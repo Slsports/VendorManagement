@@ -61,18 +61,20 @@ conflicts with `development-strategy.md` or `vendor-pipeline-and-platform-spec.m
   `Invoice # | Disc Date | Disc Avail | Date Inv | Date Due | Desc (INV/CRD) | Vendor | Inv Amt | Amt Paid | Amt Due`.
   An anonymized template is in `docs/samples/worldwide-payment-template.xlsx`. Real payment
   sheets contain vendor and dollar data and are **not** committed to the repo.
-- **Payment method follows the purchasing channel, per order.** The same vendor can be
-  ordered through Worldwide on one occasion and through Faire on another, and the payment
-  method depends on where that particular order was placed. So:
-  - Each order records `channel` = where it was placed: `worldwide`, `faire`, `direct`
-    (vendor or rep group), `other`.
-  - The channel sets the default payment method: `worldwide` → Worldwide portal,
-    `faire` → credit card (prepaid), `direct` → Bill.com unless prepaid by card. Always
-    editable on the order.
-  - Vendors list the channels they are available through (`vendor_channels`) with one
-    marked as the usual choice, so the order form pre-selects it and the buyer changes
-    it only when ordering elsewhere.
-- Adds to the schema (Phase 4/5): `payments` (batch) and `payment_lines`; on `orders` a
-  `channel`, `payment_method` (`worldwide`, `billcom`, `credit_card`, `other`),
-  `payment_status` (`unpaid`, `prepaid`, `paid`) and `paid_at`, kept separate from the
-  fulfilment status; `vendor_channels` (vendor, channel, is_default, account/login notes).
+- **Ordering method and billing route are two different facts.** Most Worldwide orders
+  are placed through the vendors' reps at the bi-annual buying shows (Worldwide has
+  hundreds of vendors); only occasionally is an order keyed on the Worldwide portal. In
+  both cases Worldwide bills and collects. The same vendor may also be ordered through
+  Faire, in which case Faire bills and the card is charged. So each order records:
+  - `ordered_via` — how it was placed: `rep_at_show`, `rep`, `worldwide_portal`, `faire`,
+    `vendor_direct`, `other`. Informational. Links to the buying show and rep when relevant.
+  - `billed_through` — who invoices and collects: `worldwide`, `faire`, `vendor`.
+    **This is what drives payment.** `worldwide` → paid in a Worldwide batch upload;
+    `faire` → credit card, prepaid; `vendor` → Bill.com unless prepaid by card.
+  - Vendors are tagged with the billing routes available for them (`vendor_billing_routes`,
+    usually one: most are Worldwide vendors). The order form pre-fills `billed_through`
+    from the vendor's usual route; the buyer changes it only on an order placed elsewhere.
+- Adds to the schema (Phase 4/5): `payments` (batch) and `payment_lines`; on `orders`
+  `ordered_via`, `billed_through`, `payment_method` (`worldwide`, `billcom`, `credit_card`,
+  `other`), `payment_status` (`unpaid`, `prepaid`, `paid`) and `paid_at`, kept separate
+  from the fulfilment status; `vendor_billing_routes` (vendor, route, is_default, notes).
