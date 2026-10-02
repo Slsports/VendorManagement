@@ -228,3 +228,51 @@ Not committed (real data). Findings that shape the invoice reader:
   per-bag ice prices trackable over time.
 - Received-by signatures identify the employee who accepted the delivery; optional to
   capture as text, never required.
+
+## 2026-10-02 — Adjustments and corrected invoices (second Mountain Milk batch reviewed)
+
+Sample: `8.26.26_MM_INVOICES_ALL_STORES.pdf`, 26 pages, scanned together by the
+assistant for this review only. Not committed.
+
+**Normal flow (per Dana):** Mountain Milk emails each invoice individually as it is
+issued, weekly, to the orders mailbox **with a CC to Bill.com**, so the bills already
+exist in Bill.com when Dana pays. The paper copy left at delivery is what store staff
+annotate by hand. The emailed copy is clean.
+
+**How adjustments happen today:**
+1. Store staff mark the paper invoice at delivery: items not received are crossed out,
+   quantities corrected (e.g. 240 → 210), the fuel surcharge and total recomputed by hand
+   (e.g. invoice 302388: $995.00 → $753.60; invoice 302479: $1,452.20 → $1,303.28).
+2. The assistant enters the **adjusted** amount on the payment sheet with the note
+   `NEEDS CORRECTED INVOICE`. Dana pays the adjusted total.
+3. Howard at Mountain Milk emails a corrected invoice. It keeps the **same invoice
+   number**, prints `+++++CORRECTED INVOICE+++++` under the line items, and marks changed
+   lines with `+++++` (e.g. `FUEL SURCHARGE+++++`, `ICE - CRUSHED - 16# BAG+++++++`). A
+   removed item may appear with quantity 0 and amount 0.00 rather than being dropped.
+
+**Decision: the VMS replaces the handwriting with the digital check-in and tracks the
+correction cycle on the invoice record.**
+- The emailed invoice creates the invoice/order record (see the delivery-vendor entry).
+  Store staff check it in on a phone: received quantity and status per line (the
+  strategy's Phase 4 check-in form). Short or missing lines produce an **adjusted amount
+  due** computed by the app (line amounts plus the fuel surcharge recalculated at the
+  same rate), and the invoice is flagged `needs_corrected_invoice`.
+- The remittance sheet and the pending payment use the adjusted amount, and the NOTES
+  column carries `NEEDS CORRECTED INVOICE` exactly as today.
+- When an emailed invoice arrives with an **invoice number that already exists** for the
+  vendor, it is treated as a corrected invoice (confirmed by the `CORRECTED INVOICE`
+  text when present): the original file is kept as version 1, the new one becomes the
+  current version, line items are replaced, and the flag clears automatically if the
+  corrected total equals the adjusted amount. If it does not match, the invoice goes to
+  the review queue with both totals shown.
+- A vendor-level "request corrected invoice" email can be drafted from the flagged
+  invoices (Phase 5, with the AI-drafted vendor emails), so Dana does not have to write
+  to Howard by hand.
+
+**Bill.com consequence:** because invoices are CC'd to Bill.com, Bill.com holds each bill
+with its invoice number. A bill-level export from Bill.com (if available) would therefore
+resolve `Multiple` payment rows exactly; the vendor + amount matching remains the fallback.
+
+**Also seen:** `No invoice on delivery` lines; handwritten `Inventory AS 7/30` and
+`Entered in LS` notes (replaced by the check-in/entered status); price notices in the
+footer change month to month and should be captured per invoice date.
