@@ -52,9 +52,17 @@ conflicts with `development-strategy.md` or `vendor-pipeline-and-platform-spec.m
   5. Capture early-payment discount data when present (`Disc Date`, `Disc Avail`).
 - Bill.com payments: to be decided. Options are uploading a Bill.com export the same way,
   or marking orders paid manually. Not needed before Phase 5.
+- **Credit card prepayment.** Some orders are prepaid by credit card at the time of
+  ordering. **Every Faire vendor is paid by credit card.** Prepaid orders are therefore
+  already paid before they are confirmed, shipped, or received: payment status must be
+  tracked separately from the fulfilment status, so an order can be `paid` and still be
+  `awaiting_confirmation` or `shipped`. The "ready to pay" step does not apply to them.
 - Sheet layout (header row 2, data from row 3, `=SUM()` total in the last row of column J):
   `Invoice # | Disc Date | Disc Avail | Date Inv | Date Due | Desc (INV/CRD) | Vendor | Inv Amt | Amt Paid | Amt Due`.
   An anonymized template is in `docs/samples/worldwide-payment-template.xlsx`. Real payment
   sheets contain vendor and dollar data and are **not** committed to the repo.
-- Adds to the schema (Phase 4/5): `payments` (batch) and `payment_lines`, `orders.payment_method`
-  (`worldwide`, `billcom`, `other`), and a vendor-level flag for "paid through Worldwide".
+- Adds to the schema (Phase 4/5): `payments` (batch) and `payment_lines`; on `orders` a
+  `payment_method` (`worldwide`, `billcom`, `credit_card`, `other`), `payment_status`
+  (`unpaid`, `prepaid`, `paid`) and `paid_at`, kept separate from the fulfilment status;
+  on `vendors` a default `payment_method` and a `marketplace` field (e.g. `faire`) so new
+  orders inherit the right method automatically.
