@@ -178,3 +178,20 @@ conflicts with `development-strategy.md` or `vendor-pipeline-and-platform-spec.m
   vendor owes a corrected copy. The VMS keeps it as an invoice status flag that shows in
   the remittance NOTES column and on the statement reconciliation until a corrected
   invoice is uploaded against it.
+
+## 2026-10-02 — Delivery-vendor invoices arrive by email like every other vendor
+
+- Mountain Milk (and similar delivery vendors) email invoices to the orders mailbox, so
+  they flow through the standard inbound pipeline (spec §10.1): classified as an invoice,
+  filed to the vendor's Invoices folder, and the invoice number, date, store and amount
+  extracted. No manual invoice entry by the assistant.
+- Consequence for the schema: **vendor invoices are first-class records**
+  (`vendor_invoices`), optionally linked to an order. For standing delivery vendors there
+  is no order placed beforehand, so an emailed invoice creates its own order record
+  automatically (one per invoice, marked as a delivery, status received) so that
+  check-in, payment, remittance and reconciliation all work the same way as for ordered
+  goods. A vendor flag `is_delivery_vendor` turns this behavior on.
+- Store on an invoice is identified from the ship-to / store name on the document using
+  the store names, codes and aliases (TOWN, MARINA, HAPPY, HC) and the store addresses.
+  **Dana enters each store's street address in Settings** so address matching works;
+  until then, name/alias matching is used and unmatched invoices go to the review queue.
