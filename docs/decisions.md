@@ -317,3 +317,22 @@ footer change month to month and should be captured per invoice date.
   itself so she sends it once.
 - Corrected invoices from Howard arrive by email directly from the vendor and are
   matched by invoice number as already described.
+
+## 2026-10-02 — Delivery vendors: who they are and how each is handled
+
+"Delivery vendor" = a route vendor that drops goods with a paper invoice and bills for
+what was left; no order is placed beforehand. Flagged `is_delivery_vendor` on the vendor.
+
+| Vendor | Goods | Invoices reach the VMS how | Payment | Notes |
+|---|---|---|---|---|
+| Mountain Milk & Cream | milk and ice, all three delivery stores | assistant scans the paper and emails to orders mailbox + Bill.com | Bill.com, monthly remittance sheet | adjustment/corrected-invoice cycle as recorded above |
+| Rod's Power Bait | worms (live bait) | assistant emails the invoices to orders mailbox + Bill.com | Bill.com, **must be paid immediately** | see "pay now" rule below |
+| Frito-Lay | snacks | not emailed; prepaid at delivery | prepaid | **not tracked in the VMS**; add to the excluded-payee list if it ever appears in a Bill.com export |
+
+**"Pay now" rule.** Vendors carry payment terms; Rod's Power Bait is `due on receipt`
+(0 days). When an invoice for a due-on-receipt vendor is recorded from the mailbox, it
+appears on the dashboard's "Payments due" card **immediately**, in its own "pay now"
+group above overdue and due-soon, with the vendor, invoice number and amount, linking
+to the invoice. It leaves the card when the Bill.com payment report is uploaded and the
+payment matches (vendor + invoice number, or vendor + amount for `Multiple` rows, as Rod's
+payments in the sample export show), or when a payment is entered by hand.
