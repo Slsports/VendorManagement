@@ -336,3 +336,17 @@ group above overdue and due-soon, with the vendor, invoice number and amount, li
 to the invoice. It leaves the card when the Bill.com payment report is uploaded and the
 payment matches (vendor + invoice number, or vendor + amount for `Multiple` rows, as Rod's
 payments in the sample export show), or when a payment is entered by hand.
+
+## 2026-10-02 — Payments-due alert covers every direct-billed vendor, with per-vendor lead time
+
+- Dana has several other vendors paid through Bill.com outside Worldwide and wants the
+  dashboard to alert when their payments are due. The "Payments due" card already covers
+  **every** invoice whose billing route is `vendor` (direct, paid through Bill.com) and
+  that has no payment recorded, so no separate list is needed.
+- Refinement: vendors get `payment_terms_days` (net 30, net 15, 0 = due on receipt) and
+  `alert_days_before_due` (default 7). The card groups invoices as **pay now** (due on
+  receipt, or past due), **due soon** (within the vendor's lead time), and shows a count
+  of the rest. Dana sets terms and lead time on the vendor page; the vendor import
+  pre-fills terms from the spreadsheet where present.
+- Worldwide-billed invoices are excluded from this card by default because they are
+  paid in batches on the portal; a toggle can include them later if wanted.
