@@ -8,6 +8,8 @@
  *
  * Needs SUPABASE_PROJECT_REF and SUPABASE_ACCESS_TOKEN (personal access token,
  * https://supabase.com/dashboard/account/tokens) in .env or the environment.
+ * In an environment whose outbound proxy attaches the token itself (Claude Code
+ * cloud sessions), SUPABASE_ACCESS_TOKEN may be left unset.
  *
  * Applied versions are recorded in supabase_migrations.schema_migrations, the same
  * table the Supabase CLI uses, so `supabase db push` stays compatible later.
@@ -19,13 +21,14 @@ import { loadEnv, requireEnv } from './env.mjs'
 loadEnv()
 const dry = process.argv.includes('--dry')
 const ref = requireEnv('SUPABASE_PROJECT_REF')
-const token = requireEnv('SUPABASE_ACCESS_TOKEN', 'Create one at https://supabase.com/dashboard/account/tokens')
+const token = process.env.SUPABASE_ACCESS_TOKEN
+if (!token) console.warn('SUPABASE_ACCESS_TOKEN is not set; relying on credentials attached by the environment proxy.')
 const dir = resolve(process.cwd(), 'supabase/migrations')
 
 async function query(sql) {
   const res = await fetch(`https://api.supabase.com/v1/projects/${ref}/database/query`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     body: JSON.stringify({ query: sql }),
   })
   const text = await res.text()
