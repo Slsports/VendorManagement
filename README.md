@@ -3,8 +3,9 @@
 Vendor and order management for Shaver Lake Sports Inc. (Shaver Lake Sports, Shaver Lake Hardware,
 Shaver Lake Marina, The Happy Camper General Store), built multi-tenant from day one.
 
-Specs live in [`docs/`](docs/): `development-strategy.md` is the build plan and
-`vendor-pipeline-and-platform-spec.md` extends and (per its §12) overrides it.
+Specs live in [`docs/`](docs/): `development-strategy.md` is the build plan,
+`vendor-pipeline-and-platform-spec.md` extends and (per its §12) overrides it, and
+`decisions.md` records later decisions that override both.
 
 ## Stack
 
