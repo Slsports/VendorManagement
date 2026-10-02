@@ -130,3 +130,32 @@ conflicts with `development-strategy.md` or `vendor-pipeline-and-platform-spec.m
   Worth checking under Bill.com's Reports or the Bills list export, but not required.
 - A free-text invoice value such as `August 2026` is treated as a reference, matched by
   vendor + amount like `Multiple`.
+
+## 2026-10-02 — Excluded Bill.com payees; remittance sheets and statement reconciliation
+
+- **Excluded payees.** Dana will supply a list of Bill.com payees that are not VMS vendors
+  (e.g. Powell & Son Properties = SLS rent/mortgage). Kept as a per-tenant list in
+  Settings ("Bill.com payees to ignore"); the importer skips them silently. New unknown
+  payees still surface once under "not a VMS vendor" so the list can be extended.
+- **High-frequency delivery vendors (Mountain Milk pattern).** Today: the assistant types
+  each invoice into a per-store spreadsheet (SLS, SLM, GS); Dana pays the total through
+  Bill.com and emails the vendor the spreadsheet as a remittance advice; the vendor sends
+  one statement per store. Decision: automate both ends in the VMS.
+  1. **Invoice capture.** Invoices are entered or uploaded (photo/PDF) against the vendor
+     and store; the app extracts invoice number, date, store and amount (Claude Call 3
+     style extraction, with manual entry as the fallback). The assistant does the same job
+     inside the VMS instead of in a spreadsheet.
+  2. **Remittance sheet.** "Pay vendor" on the vendor page lists unpaid invoices (filter by
+     store), Dana ticks them, and the app produces the remittance spreadsheet in the same
+     layout the vendor already receives, records a pending payment for that total with the
+     invoices attached, and emails it to the vendor (download in Phase 5; automatic email
+     once outbound email exists in Phase 7). When the Bill.com export is later uploaded,
+     the payment matches by vendor + amount and the invoices flip to paid.
+  3. **Statement reconciliation.** Upload each store's statement (PDF/photo). The app
+     extracts the statement lines and compares them with VMS invoices for that vendor and
+     store, flagging: on the statement but not in the VMS (missed invoice), in the VMS but
+     not on the statement, amount differs, and paid in the VMS but still open on the
+     statement (vendor has not applied the payment). Missing invoices can be added from
+     the reconciliation screen as placeholders pending the paper copy.
+- Phase 5 (Returns/Credits + payments) for 1–2, Phase 6 for 3. Dana supplies the current
+  per-store Mountain Milk spreadsheet so the remittance layout matches exactly.
