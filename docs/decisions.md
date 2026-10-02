@@ -367,3 +367,39 @@ payments in the sample export show), or when a payment is entered by hand.
   `vendors.payment_terms_id`; `orders`/invoices keep `due_date` resolved at creation.
 - Phase 6 (Settings) for the admin screen; the table and seed go in with the vendor
   schema in Phase 3 so the import can map the terms column to list entries.
+
+## 2026-10-02 — Lightspeed Retail R-Series: build sales reports from the API, run them before each show
+
+- **Lightspeed version:** Retail R-Series. Its Analytics reports are not exposed by the
+  API, but the underlying data is (items with default vendor, vendor SKU, cost, per-store
+  on-hand and reorder points; sales lines by date; vendors; purchase orders). To be
+  verified with a test call once API credentials exist; the documentation sites are
+  blocked from the build environment.
+- **Decision: the VMS generates vendor sales reports itself from the Lightspeed API**,
+  applying the NEED/ORDER logic from `sales-report-formatting-spec.md`. The Drive
+  `/Incoming/` upload (spec §4.1, §9) stays as a manual fallback for reports the API
+  cannot reproduce or if API access is delayed.
+- **Pre-show report run.** The comparison must use the report the buyer relied on at the
+  show, not data pulled when the confirmation arrives weeks later. So each buying show
+  has a `report_run_days_before` setting (default 14; Dana can change it per show). On
+  that date the VMS runs the sales report for every vendor on the show's visit list
+  (optionally all active vendors), stores each as a new `vendor_sales_reports` version
+  attached to the vendor **and tagged with the show**, and notifies the buyers. Buyers
+  take those reports to the show. A "Run now" button on the show and on any vendor
+  covers late additions.
+- **Versioning rule, extended.** An order linked to a buying show compares against the
+  report version tagged with that show. An order not linked to a show uses the spec's
+  rule: the most recent report dated before the confirmation. The report run date and the
+  365-day window it covered are shown on every comparison.
+- **Mobile confirmation scan at the show.** Many vendors hand over a paper copy of the
+  order at the booth. From the phone, "Scan confirmation": camera capture (multi-page),
+  the active show pre-selected, vendor matched from the document (booth list as a hint),
+  line items extracted, order created with `ordered_via = rep_at_show` and
+  `billed_through` from the vendor, and the comparison runs immediately against the
+  show's report, so missing items, new items and price changes are visible while the
+  buyer is still at the booth. If the document is the buyer's own order copy rather than a
+  vendor confirmation, the order is created as `awaiting_confirmation` and the emailed
+  confirmation later attaches to it instead of creating a duplicate.
+- Needs from Dana (Phase 4): Lightspeed API credentials (app registration; numbered steps
+  will be provided), the account ID, and a sample of TJ's exported report to confirm each
+  column maps to API data.
