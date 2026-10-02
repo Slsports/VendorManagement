@@ -276,3 +276,23 @@ resolve `Multiple` payment rows exactly; the vendor + amount matching remains th
 **Also seen:** `No invoice on delivery` lines; handwritten `Inventory AS 7/30` and
 `Entered in LS` notes (replaced by the check-in/entered status); price notices in the
 footer change month to month and should be captured per invoice date.
+
+## 2026-10-02 — Check-in mode is per store; Marina stays on paper
+
+- Dana runs SLS and GS, so staff there can check deliveries in on a phone. **Marina
+  (SLM) staff will not have VMS access**; the paper invoice stays the record there and
+  is annotated by hand as today.
+- Decision: each store has a `checkin_mode` setting, `digital` (SLS, GS) or `paper` (SLM).
+  Both end in the same place: an adjusted amount due and the `needs_corrected_invoice`
+  flag on the invoice record.
+  - **Digital:** store staff fill in the check-in form on a phone.
+  - **Paper:** the annotated paper invoice is photographed or scanned (the assistant
+    already does this). Uploading it to the invoice in the VMS opens an **Adjust invoice**
+    screen pre-filled by reading the handwriting: crossed-out lines, corrected quantities,
+    corrected totals. The assistant confirms or edits, then saves. The same screen works
+    with no photo at all for a purely manual adjustment.
+- The assistant (initials "CP" on the invoices) therefore needs a VMS login, role
+  `manager`, with access to all three delivery stores. Created via Settings in Phase 6 or
+  `npm run db:create-user` before then.
+- Marina's Lightspeed entry is done by TJ ("TP/TJ" initials on the marina invoices); the
+  VMS `entered` status is set by whoever enters it, from any store's invoice page.
