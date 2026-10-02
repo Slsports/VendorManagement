@@ -88,3 +88,18 @@ conflicts with `development-strategy.md` or `vendor-pipeline-and-platform-spec.m
   `ordered_via`, `billed_through`, `payment_method` (`worldwide`, `billcom`, `credit_card`,
   `other`), `payment_status` (`unpaid`, `prepaid`, `paid`) and `paid_at`, kept separate
   from the fulfilment status; `vendor_billing_routes` (vendor, route, is_default, notes).
+
+## 2026-10-02 — Dashboard alert for unrecorded Bill.com payments due
+
+- Decision: the dashboard shows a **"Payments due" alert** listing orders billed direct
+  (the Bill.com route) whose invoice is due soon or overdue and has **no payment recorded**
+  in the VMS. Counts split into *overdue* and *due within 7 days*, each linking to the
+  filtered order list; the alert clears as Bill.com uploads or manual payment entries
+  are recorded against those orders.
+- Due date source, in order of preference: the due date on the vendor invoice (extracted
+  when the invoice is uploaded, or entered by hand), otherwise invoice date plus the
+  vendor's payment terms (e.g. net 30), otherwise order date plus terms. Orders with no
+  usable date are listed under "no due date" rather than hidden.
+- The same card can later include Worldwide invoices due if wanted; the first version
+  covers the Bill.com route only, as requested.
+- Phase 4 (Dashboard). Needs `orders.invoice_due_date` and `vendors.payment_terms_days`.
