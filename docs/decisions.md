@@ -195,3 +195,36 @@ conflicts with `development-strategy.md` or `vendor-pipeline-and-platform-spec.m
   the store names, codes and aliases (TOWN, MARINA, HAPPY, HC) and the store addresses.
   **Dana enters each store's street address in Settings** so address matching works;
   until then, name/alias matching is used and unmatched invoices go to the review queue.
+
+## 2026-10-02 — What a Mountain Milk invoice batch looks like (sample reviewed)
+
+Sample: `10.1.26_MM_ALL_INVOICES.pdf`, 10 pages, produced by Adobe Scan on a phone.
+Not committed (real data). Findings that shape the invoice reader:
+
+- **One PDF holds many invoices, one per page, as images with no text layer.** The
+  pipeline must split multi-page attachments per page, read each page with vision
+  (Claude handles scanned PDFs natively), and create one invoice record per page.
+  A batch may mix stores and dates.
+- **Fields on each invoice:** vendor name/address, `Date`, `Invoice #` (6 digits, e.g.
+  302984), `DATE DUE` (equals the invoice date, i.e. due on receipt), `DELIVER TO` block,
+  `RECEIVED BY` signature, line items (`Item`, `Description`, `QTY`, `PRICE EA`, `Amount`),
+  a `FUEL SURCHARGE` line, free-text notes, and `TOTAL`.
+- **Store is on the last line of DELIVER TO**, not the name line. The name line is the
+  same across stores ("SHAVER LAKE SPORT & FISHING"); the last line reads `TOWN STORE`,
+  `MARINA` or `Happy Camper`. Matching must be case-insensitive whole-word containment
+  against store names and aliases (TOWN, MARINA, HAPPY) so "TOWN STORE" and "Happy
+  Camper" resolve without new aliases.
+- **Handwritten annotations** such as `Entered in LS 9/9/26 CP` or `LS=9/9/2026 TJ`
+  record when the invoice was entered in Lightspeed and by whom. The VMS replaces this
+  with the order's `entered` status (date + user). The reader should capture the
+  annotation when legible and store it as a note, but never depend on it.
+- **"No invoice on delivery"** printed in the line-item area means the paper copy was not
+  left at delivery; this emailed copy is the only one. Capture as a flag/note.
+- **Price-change notices** in the footer ("For the month of Sept, milk is down a small
+  amount. Check your new prices.") are worth surfacing: extract as a vendor notice and
+  show it on the vendor page / dashboard alerts so price updates are not missed.
+- **Line items feed cost history.** Item code, description, qty and unit price go to
+  `vendor_sku_cost_history` like any other vendor, which makes the fuel surcharge and
+  per-bag ice prices trackable over time.
+- Received-by signatures identify the employee who accepted the delivery; optional to
+  capture as text, never required.
