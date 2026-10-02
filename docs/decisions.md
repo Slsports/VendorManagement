@@ -350,3 +350,20 @@ payments in the sample export show), or when a payment is entered by hand.
   pre-fills terms from the spreadsheet where present.
 - Worldwide-billed invoices are excluded from this card by default because they are
   paid in batches on the portal; a toggle can include them later if wanted.
+
+## 2026-10-02 — Payment terms are an admin-managed list
+
+- Decision: payment terms are a per-organization list managed by admins in Settings
+  ("Payment terms"), not a free-text field. Vendors choose from the list; the order and
+  invoice records keep a snapshot of the terms that applied.
+- Each term has: name (e.g. "Net 30", "Due on receipt", "2% 10 Net 30"), days until due,
+  optional early-payment discount (percent + days), optional fixed due day of month
+  ("bill on the 1st, due on the 15th"), active flag, and one term marked as the
+  organization default. Admins can add, rename, deactivate (never delete terms in use),
+  and reorder.
+- Seed for organization #1: Due on receipt (0), Net 15, Net 30 (default), Net 45, Net 60,
+  2% 10 Net 30. Dana adds anything else from Settings.
+- Schema: `payment_terms` table (organization-scoped, RLS like other tenant tables);
+  `vendors.payment_terms_id`; `orders`/invoices keep `due_date` resolved at creation.
+- Phase 6 (Settings) for the admin screen; the table and seed go in with the vendor
+  schema in Phase 3 so the import can map the terms column to list entries.
