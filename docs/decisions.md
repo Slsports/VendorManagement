@@ -50,8 +50,18 @@ conflicts with `development-strategy.md` or `vendor-pipeline-and-platform-spec.m
      should attach to the vendor's return/credit records rather than an order.
   4. Send unmatched rows to a review list instead of failing the upload.
   5. Capture early-payment discount data when present (`Disc Date`, `Disc Avail`).
-- Bill.com payments: to be decided. Options are uploading a Bill.com export the same way,
-  or marking orders paid manually. Not needed before Phase 5.
+- **Bill.com payments are logged the same way: by uploading a Bill.com payment report.**
+  Goal: every payment date, amount and reference is visible in the VMS on the vendor and
+  on the specific order, so Dana never has to log into Bill.com to check a payment.
+  - Match each report row to an order by vendor plus the vendor's invoice number, with
+    amount as a tiebreaker; unmatched rows go to the same review list as Worldwide rows.
+  - Store on the payment line: payment date, amount, Bill.com payment/confirmation number,
+    and method (check / ACH / card) when the report provides it.
+  - Payment history is shown on the vendor detail page and on each order's detail page,
+    with the Worldwide and Bill.com uploads feeding the same `payments` / `payment_lines`
+    tables.
+  - **Dana supplies a sample Bill.com export** (CSV or Excel) before Phase 5 so the parser
+    can be built against the real column layout.
 - **Credit card prepayment.** Some orders are prepaid by credit card at the time of
   ordering. **Every Faire vendor is paid by credit card.** Prepaid orders are therefore
   already paid before they are confirmed, shipped, or received: payment status must be
