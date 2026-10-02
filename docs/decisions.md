@@ -296,3 +296,24 @@ footer change month to month and should be captured per invoice date.
   `npm run db:create-user` before then.
 - Marina's Lightspeed entry is done by TJ ("TP/TJ" initials on the marina invoices); the
   VMS `entered` status is set by whoever enters it, from any store's invoice page.
+
+## 2026-10-02 — Correction: Mountain Milk invoices are paper; the assistant emails the scans
+
+- **Mountain Milk hands a paper invoice to each store at delivery.** The assistant scans
+  them and emails the scans to the orders mailbox and to Bill.com. **Howard only emails
+  the corrected invoices.** This replaces the earlier assumption that the vendor emails
+  each original.
+- Consequence: the first copy the VMS sees is the store's paper copy, which may already
+  carry handwritten adjustments ("Entered in LS", crossed-out lines, corrected totals).
+  So the invoice reader handles handwriting from the start: an incoming scan creates the
+  invoice **and**, when annotations are present, a proposed adjustment in the same step.
+  The assistant confirms the proposed adjustment in the review queue (one click when it
+  is right), which sets the adjusted amount due and the `needs_corrected_invoice` flag.
+- This makes the "paper" path the default for all three delivery stores. The digital
+  check-in form at SLS and GS remains available but is optional for delivery vendors;
+  a digital check-in done before the scan arrives simply takes precedence.
+- The assistant keeps emailing scans exactly as today; nothing changes for her on day
+  one. Once outbound email exists (Phase 7), the VMS can forward the scan to Bill.com
+  itself so she sends it once.
+- Corrected invoices from Howard arrive by email directly from the vendor and are
+  matched by invoice number as already described.
