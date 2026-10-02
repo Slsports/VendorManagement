@@ -21,6 +21,6 @@ $$;
 grant usage on schema public to anon, authenticated, service_role;
 grant usage on schema auth to anon, authenticated, service_role;
 grant execute on function auth.uid() to anon, authenticated, service_role;
-alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
-alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
-alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
+-- Mirror the hosted project: API roles get NO default data privileges on new
+-- tables or functions. Every migration must grant what it needs explicitly.
+alter default privileges in schema public grant truncate, references, trigger on tables to anon, authenticated, service_role;
