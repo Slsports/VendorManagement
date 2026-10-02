@@ -15,7 +15,7 @@ export interface Branding {
 
 export const DEFAULT_BRANDING: Branding = {
   appName: import.meta.env.VITE_APP_NAME?.trim() || 'RetailHQ VMS',
-  organizationName: import.meta.env.VITE_APP_NAME?.trim() || 'RetailHQ',
+  organizationName: import.meta.env.VITE_ORG_NAME?.trim() || import.meta.env.VITE_APP_NAME?.trim() || 'RetailHQ',
   logoUrl: null,
   // Must match the :root default in index.css and the organizations.accent_color default.
   accentColor: '#2f5d3a',
