@@ -103,3 +103,30 @@ conflicts with `development-strategy.md` or `vendor-pipeline-and-platform-spec.m
 - The same card can later include Worldwide invoices due if wanted; the first version
   covers the Bill.com route only, as requested.
 - Phase 4 (Dashboard). Needs `orders.invoice_due_date` and `vendors.payment_terms_days`.
+
+## 2026-10-02 — Bill.com "Payments Out" export: layout and the "Multiple" problem
+
+- The upload is Bill.com's **Payments Out** export, one row per payment. Columns:
+  `Confirmation number | Vendor | Process date | Payment status | Payment method |
+  Payment amount | Arrival date | Invoice number | Paid from | Vendor credit | Currency`.
+  Dates are text like `Sep 21, 2026`. Anonymized template:
+  `docs/samples/billcom-payments-out-template.xlsx`. Real exports are not committed.
+- **`Invoice number` says `Multiple` when one payment covered several bills.** Dana does
+  not want to print each payment to get the numbers. Decision: the VMS resolves these
+  itself from the invoices it already holds:
+  1. Single invoice number → match that vendor's order by invoice number, amount as check.
+  2. `Multiple` → find the combination of that vendor's **unpaid invoices in the VMS**
+     whose total equals the payment amount. One combination → assign automatically.
+     Several, or none → review screen listing the vendor's unpaid invoices with the
+     payment amount at the top; Dana ticks the ones it covered. Nothing is lost: the
+     payment is still recorded on the vendor with its confirmation number and date.
+  3. Vendors in the export that are not VMS vendors (rent, utilities, fuel, batteries...)
+     are listed under "not a VMS vendor" and skipped, not treated as errors.
+  4. Re-uploading an export is safe: rows are deduplicated on confirmation number.
+- Stored per payment: confirmation number, process date, arrival date, method
+  (ePayment / Check / Virtual Card), status, amount, "paid from" account label.
+- If Bill.com offers a bill-level export (one row per bill with invoice number and
+  payment date), the importer accepts that too and it removes the `Multiple` ambiguity.
+  Worth checking under Bill.com's Reports or the Bills list export, but not required.
+- A free-text invoice value such as `August 2026` is treated as a reference, matched by
+  vendor + amount like `Multiple`.
