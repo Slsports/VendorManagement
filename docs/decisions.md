@@ -159,3 +159,22 @@ conflicts with `development-strategy.md` or `vendor-pipeline-and-platform-spec.m
      the reconciliation screen as placeholders pending the paper copy.
 - Phase 5 (Returns/Credits + payments) for 1–2, Phase 6 for 3. Dana supplies the current
   per-store Mountain Milk spreadsheet so the remittance layout matches exactly.
+
+## 2026-10-02 — Mountain Milk remittance sheet layout; TOWN and MARINA store aliases
+
+- Layout (sent to the vendor as PDF, one per monthly payment covering all stores):
+  title `MOUNTAIN MILK PAYMENT`; columns `Store | Delivery Date | INVOICE # | AMOUNT | NOTES`;
+  rows grouped by store with a `TOTAL PAID <STORE>` subtotal after each group; a
+  `Grand Total` row; a note such as `PAID VIA DIRECT DEPOSIT ON 9-17-26`. The grand
+  total ($16,139.81 in the sample) is the Bill.com payment amount, whose invoice
+  reference reads `August 2026`. Template: `docs/samples/mountain-milk-remittance-template.xlsx`.
+- The vendor-facing generator in Phase 5 reproduces this layout, with the title and
+  payment note built from the vendor name, payment method and date. Delivery date is
+  the invoice date for delivery vendors.
+- **Store aliases:** the sheet uses `TOWN` for Shaver Lake Sports and `MARINA` for
+  Shaver Lake Marina (`HAPPY` for GS was already known). Added to `stores.aliases` in
+  migration `20261002000002_store_aliases.sql` and to `STORE_CODE_ALIASES` in the app.
+- **"NEEDS CORRECTED INVOICE"** is a per-invoice flag: the invoice was paid but the
+  vendor owes a corrected copy. The VMS keeps it as an invoice status flag that shows in
+  the remittance NOTES column and on the statement reconciliation until a corrected
+  invoice is uploaded against it.

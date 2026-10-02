@@ -14,8 +14,14 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 /** Store codes for the default tenant. Other tenants define their own in the stores table. */
 export const STORE_CODES = ['SLS', 'SLH', 'SLM', 'GS'] as const
 
-/** Spreadsheet aliases that must map to a store code on import (spec §2). */
+/**
+ * Spreadsheet aliases that must map to a store code on import (spec §2 plus
+ * docs/decisions.md). The authoritative list is stores.aliases in the database;
+ * this mirror is for client-side parsing of pasted or uploaded sheets.
+ */
 export const STORE_CODE_ALIASES: Record<string, (typeof STORE_CODES)[number]> = {
+  TOWN: 'SLS',
+  MARINA: 'SLM',
   HAPPY: 'GS',
   HC: 'GS',
 }
