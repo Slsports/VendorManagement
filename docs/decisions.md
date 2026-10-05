@@ -589,3 +589,14 @@ payments in the sample export show), or when a payment is entered by hand.
   Lightspeed has separate vendor entries for the same company; the import proposes a merge
   into one vendor with both routes, keeping both Lightspeed names as aliases, for Dana to
   confirm.
+
+
+## 2026-10-05 — Lightspeed vendor import completed
+- Imported from `10-5-26_SLS_LS_Vendor_Export.csv` (1,079 rows): 771 enabled rows → **767
+  vendors** (4 exact duplicate groups merged, e.g. "RUKO - WWD" + "RUKO"), 322 Worldwide,
+  33 Faire, 3 Direct, 414 with no route yet. 15 possible duplicate pairs and the 4 merges
+  are in the review queue and flagged on the vendors; Dana reviews them from the vendor list
+  ("Needs review" filter) or the review workbook sent in chat.
+- Only 22 rows carried any contact/phone data in Lightspeed; contacts come from the mailbox
+  backfill and the vendor intake form.
+- Import script: `npm run import:ls-vendors`. Re-runnable; existing vendors are skipped.

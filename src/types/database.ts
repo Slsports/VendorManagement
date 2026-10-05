@@ -206,6 +206,138 @@ export type Database = {
           },
         ]
       }
+      categories: {
+        Row: { id: string; organization_id: string; name: string; parent_id: string | null; full_path: string | null; lightspeed_category_id: string | null; sort_order: number; is_active: boolean; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; name: string; parent_id?: string | null; full_path?: string | null; lightspeed_category_id?: string | null; sort_order?: number; is_active?: boolean; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; name?: string; parent_id?: string | null; full_path?: string | null; lightspeed_category_id?: string | null; sort_order?: number; is_active?: boolean; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'categories_organization_id_fkey'; columns: ['organization_id']; isOneToOne: false; referencedRelation: 'organizations'; referencedColumns: ['id'] },
+          { foreignKeyName: 'categories_parent_id_fkey'; columns: ['parent_id']; isOneToOne: false; referencedRelation: 'categories'; referencedColumns: ['id'] },
+        ]
+      }
+      rep_groups: {
+        Row: { id: string; organization_id: string; name: string; contact_name: string | null; email: string | null; phone: string | null; website: string | null; address: string | null; notes: string | null; is_active: boolean; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; name: string; contact_name?: string | null; email?: string | null; phone?: string | null; website?: string | null; address?: string | null; notes?: string | null; is_active?: boolean; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; name?: string; contact_name?: string | null; email?: string | null; phone?: string | null; website?: string | null; address?: string | null; notes?: string | null; is_active?: boolean; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'rep_groups_organization_id_fkey'; columns: ['organization_id']; isOneToOne: false; referencedRelation: 'organizations'; referencedColumns: ['id'] },
+        ]
+      }
+      payment_terms: {
+        Row: { id: string; organization_id: string; name: string; days_until_due: number; discount_percent: number | null; discount_days: number | null; due_day_of_month: number | null; is_default: boolean; is_active: boolean; sort_order: number; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; name: string; days_until_due?: number; discount_percent?: number | null; discount_days?: number | null; due_day_of_month?: number | null; is_default?: boolean; is_active?: boolean; sort_order?: number; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; name?: string; days_until_due?: number; discount_percent?: number | null; discount_days?: number | null; due_day_of_month?: number | null; is_default?: boolean; is_active?: boolean; sort_order?: number; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'payment_terms_organization_id_fkey'; columns: ['organization_id']; isOneToOne: false; referencedRelation: 'organizations'; referencedColumns: ['id'] },
+        ]
+      }
+      vendors: {
+        Row: {
+          id: string; organization_id: string; name: string; lightspeed_name: string | null; lightspeed_vendor_id: string | null; aliases: string[]
+          rep_group_id: string | null; assigned_buyer_id: string | null; payment_terms_id: string | null
+          website: string | null; account_number: string | null; catalog: string | null; phone: string | null; fax: string | null
+          address: string | null; city: string | null; state: string | null; postal_code: string | null; country: string | null
+          rep_name: string | null; rep_phone: string | null; pickup_address: string | null; pickup_times: string | null
+          shipping_contact: string | null; shipping_contact_phone: string | null; return_notes: string | null; google_drive_folder: string | null
+          rating: number | null; tier: string | null; ordering_frequency: Database['public']['Enums']['ordering_frequency'] | null
+          is_delivery_vendor: boolean; minimum_order: string | null; notes: string | null; needs_review: boolean; review_note: string | null
+          is_active: boolean; created_by: string | null; created_at: string; updated_at: string
+        }
+        Insert: {
+          id?: string; organization_id: string; name: string; lightspeed_name?: string | null; lightspeed_vendor_id?: string | null; aliases?: string[]
+          rep_group_id?: string | null; assigned_buyer_id?: string | null; payment_terms_id?: string | null
+          website?: string | null; account_number?: string | null; catalog?: string | null; phone?: string | null; fax?: string | null
+          address?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; country?: string | null
+          rep_name?: string | null; rep_phone?: string | null; pickup_address?: string | null; pickup_times?: string | null
+          shipping_contact?: string | null; shipping_contact_phone?: string | null; return_notes?: string | null; google_drive_folder?: string | null
+          rating?: number | null; tier?: string | null; ordering_frequency?: Database['public']['Enums']['ordering_frequency'] | null
+          is_delivery_vendor?: boolean; minimum_order?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null
+          is_active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string
+        }
+        Update: {
+          id?: string; organization_id?: string; name?: string; lightspeed_name?: string | null; lightspeed_vendor_id?: string | null; aliases?: string[]
+          rep_group_id?: string | null; assigned_buyer_id?: string | null; payment_terms_id?: string | null
+          website?: string | null; account_number?: string | null; catalog?: string | null; phone?: string | null; fax?: string | null
+          address?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; country?: string | null
+          rep_name?: string | null; rep_phone?: string | null; pickup_address?: string | null; pickup_times?: string | null
+          shipping_contact?: string | null; shipping_contact_phone?: string | null; return_notes?: string | null; google_drive_folder?: string | null
+          rating?: number | null; tier?: string | null; ordering_frequency?: Database['public']['Enums']['ordering_frequency'] | null
+          is_delivery_vendor?: boolean; minimum_order?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null
+          is_active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: 'vendors_organization_id_fkey'; columns: ['organization_id']; isOneToOne: false; referencedRelation: 'organizations'; referencedColumns: ['id'] },
+          { foreignKeyName: 'vendors_rep_group_id_fkey'; columns: ['rep_group_id']; isOneToOne: false; referencedRelation: 'rep_groups'; referencedColumns: ['id'] },
+          { foreignKeyName: 'vendors_assigned_buyer_id_fkey'; columns: ['assigned_buyer_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+          { foreignKeyName: 'vendors_payment_terms_id_fkey'; columns: ['payment_terms_id']; isOneToOne: false; referencedRelation: 'payment_terms'; referencedColumns: ['id'] },
+        ]
+      }
+      vendor_billing_routes: {
+        Row: { organization_id: string | null; vendor_id: string; route: Database['public']['Enums']['billing_route']; is_default: boolean; account_number: string | null; notes: string | null; created_at: string }
+        Insert: { organization_id?: string | null; vendor_id: string; route: Database['public']['Enums']['billing_route']; is_default?: boolean; account_number?: string | null; notes?: string | null; created_at?: string }
+        Update: { organization_id?: string | null; vendor_id?: string; route?: Database['public']['Enums']['billing_route']; is_default?: boolean; account_number?: string | null; notes?: string | null; created_at?: string }
+        Relationships: [
+          { foreignKeyName: 'vendor_billing_routes_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+        ]
+      }
+      vendor_emails: {
+        Row: { id: string; organization_id: string | null; vendor_id: string; email: string; contact_name: string | null; title: string | null; phone: string | null; contact_type: Database['public']['Enums']['contact_type']; source: Database['public']['Enums']['contact_source']; confidence: number | null; verified_at: string | null; is_primary: boolean; notes: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id?: string | null; vendor_id: string; email: string; contact_name?: string | null; title?: string | null; phone?: string | null; contact_type?: Database['public']['Enums']['contact_type']; source?: Database['public']['Enums']['contact_source']; confidence?: number | null; verified_at?: string | null; is_primary?: boolean; notes?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string | null; vendor_id?: string; email?: string; contact_name?: string | null; title?: string | null; phone?: string | null; contact_type?: Database['public']['Enums']['contact_type']; source?: Database['public']['Enums']['contact_source']; confidence?: number | null; verified_at?: string | null; is_primary?: boolean; notes?: string | null; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'vendor_emails_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+        ]
+      }
+      vendor_stores: {
+        Row: { organization_id: string | null; vendor_id: string; store_id: string; created_at: string }
+        Insert: { organization_id?: string | null; vendor_id: string; store_id: string; created_at?: string }
+        Update: { organization_id?: string | null; vendor_id?: string; store_id?: string; created_at?: string }
+        Relationships: [
+          { foreignKeyName: 'vendor_stores_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+          { foreignKeyName: 'vendor_stores_store_id_fkey'; columns: ['store_id']; isOneToOne: false; referencedRelation: 'stores'; referencedColumns: ['id'] },
+        ]
+      }
+      vendor_categories: {
+        Row: { organization_id: string | null; vendor_id: string; category_id: string; created_at: string }
+        Insert: { organization_id?: string | null; vendor_id: string; category_id: string; created_at?: string }
+        Update: { organization_id?: string | null; vendor_id?: string; category_id?: string; created_at?: string }
+        Relationships: [
+          { foreignKeyName: 'vendor_categories_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+          { foreignKeyName: 'vendor_categories_category_id_fkey'; columns: ['category_id']; isOneToOne: false; referencedRelation: 'categories'; referencedColumns: ['id'] },
+        ]
+      }
+      vendor_order_windows: {
+        Row: { id: string; organization_id: string | null; vendor_id: string; kind: Database['public']['Enums']['order_window_kind']; label: string | null; months: number[]; buyer_id: string | null; notes: string | null; sort_order: number; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id?: string | null; vendor_id: string; kind?: Database['public']['Enums']['order_window_kind']; label?: string | null; months?: number[]; buyer_id?: string | null; notes?: string | null; sort_order?: number; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string | null; vendor_id?: string; kind?: Database['public']['Enums']['order_window_kind']; label?: string | null; months?: number[]; buyer_id?: string | null; notes?: string | null; sort_order?: number; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'vendor_order_windows_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+        ]
+      }
+      notes: {
+        Row: { id: string; organization_id: string; entity_type: string; entity_id: string; body: string; created_by: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; entity_type: string; entity_id: string; body: string; created_by?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; entity_type?: string; entity_id?: string; body?: string; created_by?: string | null; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'notes_created_by_fkey'; columns: ['created_by']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+        ]
+      }
+      activity_log: {
+        Row: { id: string; organization_id: string; entity_type: string; entity_id: string | null; action: string; details: Json; actor_id: string | null; created_at: string }
+        Insert: { id?: string; organization_id: string; entity_type: string; entity_id?: string | null; action: string; details?: Json; actor_id?: string | null; created_at?: string }
+        Update: { id?: string; organization_id?: string; entity_type?: string; entity_id?: string | null; action?: string; details?: Json; actor_id?: string | null; created_at?: string }
+        Relationships: [
+          { foreignKeyName: 'activity_log_actor_id_fkey'; columns: ['actor_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+        ]
+      }
+      review_items: {
+        Row: { id: string; organization_id: string; kind: string; entity_type: string | null; entity_id: string | null; title: string; details: Json; status: Database['public']['Enums']['review_status']; created_by: string | null; created_at: string; resolved_by: string | null; resolved_at: string | null; resolution_note: string | null }
+        Insert: { id?: string; organization_id: string; kind: string; entity_type?: string | null; entity_id?: string | null; title: string; details?: Json; status?: Database['public']['Enums']['review_status']; created_by?: string | null; created_at?: string; resolved_by?: string | null; resolved_at?: string | null; resolution_note?: string | null }
+        Update: { id?: string; organization_id?: string; kind?: string; entity_type?: string | null; entity_id?: string | null; title?: string; details?: Json; status?: Database['public']['Enums']['review_status']; created_by?: string | null; created_at?: string; resolved_by?: string | null; resolved_at?: string | null; resolution_note?: string | null }
+        Relationships: [
+          { foreignKeyName: 'review_items_resolved_by_fkey'; columns: ['resolved_by']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -217,9 +349,16 @@ export type Database = {
       user_in_org: { Args: { org_id: string }; Returns: boolean }
       user_has_store_access: { Args: { p_store_id: string }; Returns: boolean }
       store_organization_id: { Args: { p_store_id: string }; Returns: string | null }
+      user_can_edit: { Args: Record<string, never>; Returns: boolean }
     }
     Enums: {
       user_role: 'admin' | 'manager' | 'buyer' | 'viewer' | 'uploader'
+      billing_route: 'worldwide' | 'faire' | 'direct'
+      contact_type: 'rep' | 'ap' | 'customer_service' | 'shipping' | 'orders' | 'other'
+      contact_source: 'import' | 'manual' | 'email_enrichment' | 'vendor_form'
+      ordering_frequency: 'weekly' | 'monthly' | 'seasonal' | 'annual' | 'as_needed'
+      order_window_kind: 'feb_show' | 'aug_show' | 'pre_season' | 'reorder' | 'delivery' | 'custom'
+      review_status: 'pending' | 'accepted' | 'rejected'
     }
     CompositeTypes: {
       [_ in never]: never

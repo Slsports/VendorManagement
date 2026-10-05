@@ -28,6 +28,7 @@ Migrations are plain SQL in `supabase/migrations/` and apply in filename order.
 | `npm run db:migrate` | Applies pending migrations to the hosted project through the Supabase Management API. Needs `SUPABASE_PROJECT_REF` and `SUPABASE_ACCESS_TOKEN` (a personal access token from https://supabase.com/dashboard/account/tokens). |
 | `npm run db:migrate -- --dry` | Shows which migrations would run. |
 | `npm run db:create-user -- --email you@example.com --name "Your Name" --role admin --password "…"` | Creates a login. Needs `SUPABASE_SERVICE_ROLE_KEY`. Omit `--password` to send an invite email instead; add `--stores SLS,GS` to grant specific stores to non-admins. |
+| `npm run import:ls-vendors -- --file export.csv [--dry]` | Imports the Lightspeed vendor export (enabled vendors only, WWD/Faire/NOT WWD tags become billing routes, duplicates flagged for review). Safe to re-run. |
 
 If the Management API token is not available, open the Supabase SQL Editor, paste the contents
 of the migration file, and run it. The result is identical.
@@ -81,7 +82,7 @@ deploys automatically from the branch connected in Vercel. The custom domain
 
 - [x] Phase 1 — scaffolding, foundation migration (organizations, stores, profiles, RLS), auth and login
 - [x] Phase 2 — app shell, navigation, routing (no store selector, per docs/decisions.md); Vercel deployment pending token
-- [ ] Phase 3 — data layer, spreadsheet import, email-based vendor enrichment
+- [~] Phase 3 — vendor database and Lightspeed vendor import done; vendor pages live; Gmail connection, enrichment and intake form next
 - [ ] Phase 4 — dashboard, vendors, orders, automated vendor pipeline
 - [ ] Phase 5 — purchase orders, returns, shipments, buying shows
 - [ ] Phase 6 — reports, product sourcing, file manager, settings

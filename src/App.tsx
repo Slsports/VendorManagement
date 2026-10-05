@@ -16,6 +16,7 @@ import NotFoundPage from '@/pages/NotFound'
 const DashboardPage = lazy(() => import('@/pages/Dashboard'))
 const VendorList = lazy(() => import('@/pages/vendors/VendorList'))
 const VendorDetail = lazy(() => import('@/pages/vendors/VendorDetail'))
+const VendorForm = lazy(() => import('@/pages/vendors/VendorForm'))
 const OrderList = lazy(() => import('@/pages/orders/OrderList'))
 const OrderDetail = lazy(() => import('@/pages/orders/OrderDetail'))
 const PurchaseOrderList = lazy(() => import('@/pages/purchase-orders/PurchaseOrderList'))
@@ -79,7 +80,9 @@ export default function App() {
 
               <Route element={<RequireRole roles={STAFF} />}>
                 <Route path={ROUTES.vendors} element={<VendorList />} />
+                <Route path={`${ROUTES.vendors}/new`} element={<VendorForm />} />
                 <Route path={`${ROUTES.vendors}/:id`} element={<VendorDetail />} />
+                <Route path={`${ROUTES.vendors}/:id/edit`} element={<VendorForm />} />
                 <Route path={ROUTES.orders} element={<OrderList />} />
                 <Route path={`${ROUTES.orders}/:id`} element={<OrderDetail />} />
                 <Route path={ROUTES.purchaseOrders} element={<PurchaseOrderList />} />

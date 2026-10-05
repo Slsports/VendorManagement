@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "RetailHQ VMS — vendor management system for Shaver Lake Sports Inc.",
+  "description": "RetailHQ VMS \u2014 vendor management system for Shaver Lake Sports Inc.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -14,7 +14,8 @@
     "db:create-user": "node scripts/create-user.mjs",
     "db:test": "bash scripts/test-migrations.sh",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "import:ls-vendors": "node scripts/import-ls-vendors.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2",
