@@ -506,3 +506,12 @@ payments in the sample export show), or when a payment is entered by hand.
   Supabase Pro ~$25, Vercel Pro ~$20, Claude API ~$10–40 (higher in show months), Gmail/
   Drive/Lightspeed APIs and GitHub $0. Roughly $70–100/month. One-time email backfill
   ~$50–150.
+
+### Lightspeed Analytics subscription
+- SLSI currently pays $225/month for Lightspeed Analytics (three stores at $75). The VMS
+  reports replace it, so the net running cost of the VMS is below what Analytics alone
+  costs today.
+- Do not cancel Analytics until VMS reports have been validated against it for a full
+  cycle (ideally through the February show) and anything worth keeping has been exported.
+  The sales history backfill uses the Lightspeed API, not Analytics, so it does not
+  depend on the subscription.
