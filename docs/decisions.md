@@ -573,3 +573,13 @@ payments in the sample export show), or when a payment is entered by hand.
      ordering windows, minimums) without overwriting reviewed data.
 - Lightspeed API registration moves into Phase 3 so vendor names, categories and the nightly
   inventory snapshot start as early as possible.
+
+### Lightspeed vendor names carry "WWD" / "NOT WWD" suffixes
+- Some Lightspeed vendor names end in `WWD` or `NOT WWD` (variants with dashes, parentheses
+  or different case must be handled). On import: strip the suffix from the display name, keep
+  the exact Lightspeed name in `vendors.lightspeed_name` and in `aliases` so sales reports and
+  POs still match, and set the billing route: `WWD` → Worldwide vendor (billed through
+  Worldwide), `NOT WWD` → bills direct. Names with neither suffix get no route yet and are
+  listed for Dana to classify. Nothing is renamed in Lightspeed.
+- The route shows as a badge ("Worldwide" / "Direct") on the vendor list and page and drives
+  the default `billed_through` and payment method on new orders.
