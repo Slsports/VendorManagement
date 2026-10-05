@@ -67,12 +67,20 @@ export default function VendorDetailPage() {
         description={
           <span className="inline-flex flex-wrap items-center gap-2">
             <RouteBadges routes={v.vendor_billing_routes} />
+            {v.do_not_order ? <Badge tone="danger">Do not order</Badge> : null}
             {v.is_delivery_vendor ? <Badge tone="neutral">Delivery vendor</Badge> : null}
             {!v.is_active ? <Badge tone="danger">Inactive</Badge> : null}
           </span>
         }
         actions={canEdit ? <Button variant="secondary" onClick={() => navigate(`${ROUTES.vendors}/${v.id}/edit`)} leftIcon={<Pencil className="size-4" aria-hidden="true" />}>Edit</Button> : undefined}
       />
+
+      {v.do_not_order ? (
+        <Alert variant="error" title="Do not order from this vendor" className="mb-6">
+          <p>{v.do_not_order_reason ?? 'No reason recorded.'}</p>
+          <p className="mt-1 text-xs opacity-80">Ordering is still possible if you change your mind; this is a warning, not a block.</p>
+        </Alert>
+      ) : null}
 
       {v.needs_review ? (
         <Alert variant="warning" title="Flagged for review" className="mb-6">

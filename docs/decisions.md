@@ -627,3 +627,15 @@ payments in the sample export show), or when a payment is entered by hand.
   backfill may propose newer reps; those arrive as review suggestions.
 - **Orders mailbox**: not on Google Workspace yet. Dana is migrating it now; the backfill
   waits for the migration with attachments intact.
+
+## 2026-10-05 — "Do not order" flag
+- Vendors get `do_not_order` (checkbox) and `do_not_order_reason` (free text). It is a
+  **warning, not a block**: shown as a red badge on the vendor list, a red banner on the
+  vendor page, and (Phase 4) a confirmation prompt on the order form and the show scan
+  screen. Ordering remains possible if the buyer decides to.
+- Set now: **Puka Creations** (too many broken items; the asterisks in its Lightspeed name
+  meant this) and **American Dream Home Goods** (twice could not deliver what was ordered,
+  outrageous shipping, too late to source elsewhere).
+- Three other Lightspeed names carried a trailing asterisk (Leisure Concepts Intl, Maxxsel
+  Apparel, Terramar): names cleaned, originals kept as aliases, review items ask Dana what
+  the asterisk meant. The import parser now strips asterisks and dangling "&".

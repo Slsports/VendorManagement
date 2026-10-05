@@ -43,8 +43,9 @@ function parseName(raw) {
     tags.add(t.startsWith('NOT') || t.startsWith('NON') ? 'direct' : t === 'WWD' ? 'worldwide' : 'faire')
   }
   let clean = raw.replace(TAG_RE, ' ')
-  clean = clean.replace(/\(\s*\)/g, ' ').replace(/[\s\-–/(),.]+$/, '').replace(/^[\s\-–/(),.]+/, '').replace(/\s{2,}/g, ' ').trim()
-  return { clean, tags }
+  const hadAsterisk = /\*/.test(raw)
+  clean = clean.replace(/\*/g, ' ').replace(/\(\s*\)/g, ' ').replace(/[\s\-–/(),.&]+$/, '').replace(/^[\s\-–/(),.&]+/, '').replace(/\s{2,}/g, ' ').trim()
+  return { clean, tags, hadAsterisk }
 }
 const key = (s) => s.toUpperCase().replace(/[^A-Z0-9]/g, '')
 const loose = (s) => key(s.toUpperCase().replace(/\b(INC|LLC|CO|CORP|CORPORATION|COMPANY|LTD|USA|THE)\b/g, ''))

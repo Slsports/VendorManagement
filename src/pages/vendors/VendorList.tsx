@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { AlertTriangle, Plus, Search } from 'lucide-react'
+import { AlertTriangle, Ban, Plus, Search } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listVendors } from '@/services/vendors'
 import { ROUTES } from '@/lib/constants'
 import { BILLING_ROUTE_LABELS } from '@/lib/vendors'
+import { cn } from '@/lib/utils'
 import type { BillingRoute } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { RouteBadges } from '@/components/vendors/RouteBadges'
@@ -20,6 +21,7 @@ export default function VendorListPage() {
   const search = params.get('q') ?? ''
   const route = (params.get('route') ?? '') as RouteFilter
   const review = params.get('review') === '1'
+  const dno = params.get('dno') === '1'
   const [draft, setDraft] = useState(search)
 
   const { data, error, isLoading } = useSupabaseQuery(() => listVendors({ includeInactive: false }), [])
@@ -32,8 +34,9 @@ export default function VendorListPage() {
     if (route === 'none') list = list.filter((v) => v.vendor_billing_routes.length === 0)
     else if (route) list = list.filter((v) => v.vendor_billing_routes.some((r) => r.route === route))
     if (review) list = list.filter((v) => v.needs_review)
+    if (dno) list = list.filter((v) => v.do_not_order)
     return list
-  }, [data, search, route, review])
+  }, [data, search, route, review, dno])
 
   function setParam(key: string, value: string) {
     const next = new URLSearchParams(params)
@@ -44,6 +47,7 @@ export default function VendorListPage() {
 
   const total = data?.length ?? 0
   const flagged = data?.filter((v) => v.needs_review).length ?? 0
+  const doNotOrder = data?.filter((v) => v.do_not_order).length ?? 0
 
   return (
     <div>
@@ -87,6 +91,9 @@ export default function VendorListPage() {
           <Button type="button" variant={review ? 'primary' : 'secondary'} onClick={() => setParam('review', review ? '' : '1')} leftIcon={<AlertTriangle className="size-4" aria-hidden="true" />}>
             Needs review{flagged ? ` (${flagged})` : ''}
           </Button>
+          <Button type="button" variant={dno ? 'danger' : 'secondary'} onClick={() => setParam('dno', dno ? '' : '1')} leftIcon={<Ban className="size-4" aria-hidden="true" />}>
+            Do not order{doNotOrder ? ` (${doNotOrder})` : ''}
+          </Button>
         </div>
       </form>
 
@@ -114,13 +121,14 @@ export default function VendorListPage() {
                 {rows.map((v) => (
                   <tr key={v.id} className="hover:bg-stone-50">
                     <td className="px-4 py-2.5">
-                      <Link to={`${ROUTES.vendors}/${v.id}`} className="font-medium text-stone-900 hover:text-brand hover:underline">{v.name}</Link>
+                      <Link to={`${ROUTES.vendors}/${v.id}`} className={cn('font-medium hover:underline', v.do_not_order ? 'text-red-700 hover:text-red-800' : 'text-stone-900 hover:text-brand')}>{v.name}</Link>
                       {v.lightspeed_name && v.lightspeed_name !== v.name ? <p className="truncate text-xs text-stone-400">LS: {v.lightspeed_name}</p> : null}
                     </td>
                     <td className="px-4 py-2.5"><RouteBadges routes={v.vendor_billing_routes} /></td>
                     <td className="hidden px-4 py-2.5 text-stone-600 md:table-cell">{v.rep_groups?.name ?? '—'}</td>
                     <td className="hidden px-4 py-2.5 text-stone-600 lg:table-cell">{v.phone ?? '—'}</td>
                     <td className="px-4 py-2.5 text-right">
+                      {v.do_not_order ? <Badge tone="danger" className="mr-1">Do not order</Badge> : null}
                       {v.needs_review ? <Badge tone="warning">Review</Badge> : null}
                       {v.is_delivery_vendor ? <Badge tone="neutral" className="ml-1">Delivery</Badge> : null}
                     </td>
