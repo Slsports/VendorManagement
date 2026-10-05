@@ -515,3 +515,16 @@ payments in the sample export show), or when a payment is entered by hand.
   cycle (ideally through the February show) and anything worth keeping has been exported.
   The sales history backfill uses the Lightspeed API, not Analytics, so it does not
   depend on the subscription.
+
+### Overdue orders
+- An order is **overdue** when its `ship_date` has passed by more than the grace period and
+  no shipment/tracking has been recorded, or its `expected_arrival` has passed by more than
+  the grace period and nothing has been checked in. Grace period is an organization setting
+  (default 5 days). Example: shipped-by 9/1, nothing received by 10/1 → overdue.
+- Dashboard: an "Overdue orders" card with the count and a list (vendor, order number, ship
+  date, days late), each row linking to the order and its confirmation document.
+- Vendor page: a red banner on open, repeated on the vendor's sales report screen and marked
+  on the buying show visit list, so an overdue order is seen before a new one is placed.
+- "Check status" on an overdue order drafts an email to the rep (same recipient resolution
+  as the discrepancy email), editable before send; replies attach to the order.
+- Optional daily email digest of overdue and future-dated orders once outbound email exists.
