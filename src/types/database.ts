@@ -216,7 +216,7 @@ export type Database = {
       store_organization_id: { Args: { p_store_id: string }; Returns: string | null }
     }
     Enums: {
-      user_role: 'admin' | 'manager' | 'buyer' | 'viewer'
+      user_role: 'admin' | 'manager' | 'buyer' | 'viewer' | 'uploader'
     }
     CompositeTypes: {
       [_ in never]: never

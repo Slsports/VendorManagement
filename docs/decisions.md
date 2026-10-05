@@ -403,3 +403,106 @@ payments in the sample export show), or when a payment is entered by hand.
 - Needs from Dana (Phase 4): Lightspeed API credentials (app registration; numbered steps
   will be provided), the account ID, and a sample of TJ's exported report to confirm each
   column maps to API data.
+
+## 2026-10-05 — Batch of decisions from the 10/02–10/05 review
+
+### Report used for an order (amends the versioning rule above)
+- There is always a sales report before an order is placed; more may be run afterwards to
+  double-check. Each order has a **"report used"** link. The report tagged for the show is
+  pre-selected; the buyer can tick a different version at any time. The confirmation
+  comparison always uses the ticked report and shows which one it used. Later reports are
+  kept as versions but never used unless ticked.
+
+### Scanned confirmation: is it the only copy?
+- The scan screen asks "Is this the only confirmation you'll receive?" Yes → the order is
+  `confirmed` from the scan alone. No → `awaiting_confirmation`; the emailed confirmation
+  attaches to the same order and the comparison reruns against it.
+
+### Discrepancy email after the comparison
+- The comparison screen shows checkboxes on confirmation lines in question (price, quantity,
+  substitution, unrequested new item) and on sales report lines the vendor left off
+  (missing). "Email vendor" drafts a message from the ticked items only: short summary, a
+  table of ordered vs confirmed, the confirmation attached. Editable before Send; the email
+  and replies are stored on the order.
+- **Recipient resolution never trusts the confirmation's sender.** Order: the vendor's
+  assigned rep (from `vendor_emails`, type `rep`), then the rep group contact, then the
+  vendor's orders address. The confirmation sender is offered as an extra recipient only if
+  it is a real person, never a no-reply address. Dana is always CC'd; recipients are editable.
+
+### Mobile scan quality
+- In-browser capture with automatic corner detection, perspective correction, brightness/
+  contrast normalization, shadow removal, multi-page with reorder/retake, output as one PDF.
+  Built on open-source image processing (OpenCV.js class). The same screen accepts PDFs
+  shared from Adobe Scan or the iOS scanner; a paid scanning SDK is an option later.
+
+### Uploader role
+- Fifth role `uploader`: a single "Upload invoice" screen (scan/upload, pick vendor if not
+  recognized, submit) plus a list of their own uploads and status. No vendors, orders,
+  costs, dashboard or reports. Store-scoped via `user_store_access`; uploads stamped with
+  store and user. Intended for Marina staff; managed in Settings. Added to the `user_role`
+  enum in migration `20261005000001_uploader_role.sql`.
+
+### Sales reports hub (vendor and category)
+- Two report types, vendor and category, each with **Quick run** (one button, standard
+  definition: last 365 days, all stores, standard columns, NEED/ORDER for vendor reports),
+  **Custom run** (date range, stores, vendor/category) and **Compare** (a date range, which
+  may cross a year boundary, repeated for N prior years side by side: units and dollars per
+  item, year-over-year change and change from the earliest year; Excel export and chart).
+- Standard definitions are edited by admins in Settings. Every run is saved as a version on
+  the vendor or category (`sales_reports` with a `scope`), so "report used" works for both.
+- Dana's existing Claude projects for the reports go into `docs/`; they define the standard
+  category report and other report behaviors. Add notes on what Lightspeed Analytics could
+  not do.
+
+### Lightspeed data: own copy, raw fields, nightly snapshots
+- Lightspeed Analytics is not used. The VMS pulls raw data from the R-Series API and keeps
+  its own copy: sales lines (incl. cost at time of sale), items (all fields incl. Vendor ID,
+  UPC, custom SKU, category path, prices, matrix attributes, tags), per-store stock with
+  reorder points, vendors, categories, manufacturers, employees, purchase orders, transfers,
+  inventory counts. Nightly sync with a one-time backfill of sales history (4+ years).
+- Lightspeed exposes only current stock levels. **A nightly inventory snapshot starts the day
+  the connection goes live**; history builds forward only. Connect Lightspeed as early as
+  possible so there is history by the February show.
+- Derived metrics (sell-through, turns, days of supply, dead stock, margin trends,
+  season comparisons) are computed in the VMS from the raw copy.
+
+### Purchase orders in Lightspeed from confirmations
+- TJ uses Lightspeed POs. From a confirmation the VMS creates the Lightspeed PO for the
+  vendor and store with quantities, unit costs and expected arrival. Lines are matched to
+  Lightspeed items by Vendor ID, UPC, then custom SKU; unmatched lines are shown and the
+  match is learned once a person picks the item.
+- **New items are proposed, never auto-created.** The proposal follows Dana's naming
+  convention rules (to be placed in `docs/`; may differ by category or vendor): description,
+  vendor, Vendor ID, UPC, cost, suggested retail (if markup rules exist), suggested category.
+  They sit on a "New items to approve" list; whoever checks in reviews each against the
+  confirmation line and approves before anything is created in Lightspeed. Optional
+  confidence-based auto-approve later, off by default.
+- Receiving in Lightspeed is read back (received quantities, date, shortages) and sets the
+  VMS order to `received`/`entered` automatically; shortages feed discrepancies/returns.
+- The Lightspeed app registration needs write scopes for inventory and purchase orders.
+
+### Terminology
+- **"Vendor ID"** = the vendor's item number on a Lightspeed item (Lightspeed's own label).
+  Used everywhere in the VMS for that field. The vendor record is called "vendor", never
+  "vendor ID".
+
+### Open and future-dated orders must be impossible to miss
+- Example: ordered in February, ships September 15. Buyers must not double-order at the show.
+- Orders record both `ship_date` (from the confirmation) and `expected_arrival`. An order
+  placed well ahead of its ship date is labeled a **pre-booking**.
+- Vendor page and the vendor's sales report screen show a banner: open orders with date
+  placed, ship date and total, each linking to the order (line items listed) and to the
+  confirmation document.
+- The vendor sales report gets an **"On order"** column per item (quantity and expected date
+  from open orders, matched by Vendor ID) and the NEED calculation subtracts it.
+- Buying show visit list marks vendors with open orders; the scan screen warns before a new
+  order is scanned for such a vendor. Dashboard lists future-dated orders (ships > 30 days out).
+
+### Sessions, hosting and running costs
+- Cloud sessions remain the default workspace; a Local session with Nick present can be used
+  for one-time steps that need browser logins (Vercel project, Lightspeed/Google OAuth apps).
+  Vercel stays the hosting plan; Railway only if Supabase background jobs prove insufficient.
+- Estimated running cost once live (current published pricing, confirm at signup):
+  Supabase Pro ~$25, Vercel Pro ~$20, Claude API ~$10–40 (higher in show months), Gmail/
+  Drive/Lightspeed APIs and GitHub $0. Roughly $70–100/month. One-time email backfill
+  ~$50–150.

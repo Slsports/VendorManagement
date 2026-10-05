@@ -1,7 +1,7 @@
 /** Default tenant seeded in migration 0001 (Shaver Lake Sports Inc.). */
 export const DEFAULT_ORGANIZATION_ID = '00000000-0000-0000-0000-000000000001'
 
-export const USER_ROLES = ['admin', 'manager', 'buyer', 'viewer'] as const
+export const USER_ROLES = ['admin', 'manager', 'buyer', 'viewer', 'uploader'] as const
 export type UserRole = (typeof USER_ROLES)[number]
 
 export const ROLE_LABELS: Record<UserRole, string> = {
@@ -9,6 +9,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   manager: 'Manager',
   buyer: 'Buyer',
   viewer: 'Viewer',
+  uploader: 'Invoice uploader',
 }
 
 /** Store codes for the default tenant. Other tenants define their own in the stores table. */
