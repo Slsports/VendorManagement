@@ -63,12 +63,24 @@ docs/           specifications
 | `npm run dev` | Vite dev server |
 | `npm run build` | Typecheck and production build |
 | `npm run lint` | oxlint |
+| `npm run test` | vitest unit tests |
 | `npm run typecheck` | `tsc -b` |
+
+## Deployment (Vercel)
+
+The site is a static Vite build served by Vercel; `vercel.json` rewrites every path to
+`index.html` so React Router handles routing. Required environment variables on Vercel:
+`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_APP_NAME`, `VITE_ORG_NAME`,
+`VITE_APP_URL` (the public URL, used for password-reset links).
+
+One-time setup, done by Dana (numbered steps are in the session notes), then the project
+deploys automatically from the branch connected in Vercel. The custom domain
+`vms.shaverlakesports.com` is a CNAME at GoDaddy pointing to Vercel.
 
 ## Build status
 
 - [x] Phase 1 — scaffolding, foundation migration (organizations, stores, profiles, RLS), auth and login
-- [ ] Phase 2 — app shell, navigation, routing, store selector
+- [x] Phase 2 — app shell, navigation, routing (no store selector, per docs/decisions.md); Vercel deployment pending token
 - [ ] Phase 3 — data layer, spreadsheet import, email-based vendor enrichment
 - [ ] Phase 4 — dashboard, vendors, orders, automated vendor pipeline
 - [ ] Phase 5 — purchase orders, returns, shipments, buying shows

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "RetailHQ VMS \u2014 vendor management system for Shaver Lake Sports Inc.",
+  "description": "RetailHQ VMS — vendor management system for Shaver Lake Sports Inc.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -12,7 +12,9 @@
     "preview": "vite preview",
     "db:migrate": "node scripts/apply-migrations.mjs",
     "db:create-user": "node scripts/create-user.mjs",
-    "db:test": "bash scripts/test-migrations.sh"
+    "db:test": "bash scripts/test-migrations.sh",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2",
@@ -27,13 +29,18 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^6",
+    "@testing-library/react": "^16",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "jsdom": "^28",
     "oxlint": "^1.81.0",
     "tailwindcss": "^4",
     "typescript": "~6.0.2",
-    "vite": "^8.3.0"
+    "vite": "^8.3.0",
+    "vitest": "^4"
   }
 }
