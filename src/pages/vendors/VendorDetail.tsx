@@ -40,6 +40,8 @@ export default function VendorDetailPage() {
     ['Address', [v.address, [v.city, v.state].filter(Boolean).join(', '), v.postal_code].filter(Boolean).join(', ') || null],
     ['Ordering', v.ordering_frequency ? ORDERING_FREQUENCY_LABELS[v.ordering_frequency] : null],
     ['Minimum order', v.minimum_order],
+    ['Freight program', v.freight_program],
+    ['Product types', v.product_types],
     ['Pickup', [v.pickup_address, v.pickup_times].filter(Boolean).join(' · ') || null],
     ['Shipping contact', [v.shipping_contact, v.shipping_contact_phone].filter(Boolean).join(' · ') || null],
   ]

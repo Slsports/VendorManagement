@@ -52,6 +52,8 @@ interface FormState {
   shipping_contact: string
   shipping_contact_phone: string
   minimum_order: string
+  freight_program: string
+  product_types: string
   notes: string
   return_notes: string
   windows: WindowDraft[]
@@ -61,7 +63,7 @@ const EMPTY: FormState = {
   name: '', aliases: '', routes: [], defaultRoute: '', rep_group_id: '', payment_terms_id: '', ordering_frequency: '',
   is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '',
   website: '', phone: '', fax: '', account_number: '', catalog: '', address: '', city: '', state: '', postal_code: '',
-  rep_name: '', rep_phone: '', pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', minimum_order: '',
+  rep_name: '', rep_phone: '', pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', minimum_order: '', freight_program: '', product_types: '',
   notes: '', return_notes: '', windows: [],
 }
 
@@ -83,7 +85,7 @@ function formFromVendor(v: VendorDetail): FormState {
     website: v.website ?? '', phone: v.phone ?? '', fax: v.fax ?? '', account_number: v.account_number ?? '', catalog: v.catalog ?? '',
     address: v.address ?? '', city: v.city ?? '', state: v.state ?? '', postal_code: v.postal_code ?? '',
     rep_name: v.rep_name ?? '', rep_phone: v.rep_phone ?? '', pickup_address: v.pickup_address ?? '', pickup_times: v.pickup_times ?? '',
-    shipping_contact: v.shipping_contact ?? '', shipping_contact_phone: v.shipping_contact_phone ?? '', minimum_order: v.minimum_order ?? '',
+    shipping_contact: v.shipping_contact ?? '', shipping_contact_phone: v.shipping_contact_phone ?? '', minimum_order: v.minimum_order ?? '', freight_program: v.freight_program ?? '', product_types: v.product_types ?? '',
     notes: v.notes ?? '', return_notes: v.return_notes ?? '',
     windows: v.vendor_order_windows.map((w) => ({ id: w.id, kind: w.kind, label: w.label ?? '', months: w.months, notes: w.notes ?? '' })),
   }
@@ -146,7 +148,7 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
       website: nz(form.website), phone: nz(form.phone), fax: nz(form.fax), account_number: nz(form.account_number), catalog: nz(form.catalog),
       address: nz(form.address), city: nz(form.city), state: nz(form.state), postal_code: nz(form.postal_code),
       rep_name: nz(form.rep_name), rep_phone: nz(form.rep_phone), pickup_address: nz(form.pickup_address), pickup_times: nz(form.pickup_times),
-      shipping_contact: nz(form.shipping_contact), shipping_contact_phone: nz(form.shipping_contact_phone), minimum_order: nz(form.minimum_order),
+      shipping_contact: nz(form.shipping_contact), shipping_contact_phone: nz(form.shipping_contact_phone), minimum_order: nz(form.minimum_order), freight_program: nz(form.freight_program), product_types: nz(form.product_types),
       notes: nz(form.notes), return_notes: nz(form.return_notes),
     }
     try {
@@ -230,6 +232,8 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
             </Select>
           </FormField>
           <FormField label="Minimum order" htmlFor="min"><Input id="min" value={form.minimum_order} onChange={(e) => set('minimum_order', e.target.value)} placeholder="e.g. $250 or 12 units" /></FormField>
+          <FormField label="Freight program" htmlFor="freight"><Input id="freight" value={form.freight_program} onChange={(e) => set('freight_program', e.target.value)} placeholder="e.g. Free freight over $500" /></FormField>
+          <FormField label="Product types" htmlFor="products" className="sm:col-span-2"><Input id="products" value={form.product_types} onChange={(e) => set('product_types', e.target.value)} placeholder="e.g. Fly line, leader, tippet" /></FormField>
           <div className="flex flex-col gap-2 sm:col-span-2">
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_delivery_vendor} onChange={(e) => set('is_delivery_vendor', e.target.checked)} /> Delivery vendor (drops goods with a paper invoice, no order placed ahead)</label>
             {isEdit ? <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_active} onChange={(e) => set('is_active', e.target.checked)} /> Active</label> : null}

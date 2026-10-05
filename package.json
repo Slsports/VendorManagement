@@ -15,7 +15,8 @@
     "db:test": "bash scripts/test-migrations.sh",
     "test": "vitest run",
     "test:watch": "vitest",
-    "import:ls-vendors": "node scripts/import-ls-vendors.mjs"
+    "import:ls-vendors": "node scripts/import-ls-vendors.mjs",
+    "import:contact-sheet": "node scripts/import-contact-sheet.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2",
@@ -26,7 +27,8 @@
     "react-dom": "^19.2.8",
     "react-hot-toast": "^2",
     "react-router-dom": "^7",
-    "tailwind-merge": "^3"
+    "tailwind-merge": "^3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4",
