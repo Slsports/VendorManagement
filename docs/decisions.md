@@ -517,10 +517,11 @@ payments in the sample export show), or when a payment is entered by hand.
   depend on the subscription.
 
 ### Overdue orders
-- An order is **overdue** when its `ship_date` has passed by more than the grace period and
-  no shipment/tracking has been recorded, or its `expected_arrival` has passed by more than
-  the grace period and nothing has been checked in. Grace period is an organization setting
-  (default 5 days). Example: shipped-by 9/1, nothing received by 10/1 → overdue.
+- An order is **overdue** when **30 days have passed since the quoted ship date** and the
+  order has not been received. The 30 days is an organization setting so it can be tuned,
+  but 30 is the rule. Example: quoted ship date 9/1, nothing received by 10/1 → overdue.
+- Orders past their ship date but inside the 30 days are shown as "shipping late" on the
+  order itself, without an alert.
 - Dashboard: an "Overdue orders" card with the count and a list (vendor, order number, ship
   date, days late), each row linking to the order and its confirmation document.
 - Vendor page: a red banner on open, repeated on the vendor's sales report screen and marked
