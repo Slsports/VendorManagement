@@ -600,3 +600,30 @@ payments in the sample export show), or when a payment is entered by hand.
 - Only 22 rows carried any contact/phone data in Lightspeed; contacts come from the mailbox
   backfill and the vendor intake form.
 - Import script: `npm run import:ls-vendors`. Re-runnable; existing vendors are skipped.
+
+## 2026-10-05 — Contacts per vendor, vendor intake form writes directly, fishing sheet as gap-filler
+
+- **Contacts.** Lightspeed's single contact/phone is not enough. The VMS keeps **any number of
+  contacts per vendor** in `vendor_emails`, each with a role: rep, orders, accounts payable,
+  customer service, shipping, other. Several contacts can share a role (two or three orders
+  contacts), one per role can be marked primary. Each has name, title, email, phone, source
+  and a verified date. Vendor-level fields stay for the rep, will-call pickup and shipping
+  contact summary; new fields `freight_program` and `product_types` (migration 0009) from
+  Dana's contact sheets.
+- **Vendor intake form updates the database directly** (changes Dana's earlier review-first
+  idea for this source, because the vendor is the authority on their own contact details).
+  Rules: a submission adds new contacts and fills empty fields immediately; a change to an
+  existing value is applied too, with the previous value kept in the activity log and the
+  vendor marked "updated by vendor form on <date>"; Dana gets a daily summary notification of
+  what changed; a submission arriving on an expired or unknown link goes to the review queue
+  instead. Reverting any field is one click from the vendor's activity history. (Supersedes
+  the "submissions go to the review queue" line in the Phase 3 vendor data entry.)
+- **Fishing vendor contact sheet** (`FISHING_VENDOR_CONTACT_LIST.xlsx`, 29 vendors, columns
+  Vendor / Type of products / Min order / Freight programs / Rep group / Rep name / Phone /
+  Email / Notes): imported as a gap-filler after the Lightspeed import. Matched by name to
+  existing vendors; fills rep name/phone, adds the rep email as a contact, sets minimum order,
+  freight program, product types and notes, creates rep groups; vendors not found in
+  Lightspeed are created and flagged for review. Dana created it last year, so the mailbox
+  backfill may propose newer reps; those arrive as review suggestions.
+- **Orders mailbox**: not on Google Workspace yet. Dana is migrating it now; the backfill
+  waits for the migration with attachments intact.
