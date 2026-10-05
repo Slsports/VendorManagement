@@ -7,14 +7,14 @@
  * organizations record, so no brand color is hardcoded in components.
  */
 :root {
-  --brand-primary: #2f5d3a;            /* forest green */
-  --brand-primary-hover: #254a2e;
-  --brand-primary-soft: #e6efe8;
-  --brand-primary-foreground: #ffffff;
+  --brand-primary: #00b050;            /* Shaver Lake Sports green */
+  --brand-primary-hover: #009042;
+  --brand-primary-soft: #e0f6ea;
+  --brand-primary-foreground: #1c1917; /* dark text: white fails contrast on this green */
   --brand-accent: #8a5a2b;             /* warm brown */
-  --brand-sidebar: #1c261e;            /* deep forest, used by the app shell */
+  --brand-sidebar: #0c3e23;            /* deep green, used by the app shell */
   --brand-surface: #f6f3ec;            /* warm off-white page background */
-  --brand-ring: #2f5d3a;
+  --brand-ring: #00b050;
 }
 
 @theme inline {

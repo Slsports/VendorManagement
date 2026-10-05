@@ -17,8 +17,8 @@ export const DEFAULT_BRANDING: Branding = {
   appName: import.meta.env.VITE_APP_NAME?.trim() || 'RetailHQ VMS',
   organizationName: import.meta.env.VITE_ORG_NAME?.trim() || import.meta.env.VITE_APP_NAME?.trim() || 'RetailHQ',
   logoUrl: null,
-  // Must match the :root default in index.css and the organizations.accent_color default.
-  accentColor: '#2f5d3a',
+  // Must match the :root default in index.css (organization #1's green).
+  accentColor: '#00b050',
 }
 
 export function brandingFromOrganization(org: Organization | null | undefined): Branding {
@@ -87,5 +87,7 @@ function readableOn(hex: string) {
     return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4
   }) as [number, number, number]
   const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
-  return luminance > 0.45 ? '#1c1917' : '#ffffff'
+  // White text needs a fairly dark background to stay readable (WCAG AA ~4.5:1).
+  // Above this luminance, dark text contrasts better than white.
+  return luminance > 0.18 ? '#1c1917' : '#ffffff'
 }

@@ -28,7 +28,7 @@ export function withAuth(role: UserRole, ui: ReactNode, initialEntries: string[]
       legal_name: null,
       app_name: null,
       logo_url: null,
-      accent_color: '#2f5d3a',
+      accent_color: '#00b050',
       settings: {},
       is_active: true,
       created_at: '',
