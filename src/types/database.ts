@@ -354,7 +354,7 @@ export type Database = {
     Enums: {
       user_role: 'admin' | 'manager' | 'buyer' | 'viewer' | 'uploader'
       billing_route: 'worldwide' | 'faire' | 'direct'
-      contact_type: 'rep' | 'ap' | 'customer_service' | 'shipping' | 'orders' | 'other'
+      contact_type: 'rep' | 'ap' | 'customer_service' | 'shipping' | 'orders' | 'owner' | 'other'
       contact_source: 'import' | 'manual' | 'email_enrichment' | 'vendor_form'
       ordering_frequency: 'weekly' | 'monthly' | 'seasonal' | 'annual' | 'as_needed'
       order_window_kind: 'feb_show' | 'aug_show' | 'pre_season' | 'reorder' | 'delivery' | 'custom'

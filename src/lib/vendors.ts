@@ -35,12 +35,14 @@ export const ORDER_WINDOW_KIND_LABELS: Record<OrderWindowKind, string> = {
   custom: 'Custom',
 }
 
+/** Contact "Title" choices, in display order. */
 export const CONTACT_TYPE_LABELS: Record<ContactType, string> = {
   rep: 'Rep',
-  ap: 'Accounts payable',
-  customer_service: 'Customer service',
-  shipping: 'Shipping',
   orders: 'Orders',
+  ap: 'AR / Accounting',
+  customer_service: 'Customer service',
+  shipping: 'Warehouse / Shipping',
+  owner: 'Owner',
   other: 'Other',
 }
 

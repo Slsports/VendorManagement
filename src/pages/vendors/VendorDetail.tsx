@@ -194,15 +194,15 @@ function normalizeUrl(u: string) {
 
 function ContactsSection({ vendorId, contacts, canEdit, onChange }: { vendorId: string; contacts: { id: string; email: string; contact_name: string | null; title: string | null; phone: string | null; contact_type: ContactType; source: string }[]; canEdit: boolean; onChange: () => Promise<void> }) {
   const [adding, setAdding] = useState(false)
-  const [form, setForm] = useState({ contact_name: '', email: '', phone: '', contact_type: 'rep' as ContactType })
+  const [form, setForm] = useState({ contact_name: '', email: '', phone: '', title: '', contact_type: 'rep' as ContactType })
   const [saving, setSaving] = useState(false)
 
   async function submit(e: FormEvent) {
     e.preventDefault()
     setSaving(true)
     try {
-      await addVendorEmail({ vendor_id: vendorId, email: form.email.trim(), contact_name: form.contact_name.trim() || null, phone: form.phone.trim() || null, contact_type: form.contact_type, source: 'manual' })
-      setForm({ contact_name: '', email: '', phone: '', contact_type: 'rep' })
+      await addVendorEmail({ vendor_id: vendorId, email: form.email.trim(), contact_name: form.contact_name.trim() || null, phone: form.phone.trim() || null, title: form.title.trim() || null, contact_type: form.contact_type, source: 'manual' })
+      setForm({ contact_name: '', email: '', phone: '', title: '', contact_type: 'rep' })
       setAdding(false)
       toast.success('Contact added')
       await onChange()
@@ -234,11 +234,12 @@ function ContactsSection({ vendorId, contacts, canEdit, onChange }: { vendorId: 
           <FormField label="Name" htmlFor="c-name"><Input id="c-name" value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} /></FormField>
           <FormField label="Email" htmlFor="c-email"><Input id="c-email" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></FormField>
           <FormField label="Phone" htmlFor="c-phone"><Input id="c-phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></FormField>
-          <FormField label="Role" htmlFor="c-type">
+          <FormField label="Title" htmlFor="c-type">
             <Select id="c-type" value={form.contact_type} onChange={(e) => setForm({ ...form, contact_type: e.target.value as ContactType })}>
               {(Object.keys(CONTACT_TYPE_LABELS) as ContactType[]).map((t) => <option key={t} value={t}>{CONTACT_TYPE_LABELS[t]}</option>)}
             </Select>
           </FormField>
+          <FormField label="Job title (optional)" htmlFor="c-title" className="sm:col-span-2"><Input id="c-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Regional Sales Manager" /></FormField>
           <div className="flex gap-2 sm:col-span-2">
             <Button type="submit" loading={saving}>Save contact</Button>
             <Button type="button" variant="ghost" onClick={() => setAdding(false)}>Cancel</Button>
@@ -252,7 +253,7 @@ function ContactsSection({ vendorId, contacts, canEdit, onChange }: { vendorId: 
           {contacts.map((c) => (
             <li key={c.id} className="flex items-start justify-between gap-3 py-2.5 text-sm">
               <div className="min-w-0">
-                <p className="font-medium text-stone-900">{c.contact_name || c.email} <Badge tone="neutral" className="ml-1">{CONTACT_TYPE_LABELS[c.contact_type]}</Badge></p>
+                <p className="font-medium text-stone-900">{c.contact_name || c.email} <Badge tone="neutral" className="ml-1">{CONTACT_TYPE_LABELS[c.contact_type]}</Badge>{c.title ? <span className="ml-2 text-xs font-normal text-stone-500">{c.title}</span> : null}</p>
                 <p className="flex flex-wrap gap-x-4 text-stone-600">
                   <a href={`mailto:${c.email}`} className="inline-flex items-center gap-1 hover:text-brand"><Mail className="size-3.5" aria-hidden="true" />{c.email}</a>
                   {c.phone ? <a href={`tel:${c.phone}`} className="inline-flex items-center gap-1 hover:text-brand"><Phone className="size-3.5" aria-hidden="true" />{c.phone}</a> : null}
