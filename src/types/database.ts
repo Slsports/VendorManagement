@@ -240,7 +240,7 @@ export type Database = {
           rep_name: string | null; rep_phone: string | null; pickup_address: string | null; pickup_times: string | null
           shipping_contact: string | null; shipping_contact_phone: string | null; return_notes: string | null; google_drive_folder: string | null
           rating: number | null; tier: string | null; ordering_frequency: Database['public']['Enums']['ordering_frequency'] | null
-          is_delivery_vendor: boolean; minimum_order: string | null; freight_program: string | null; product_types: string | null; notes: string | null; needs_review: boolean; review_note: string | null; do_not_order: boolean; do_not_order_reason: string | null
+          is_delivery_vendor: boolean; minimum_order: string | null; freight_program: string | null; product_types: string | null; notes: string | null; needs_review: boolean; review_note: string | null; do_not_order: boolean; do_not_order_reason: string | null; merged_into_id: string | null
           is_active: boolean; created_by: string | null; created_at: string; updated_at: string
         }
         Insert: {
@@ -251,7 +251,7 @@ export type Database = {
           rep_name?: string | null; rep_phone?: string | null; pickup_address?: string | null; pickup_times?: string | null
           shipping_contact?: string | null; shipping_contact_phone?: string | null; return_notes?: string | null; google_drive_folder?: string | null
           rating?: number | null; tier?: string | null; ordering_frequency?: Database['public']['Enums']['ordering_frequency'] | null
-          is_delivery_vendor?: boolean; minimum_order?: string | null; freight_program?: string | null; product_types?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null; do_not_order?: boolean; do_not_order_reason?: string | null
+          is_delivery_vendor?: boolean; minimum_order?: string | null; freight_program?: string | null; product_types?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null; do_not_order?: boolean; do_not_order_reason?: string | null; merged_into_id?: string | null
           is_active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string
         }
         Update: {
@@ -262,7 +262,7 @@ export type Database = {
           rep_name?: string | null; rep_phone?: string | null; pickup_address?: string | null; pickup_times?: string | null
           shipping_contact?: string | null; shipping_contact_phone?: string | null; return_notes?: string | null; google_drive_folder?: string | null
           rating?: number | null; tier?: string | null; ordering_frequency?: Database['public']['Enums']['ordering_frequency'] | null
-          is_delivery_vendor?: boolean; minimum_order?: string | null; freight_program?: string | null; product_types?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null; do_not_order?: boolean; do_not_order_reason?: string | null
+          is_delivery_vendor?: boolean; minimum_order?: string | null; freight_program?: string | null; product_types?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null; do_not_order?: boolean; do_not_order_reason?: string | null; merged_into_id?: string | null
           is_active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string
         }
         Relationships: [
@@ -338,6 +338,25 @@ export type Database = {
           { foreignKeyName: 'review_items_resolved_by_fkey'; columns: ['resolved_by']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
         ]
       }
+      vendor_merges: {
+        Row: { id: string; organization_id: string; kept_vendor_id: string; kept_name: string; kept_lightspeed_name: string | null; merged_name: string; merged_lightspeed_name: string | null; merged_vendor_id: string | null; source: 'import' | 'manual'; status: 'pending' | 'confirmed' | 'split'; route: Database['public']['Enums']['billing_route'] | null; merged_at: string; merged_by: string | null; ls_done_at: string | null; ls_done_by: string | null }
+        Insert: { id?: string; organization_id: string; kept_vendor_id: string; kept_name: string; kept_lightspeed_name?: string | null; merged_name: string; merged_lightspeed_name?: string | null; merged_vendor_id?: string | null; source?: 'import' | 'manual'; status?: 'pending' | 'confirmed' | 'split'; route?: Database['public']['Enums']['billing_route'] | null; merged_at?: string; merged_by?: string | null; ls_done_at?: string | null; ls_done_by?: string | null }
+        Update: { id?: string; organization_id?: string; kept_vendor_id?: string; kept_name?: string; kept_lightspeed_name?: string | null; merged_name?: string; merged_lightspeed_name?: string | null; merged_vendor_id?: string | null; source?: 'import' | 'manual'; status?: 'pending' | 'confirmed' | 'split'; route?: Database['public']['Enums']['billing_route'] | null; merged_at?: string; merged_by?: string | null; ls_done_at?: string | null; ls_done_by?: string | null }
+        Relationships: [
+          { foreignKeyName: 'vendor_merges_kept_vendor_id_fkey'; columns: ['kept_vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+          { foreignKeyName: 'vendor_merges_merged_vendor_id_fkey'; columns: ['merged_vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+          { foreignKeyName: 'vendor_merges_merged_by_fkey'; columns: ['merged_by']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+          { foreignKeyName: 'vendor_merges_ls_done_by_fkey'; columns: ['ls_done_by']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+        ]
+      }
+      vendor_directory: {
+        Row: { id: string; organization_id: string; source: string; source_label: string | null; name: string; name_key: string; route: Database['public']['Enums']['billing_route']; email_domain: string | null; email: string | null; website: string | null; phone: string | null; rep_name: string | null; booth: string | null; data: Json; matched_vendor_id: string | null; created_at: string }
+        Insert: { id?: string; organization_id: string; source: string; source_label?: string | null; name: string; route?: Database['public']['Enums']['billing_route']; email_domain?: string | null; email?: string | null; website?: string | null; phone?: string | null; rep_name?: string | null; booth?: string | null; data?: Json; matched_vendor_id?: string | null; created_at?: string }
+        Update: { id?: string; organization_id?: string; source?: string; source_label?: string | null; name?: string; route?: Database['public']['Enums']['billing_route']; email_domain?: string | null; email?: string | null; website?: string | null; phone?: string | null; rep_name?: string | null; booth?: string | null; data?: Json; matched_vendor_id?: string | null; created_at?: string }
+        Relationships: [
+          { foreignKeyName: 'vendor_directory_matched_vendor_id_fkey'; columns: ['matched_vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -350,6 +369,11 @@ export type Database = {
       user_has_store_access: { Args: { p_store_id: string }; Returns: boolean }
       store_organization_id: { Args: { p_store_id: string }; Returns: string | null }
       user_can_edit: { Args: Record<string, never>; Returns: boolean }
+      merge_vendors: { Args: { p_keep: string; p_remove: string; p_route?: Database['public']['Enums']['billing_route'] | null }; Returns: string }
+      unmerge_vendor: { Args: { p_vendor: string; p_lightspeed_name: string; p_route?: Database['public']['Enums']['billing_route'] | null }; Returns: string }
+      confirm_vendor_merge: { Args: { p_vendor: string; p_route?: Database['public']['Enums']['billing_route'] | null }; Returns: undefined }
+      resolve_review_item: { Args: { p_item: string; p_status: Database['public']['Enums']['review_status']; p_note?: string | null }; Returns: undefined }
+      directory_route_for: { Args: { p_org: string; p_name: string; p_domain?: string | null }; Returns: Database['public']['Enums']['billing_route'] | null }
     }
     Enums: {
       user_role: 'admin' | 'manager' | 'buyer' | 'viewer' | 'uploader'

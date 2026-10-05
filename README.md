@@ -29,6 +29,7 @@ Migrations are plain SQL in `supabase/migrations/` and apply in filename order.
 | `npm run db:migrate -- --dry` | Shows which migrations would run. |
 | `npm run db:create-user -- --email you@example.com --name "Your Name" --role admin --password "…"` | Creates a login. Needs `SUPABASE_SERVICE_ROLE_KEY`. Omit `--password` to send an invite email instead; add `--stores SLS,GS` to grant specific stores to non-admins. |
 | `npm run import:ls-vendors -- --file export.csv [--dry]` | Imports the Lightspeed vendor export (enabled vendors only, WWD/Faire/NOT WWD tags become billing routes, duplicates flagged for review). Safe to re-run. |
+| `npm run import:vendor-directory -- --file list.xlsx --source wwd_show_2026_08 --label "Worldwide show, Aug 2026" [--route worldwide] [--apply-routes] [--dry]` | Loads a reference list (e.g. the Worldwide show vendor list) into the vendor directory. Not vendors: used to recognise WWD/Faire vendors when new ones arrive, and to tag matching vendors that have no route yet. Safe to re-run. |
 
 If the Management API token is not available, open the Supabase SQL Editor, paste the contents
 of the migration file, and run it. The result is identical.

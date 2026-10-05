@@ -4,13 +4,14 @@ import toast from 'react-hot-toast'
 import { AlertTriangle, ArrowLeft, Check, Mail, Pencil, Phone, Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { addNote, addVendorEmail, deleteVendorEmail, getVendor, listNotes, listReviewItems, resolveReviewItem, updateVendor } from '@/services/vendors'
+import { addNote, addVendorEmail, deleteVendorEmail, getVendor, listNotes, listReviewQueue, updateVendor } from '@/services/vendors'
 import { ROUTES } from '@/lib/constants'
 import { BILLING_ROUTE_HELP, CONTACT_TYPE_LABELS, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, monthsLabel } from '@/lib/vendors'
 import { errorMessage } from '@/lib/utils'
 import type { ContactType } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { RouteBadges } from '@/components/vendors/RouteBadges'
+import { ReviewItemCard } from '@/components/vendors/ReviewItemCard'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
 
 export default function VendorDetailPage() {
@@ -20,7 +21,7 @@ export default function VendorDetailPage() {
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
   const vendorQ = useSupabaseQuery(() => getVendor(id), [id])
   const notesQ = useSupabaseQuery(() => listNotes('vendor', id), [id])
-  const reviewQ = useSupabaseQuery(async () => (organization ? (await listReviewItems(organization.id)).filter((r) => r.entity_id === id) : []), [id, organization?.id])
+  const reviewQ = useSupabaseQuery(async () => (organization ? (await listReviewQueue(organization.id)).filter((r) => r.entity_id === id || r.other?.id === id) : []), [id, organization?.id])
   const v = vendorQ.data
 
   if (vendorQ.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading vendor…" className="text-brand" /></div>
@@ -82,12 +83,20 @@ export default function VendorDetailPage() {
         </Alert>
       ) : null}
 
+      {v.merged_into_id ? (
+        <Alert variant="info" title="Merged into another vendor" className="mb-6">
+          <p>This record was folded into <Link to={`${ROUTES.vendors}/${v.merged_into_id}`} className="underline">another vendor</Link> and is kept for history.</p>
+        </Alert>
+      ) : null}
+
       {v.needs_review ? (
         <Alert variant="warning" title="Flagged for review" className="mb-6">
           <p>{v.review_note ?? 'This vendor needs a look.'}</p>
-          {canEdit ? (
+          {reviewQ.data && reviewQ.data.length > 0 ? (
+            <p className="mt-1 text-xs opacity-80">Answer the question below and the flag clears itself.</p>
+          ) : canEdit ? (
             <Button size="sm" variant="secondary" className="mt-3" onClick={() => void clearReview()} leftIcon={<Check className="size-4" aria-hidden="true" />}>
-              Looks right, clear the flag
+              Checked, clear the flag
             </Button>
           ) : null}
         </Alert>
@@ -96,26 +105,20 @@ export default function VendorDetailPage() {
       {reviewQ.data && reviewQ.data.length > 0 ? (
         <section className="mb-6 space-y-2">
           {reviewQ.data.map((item) => {
-            const details = item.details as { other_vendor_id?: string; other_name?: string; reason?: string; lightspeed_names?: string[] }
+            // Show the pair from this vendor's point of view.
+            const mine = item.entity_id === v.id
             return (
-              <div key={item.id} className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="font-medium text-amber-900">{item.title}</p>
-                  <p className="text-amber-800">
-                    {details.reason ? `${details.reason}. ` : ''}
-                    {details.lightspeed_names?.length ? `Lightspeed names: ${details.lightspeed_names.join(' | ')}` : ''}
-                  </p>
-                  {details.other_vendor_id ? (
-                    <Link to={`${ROUTES.vendors}/${details.other_vendor_id}`} className="text-amber-900 underline">Open {details.other_name}</Link>
-                  ) : null}
-                </div>
-                {canEdit && profile ? (
-                  <div className="flex shrink-0 gap-2">
-                    <Button size="sm" variant="secondary" onClick={() => void resolve(item.id, 'rejected')}>Not a duplicate</Button>
-                    <Button size="sm" variant="secondary" onClick={() => void resolve(item.id, 'accepted')}>Noted, keep both</Button>
-                  </div>
-                ) : null}
-              </div>
+              <ReviewItemCard
+                key={item.id}
+                item={item}
+                vendor={mine ? item.vendor : item.other}
+                other={mine ? item.other : item.vendor}
+                canEdit={canEdit}
+                onDone={async (resultId) => {
+                  if (resultId && resultId !== v.id) navigate(`${ROUTES.vendors}/${resultId}`)
+                  else await Promise.all([vendorQ.refetch(), reviewQ.refetch()])
+                }}
+              />
             )
           })}
         </section>
@@ -185,15 +188,6 @@ export default function VendorDetailPage() {
     </div>
   )
 
-  async function resolve(itemId: string, status: 'accepted' | 'rejected') {
-    try {
-      await resolveReviewItem(itemId, status, profile!.id)
-      toast.success(status === 'rejected' ? 'Marked as not a duplicate' : 'Noted')
-      await reviewQ.refetch()
-    } catch (err) {
-      toast.error(errorMessage(err))
-    }
-  }
 }
 
 function normalizeUrl(u: string) {

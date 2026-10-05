@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { BillingRoute, Json, Vendor, VendorBillingRoute, VendorEmail, VendorOrderWindow, RepGroup, PaymentTerms, Note, ReviewItem, TablesInsert, TablesUpdate } from '@/types'
+import type { BillingRoute, Json, Vendor, VendorBillingRoute, VendorEmail, VendorMerge, VendorOrderWindow, RepGroup, PaymentTerms, Note, ReviewItem, TablesInsert, TablesUpdate } from '@/types'
 
 export interface VendorListRow extends Vendor {
   vendor_billing_routes: Pick<VendorBillingRoute, 'route' | 'is_default'>[]
@@ -157,15 +157,75 @@ export async function listReviewItems(organizationId: string, status: ReviewItem
   return data ?? []
 }
 
-export async function resolveReviewItem(id: string, status: 'accepted' | 'rejected', resolvedBy: string, note?: string): Promise<ReviewItem> {
-  const { data, error } = await supabase
-    .from('review_items')
-    .update({ status, resolved_by: resolvedBy, resolved_at: new Date().toISOString(), resolution_note: note ?? null })
-    .eq('id', id)
-    .select('*')
-    .single()
+export async function resolveReviewItem(id: string, status: 'accepted' | 'rejected', note?: string): Promise<void> {
+  const { error } = await supabase.rpc('resolve_review_item', { p_item: id, p_status: status, p_note: note ?? null })
+  if (error) throw error
+}
+
+/** Review items for the queue page, with the vendor names they talk about. */
+export interface ReviewItemRow extends ReviewItem {
+  vendor: Pick<Vendor, 'id' | 'name' | 'lightspeed_name' | 'aliases' | 'is_active'> | null
+  other: Pick<Vendor, 'id' | 'name' | 'lightspeed_name' | 'aliases' | 'is_active'> | null
+}
+
+export async function listReviewQueue(organizationId: string): Promise<ReviewItemRow[]> {
+  const items = await listReviewItems(organizationId)
+  const ids = new Set<string>()
+  for (const it of items) {
+    if (it.entity_type === 'vendor' && it.entity_id) ids.add(it.entity_id)
+    const other = (it.details as { other_vendor_id?: string } | null)?.other_vendor_id
+    if (other) ids.add(other)
+  }
+  if (ids.size === 0) return items.map((it) => ({ ...it, vendor: null, other: null }))
+  const { data, error } = await supabase.from('vendors').select('id, name, lightspeed_name, aliases, is_active').in('id', [...ids])
+  if (error) throw error
+  const byId = new Map((data ?? []).map((v) => [v.id, v]))
+  return items.map((it) => ({
+    ...it,
+    vendor: it.entity_type === 'vendor' && it.entity_id ? (byId.get(it.entity_id) ?? null) : null,
+    other: byId.get((it.details as { other_vendor_id?: string } | null)?.other_vendor_id ?? '') ?? null,
+  }))
+}
+
+// ---- merge / split (duplicate review) ----
+/** Fold `removeId` into `keepId`. Optionally state the usual billing route of the result. */
+export async function mergeVendors(keepId: string, removeId: string, route?: BillingRoute | null): Promise<string> {
+  const { data, error } = await supabase.rpc('merge_vendors', { p_keep: keepId, p_remove: removeId, p_route: route ?? null })
   if (error) throw error
   return data
+}
+
+/** Split one Lightspeed name back out of a vendor into its own record. */
+export async function unmergeVendor(vendorId: string, lightspeedName: string, route?: BillingRoute | null): Promise<string> {
+  const { data, error } = await supabase.rpc('unmerge_vendor', { p_vendor: vendorId, p_lightspeed_name: lightspeedName, p_route: route ?? null })
+  if (error) throw error
+  return data
+}
+
+/** Dana looked at an import-time merge and it is one vendor. */
+export async function confirmVendorMerge(vendorId: string, route?: BillingRoute | null): Promise<void> {
+  const { error } = await supabase.rpc('confirm_vendor_merge', { p_vendor: vendorId, p_route: route ?? null })
+  if (error) throw error
+}
+
+// ---- Lightspeed merge report ----
+export async function listVendorMerges(organizationId: string): Promise<VendorMerge[]> {
+  const { data, error } = await supabase
+    .from('vendor_merges')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .order('kept_name', { ascending: true })
+    .order('merged_at', { ascending: true })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function setMergeDoneInLightspeed(id: string, done: boolean, userId: string): Promise<void> {
+  const { error } = await supabase
+    .from('vendor_merges')
+    .update(done ? { ls_done_at: new Date().toISOString(), ls_done_by: userId } : { ls_done_at: null, ls_done_by: null })
+    .eq('id', id)
+  if (error) throw error
 }
 
 // ---- activity ----

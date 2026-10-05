@@ -639,3 +639,33 @@ payments in the sample export show), or when a payment is entered by hand.
 - Three other Lightspeed names carried a trailing asterisk (Leisure Concepts Intl, Maxxsel
   Apparel, Terramar): names cleaned, originals kept as aliases, review items ask Dana what
   the asterisk meant. The import parser now strips asterisks and dangling "&".
+
+## 2026-10-05 — Duplicate review actions, Lightspeed merge report, WWD show list
+- **Review actions are explicit** (Dana: "'Looks right, clear the flag' — keep both or merge
+  them?"). For a pair flagged as a *possible duplicate*: **Keep both, not the same** or
+  **Same vendor, merge** (choose which record to keep; contacts, routes, windows, notes and
+  aliases move into it; the other record stays inactive for history and points at the
+  survivor). For a vendor *merged automatically at import*: **Yes, one vendor** or **No, split
+  one out** (pick the Lightspeed name; it becomes its own vendor again, or the original record
+  is revived if it had one). Asterisk markers: **Handled** / **Dismiss**. The "flagged for
+  review" banner clears itself once nothing is pending for that vendor; the plain "clear the
+  flag" button only appears when there is no question to answer.
+- **Route choice on every action** (Dana: "I need to be able to tell you if it's WWD or Faire
+  or not"). Each merge, confirm or split takes an optional WWD / Faire / Not WWD (direct)
+  choice that becomes the result's usual route. "Leave as is" keeps what the import tagged.
+- **Lightspeed merge ledger and report** (Dana: "I'm going to need to go into LS and merge
+  those vendors there too"). Every merge is recorded in `vendor_merges` (keep this LS name,
+  merge that LS name into it, route, who/when, confirmed / awaiting OK / split back out).
+  The report at `/review/merges` lists what to do in Lightspeed, grouped by the record to
+  keep, with a **Done in LS** checkbox per line and a CSV download. VMS-only vendors (no
+  Lightspeed name) show in "Everything" but never in the to-do list.
+- **Review queue page** at `/review` (admin, manager, buyer): all pending items grouped by
+  kind with the same actions as the vendor page; dashboard card shows the pending count.
+- **Worldwide show vendor list = reference directory, not vendors** (Dana: "All of these
+  vendors are WWD. We don't order from all of them, but keep it in a file so when an email
+  comes in it checks if it's a WWD vendor"). Loaded into `vendor_directory` with
+  `npm run import:vendor-directory` (route worldwide, name, email domain, booth, every other
+  column kept). Used two ways: (1) when the mailbox scan or the intake form creates a new
+  vendor, a name or email-domain hit presets the route to WWD; (2) existing vendors that match
+  the list and have no route yet can be tagged WWD with `--apply-routes` (vendors already
+  tagged differently are listed for Dana, never changed).

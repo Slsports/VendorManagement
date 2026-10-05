@@ -4,6 +4,7 @@ import {
   Building2,
   CalendarDays,
   ChartColumn,
+  ClipboardCheck,
   ClipboardList,
   FileText,
   FolderOpen,
@@ -47,7 +48,10 @@ const ORDER_CHILDREN: readonly NavChild[] = [
 export const NAV_GROUPS: readonly NavGroup[] = [
   {
     label: 'Overview',
-    items: [{ label: 'Dashboard', to: ROUTES.dashboard, icon: LayoutDashboard, end: true }],
+    items: [
+      { label: 'Dashboard', to: ROUTES.dashboard, icon: LayoutDashboard, end: true },
+      { label: 'Review queue', to: ROUTES.review, icon: ClipboardCheck, roles: ['admin', 'manager', 'buyer'] },
+    ],
   },
   {
     label: 'Procurement',

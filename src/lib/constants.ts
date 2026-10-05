@@ -72,6 +72,8 @@ export const ROUTES = {
   settings: '/settings',
   upload: '/upload',
   search: '/search',
+  review: '/review',
+  mergeReport: '/review/merges',
 } as const
 
 /** localStorage keys for per-device conveniences. Never for data. */

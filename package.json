@@ -16,7 +16,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "import:ls-vendors": "node scripts/import-ls-vendors.mjs",
-    "import:contact-sheet": "node scripts/import-contact-sheet.mjs"
+    "import:contact-sheet": "node scripts/import-contact-sheet.mjs",
+    "import:vendor-directory": "node scripts/import-vendor-directory.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2",

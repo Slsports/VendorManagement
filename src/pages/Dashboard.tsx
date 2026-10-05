@@ -1,5 +1,9 @@
-import { AlertTriangle, Banknote, CalendarClock, Inbox, ShoppingCart } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { AlertTriangle, Banknote, CalendarClock, ClipboardCheck, Inbox, ShoppingCart } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { listReviewItems } from '@/services/vendors'
+import { ROUTES } from '@/lib/constants'
 import { PageHeader } from '@/components/shared/PageHeader'
 
 const KPIS = [
@@ -10,14 +14,16 @@ const KPIS = [
 ] as const
 
 const PANELS = [
-  { title: 'Review queue', phase: 3, text: 'Invoices and emails the pipeline could not match with confidence land here for a one-click decision.' },
   { title: 'Overdue and future-dated orders', phase: 4, text: 'Orders 30 days past their quoted ship date, and pre-bookings shipping more than 30 days out.' },
   { title: 'Recent activity', phase: 3, text: 'Who changed what, across vendors, orders and payments.' },
 ] as const
 
 export default function DashboardPage() {
-  const { profile } = useAuth()
+  const { profile, organization, role } = useAuth()
   const first = profile?.full_name?.split(' ')[0]
+  const canReview = role === 'admin' || role === 'manager' || role === 'buyer'
+  const reviewQ = useSupabaseQuery(async () => (organization && canReview ? listReviewItems(organization.id) : []), [organization?.id, canReview])
+  const pending = reviewQ.data?.length ?? 0
 
   return (
     <div>
@@ -40,6 +46,24 @@ export default function DashboardPage() {
       </section>
 
       <section className="mt-6 grid gap-4 lg:grid-cols-3">
+        <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+          <h2 className="text-sm font-semibold text-stone-900">Review queue</h2>
+          <div className="mt-4 flex items-start gap-3 rounded-xl bg-stone-50 p-4">
+            <ClipboardCheck className={pending ? 'mt-0.5 size-5 shrink-0 text-amber-500' : 'mt-0.5 size-5 shrink-0 text-stone-400'} aria-hidden="true" />
+            <div>
+              {canReview ? (
+                <>
+                  <p className="text-sm text-stone-600">
+                    {reviewQ.isLoading ? 'Checking…' : pending ? `${pending} item${pending === 1 ? '' : 's'} waiting for a decision: merged or duplicate vendors from the Lightspeed import.` : 'Nothing waiting. Imports, the mailbox and the vendor form add items here.'}
+                  </p>
+                  <Link to={ROUTES.review} className="mt-2 inline-block text-sm font-medium text-brand hover:underline">Open the review queue</Link>
+                </>
+              ) : (
+                <p className="text-sm text-stone-600">Admins, managers and buyers settle the review queue.</p>
+              )}
+            </div>
+          </div>
+        </div>
         {PANELS.map((p) => (
           <div key={p.title} className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
             <h2 className="text-sm font-semibold text-stone-900">{p.title}</h2>
