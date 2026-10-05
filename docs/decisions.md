@@ -529,3 +529,23 @@ payments in the sample export show), or when a payment is entered by hand.
 - "Check status" on an overdue order drafts an email to the rep (same recipient resolution
   as the discrepancy email), editable before send; replies attach to the order.
 - Optional daily email digest of overdue and future-dated orders once outbound email exists.
+
+## 2026-10-05 — Ordering calendar per vendor and an ordering guide
+
+- Each vendor records **when SLSI typically orders from them**: an ordering frequency
+  (`weekly`, `monthly`, `seasonal`, `annual`, `as_needed`) and one or more ordering
+  windows (`vendor_order_windows`: month(s) or a start/end date in the year, a kind such as
+  `feb_show`, `aug_show`, `pre_season`, `reorder`, `delivery`, free-text notes such as
+  "winter goods by Oct 15 for Nov delivery", and the usual buyer). Imported from the vendor
+  spreadsheet where a column exists; editable on the vendor page.
+- Once order history exists, the VMS also shows **"usually ordered in"** derived from past
+  order dates (last three years) next to the manual windows, and flags vendors whose manual
+  windows disagree with history.
+- **Ordering guide**: a list, generated for any month or date range (default: this month
+  and next), of vendors due to be ordered from, with last order date, open orders, the
+  ordering window note, the rep contact, and a link to run the sales report. Available from
+  the Vendors page ("Order this month" filter), as a dashboard card with the count, and
+  printable/exportable. Vendors in the window with no order placed by its end are flagged.
+- Buying show visit lists can be pre-filled from vendors whose window is that show.
+- Phase 3 for the fields and import; Phase 4 for the history-derived view, the dashboard
+  card and the guide.
