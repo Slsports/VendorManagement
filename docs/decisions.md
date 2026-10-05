@@ -583,3 +583,9 @@ payments in the sample export show), or when a payment is entered by hand.
   listed for Dana to classify. Nothing is renamed in Lightspeed.
 - The route shows as a badge ("Worldwide" / "Direct") on the vendor list and page and drives
   the default `billed_through` and payment method on new orders.
+- Likewise `Faire` in a Lightspeed vendor name: strip it from the display name, keep the
+  exact Lightspeed name as an alias, and add the **Faire** billing route (credit card,
+  prepaid). A vendor can end up with more than one route (e.g. Worldwide and Faire) if
+  Lightspeed has separate vendor entries for the same company; the import proposes a merge
+  into one vendor with both routes, keeping both Lightspeed names as aliases, for Dana to
+  confirm.
