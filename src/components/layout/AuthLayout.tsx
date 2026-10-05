@@ -23,7 +23,7 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
           }}
         />
         <div className="relative flex items-center gap-4">
-          <BrandMark branding={branding} size="lg" />
+          <BrandMark branding={branding} size="lg" onDark />
           <div>
             <p className="text-lg font-semibold leading-tight">{branding.appName}</p>
             <p className="text-sm text-white/70">{branding.organizationName}</p>

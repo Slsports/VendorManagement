@@ -23,7 +23,7 @@ export function SidebarNav({ expanded, onNavigate, collapseToggle }: SidebarNavP
   return (
     <div className="flex h-full flex-col text-white">
       <div className={cn('flex h-16 shrink-0 items-center gap-3 px-3', expanded ? 'pr-4' : 'justify-center')}>
-        <BrandMark branding={branding} size={expanded ? 'md' : 'sm'} className="shrink-0" />
+        <BrandMark branding={branding} size={expanded ? 'md' : 'sm'} onDark className="shrink-0" />
         {expanded ? (
           <div className="min-w-0">
             <p className="line-clamp-2 text-sm font-semibold leading-tight">{branding.appName}</p>

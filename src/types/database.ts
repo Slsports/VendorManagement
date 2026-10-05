@@ -17,6 +17,7 @@ export type Database = {
           legal_name: string | null
           app_name: string | null
           logo_url: string | null
+          logo_dark_url: string | null
           accent_color: string
           settings: Json
           is_active: boolean
@@ -30,6 +31,7 @@ export type Database = {
           legal_name?: string | null
           app_name?: string | null
           logo_url?: string | null
+          logo_dark_url?: string | null
           accent_color?: string
           settings?: Json
           is_active?: boolean
@@ -43,6 +45,7 @@ export type Database = {
           legal_name?: string | null
           app_name?: string | null
           logo_url?: string | null
+          logo_dark_url?: string | null
           accent_color?: string
           settings?: Json
           is_active?: boolean
