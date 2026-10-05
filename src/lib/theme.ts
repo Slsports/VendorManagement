@@ -16,7 +16,8 @@ export interface Branding {
 export const DEFAULT_BRANDING: Branding = {
   appName: import.meta.env.VITE_APP_NAME?.trim() || 'RetailHQ VMS',
   organizationName: import.meta.env.VITE_ORG_NAME?.trim() || import.meta.env.VITE_APP_NAME?.trim() || 'RetailHQ',
-  logoUrl: null,
+  // Pre-login logo. Set VITE_LOGO_URL to a path or URL, or to an empty string for none.
+  logoUrl: import.meta.env.VITE_LOGO_URL === undefined ? '/brand/slsi-logo.png' : import.meta.env.VITE_LOGO_URL.trim() || null,
   // Must match the :root default in index.css (organization #1's green).
   accentColor: '#00b050',
 }

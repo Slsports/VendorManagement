@@ -22,8 +22,8 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
               'radial-gradient(60% 50% at 20% 10%, var(--brand-primary) 0%, transparent 70%), radial-gradient(50% 40% at 90% 90%, var(--brand-accent) 0%, transparent 70%)',
           }}
         />
-        <div className="relative flex items-center gap-3">
-          <BrandMark branding={branding} />
+        <div className="relative flex items-center gap-4">
+          <BrandMark branding={branding} size="lg" />
           <div>
             <p className="text-lg font-semibold leading-tight">{branding.appName}</p>
             <p className="text-sm text-white/70">{branding.organizationName}</p>
