@@ -549,3 +549,27 @@ payments in the sample export show), or when a payment is entered by hand.
 - Buying show visit lists can be pre-filled from vendors whose window is that show.
 - Phase 3 for the fields and import; Phase 4 for the history-derived view, the dashboard
   card and the guide.
+
+## 2026-10-05 — Phase 3 vendor data: Lightspeed export first, then email, then a vendor intake form
+
+- The vendor contact spreadsheet is not ready and may never be the primary source. Phase 3
+  order of sources:
+  1. **Lightspeed vendor export (CSV from Inventory → Vendors → Export)** gives the
+     authoritative vendor names (plus any account numbers / contact fields present). Imported
+     first; names are kept exactly as Lightspeed has them so sales reports and POs match.
+  2. **Orders mailbox backfill (Gmail API)** proposes contacts, roles, phones, websites,
+     remit-to details and return patterns per vendor, matched to the Lightspeed names; senders
+     that match no vendor are proposed as new-vendor candidates. Everything through the review
+     queue, nothing auto-written (spec §5).
+  3. **Vendor intake form.** Each vendor gets a private, unguessable, expiring link to a public
+     form on the VMS (no login): rep name/phone/email, orders email, AP contact, customer
+     service contact, remit-to address, payment terms, website, shipping contact, will-call
+     pickup address and hours, minimum order, return policy notes. Submissions go to the review
+     queue; Dana accepts or edits. Requests are sent from the orders mailbox (Gmail send scope,
+     pulled forward from Phase 7) to the best-known address, for one vendor, a selection, or
+     all, in batches of 30–40 per day with plain personal wording; the VMS tracks responses
+     and can send a reminder after 14 days. Public endpoint is rate-limited and token-scoped.
+  4. The spreadsheet, if finished later, imports as a gap-filler (categories, ratings,
+     ordering windows, minimums) without overwriting reviewed data.
+- Lightspeed API registration moves into Phase 3 so vendor names, categories and the nightly
+  inventory snapshot start as early as possible.
