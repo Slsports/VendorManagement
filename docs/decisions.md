@@ -1050,3 +1050,14 @@ payments in the sample export show), or when a payment is entered by hand.
 - Until the Gmail connection: nested Gmail labels `Assigned/<First name>` (Dana, Jarrett, Trevor,
   Cat, Annette, Raelee) applied by hand, plus a star for what was pinned. The Gmail connection
   reads those labels and turns them into VMS assignments, so this week's tagging carries over.
+
+## 2026-10-07 — Mail is live on Google Workspace; VMS reads orders@ through a service account
+- MX switched at GoDaddy (one record, smtp.google.com priority 1; a first attempt with a typo
+  cost 40 minutes), test email landed in Gmail. Left to do: delta import then exit import, jobs@
+  alias on Dana, staff on Gmail only, Microsoft kept two weeks, DKIM and DMARC from Oct 9.
+- Gmail connection design: a Google Cloud project owned by the Workspace admin, Gmail API on, a
+  service account with domain-wide delegation authorized in the Admin console for gmail.modify
+  and gmail.send. VMS impersonates orders@ for reading, filing and sending; a send carries the
+  signed-in user's signature. No per-user OAuth screens. The service-account key goes straight
+  into Supabase secrets by Dana, never through chat or the repo. Sync runs as a scheduled
+  Supabase Edge Function.
