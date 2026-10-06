@@ -1023,3 +1023,13 @@ payments in the sample export show), or when a payment is entered by hand.
   lands, because Lightspeed keeps the history on the item and it rolls up under the new
   category. Duplicate records split history: VMS joins them on its own side by Vendor ID or
   UPC and does not rely on Lightspeed's merge (see the merge defect above).
+
+## 2026-10-07 — Workspace migration done; email signatures per person
+- All six mailboxes imported (19,138 emails, 12 calendar events, 21 contacts, nothing failed);
+  Outlook folders arrived as Gmail labels, orders@ checked by Dana. Next: check the other four
+  mailboxes, switch MX at GoDaddy, activate Gmail, one delta import, jobs@ alias on Dana, keep
+  Microsoft two more weeks.
+- Dana: each employee gets their own email signature when VMS sends from orders@, based on who
+  is signed in. VMS sends nothing until the Gmail connection; the signature lives on the VMS
+  profile and Dana writes them when the connection lands (she hopes this week). Until then, a
+  "Send mail as" orders@ address in each person's own Gmail gives per-person signatures.
