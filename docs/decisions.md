@@ -795,3 +795,23 @@ payments in the sample export show), or when a payment is entered by hand.
 - Fishing flag today is hand-set (40 vendors). Coyote Vision and Sona are general vendors
   that happen to sell some fishing items: not flagged. Coast, Frogg Toggs, Smith's 1886 and
   Mike Reddin flagged on Dana's say-so.
+
+## 2026-10-06 — Lightspeed category standard drafted for sign-off
+- From the Oct 5 LS exports (16,771 items, 1,017 categories): 85 categories lack a size
+  breakdown, 33 lack age/gender, 35 have items sitting above an existing breakdown, nine size
+  spellings are in use, and two category names were mangled by Excel (`10-Aug`, `14-Dec`).
+- The standard is written up in `docs/lightspeed-category-standard.md` (mirror of the Claude
+  Doc Dana and Trevor review). Ladder department > type > age (INFANT, TODDLER, KIDS, YOUTH,
+  ADULT) > gender (MENS, WOMENS, BOYS, GIRLS, UNISEX) > size (XS, SM, MED, LG, XL, 2XL, 3XL,
+  4XL; guides in parentheses like `MED (10/12)`; infant months, toddler T sizes). All caps,
+  straight apostrophes only, no inch marks, no commas; slashes, dashes and `&` are safe.
+  Tents by person bands, coolers HARD by quart / SOFT > BAGS by can / SOFT > BACKPACK,
+  canopies by footprint, umbrellas RAIN/CHAIR/BEACH, pet items XS–XL, life jackets keep their
+  weight bands. Stickers, fishing line, rope, chargers, nets get no size rung.
+- Ten open points carry defaults (ADULT UNISEX as two rungs, no shoe-size rungs yet, sleeping
+  bags by age only, JUNIORS → YOUTH, sub-type before age, misfiled items moved, the two date
+  names renamed, WFS guide under every kids branch, helmet/goggle rungs, Trevor's live work
+  kept). Dana and Trevor sign off; the standard is corrected to match.
+- Nothing changes in Lightspeed from the document. Next: a proposal spreadsheet (new
+  categories, renames, item moves) from the latest export, approved by branch in VMS, written
+  back only after the LS connection, every batch logged and reversible.
