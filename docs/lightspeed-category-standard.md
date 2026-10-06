@@ -58,9 +58,9 @@ and Age; they never carry age or gender words.
 | YOUTH | roughly 8 to 16 (SM to XL with the number guide) |
 | ADULT | everything else |
 
-JUNIORS is retired as an age word; those items become YOUTH (open point 8.4). Where a vendor sizes
-KIDS and YOUTH as one run (World Famous Sports does), the branch keeps one rung named KIDS with the
-vendor's full run under it.
+YOUTH stays a rung of its own. Retiring JUNIORS (those items would become YOUTH) and keeping one
+KIDS rung where a vendor sizes kids and youth as one run (World Famous Sports does) are both on
+hold while Dana looks into youth sizing (open point 8.4).
 
 **Rung 4, Gender.** Exactly one of MENS, WOMENS, BOYS, GIRLS, UNISEX. Under ADULT the pair is MENS
 and WOMENS; under KIDS and YOUTH it is BOYS and GIRLS; UNISEX is allowed under any age. Age and
@@ -270,7 +270,9 @@ Each has a default. Signing off with no change means the default stands.
 2. **Footwear sizes.** Decided Oct 6: full clean-up with shoe-size rungs, and a leading zero so they
    sort: `HIKING > ADULT > WOMENS > 08.5` (section 5).
 3. **Sleeping bags.** Default: `ADULT` and `KIDS` only. Alternative: temperature bands.
-4. **JUNIORS.** Default: retire it; those items become YOUTH.
+4. **JUNIORS and YOUTH.** On hold: Dana is researching how youth sizing should work (Oct 7). Until
+   then YOUTH stays a rung (roughly 8 to 16) and nothing merges into KIDS. The proposal was to retire
+   JUNIORS as a word (rash guards 21, swimwear girls 12, boys 9 become YOUTH).
 5. **Where a sub-type sits.** Default: before age (`SWIMWEAR > BIKINI > ADULT > WOMENS > size`),
    matching RASH GUARDS and PERFORMANCE LS. Alternative: after gender, the way women's swimwear is
    built today.

@@ -856,3 +856,9 @@ payments in the sample export show), or when a payment is entered by hand.
 - Accounts were created straight in the auth tables through the Management API: the proxy here
   does not carry the service-role key the `db:create-user` script needs. Dana can switch either
   of them to admin by asking, or later from Settings > Users once that page exists.
+
+## 2026-10-06 — Youth sizing on hold
+- Dana: "I'm not sure we should do away with youth. I need to research that tomorrow." YOUTH stays
+  an age rung. Two proposals wait on her research: retiring JUNIORS in favour of YOUTH, and one
+  KIDS rung where a vendor (World Famous Sports) sizes kids and youth as one run. No proposal sheet
+  row touches youth until she decides.
