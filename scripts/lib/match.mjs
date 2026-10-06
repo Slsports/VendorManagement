@@ -28,6 +28,15 @@ const GENERIC = /\b(outdoor|outdoors|fishing|tackle|companies|supply|knives|belt
 function genericKey(s) {
   return String(s || '').toLowerCase().replace(/\s[-–(].*$/, '').replace(STOP, '').replace(GENERIC, '').replace(/[^a-z0-9]/g, '')
 }
+/** The generic words a name carried, so "Eastman Footwear Group" never equals "Eastman Outdoors". */
+function genericWords(s) {
+  return new Set((String(s || '').toLowerCase().replace(/\s[-–(].*$/, '').match(GENERIC) || []))
+}
+function compatible(a, b) {
+  const wa = genericWords(a), wb = genericWords(b)
+  if (wa.size === 0 || wb.size === 0) return true
+  return [...wa].every((w) => wb.has(w)) || [...wb].every((w) => wa.has(w))
+}
 
 export function findVendor(index, name) {
   const k = nameKey(name)
@@ -40,7 +49,8 @@ export function findVendor(index, name) {
       index.generic = new Map()
       for (const [ik, v] of index) { const g = genericKey(v.name) || ik; if (!index.generic.has(g)) index.generic.set(g, v); if (!index.generic.has(ik)) index.generic.set(ik, v) }
     }
-    if (index.generic.has(gk)) return { vendor: index.generic.get(gk), how: 'generic' }
+    const gv = index.generic.get(gk)
+    if (gv && compatible(name, gv.name)) return { vendor: gv, how: 'generic' }
   }
   // Prefix only when both sides are substantial and the shorter covers most of the longer:
   // "coghlans" ~ "coghlan" yes; "mountain" ~ "mountainsmith" no; "ace" ~ "acecamp" no.

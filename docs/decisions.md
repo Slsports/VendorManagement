@@ -708,3 +708,20 @@ payments in the sample export show), or when a payment is entered by hand.
   38 proposals sit in the review queue as "Name clean-ups". Rep tags become the rep group,
   parent-company tags become aliases, the Lightspeed name is always kept as an alias. Dana
   approves each (editable) or all at once; nothing is renamed without her.
+
+## 2026-10-06 — Worldwide contacts box, Spring 2026 show, Workspace question
+- **Our contacts at Worldwide** (Dana: "an info box for all WWD vendors that lists our
+  contact info with WWD"). Every vendor with a WWD route shows a box: Member #816, main line
+  253-872-8746, the Accounts Receivable specialist who handles our member range (Arsenia
+  Miyaji, ext 339), the vendor liaison for that vendor's initial (A-L Jill Matthews, M-Z
+  Sydney Engel), the warehouse line (ext 323) and the warehouse manager. The full 46-person
+  roster lives under Settings → Worldwide, where the people shown in the box can be changed.
+  Extensions go with the main number. One roster email had a typo'd domain
+  (worldwidebuygoup.com); stored corrected, noted on the contact.
+- **Spring 2026 show** loaded from the full ShowTime packet (line listing pages only; the
+  packet has no separate exhibitor listing, so booth holders are unknown for Spring but
+  booth-mates still show). 826 lines, 111 of our vendors, 13 got WWD. 52 vendors appear at
+  both 2026 shows.
+- **Google Workspace**: moving the orders mailbox to Workspace changes nothing about how
+  mail is read. Gmail stays the inbox; VMS reads through Google's API (read-only until
+  sending is wanted), never moves or deletes mail, and links back to the original message.
