@@ -846,3 +846,13 @@ payments in the sample export show), or when a payment is entered by hand.
   number (`0-19 QT`, `0-15 CAN`), infant months `00-03M`, `03-06M`, `06M`, `06-12M`.
 - Open: letter sizes only sort with a number in front (`1 XS`, `2 SM`, `3 MED (10/12)` …). Default
   in the standard is to add it; Dana and Trevor to confirm.
+
+## 2026-10-06 — Trevor and Jarrett get VMS accounts
+- Dana: "I need Trevor & Jarrett to be able to login to help me finish setting this up." Both
+  created as **managers** (edit everything; Settings and user roles stay with admins) on their
+  Workspace addresses with access to all four stores. Temporary passwords handed to Dana outside
+  the repo; the account menu now has **Change password** (the reset page, reachable while signed
+  in) because the project's default mailer cannot send reset emails to staff addresses.
+- Accounts were created straight in the auth tables through the Management API: the proxy here
+  does not carry the service-role key the `db:create-user` script needs. Dana can switch either
+  of them to admin by asking, or later from Settings > Users once that page exists.

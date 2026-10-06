@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Bell, LogOut, Menu, Search, User } from 'lucide-react'
+import { Bell, KeyRound, LogOut, Menu, Search, User } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { ROLE_LABELS, ROUTES } from '@/lib/constants'
 import { cn, errorMessage, initials } from '@/lib/utils'
@@ -124,6 +124,16 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
                 className={cn('flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-stone-700 hover:bg-stone-100', role !== 'admin' && 'hidden')}
               >
                 <User className="size-4" aria-hidden="true" /> Settings
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  close()
+                  navigate(ROUTES.resetPassword)
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-stone-700 hover:bg-stone-100"
+              >
+                <KeyRound className="size-4" aria-hidden="true" /> Change password
               </button>
               <button
                 type="button"
