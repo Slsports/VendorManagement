@@ -767,3 +767,17 @@ payments in the sample export show), or when a payment is entered by hand.
   page shows a "?" when it is inferred). Hand-typed dates that are not real dates (June 31,
   "8/22/25 & 9/3/25") are kept as typed on the order, not guessed.
 - **Dashboard**: Open orders and Payments due now count real orders.
+
+## 2026-10-06 — Needs list (staff requests that are not vendor orders), Gmail folders
+- Dana files staff requests (office supplies etc.) in Outlook folders "Need to Order" and
+  "Placed Orders". VMS gets a **Needs list** (Phase 4, after the Gmail connection): one line per
+  request with requester, item, store, status Needed → Ordered → Received, shown on the
+  dashboard. A Gmail label "Need to Order" feeds it automatically with a link back to the
+  email; marking it Ordered in VMS swaps the Gmail label to "Placed Orders". A request links to
+  the order record once placed, whatever the source (Amazon, Uline, Sam's Club are vendors).
+  Staff may also add a need directly in VMS from a phone.
+- Outlook folders arrive in Gmail as labels via the import and stay as history. VMS files
+  vendor mail by vendor on its own and never moves or relabels Gmail mail unless asked.
+- Workspace status: Business Starter, 8 licenses; users orders, dana, jarrett, trevor, cat,
+  annette, raelee (new, nothing to migrate); jobs@ becomes an alias on Dana. Migration from
+  Microsoft 365 (GoDaddy) via the Admin console data import, dana@ first as the test.
