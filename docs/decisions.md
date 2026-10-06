@@ -725,3 +725,9 @@ payments in the sample export show), or when a payment is entered by hand.
 - **Google Workspace**: moving the orders mailbox to Workspace changes nothing about how
   mail is read. Gmail stays the inbox; VMS reads through Google's API (read-only until
   sending is wanted), never moves or deletes mail, and links back to the original message.
+- **2025 shows loaded** (same day): Spring 2025 from the "Line Listing" table (single column,
+  booth + Zero Upcharge Y column) plus its exhibitor listing and Worldwide's zero-upcharge
+  vendor list; Fall 2025 from its exhibitor listing only (each exhibitor counted as a line,
+  names split on "/"); the Fall 2025 line listing is still to be found. Zero-upcharge status
+  from a show list sets the vendor flag (45 vendors now); Dana can untick on the vendor form.
+  Look-alike names the matcher must not link go in `--skip` (e.g. Taylor's & Co. vs Taylor Brands).
