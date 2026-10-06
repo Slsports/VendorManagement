@@ -22,6 +22,16 @@ by Vercel from the branch `claude/ecstatic-carson-ziz2a9`.
 - Dana reviews proposals before data changes: duplicates, renames, category changes go through the
   review queue, never applied silently.
 
+## Several sessions share one branch
+Dana runs more than one Claude session at a time (a Fable session for big builds, an Opus session for
+small fixes, a Sonnet session for questions). All code goes to `claude/ecstatic-carson-ziz2a9`.
+- If your session started on another branch, switch first: `git fetch origin && git checkout claude/ecstatic-carson-ziz2a9`.
+- **Before every push: `git pull origin claude/ecstatic-carson-ziz2a9`**, then lint, typecheck, test, then push.
+  A conflict means the other session touched the same lines; resolve it, do not force-push.
+- Hosted migrations are shared: run `NODE_USE_ENV_PROXY=1 npm run db:migrate` after pulling so your
+  session's database view matches; it skips what is already applied.
+- Append to `docs/decisions.md` for decisions, and to `CLAUDE.md` only for rules every session needs.
+
 ## Stack and commands
 Vite + React 19 + TypeScript + Tailwind 4, Supabase (project `bpdpkytfmpbwpbmpejbf`), vitest, oxlint.
 - `npm run lint`, `npm run typecheck`, `npm test` — run all three before every push.
