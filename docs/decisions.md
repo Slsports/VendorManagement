@@ -944,3 +944,20 @@ payments in the sample export show), or when a payment is entered by hand.
 - Clarified: what was imported is the Seasonal Vendors Buying Guide ("8-25-26 Summer WWD Order
   Guide v6"), gleaned from the Placed Order Summary. The Placed Order Summary v2.0 itself has not
   been uploaded yet; Dana will say which of its tabs to ignore when she does.
+
+## 2026-10-07 — Vendor standing: fine / last resort / do not order, with the reason beside the stars
+- Dana: "some of the vendors will be a no way on ordering again, others may be subjective and only
+  if we can't find the items anywhere else. But I want it to show on the Stars why they are
+  flagged that way (shipping fees, damaged goods ... or bad attitude)". Plus: mistakes on orders
+  include missing or wrong hang tags (a WFS order tagged boys on girls' jackets).
+- Every vendor has a **standing**: fine to order, last resort (only if the items are nowhere
+  else), do not order. Reason **tags** (shipping fees; damaged goods or junk; order mistakes
+  including wrong items, quantities and hang tags; does not deliver what was ordered; bad
+  attitude; slow with credits; out of business; other) plus the free-text reason. Shown on the
+  vendor header, the warning box, the vendor list, the scorecard under the stars, and the Vendor
+  scores report. Still a warning, never a block.
+- The old do-not-order flag follows the standing (trigger), so the seven vendors already flagged
+  carried over: Puka (damaged goods), American Dream Home Goods (does not deliver, shipping
+  fees), Leisure Concepts (out of business), Haddad, Kaufman, Troll, Ty (other, from the order
+  guide and Maryellen's list).
+- Order accuracy now also counts hang-tag notes (no tags, wrong tags) from check-in.

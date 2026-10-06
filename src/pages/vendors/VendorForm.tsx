@@ -6,9 +6,9 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { createVendor, deleteOrderWindow, getVendor, listPaymentTerms, listRepGroups, saveOrderWindow, setVendorRoutes, updateVendor, type VendorDetail } from '@/services/vendors'
 import { ROUTES } from '@/lib/constants'
-import { BILLING_ROUTE_HELP, BILLING_ROUTE_LABELS, MONTHS, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, FREE_SHIPPING_POLICY_LABELS } from '@/lib/vendors'
+import { BILLING_ROUTE_HELP, BILLING_ROUTE_LABELS, MONTHS, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, FREE_SHIPPING_POLICY_LABELS, STANDING_LABELS, STANDING_TAGS, STANDING_TAG_LABELS } from '@/lib/vendors'
 import { cn, errorMessage } from '@/lib/utils'
-import type { BillingRoute, OrderingFrequency, OrderWindowKind, PaymentTerms, RepGroup, TablesInsert, FreeShippingPolicy } from '@/types'
+import type { BillingRoute, OrderingFrequency, OrderWindowKind, PaymentTerms, RepGroup, TablesInsert, FreeShippingPolicy, VendorStanding, StandingTag } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Alert, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
 
@@ -36,7 +36,8 @@ interface FormState {
   is_active: boolean
   needs_review: boolean
   review_note: string
-  do_not_order: boolean
+  standing: VendorStanding
+  standing_tags: StandingTag[]
   do_not_order_reason: string
   wwd_zero_upcharge: boolean
   is_fishing: boolean
@@ -68,7 +69,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   name: '', aliases: '', routes: [], defaultRoute: '', rep_group_id: '', payment_terms_id: '', ordering_frequency: '',
-  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', do_not_order: false, do_not_order_reason: '', wwd_zero_upcharge: false, is_fishing: false,
+  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], do_not_order_reason: '', wwd_zero_upcharge: false, is_fishing: false,
   website: '', phone: '', fax: '', account_number: '', catalog: '', address: '', city: '', state: '', postal_code: '',
   rep_name: '', rep_phone: '', pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', minimum_order: '', freight_program: '', free_shipping_policy: '', free_shipping_threshold: '', freight_routing: '', product_types: '',
   notes: '', return_notes: '', windows: [],
@@ -89,7 +90,8 @@ function formFromVendor(v: VendorDetail): FormState {
     is_active: v.is_active,
     needs_review: v.needs_review,
     review_note: v.review_note ?? '',
-    do_not_order: v.do_not_order,
+    standing: v.standing,
+    standing_tags: v.standing_tags as StandingTag[],
     wwd_zero_upcharge: v.wwd_zero_upcharge,
     is_fishing: v.is_fishing,
     do_not_order_reason: v.do_not_order_reason ?? '',
@@ -156,10 +158,11 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
       is_active: form.is_active,
       needs_review: form.needs_review,
       review_note: form.needs_review ? nz(form.review_note) : null,
-      do_not_order: form.do_not_order,
+      standing: form.standing,
+      standing_tags: form.standing === 'ok' ? [] : form.standing_tags,
       wwd_zero_upcharge: form.wwd_zero_upcharge,
       is_fishing: form.is_fishing,
-      do_not_order_reason: form.do_not_order ? nz(form.do_not_order_reason) : null,
+      do_not_order_reason: form.standing !== 'ok' ? nz(form.do_not_order_reason) : null,
       website: nz(form.website), phone: nz(form.phone), fax: nz(form.fax), account_number: nz(form.account_number), catalog: nz(form.catalog),
       address: nz(form.address), city: nz(form.city), state: nz(form.state), postal_code: nz(form.postal_code),
       rep_name: nz(form.rep_name), rep_phone: nz(form.rep_phone), pickup_address: nz(form.pickup_address), pickup_times: nz(form.pickup_times),
@@ -264,8 +267,26 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
             {isEdit ? <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_active} onChange={(e) => set('is_active', e.target.checked)} /> Active</label> : null}
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.needs_review} onChange={(e) => set('needs_review', e.target.checked)} /> Flag for review</label>
             {form.needs_review ? <Input aria-label="Review note" value={form.review_note} onChange={(e) => set('review_note', e.target.value)} placeholder="What needs checking?" /> : null}
-            <label className="flex items-center gap-2 text-sm font-medium text-red-700"><input type="checkbox" className="size-4 accent-red-600" checked={form.do_not_order} onChange={(e) => set('do_not_order', e.target.checked)} /> Do not order</label>
-            {form.do_not_order ? <Textarea aria-label="Reason not to order" rows={2} value={form.do_not_order_reason} onChange={(e) => set('do_not_order_reason', e.target.value)} placeholder="Why? e.g. too many broken items, could not deliver, shipping too high" /> : null}
+            <FormField label="Standing" htmlFor="standing" hint="A warning on every screen, never a block.">
+              <Select id="standing" value={form.standing} onChange={(e) => set('standing', e.target.value as VendorStanding)}>
+                {(Object.keys(STANDING_LABELS) as VendorStanding[]).map((k) => <option key={k} value={k}>{STANDING_LABELS[k]}</option>)}
+              </Select>
+            </FormField>
+            {form.standing !== 'ok' ? (
+              <>
+                <fieldset>
+                  <legend className="text-sm font-medium text-stone-800">Why? Shows beside the stars.</legend>
+                  <div className="mt-1 grid gap-1 sm:grid-cols-2">
+                    {STANDING_TAGS.map((t) => (
+                      <label key={t} className="flex items-center gap-2 text-sm text-stone-800">
+                        <input type="checkbox" className="size-4 accent-brand" checked={form.standing_tags.includes(t)} onChange={(e) => set('standing_tags', e.target.checked ? [...form.standing_tags, t] : form.standing_tags.filter((x) => x !== t))} /> {STANDING_TAG_LABELS[t]}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <Textarea aria-label="Reason" rows={2} value={form.do_not_order_reason} onChange={(e) => set('do_not_order_reason', e.target.value)} placeholder="In your words: e.g. ordered twice, could not deliver either time, shipping was outrageous" />
+              </>
+            ) : null}
           </div>
         </Section>
 

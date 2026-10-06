@@ -5,6 +5,7 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { getScorecard, rateVendor } from '@/services/scores'
 import { SCORE_DIMENSIONS, SCORE_WORDS, evidence, scoreTone } from '@/lib/scores'
 import { errorMessage } from '@/lib/utils'
+import { standingWhy } from '@/lib/vendors'
 import type { ScoreDimension, VendorScorecard as Card } from '@/types'
 import { Button, Input, Select, Spinner } from '@/components/ui'
 
@@ -64,6 +65,11 @@ export function VendorScorecard({ organizationId, vendorId, userId, canEdit }: V
         <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Scorecard</h2>
         {c ? <span className="inline-flex items-center gap-2 text-sm"><Stars score={c.overall !== null ? Math.round(c.overall) : null} /><span className={`font-semibold ${TONE[scoreTone(c.overall)]}`}>{c.overall !== null ? `${c.overall} / 5` : 'Not scored yet'}</span></span> : null}
       </div>
+      {c && c.standing !== 'ok' ? (
+        <p className={`mt-2 rounded-lg px-3 py-2 text-sm ${c.standing === 'do_not_order' ? 'bg-red-50 text-red-800' : 'bg-amber-50 text-amber-900'}`}>
+          <span className="font-semibold">{c.standing === 'do_not_order' ? 'Do not order.' : 'Last resort.'}</span>{c.standing_tags.length ? ` Why: ${standingWhy(c.standing_tags)}.` : ''}{c.standing_reason ? ` ${c.standing_reason}` : ''}
+        </p>
+      ) : null}
       {q.isLoading ? <div className="flex justify-center py-6"><Spinner label="Scoring…" className="text-brand" /></div> : q.error ? <p className="mt-2 text-sm text-red-700">{q.error}</p> : !c ? null : (
         <ul className="mt-3 divide-y divide-stone-100">
           {SCORE_DIMENSIONS.map((d) => {

@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { addNote, addVendorEmail, deleteVendorEmail, getVendor, listNotes, listReviewQueue, updateVendor } from '@/services/vendors'
 import { ROUTES } from '@/lib/constants'
-import { BILLING_ROUTE_HELP, CONTACT_TYPE_LABELS, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, monthsLabel, freeShippingRule } from '@/lib/vendors'
+import { BILLING_ROUTE_HELP, CONTACT_TYPE_LABELS, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, monthsLabel, freeShippingRule, standingWhy } from '@/lib/vendors'
 import { errorMessage } from '@/lib/utils'
 import type { ContactType } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -76,7 +76,7 @@ export default function VendorDetailPage() {
         description={
           <span className="inline-flex flex-wrap items-center gap-2">
             <RouteBadges routes={v.vendor_billing_routes} />
-            {v.do_not_order ? <Badge tone="danger">Do not order</Badge> : null}
+            {v.standing === 'do_not_order' ? <Badge tone="danger">Do not order</Badge> : v.standing === 'last_resort' ? <Badge tone="warning">Last resort</Badge> : null}
             {v.wwd_zero_upcharge ? <Badge tone="success">WWD 0% upcharge</Badge> : null}
             {v.is_fishing ? <Badge tone="info">Fishing</Badge> : null}
             {v.is_delivery_vendor ? <Badge tone="neutral">Delivery vendor</Badge> : null}
@@ -86,8 +86,9 @@ export default function VendorDetailPage() {
         actions={canEdit ? <Button variant="secondary" onClick={() => navigate(`${ROUTES.vendors}/${v.id}/edit`)} leftIcon={<Pencil className="size-4" aria-hidden="true" />}>Edit</Button> : undefined}
       />
 
-      {v.do_not_order ? (
-        <Alert variant="error" title="Do not order from this vendor" className="mb-6">
+      {v.standing !== 'ok' ? (
+        <Alert variant={v.standing === 'do_not_order' ? 'error' : 'warning'} title={v.standing === 'do_not_order' ? 'Do not order from this vendor' : 'Last resort: order only if the items are nowhere else'} className="mb-6">
+          {v.standing_tags.length ? <p className="font-medium">{standingWhy(v.standing_tags)}</p> : null}
           <p>{v.do_not_order_reason ?? 'No reason recorded.'}</p>
           <p className="mt-1 text-xs opacity-80">Ordering is still possible if you change your mind; this is a warning, not a block.</p>
         </Alert>

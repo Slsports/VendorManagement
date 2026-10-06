@@ -41,3 +41,5 @@ export type FreeShippingBasis = NonNullable<Tables<'orders'>['free_shipping_basi
 export type VendorRating = Tables<'vendor_ratings'>
 export type ScoreDimension = VendorRating['dimension']
 export type VendorScorecard = Database['public']['Functions']['vendor_scorecards']['Returns'][number]
+export type VendorStanding = Tables<'vendors'>['standing']
+export type StandingTag = 'shipping_fees' | 'damaged_goods' | 'order_mistakes' | 'unreliable_delivery' | 'bad_attitude' | 'slow_credits' | 'out_of_business' | 'other'

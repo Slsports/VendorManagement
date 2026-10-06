@@ -107,3 +107,24 @@ export function freeShippingRule(v: { free_shipping_policy: import('@/types').Fr
     default: return v.freight_program ?? null
   }
 }
+
+export const STANDING_LABELS: Record<import('@/types').VendorStanding, string> = {
+  ok: 'Fine to order',
+  last_resort: 'Last resort: only if the items are nowhere else',
+  do_not_order: 'Do not order',
+}
+export const STANDING_TAGS: import('@/types').StandingTag[] = ['shipping_fees', 'damaged_goods', 'order_mistakes', 'unreliable_delivery', 'bad_attitude', 'slow_credits', 'out_of_business', 'other']
+export const STANDING_TAG_LABELS: Record<import('@/types').StandingTag, string> = {
+  shipping_fees: 'Shipping fees',
+  damaged_goods: 'Damaged goods or junk',
+  order_mistakes: 'Order mistakes (wrong items, quantities, hang tags)',
+  unreliable_delivery: 'Does not deliver what was ordered',
+  bad_attitude: 'Bad attitude',
+  slow_credits: 'Slow with credits',
+  out_of_business: 'Out of business',
+  other: 'Other',
+}
+/** "Shipping fees, damaged goods or junk" for a vendor's tags. */
+export function standingWhy(tags: string[]): string {
+  return tags.map((t) => STANDING_TAG_LABELS[t as import('@/types').StandingTag] ?? t).join(', ')
+}

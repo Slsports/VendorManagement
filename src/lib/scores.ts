@@ -4,7 +4,7 @@ export const SCORE_DIMENSIONS: { key: ScoreDimension; label: string; help: strin
   { key: 'ease', label: 'Ease of ordering', help: 'How much work it takes to get an order in: forms, portals, confirmations.', auto: false },
   { key: 'communication', label: 'Communication and help', help: 'Does the rep or vendor answer, and do they help get the order right?', auto: false },
   { key: 'fulfilment', label: 'On-time fulfilment', help: 'Received within a week of the ship date they gave.', auto: true },
-  { key: 'accuracy', label: 'Order accuracy', help: 'Right items, right quantities, nothing damaged. From check-in notes today; from the check-in form once it lives in VMS.', auto: true },
+  { key: 'accuracy', label: 'Order accuracy', help: 'Right items, right quantities, right hang tags, nothing damaged. From check-in notes today; from the check-in form once it lives in VMS.', auto: true },
   { key: 'shipping', label: 'Shipping', help: 'Freight as a share of product cost, free shipping honored, late or lost shipments.', auto: true },
   { key: 'resolution', label: 'Resolving issues', help: 'Credits owed to us: how many came through and how fast.', auto: true },
 ]
@@ -24,7 +24,7 @@ export function evidence(c: Card, key: ScoreDimension): string {
       return `${c.on_time} of ${c.received} received within a week of the ship date${c.late ? `, ${c.late} late by about ${c.avg_days_late ?? '?'} days` : ''}.`
     case 'accuracy':
       if (c.orders < 3) return `${c.orders} order${c.orders === 1 ? '' : 's'} on file; three are needed to score.`
-      return c.accuracy_issues ? `${c.accuracy_issues} of ${c.orders} orders mention damage, shortages or wrong items.` : `No damage, shortage or wrong-item notes on ${c.orders} orders.`
+      return c.accuracy_issues ? `${c.accuracy_issues} of ${c.orders} orders mention damage, shortages, wrong items or wrong tags.` : `No damage, shortage, wrong-item or tag notes on ${c.orders} orders.`
     case 'shipping':
       if (c.freight_pct === null) return 'Fewer than two orders with a freight figure.'
       return `Freight ${c.freight_pct}% of product cost over ${c.freight_orders} orders${c.free_violations ? `, ${c.free_violations} charged when they should have shipped free` : ''}${c.issue_notes ? `, ${c.issue_notes} late or lost notes` : ''}.`
