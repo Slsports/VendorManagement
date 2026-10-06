@@ -1033,3 +1033,11 @@ payments in the sample export show), or when a payment is entered by hand.
   is signed in. VMS sends nothing until the Gmail connection; the signature lives on the VMS
   profile and Dana writes them when the connection lands (she hopes this week). Until then, a
   "Send mail as" orders@ address in each person's own Gmail gives per-person signatures.
+
+## 2026-10-07 — Target: running well by December, ready for the WWD show Jan 25-28, 2027
+- Dana: "I want this system running good by December so we are fully ready for show time at
+  the end of January." Working back from that: Gmail connected in October; Lightspeed connected
+  and the category clean-up under way by early November so the December sales land in clean
+  categories; replenishment check and pattern engine live by the end of November; December for
+  the show-prep view (vendors attending, minimums and free-shipping lines, item rules, open
+  holds with January review dates, what to look at by vendor) and for everyone using it daily.
