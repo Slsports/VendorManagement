@@ -731,3 +731,5 @@ payments in the sample export show), or when a payment is entered by hand.
   names split on "/"); the Fall 2025 line listing is still to be found. Zero-upcharge status
   from a show list sets the vendor flag (45 vendors now); Dana can untick on the vendor form.
   Look-alike names the matcher must not link go in `--skip` (e.g. Taylor's & Co. vs Taylor Brands).
+- **Fall 2024** loaded from its exhibitor listing (two columns). Four shows plus Fall 2024 now
+  give every vendor its show history back to August 2024.
