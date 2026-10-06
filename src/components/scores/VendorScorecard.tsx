@@ -66,8 +66,8 @@ export function VendorScorecard({ organizationId, vendorId, userId, canEdit }: V
         {c ? <span className="inline-flex items-center gap-2 text-sm"><Stars score={c.overall !== null ? Math.round(c.overall) : null} /><span className={`font-semibold ${TONE[scoreTone(c.overall)]}`}>{c.overall !== null ? `${c.overall} / 5` : 'Not scored yet'}</span></span> : null}
       </div>
       {c && c.standing !== 'ok' ? (
-        <p className={`mt-2 rounded-lg px-3 py-2 text-sm ${c.standing === 'do_not_order' ? 'bg-red-50 text-red-800' : 'bg-amber-50 text-amber-900'}`}>
-          <span className="font-semibold">{c.standing === 'do_not_order' ? 'Do not order.' : 'Last resort.'}</span>{c.standing_tags.length ? ` Why: ${standingWhy(c.standing_tags)}.` : ''}{c.standing_reason ? ` ${c.standing_reason}` : ''}
+        <p className={`mt-2 rounded-lg px-3 py-2 text-sm ${c.standing === 'do_not_order' ? 'bg-red-50 text-red-800' : c.standing === 'hold' ? 'bg-sky-50 text-sky-900' : 'bg-amber-50 text-amber-900'}`}>
+          <span className="font-semibold">{c.standing === 'do_not_order' ? 'Do not order.' : c.standing === 'hold' ? 'On hold.' : 'Last resort.'}</span>{c.standing_tags.length ? ` Why: ${standingWhy(c.standing_tags)}.` : ''}{c.standing_reason ? ` ${c.standing_reason}` : ''}
         </p>
       ) : null}
       {q.isLoading ? <div className="flex justify-center py-6"><Spinner label="Scoring…" className="text-brand" /></div> : q.error ? <p className="mt-2 text-sm text-red-700">{q.error}</p> : !c ? null : (

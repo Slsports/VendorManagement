@@ -38,6 +38,7 @@ interface FormState {
   review_note: string
   standing: VendorStanding
   standing_tags: StandingTag[]
+  standing_review_date: string
   do_not_order_reason: string
   wwd_zero_upcharge: boolean
   is_fishing: boolean
@@ -69,7 +70,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   name: '', aliases: '', routes: [], defaultRoute: '', rep_group_id: '', payment_terms_id: '', ordering_frequency: '',
-  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], do_not_order_reason: '', wwd_zero_upcharge: false, is_fishing: false,
+  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, is_fishing: false,
   website: '', phone: '', fax: '', account_number: '', catalog: '', address: '', city: '', state: '', postal_code: '',
   rep_name: '', rep_phone: '', pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', minimum_order: '', freight_program: '', free_shipping_policy: '', free_shipping_threshold: '', freight_routing: '', product_types: '',
   notes: '', return_notes: '', windows: [],
@@ -92,6 +93,7 @@ function formFromVendor(v: VendorDetail): FormState {
     review_note: v.review_note ?? '',
     standing: v.standing,
     standing_tags: v.standing_tags as StandingTag[],
+    standing_review_date: v.standing_review_date ?? '',
     wwd_zero_upcharge: v.wwd_zero_upcharge,
     is_fishing: v.is_fishing,
     do_not_order_reason: v.do_not_order_reason ?? '',
@@ -160,6 +162,7 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
       review_note: form.needs_review ? nz(form.review_note) : null,
       standing: form.standing,
       standing_tags: form.standing === 'ok' ? [] : form.standing_tags,
+      standing_review_date: form.standing !== 'ok' && form.standing_review_date ? form.standing_review_date : null,
       wwd_zero_upcharge: form.wwd_zero_upcharge,
       is_fishing: form.is_fishing,
       do_not_order_reason: form.standing !== 'ok' ? nz(form.do_not_order_reason) : null,
@@ -284,6 +287,7 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
                     ))}
                   </div>
                 </fieldset>
+                <FormField label="Look at this again on" htmlFor="standing-review" hint="Optional. A hold until January, for example."><Input id="standing-review" type="date" value={form.standing_review_date} onChange={(e) => set('standing_review_date', e.target.value)} className="sm:w-48" /></FormField>
                 <Textarea aria-label="Reason" rows={2} value={form.do_not_order_reason} onChange={(e) => set('do_not_order_reason', e.target.value)} placeholder="In your words: e.g. ordered twice, could not deliver either time, shipping was outrageous" />
               </>
             ) : null}

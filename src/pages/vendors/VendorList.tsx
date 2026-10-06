@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listVendors } from '@/services/vendors'
 import { ROUTES } from '@/lib/constants'
-import { BILLING_ROUTE_LABELS } from '@/lib/vendors'
+import { BILLING_ROUTE_LABELS, STANDING_BADGE } from '@/lib/vendors'
 import { cn } from '@/lib/utils'
 import type { BillingRoute } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -134,7 +134,7 @@ export default function VendorListPage() {
                     <td className="hidden px-4 py-2.5 text-stone-600 md:table-cell">{v.rep_groups?.name ?? '—'}</td>
                     <td className="hidden px-4 py-2.5 text-stone-600 lg:table-cell">{v.phone ?? '—'}</td>
                     <td className="px-4 py-2.5 text-right">
-                      {v.standing === 'do_not_order' ? <Badge tone="danger" className="mr-1">Do not order</Badge> : v.standing === 'last_resort' ? <Badge tone="warning" className="mr-1">Last resort</Badge> : null}
+                      {STANDING_BADGE[v.standing] ? <Badge tone={STANDING_BADGE[v.standing]!.tone} className="mr-1">{STANDING_BADGE[v.standing]!.label}</Badge> : null}
                       {v.is_fishing ? <Badge tone="info" className="mr-1">Fishing</Badge> : null}
                       {v.needs_review ? <Badge tone="warning">Review</Badge> : null}
                       {v.is_delivery_vendor ? <Badge tone="neutral" className="ml-1">Delivery</Badge> : null}

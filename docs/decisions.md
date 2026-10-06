@@ -961,3 +961,16 @@ payments in the sample export show), or when a payment is entered by hand.
   fees), Leisure Concepts (out of business), Haddad, Kaufman, Troll, Ty (other, from the order
   guide and Maryellen's list).
 - Order accuracy now also counts hang-tag notes (no tags, wrong tags) from check-in.
+
+## 2026-10-07 — Standing: "on hold" with a review date; discontinued line and overstocked reasons
+- Dana: add a reason "discontinued line" (we no longer want to carry their products). Troll is a
+  high-end clothing line that ran its course; the store's market is vacationers who forgot
+  something and do not want to spend a lot. Troll stays do-not-order, tagged discontinued line.
+- Ty is not a do-not-order: too much stock on hand, some Ty toy types discontinued and others
+  kept (worked out with Claude from the inventory numbers). New standing **on hold** with a
+  **review date**: Ty is on hold until 2027-01-15, tagged overstocked; order again in January if
+  enough has sold, otherwise wait and see what is new. Dana will upload the Ty data from those
+  sessions.
+- Planned for the Lightspeed connection: item-level tags per vendor (stop ordering these items,
+  keep ordering those), driven by sell-through: push the fast turns, slow or stop the slow ones.
+  The vendor standing says whether to order from the vendor at all; the item tags say what.

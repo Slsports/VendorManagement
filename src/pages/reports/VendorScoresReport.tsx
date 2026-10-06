@@ -6,7 +6,7 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listScorecards } from '@/services/scores'
 import { SCORE_DIMENSIONS, scoreTone } from '@/lib/scores'
 import { ROUTES } from '@/lib/constants'
-import { standingWhy } from '@/lib/vendors'
+import { standingWhy, STANDING_BADGE } from '@/lib/vendors'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Alert, Badge, Select, Spinner } from '@/components/ui'
 
@@ -38,7 +38,7 @@ export default function VendorScoresReportPage() {
             {rows.map((r) => (
               <tr key={r.vendor_id} className="hover:bg-stone-50">
                 <td className="px-3 py-2"><Link to={`${ROUTES.vendors}/${r.vendor_id}`} className="font-medium text-stone-900 hover:text-brand">{r.name}</Link></td>
-                <td className="px-3 py-2">{r.standing === 'do_not_order' ? <Badge tone="danger">Do not order</Badge> : r.standing === 'last_resort' ? <Badge tone="warning">Last resort</Badge> : null}{r.standing_tags.length ? <span className="block text-xs text-stone-500">{standingWhy(r.standing_tags)}</span> : null}</td>
+                <td className="px-3 py-2">{STANDING_BADGE[r.standing] ? <Badge tone={STANDING_BADGE[r.standing]!.tone}>{STANDING_BADGE[r.standing]!.label}</Badge> : null}{r.standing_tags.length ? <span className="block text-xs text-stone-500">{standingWhy(r.standing_tags)}</span> : null}</td>
                 <td className={`px-3 py-2 text-center font-semibold ${TONE[scoreTone(r.overall)]}`}>{r.overall ?? '·'}</td>
                 {cell(r.rated_ease)}{cell(r.rated_communication)}{cell(r.rated_fulfilment ?? r.auto_fulfilment)}{cell(r.rated_accuracy ?? r.auto_accuracy)}{cell(r.rated_shipping ?? r.auto_shipping)}{cell(r.rated_resolution ?? r.auto_resolution)}
                 <td className="px-3 py-2 text-right text-stone-600">{r.orders}</td>
