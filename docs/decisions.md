@@ -733,3 +733,15 @@ payments in the sample export show), or when a payment is entered by hand.
   Look-alike names the matcher must not link go in `--skip` (e.g. Taylor's & Co. vs Taylor Brands).
 - **Fall 2024** loaded from its exhibitor listing (two columns). Four shows plus Fall 2024 now
   give every vendor its show history back to August 2024.
+
+## 2026-10-06 — Which show an order came from (rule for Phase 4, Dana)
+- When the Placed Order Summary is imported, each order gets a **show tag** inferred from its
+  date: Spring show = late January to mid February, Fall show = late August to early
+  September (exact dates per year from the show packets, e.g. Feb 1–4 and Sept 1–3, 2026).
+- A **WWD vendor's** order dated inside the window or up to 30 days after is "from the show";
+  31–60 days after is "probably from the show" (orders trickle in that long); later is a
+  reorder. If the vendor was on that show's line listing the tag is firmer; otherwise it is
+  shown as inferred.
+- **Not-WWD vendors** get no automatic show tag; it can be set by hand on the order.
+- The show tag is an editable field on the order; the ordering guide and the "what did we
+  buy at the last show" views use whatever is on the order.
