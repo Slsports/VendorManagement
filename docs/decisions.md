@@ -1041,3 +1041,12 @@ payments in the sample export show), or when a payment is entered by hand.
   categories; replenishment check and pattern engine live by the end of November; December for
   the show-prep view (vendors attending, minimums and free-shipping lines, item rules, open
   holds with January review dates, what to look at by vendor) and for everyone using it daily.
+
+## 2026-10-07 — Email assignment per employee; interim Gmail labels VMS will read
+- Dana used Outlook categories to mark which employee handles an email and pinned it; the
+  migration did not carry categories. In VMS every vendor email gets an "Assigned to" (the
+  review-queue picker) and the review assignment rules apply on arrival (fishing vendors to
+  Jarrett). Assigned mail sorts to the top of that person's list, replacing the pin.
+- Until the Gmail connection: nested Gmail labels `Assigned/<First name>` (Dana, Jarrett, Trevor,
+  Cat, Annette, Raelee) applied by hand, plus a star for what was pinned. The Gmail connection
+  reads those labels and turns them into VMS assignments, so this week's tagging carries over.
