@@ -830,3 +830,11 @@ payments in the sample export show), or when a payment is entered by hand.
   "Mine" when you have items, with Everyone / Unassigned / per person filters. The migration adds
   the fishing → Jarrett rule as soon as his account exists. The same rules will route the
   category clean-up batches and the second-pass mismatches.
+
+## 2026-10-06 — UNISEX is a gender rung; one-size items get a ONE SIZE rung
+- Dana: "adult/unisex because it should be considered a gender. So we would have
+  sweatshirts/adults/unisex." Two rungs everywhere: `ADULT > UNISEX`, `KIDS > UNISEX`,
+  `YOUTH > UNISEX` (juniors are YOUTH). The old one-line `ADULT UNISEX` names are renamed.
+- Dana: a one-size-fits-all item gets a size: `SWEATSHIRTS > ADULT > WOMENS > ONE SIZE`. Spelled
+  `ONE SIZE`, never `OS`, `OSFA` or `O/S`. So nothing with an age or gender stops above the size
+  rung; only things with no age or gender (tents, coolers) stop at the type.

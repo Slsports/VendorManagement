@@ -37,8 +37,8 @@ Rules:
 
 - An item sits on the deepest rung its branch has. Never on AGE or GENDER when a SIZE rung exists
   below. Nothing stops at AGE.
-- Skip a rung only when it has nothing to say: one-size items stop at GENDER; things with no age or
-  gender (tents, coolers) stop at TYPE and take their own size rung (section 5).
+- Nothing with an age or gender stops before SIZE: a one-size item takes a `ONE SIZE` rung. Things
+  with no age or gender (tents, coolers) stop at TYPE and take their own size rung (section 5).
 - Footwear uses the same ladder with shoe sizes on the SIZE rung: `HIKING > ADULT > WOMENS > 8.5`
   (section 5).
 
@@ -65,7 +65,8 @@ vendor's full run under it.
 **Rung 4, Gender.** Exactly one of MENS, WOMENS, BOYS, GIRLS, UNISEX. Under ADULT the pair is MENS
 and WOMENS; under KIDS and YOUTH it is BOYS and GIRLS; UNISEX is allowed under any age. Age and
 gender are two rungs, so the picker reads `KIDS > GIRLS`, not `KIDS GIRLS`, and `ADULT > UNISEX`,
-not `ADULT UNISEX` (open point 8.1).
+not `ADULT UNISEX`. Decided Oct 6 (Dana): UNISEX is a gender, so `SWEATSHIRTS > ADULT > UNISEX`,
+`KIDS > UNISEX`, `YOUTH > UNISEX`.
 
 **Rung 5, Size.** The size names in section 3. Infant and toddler branches use months and T sizes.
 
@@ -102,8 +103,9 @@ and rash guards), the vendor's numbers stay as the guide: `SM (4/5)`, `MED (6/7)
 
 **Toddler.** `2T`, `3T`, `4T`, `5T`. A two-size item joins them with a slash, `5/6T`.
 
-**One size.** Items made in one size get no size rung; the item sits on the Gender rung. Never a
-category named ONE SIZE or OS.
+**One size.** Items made in one size take a size rung spelled `ONE SIZE` (decided Oct 6; never `OS`,
+`OSFA` or `O/S`): `SWEATSHIRTS > ADULT > WOMENS > ONE SIZE`, `HATS > BEANIES > ADULT > UNISEX > ONE SIZE`.
+That way every item in a sized branch sits on the size rung and the reorder report has no gaps.
 
 **Order in the picker.** Lightspeed sorts categories alphabetically, so sizes do not line up small to
 large on their own. Accept that; the names are what matter for reorder reports.
@@ -212,6 +214,7 @@ because their names carry size words; left alone.
 | CAMPING > COOLERS > COOLER BAGS | CAMPING > COOLERS > SOFT > BAGS > 16-30 CAN (by the bag) |
 | CAMPING > COOLERS > BACKPACK COOLERS | CAMPING > COOLERS > SOFT > BACKPACK |
 | WATERSPORTS > GOGGLES, MASKS & FINS > MASKS | WATERSPORTS > GOGGLES MASKS & FINS > MASKS |
+| CLOTHING > HATS > BEANIES (34 one-size items on the type) | CLOTHING > HATS > BEANIES > ADULT > UNISEX > ONE SIZE |
 
 `10-Aug` and `14-Dec` are Excel's doing (`8-10` and `12-14` read as dates). Both get renamed, letter
 first (open point 8.7). Where a sub-type exists (HOODIE, RACERBACK, BIKINI, RASH GUARDS, SKI) it sits
@@ -256,8 +259,9 @@ the 18 empty departments reviewed, archived items left where they are.
 
 Each has a default. Signing off with no change means the default stands.
 
-1. **ADULT UNISEX wording.** Default: two rungs, `ADULT > UNISEX`. Alternative: keep `ADULT UNISEX`
-   as one rung name where it already exists.
+1. **ADULT UNISEX wording.** Decided Oct 6 (Dana): UNISEX is a gender, so two rungs everywhere:
+   `SWEATSHIRTS > ADULT > UNISEX`, `KIDS > UNISEX`, `YOUTH > UNISEX`. One-size items take a
+   `ONE SIZE` rung below that.
 2. **Footwear sizes.** Decided Oct 6: full clean-up with shoe-size rungs,
    `HIKING > ADULT > WOMENS > 8.5` (section 5). Still open inside it: plain numbers (default) or a
    leading zero so the picker sorts 8 before 10.
