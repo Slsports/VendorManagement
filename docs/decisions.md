@@ -873,3 +873,17 @@ payments in the sample export show), or when a payment is entered by hand.
 - Dana: "No one should be admin but me." Trevor and Jarrett stay managers. Role changes are
   admin-only in the database (the profiles policy and the role-column trigger), so nobody can
   promote themselves; the Settings > Users page, when built, lets Dana alone change roles.
+
+## 2026-10-07 — Planned: scheduled replenishment check (after the Lightspeed connection)
+- Dana asked whether VMS can check a vendor's Lightspeed inventory on a schedule and say when it
+  is time to order, using the vendor's minimum order and free-shipping threshold, and show it on
+  the dashboard. Yes; planned as the first feature after the Lightspeed API connection.
+- Vendor fields it needs (build them with this in mind): minimum order, free-shipping threshold,
+  lead time, order windows / season, report owner. From Lightspeed: on-hand, vendor and Vendor ID
+  per item, sales history (days of cover per item).
+- Nightly job per vendor: items at or below reorder point, suggested order priced at cost,
+  compared to the minimum and the free-shipping line, with the order window and the next show in
+  view. Dashboard panel "Orders to look at": one line per vendor (suggested total, what it is
+  short of or clears, driving items, assignee), one click to a draft order.
+- Prerequisite: items in Lightspeed carry the right vendor, part of the category and item
+  clean-up.
