@@ -922,3 +922,25 @@ payments in the sample export show), or when a payment is entered by hand.
   threshold their notes state ("free @ $500"); Dana reviews them on the vendor pages.
 - Caveat from Dana: shipping has been tracked carefully for about two years; before that it was
   hit and miss, so older orders say little about freight.
+
+## 2026-10-07 — Vendor scoring
+- Dana: "an automated scoring system based on ease of ordering, rep/vendor communication &
+  willingness to help out, fulfilment on time or not, shipping issues and how well they resolve
+  issues", plus "delivering damaged goods or mistakes on orders (quantities, or wrong item all
+  together)". Six dimensions, 1 to 5: ease of ordering, communication and help, on-time
+  fulfilment, order accuracy, shipping, resolving issues.
+- Four score themselves from the order history today: fulfilment (received within a week of the
+  ship date given), accuracy (damage, shortage or wrong-item notes per order), shipping (freight
+  as a share of product cost, minus free-shipping breaches and late or lost notes), resolution
+  (credits owed that came through, and how fast). Ease and communication are staff ratings until
+  Gmail is connected. A staff rating on any line replaces the automatic score; history is kept.
+- Shown as a Scorecard on every vendor page (rate any line in one click) and as Reports > Vendor
+  scores, sortable, with the evidence counts. First run: 176 of 778 vendors scored from the
+  order guide; Panther Martin, Wisconsin Pharmacal and Talahi at 5.0; Water Sports LLC at 1.0
+  (freight 40.6 percent, four issue notes), Daisy at 1.0 on an open credit.
+- Dana: after a full year in VMS (every season), the check-in form and the vendor emails about
+  issues live in VMS, so every dimension scores itself. The check-in form feeds accuracy; email
+  response times feed communication; Gmail threads feed ease and resolution.
+- Clarified: what was imported is the Seasonal Vendors Buying Guide ("8-25-26 Summer WWD Order
+  Guide v6"), gleaned from the Placed Order Summary. The Placed Order Summary v2.0 itself has not
+  been uploaded yet; Dana will say which of its tabs to ignore when she does.

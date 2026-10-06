@@ -17,6 +17,7 @@ import { VendorRepGroupCard } from '@/components/vendors/VendorRepGroupCard'
 import { VendorShowsSection } from '@/components/vendors/VendorShowsSection'
 import { PartnerContactsCard } from '@/components/vendors/PartnerContactsCard'
 import { VendorOrdersSection } from '@/components/vendors/VendorOrdersSection'
+import { VendorScorecard } from '@/components/scores/VendorScorecard'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
 
 export default function VendorDetailPage() {
@@ -179,6 +180,7 @@ export default function VendorDetailPage() {
 
         <ContactsSection vendorId={v.id} contacts={v.vendor_emails} canEdit={canEdit} onChange={vendorQ.refetch} />
         <VendorShowsSection vendorId={v.id} />
+        <VendorScorecard organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorOrdersSection vendorId={v.id} />
 
         <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-1">

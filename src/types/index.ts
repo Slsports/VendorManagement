@@ -1,4 +1,4 @@
-import type { Tables, Enums } from './database'
+import type { Database, Tables, Enums } from './database'
 
 export type { Database, Json, Tables, TablesInsert, TablesUpdate, Enums } from './database'
 
@@ -38,3 +38,6 @@ export type OrderingFrequency = Enums<'ordering_frequency'>
 export type OrderWindowKind = Enums<'order_window_kind'>
 export type FreeShippingPolicy = NonNullable<Tables<'vendors'>['free_shipping_policy']>
 export type FreeShippingBasis = NonNullable<Tables<'orders'>['free_shipping_basis']>
+export type VendorRating = Tables<'vendor_ratings'>
+export type ScoreDimension = VendorRating['dimension']
+export type VendorScorecard = Database['public']['Functions']['vendor_scorecards']['Returns'][number]

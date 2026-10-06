@@ -67,6 +67,7 @@ export const ROUTES = {
   payments: '/payments',
   salesReports: '/sales-reports',
   reports: '/reports',
+  vendorScores: '/reports/vendor-scores',
   productSourcing: '/product-sourcing',
   files: '/files',
   settings: '/settings',

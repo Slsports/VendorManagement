@@ -339,6 +339,15 @@ export type Database = {
           { foreignKeyName: 'review_items_assigned_to_fkey'; columns: ['assigned_to']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
         ]
       }
+      vendor_ratings: {
+        Row: { id: string; organization_id: string; vendor_id: string; dimension: 'ease' | 'communication' | 'fulfilment' | 'accuracy' | 'shipping' | 'resolution'; score: number; note: string | null; rated_by: string | null; rated_at: string }
+        Insert: { id?: string; organization_id: string; vendor_id: string; dimension: 'ease' | 'communication' | 'fulfilment' | 'accuracy' | 'shipping' | 'resolution'; score: number; note?: string | null; rated_by?: string | null; rated_at?: string }
+        Update: { id?: string; organization_id?: string; vendor_id?: string; dimension?: 'ease' | 'communication' | 'fulfilment' | 'accuracy' | 'shipping' | 'resolution'; score?: number; note?: string | null; rated_by?: string | null; rated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'vendor_ratings_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+          { foreignKeyName: 'vendor_ratings_rated_by_fkey'; columns: ['rated_by']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+        ]
+      }
       review_assignment_rules: {
         Row: { id: string; organization_id: string; match_kind: 'vendor' | 'fishing' | 'department' | 'review_kind' | 'fallback'; match_value: string | null; vendor_id: string | null; assignee_id: string; priority: number; is_active: boolean; note: string | null; created_by: string | null; created_at: string }
         Insert: { id?: string; organization_id: string; match_kind: 'vendor' | 'fishing' | 'department' | 'review_kind' | 'fallback'; match_value?: string | null; vendor_id?: string | null; assignee_id: string; priority?: number; is_active?: boolean; note?: string | null; created_by?: string | null; created_at?: string }
@@ -438,6 +447,7 @@ export type Database = {
       resolve_review_item: { Args: { p_item: string; p_status: Database['public']['Enums']['review_status']; p_note?: string | null }; Returns: undefined }
       assign_review_item: { Args: { p_item: string; p_profile?: string | null }; Returns: undefined }
       apply_review_rules: { Args: { p_org: string; p_overwrite?: boolean }; Returns: number }
+      vendor_scorecards: { Args: { p_org: string; p_vendor?: string | null }; Returns: { vendor_id: string; name: string; orders: number; received: number; on_time: number; late: number; avg_days_late: number | null; freight_pct: number | null; freight_orders: number; free_violations: number; issue_notes: number; accuracy_issues: number; credits_due: number; credits_resolved: number; avg_credit_days: number | null; auto_fulfilment: number | null; auto_accuracy: number | null; auto_shipping: number | null; auto_resolution: number | null; rated_ease: number | null; rated_communication: number | null; rated_fulfilment: number | null; rated_accuracy: number | null; rated_shipping: number | null; rated_resolution: number | null; note_ease: string | null; note_communication: string | null; note_fulfilment: string | null; note_accuracy: string | null; note_shipping: string | null; note_resolution: string | null; overall: number | null }[] }
       directory_route_for: { Args: { p_org: string; p_name: string; p_domain?: string | null }; Returns: Database['public']['Enums']['billing_route'] | null }
       promote_line_to_vendor: { Args: { p_line: string; p_route?: Database['public']['Enums']['billing_route'] | null }; Returns: string }
       apply_vendor_rename: { Args: { p_item: string; p_new_name?: string | null; p_rep_group_id?: string | null }; Returns: undefined }

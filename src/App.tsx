@@ -41,6 +41,7 @@ const StoreSettings = lazy(() => import('@/pages/settings/StoreSettings'))
 const PlaceholderSettings = lazy(() => import('@/pages/settings/PlaceholderSettings'))
 const PartnerSettings = lazy(() => import('@/pages/settings/PartnerSettings'))
 const ReviewAssignmentSettings = lazy(() => import('@/pages/settings/ReviewAssignmentSettings'))
+const VendorScoresReport = lazy(() => import('@/pages/reports/VendorScoresReport'))
 
 const STAFF = ['admin', 'manager', 'buyer', 'viewer'] as const
 
@@ -103,6 +104,7 @@ export default function App() {
                 <Route path={ROUTES.buyingShows} element={<BuyingShowList />} />
                 <Route path={ROUTES.salesReports} element={<SalesReportsHub />} />
                 <Route path={ROUTES.reports} element={<ReportList />} />
+                <Route path={ROUTES.vendorScores} element={<VendorScoresReport />} />
                 <Route path={ROUTES.productSourcing} element={<ProductSourcing />} />
                 <Route path={ROUTES.files} element={<FileManager />} />
                 <Route path={ROUTES.search} element={<SearchPage />} />
