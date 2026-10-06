@@ -24,14 +24,14 @@ Every sized category is built on the same five rungs, in the same order:
 2 TYPE         SWIMWEAR, PAJAMAS, SOCKS, T-SHIRTS, SLIPPERS, TENTS, COOLERS ...
 3 AGE          INFANT, TODDLER, KIDS, YOUTH, ADULT
 4 GENDER       MENS, WOMENS, BOYS, GIRLS, UNISEX
-5 SIZE         XS, SM, MED, LG, XL, 2XL, 3XL, 4XL, or months, T sizes, shoe sizes
+5 SIZE         1 XS, 2 SM, 3 MED, 4 LG, 5 XL, 6 2XL, ONE SIZE, months, T sizes, shoe sizes
 ```
 
 Three paths built the same way:
 
-- `CLOTHING > SWIMWEAR > KIDS > GIRLS > MED (10/12)`
-- `CLOTHING > SOCKS > ADULT > MENS > LG`
-- `CLOTHING > PAJAMAS > ADULT > UNISEX > XL`
+- `CLOTHING > SWIMWEAR > KIDS > GIRLS > 3 MED (10/12)`
+- `CLOTHING > SOCKS > ADULT > MENS > 4 LG`
+- `CLOTHING > PAJAMAS > ADULT > UNISEX > 5 XL`
 
 Rules:
 
@@ -80,23 +80,25 @@ clean-up renames all of them to this list.
 
 | Standard | Replaces | Notes |
 |---|---|---|
-| XS | X-SMALL, XSMALL | |
-| SM | SMALL, S | |
-| MED | MEDIUM, MD, M | MED, never MD |
-| LG | LARGE, L | |
-| XL | X-LARGE, XLARGE, 1XL | 1XL on bibs becomes XL |
-| 2XL | XXL, 2X, XX-LARGE | number first, then XL |
-| 3XL | XXXL, 3X | |
-| 4XL | 4X | |
+| 1 XS | XS, X-SMALL, XSMALL | the number in front makes the picker sort small to large (decided Oct 6) |
+| 2 SM | SMALL, SM, S | |
+| 3 MED | MEDIUM, MED, MD, M | MED, never MD |
+| 4 LG | LARGE, LG, L | |
+| 5 XL | XL, X-LARGE, XLARGE, 1XL | 1XL on bibs becomes 5 XL |
+| 6 2XL | XXL, 2X, XX-LARGE | number, then XL |
+| 7 3XL | XXXL, 3X | |
+| 8 4XL | 4X | |
+| ONE SIZE | OS, OSFA, O/S | no number; it sorts after the others on its own |
 
 **Size guides in parentheses.** Where staff need the number run to file an item, the guide follows the
-letter in parentheses, with a slash for a two-number size and a dash for a range: `MED (10/12)`,
-`LG (12-14)`, `XL (18-20)`. The letter always comes first so the picker sorts the same way in every
-branch. The old `4-5 SM`, `6-6X MED`, `7 LG` on winter bibs become `SM (4-5)`, `MED (6-6X)`, `LG (7)`.
+size in parentheses, with a slash for a two-number size and a dash for a range: `3 MED (10/12)`,
+`4 LG (12-14)`, `5 XL (18-20)`. The sort number and letter always come first so the picker reads the
+same way in every branch. The old `4-5 SM`, `6-6X MED`, `7 LG` on winter bibs become `2 SM (4-5)`,
+`3 MED (6-6X)`, `4 LG (7)`.
 
 **Vendor-mirrored runs.** Where a branch mirrors a vendor's size run (World Famous Sports swimwear
-and rash guards), the vendor's numbers stay as the guide: `SM (4/5)`, `MED (6/7)`, `LG (8/10)`,
-`XL (12/14)`, `2XL (16/18)`. The guide is the vendor's; the letter is ours.
+and rash guards), the vendor's numbers stay as the guide: `2 SM (4/5)`, `3 MED (6/7)`, `4 LG (8/10)`,
+`5 XL (12/14)`, `6 2XL (16/18)`. The guide is the vendor's; the letter is ours.
 
 **Infant.** Months with the M suffix, no space, and a leading zero so they sort: `00-03M`, `03-06M`,
 `06M`, `06-12M`, `12M`, `18M`, `24M`. A vendor that sizes 0-24 months as one run keeps that run.
@@ -109,12 +111,11 @@ That way every item in a sized branch sits on the size rung and the reorder repo
 
 **Sorting** (decided Oct 6: sizes should list in order). Lightspeed sorts category names
 alphabetically, digits before letters, so size names are written to sort the way the sizes run.
-Shoe sizes carry a leading zero: `05`, `05.5`, `06` up to `13`. Bands start with their low number:
-`0-19 QT` not `UNDER 20 QT`, `0-15 CAN` not `UNDER 16 CAN`, `1-2 PERSON`, `3-4 PERSON`. Infant months
-carry a leading zero. Letter sizes do not sort on their own (alphabetically they run 2XL, 3XL, 4XL,
-LG, MED, SM, XL, XS); the only fix is a number in front, `1 XS`, `2 SM`, `3 MED (10/12)`, `4 LG`,
-`5 XL`, `6 2XL`, `7 3XL`, `8 4XL`, which is open point 8.11. `ONE SIZE` sorts after the numbers
-either way.
+Letter sizes carry a number in front (decided Oct 6): `1 XS`, `2 SM`, `3 MED (10/12)`, `4 LG`,
+`5 XL`, `6 2XL`, `7 3XL`, `8 4XL`; `ONE SIZE` needs none, it sorts after them. Shoe sizes carry a
+leading zero: `05`, `05.5`, `06` up to `13`. Bands start with their low number: `0-19 QT` not
+`UNDER 20 QT`, `0-15 CAN` not `UNDER 16 CAN`, `1-2 PERSON`, `3-4 PERSON`. Infant months carry a
+leading zero.
 
 ## 4. Spelling and characters
 
@@ -168,15 +169,15 @@ A cooler sold by liters is filed by the nearest quart band.
 
 **Sleeping bags** (21 items). Proposed `ADULT` and `KIDS` only, no temperature bands (open point 8.3).
 
-**Pet items** (collars 130, harnesses 41, life jackets 25, clothing 20). Letter sizes `XS` to `XL`
-under each type: `PET COLLARS > MED`. No age or gender rung.
+**Pet items** (collars 130, harnesses 41, life jackets 25, clothing 20). Letter sizes `1 XS` to `5 XL`
+under each type: `PET COLLARS > 3 MED`. No age or gender rung.
 
 **Life jackets** (`WATERSPORTS > LIFE JACKETS`). Keep the weight bands the label prints. Spelling
 only: `INFANT UNDER 30 LB`, `CHILD 30-55 LB`, `YOUTH 50-90 LB`, `TEEN OR ADULT PETITE 75-125 LB`,
 `ADULT SM-MED 90+ LB`, `ADULT LG-XL`, `ADULT 2X-6X`. `LB` not `LBS`, a dash for the range.
 
-**Helmets and goggles.** Helmets by `ADULT` or `YOUTH` then `SM`, `MED`, `LG`, `XL`; the existing
-`ADULT > ADULT MED` becomes `ADULT > MED`. Goggles by `ADULT` or `KIDS` only.
+**Helmets and goggles.** Helmets by `ADULT` or `YOUTH` then `2 SM`, `3 MED`, `4 LG`, `5 XL`; the
+existing `ADULT > ADULT MED` becomes `ADULT > 3 MED`. Goggles by `ADULT` or `KIDS` only.
 
 **Footwear** (decided Oct 6: full clean-up with shoe sizes). Same ladder as clothing, with the shoe
 size on the last rung: `FOOTWEAR > HIKING > ADULT > WOMENS > 08.5`. The types stay as they are
@@ -195,24 +196,24 @@ because their names carry size words; left alone.
 
 | Today | Under the standard |
 |---|---|
-| CLOTHING > T-SHIRTS > LARGE | CLOTHING > T-SHIRTS > ADULT > UNISEX > LG |
+| CLOTHING > T-SHIRTS > LARGE | CLOTHING > T-SHIRTS > ADULT > UNISEX > 4 LG |
 | CLOTHING > T-SHIRTS > KIDS > 5/6T | CLOTHING > T-SHIRTS > TODDLER > UNISEX > 5/6T |
 | CLOTHING > T-SHIRTS > KIDS > 12M | CLOTHING > T-SHIRTS > INFANT > UNISEX > 12M |
 | CLOTHING > T-SHIRTS (257 items on the type) | one of the paths above, by the size in the item name |
-| CLOTHING > SWEATSHIRTS > HOODIE UNISEX > MEDIUM | CLOTHING > SWEATSHIRTS > HOODIE > ADULT > UNISEX > MED |
-| CLOTHING > TANK TOPS > WOMENS > RACERBACK > M | CLOTHING > TANK TOPS > RACERBACK > ADULT > WOMENS > MED |
-| CLOTHING > SWIMWEAR > WOMENS > BIKINI > MEDIUM  (8-10) | CLOTHING > SWIMWEAR > BIKINI > ADULT > WOMENS > MED (8-10) |
-| CLOTHING > SWIMWEAR > JUNIORS > GIRLS > BIKINI > SMALL | CLOTHING > SWIMWEAR > BIKINI > YOUTH > GIRLS > SM |
-| CLOTHING > SWIMWEAR > KIDS > BOYS > 10-Aug | CLOTHING > SWIMWEAR > KIDS > BOYS > MED (8-10) |
-| CLOTHING > SWIMWEAR > RASH GUARDS > BOYS (55 items, no sizes) | CLOTHING > SWIMWEAR > RASH GUARDS > KIDS > BOYS > SM (4/5) ... |
-| CLOTHING > WINTER CLOTHING > BIBS > KIDS > 6-6X MED | CLOTHING > WINTER CLOTHING > BIBS > KIDS > UNISEX > MED (6-6X) |
-| CLOTHING > WINTER CLOTHING > BIBS > WOMENS > 1XL | CLOTHING > WINTER CLOTHING > BIBS > ADULT > WOMENS > XL |
-| CLOTHING > PAJAMAS (311 items) | CLOTHING > PAJAMAS > ADULT > UNISEX > MED, or KIDS > BOYS > SM (4-5) |
-| CLOTHING > SOCKS (142 items) | CLOTHING > SOCKS > ADULT > MENS > LG; CLOTHING > SOCKS > SKI > ADULT > WOMENS > MED |
-| CLOTHING > UNDERWEAR > MENS (140 items) | CLOTHING > UNDERWEAR > ADULT > MENS > MED |
-| CLOTHING > LONG SLEEVE > PERFORMANCE LS > MENS > MD | CLOTHING > LONG SLEEVE > PERFORMANCE LS > ADULT > MENS > MED |
-| WINTERSPORTS > HELMETS > ADULT > ADULT MED | WINTERSPORTS > HELMETS > ADULT > MED |
-| WINTERSPORTS > HELMETS > YOUTH > YOUTH SMALL | WINTERSPORTS > HELMETS > YOUTH > SM |
+| CLOTHING > SWEATSHIRTS > HOODIE UNISEX > MEDIUM | CLOTHING > SWEATSHIRTS > HOODIE > ADULT > UNISEX > 3 MED |
+| CLOTHING > TANK TOPS > WOMENS > RACERBACK > M | CLOTHING > TANK TOPS > RACERBACK > ADULT > WOMENS > 3 MED |
+| CLOTHING > SWIMWEAR > WOMENS > BIKINI > MEDIUM  (8-10) | CLOTHING > SWIMWEAR > BIKINI > ADULT > WOMENS > 3 MED (8-10) |
+| CLOTHING > SWIMWEAR > JUNIORS > GIRLS > BIKINI > SMALL | CLOTHING > SWIMWEAR > BIKINI > YOUTH > GIRLS > 2 SM (youth on hold, 8.4) |
+| CLOTHING > SWIMWEAR > KIDS > BOYS > 10-Aug | CLOTHING > SWIMWEAR > KIDS > BOYS > 3 MED (8-10) |
+| CLOTHING > SWIMWEAR > RASH GUARDS > BOYS (55 items, no sizes) | CLOTHING > SWIMWEAR > RASH GUARDS > KIDS > BOYS > 2 SM (4/5) ... |
+| CLOTHING > WINTER CLOTHING > BIBS > KIDS > 6-6X MED | CLOTHING > WINTER CLOTHING > BIBS > KIDS > UNISEX > 3 MED (6-6X) |
+| CLOTHING > WINTER CLOTHING > BIBS > WOMENS > 1XL | CLOTHING > WINTER CLOTHING > BIBS > ADULT > WOMENS > 5 XL |
+| CLOTHING > PAJAMAS (311 items) | CLOTHING > PAJAMAS > ADULT > UNISEX > MED, or KIDS > BOYS > 2 SM (4-5) |
+| CLOTHING > SOCKS (142 items) | CLOTHING > SOCKS > ADULT > MENS > LG; CLOTHING > SOCKS > SKI > ADULT > WOMENS > 3 MED |
+| CLOTHING > UNDERWEAR > MENS (140 items) | CLOTHING > UNDERWEAR > ADULT > MENS > 3 MED |
+| CLOTHING > LONG SLEEVE > PERFORMANCE LS > MENS > MD | CLOTHING > LONG SLEEVE > PERFORMANCE LS > ADULT > MENS > 3 MED |
+| WINTERSPORTS > HELMETS > ADULT > ADULT MED | WINTERSPORTS > HELMETS > ADULT > 3 MED |
+| WINTERSPORTS > HELMETS > YOUTH > YOUTH SMALL | WINTERSPORTS > HELMETS > YOUTH > 2 SM |
 | FOOTWEAR > BOOTS - WINTER > YOUTH (SZ 13-6) > BOYS | FOOTWEAR > BOOTS - WINTER > YOUTH (1-6) > BOYS > 03 |
 | FOOTWEAR > FLIP FLOPS > KIDS BOYS | FOOTWEAR > FLIP FLOPS > KIDS > BOYS |
 | CAMPING > TENTS > 4 MAN | CAMPING > TENTS > 3-4 PERSON |
@@ -248,8 +249,9 @@ TENTS 28, VESTS 13.
 sizes), work boots 17, hiking 12. Gear: helmets 56, goggles 47, tents 28, sleeping bags 21, coolers
 20; pet collars 130, harnesses 41, pet life jackets 25, pet clothing 20.
 
-**D. Renames only, no item moves.** 75 branches spelled SMALL/MEDIUM/LARGE and 9 spelled SM/MD/LG
-become SM/MED/LG; `ADULT > ADULT MED` becomes `ADULT > MED`; `1XL` becomes `XL`; `10-Aug` and
+**D. Renames only, no item moves.** 75 branches spelled SMALL/MEDIUM/LARGE, 9 spelled SM/MD/LG and
+56 spelled XS to XL take the numbered names `1 XS` to `8 4XL`; `ADULT > ADULT MED` becomes
+`ADULT > 3 MED`; `1XL` becomes `5 XL`; `10-Aug` and
 `14-Dec` get their real sizes back; `GOGGLES, MASKS & FINS` loses its comma; `KIDS BOYS` and
 `KIDS GIRLS` under flip flops become two rungs.
 
@@ -289,8 +291,8 @@ Each has a default. Signing off with no change means the default stands.
 11. **Letter sizes in order.** Alphabetically XS, SM, MED, LG, XL, 2XL list as 2XL, 3XL, 4XL, LG,
     MED, SM, XL, XS. A number in front fixes it: `1 XS`, `2 SM`, `3 MED (10/12)`, `4 LG`, `5 XL`,
     `6 2XL`, `7 3XL`, `8 4XL`. It touches every letter-size branch (all being renamed anyway) and
-    the number doubles as a guide for staff. Default: add the number. Alternative: leave the letters
-    alone and accept the order.
+    the number doubles as a guide for staff. Decided Oct 6 (Dana): yes, add the number. Written into
+    section 3.
 
 ## 9. How the changes reach Lightspeed
 

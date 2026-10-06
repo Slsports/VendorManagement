@@ -862,3 +862,9 @@ payments in the sample export show), or when a payment is entered by hand.
   an age rung. Two proposals wait on her research: retiring JUNIORS in favour of YOUTH, and one
   KIDS rung where a vendor (World Famous Sports) sizes kids and youth as one run. No proposal sheet
   row touches youth until she decides.
+
+## 2026-10-06 — Letter sizes carry a sort number
+- Dana: "Point 11, yes add the 1, 2, 3 etc." Letter sizes are `1 XS`, `2 SM`, `3 MED`, `4 LG`,
+  `5 XL`, `6 2XL`, `7 3XL`, `8 4XL`, guides after them (`3 MED (10/12)`); `ONE SIZE` takes no
+  number. Applies to clothing, footwear sold by letter, pet items and helmets. The 140 branches
+  spelled SMALL/MEDIUM/LARGE, SM/MD/LG or XS–XL today all take the numbered names in the clean-up.
