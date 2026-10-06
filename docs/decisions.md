@@ -887,3 +887,18 @@ payments in the sample export show), or when a payment is entered by hand.
   short of or clears, driving items, assignee), one click to a draft order.
 - Prerequisite: items in Lightspeed carry the right vendor, part of the category and item
   clean-up.
+
+## 2026-10-07 — Freight discipline and seasonal sync (Dana's context for replenishment)
+- Vendors are not equal: the replenishment check must respect each vendor's own minimum,
+  free-shipping line and ordering rhythm, never one rule for all.
+- Goal: get back in sync with the two shows (spring and fall) instead of ordering once a year,
+  order less often, and land above free-shipping thresholds. Freight has run 30 to 60 percent of
+  product value on some orders this year, 120 percent once (Daisy, routing instructions ignored;
+  full credit won, but it took March to October).
+- VMS needs: freight as a share of product cost on every order and on the vendor page; per-vendor
+  **freight routing instructions** shown when an order is placed and checked against the invoice;
+  a **dispute / credit** record on an order with an owner and a follow-up date that nags on the
+  dashboard until the credit lands; the Placed Order Summary stays the source of truth until
+  go-live.
+- From the imported orders today: 433 orders carry a freight figure; freight is 10 percent of
+  product cost overall, 36 orders at 30 percent or more, 10 at 50 percent or more.
