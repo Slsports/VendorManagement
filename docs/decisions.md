@@ -1014,3 +1014,12 @@ payments in the sample export show), or when a payment is entered by hand.
   store; it proposes item rules (stop / keep / reorder first / watch) and standing changes
   (hold, review dates) into the review queue, never changes them on its own. Each proposal
   carries the numbers that drove it, the way the Ty document does.
+
+## 2026-10-07 — Reading patterns from the old Lightspeed history despite bad names and categories
+- Dana's concern: naming conventions and categories were not in place, so the history is messy.
+  Rule for the pattern engine: trust item number, Vendor ID, UPC, vendor, quantity, sale date,
+  cost and store; never trust the description or the category of an old record. Patterns by
+  item and vendor read straight away; patterns by product type arrive as the category clean-up
+  lands, because Lightspeed keeps the history on the item and it rolls up under the new
+  category. Duplicate records split history: VMS joins them on its own side by Vendor ID or
+  UPC and does not rely on Lightspeed's merge (see the merge defect above).
