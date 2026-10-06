@@ -838,3 +838,11 @@ payments in the sample export show), or when a payment is entered by hand.
 - Dana: a one-size-fits-all item gets a size: `SWEATSHIRTS > ADULT > WOMENS > ONE SIZE`. Spelled
   `ONE SIZE`, never `OS`, `OSFA` or `O/S`. So nothing with an age or gender stops above the size
   rung; only things with no age or gender (tents, coolers) stop at the type.
+
+## 2026-10-06 — Size names must sort in order
+- Dana: "I like things to sort in order. So we probably need to add the leading zero." Lightspeed
+  sorts category names alphabetically, so size names are written to sort: shoe sizes `05`,
+  `05.5` … `13` (youth 13 moves into KIDS 8-13 so every run counts up), bands start with the low
+  number (`0-19 QT`, `0-15 CAN`), infant months `00-03M`, `03-06M`, `06M`, `06-12M`.
+- Open: letter sizes only sort with a number in front (`1 XS`, `2 SM`, `3 MED (10/12)` …). Default
+  in the standard is to add it; Dana and Trevor to confirm.

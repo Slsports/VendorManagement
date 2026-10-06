@@ -39,7 +39,7 @@ Rules:
   below. Nothing stops at AGE.
 - Nothing with an age or gender stops before SIZE: a one-size item takes a `ONE SIZE` rung. Things
   with no age or gender (tents, coolers) stop at TYPE and take their own size rung (section 5).
-- Footwear uses the same ladder with shoe sizes on the SIZE rung: `HIKING > ADULT > WOMENS > 8.5`
+- Footwear uses the same ladder with shoe sizes on the SIZE rung: `HIKING > ADULT > WOMENS > 08.5`
   (section 5).
 
 **Rung 1, Department.** The 22 live departments stay as they are. No new departments in this pass.
@@ -98,8 +98,8 @@ branch. The old `4-5 SM`, `6-6X MED`, `7 LG` on winter bibs become `SM (4-5)`, `
 and rash guards), the vendor's numbers stay as the guide: `SM (4/5)`, `MED (6/7)`, `LG (8/10)`,
 `XL (12/14)`, `2XL (16/18)`. The guide is the vendor's; the letter is ours.
 
-**Infant.** Months with the M suffix and no space: `0-3M`, `3-6M`, `6M`, `6-12M`, `12M`, `18M`,
-`24M`. A vendor that sizes 0-24 months as one run keeps that run.
+**Infant.** Months with the M suffix, no space, and a leading zero so they sort: `00-03M`, `03-06M`,
+`06M`, `06-12M`, `12M`, `18M`, `24M`. A vendor that sizes 0-24 months as one run keeps that run.
 
 **Toddler.** `2T`, `3T`, `4T`, `5T`. A two-size item joins them with a slash, `5/6T`.
 
@@ -107,8 +107,14 @@ and rash guards), the vendor's numbers stay as the guide: `SM (4/5)`, `MED (6/7)
 `OSFA` or `O/S`): `SWEATSHIRTS > ADULT > WOMENS > ONE SIZE`, `HATS > BEANIES > ADULT > UNISEX > ONE SIZE`.
 That way every item in a sized branch sits on the size rung and the reorder report has no gaps.
 
-**Order in the picker.** Lightspeed sorts categories alphabetically, so sizes do not line up small to
-large on their own. Accept that; the names are what matter for reorder reports.
+**Sorting** (decided Oct 6: sizes should list in order). Lightspeed sorts category names
+alphabetically, digits before letters, so size names are written to sort the way the sizes run.
+Shoe sizes carry a leading zero: `05`, `05.5`, `06` up to `13`. Bands start with their low number:
+`0-19 QT` not `UNDER 20 QT`, `0-15 CAN` not `UNDER 16 CAN`, `1-2 PERSON`, `3-4 PERSON`. Infant months
+carry a leading zero. Letter sizes do not sort on their own (alphabetically they run 2XL, 3XL, 4XL,
+LG, MED, SM, XL, XS); the only fix is a number in front, `1 XS`, `2 SM`, `3 MED (10/12)`, `4 LG`,
+`5 XL`, `6 2XL`, `7 3XL`, `8 4XL`, which is open point 8.11. `ONE SIZE` sorts after the numbers
+either way.
 
 ## 4. Spelling and characters
 
@@ -143,11 +149,11 @@ No age or gender rung; the size rung sits right under the type (or sub-type).
 
 | Path | Covers |
 |---|---|
-| COOLERS > HARD > UNDER 20 QT | |
+| COOLERS > HARD > 0-19 QT | |
 | COOLERS > HARD > 20-39 QT | |
 | COOLERS > HARD > 40-69 QT | |
 | COOLERS > HARD > 70+ QT | |
-| COOLERS > SOFT > BAGS > UNDER 16 CAN | |
+| COOLERS > SOFT > BAGS > 0-15 CAN | |
 | COOLERS > SOFT > BAGS > 16-30 CAN | |
 | COOLERS > SOFT > BAGS > 30+ CAN | |
 | COOLERS > SOFT > BACKPACK | all backpack coolers, any size |
@@ -173,14 +179,13 @@ only: `INFANT UNDER 30 LB`, `CHILD 30-55 LB`, `YOUTH 50-90 LB`, `TEEN OR ADULT P
 `ADULT > ADULT MED` becomes `ADULT > MED`. Goggles by `ADULT` or `KIDS` only.
 
 **Footwear** (decided Oct 6: full clean-up with shoe sizes). Same ladder as clothing, with the shoe
-size on the last rung: `FOOTWEAR > HIKING > ADULT > WOMENS > 8.5`. The types stay as they are
+size on the last rung: `FOOTWEAR > HIKING > ADULT > WOMENS > 08.5`. The types stay as they are
 (HIKING, BOOTS - WINTER, BOOTS - WORK, SLIPPERS, FLIP FLOPS, WATER SHOES). Sizes are written as the
-box prints them: `8`, `8.5`, `10`, no `SZ` and no `US`. The age rung keeps its shoe-size guide so
-staff know where a run breaks: `INFANT (1-7)`, `KIDS (8-12)`, `YOUTH (13-6)`; under those the sizes
-are the run's own numbers (youth `13`, `1`, `2` to `6`). Widths (`W`, `WIDE`) stay in the item
-name. Flip flops and slippers sold as S/M/L take the letter sizes from section 3. Lightspeed sorts
-the size rung alphabetically, so `10` lists before `8`; a leading zero (`08`, `08.5`) would fix the
-order at the cost of looking odd. Default: plain numbers.
+box prints them with a leading zero so they sort: `05`, `05.5`, `06` up to `13`, no `SZ` and no
+`US`. The age rung keeps its shoe-size guide: `INFANT (1-7)`, `KIDS (8-13)`, `YOUTH (1-6)`; youth
+size 13 moves into KIDS so each run counts up (`01` to `07` under infant, `08` to `13` under kids,
+`01` to `06` under youth). Widths (`W`, `WIDE`) stay in the item name. Flip flops and slippers sold
+as S/M/L take the letter sizes from section 3.
 
 **No size rung, ever.** Stickers (the `LG` in a sticker name is the design), fishing line and leaders
 (test weight stays in the item name), rope and cord, chargers, nets, insoles. Flagged by the analysis
@@ -208,7 +213,7 @@ because their names carry size words; left alone.
 | CLOTHING > LONG SLEEVE > PERFORMANCE LS > MENS > MD | CLOTHING > LONG SLEEVE > PERFORMANCE LS > ADULT > MENS > MED |
 | WINTERSPORTS > HELMETS > ADULT > ADULT MED | WINTERSPORTS > HELMETS > ADULT > MED |
 | WINTERSPORTS > HELMETS > YOUTH > YOUTH SMALL | WINTERSPORTS > HELMETS > YOUTH > SM |
-| FOOTWEAR > BOOTS - WINTER > YOUTH (SZ 13-6) > BOYS | FOOTWEAR > BOOTS - WINTER > YOUTH (13-6) > BOYS > 3 |
+| FOOTWEAR > BOOTS - WINTER > YOUTH (SZ 13-6) > BOYS | FOOTWEAR > BOOTS - WINTER > YOUTH (1-6) > BOYS > 03 |
 | FOOTWEAR > FLIP FLOPS > KIDS BOYS | FOOTWEAR > FLIP FLOPS > KIDS > BOYS |
 | CAMPING > TENTS > 4 MAN | CAMPING > TENTS > 3-4 PERSON |
 | CAMPING > COOLERS > COOLER BAGS | CAMPING > COOLERS > SOFT > BAGS > 16-30 CAN (by the bag) |
@@ -262,9 +267,8 @@ Each has a default. Signing off with no change means the default stands.
 1. **ADULT UNISEX wording.** Decided Oct 6 (Dana): UNISEX is a gender, so two rungs everywhere:
    `SWEATSHIRTS > ADULT > UNISEX`, `KIDS > UNISEX`, `YOUTH > UNISEX`. One-size items take a
    `ONE SIZE` rung below that.
-2. **Footwear sizes.** Decided Oct 6: full clean-up with shoe-size rungs,
-   `HIKING > ADULT > WOMENS > 8.5` (section 5). Still open inside it: plain numbers (default) or a
-   leading zero so the picker sorts 8 before 10.
+2. **Footwear sizes.** Decided Oct 6: full clean-up with shoe-size rungs, and a leading zero so they
+   sort: `HIKING > ADULT > WOMENS > 08.5` (section 5).
 3. **Sleeping bags.** Default: `ADULT` and `KIDS` only. Alternative: temperature bands.
 4. **JUNIORS.** Default: retire it; those items become YOUTH.
 5. **Where a sub-type sits.** Default: before age (`SWIMWEAR > BIKINI > ADULT > WOMENS > size`),
@@ -280,6 +284,11 @@ Each has a default. Signing off with no change means the default stands.
 9. **Helmets and goggles.** Default: as written in section 5.
 10. **What Trevor already built.** Anything restructured in the live tree since the Oct 5 export is
     kept where it fits this standard, and this standard is updated where it does not.
+11. **Letter sizes in order.** Alphabetically XS, SM, MED, LG, XL, 2XL list as 2XL, 3XL, 4XL, LG,
+    MED, SM, XL, XS. A number in front fixes it: `1 XS`, `2 SM`, `3 MED (10/12)`, `4 LG`, `5 XL`,
+    `6 2XL`, `7 3XL`, `8 4XL`. It touches every letter-size branch (all being renamed anyway) and
+    the number doubles as a guide for staff. Default: add the number. Alternative: leave the letters
+    alone and accept the order.
 
 ## 9. How the changes reach Lightspeed
 
