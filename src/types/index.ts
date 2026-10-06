@@ -36,3 +36,5 @@ export type BillingRoute = Enums<'billing_route'>
 export type ContactType = Enums<'contact_type'>
 export type OrderingFrequency = Enums<'ordering_frequency'>
 export type OrderWindowKind = Enums<'order_window_kind'>
+export type FreeShippingPolicy = NonNullable<Tables<'vendors'>['free_shipping_policy']>
+export type FreeShippingBasis = NonNullable<Tables<'orders'>['free_shipping_basis']>

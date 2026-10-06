@@ -79,7 +79,7 @@ export default function OrderListPage() {
                     <td className="px-3 py-2"><OrderStatusBadge status={o.status} /></td>
                     <td className="max-w-md px-3 py-2 text-stone-700">{o.description}{o.po_number ? <span className="block text-xs text-stone-500">PO {o.po_number}</span> : null}</td>
                     <td className="whitespace-nowrap px-3 py-2 text-stone-600">{o.store_codes.join(', ')}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right">{money(o.final_cost ?? o.est_cost)}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-right">{money(o.final_cost ?? o.est_cost)}{o.free_shipping === true ? <span className="block text-xs text-emerald-700">free ship</span> : o.free_shipping === false && o.freight_cost ? <span className="block text-xs text-stone-500">+{money(o.freight_cost)} freight</span> : null}</td>
                     <td className="whitespace-nowrap px-3 py-2 text-stone-600">{o.est_ship_date ? new Date(o.est_ship_date).toLocaleDateString() : ''}</td>
                     <td className="whitespace-nowrap px-3 py-2 text-stone-600">{o.paid_date ? new Date(o.paid_date).toLocaleDateString() : ''}</td>
                   </tr>

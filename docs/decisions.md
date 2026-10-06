@@ -902,3 +902,23 @@ payments in the sample export show), or when a payment is entered by hand.
   go-live.
 - From the imported orders today: 433 orders carry a freight figure; freight is 10 percent of
   product cost overall, 36 orders at 30 percent or more, 10 at 50 percent or more.
+
+## 2026-10-07 — Free shipping: the vendor's rule and each order's answer
+- Dana: "We need a setting in vms to indicate NEVER free shipping vs sometimes free shipping. And
+  a place for every order placed whether it qualifies for free shipping as a special or
+  something... each order shows if it is supposed to be free shipping or not in addition to the
+  system showing the normal shipping rules for that vendor."
+- Vendor: **free shipping policy** (never / sometimes: show special or above a volume / always),
+  **free shipping over** (order value at cost), **freight routing instructions**. Shown on the
+  vendor page; the old free-text freight program stays as notes.
+- Order: **Is this order supposed to ship free?** Yes / No / Not stated, with a reason (show
+  special, hit their volume, negotiated, vendor always does, other) and a note. The order page
+  shows it in a Shipping card beside the vendor's usual rule, our routing instructions and the
+  freight actually billed, and warns when they disagree (free from a "never" vendor, under the
+  volume with no special, over the volume yet charged, freight billed on a free order). Order
+  lists carry a "free ship" or "+freight" tag.
+- Backfilled from the Placed Order Summary freight notes: 214 orders marked free, 439 marked paid
+  (a freight figure above zero), 451 left unstated. 17 vendors got a "sometimes" rule with the
+  threshold their notes state ("free @ $500"); Dana reviews them on the vendor pages.
+- Caveat from Dana: shipping has been tracked carefully for about two years; before that it was
+  hit and miss, so older orders say little about freight.

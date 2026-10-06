@@ -59,19 +59,20 @@ export async function vendorOrderSummary(vendorId: string): Promise<VendorOrderS
   }
 }
 
-export interface OrderDetail extends OrderRow {
+export interface OrderDetail extends Omit<OrderRow, 'vendor'> {
+  vendor: Pick<Vendor, 'id' | 'name' | 'free_shipping_policy' | 'free_shipping_threshold' | 'freight_program' | 'freight_routing'> | null
   order_status_history: OrderStatusHistory[]
   documents: VendorLink[]
 }
 
 export async function getOrder(id: string): Promise<OrderDetail> {
   const [{ data, error }, { data: docs, error: e2 }] = await Promise.all([
-    supabase.from('orders').select('*, vendor:vendors(id, name), order_status_history(*)').eq('id', id).single(),
+    supabase.from('orders').select('*, vendor:vendors(id, name, free_shipping_policy, free_shipping_threshold, freight_program, freight_routing), order_status_history(*)').eq('id', id).single(),
     supabase.from('vendor_links').select('*').eq('order_id', id).order('created_at', { ascending: false }),
   ])
   if (error) throw error
   if (e2) throw e2
-  const row = data as unknown as OrderRow & { order_status_history: OrderStatusHistory[] }
+  const row = data as unknown as Omit<OrderRow, 'vendor'> & { vendor: OrderDetail['vendor']; order_status_history: OrderStatusHistory[] }
   return { ...row, order_status_history: (row.order_status_history ?? []).sort((a, b) => a.changed_at.localeCompare(b.changed_at)), documents: docs ?? [] }
 }
 

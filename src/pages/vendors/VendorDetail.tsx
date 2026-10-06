@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { addNote, addVendorEmail, deleteVendorEmail, getVendor, listNotes, listReviewQueue, updateVendor } from '@/services/vendors'
 import { ROUTES } from '@/lib/constants'
-import { BILLING_ROUTE_HELP, CONTACT_TYPE_LABELS, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, monthsLabel } from '@/lib/vendors'
+import { BILLING_ROUTE_HELP, CONTACT_TYPE_LABELS, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, monthsLabel, freeShippingRule } from '@/lib/vendors'
 import { errorMessage } from '@/lib/utils'
 import type { ContactType } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -46,7 +46,9 @@ export default function VendorDetailPage() {
     ['Address', [v.address, [v.city, v.state].filter(Boolean).join(', '), v.postal_code].filter(Boolean).join(', ') || null],
     ['Ordering', v.ordering_frequency ? ORDERING_FREQUENCY_LABELS[v.ordering_frequency] : null],
     ['Minimum order', v.minimum_order],
-    ['Freight program', v.freight_program],
+    ['Free shipping', freeShippingRule(v)],
+    ['Freight program', v.free_shipping_policy ? v.freight_program : null],
+    ['Freight routing', v.freight_routing],
     ['Product types', v.product_types],
     ['Pickup', [v.pickup_address, v.pickup_times].filter(Boolean).join(' · ') || null],
     ['Shipping contact', [v.shipping_contact, v.shipping_contact_phone].filter(Boolean).join(' · ') || null],

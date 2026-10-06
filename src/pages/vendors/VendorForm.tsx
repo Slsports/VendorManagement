@@ -6,9 +6,9 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { createVendor, deleteOrderWindow, getVendor, listPaymentTerms, listRepGroups, saveOrderWindow, setVendorRoutes, updateVendor, type VendorDetail } from '@/services/vendors'
 import { ROUTES } from '@/lib/constants'
-import { BILLING_ROUTE_HELP, BILLING_ROUTE_LABELS, MONTHS, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS } from '@/lib/vendors'
+import { BILLING_ROUTE_HELP, BILLING_ROUTE_LABELS, MONTHS, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, FREE_SHIPPING_POLICY_LABELS } from '@/lib/vendors'
 import { cn, errorMessage } from '@/lib/utils'
-import type { BillingRoute, OrderingFrequency, OrderWindowKind, PaymentTerms, RepGroup, TablesInsert } from '@/types'
+import type { BillingRoute, OrderingFrequency, OrderWindowKind, PaymentTerms, RepGroup, TablesInsert, FreeShippingPolicy } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Alert, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
 
@@ -57,6 +57,9 @@ interface FormState {
   shipping_contact_phone: string
   minimum_order: string
   freight_program: string
+  free_shipping_policy: FreeShippingPolicy | ''
+  free_shipping_threshold: string
+  freight_routing: string
   product_types: string
   notes: string
   return_notes: string
@@ -67,7 +70,7 @@ const EMPTY: FormState = {
   name: '', aliases: '', routes: [], defaultRoute: '', rep_group_id: '', payment_terms_id: '', ordering_frequency: '',
   is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', do_not_order: false, do_not_order_reason: '', wwd_zero_upcharge: false, is_fishing: false,
   website: '', phone: '', fax: '', account_number: '', catalog: '', address: '', city: '', state: '', postal_code: '',
-  rep_name: '', rep_phone: '', pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', minimum_order: '', freight_program: '', product_types: '',
+  rep_name: '', rep_phone: '', pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', minimum_order: '', freight_program: '', free_shipping_policy: '', free_shipping_threshold: '', freight_routing: '', product_types: '',
   notes: '', return_notes: '', windows: [],
 }
 
@@ -93,7 +96,7 @@ function formFromVendor(v: VendorDetail): FormState {
     website: v.website ?? '', phone: v.phone ?? '', fax: v.fax ?? '', account_number: v.account_number ?? '', catalog: v.catalog ?? '',
     address: v.address ?? '', city: v.city ?? '', state: v.state ?? '', postal_code: v.postal_code ?? '',
     rep_name: v.rep_name ?? '', rep_phone: v.rep_phone ?? '', pickup_address: v.pickup_address ?? '', pickup_times: v.pickup_times ?? '',
-    shipping_contact: v.shipping_contact ?? '', shipping_contact_phone: v.shipping_contact_phone ?? '', minimum_order: v.minimum_order ?? '', freight_program: v.freight_program ?? '', product_types: v.product_types ?? '',
+    shipping_contact: v.shipping_contact ?? '', shipping_contact_phone: v.shipping_contact_phone ?? '', minimum_order: v.minimum_order ?? '', freight_program: v.freight_program ?? '', free_shipping_policy: v.free_shipping_policy ?? '', free_shipping_threshold: v.free_shipping_threshold !== null ? String(v.free_shipping_threshold) : '', freight_routing: v.freight_routing ?? '', product_types: v.product_types ?? '',
     notes: v.notes ?? '', return_notes: v.return_notes ?? '',
     windows: v.vendor_order_windows.map((w) => ({ id: w.id, kind: w.kind, label: w.label ?? '', months: w.months, notes: w.notes ?? '' })),
   }
@@ -160,7 +163,7 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
       website: nz(form.website), phone: nz(form.phone), fax: nz(form.fax), account_number: nz(form.account_number), catalog: nz(form.catalog),
       address: nz(form.address), city: nz(form.city), state: nz(form.state), postal_code: nz(form.postal_code),
       rep_name: nz(form.rep_name), rep_phone: nz(form.rep_phone), pickup_address: nz(form.pickup_address), pickup_times: nz(form.pickup_times),
-      shipping_contact: nz(form.shipping_contact), shipping_contact_phone: nz(form.shipping_contact_phone), minimum_order: nz(form.minimum_order), freight_program: nz(form.freight_program), product_types: nz(form.product_types),
+      shipping_contact: nz(form.shipping_contact), shipping_contact_phone: nz(form.shipping_contact_phone), minimum_order: nz(form.minimum_order), freight_program: nz(form.freight_program), free_shipping_policy: form.free_shipping_policy || null, free_shipping_threshold: form.free_shipping_threshold.trim() ? Number(form.free_shipping_threshold.replace(/[^0-9.]/g, '')) : null, freight_routing: nz(form.freight_routing), product_types: nz(form.product_types),
       notes: nz(form.notes), return_notes: nz(form.return_notes),
     }
     try {
@@ -245,6 +248,14 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
           </FormField>
           <FormField label="Minimum order" htmlFor="min"><Input id="min" value={form.minimum_order} onChange={(e) => set('minimum_order', e.target.value)} placeholder="e.g. $250 or 12 units" /></FormField>
           <FormField label="Freight program" htmlFor="freight"><Input id="freight" value={form.freight_program} onChange={(e) => set('freight_program', e.target.value)} placeholder="e.g. Free freight over $500" /></FormField>
+          <FormField label="Free shipping" htmlFor="fsp">
+            <Select id="fsp" value={form.free_shipping_policy} onChange={(e) => set('free_shipping_policy', e.target.value as FreeShippingPolicy | '')}>
+              <option value="">Not set</option>
+              {(Object.keys(FREE_SHIPPING_POLICY_LABELS) as FreeShippingPolicy[]).map((k) => <option key={k} value={k}>{FREE_SHIPPING_POLICY_LABELS[k]}</option>)}
+            </Select>
+          </FormField>
+          <FormField label="Free shipping over (order value at cost)" htmlFor="fst"><Input id="fst" inputMode="decimal" value={form.free_shipping_threshold} onChange={(e) => set('free_shipping_threshold', e.target.value)} placeholder="e.g. 500" disabled={form.free_shipping_policy === 'never'} /></FormField>
+          <FormField label="Freight routing instructions" htmlFor="froute" className="sm:col-span-2"><Input id="froute" value={form.freight_routing} onChange={(e) => set('freight_routing', e.target.value)} placeholder="e.g. UPS Ground collect on our account; never air" /></FormField>
           <FormField label="Product types" htmlFor="products" className="sm:col-span-2"><Input id="products" value={form.product_types} onChange={(e) => set('product_types', e.target.value)} placeholder="e.g. Fly line, leader, tippet" /></FormField>
           <div className="flex flex-col gap-2 sm:col-span-2">
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_delivery_vendor} onChange={(e) => set('is_delivery_vendor', e.target.checked)} /> Delivery vendor (drops goods with a paper invoice, no order placed ahead)</label>

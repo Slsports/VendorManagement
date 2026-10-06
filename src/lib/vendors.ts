@@ -84,3 +84,26 @@ export function money(n: number | null | undefined): string {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
 }
 
+
+export const FREE_SHIPPING_POLICY_LABELS: Record<import('@/types').FreeShippingPolicy, string> = {
+  never: 'Never free shipping',
+  sometimes: 'Sometimes (show special or above a volume)',
+  always: 'Always free shipping',
+}
+export const FREE_SHIPPING_BASIS_LABELS: Record<import('@/types').FreeShippingBasis, string> = {
+  show_special: 'Show special',
+  minimum_met: 'Hit their free-shipping volume',
+  negotiated: 'Negotiated for this order',
+  always: 'Vendor always ships free',
+  other: 'Other (see note)',
+}
+/** One line that states a vendor's usual shipping rule. */
+export function freeShippingRule(v: { free_shipping_policy: import('@/types').FreeShippingPolicy | null; free_shipping_threshold: number | null; freight_program: string | null }): string | null {
+  const t = v.free_shipping_threshold !== null ? money(v.free_shipping_threshold) : null
+  switch (v.free_shipping_policy) {
+    case 'never': return 'Never offers free shipping'
+    case 'always': return t ? `Always free shipping over ${t}` : 'Always free shipping'
+    case 'sometimes': return t ? `Free shipping over ${t}, or as a show special` : 'Free shipping only as a show special or above their volume'
+    default: return v.freight_program ?? null
+  }
+}
