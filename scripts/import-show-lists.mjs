@@ -6,6 +6,8 @@
  *
  *   node scripts/import-show-lists.mjs --show wwd_fall_2026 --label "Fall 2026 (Reno, Sept 1-3)" --date 2026-09-01 \
  *        --exhibitors ExhibitorListing.pdf --lines ShowTime.pdf --lines-pages 6-9 [--new-pages 18] [--dry]
+ *   Page lists may be ranges and commas: --lines-pages 8-11,14,16-19. When the packet has no separate
+ *   exhibitor listing, leave --exhibitors out: booth holders are then unknown (booth-mates still work).
  *
  * What it writes (never a vendor record):
  *   - one line per listed name in vendor_directory (route worldwide), matched to an existing vendor when the name fits
@@ -21,7 +23,7 @@ import { buildIndex, dbKey, findVendor, parseArgs, die } from './lib/match.mjs'
 const args = parseArgs(process.argv.slice(2))
 const dry = !!args.dry
 const ORG = args.org || '00000000-0000-0000-0000-000000000001'
-for (const k of ['show', 'label', 'exhibitors', 'lines', 'lines-pages']) if (!args[k]) die(`--${k} is required`)
+for (const k of ['show', 'label', 'lines', 'lines-pages']) if (!args[k]) die(`--${k} is required`)
 
 const BOOTH = /^(?:\d{3,4}|L\d)(?:,\d{3,4})*$/
 const SERVICE = /payments?|insurance|paychex|nssf|guns\.com|gearfire|livescan|\bffl|4473|acumatica|celerant|lightspeed|clover|armslist|lipsey|bravo store|otter ?text|hub international|hobson/i
@@ -30,9 +32,11 @@ const SKIP_BOOTHS = new Set(['401', 'L1', 'L2', 'L3'])
 // ---- parse "name + booth" listings from word boxes (poppler pdftotext -bbox-layout) ----
 function decode(s) { return s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'") }
 /** Returns [{name, booth}] for a PDF whose pages are `columns` columns of "Name   booth". */
+function pageRanges(spec) {
+  return String(spec).split(',').map((part) => { const [a, b] = part.trim().split('-').map(Number); return [a, b || a] })
+}
 function parseListing(pdf, pages, columns) {
-  const [pFrom, pTo] = String(pages).split('-').map(Number)
-  const xml = execFileSync('pdftotext', ['-bbox-layout', '-f', String(pFrom), '-l', String(pTo || pFrom), pdf, '-']).toString()
+  const xml = pageRanges(pages).map(([pFrom, pTo]) => execFileSync('pdftotext', ['-bbox-layout', '-f', String(pFrom), '-l', String(pTo), pdf, '-']).toString()).join('\n')
   const out = []
   for (const page of xml.split('<page ').slice(1)) {
     const width = Number(page.match(/width="([\d.]+)"/)[1])
@@ -68,14 +72,13 @@ function parseListing(pdf, pages, columns) {
 }
 
 const exhibitorByBooth = new Map()
-for (const e of parseListing(args.exhibitors, args['exhibitors-pages'] || '1-99', 2)) for (const b of e.booth.split(',')) exhibitorByBooth.set(b, e.name)
+if (args.exhibitors) for (const e of parseListing(args.exhibitors, args['exhibitors-pages'] || '1-99', 2)) for (const b of e.booth.split(',')) exhibitorByBooth.set(b, e.name)
 const lines = parseListing(args.lines, args['lines-pages'], 3)
 
 // new exhibitors page (optional): names only
 const newNames = new Set()
 if (args['new-pages']) {
-  const [nFrom, nTo] = String(args['new-pages']).split('-').map(Number)
-  const t = execFileSync('pdftotext', ['-f', String(nFrom), '-l', String(nTo || nFrom), args.lines, '-']).toString()
+  const t = pageRanges(args['new-pages']).map(([nFrom, nTo]) => execFileSync('pdftotext', ['-f', String(nFrom), '-l', String(nTo), args.lines, '-']).toString()).join('\n')
   for (const raw of t.split('\n')) { const m = raw.trim().match(/^(.+?)\s+(\d{3,4})$/); if (m) newNames.add(dbKey(m[1])) }
 }
 

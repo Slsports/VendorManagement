@@ -39,6 +39,7 @@ const SettingsLayout = lazy(() => import('@/pages/settings/SettingsLayout'))
 const OrganizationSettings = lazy(() => import('@/pages/settings/OrganizationSettings'))
 const StoreSettings = lazy(() => import('@/pages/settings/StoreSettings'))
 const PlaceholderSettings = lazy(() => import('@/pages/settings/PlaceholderSettings'))
+const PartnerSettings = lazy(() => import('@/pages/settings/PartnerSettings'))
 
 const STAFF = ['admin', 'manager', 'buyer', 'viewer'] as const
 
@@ -115,6 +116,7 @@ export default function App() {
                   <Route index element={<Navigate to="organization" replace />} />
                   <Route path="organization" element={<OrganizationSettings />} />
                   <Route path="stores" element={<StoreSettings />} />
+                  <Route path="worldwide" element={<PartnerSettings />} />
                   <Route path=":tab" element={<PlaceholderSettings />} />
                 </Route>
               </Route>

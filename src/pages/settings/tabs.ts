@@ -4,7 +4,7 @@ export const SETTINGS_TABS = [
   { slug: 'users', label: 'Users' },
   { slug: 'payment-terms', label: 'Payment terms' },
   { slug: 'categories', label: 'Categories' },
-  { slug: 'rep-groups', label: 'Rep groups' },
+  { slug: 'worldwide', label: 'Worldwide' },
   { slug: 'integrations', label: 'Integrations' },
   { slug: 'branding', label: 'Branding' },
 ] as const

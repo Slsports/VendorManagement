@@ -376,6 +376,22 @@ export type Database = {
           { foreignKeyName: 'vendor_links_line_id_fkey'; columns: ['line_id']; isOneToOne: false; referencedRelation: 'vendor_directory'; referencedColumns: ['id'] },
         ]
       }
+      partners: {
+        Row: { id: string; organization_id: string; route: Database['public']['Enums']['billing_route']; name: string; member_number: string | null; main_phone: string | null; website: string | null; address: string | null; notes: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; route: Database['public']['Enums']['billing_route']; name: string; member_number?: string | null; main_phone?: string | null; website?: string | null; address?: string | null; notes?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; route?: Database['public']['Enums']['billing_route']; name?: string; member_number?: string | null; main_phone?: string | null; website?: string | null; address?: string | null; notes?: string | null; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'partners_organization_id_fkey'; columns: ['organization_id']; isOneToOne: false; referencedRelation: 'organizations'; referencedColumns: ['id'] },
+        ]
+      }
+      partner_contacts: {
+        Row: { id: string; organization_id: string; partner_id: string; name: string; department: string | null; title: string | null; extension: string | null; phone: string | null; email: string | null; member_range: string | null; initial_range: string | null; show_on_vendor: boolean; sort_order: number; notes: string | null; is_active: boolean; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; partner_id: string; name: string; department?: string | null; title?: string | null; extension?: string | null; phone?: string | null; email?: string | null; member_range?: string | null; initial_range?: string | null; show_on_vendor?: boolean; sort_order?: number; notes?: string | null; is_active?: boolean; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; partner_id?: string; name?: string; department?: string | null; title?: string | null; extension?: string | null; phone?: string | null; email?: string | null; member_range?: string | null; initial_range?: string | null; show_on_vendor?: boolean; sort_order?: number; notes?: string | null; is_active?: boolean; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'partner_contacts_partner_id_fkey'; columns: ['partner_id']; isOneToOne: false; referencedRelation: 'partners'; referencedColumns: ['id'] },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

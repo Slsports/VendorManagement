@@ -5,7 +5,6 @@ const COPY: Record<string, { phase: number; text: string }> = {
   users: { phase: 6, text: 'Invite people, set roles (admin, manager, buyer, viewer, uploader), grant stores, deactivate.' },
   'payment-terms': { phase: 6, text: 'Your list of terms: Net 30, due on receipt, early-payment discounts, fixed due day of month. One marked default.' },
   categories: { phase: 6, text: 'Categories synced from Lightspeed, with the standard category report definition.' },
-  'rep-groups': { phase: 6, text: 'Dandylines, Arlene Oom & Co, Sugar B Sales and the rest, with contacts.' },
   integrations: { phase: 4, text: 'Lightspeed, Gmail, Google Drive and the Claude API key, each per organization. Excluded Bill.com payees live here too.' },
   branding: { phase: 6, text: 'Logo, app name and accent color for this organization.' },
 }

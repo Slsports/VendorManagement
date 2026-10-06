@@ -15,6 +15,7 @@ import { ReviewItemCard } from '@/components/vendors/ReviewItemCard'
 import { VendorLinksSection } from '@/components/vendors/VendorLinksSection'
 import { VendorRepGroupCard } from '@/components/vendors/VendorRepGroupCard'
 import { VendorShowsSection } from '@/components/vendors/VendorShowsSection'
+import { PartnerContactsCard } from '@/components/vendors/PartnerContactsCard'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
 
 export default function VendorDetailPage() {
@@ -169,6 +170,7 @@ export default function VendorDetailPage() {
 
         <VendorLinksSection vendorId={v.id} organizationId={v.organization_id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorRepGroupCard vendorId={v.id} group={v.rep_groups} />
+        {v.vendor_billing_routes.some((r) => r.route === 'worldwide') ? <PartnerContactsCard route="worldwide" vendorName={v.name} /> : null}
 
         <ContactsSection vendorId={v.id} contacts={v.vendor_emails} canEdit={canEdit} onChange={vendorQ.refetch} />
         <VendorShowsSection vendorId={v.id} />

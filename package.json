@@ -20,7 +20,8 @@
     "import:vendor-directory": "node scripts/import-vendor-directory.mjs",
     "import:show-lists": "node scripts/import-show-lists.mjs",
     "import:rep-lines": "node scripts/import-rep-lines.mjs",
-    "propose:renames": "node scripts/propose-vendor-renames.mjs"
+    "propose:renames": "node scripts/propose-vendor-renames.mjs",
+    "import:wwd-roster": "node scripts/import-wwd-roster.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2",
