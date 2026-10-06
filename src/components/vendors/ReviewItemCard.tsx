@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Check, GitMerge, Scissors, X } from 'lucide-react'
@@ -20,6 +20,8 @@ export interface ReviewItemCardProps {
   canEdit: boolean
   /** Called after any action; the parent refetches. The new/kept vendor id is passed when one results. */
   onDone: (resultVendorId?: string) => void | Promise<void>
+  /** Shown top-right of the card, e.g. the assignee picker. */
+  aside?: ReactNode
 }
 
 type RouteChoice = '' | BillingRoute
@@ -38,7 +40,7 @@ const ROUTE_OPTIONS: { value: RouteChoice; label: string }[] = [
  *  - vendor_marker and anything else: Done / Dismiss.
  * Every merge, confirm or split can state WWD / Faire / Not WWD so the result's usual route is right.
  */
-export function ReviewItemCard({ item, vendor, other, canEdit, onDone }: ReviewItemCardProps) {
+export function ReviewItemCard({ item, vendor, other, canEdit, onDone, aside }: ReviewItemCardProps) {
   const [busy, setBusy] = useState(false)
   const [route, setRoute] = useState<RouteChoice>('')
   const [keep, setKeep] = useState<'this' | 'other'>('this')
@@ -77,7 +79,10 @@ export function ReviewItemCard({ item, vendor, other, canEdit, onDone }: ReviewI
 
   return (
     <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
-      <p className="font-medium text-amber-900">{item.title}</p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <p className="font-medium text-amber-900">{item.title}</p>
+        {aside ? <div className="shrink-0">{aside}</div> : null}
+      </div>
       {details.reason ? <p className="text-amber-800">{details.reason}.</p> : null}
       {details.question ? <p className="text-amber-800">{details.question}</p> : null}
       {item.kind === 'vendor_rename' ? (

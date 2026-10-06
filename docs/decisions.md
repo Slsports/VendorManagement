@@ -815,3 +815,18 @@ payments in the sample export show), or when a payment is entered by hand.
 - Nothing changes in Lightspeed from the document. Next: a proposal spreadsheet (new
   categories, renames, item moves) from the latest export, approved by branch in VMS, written
   back only after the LS connection, every batch logged and reversible.
+
+## 2026-10-06 — Category standard: three answers; review items get an assignee
+- Dana: footwear gets the full clean-up with shoe sizes (`HIKING > ADULT > WOMENS > 8.5`); misfiled
+  items move to the size their name says (yes); the two Excel-mangled names are renamed (yes).
+  Written into the standard; open inside footwear: plain numbers (default) or a leading zero so
+  the picker sorts 8 before 10.
+- Dana: "I'm going to want to be able to assign the reviews to an employee. Like all fishing
+  reviews go to Jarrett." Every review item now has an assignee. **Rules** in Settings > Review
+  assignments pick it when the item is created: one vendor, fishing vendors (the fishing flag,
+  or a FISHING department on the item), a Lightspeed department, a kind of review, or everything
+  else; lower priority runs first, the most specific kind wins a tie. Editors can hand an item to
+  anyone from the queue; admins can run the rules over items already waiting. The queue opens on
+  "Mine" when you have items, with Everyone / Unassigned / per person filters. The migration adds
+  the fishing → Jarrett rule as soon as his account exists. The same rules will route the
+  category clean-up batches and the second-pass mismatches.

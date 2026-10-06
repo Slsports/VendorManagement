@@ -39,7 +39,8 @@ Rules:
   below. Nothing stops at AGE.
 - Skip a rung only when it has nothing to say: one-size items stop at GENDER; things with no age or
   gender (tents, coolers) stop at TYPE and take their own size rung (section 5).
-- Footwear uses the same ladder with shoe sizes on the SIZE rung (open point 8.2).
+- Footwear uses the same ladder with shoe sizes on the SIZE rung: `HIKING > ADULT > WOMENS > 8.5`
+  (section 5).
 
 **Rung 1, Department.** The 22 live departments stay as they are. No new departments in this pass.
 
@@ -169,7 +170,15 @@ only: `INFANT UNDER 30 LB`, `CHILD 30-55 LB`, `YOUTH 50-90 LB`, `TEEN OR ADULT P
 **Helmets and goggles.** Helmets by `ADULT` or `YOUTH` then `SM`, `MED`, `LG`, `XL`; the existing
 `ADULT > ADULT MED` becomes `ADULT > MED`. Goggles by `ADULT` or `KIDS` only.
 
-**Footwear.** Same ladder as clothing with the shoe size on the last rung, if wanted (open point 8.2).
+**Footwear** (decided Oct 6: full clean-up with shoe sizes). Same ladder as clothing, with the shoe
+size on the last rung: `FOOTWEAR > HIKING > ADULT > WOMENS > 8.5`. The types stay as they are
+(HIKING, BOOTS - WINTER, BOOTS - WORK, SLIPPERS, FLIP FLOPS, WATER SHOES). Sizes are written as the
+box prints them: `8`, `8.5`, `10`, no `SZ` and no `US`. The age rung keeps its shoe-size guide so
+staff know where a run breaks: `INFANT (1-7)`, `KIDS (8-12)`, `YOUTH (13-6)`; under those the sizes
+are the run's own numbers (youth `13`, `1`, `2` to `6`). Widths (`W`, `WIDE`) stay in the item
+name. Flip flops and slippers sold as S/M/L take the letter sizes from section 3. Lightspeed sorts
+the size rung alphabetically, so `10` lists before `8`; a leading zero (`08`, `08.5`) would fix the
+order at the cost of looking odd. Default: plain numbers.
 
 **No size rung, ever.** Stickers (the `LG` in a sticker name is the design), fishing line and leaders
 (test weight stays in the item name), rope and cord, chargers, nets, insoles. Flagged by the analysis
@@ -197,7 +206,7 @@ because their names carry size words; left alone.
 | CLOTHING > LONG SLEEVE > PERFORMANCE LS > MENS > MD | CLOTHING > LONG SLEEVE > PERFORMANCE LS > ADULT > MENS > MED |
 | WINTERSPORTS > HELMETS > ADULT > ADULT MED | WINTERSPORTS > HELMETS > ADULT > MED |
 | WINTERSPORTS > HELMETS > YOUTH > YOUTH SMALL | WINTERSPORTS > HELMETS > YOUTH > SM |
-| FOOTWEAR > BOOTS - WINTER > YOUTH (SZ 13-6) > BOYS | FOOTWEAR > BOOTS - WINTER > YOUTH (13-6) > BOYS |
+| FOOTWEAR > BOOTS - WINTER > YOUTH (SZ 13-6) > BOYS | FOOTWEAR > BOOTS - WINTER > YOUTH (13-6) > BOYS > 3 |
 | FOOTWEAR > FLIP FLOPS > KIDS BOYS | FOOTWEAR > FLIP FLOPS > KIDS > BOYS |
 | CAMPING > TENTS > 4 MAN | CAMPING > TENTS > 3-4 PERSON |
 | CAMPING > COOLERS > COOLER BAGS | CAMPING > COOLERS > SOFT > BAGS > 16-30 CAN (by the bag) |
@@ -226,9 +235,10 @@ SWIMWEAR KIDS GIRLS 96; RACERBACK 79; T-SHIRTS KIDS 78; SWEATSHIRTS 67; TANK TOP
 SWIMWEAR KIDS BOYS 45; BEANIES 34; WINTER JACKETS MENS 21 and WOMENS 17; HOODIE ZIP 16; HELMETS 56,
 TENTS 28, VESTS 13.
 
-**C. Footwear and gear** (about 600 items). Age and gender rungs under slippers 152, flip flops,
-work boots 17, hiking; helmets, goggles 47, tents, coolers, sleeping bags 21; pet collars 130,
-harnesses 41, pet life jackets 25, pet clothing 20.
+**C. Footwear and gear** (about 600 items). Footwear gets the full ladder with shoe sizes: slippers
+152, flip flops 75, winter boots 37 (the youth, kids and infant branches that have gender but no
+sizes), work boots 17, hiking 12. Gear: helmets 56, goggles 47, tents 28, sleeping bags 21, coolers
+20; pet collars 130, harnesses 41, pet life jackets 25, pet clothing 20.
 
 **D. Renames only, no item moves.** 75 branches spelled SMALL/MEDIUM/LARGE and 9 spelled SM/MD/LG
 become SM/MED/LG; `ADULT > ADULT MED` becomes `ADULT > MED`; `1XL` becomes `XL`; `10-Aug` and
@@ -248,17 +258,18 @@ Each has a default. Signing off with no change means the default stands.
 
 1. **ADULT UNISEX wording.** Default: two rungs, `ADULT > UNISEX`. Alternative: keep `ADULT UNISEX`
    as one rung name where it already exists.
-2. **Footwear sizes.** Default: stop at age and gender; the age rung keeps its shoe-size guide,
-   `YOUTH (13-6)`, `KIDS (8-12)`, `INFANT (1-7)`. Alternative: shoe-size rungs.
+2. **Footwear sizes.** Decided Oct 6: full clean-up with shoe-size rungs,
+   `HIKING > ADULT > WOMENS > 8.5` (section 5). Still open inside it: plain numbers (default) or a
+   leading zero so the picker sorts 8 before 10.
 3. **Sleeping bags.** Default: `ADULT` and `KIDS` only. Alternative: temperature bands.
 4. **JUNIORS.** Default: retire it; those items become YOUTH.
 5. **Where a sub-type sits.** Default: before age (`SWIMWEAR > BIKINI > ADULT > WOMENS > size`),
    matching RASH GUARDS and PERFORMANCE LS. Alternative: after gender, the way women's swimwear is
    built today.
-6. **Misfiled items.** Default: when the name says one size and the item sits in another, move it and
-   list it on the proposal sheet.
-7. **The two date names.** Default: `10-Aug` becomes `MED (8-10)`, `14-Dec` becomes `LG (12-14)`;
-   confirm the letters against the vendor's run.
+6. **Misfiled items.** Decided Oct 6: yes. When the name says one size and the item sits in another,
+   the clean-up moves it and lists the move on the proposal sheet.
+7. **The two date names.** Decided Oct 6: `10-Aug` becomes `MED (8-10)`, `14-Dec` becomes
+   `LG (12-14)`; the letters get checked against the vendor's run when the proposal sheet is built.
 8. **World Famous Sports runs.** Default: the WFS guide (`SM (4/5)`, `MED (6/7)`, `LG (8/10)`,
    `XL (12/14)`, `2XL (16/18)`) applies under every KIDS and YOUTH branch, so one guide serves all
    vendors.
@@ -272,7 +283,10 @@ Each has a default. Signing off with no change means the default stands.
 2. **Proposal sheet.** VMS produces one spreadsheet from the latest export: new categories (full
    path), renames (old, new, item count), item moves (item, Vendor ID, today's category, proposed
    category, the size word that decided it). Rows can be struck out before anything runs.
-3. **Batch approval.** Changes go in by branch, each batch approved by an admin in VMS.
+3. **Batch approval, assigned by department.** Changes go in by branch. Each batch is assigned to an
+   employee by a rule kept in VMS Settings > Review assignments (everything under FISHING to Jarrett,
+   for example; Dana as the fallback). The assignee works the batch and an admin approves it. The same
+   rules route today's review queue and the mismatches the second pass finds.
 4. **Write-back.** Once VMS is connected to the Lightspeed API, an approved batch creates categories,
    renames, then moves items. Each change is logged with who approved it and when.
 5. **Reversible.** Every batch keeps its before state and can be undone from the log as one action.

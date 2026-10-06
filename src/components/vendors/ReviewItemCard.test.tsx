@@ -15,7 +15,7 @@ vi.mock('@/services/vendors', () => ({ mergeVendors, unmergeVendor, confirmVendo
 
 const base: ReviewItem = {
   id: 'item-1', organization_id: 'org', kind: 'vendor_duplicate', entity_type: 'vendor', entity_id: 'a', title: 'Possible duplicate: "Crosman" and "Crossman"',
-  details: { other_vendor_id: 'b', other_name: 'Crossman', reason: 'Very similar names' }, status: 'pending', created_by: null, created_at: '2026-10-05T00:00:00Z', resolved_by: null, resolved_at: null, resolution_note: null,
+  details: { other_vendor_id: 'b', other_name: 'Crossman', reason: 'Very similar names' }, status: 'pending', created_by: null, created_at: '2026-10-05T00:00:00Z', resolved_by: null, resolved_at: null, resolution_note: null, assigned_to: null, assigned_at: null,
 }
 const a = { id: 'a', name: 'Crosman', lightspeed_name: 'CROSMAN - WWD', aliases: ['CROSMAN - WWD'] }
 const b = { id: 'b', name: 'Crossman', lightspeed_name: 'CROSSMAN', aliases: ['CROSSMAN'] }

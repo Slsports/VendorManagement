@@ -25,6 +25,7 @@ export default function DashboardPage() {
   const canReview = role === 'admin' || role === 'manager' || role === 'buyer'
   const reviewQ = useSupabaseQuery(async () => (organization && canReview ? listReviewItems(organization.id) : []), [organization?.id, canReview])
   const pending = reviewQ.data?.length ?? 0
+  const mine = (reviewQ.data ?? []).filter((i) => i.assigned_to === profile?.id).length
   const ordersQ = useSupabaseQuery(async (): Promise<Record<string, number>> => (organization ? countOrdersByStatus(organization.id) : {}), [organization?.id])
   const openOrders = (ordersQ.data?.open ?? 0) + (ordersQ.data?.awaiting_confirmation ?? 0) + (ordersQ.data?.confirmed ?? 0) + (ordersQ.data?.shipped ?? 0)
   const awaitingPayment = (ordersQ.data?.entered ?? 0) + (ordersQ.data?.ready_to_pay ?? 0)
@@ -58,7 +59,7 @@ export default function DashboardPage() {
               {canReview ? (
                 <>
                   <p className="text-sm text-stone-600">
-                    {reviewQ.isLoading ? 'Checking…' : pending ? `${pending} item${pending === 1 ? '' : 's'} waiting for a decision: merged or duplicate vendors from the Lightspeed import.` : 'Nothing waiting. Imports, the mailbox and the vendor form add items here.'}
+                    {reviewQ.isLoading ? 'Checking…' : pending ? `${pending} item${pending === 1 ? '' : 's'} waiting for a decision${mine ? `, ${mine} assigned to you` : ''}.` : 'Nothing waiting. Imports, the mailbox and the vendor form add items here.'}
                   </p>
                   <Link to={ROUTES.review} className="mt-2 inline-block text-sm font-medium text-brand hover:underline">Open the review queue</Link>
                 </>

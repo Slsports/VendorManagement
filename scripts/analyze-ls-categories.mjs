@@ -50,7 +50,6 @@ const GENDER = /^(mens|men's|men|womens|women's|women|ladies|boys|girls|kids|kid
 const kind = (name) => (GENDER.test(name) ? 'gender' : SIZE.test(name) ? 'size' : null)
 const ITEM_SIZE = /\b(xs|sm|md|lg|xl|xxl|[2-6]xl|small|medium|large|x-large|\d{1,2}t|\d{1,2}m(onths?)?|\d{1,2}-\d{1,2}(m|y)?|\d+ ?(qt|quart|oz|lbs?|gal|person|man|ft|'|in|cm|mm))\b/i
 const ITEM_GENDER = /\b(mens|men's|men|womens|women's|women|ladies|boys|girls|kids?|youth|toddler|infant|baby|adult|unisex|juniors?)\b/i
-const ITEM_BAD_SIZE = /\b(\d{1,2}(\.\d)?\s*(oz|qt|pk|pc|ct|in|mm|cm|lb)|\d{1,2}\/\d{1,2})\b/i
 
 const report = { roots: [], needSize: [], needGender: [], aboveBreakdown: [], mixedNaming: [], orphans: [] }
 for (const [path, n] of nodes) {
