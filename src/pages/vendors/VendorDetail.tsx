@@ -12,6 +12,9 @@ import type { ContactType } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { RouteBadges } from '@/components/vendors/RouteBadges'
 import { ReviewItemCard } from '@/components/vendors/ReviewItemCard'
+import { VendorLinksSection } from '@/components/vendors/VendorLinksSection'
+import { VendorRepGroupCard } from '@/components/vendors/VendorRepGroupCard'
+import { VendorShowsSection } from '@/components/vendors/VendorShowsSection'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
 
 export default function VendorDetailPage() {
@@ -30,7 +33,6 @@ export default function VendorDetailPage() {
   const facts: [string, string | null | undefined][] = [
     ['Lightspeed name', v.lightspeed_name],
     ['Aliases', v.aliases.length ? v.aliases.join(', ') : null],
-    ['Rep group', v.rep_groups?.name],
     ['Rep', [v.rep_name, v.rep_phone].filter(Boolean).join(' · ') || null],
     ['Payment terms', v.payment_terms?.name],
     ['Phone', v.phone],
@@ -69,6 +71,7 @@ export default function VendorDetailPage() {
           <span className="inline-flex flex-wrap items-center gap-2">
             <RouteBadges routes={v.vendor_billing_routes} />
             {v.do_not_order ? <Badge tone="danger">Do not order</Badge> : null}
+            {v.wwd_zero_upcharge ? <Badge tone="success">WWD 0% upcharge</Badge> : null}
             {v.is_delivery_vendor ? <Badge tone="neutral">Delivery vendor</Badge> : null}
             {!v.is_active ? <Badge tone="danger">Inactive</Badge> : null}
           </span>
@@ -164,7 +167,11 @@ export default function VendorDetailPage() {
           )}
         </section>
 
+        <VendorLinksSection vendorId={v.id} organizationId={v.organization_id} userId={profile?.id ?? null} canEdit={canEdit} />
+        <VendorRepGroupCard vendorId={v.id} group={v.rep_groups} />
+
         <ContactsSection vendorId={v.id} contacts={v.vendor_emails} canEdit={canEdit} onChange={vendorQ.refetch} />
+        <VendorShowsSection vendorId={v.id} />
 
         <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-1">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Notes</h2>

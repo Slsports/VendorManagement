@@ -27,8 +27,8 @@ export const ORDERING_FREQUENCY_LABELS: Record<OrderingFrequency, string> = {
 }
 
 export const ORDER_WINDOW_KIND_LABELS: Record<OrderWindowKind, string> = {
-  feb_show: 'February show',
-  aug_show: 'August show',
+  feb_show: 'Spring show (Feb)',
+  aug_show: 'Fall show (Aug/Sept)',
   pre_season: 'Pre-season',
   reorder: 'Reorder',
   delivery: 'Delivery route',
@@ -54,4 +54,13 @@ export function monthsLabel(months: number[]) {
     .sort((a, b) => a - b)
     .map((m) => MONTHS[m - 1])
     .join(', ')
+}
+
+export const LINK_KIND_LABELS: Record<import('@/types').VendorLinkKind, string> = {
+  catalog: 'Catalog',
+  price_list: 'Price list',
+  order_form: 'Order form',
+  specials: 'Show specials',
+  website: 'Website',
+  other: 'Other',
 }

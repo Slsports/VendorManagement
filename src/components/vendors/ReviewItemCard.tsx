@@ -2,12 +2,12 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Check, GitMerge, Scissors, X } from 'lucide-react'
-import { confirmVendorMerge, mergeVendors, resolveReviewItem, unmergeVendor } from '@/services/vendors'
+import { applyVendorRename, confirmVendorMerge, mergeVendors, resolveReviewItem, unmergeVendor } from '@/services/vendors'
 import { ROUTES } from '@/lib/constants'
 import { BILLING_ROUTE_LABELS } from '@/lib/vendors'
 import { errorMessage } from '@/lib/utils'
 import type { BillingRoute, ReviewItem } from '@/types'
-import { Button, Select } from '@/components/ui'
+import { Button, Input, Select } from '@/components/ui'
 
 type VendorRef = { id: string; name: string; lightspeed_name: string | null; aliases: string[] } | null
 
@@ -44,7 +44,8 @@ export function ReviewItemCard({ item, vendor, other, canEdit, onDone }: ReviewI
   const [keep, setKeep] = useState<'this' | 'other'>('this')
   const [mode, setModeState] = useState<'idle' | 'merge' | 'split'>('idle')
   const [splitName, setSplitName] = useState('')
-  const details = (item.details ?? {}) as { other_vendor_id?: string; other_name?: string; reason?: string; lightspeed_names?: string[]; question?: string; routes?: string[] }
+  const details = (item.details ?? {}) as { other_vendor_id?: string; other_name?: string; reason?: string; lightspeed_names?: string[]; question?: string; routes?: string[]; current_name?: string; new_name?: string; alias?: string | null; rep_group_name?: string | null }
+  const [newName, setNewName] = useState(details.new_name ?? '')
   const names = details.lightspeed_names ?? []
   const routeArg = route || null
 
@@ -79,6 +80,13 @@ export function ReviewItemCard({ item, vendor, other, canEdit, onDone }: ReviewI
       <p className="font-medium text-amber-900">{item.title}</p>
       {details.reason ? <p className="text-amber-800">{details.reason}.</p> : null}
       {details.question ? <p className="text-amber-800">{details.question}</p> : null}
+      {item.kind === 'vendor_rename' ? (
+        <p className="text-amber-800">
+          Proposed: <span className="font-medium">{details.new_name}</span>
+          {details.rep_group_name ? <> · rep group <span className="font-medium">{details.rep_group_name}</span></> : null}
+          {details.alias ? <> · keeps "{details.alias}" as an alias</> : null}. The Lightspeed name stays as an alias either way.
+        </p>
+      ) : null}
       {names.length ? (
         <p className="mt-1 text-amber-800">
           Lightspeed names: {names.map((n, i) => <span key={n}>{i ? ' | ' : ''}<span className="font-medium">{n}</span></span>)}
@@ -130,6 +138,12 @@ export function ReviewItemCard({ item, vendor, other, canEdit, onDone }: ReviewI
                 <Button size="sm" disabled={busy} onClick={() => setMode('merge')} leftIcon={<GitMerge className="size-4" aria-hidden="true" />}>Same vendor, merge</Button>
               </div>
             )
+          ) : item.kind === 'vendor_rename' ? (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Input value={newName} onChange={(e) => setNewName(e.target.value)} aria-label="Vendor name" className="h-9 sm:w-72" />
+              <Button size="sm" loading={busy} disabled={!newName.trim()} onClick={() => void run('Name updated', () => applyVendorRename(item.id, newName.trim()))} leftIcon={<Check className="size-4" aria-hidden="true" />}>Use this name</Button>
+              <Button size="sm" variant="ghost" loading={busy} onClick={() => void run('Kept as is', () => resolveReviewItem(item.id, 'rejected', 'Keep name'))}>Keep as is</Button>
+            </div>
           ) : (
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="secondary" loading={busy} onClick={() => void run('Done', () => resolveReviewItem(item.id, 'accepted', 'Handled'))} leftIcon={<Check className="size-4" aria-hidden="true" />}>Handled</Button>

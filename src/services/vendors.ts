@@ -208,6 +208,12 @@ export async function confirmVendorMerge(vendorId: string, route?: BillingRoute 
   if (error) throw error
 }
 
+/** Apply a proposed Lightspeed-name clean-up (review kind vendor_rename), optionally with an edited name. */
+export async function applyVendorRename(itemId: string, newName?: string | null, repGroupId?: string | null): Promise<void> {
+  const { error } = await supabase.rpc('apply_vendor_rename', { p_item: itemId, p_new_name: newName ?? null, p_rep_group_id: repGroupId ?? null })
+  if (error) throw error
+}
+
 // ---- Lightspeed merge report ----
 export async function listVendorMerges(organizationId: string): Promise<VendorMerge[]> {
   const { data, error } = await supabase

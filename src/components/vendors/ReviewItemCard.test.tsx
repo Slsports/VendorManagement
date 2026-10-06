@@ -4,13 +4,14 @@ import { MemoryRouter } from 'react-router-dom'
 import { ReviewItemCard } from './ReviewItemCard'
 import type { ReviewItem } from '@/types'
 
-const { mergeVendors, unmergeVendor, confirmVendorMerge, resolveReviewItem } = vi.hoisted(() => ({
+const { mergeVendors, unmergeVendor, confirmVendorMerge, resolveReviewItem, applyVendorRename } = vi.hoisted(() => ({
   mergeVendors: vi.fn(async () => 'keep-id'),
   unmergeVendor: vi.fn(async () => 'new-id'),
   confirmVendorMerge: vi.fn(async () => undefined),
   resolveReviewItem: vi.fn(async () => undefined),
+  applyVendorRename: vi.fn(async () => undefined),
 }))
-vi.mock('@/services/vendors', () => ({ mergeVendors, unmergeVendor, confirmVendorMerge, resolveReviewItem }))
+vi.mock('@/services/vendors', () => ({ mergeVendors, unmergeVendor, confirmVendorMerge, resolveReviewItem, applyVendorRename }))
 
 const base: ReviewItem = {
   id: 'item-1', organization_id: 'org', kind: 'vendor_duplicate', entity_type: 'vendor', entity_id: 'a', title: 'Possible duplicate: "Crosman" and "Crossman"',
@@ -54,6 +55,19 @@ describe('ReviewItemCard', () => {
     fireEvent.change(screen.getByLabelText('Lightspeed name to split out'), { target: { value: 'CROSMAN - WWD' } })
     fireEvent.click(screen.getByRole('button', { name: /split it out/i }))
     await waitFor(() => expect(unmergeVendor).toHaveBeenCalledWith('a', 'CROSMAN - WWD', null))
+  })
+
+  it('name clean-up: the proposed name can be edited before applying, or kept as is', async () => {
+    const item: ReviewItem = { ...base, id: 'item-3', kind: 'vendor_rename', details: { current_name: 'POLAR MAGNETICS - Maryellen', new_name: 'POLAR MAGNETICS', alias: null, rep_group_name: 'Maryellen Reynolds' } }
+    renderCard(item)
+    expect(screen.getByText(/Maryellen Reynolds/)).toBeInTheDocument()
+    const input = screen.getByLabelText('Vendor name') as HTMLInputElement
+    expect(input.value).toBe('POLAR MAGNETICS')
+    fireEvent.change(input, { target: { value: 'Polar Magnetics' } })
+    fireEvent.click(screen.getByRole('button', { name: /use this name/i }))
+    await waitFor(() => expect(applyVendorRename).toHaveBeenCalledWith('item-3', 'Polar Magnetics'))
+    fireEvent.click(screen.getByRole('button', { name: /keep as is/i }))
+    await waitFor(() => expect(resolveReviewItem).toHaveBeenCalledWith('item-3', 'rejected', 'Keep name'))
   })
 
   it('hides every action for viewers', () => {

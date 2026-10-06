@@ -669,3 +669,42 @@ payments in the sample export show), or when a payment is entered by hand.
   vendor, a name or email-domain hit presets the route to WWD; (2) existing vendors that match
   the list and have no route yet can be tagged WWD with `--apply-routes` (vendors already
   tagged differently are listed for Dana, never changed).
+
+## 2026-10-06 — Rep lines, show lists, catalogs, zero upcharge (Dana's files)
+- **Lines are not vendors.** A line is something a rep carries or a Worldwide show lists.
+  Lines live in their own list (`vendor_directory`, shown as "Lines") with the rep group,
+  catalog link, show specials, which shows it was at (booth, exhibitor) and WWD if it was on
+  a show list. Dana: "I don't really want to add vendors to our database that we have never
+  bought from before, but I may want to look at a catalog." A line becomes a vendor only when
+  someone clicks **Make a vendor**; the rep group, route, catalog link and show history carry over.
+- **Rep groups from rep lists only, never guessed from shared booths.** A booth with many
+  lines is sometimes a rep (DandyLines) and sometimes one company's brands (Coleman: Ball,
+  bubba, FoodSaver). Rep groups are created from the line lists reps send (Donna Hoffman /
+  DandyLines-Diverse Marketing, Maryellen Reynolds). The show list only records booth-mates
+  on each vendor ("shared booth 1615 with …"); turning a booth into a rep group is a human call.
+- **Rep group pages** list the vendors we buy from and the other lines they carry (catalogs).
+  Each vendor page shows its rep group with contact details and "also reps …".
+- **Rep changes** are made on the vendor; history stays in the activity log. Show lists never
+  change a rep group by themselves.
+- **Show lists** (Worldwide Exhibitor Listing + ShowTime line listing PDFs) record attendance
+  per show. Rule restated: on the list ⇒ WWD; not on the list ⇒ nothing (never Direct).
+  Vendors tagged without WWD that appear on a list are reported, not changed. Service
+  booths (payments, insurance, FFL software, NSSF, Guns.com) are skipped. Shows are named
+  as Worldwide names them: **Spring show** (Feb, winter goods) and **Fall show** (Aug/Sept,
+  next summer's goods).
+- **WWD zero upcharge**: Worldwide adds 1.5% to drop-ship most vendors; zero-upcharge vendors
+  do not carry it. Flag on the vendor (`wwd_zero_upcharge`, badge "WWD 0% upcharge") and on lines.
+- **Catalog and price list links/files**: a "Catalogs, price lists & files" section per vendor
+  (type, label, season, link or uploaded file up to 25 MB in the private `vendor-files`
+  bucket). Older ones stay as history. Automatic filing of email attachments starts once the
+  Gmail/Drive connection exists; until then Dana pastes links or uploads PDFs by hand.
+- **Maryellen Reynolds**: all 13 lines are Not Worldwide (Direct, paid through Bill.com).
+  Kaufman set to do-not-order with her note. Trees to Trees stays a catalog-only line (new
+  to her; never ordered).
+- **Donna Hoffman (DandyLines / Diverse Marketing)**: 48 lines with SharePoint catalog
+  folders and Fall 2026 specials; 13 are vendors in VMS (rep group, zero upcharge, catalog
+  and specials links set), 35 are catalog-only lines.
+- **Tagged Lightspeed names** ("POLAR MAGNETICS - Maryellen", "COLEMAN - NEWELL BRANDS"):
+  38 proposals sit in the review queue as "Name clean-ups". Rep tags become the rep group,
+  parent-company tags become aliases, the Lightspeed name is always kept as an alias. Dana
+  approves each (editable) or all at once; nothing is renamed without her.

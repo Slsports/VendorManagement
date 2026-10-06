@@ -18,6 +18,9 @@ const VendorList = lazy(() => import('@/pages/vendors/VendorList'))
 const VendorDetail = lazy(() => import('@/pages/vendors/VendorDetail'))
 const VendorForm = lazy(() => import('@/pages/vendors/VendorForm'))
 const ReviewQueue = lazy(() => import('@/pages/review/ReviewQueue'))
+const RepGroupList = lazy(() => import('@/pages/rep-groups/RepGroupList'))
+const RepGroupDetail = lazy(() => import('@/pages/rep-groups/RepGroupDetail'))
+const LinesPage = lazy(() => import('@/pages/lines/LinesPage'))
 const MergeReport = lazy(() => import('@/pages/review/MergeReport'))
 const OrderList = lazy(() => import('@/pages/orders/OrderList'))
 const OrderDetail = lazy(() => import('@/pages/orders/OrderDetail'))
@@ -85,6 +88,9 @@ export default function App() {
                 <Route path={`${ROUTES.vendors}/new`} element={<VendorForm />} />
                 <Route path={`${ROUTES.vendors}/:id`} element={<VendorDetail />} />
                 <Route path={`${ROUTES.vendors}/:id/edit`} element={<VendorForm />} />
+                <Route path={ROUTES.repGroups} element={<RepGroupList />} />
+                <Route path={`${ROUTES.repGroups}/:id`} element={<RepGroupDetail />} />
+                <Route path={ROUTES.lines} element={<LinesPage />} />
                 <Route path={ROUTES.review} element={<ReviewQueue />} />
                 <Route path={ROUTES.mergeReport} element={<MergeReport />} />
                 <Route path={ROUTES.orders} element={<OrderList />} />

@@ -12,6 +12,8 @@ import {
   Lightbulb,
   Settings,
   ShoppingCart,
+  Tags,
+  Users,
   Truck,
   Undo2,
   Upload,
@@ -57,6 +59,8 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     label: 'Procurement',
     items: [
       { label: 'Vendors', to: ROUTES.vendors, icon: Building2 },
+      { label: 'Rep groups', to: ROUTES.repGroups, icon: Users },
+      { label: 'Lines', to: ROUTES.lines, icon: Tags },
       { label: 'Orders', to: ROUTES.orders, icon: ShoppingCart, children: ORDER_CHILDREN },
       { label: 'Purchase Orders', to: ROUTES.purchaseOrders, icon: ClipboardList },
     ],

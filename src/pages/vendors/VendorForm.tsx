@@ -38,6 +38,7 @@ interface FormState {
   review_note: string
   do_not_order: boolean
   do_not_order_reason: string
+  wwd_zero_upcharge: boolean
   website: string
   phone: string
   fax: string
@@ -63,7 +64,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   name: '', aliases: '', routes: [], defaultRoute: '', rep_group_id: '', payment_terms_id: '', ordering_frequency: '',
-  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', do_not_order: false, do_not_order_reason: '',
+  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', do_not_order: false, do_not_order_reason: '', wwd_zero_upcharge: false,
   website: '', phone: '', fax: '', account_number: '', catalog: '', address: '', city: '', state: '', postal_code: '',
   rep_name: '', rep_phone: '', pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', minimum_order: '', freight_program: '', product_types: '',
   notes: '', return_notes: '', windows: [],
@@ -85,6 +86,7 @@ function formFromVendor(v: VendorDetail): FormState {
     needs_review: v.needs_review,
     review_note: v.review_note ?? '',
     do_not_order: v.do_not_order,
+    wwd_zero_upcharge: v.wwd_zero_upcharge,
     do_not_order_reason: v.do_not_order_reason ?? '',
     website: v.website ?? '', phone: v.phone ?? '', fax: v.fax ?? '', account_number: v.account_number ?? '', catalog: v.catalog ?? '',
     address: v.address ?? '', city: v.city ?? '', state: v.state ?? '', postal_code: v.postal_code ?? '',
@@ -150,6 +152,7 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
       needs_review: form.needs_review,
       review_note: form.needs_review ? nz(form.review_note) : null,
       do_not_order: form.do_not_order,
+      wwd_zero_upcharge: form.wwd_zero_upcharge,
       do_not_order_reason: form.do_not_order ? nz(form.do_not_order_reason) : null,
       website: nz(form.website), phone: nz(form.phone), fax: nz(form.fax), account_number: nz(form.account_number), catalog: nz(form.catalog),
       address: nz(form.address), city: nz(form.city), state: nz(form.state), postal_code: nz(form.postal_code),
@@ -242,6 +245,7 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
           <FormField label="Product types" htmlFor="products" className="sm:col-span-2"><Input id="products" value={form.product_types} onChange={(e) => set('product_types', e.target.value)} placeholder="e.g. Fly line, leader, tippet" /></FormField>
           <div className="flex flex-col gap-2 sm:col-span-2">
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_delivery_vendor} onChange={(e) => set('is_delivery_vendor', e.target.checked)} /> Delivery vendor (drops goods with a paper invoice, no order placed ahead)</label>
+            <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.wwd_zero_upcharge} onChange={(e) => set('wwd_zero_upcharge', e.target.checked)} /> WWD zero-upcharge vendor (no 1.5% drop-ship upcharge through Worldwide)</label>
             {isEdit ? <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_active} onChange={(e) => set('is_active', e.target.checked)} /> Active</label> : null}
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.needs_review} onChange={(e) => set('needs_review', e.target.checked)} /> Flag for review</label>
             {form.needs_review ? <Input aria-label="Review note" value={form.review_note} onChange={(e) => set('review_note', e.target.value)} placeholder="What needs checking?" /> : null}

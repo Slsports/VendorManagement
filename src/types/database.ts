@@ -240,7 +240,7 @@ export type Database = {
           rep_name: string | null; rep_phone: string | null; pickup_address: string | null; pickup_times: string | null
           shipping_contact: string | null; shipping_contact_phone: string | null; return_notes: string | null; google_drive_folder: string | null
           rating: number | null; tier: string | null; ordering_frequency: Database['public']['Enums']['ordering_frequency'] | null
-          is_delivery_vendor: boolean; minimum_order: string | null; freight_program: string | null; product_types: string | null; notes: string | null; needs_review: boolean; review_note: string | null; do_not_order: boolean; do_not_order_reason: string | null; merged_into_id: string | null
+          is_delivery_vendor: boolean; minimum_order: string | null; freight_program: string | null; product_types: string | null; notes: string | null; needs_review: boolean; review_note: string | null; do_not_order: boolean; do_not_order_reason: string | null; merged_into_id: string | null; wwd_zero_upcharge: boolean
           is_active: boolean; created_by: string | null; created_at: string; updated_at: string
         }
         Insert: {
@@ -251,7 +251,7 @@ export type Database = {
           rep_name?: string | null; rep_phone?: string | null; pickup_address?: string | null; pickup_times?: string | null
           shipping_contact?: string | null; shipping_contact_phone?: string | null; return_notes?: string | null; google_drive_folder?: string | null
           rating?: number | null; tier?: string | null; ordering_frequency?: Database['public']['Enums']['ordering_frequency'] | null
-          is_delivery_vendor?: boolean; minimum_order?: string | null; freight_program?: string | null; product_types?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null; do_not_order?: boolean; do_not_order_reason?: string | null; merged_into_id?: string | null
+          is_delivery_vendor?: boolean; minimum_order?: string | null; freight_program?: string | null; product_types?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null; do_not_order?: boolean; do_not_order_reason?: string | null; merged_into_id?: string | null; wwd_zero_upcharge?: boolean
           is_active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string
         }
         Update: {
@@ -262,7 +262,7 @@ export type Database = {
           rep_name?: string | null; rep_phone?: string | null; pickup_address?: string | null; pickup_times?: string | null
           shipping_contact?: string | null; shipping_contact_phone?: string | null; return_notes?: string | null; google_drive_folder?: string | null
           rating?: number | null; tier?: string | null; ordering_frequency?: Database['public']['Enums']['ordering_frequency'] | null
-          is_delivery_vendor?: boolean; minimum_order?: string | null; freight_program?: string | null; product_types?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null; do_not_order?: boolean; do_not_order_reason?: string | null; merged_into_id?: string | null
+          is_delivery_vendor?: boolean; minimum_order?: string | null; freight_program?: string | null; product_types?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null; do_not_order?: boolean; do_not_order_reason?: string | null; merged_into_id?: string | null; wwd_zero_upcharge?: boolean
           is_active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string
         }
         Relationships: [
@@ -350,11 +350,30 @@ export type Database = {
         ]
       }
       vendor_directory: {
-        Row: { id: string; organization_id: string; source: string; source_label: string | null; name: string; name_key: string; route: Database['public']['Enums']['billing_route']; email_domain: string | null; email: string | null; website: string | null; phone: string | null; rep_name: string | null; booth: string | null; data: Json; matched_vendor_id: string | null; created_at: string }
-        Insert: { id?: string; organization_id: string; source: string; source_label?: string | null; name: string; route?: Database['public']['Enums']['billing_route']; email_domain?: string | null; email?: string | null; website?: string | null; phone?: string | null; rep_name?: string | null; booth?: string | null; data?: Json; matched_vendor_id?: string | null; created_at?: string }
-        Update: { id?: string; organization_id?: string; source?: string; source_label?: string | null; name?: string; route?: Database['public']['Enums']['billing_route']; email_domain?: string | null; email?: string | null; website?: string | null; phone?: string | null; rep_name?: string | null; booth?: string | null; data?: Json; matched_vendor_id?: string | null; created_at?: string }
+        Row: { id: string; organization_id: string; source: string; source_label: string | null; name: string; name_key: string; route: Database['public']['Enums']['billing_route']; email_domain: string | null; email: string | null; website: string | null; phone: string | null; rep_name: string | null; booth: string | null; data: Json; matched_vendor_id: string | null; created_at: string; rep_group_id: string | null; catalog_url: string | null; specials: string | null; specials_label: string | null; zero_upcharge: boolean; notes: string | null; updated_at: string }
+        Insert: { id?: string; organization_id: string; source: string; source_label?: string | null; name: string; route?: Database['public']['Enums']['billing_route']; email_domain?: string | null; email?: string | null; website?: string | null; phone?: string | null; rep_name?: string | null; booth?: string | null; data?: Json; matched_vendor_id?: string | null; created_at?: string; rep_group_id?: string | null; catalog_url?: string | null; specials?: string | null; specials_label?: string | null; zero_upcharge?: boolean; notes?: string | null; updated_at?: string }
+        Update: { id?: string; organization_id?: string; source?: string; source_label?: string | null; name?: string; route?: Database['public']['Enums']['billing_route']; email_domain?: string | null; email?: string | null; website?: string | null; phone?: string | null; rep_name?: string | null; booth?: string | null; data?: Json; matched_vendor_id?: string | null; created_at?: string; rep_group_id?: string | null; catalog_url?: string | null; specials?: string | null; specials_label?: string | null; zero_upcharge?: boolean; notes?: string | null; updated_at?: string }
         Relationships: [
           { foreignKeyName: 'vendor_directory_matched_vendor_id_fkey'; columns: ['matched_vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+          { foreignKeyName: 'vendor_directory_rep_group_id_fkey'; columns: ['rep_group_id']; isOneToOne: false; referencedRelation: 'rep_groups'; referencedColumns: ['id'] },
+        ]
+      }
+      show_appearances: {
+        Row: { id: string; organization_id: string; show_code: string; show_label: string; show_date: string | null; line_id: string; vendor_id: string | null; booth: string | null; exhibitor: string | null; is_new: boolean; created_at: string }
+        Insert: { id?: string; organization_id: string; show_code: string; show_label: string; show_date?: string | null; line_id: string; vendor_id?: string | null; booth?: string | null; exhibitor?: string | null; is_new?: boolean; created_at?: string }
+        Update: { id?: string; organization_id?: string; show_code?: string; show_label?: string; show_date?: string | null; line_id?: string; vendor_id?: string | null; booth?: string | null; exhibitor?: string | null; is_new?: boolean; created_at?: string }
+        Relationships: [
+          { foreignKeyName: 'show_appearances_line_id_fkey'; columns: ['line_id']; isOneToOne: false; referencedRelation: 'vendor_directory'; referencedColumns: ['id'] },
+          { foreignKeyName: 'show_appearances_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+        ]
+      }
+      vendor_links: {
+        Row: { id: string; organization_id: string; vendor_id: string | null; line_id: string | null; kind: 'catalog' | 'price_list' | 'order_form' | 'specials' | 'website' | 'other'; label: string; url: string | null; storage_path: string | null; file_name: string | null; file_size: number | null; mime_type: string | null; season_label: string | null; received_at: string | null; source: 'manual' | 'rep_list' | 'email' | 'vendor_form'; notes: string | null; created_by: string | null; created_at: string }
+        Insert: { id?: string; organization_id: string; vendor_id?: string | null; line_id?: string | null; kind: 'catalog' | 'price_list' | 'order_form' | 'specials' | 'website' | 'other'; label: string; url?: string | null; storage_path?: string | null; file_name?: string | null; file_size?: number | null; mime_type?: string | null; season_label?: string | null; received_at?: string | null; source?: 'manual' | 'rep_list' | 'email' | 'vendor_form'; notes?: string | null; created_by?: string | null; created_at?: string }
+        Update: { id?: string; organization_id?: string; vendor_id?: string | null; line_id?: string | null; kind?: 'catalog' | 'price_list' | 'order_form' | 'specials' | 'website' | 'other'; label?: string; url?: string | null; storage_path?: string | null; file_name?: string | null; file_size?: number | null; mime_type?: string | null; season_label?: string | null; received_at?: string | null; source?: 'manual' | 'rep_list' | 'email' | 'vendor_form'; notes?: string | null; created_by?: string | null; created_at?: string }
+        Relationships: [
+          { foreignKeyName: 'vendor_links_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+          { foreignKeyName: 'vendor_links_line_id_fkey'; columns: ['line_id']; isOneToOne: false; referencedRelation: 'vendor_directory'; referencedColumns: ['id'] },
         ]
       }
     }
@@ -374,6 +393,8 @@ export type Database = {
       confirm_vendor_merge: { Args: { p_vendor: string; p_route?: Database['public']['Enums']['billing_route'] | null }; Returns: undefined }
       resolve_review_item: { Args: { p_item: string; p_status: Database['public']['Enums']['review_status']; p_note?: string | null }; Returns: undefined }
       directory_route_for: { Args: { p_org: string; p_name: string; p_domain?: string | null }; Returns: Database['public']['Enums']['billing_route'] | null }
+      promote_line_to_vendor: { Args: { p_line: string; p_route?: Database['public']['Enums']['billing_route'] | null }; Returns: string }
+      apply_vendor_rename: { Args: { p_item: string; p_new_name?: string | null; p_rep_group_id?: string | null }; Returns: undefined }
     }
     Enums: {
       user_role: 'admin' | 'manager' | 'buyer' | 'viewer' | 'uploader'

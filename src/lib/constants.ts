@@ -72,6 +72,8 @@ export const ROUTES = {
   settings: '/settings',
   upload: '/upload',
   search: '/search',
+  repGroups: '/rep-groups',
+  lines: '/lines',
   review: '/review',
   mergeReport: '/review/merges',
 } as const
