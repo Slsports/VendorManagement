@@ -781,3 +781,17 @@ payments in the sample export show), or when a payment is entered by hand.
 - Workspace status: Business Starter, 8 licenses; users orders, dana, jarrett, trevor, cat,
   annette, raelee (new, nothing to migrate); jobs@ becomes an alias on Dana. Migration from
   Microsoft 365 (GoDaddy) via the Admin console data import, dana@ first as the test.
+
+## 2026-10-06 — Lightspeed categories are not trusted yet; category clean-up is the first LS job
+- Context from Dana: before 2022 anyone could enter orders and items, so Lightspeed categories
+  are unreliable. Fixed as found since then; ~26,000 SKUs to start, many still wrong.
+- VMS derives nothing from LS categories (fishing flag, reports, vendor product types) until
+  the clean-up pass. The **first job after the Lightspeed connection**: pull every item with
+  description, vendor, category and sales; flag items whose description does not fit the
+  category (Claude reads descriptions against the category list and the naming rules) with a
+  suggested category; a review page grouped by vendor and suggested category with bulk
+  approve; write back to Lightspeed only what was approved, every change logged and
+  reversible. Naming rules document from Dana feeds this.
+- Fishing flag today is hand-set (40 vendors). Coyote Vision and Sona are general vendors
+  that happen to sell some fishing items: not flagged. Coast, Frogg Toggs, Smith's 1886 and
+  Mike Reddin flagged on Dana's say-so.
