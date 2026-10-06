@@ -868,3 +868,8 @@ payments in the sample export show), or when a payment is entered by hand.
   `5 XL`, `6 2XL`, `7 3XL`, `8 4XL`, guides after them (`3 MED (10/12)`); `ONE SIZE` takes no
   number. Applies to clothing, footwear sold by letter, pet items and helmets. The 140 branches
   spelled SMALL/MEDIUM/LARGE, SM/MD/LG or XS–XL today all take the numbered names in the clean-up.
+
+## 2026-10-06 — Only Dana is an admin
+- Dana: "No one should be admin but me." Trevor and Jarrett stay managers. Role changes are
+  admin-only in the database (the profiles policy and the role-column trigger), so nobody can
+  promote themselves; the Settings > Users page, when built, lets Dana alone change roles.
