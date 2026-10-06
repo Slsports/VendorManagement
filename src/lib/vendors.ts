@@ -63,4 +63,24 @@ export const LINK_KIND_LABELS: Record<import('@/types').VendorLinkKind, string> 
   specials: 'Show specials',
   website: 'Website',
   other: 'Other',
+  invoice: 'Invoice',
+  confirmation: 'Order confirmation',
+  order: 'Order',
+  packing_slip: 'Packing slip',
+  payment: 'Payment',
 }
+
+export const ORDER_SEASON_LABELS: Record<import('@/types').OrderSeason, string> = { summer: 'Summer', winter: 'Winter' }
+export const PAID_VIA_LABELS: Record<NonNullable<import('@/types').Order['paid_via']>, string> = { billcom: 'Bill.com', wwd: 'Worldwide portal', card: 'Credit card', other: 'Other' }
+
+export function showLabel(code: string | null | undefined): string | null {
+  if (!code) return null
+  const m = code.match(/^wwd_(spring|fall)_(\d{4})$/)
+  return m ? `${m[1] === 'spring' ? 'Spring' : 'Fall'} show ${m[2]}` : code
+}
+
+export function money(n: number | null | undefined): string {
+  if (n === null || n === undefined) return ''
+  return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+}
+

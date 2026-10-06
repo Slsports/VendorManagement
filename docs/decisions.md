@@ -745,3 +745,25 @@ payments in the sample export show), or when a payment is entered by hand.
 - **Not-WWD vendors** get no automatic show tag; it can be set by hand on the order.
 - The show tag is an editable field on the order; the ordering guide and the "what did we
   buy at the last show" views use whatever is on the order.
+
+## 2026-10-06 — Orders arrive early: the Summer WWD Order Guide (Placed Order Summary) is in
+- Dana uploaded the "8-25-26 Summer WWD Order Guide v6" workbook built from the Placed Order
+  Summary (Open / Entered / Paid tabs, by buyer and by season) and asked for every order and
+  payment date to show on the vendor record, with the paper behind it attached later.
+  The Phase 4 orders table was created now to hold it (one row per order, every column the
+  sheet tracks, status history, documents). Line items, check-in and the pipeline stay Phase 4.
+- **Re-uploadable**: orders are keyed by vendor + date + what was ordered + cost + store, so
+  the fresh copy of the living sheet before go-live updates in place (status changes included).
+- **Vendor matching**: 312 of the 328 sheet spellings linked to existing vendors (sheet
+  spellings kept as aliases: "WFS" style differences stop mattering next time); 16 we have
+  ordered from but had no record for were created and flagged to check for duplicates.
+  Spellings that differ only by a rep tag or "(…)" are one vendor.
+- **From the guide onto the vendor**: Category (61 categories created), Report owner (Trevor
+  64, Jarrett 52, Dana 34, shown on the vendor page until they have logins), "Do Not Order /
+  Out of Biz" → do-not-order with the reason, "Do Not Need" → a note.
+- **Statuses**: 1-Open → open, 2-Entered → entered, 3-Paid → paid. Both paid-date columns
+  are kept: "Date Paid (Dana)" = Bill.com, "Paid Date (WWD)" = Worldwide portal.
+- **Show tag** inferred per the earlier rule for WWD orders (617 of 1,104 got one; the vendor
+  page shows a "?" when it is inferred). Hand-typed dates that are not real dates (June 31,
+  "8/22/25 & 9/3/25") are kept as typed on the order, not guessed.
+- **Dashboard**: Open orders and Payments due now count real orders.

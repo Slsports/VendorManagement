@@ -16,6 +16,7 @@ import { VendorLinksSection } from '@/components/vendors/VendorLinksSection'
 import { VendorRepGroupCard } from '@/components/vendors/VendorRepGroupCard'
 import { VendorShowsSection } from '@/components/vendors/VendorShowsSection'
 import { PartnerContactsCard } from '@/components/vendors/PartnerContactsCard'
+import { VendorOrdersSection } from '@/components/vendors/VendorOrdersSection'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
 
 export default function VendorDetailPage() {
@@ -33,6 +34,7 @@ export default function VendorDetailPage() {
 
   const facts: [string, string | null | undefined][] = [
     ['Lightspeed name', v.lightspeed_name],
+    ['Report owner', v.report_owner],
     ['Aliases', v.aliases.length ? v.aliases.join(', ') : null],
     ['Rep', [v.rep_name, v.rep_phone].filter(Boolean).join(' · ') || null],
     ['Payment terms', v.payment_terms?.name],
@@ -174,6 +176,7 @@ export default function VendorDetailPage() {
 
         <ContactsSection vendorId={v.id} contacts={v.vendor_emails} canEdit={canEdit} onChange={vendorQ.refetch} />
         <VendorShowsSection vendorId={v.id} />
+        <VendorOrdersSection vendorId={v.id} />
 
         <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-1">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Notes</h2>

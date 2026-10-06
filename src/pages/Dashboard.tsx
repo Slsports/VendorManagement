@@ -3,6 +3,7 @@ import { AlertTriangle, Banknote, CalendarClock, ClipboardCheck, Inbox, Shopping
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listReviewItems } from '@/services/vendors'
+import { countOrdersByStatus } from '@/services/orders'
 import { ROUTES } from '@/lib/constants'
 import { PageHeader } from '@/components/shared/PageHeader'
 
@@ -24,6 +25,9 @@ export default function DashboardPage() {
   const canReview = role === 'admin' || role === 'manager' || role === 'buyer'
   const reviewQ = useSupabaseQuery(async () => (organization && canReview ? listReviewItems(organization.id) : []), [organization?.id, canReview])
   const pending = reviewQ.data?.length ?? 0
+  const ordersQ = useSupabaseQuery(async (): Promise<Record<string, number>> => (organization ? countOrdersByStatus(organization.id) : {}), [organization?.id])
+  const openOrders = (ordersQ.data?.open ?? 0) + (ordersQ.data?.awaiting_confirmation ?? 0) + (ordersQ.data?.confirmed ?? 0) + (ordersQ.data?.shipped ?? 0)
+  const awaitingPayment = (ordersQ.data?.entered ?? 0) + (ordersQ.data?.ready_to_pay ?? 0)
 
   return (
     <div>
@@ -39,8 +43,8 @@ export default function DashboardPage() {
               <p className="text-sm font-medium text-stone-600">{label}</p>
               <Icon className="size-5 text-stone-400" aria-hidden="true" />
             </div>
-            <p className="mt-3 text-3xl font-semibold tracking-tight text-stone-300">—</p>
-            <p className="mt-1 text-xs text-stone-400">Live in Phase {phase}</p>
+            {label === 'Open orders' ? <p className="mt-3 text-3xl font-semibold tracking-tight text-stone-900">{ordersQ.data ? openOrders : '—'}</p> : label === 'Payments due' ? <p className="mt-3 text-3xl font-semibold tracking-tight text-stone-900">{ordersQ.data ? awaitingPayment : '—'}</p> : <p className="mt-3 text-3xl font-semibold tracking-tight text-stone-300">—</p>}
+            {label === 'Open orders' ? <p className="mt-1 text-xs text-stone-400">placed, not yet received</p> : label === 'Payments due' ? <p className="mt-1 text-xs text-stone-400">entered, not yet paid</p> : <p className="mt-1 text-xs text-stone-400">Live in Phase {phase}</p>}
           </div>
         ))}
       </section>

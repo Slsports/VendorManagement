@@ -21,7 +21,8 @@
     "import:show-lists": "node scripts/import-show-lists.mjs",
     "import:rep-lines": "node scripts/import-rep-lines.mjs",
     "propose:renames": "node scripts/propose-vendor-renames.mjs",
-    "import:wwd-roster": "node scripts/import-wwd-roster.mjs"
+    "import:wwd-roster": "node scripts/import-wwd-roster.mjs",
+    "import:order-guide": "node scripts/import-order-guide.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2",
