@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { AlertTriangle, Ban, Plus, Search } from 'lucide-react'
+import { AlertTriangle, Ban, Fish, Plus, Search } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listVendors } from '@/services/vendors'
@@ -22,6 +22,7 @@ export default function VendorListPage() {
   const route = (params.get('route') ?? '') as RouteFilter
   const review = params.get('review') === '1'
   const dno = params.get('dno') === '1'
+  const fishing = params.get('fishing') === '1'
   const [draft, setDraft] = useState(search)
 
   const { data, error, isLoading } = useSupabaseQuery(() => listVendors({ includeInactive: false }), [])
@@ -35,8 +36,9 @@ export default function VendorListPage() {
     else if (route) list = list.filter((v) => v.vendor_billing_routes.some((r) => r.route === route))
     if (review) list = list.filter((v) => v.needs_review)
     if (dno) list = list.filter((v) => v.do_not_order)
+    if (fishing) list = list.filter((v) => v.is_fishing)
     return list
-  }, [data, search, route, review, dno])
+  }, [data, search, route, review, dno, fishing])
 
   function setParam(key: string, value: string) {
     const next = new URLSearchParams(params)
@@ -48,6 +50,7 @@ export default function VendorListPage() {
   const total = data?.length ?? 0
   const flagged = data?.filter((v) => v.needs_review).length ?? 0
   const doNotOrder = data?.filter((v) => v.do_not_order).length ?? 0
+  const fishingCount = data?.filter((v) => v.is_fishing).length ?? 0
 
   return (
     <div>
@@ -94,6 +97,9 @@ export default function VendorListPage() {
           <Button type="button" variant={dno ? 'danger' : 'secondary'} onClick={() => setParam('dno', dno ? '' : '1')} leftIcon={<Ban className="size-4" aria-hidden="true" />}>
             Do not order{doNotOrder ? ` (${doNotOrder})` : ''}
           </Button>
+          <Button type="button" variant={fishing ? 'primary' : 'secondary'} onClick={() => setParam('fishing', fishing ? '' : '1')} leftIcon={<Fish className="size-4" aria-hidden="true" />}>
+            Fishing{fishingCount ? ` (${fishingCount})` : ''}
+          </Button>
         </div>
       </form>
 
@@ -129,6 +135,7 @@ export default function VendorListPage() {
                     <td className="hidden px-4 py-2.5 text-stone-600 lg:table-cell">{v.phone ?? '—'}</td>
                     <td className="px-4 py-2.5 text-right">
                       {v.do_not_order ? <Badge tone="danger" className="mr-1">Do not order</Badge> : null}
+                      {v.is_fishing ? <Badge tone="info" className="mr-1">Fishing</Badge> : null}
                       {v.needs_review ? <Badge tone="warning">Review</Badge> : null}
                       {v.is_delivery_vendor ? <Badge tone="neutral" className="ml-1">Delivery</Badge> : null}
                     </td>

@@ -75,6 +75,7 @@ export default function VendorDetailPage() {
             <RouteBadges routes={v.vendor_billing_routes} />
             {v.do_not_order ? <Badge tone="danger">Do not order</Badge> : null}
             {v.wwd_zero_upcharge ? <Badge tone="success">WWD 0% upcharge</Badge> : null}
+            {v.is_fishing ? <Badge tone="info">Fishing</Badge> : null}
             {v.is_delivery_vendor ? <Badge tone="neutral">Delivery vendor</Badge> : null}
             {!v.is_active ? <Badge tone="danger">Inactive</Badge> : null}
           </span>
