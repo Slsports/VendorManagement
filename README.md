@@ -35,6 +35,7 @@ Migrations are plain SQL in `supabase/migrations/` and apply in filename order.
 | `npm run propose:renames -- [--dry]` | Proposes clean-ups for Lightspeed names carrying a rep or parent-company tag, as review items for approval. |
 | `npm run import:wwd-roster -- --file roster.pdf --member 816 --main-phone 253-872-8746 [--dry]` | Loads Worldwide's team roster: member number, main line, every person, and marks the AR specialist for our member range, the vendor liaisons and the warehouse for the vendor-page box. |
 | `npm run import:order-guide -- --file guide.xlsx [--match-hints "Sheet name=VMS vendor;…"] [--dry]` | Loads the Placed Order Summary / Summer WWD Order Guide workbook: orders upserted by a stable key (safe to re-run on the living sheet), vendors linked or created, categories, report owners, do-not-order flags, inferred show tags. |
+| `npm run analyze:ls-categories -- --items items.xlsx --categories categories.xlsx [--min 5] [--json report.json]` | Reads a Lightspeed item export plus category export and reports where size / gender-age breakdowns are missing, items sitting above an existing breakdown, mixed size naming, and item paths that are not real categories. Read-only. |
 
 If the Management API token is not available, open the Supabase SQL Editor, paste the contents
 of the migration file, and run it. The result is identical.
