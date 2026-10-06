@@ -348,6 +348,14 @@ export type Database = {
           { foreignKeyName: 'vendor_ratings_rated_by_fkey'; columns: ['rated_by']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
         ]
       }
+      vendor_item_rules: {
+        Row: { id: string; organization_id: string; vendor_id: string; scope: 'type' | 'item'; vendor_item_id: string | null; name: string; rule: 'stop' | 'keep' | 'reorder_first' | 'watch'; reason: string | null; source: string | null; as_of: string | null; created_by: string | null; created_at: string }
+        Insert: { id?: string; organization_id: string; vendor_id: string; scope: 'type' | 'item'; vendor_item_id?: string | null; name: string; rule: 'stop' | 'keep' | 'reorder_first' | 'watch'; reason?: string | null; source?: string | null; as_of?: string | null; created_by?: string | null; created_at?: string }
+        Update: { id?: string; organization_id?: string; vendor_id?: string; scope?: 'type' | 'item'; vendor_item_id?: string | null; name?: string; rule?: 'stop' | 'keep' | 'reorder_first' | 'watch'; reason?: string | null; source?: string | null; as_of?: string | null; created_by?: string | null; created_at?: string }
+        Relationships: [
+          { foreignKeyName: 'vendor_item_rules_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+        ]
+      }
       review_assignment_rules: {
         Row: { id: string; organization_id: string; match_kind: 'vendor' | 'fishing' | 'department' | 'review_kind' | 'fallback'; match_value: string | null; vendor_id: string | null; assignee_id: string; priority: number; is_active: boolean; note: string | null; created_by: string | null; created_at: string }
         Insert: { id?: string; organization_id: string; match_kind: 'vendor' | 'fishing' | 'department' | 'review_kind' | 'fallback'; match_value?: string | null; vendor_id?: string | null; assignee_id: string; priority?: number; is_active?: boolean; note?: string | null; created_by?: string | null; created_at?: string }

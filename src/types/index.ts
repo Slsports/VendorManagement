@@ -43,3 +43,5 @@ export type ScoreDimension = VendorRating['dimension']
 export type VendorScorecard = Database['public']['Functions']['vendor_scorecards']['Returns'][number]
 export type VendorStanding = Tables<'vendors'>['standing']
 export type StandingTag = 'shipping_fees' | 'damaged_goods' | 'order_mistakes' | 'unreliable_delivery' | 'bad_attitude' | 'slow_credits' | 'out_of_business' | 'discontinued_line' | 'overstocked' | 'other'
+export type VendorItemRule = Tables<'vendor_item_rules'>
+export type ItemRule = VendorItemRule['rule']

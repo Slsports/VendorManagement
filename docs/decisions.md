@@ -974,3 +974,30 @@ payments in the sample export show), or when a payment is entered by hand.
 - Planned for the Lightspeed connection: item-level tags per vendor (stop ordering these items,
   keep ordering those), driven by sell-through: push the fast turns, slow or stop the slow ones.
   The vendor standing says whether to order from the vendor at all; the item tags say what.
+
+## 2026-10-07 — Ty analysis loaded; item-level buying rules exist now
+- Dana uploaded "Ty Vendor Analysis v3" (Word for reading, Markdown for loading). Loaded into Ty's
+  record: account number, rep Charlene Lal as a contact, free shipping "sometimes" at $2,500 with
+  the half-freight floor at $1,000 in the freight notes, standing on hold with the review date
+  moved to 2027-01-18 (count week), the decision rule in the standing reason, four vendor notes
+  (decision rule and why $1,850; product types stop/keep with the numbers; nine buying rules
+  learned; open items), a note on the ten backordered order lines to confirm status before the
+  next order, and a category review item for the three Franklin pump items filed under
+  WATERSPORTS.
+- New table **vendor item rules** (per vendor: product type or one item by Vendor ID; reorder
+  first / keep / watch / stop; reason, source, as-of date) with a "What to order from them"
+  section on the vendor page. Ty seeded with 12 type rules and 36 item rules (27 stop, 9 reorder
+  first). The standing says whether to order from a vendor; the item rules say what. The
+  Lightspeed connection ties them to live items and lets sell-through propose new ones.
+- Carry-forward facts from the analysis: Ty renamed Sparkle to Floppy (same item numbers; old
+  Lightspeed records still say Sparkle); descriptions before 2023 are unreliable, item numbers
+  and UPCs are not; zero sales with zero stock is a stockout, not a dead item.
+- Open: source a North American wildlife plush vendor (bear, deer, fox, owl, raccoon); Ty has
+  effectively exited the category and it is the store's best-performing one (about 89 percent
+  sell-through). Goes on the Needs list when it exists.
+- **Lightspeed merge defect** (ticket 215475329366619): merging an item that was archived then
+  unarchived loses its sales history; reproduced twice, no engineering answer. The item clean-up
+  must check archive history before any merge and never merge such items through Lightspeed's
+  own merge until the defect is fixed. Several thousand duplicate records may be affected.
+- The Word file is not attached yet: VMS file uploads run under a signed-in user, which this
+  session does not have. Dana drops it on Ty's page under Links & files.
