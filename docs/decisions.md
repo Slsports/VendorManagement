@@ -1001,3 +1001,16 @@ payments in the sample export show), or when a payment is entered by hand.
   own merge until the defect is fixed. Several thousand duplicate records may be affected.
 - The Word file is not attached yet: VMS file uploads run under a signed-in user, which this
   session does not have. Dana drops it on Ty's page under Links & files.
+
+## 2026-10-07 — Ty backorders; VMS watches for patterns once Lightspeed is connected
+- Dana believes every Ty backorder was cancelled by email with Charlene. First job for the Gmail
+  connection: find those emails in the orders mailbox, confirm, and close the ten backordered
+  Ty lines (noted on each line).
+- Dana: the Ty analysis is the model for every vendor, and with the Lightspeed connection VMS
+  should look for patterns all the time: monthly and seasonal sales by vendor and item, items
+  to stop buying, the best time to buy, and when to hold off. Planned as the **pattern engine**
+  that runs beside the replenishment check: per vendor, sell-through by product type and item,
+  stockouts (zero sales with zero stock), velocity since arrival, shrink, seasonal windows by
+  store; it proposes item rules (stop / keep / reorder first / watch) and standing changes
+  (hold, review dates) into the review queue, never changes them on its own. Each proposal
+  carries the numbers that drove it, the way the Ty document does.
