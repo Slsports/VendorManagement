@@ -6,6 +6,7 @@ export const REVIEW_KIND_LABELS: Record<string, { title: string; help: string }>
   vendor_duplicate: { title: 'Possible duplicates', help: 'Two records that look alike. Keep both, or merge into the one you choose.' },
   vendor_rename: { title: 'Name clean-ups', help: 'Lightspeed names that carried a rep or parent-company tag. Edit the name if you like, then use it; the old name stays as an alias.' },
   email_sender: { title: 'Who is this mail from?', help: 'One answer per sender files all its mail, now and later. Rep groups and services that send for many vendors are filed email by email, by the vendor each one names.' },
+  vendor_assignment: { title: 'Who orders from these vendors?', help: 'Trevor ran their sales reports before the show, so they went to Jarrett. Keep Jarrett, or pick who orders from the vendor.' },
   vendor_marker: { title: 'Lightspeed markers', help: 'Names that carried an asterisk in Lightspeed.' },
   category_change: { title: 'Category clean-up', help: 'Proposed Lightspeed category changes, by batch. Nothing changes in Lightspeed until a batch is approved.' },
 }

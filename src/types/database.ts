@@ -128,7 +128,7 @@ export type Database = {
           is_active: boolean
           created_at: string
           updated_at: string
-       ; email_signature: string | null }
+       ; email_signature: string | null; places_orders: boolean }
         Insert: {
           id: string
           organization_id: string
@@ -140,7 +140,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null }
+       ; email_signature?: string | null; places_orders?: boolean }
         Update: {
           id?: string
           organization_id?: string
@@ -152,7 +152,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null }
+       ; email_signature?: string | null; places_orders?: boolean }
         Relationships: [
           {
             foreignKeyName: 'profiles_organization_id_fkey'
@@ -516,6 +516,7 @@ export type Database = {
       confirm_vendor_merge: { Args: { p_vendor: string; p_route?: Database['public']['Enums']['billing_route'] | null }; Returns: undefined }
       resolve_review_item: { Args: { p_item: string; p_status: Database['public']['Enums']['review_status']; p_note?: string | null }; Returns: undefined }
       assign_review_item: { Args: { p_item: string; p_profile?: string | null }; Returns: undefined }
+      set_vendor_assignee: { Args: { p_vendor: string; p_profile: string | null }; Returns: undefined }
       resolve_email_sender: { Args: { p_sender: string; p_kind: 'vendor' | 'rep_group' | 'platform' | 'not_vendor' | 'internal'; p_vendor?: string | null; p_rep_group?: string | null }; Returns: number }
       link_email_thread_order: { Args: { p_thread: string; p_order: string | null }; Returns: undefined }
       set_email_thread_view: { Args: { p_thread: string; p_view: 'attention' | 'offers'; p_teach?: boolean }; Returns: number }

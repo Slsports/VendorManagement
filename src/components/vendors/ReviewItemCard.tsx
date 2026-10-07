@@ -9,6 +9,7 @@ import { errorMessage } from '@/lib/utils'
 import type { BillingRoute, ReviewItem } from '@/types'
 import { Button, Input, Select } from '@/components/ui'
 import { EmailSenderReview } from '@/components/mail/EmailSenderReview'
+import { VendorAssignmentActions } from '@/components/vendors/VendorAssignmentActions'
 
 type VendorRef = { id: string; name: string; lightspeed_name: string | null; aliases: string[] } | null
 
@@ -38,6 +39,7 @@ const ROUTE_OPTIONS: { value: RouteChoice; label: string }[] = [
  * One review item with real actions:
  *  - vendor_merge (auto-merged at import): Confirm it is one vendor, or Split a name back out.
  *  - vendor_duplicate (two records that look alike): Keep both, or Merge into the one you choose.
+ *  - vendor_assignment (who orders from it): keep the proposed person or pick another.
  *  - vendor_marker and anything else: Done / Dismiss.
  * Every merge, confirm or split can state WWD / Faire / Not WWD so the result's usual route is right.
  */
@@ -47,7 +49,7 @@ export function ReviewItemCard({ item, vendor, other, canEdit, onDone, aside }: 
   const [keep, setKeep] = useState<'this' | 'other'>('this')
   const [mode, setModeState] = useState<'idle' | 'merge' | 'split'>('idle')
   const [splitName, setSplitName] = useState('')
-  const details = (item.details ?? {}) as { other_vendor_id?: string; other_name?: string; reason?: string; lightspeed_names?: string[]; question?: string; routes?: string[]; current_name?: string; new_name?: string; alias?: string | null; rep_group_name?: string | null }
+  const details = (item.details ?? {}) as { other_vendor_id?: string; other_name?: string; reason?: string; lightspeed_names?: string[]; question?: string; routes?: string[]; current_name?: string; new_name?: string; alias?: string | null; rep_group_name?: string | null; proposed_assignee_id?: string }
   const [newName, setNewName] = useState(details.new_name ?? '')
   const names = details.lightspeed_names ?? []
   const routeArg = route || null
@@ -156,6 +158,8 @@ export function ReviewItemCard({ item, vendor, other, canEdit, onDone, aside }: 
                 <Button size="sm" disabled={busy} onClick={() => setMode('merge')} leftIcon={<GitMerge className="size-4" aria-hidden="true" />}>Same vendor, merge</Button>
               </div>
             )
+          ) : item.kind === 'vendor_assignment' && vendor ? (
+            <VendorAssignmentActions vendorId={vendor.id} proposedId={details.proposed_assignee_id ?? null} onDone={() => onDone()} />
           ) : item.kind === 'vendor_rename' ? (
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Input value={newName} onChange={(e) => setNewName(e.target.value)} aria-label="Vendor name" className="h-9 sm:w-72" />

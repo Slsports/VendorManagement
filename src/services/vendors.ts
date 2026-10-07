@@ -157,6 +157,12 @@ export async function listReviewItems(organizationId: string, status: ReviewItem
   return data ?? []
 }
 
+/** Set (or keep) who orders from a vendor; closes its "who orders from this vendor" review. */
+export async function setVendorAssignee(vendorId: string, profileId: string | null): Promise<void> {
+  const { error } = await supabase.rpc('set_vendor_assignee', { p_vendor: vendorId, p_profile: profileId })
+  if (error) throw error
+}
+
 export async function resolveReviewItem(id: string, status: 'accepted' | 'rejected', note?: string): Promise<void> {
   const { error } = await supabase.rpc('resolve_review_item', { p_item: id, p_status: status, p_note: note ?? null })
   if (error) throw error

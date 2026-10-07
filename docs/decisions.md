@@ -1216,3 +1216,18 @@ payments in the sample export show), or when a payment is entered by hand.
   email files to the one line of hers it names; emails naming none or several stay unfiled in Mail.
   Claude is also told the rep groups and their lines. First run: Maryellen 185 of 238 emails filed,
   DandyLines/Diverse Marketing (Donna) 13 of 46.
+
+## 2026-10-08 — Vendors are assigned to who orders from them; Report owner retired
+- Dana: Report owner was only who ran the sales report before the show; the person who orders from
+  the vendor should own it now that VMS will run the report. Only Dana and Jarrett order. Exceptions:
+  Raelee orders Kelli's Gifts, Cat orders Mountain Milk. Trevor ran reports but orders nothing.
+- Every vendor has **Assigned to**, editable on the vendor page, in the edit form, and filterable on the
+  Vendors list (Mine / a person / Unassigned). Only people marked as placing orders
+  (`profiles.places_orders`, admins set it) can be picked: Dana and Jarrett today.
+- Started from Report owner: Dana's 34 stay Dana's, Jarrett's 53 stay his, Trevor's 64 went to Jarrett,
+  each with a "Who orders from these vendors?" review for Dana to keep or change. Kelli's and Mountain
+  Milk stay unassigned until Raelee and Cat get logins.
+- The assignee gets the vendor's review items and mail; a matching Settings rule (one vendor, fishing,
+  department, kind) still wins, and the "everything else" rule comes after the assignee.
+- Logins for Raelee, Cat and Annette wait for go-live; Raelee and Cat get `places_orders`. Jarrett and
+  Trevor start troubleshooting once all phases are done.

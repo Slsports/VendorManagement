@@ -4,7 +4,8 @@ import toast from 'react-hot-toast'
 import { AlertTriangle, Check, Mail, Pencil, Phone, Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { addNote, addVendorEmail, deleteVendorEmail, getVendor, listNotes, listReviewQueue, updateVendor } from '@/services/vendors'
+import { addNote, addVendorEmail, deleteVendorEmail, getVendor, listNotes, listReviewQueue, setVendorAssignee, updateVendor } from '@/services/vendors'
+import { listOrderers } from '@/services/reviews'
 import { ROUTES } from '@/lib/constants'
 import { BILLING_ROUTE_HELP, CONTACT_TYPE_LABELS, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, monthsLabel, freeShippingRule, standingWhy, STANDING_BADGE } from '@/lib/vendors'
 import { errorMessage } from '@/lib/utils'
@@ -32,6 +33,7 @@ export default function VendorDetailPage() {
   const vendorQ = useSupabaseQuery(() => getVendor(id), [id])
   const notesQ = useSupabaseQuery(() => listNotes('vendor', id), [id])
   const reviewQ = useSupabaseQuery(async () => (organization ? (await listReviewQueue(organization.id)).filter((r) => r.entity_id === id || r.other?.id === id) : []), [id, organization?.id])
+  const orderersQ = useSupabaseQuery(async () => (organization ? listOrderers(organization.id) : []), [organization?.id])
   const v = vendorQ.data
   const [draft, setDraft] = useState<ComposeDraft | null>(null)
 
@@ -58,9 +60,26 @@ export default function VendorDetailPage() {
     if (!text && !email) return null
     return <>{text}{text && email ? ' · ' : ''}{mail(email)}</>
   }
+  /** Who orders from this vendor (and gets its reviews and mail). */
+  async function assign(profileId: string | null) {
+    try {
+      await setVendorAssignee(v!.id, profileId)
+      toast.success(profileId ? `Assigned to ${(orderersQ.data ?? []).find((p) => p.id === profileId)?.full_name ?? 'them'}` : 'Unassigned')
+      await Promise.all([vendorQ.refetch(), reviewQ.refetch()])
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
+
+  const assignedTo: ReactNode = canEdit
+    ? <Select value={v.assigned_buyer_id ?? ''} onChange={(e) => void assign(e.target.value || null)} aria-label="Assigned to" className="h-8 w-48 text-sm">
+        <option value="">Nobody yet</option>
+        {(orderersQ.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+      </Select>
+    : (orderersQ.data ?? []).find((p) => p.id === v.assigned_buyer_id)?.full_name ?? null
   const facts: [string, ReactNode][] = [
     ['Lightspeed name', v.lightspeed_name],
-    ['Report owner', v.report_owner],
+    ['Assigned to', assignedTo],
     ['Aliases', v.aliases.length ? v.aliases.join(', ') : null],
     ['Rep', contact(v.rep_name, v.rep_phone, v.rep_email)],
     ['Payment terms', v.payment_terms?.name],

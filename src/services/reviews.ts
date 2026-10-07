@@ -20,6 +20,19 @@ export async function listPeople(organizationId: string): Promise<Person[]> {
   return data ?? []
 }
 
+/** People who place orders, for a vendor's Assigned to (Dana and Jarrett; more at go-live). */
+export async function listOrderers(organizationId: string): Promise<Person[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, email, role')
+    .eq('organization_id', organizationId)
+    .eq('is_active', true)
+    .eq('places_orders', true)
+    .order('full_name', { ascending: true })
+  if (error) throw error
+  return data ?? []
+}
+
 export async function listReviewRules(organizationId: string): Promise<ReviewAssignmentRule[]> {
   const { data, error } = await supabase
     .from('review_assignment_rules')

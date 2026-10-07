@@ -13,6 +13,7 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { BackLink } from '@/components/shared/BackLink'
 import { StickySaveBar } from '@/components/shared/StickySaveBar'
 import { resolveEmailSender, setEmailVendor } from '@/services/mail'
+import { listOrderers } from '@/services/reviews'
 import { useHasInAppHistory } from '@/hooks/useHasInAppHistory'
 import { Alert, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
 
@@ -34,6 +35,7 @@ interface FormState {
   routes: BillingRoute[]
   defaultRoute: BillingRoute | ''
   rep_group_id: string
+  assigned_buyer_id: string
   payment_terms_id: string
   ordering_frequency: OrderingFrequency | ''
   is_delivery_vendor: boolean
@@ -76,7 +78,7 @@ interface FormState {
 }
 
 const EMPTY: FormState = {
-  name: '', aliases: '', routes: [], defaultRoute: '', rep_group_id: '', payment_terms_id: '', ordering_frequency: '',
+  name: '', aliases: '', routes: [], defaultRoute: '', rep_group_id: '', assigned_buyer_id: '', payment_terms_id: '', ordering_frequency: '',
   is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, is_fishing: false,
   website: '', phone: '', email: '', fax: '', account_number: '', catalog: '', address: '', city: '', state: '', postal_code: '',
   rep_name: '', rep_phone: '', rep_email: '', pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', shipping_contact_email: '', minimum_order: '', freight_program: '', free_shipping_policy: '', free_shipping_threshold: '', freight_routing: '', product_types: '',
@@ -92,6 +94,7 @@ function formFromVendor(v: VendorDetail): FormState {
     routes: v.vendor_billing_routes.map((r) => r.route),
     defaultRoute: v.vendor_billing_routes.find((r) => r.is_default)?.route ?? '',
     rep_group_id: v.rep_group_id ?? '',
+    assigned_buyer_id: v.assigned_buyer_id ?? '',
     payment_terms_id: v.payment_terms_id ?? '',
     ordering_frequency: v.ordering_frequency ?? '',
     is_delivery_vendor: v.is_delivery_vendor,
@@ -138,6 +141,7 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
   const fromEmail = isEdit ? null : params.get('from_email')
   const fromSender = isEdit ? null : params.get('from_sender')
   const [form, setForm] = useState<FormState>(() => (v ? formFromVendor(v) : { ...EMPTY, name: params.get('name') ?? '', email: params.get('email') ?? '', website: params.get('website') ?? '' }))
+  const orderersQ = useSupabaseQuery(async () => (organization ? listOrderers(organization.id) : []), [organization?.id])
   const [removedWindows, setRemovedWindows] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -171,6 +175,7 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
       name: form.name.trim(),
       aliases: form.aliases.split(',').map((a) => a.trim()).filter(Boolean),
       rep_group_id: form.rep_group_id || null,
+      assigned_buyer_id: form.assigned_buyer_id || null,
       payment_terms_id: form.payment_terms_id || null,
       ordering_frequency: form.ordering_frequency || null,
       is_delivery_vendor: form.is_delivery_vendor,
@@ -252,6 +257,12 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
               })}
             </div>
           </fieldset>
+          <FormField label="Assigned to" htmlFor="assigned_to" hint="Who orders from this vendor and runs its sales report. Gets its reviews and mail.">
+            <Select id="assigned_to" value={form.assigned_buyer_id} onChange={(e) => set('assigned_buyer_id', e.target.value)}>
+              <option value="">Nobody yet</option>
+              {(orderersQ.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+            </Select>
+          </FormField>
           <FormField label="Rep group" htmlFor="rep_group">
             <Select id="rep_group" value={form.rep_group_id} onChange={(e) => set('rep_group_id', e.target.value)}>
               <option value="">None</option>

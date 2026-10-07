@@ -4,6 +4,7 @@ import { AlertTriangle, Ban, Fish, Plus, Search } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listVendors } from '@/services/vendors'
+import { listOrderers } from '@/services/reviews'
 import { ROUTES } from '@/lib/constants'
 import { BILLING_ROUTE_LABELS, STANDING_BADGE } from '@/lib/vendors'
 import { cn } from '@/lib/utils'
@@ -17,7 +18,7 @@ import { Alert, Badge, Button, Select, Spinner } from '@/components/ui'
 type RouteFilter = '' | BillingRoute | 'none'
 
 export default function VendorListPage() {
-  const { role } = useAuth()
+  const { role, organization, profile } = useAuth()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const search = params.get('q') ?? ''
@@ -25,10 +26,14 @@ export default function VendorListPage() {
   const review = params.get('review') === '1'
   const dno = params.get('dno') === '1'
   const fishing = params.get('fishing') === '1'
+  /** '' everyone, 'me', 'none', or a person's id */
+  const who = params.get('who') ?? ''
   const [draft, setDraft] = useState(search)
 
   const { data, error, isLoading } = useSupabaseQuery(() => listVendors({ includeInactive: false }), [])
+  const orderersQ = useSupabaseQuery(async () => (organization ? listOrderers(organization.id) : []), [organization?.id])
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
+  const nameOf = (id: string | null) => (id ? (orderersQ.data ?? []).find((p) => p.id === id)?.full_name ?? null : null)
 
   const rows = useMemo(() => {
     let list = data ?? []
@@ -39,13 +44,16 @@ export default function VendorListPage() {
     if (review) list = list.filter((v) => v.needs_review)
     if (dno) list = list.filter((v) => v.do_not_order)
     if (fishing) list = list.filter((v) => v.is_fishing)
+    if (who === 'none') list = list.filter((v) => !v.assigned_buyer_id)
+    else if (who) list = list.filter((v) => v.assigned_buyer_id === (who === 'me' ? profile?.id : who))
     return list
-  }, [data, search, route, review, dno, fishing])
+  }, [data, search, route, review, dno, fishing, who, profile?.id])
 
   const { sorted, sort, toggle } = useTableSort(rows, {
     name: (v) => v.name,
     billing: (v) => v.vendor_billing_routes.map((r) => BILLING_ROUTE_LABELS[r.route]).sort().join(', '),
     rep: (v) => v.rep_groups?.name,
+    assigned: (v) => nameOf(v.assigned_buyer_id),
     phone: (v) => v.phone ?? v.email,
     flags: (v) => [STANDING_BADGE[v.standing]?.label, v.is_fishing ? 'Fishing' : '', v.needs_review ? 'Review' : ''].filter(Boolean).join(' ') || null,
   })
@@ -91,7 +99,15 @@ export default function VendorListPage() {
             className="h-11 w-full rounded-lg border border-stone-300 bg-white pl-9 pr-3 text-sm shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-ring-brand"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <div className="w-44">
+            <Select value={who} onChange={(e) => setParam('who', e.target.value)} aria-label="Assigned to">
+              <option value="">Everyone's vendors</option>
+              {(orderersQ.data ?? []).some((p) => p.id === profile?.id) ? <option value="me">Mine</option> : null}
+              {(orderersQ.data ?? []).filter((p) => p.id !== profile?.id).map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+              <option value="none">Unassigned</option>
+            </Select>
+          </div>
           <div className="w-44">
             <Select value={route} onChange={(e) => setParam('route', e.target.value)} aria-label="Billing route">
               <option value="">All routes</option>
@@ -129,6 +145,7 @@ export default function VendorListPage() {
                   <SortHeader label="Vendor" sortKey="name" sort={sort} onSort={toggle} className="px-4 py-2.5" />
                   <SortHeader label="Billing" sortKey="billing" sort={sort} onSort={toggle} className="px-4 py-2.5" />
                   <SortHeader label="Rep group" sortKey="rep" sort={sort} onSort={toggle} className="hidden px-4 py-2.5 md:table-cell" />
+                  <SortHeader label="Assigned to" sortKey="assigned" sort={sort} onSort={toggle} className="hidden px-4 py-2.5 md:table-cell" />
                   <SortHeader label="Phone / email" sortKey="phone" sort={sort} onSort={toggle} className="hidden px-4 py-2.5 lg:table-cell" />
                   <SortHeader label="Flags" sortKey="flags" sort={sort} onSort={toggle} align="right" className="px-4 py-2.5 text-right" />
                 </tr>
@@ -142,6 +159,7 @@ export default function VendorListPage() {
                     </td>
                     <td className="px-4 py-2.5"><RouteBadges routes={v.vendor_billing_routes} /></td>
                     <td className="hidden px-4 py-2.5 text-stone-600 md:table-cell">{v.rep_groups?.name ?? '—'}</td>
+                    <td className="hidden px-4 py-2.5 text-stone-600 md:table-cell">{nameOf(v.assigned_buyer_id) ?? '—'}</td>
                     <td className="hidden px-4 py-2.5 text-stone-600 lg:table-cell">
                       {v.phone ?? (v.email ? null : '—')}
                       {v.email ? <a href={`mailto:${v.email}`} className="block truncate text-xs text-brand hover:underline">{v.email}</a> : null}
