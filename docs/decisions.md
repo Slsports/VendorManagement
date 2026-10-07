@@ -1082,3 +1082,8 @@ payments in the sample export show), or when a payment is entered by hand.
 - First sync brings in the last 12 months only; older mail stays in Gmail and can be pulled later.
 - Build order (Opus session): tables + sync + matching, then the Mail page, then sending with
   signatures. Not started yet; resumes the morning of Oct 8.
+- Dana: rep signatures often list every company the rep carries, but each email still says which
+  vendor it is about. So a rep group's sender is matched **per email**, not per sender: the
+  signature block is ignored for vendor clues; the subject, body above the signature and attachment
+  names decide. The sender is remembered as that rep group (not one vendor), and an email naming
+  more than one of the rep's vendors, or none, goes to review on its own.
