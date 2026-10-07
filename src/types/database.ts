@@ -238,7 +238,7 @@ export type Database = {
           website: string | null; account_number: string | null; catalog: string | null; phone: string | null; fax: string | null
           address: string | null; city: string | null; state: string | null; postal_code: string | null; country: string | null
           rep_name: string | null; rep_phone: string | null; pickup_address: string | null; pickup_times: string | null
-          shipping_contact: string | null; shipping_contact_phone: string | null; return_notes: string | null; google_drive_folder: string | null
+          shipping_contact: string | null; shipping_contact_phone: string | null; email: string | null; rep_email: string | null; shipping_contact_email: string | null; return_notes: string | null; google_drive_folder: string | null
           rating: number | null; tier: string | null; ordering_frequency: Database['public']['Enums']['ordering_frequency'] | null
           is_delivery_vendor: boolean; minimum_order: string | null; freight_program: string | null; free_shipping_policy: 'never' | 'sometimes' | 'always' | null; free_shipping_threshold: number | null; freight_routing: string | null; product_types: string | null; notes: string | null; needs_review: boolean; review_note: string | null; do_not_order: boolean; do_not_order_reason: string | null; standing: 'ok' | 'hold' | 'last_resort' | 'do_not_order'; standing_tags: string[]; standing_review_date: string | null; merged_into_id: string | null; wwd_zero_upcharge: boolean; report_owner: string | null; is_fishing: boolean
           is_active: boolean; created_by: string | null; created_at: string; updated_at: string
@@ -249,7 +249,7 @@ export type Database = {
           website?: string | null; account_number?: string | null; catalog?: string | null; phone?: string | null; fax?: string | null
           address?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; country?: string | null
           rep_name?: string | null; rep_phone?: string | null; pickup_address?: string | null; pickup_times?: string | null
-          shipping_contact?: string | null; shipping_contact_phone?: string | null; return_notes?: string | null; google_drive_folder?: string | null
+          shipping_contact?: string | null; shipping_contact_phone?: string | null; email?: string | null; rep_email?: string | null; shipping_contact_email?: string | null; return_notes?: string | null; google_drive_folder?: string | null
           rating?: number | null; tier?: string | null; ordering_frequency?: Database['public']['Enums']['ordering_frequency'] | null
           is_delivery_vendor?: boolean; minimum_order?: string | null; freight_program?: string | null; free_shipping_policy?: 'never' | 'sometimes' | 'always' | null; free_shipping_threshold?: number | null; freight_routing?: string | null; product_types?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null; do_not_order?: boolean; do_not_order_reason?: string | null; standing?: 'ok' | 'hold' | 'last_resort' | 'do_not_order'; standing_tags?: string[]; standing_review_date?: string | null; merged_into_id?: string | null; wwd_zero_upcharge?: boolean; report_owner?: string | null; is_fishing?: boolean
           is_active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string
@@ -260,7 +260,7 @@ export type Database = {
           website?: string | null; account_number?: string | null; catalog?: string | null; phone?: string | null; fax?: string | null
           address?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; country?: string | null
           rep_name?: string | null; rep_phone?: string | null; pickup_address?: string | null; pickup_times?: string | null
-          shipping_contact?: string | null; shipping_contact_phone?: string | null; return_notes?: string | null; google_drive_folder?: string | null
+          shipping_contact?: string | null; shipping_contact_phone?: string | null; email?: string | null; rep_email?: string | null; shipping_contact_email?: string | null; return_notes?: string | null; google_drive_folder?: string | null
           rating?: number | null; tier?: string | null; ordering_frequency?: Database['public']['Enums']['ordering_frequency'] | null
           is_delivery_vendor?: boolean; minimum_order?: string | null; freight_program?: string | null; free_shipping_policy?: 'never' | 'sometimes' | 'always' | null; free_shipping_threshold?: number | null; freight_routing?: string | null; product_types?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null; do_not_order?: boolean; do_not_order_reason?: string | null; standing?: 'ok' | 'hold' | 'last_resort' | 'do_not_order'; standing_tags?: string[]; standing_review_date?: string | null; merged_into_id?: string | null; wwd_zero_upcharge?: boolean; report_owner?: string | null; is_fishing?: boolean
           is_active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string

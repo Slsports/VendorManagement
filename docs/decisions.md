@@ -1096,3 +1096,11 @@ payments in the sample export show), or when a payment is entered by hand.
 - Dana: on lists like outstanding orders, click a column header to sort by that column (vendor
   name, date, cost ...), click again to reverse. Rule for every table in the app, one shared hook.
 - Added to CLAUDE.md as standing rules; the fix across existing pages is the next small-build job.
+
+## 2026-10-08 — An email beside every phone on the vendor
+- Dana: "anywhere that there is contact information, I want an email; that's how we do most of our
+  orders." Vendors get three fields: **Orders email** (where orders go), **Rep email** and **Shipping
+  contact email**, on the edit form, the vendor overview (clickable) and the vendor list. Each
+  address is also added to the vendor's contact list so the Gmail connection recognises mail from it.
+- Rep groups and Worldwide contacts already had email. Only 9 vendors had any email on file today;
+  the Gmail contact backfill (spec §5) will propose the rest through the review queue.

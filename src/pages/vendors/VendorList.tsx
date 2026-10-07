@@ -46,7 +46,7 @@ export default function VendorListPage() {
     name: (v) => v.name,
     billing: (v) => v.vendor_billing_routes.map((r) => BILLING_ROUTE_LABELS[r.route]).sort().join(', '),
     rep: (v) => v.rep_groups?.name,
-    phone: (v) => v.phone,
+    phone: (v) => v.phone ?? v.email,
     flags: (v) => [STANDING_BADGE[v.standing]?.label, v.is_fishing ? 'Fishing' : '', v.needs_review ? 'Review' : ''].filter(Boolean).join(' ') || null,
   })
 
@@ -129,7 +129,7 @@ export default function VendorListPage() {
                   <SortHeader label="Vendor" sortKey="name" sort={sort} onSort={toggle} className="px-4 py-2.5" />
                   <SortHeader label="Billing" sortKey="billing" sort={sort} onSort={toggle} className="px-4 py-2.5" />
                   <SortHeader label="Rep group" sortKey="rep" sort={sort} onSort={toggle} className="hidden px-4 py-2.5 md:table-cell" />
-                  <SortHeader label="Phone" sortKey="phone" sort={sort} onSort={toggle} className="hidden px-4 py-2.5 lg:table-cell" />
+                  <SortHeader label="Phone / email" sortKey="phone" sort={sort} onSort={toggle} className="hidden px-4 py-2.5 lg:table-cell" />
                   <SortHeader label="Flags" sortKey="flags" sort={sort} onSort={toggle} align="right" className="px-4 py-2.5 text-right" />
                 </tr>
               </thead>
@@ -142,7 +142,10 @@ export default function VendorListPage() {
                     </td>
                     <td className="px-4 py-2.5"><RouteBadges routes={v.vendor_billing_routes} /></td>
                     <td className="hidden px-4 py-2.5 text-stone-600 md:table-cell">{v.rep_groups?.name ?? '—'}</td>
-                    <td className="hidden px-4 py-2.5 text-stone-600 lg:table-cell">{v.phone ?? '—'}</td>
+                    <td className="hidden px-4 py-2.5 text-stone-600 lg:table-cell">
+                      {v.phone ?? (v.email ? null : '—')}
+                      {v.email ? <a href={`mailto:${v.email}`} className="block truncate text-xs text-brand hover:underline">{v.email}</a> : null}
+                    </td>
                     <td className="px-4 py-2.5 text-right">
                       {STANDING_BADGE[v.standing] ? <Badge tone={STANDING_BADGE[v.standing]!.tone} className="mr-1">{STANDING_BADGE[v.standing]!.label}</Badge> : null}
                       {v.is_fishing ? <Badge tone="info" className="mr-1">Fishing</Badge> : null}

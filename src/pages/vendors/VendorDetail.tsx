@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { AlertTriangle, Check, Mail, Pencil, Phone, Plus, Trash2 } from 'lucide-react'
@@ -35,12 +35,20 @@ export default function VendorDetailPage() {
   if (vendorQ.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading vendor…" className="text-brand" /></div>
   if (vendorQ.error || !v) return <Alert variant="error">{vendorQ.error ?? 'Vendor not found'}</Alert>
 
-  const facts: [string, string | null | undefined][] = [
+  const mail = (address: string | null) => (address ? <a href={`mailto:${address}`} className="text-brand hover:underline">{address}</a> : null)
+  /** "Name · phone · email", the email clickable; null when all three are blank. */
+  const contact = (name: string | null, phone: string | null, email: string | null) => {
+    const text = [name, phone].filter(Boolean).join(' · ')
+    if (!text && !email) return null
+    return <>{text}{text && email ? ' · ' : ''}{mail(email)}</>
+  }
+  const facts: [string, ReactNode][] = [
     ['Lightspeed name', v.lightspeed_name],
     ['Report owner', v.report_owner],
     ['Aliases', v.aliases.length ? v.aliases.join(', ') : null],
-    ['Rep', [v.rep_name, v.rep_phone].filter(Boolean).join(' · ') || null],
+    ['Rep', contact(v.rep_name, v.rep_phone, v.rep_email)],
     ['Payment terms', v.payment_terms?.name],
+    ['Orders email', mail(v.email)],
     ['Phone', v.phone],
     ['Fax', v.fax],
     ['Website', v.website],
@@ -54,7 +62,7 @@ export default function VendorDetailPage() {
     ['Freight routing', v.freight_routing],
     ['Product types', v.product_types],
     ['Pickup', [v.pickup_address, v.pickup_times].filter(Boolean).join(' · ') || null],
-    ['Shipping contact', [v.shipping_contact, v.shipping_contact_phone].filter(Boolean).join(' · ') || null],
+    ['Shipping contact', contact(v.shipping_contact, v.shipping_contact_phone, v.shipping_contact_email)],
   ]
 
   async function clearReview() {
@@ -142,7 +150,7 @@ export default function VendorDetailPage() {
             {facts.filter(([, val]) => val).map(([k, val]) => (
               <div key={k}>
                 <dt className="text-xs font-medium text-stone-500">{k}</dt>
-                <dd className="text-sm text-stone-900">{k === 'Website' ? <a href={normalizeUrl(val!)} target="_blank" rel="noreferrer" className="text-brand hover:underline">{val}</a> : val}</dd>
+                <dd className="text-sm text-stone-900">{k === 'Website' && typeof val === 'string' ? <a href={normalizeUrl(val)} target="_blank" rel="noreferrer" className="text-brand hover:underline">{val}</a> : val}</dd>
               </div>
             ))}
           </dl>
