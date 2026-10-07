@@ -1,10 +1,13 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Ban, Check, Layers, Users } from 'lucide-react'
+import { Ban, Building2, Check, Layers, Users } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listRepGroupNames, listVendorNames, resolveEmailSender } from '@/services/mail'
 import { errorMessage } from '@/lib/utils'
+import { newVendorFromMailUrl } from '@/lib/mail'
+import { ROUTES } from '@/lib/constants'
 import type { ReviewItem } from '@/types'
 import { Button, Input, Select } from '@/components/ui'
 
@@ -80,6 +83,10 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
                 <Button size="sm" loading={busy} onClick={() => void answer(`Filed to ${d.proposed_vendor_name}`, 'vendor', d.proposed_vendor_id!)} leftIcon={<Check className="size-4" aria-hidden="true" />}>Yes, {d.proposed_vendor_name}</Button>
               ) : null}
               <Button size="sm" variant={d.proposed_vendor_id ? 'secondary' : 'primary'} disabled={busy} onClick={() => setMode('vendor')}>{d.proposed_vendor_id ? 'Another vendor' : 'Pick the vendor'}</Button>
+              <Link to={newVendorFromMailUrl(ROUTES.vendors, { senderKey: d.sender_key, isDomain: d.is_domain, displayName: d.display_name, senderId: d.sender_id })}
+                className="inline-flex h-8 items-center gap-1 rounded-lg border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 hover:bg-stone-50">
+                <Building2 className="size-4" aria-hidden="true" /> New vendor
+              </Link>
               <Button size="sm" variant="secondary" disabled={busy} onClick={() => setMode('rep')} leftIcon={<Users className="size-4" aria-hidden="true" />}>A rep group</Button>
               <Button size="sm" variant="secondary" loading={busy} onClick={() => void answer('Each email will be filed by the vendor it names', 'platform')} leftIcon={<Layers className="size-4" aria-hidden="true" />} title="NetSuite, Bill.com, FashionGo and similar services that send mail for many vendors">Sends for many vendors</Button>
               <Button size="sm" variant="ghost" loading={busy} onClick={() => void answer('Not a vendor', 'not_vendor')} leftIcon={<Ban className="size-4" aria-hidden="true" />}>Not a vendor</Button>

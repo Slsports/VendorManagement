@@ -89,3 +89,29 @@ export function followUpDraft(t: DraftThread, lastOut: DraftEmail) {
     thread_id: t.id, reply_to_email_id: lastOut.id, vendor_id: t.vendor_id,
   }
 }
+
+/** "wfsports.com" → "Wfsports": a starting point for a new vendor's name; the person corrects it. */
+export function nameFromDomain(domain: string): string {
+  const parts = domain.toLowerCase().split('.').filter(Boolean)
+  const label = parts.length >= 3 && ['co', 'com'].includes(parts[parts.length - 2]!) ? parts[parts.length - 3]! : parts[parts.length - 2] ?? parts[0] ?? ''
+  return label.split(/[-_]+/).filter(Boolean).map((w) => w[0]!.toUpperCase() + w.slice(1)).join(' ')
+}
+
+/**
+ * The new-vendor form, filled from an email: name from the sender's company domain (or their From name for
+ * free mail), the address as the orders email, the domain as the website. After saving, the email (or every
+ * email from that sender) is filed to the new vendor.
+ */
+export function newVendorFromMailUrl(vendorsRoute: string, p: { email?: string | null; displayName?: string | null; senderKey?: string | null; isDomain?: boolean; emailId?: string; senderId?: string }): string {
+  const q = new URLSearchParams()
+  const address = p.email ?? (p.senderKey && !p.isDomain ? p.senderKey : null)
+  const domain = p.isDomain && p.senderKey ? p.senderKey : address ? address.split('@')[1] ?? '' : ''
+  const free = /^(gmail|googlemail|yahoo|ymail|outlook|hotmail|live|msn|icloud|me|mac|aol|comcast|att|sbcglobal|verizon)\./.test(domain)
+  const name = free ? (p.displayName ?? '') : domain ? nameFromDomain(domain) : (p.displayName ?? '')
+  if (name) q.set('name', name)
+  if (address) q.set('email', address)
+  if (domain && !free) q.set('website', domain)
+  if (p.emailId) q.set('from_email', p.emailId)
+  if (p.senderId) q.set('from_sender', p.senderId)
+  return `${vendorsRoute}/new?${q.toString()}`
+}

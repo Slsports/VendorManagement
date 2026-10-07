@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
@@ -11,6 +11,7 @@ import { cn, errorMessage } from '@/lib/utils'
 import type { BillingRoute, OrderingFrequency, OrderWindowKind, PaymentTerms, RepGroup, TablesInsert, FreeShippingPolicy, VendorStanding, StandingTag } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { BackLink } from '@/components/shared/BackLink'
+import { resolveEmailSender, setEmailVendor } from '@/services/mail'
 import { useHasInAppHistory } from '@/hooks/useHasInAppHistory'
 import { Alert, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
 
@@ -131,7 +132,11 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
   const navigate = useNavigate()
   const hasHistory = useHasInAppHistory()
   const { organization, profile } = useAuth()
-  const [form, setForm] = useState<FormState>(() => (v ? formFromVendor(v) : EMPTY))
+  // A new vendor started from an email arrives with its details in the address (Mail > New vendor).
+  const [params] = useSearchParams()
+  const fromEmail = isEdit ? null : params.get('from_email')
+  const fromSender = isEdit ? null : params.get('from_sender')
+  const [form, setForm] = useState<FormState>(() => (v ? formFromVendor(v) : { ...EMPTY, name: params.get('name') ?? '', email: params.get('email') ?? '', website: params.get('website') ?? '' }))
   const [removedWindows, setRemovedWindows] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -192,13 +197,15 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
       } else {
         const created = await createVendor({ ...payload, created_by: profile.id })
         vendorId = created.id
+        if (fromSender) await resolveEmailSender(fromSender, 'vendor', vendorId)
+        else if (fromEmail) await setEmailVendor(fromEmail, vendorId)
       }
       await setVendorRoutes(vendorId!, form.routes.map((r) => ({ route: r, is_default: r === form.defaultRoute })))
       for (const wid of removedWindows) await deleteOrderWindow(wid)
       for (const [i, w] of form.windows.entries()) {
         await saveOrderWindow({ ...(w.id ? { id: w.id } : {}), vendor_id: vendorId!, kind: w.kind, label: nz(w.label), months: w.months, notes: nz(w.notes), sort_order: i })
       }
-      toast.success(isEdit ? 'Vendor saved' : 'Vendor created')
+      toast.success(isEdit ? 'Vendor saved' : fromSender ? 'Vendor created; their mail is filed to it' : fromEmail ? 'Vendor created; the email is filed to it' : 'Vendor created')
       navigate(`${ROUTES.vendors}/${vendorId}`, { replace: true })
     } catch (err) {
       setError(errorMessage(err))
@@ -211,6 +218,7 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
     <div className="mx-auto max-w-4xl">
       <BackLink fallback={isEdit ? `${ROUTES.vendors}/${id}` : ROUTES.vendors} fallbackLabel={isEdit ? 'Vendor' : 'Vendors'} />
       <PageHeader eyebrow="Vendor" title={isEdit ? `Edit ${v?.name ?? ''}` : 'New vendor'} />
+      {fromEmail || fromSender ? <Alert variant="info" className="mb-4">Started from an email. Check the name: it is a guess from their web address. When you save, {fromSender ? 'all mail from this sender is' : 'the email is'} filed to this vendor.</Alert> : null}
 
       <form onSubmit={handleSubmit} noValidate className="space-y-6">
         {error ? <Alert variant="error">{error}</Alert> : null}

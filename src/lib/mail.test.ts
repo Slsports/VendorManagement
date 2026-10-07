@@ -34,3 +34,16 @@ describe('drafts', () => {
     expect(followUpDraft(t, out)).toMatchObject({ to: ['amy@wfs.com'], reply_to_email_id: 'e2', thread_id: 't1' })
   })
 })
+
+import { newVendorFromMailUrl, nameFromDomain } from './mail'
+
+describe('new vendor from mail', () => {
+  it('starts from the company domain, or the From name for free mail', () => {
+    expect(nameFromDomain('mail.happy-hats.com')).toBe('Happy Hats')
+    const url = new URL(newVendorFromMailUrl('/vendors', { email: 'sales@happy-hats.com', emailId: 'e1' }), 'http://x')
+    expect(url.pathname).toBe('/vendors/new')
+    expect(Object.fromEntries(url.searchParams)).toEqual({ name: 'Happy Hats', email: 'sales@happy-hats.com', website: 'happy-hats.com', from_email: 'e1' })
+    const free = new URL(newVendorFromMailUrl('/vendors', { senderKey: 'joe.hats@gmail.com', isDomain: false, displayName: 'Joe Hats', senderId: 's1' }), 'http://x')
+    expect(Object.fromEntries(free.searchParams)).toEqual({ name: 'Joe Hats', email: 'joe.hats@gmail.com', from_sender: 's1' })
+  })
+})

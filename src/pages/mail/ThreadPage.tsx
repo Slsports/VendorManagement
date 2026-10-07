@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { CheckCircle2, ExternalLink, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
+import { Building2, CheckCircle2, ExternalLink, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { assignEmailThread, fetchEmailHtml, fileAttachmentToVendor, getMailbox, getThread, listVendorNames, openAttachment, setEmailThreadStatus, setEmailVendor, type ThreadDetail } from '@/services/mail'
 import { listPeople } from '@/services/reviews'
-import { followUpDraft, forwardDraft, gmailThreadUrl, replyDraft, threadState, waited } from '@/lib/mail'
+import { followUpDraft, forwardDraft, gmailThreadUrl, newVendorFromMailUrl, replyDraft, threadState, waited } from '@/lib/mail'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
 import { BackLink } from '@/components/shared/BackLink'
@@ -29,6 +29,9 @@ export default function ThreadPage() {
   if (q.error || !q.data) return <Alert variant="error">{q.error ?? 'Conversation not found'}</Alert>
   const { thread: t, emails } = q.data
   const lastOut = [...emails].reverse().find((e) => e.direction === 'out')
+  // The outside party, for "New vendor": who wrote in, or who we wrote to. Mail only among us has none.
+  const firstIn = emails.find((e) => e.direction === 'in')
+  const party = firstIn ? { email: firstIn.from_email, displayName: firstIn.from_name } : lastOut ? { email: lastOut.to_emails[0] ?? null, displayName: null } : { email: null, displayName: null }
 
   async function act(label: string, fn: () => Promise<void>) {
     try {
@@ -63,6 +66,11 @@ export default function ThreadPage() {
             ? <Button size="sm" variant="secondary" onClick={() => void act('Opened again', () => setEmailThreadStatus(t.id, 'waiting_on_us'))} leftIcon={<RotateCcw className="size-4" aria-hidden="true" />}>Open again</Button>
             : <Button size="sm" variant="secondary" onClick={() => void act('Marked handled', () => setEmailThreadStatus(t.id, 'handled'))} leftIcon={<CheckCircle2 className="size-4" aria-hidden="true" />}>Mark handled</Button>}
           <VendorPicker current={t.vendor} onPick={(v) => act(v ? `Filed to ${v.name}` : 'Unfiled', () => setEmailVendor(emails[0]!.id, v?.id ?? null))} />
+          {!t.vendor ? (
+            <Link to={newVendorFromMailUrl(ROUTES.vendors, { ...party, isDomain: true, emailId: emails[0]!.id })} className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline">
+              <Building2 className="size-4" aria-hidden="true" /> New vendor from this email
+            </Link>
+          ) : null}
           {lastOut && (threadState(t) === 'no_answer' || threadState(t) === 'waiting')
             ? <Button size="sm" variant={threadState(t) === 'no_answer' ? 'primary' : 'secondary'} onClick={() => setDraft(followUpDraft(t, lastOut))} leftIcon={<Send className="size-4" aria-hidden="true" />}>Follow up</Button>
             : null}
