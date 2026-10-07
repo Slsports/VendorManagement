@@ -1087,3 +1087,12 @@ payments in the sample export show), or when a payment is entered by hand.
   signature block is ignored for vendor clues; the subject, body above the signature and attachment
   names decide. The sender is remembered as that rep group (not one vendor), and an email naming
   more than one of the rep's vendors, or none, goes to review on its own.
+
+## 2026-10-07 — Screen rules: Back returns to where you came from; tables sort by header
+- Dana: clicking a rep from a vendor page and then wanting to go back lands on the wrong list;
+  from a review item the only way out was "All vendors" instead of the review queue. Rule: every
+  detail page has a Back that returns to the previous in-app page, with the list's filters intact;
+  cold opens fall back to the section's list. One shared component.
+- Dana: on lists like outstanding orders, click a column header to sort by that column (vendor
+  name, date, cost ...), click again to reverse. Rule for every table in the app, one shared hook.
+- Added to CLAUDE.md as standing rules; the fix across existing pages is the next small-build job.

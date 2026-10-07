@@ -22,6 +22,16 @@ by Vercel from the branch `claude/ecstatic-carson-ziz2a9`.
 - Dana reviews proposals before data changes: duplicates, renames, category changes go through the
   review queue, never applied silently.
 
+## Screen rules (Dana, Oct 7)
+- **Back goes to where you came from.** Every detail page (vendor, rep group, order, line, review item)
+  has a Back link at the top that returns to the previous page in the app: the list with its filters, the
+  vendor page that linked here, the review queue. Use one shared `BackLink` component that uses the
+  in-app history when there is one and falls back to the section's list only on a cold open. Never link
+  "All vendors" as the way out of a page reached from somewhere else.
+- **Every list sorts by its headers.** Clicking a column header sorts by that column, clicking again
+  reverses it, and the arrow shows the sort. One shared hook/component for all tables (orders, vendors,
+  lines, rep groups, scores, mail). Default sort stays what it is today.
+
 ## Several sessions share one branch
 Dana runs more than one Claude session at a time (a Fable session for big builds, an Opus session for
 small fixes, a Sonnet session for questions). All code goes to `claude/ecstatic-carson-ziz2a9`.
