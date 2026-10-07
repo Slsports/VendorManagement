@@ -1,17 +1,18 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { CheckCircle2, ExternalLink, Paperclip, RotateCcw } from 'lucide-react'
+import { CheckCircle2, ExternalLink, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { assignEmailThread, getMailbox, getThread, listVendorNames, setEmailThreadStatus, setEmailVendor, type ThreadDetail } from '@/services/mail'
+import { assignEmailThread, fetchEmailHtml, fileAttachmentToVendor, getMailbox, getThread, listVendorNames, openAttachment, setEmailThreadStatus, setEmailVendor, type ThreadDetail } from '@/services/mail'
 import { listPeople } from '@/services/reviews'
-import { gmailThreadUrl, waited } from '@/lib/mail'
+import { followUpDraft, forwardDraft, gmailThreadUrl, replyDraft, threadState, waited } from '@/lib/mail'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
 import { BackLink } from '@/components/shared/BackLink'
 import { ThreadStatusBadge } from '@/components/mail/ThreadStatusBadge'
 import { AssigneeSelect } from '@/components/review/AssigneeSelect'
+import { ComposeDialog, type ComposeDraft } from '@/components/mail/ComposeDialog'
 import { Alert, Button, Input, Spinner } from '@/components/ui'
 
 /** One conversation: every message, who owns it, which vendor it is filed to, and where it stands. */
@@ -22,10 +23,12 @@ export default function ThreadPage() {
   const q = useSupabaseQuery(() => getThread(id), [id])
   const people = useSupabaseQuery(async () => (organization ? listPeople(organization.id) : []), [organization?.id])
   const mailbox = useSupabaseQuery(async () => (organization ? getMailbox(organization.id) : null), [organization?.id])
+  const [draft, setDraft] = useState<ComposeDraft | null>(null)
 
   if (q.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading the conversation…" className="text-brand" /></div>
   if (q.error || !q.data) return <Alert variant="error">{q.error ?? 'Conversation not found'}</Alert>
   const { thread: t, emails } = q.data
+  const lastOut = [...emails].reverse().find((e) => e.direction === 'out')
 
   async function act(label: string, fn: () => Promise<void>) {
     try {
@@ -60,18 +63,50 @@ export default function ThreadPage() {
             ? <Button size="sm" variant="secondary" onClick={() => void act('Opened again', () => setEmailThreadStatus(t.id, 'waiting_on_us'))} leftIcon={<RotateCcw className="size-4" aria-hidden="true" />}>Open again</Button>
             : <Button size="sm" variant="secondary" onClick={() => void act('Marked handled', () => setEmailThreadStatus(t.id, 'handled'))} leftIcon={<CheckCircle2 className="size-4" aria-hidden="true" />}>Mark handled</Button>}
           <VendorPicker current={t.vendor} onPick={(v) => act(v ? `Filed to ${v.name}` : 'Unfiled', () => setEmailVendor(emails[0]!.id, v?.id ?? null))} />
+          {lastOut && (threadState(t) === 'no_answer' || threadState(t) === 'waiting')
+            ? <Button size="sm" variant={threadState(t) === 'no_answer' ? 'primary' : 'secondary'} onClick={() => setDraft(followUpDraft(t, lastOut))} leftIcon={<Send className="size-4" aria-hidden="true" />}>Follow up</Button>
+            : null}
         </section>
       ) : null}
 
       <ol className="space-y-3">
-        {emails.map((e, i) => <Message key={e.id} email={e} startOpen={i === emails.length - 1 || emails.length <= 3} />)}
+        {emails.map((e, i) => (
+          <Message key={e.id} email={e} startOpen={i === emails.length - 1 || emails.length <= 3} vendor={t.vendor}
+            onCompose={canEdit && mailbox.data ? (kind) => setDraft(kind === 'forward' ? forwardDraft(t, e, e.attachments.length) : replyDraft(t, e, mailbox.data!, kind === 'all')) : undefined} />
+        ))}
       </ol>
+      {draft ? <ComposeDialog draft={draft} onClose={() => setDraft(null)} onSent={() => void q.refetch()} /> : null}
     </div>
   )
 }
 
-function Message({ email: e, startOpen }: { email: ThreadDetail['emails'][number]; startOpen: boolean }) {
+function Message({ email: e, startOpen, vendor, onCompose }: { email: ThreadDetail['emails'][number]; startOpen: boolean; vendor: { id: string; name: string } | null; onCompose?: (kind: 'reply' | 'all' | 'forward') => void }) {
   const [open, setOpen] = useState(startOpen)
+  const [html, setHtml] = useState<string | null>(null)
+  const [loadingHtml, setLoadingHtml] = useState(false)
+  const { role } = useAuth()
+  const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
+
+  async function showFormatted() {
+    setLoadingHtml(true)
+    try {
+      const h = await fetchEmailHtml(e.id)
+      if (!h) toast('This message has no formatted version')
+      setHtml(h || null)
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setLoadingHtml(false)
+    }
+  }
+  async function run(label: string, fn: () => Promise<void>) {
+    try {
+      await fn()
+      if (label) toast.success(label)
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
   return (
     <li className={cn('rounded-2xl border bg-white', e.direction === 'out' ? 'border-brand/30' : 'border-stone-200')}>
       <button type="button" onClick={() => setOpen((v) => !v)} className="flex w-full flex-wrap items-baseline justify-between gap-2 px-4 py-3 text-left" aria-expanded={open}>
@@ -86,16 +121,35 @@ function Message({ email: e, startOpen }: { email: ThreadDetail['emails'][number
       {open ? (
         <div className="border-t border-stone-100 px-4 py-3">
           <p className="mb-2 text-xs text-stone-500">To {e.to_emails.join(', ') || '—'}{e.cc_emails.length ? ` · Cc ${e.cc_emails.join(', ')}` : ''}</p>
-          <div className="whitespace-pre-wrap break-words text-sm text-stone-800">{e.body_text || e.snippet}</div>
+          {html
+            ? <iframe title="Formatted message" sandbox="allow-popups allow-popups-to-escape-sandbox" srcDoc={`<base target="_blank">${html}`} className="h-[32rem] w-full rounded-lg border border-stone-200 bg-white" />
+            : <div className="whitespace-pre-wrap break-words text-sm text-stone-800">{e.body_text || e.snippet}</div>}
           {e.attachments.length ? (
             <ul className="mt-3 flex flex-wrap gap-2">
               {e.attachments.map((a) => (
-                <li key={a.id} className="inline-flex items-center gap-1 rounded-lg bg-stone-100 px-2 py-1 text-xs text-stone-700">
-                  <Paperclip className="size-3.5" aria-hidden="true" />{a.file_name}{a.size ? <span className="text-stone-400"> · {Math.max(1, Math.round(a.size / 1024))} KB</span> : null}
+                <li key={a.id} className="inline-flex items-center gap-1 rounded-lg bg-stone-100 text-xs text-stone-700">
+                  <button type="button" onClick={() => void run('', () => openAttachment(a.id))} disabled={!a.gmail_attachment_id} className="inline-flex items-center gap-1 px-2 py-1 hover:text-brand disabled:cursor-default disabled:hover:text-stone-700" title={a.gmail_attachment_id ? 'Open' : 'Not available from Gmail'}>
+                    <Paperclip className="size-3.5" aria-hidden="true" />{a.file_name}{a.size ? <span className="text-stone-400"> · {Math.max(1, Math.round(a.size / 1024))} KB</span> : null}
+                  </button>
+                  {canEdit && vendor && a.gmail_attachment_id && !a.vendor_link_id ? (
+                    <button type="button" onClick={() => void run(`Saved to ${vendor.name}'s files`, () => fileAttachmentToVendor(a.id, vendor.id, 'other'))} className="border-l border-stone-200 px-2 py-1 text-stone-500 hover:text-brand" title={`Save to ${vendor.name}'s Links & files`}>
+                      <FolderInput className="size-3.5" aria-hidden="true" /><span className="sr-only">Save to {vendor.name}'s files</span>
+                    </button>
+                  ) : a.vendor_link_id ? <span className="border-l border-stone-200 px-2 py-1 text-emerald-700">saved</span> : null}
                 </li>
               ))}
             </ul>
           ) : null}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {onCompose ? (
+              <>
+                <Button size="sm" variant="secondary" onClick={() => onCompose('reply')} leftIcon={<Reply className="size-4" aria-hidden="true" />}>Reply</Button>
+                {e.to_emails.length + e.cc_emails.length > 1 ? <Button size="sm" variant="ghost" onClick={() => onCompose('all')} leftIcon={<ReplyAll className="size-4" aria-hidden="true" />}>Reply all</Button> : null}
+                <Button size="sm" variant="ghost" onClick={() => onCompose('forward')} leftIcon={<Forward className="size-4" aria-hidden="true" />}>Forward</Button>
+              </>
+            ) : null}
+            {html ? <Button size="sm" variant="ghost" onClick={() => setHtml(null)}>Plain text</Button> : <Button size="sm" variant="ghost" loading={loadingHtml} onClick={() => void showFormatted()}>Show formatted</Button>}
+          </div>
         </div>
       ) : null}
     </li>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Inbox, Search } from 'lucide-react'
+import { Inbox, PenLine, Search } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listThreads, type ThreadFilters } from '@/services/mail'
@@ -8,7 +8,8 @@ import { listPeople } from '@/services/reviews'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { ThreadTable } from '@/components/mail/ThreadTable'
-import { Alert, Select, Spinner } from '@/components/ui'
+import { ComposeDialog } from '@/components/mail/ComposeDialog'
+import { Alert, Button, Select, Spinner } from '@/components/ui'
 
 const STATUS_TABS: { value: ThreadFilters['status']; label: string }[] = [
   { value: 'needs', label: 'Needs an answer' },
@@ -21,7 +22,9 @@ const STATUS_TABS: { value: ThreadFilters['status']; label: string }[] = [
 
 /** orders@ inside VMS: whose mail, where it stands, filed to which vendor. Everything is shared; ownership decides whose list. */
 export default function MailPage() {
-  const { organization, profile } = useAuth()
+  const { organization, profile, role } = useAuth()
+  const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
+  const [composing, setComposing] = useState(false)
   const [params, setParams] = useSearchParams()
   const who = params.get('who') ?? 'mine'
   const status = (params.get('status') ?? 'open') as ThreadFilters['status']
@@ -43,7 +46,9 @@ export default function MailPage() {
 
   return (
     <div>
-      <PageHeader title="Mail" description="Everything that comes into orders@, filed by vendor. Answer it here; Gmail is the backup." />
+      <PageHeader title="Mail" description="Everything that comes into orders@, filed by vendor. Answer it here; Gmail is the backup."
+        actions={canEdit ? <Button onClick={() => setComposing(true)} leftIcon={<PenLine className="size-4" aria-hidden="true" />}>New email</Button> : undefined} />
+      {composing ? <ComposeDialog draft={{ to: [], subject: '', body: '' }} onClose={() => setComposing(false)} onSent={() => void q.refetch()} /> : null}
       <nav aria-label="Mail status" className="mb-4 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <ul className="flex w-max gap-1 rounded-xl bg-stone-100 p-1">
           {STATUS_TABS.map((t) => (

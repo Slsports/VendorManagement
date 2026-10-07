@@ -54,6 +54,20 @@ export class Gmail {
     }
   }
 
+  /** Send a full RFC 5322 message, in an existing Gmail thread when threadId is given (multipart upload, up to 25 MB). */
+  async send(raw: string, threadId?: string): Promise<{ id: string; threadId: string }> {
+    const boundary = `vms-send-${crypto.randomUUID()}`
+    const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(threadId ? { threadId } : {})}\r\n--${boundary}\r\nContent-Type: message/rfc822\r\n\r\n${raw}\r\n--${boundary}--`
+    const res = await fetch(`https://gmail.googleapis.com/upload/gmail/v1/users/${this.user}/messages/send?uploadType=multipart`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${this.token}`, 'Content-Type': `multipart/related; boundary=${boundary}` },
+      body,
+    })
+    const text = await res.text()
+    if (!res.ok) throw new GmailError(res.status, `Gmail would not send it (${res.status}): ${text.slice(0, 300)}`)
+    return JSON.parse(text)
+  }
+
   profile() { return this.call<{ emailAddress: string; messagesTotal: number; historyId: string }>('profile') }
   labels() { return this.call<{ labels: { id: string; name: string }[] }>('labels') }
   list(q: string, pageToken?: string, maxResults = 100) {

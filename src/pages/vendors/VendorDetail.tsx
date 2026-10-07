@@ -19,6 +19,7 @@ import { VendorShowsSection } from '@/components/vendors/VendorShowsSection'
 import { PartnerContactsCard } from '@/components/vendors/PartnerContactsCard'
 import { VendorOrdersSection } from '@/components/vendors/VendorOrdersSection'
 import { VendorMailSection } from '@/components/vendors/VendorMailSection'
+import { ComposeDialog, type ComposeDraft } from '@/components/mail/ComposeDialog'
 import { VendorScorecard } from '@/components/scores/VendorScorecard'
 import { VendorItemRulesSection } from '@/components/vendors/VendorItemRulesSection'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
@@ -32,11 +33,25 @@ export default function VendorDetailPage() {
   const notesQ = useSupabaseQuery(() => listNotes('vendor', id), [id])
   const reviewQ = useSupabaseQuery(async () => (organization ? (await listReviewQueue(organization.id)).filter((r) => r.entity_id === id || r.other?.id === id) : []), [id, organization?.id])
   const v = vendorQ.data
+  const [draft, setDraft] = useState<ComposeDraft | null>(null)
 
   if (vendorQ.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading vendor…" className="text-brand" /></div>
   if (vendorQ.error || !v) return <Alert variant="error">{vendorQ.error ?? 'Vendor not found'}</Alert>
 
-  const mail = (address: string | null) => (address ? <a href={`mailto:${address}`} className="text-brand hover:underline">{address}</a> : null)
+  /** Every address on the record, for the To suggestions. */
+  const suggestions = [
+    ...(v.email ? [{ email: v.email, label: `Orders ${v.email}` }] : []),
+    ...(v.rep_email ? [{ email: v.rep_email, label: `${v.rep_name || 'Rep'} ${v.rep_email}` }] : []),
+    ...(v.shipping_contact_email ? [{ email: v.shipping_contact_email, label: `${v.shipping_contact || 'Shipping'} ${v.shipping_contact_email}` }] : []),
+    ...v.vendor_emails.map((c) => ({ email: c.email, label: `${c.contact_name || c.email}${c.contact_name ? ` ${c.email}` : ''}` })),
+  ].filter((s, i, all) => all.findIndex((x) => x.email.toLowerCase() === s.email.toLowerCase()) === i)
+  /** Write to this address from VMS (orders@, your signature, filed to this vendor). */
+  const compose = (to: string[]) => setDraft({ to, subject: '', body: '', vendor_id: v.id })
+  const mail = (address: string | null) => (address
+    ? canEdit
+      ? <button type="button" onClick={() => compose([address])} className="text-brand hover:underline" title="Write an email from VMS">{address}</button>
+      : <a href={`mailto:${address}`} className="text-brand hover:underline">{address}</a>
+    : null)
   /** "Name · phone · email", the email clickable; null when all three are blank. */
   const contact = (name: string | null, phone: string | null, email: string | null) => {
     const text = [name, phone].filter(Boolean).join(' · ')
@@ -188,12 +203,12 @@ export default function VendorDetailPage() {
         <VendorRepGroupCard vendorId={v.id} group={v.rep_groups} />
         {v.vendor_billing_routes.some((r) => r.route === 'worldwide') ? <PartnerContactsCard route="worldwide" vendorName={v.name} /> : null}
 
-        <ContactsSection vendorId={v.id} contacts={v.vendor_emails} canEdit={canEdit} onChange={vendorQ.refetch} />
+        <ContactsSection vendorId={v.id} contacts={v.vendor_emails} canEdit={canEdit} onChange={vendorQ.refetch} onEmail={(email) => compose([email])} />
         <VendorShowsSection vendorId={v.id} />
         <VendorScorecard organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorItemRulesSection organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorOrdersSection vendorId={v.id} />
-        <VendorMailSection vendorId={v.id} organizationId={v.organization_id} />
+        <VendorMailSection vendorId={v.id} organizationId={v.organization_id} onNewEmail={canEdit ? () => compose(suggestions[0] ? [suggestions[0].email] : []) : undefined} />
 
         <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-1">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Notes</h2>
@@ -214,6 +229,7 @@ export default function VendorDetailPage() {
           )}
         </section>
       </div>
+      {draft ? <ComposeDialog draft={draft} suggestions={suggestions} onClose={() => setDraft(null)} onSent={() => void vendorQ.refetch()} /> : null}
     </div>
   )
 
@@ -223,7 +239,7 @@ function normalizeUrl(u: string) {
   return /^https?:\/\//i.test(u) ? u : `https://${u}`
 }
 
-function ContactsSection({ vendorId, contacts, canEdit, onChange }: { vendorId: string; contacts: { id: string; email: string; contact_name: string | null; title: string | null; phone: string | null; contact_type: ContactType; source: string }[]; canEdit: boolean; onChange: () => Promise<void> }) {
+function ContactsSection({ vendorId, contacts, canEdit, onChange, onEmail }: { vendorId: string; contacts: { id: string; email: string; contact_name: string | null; title: string | null; phone: string | null; contact_type: ContactType; source: string }[]; canEdit: boolean; onChange: () => Promise<void>; onEmail: (email: string) => void }) {
   const [adding, setAdding] = useState(false)
   const [form, setForm] = useState({ contact_name: '', email: '', phone: '', title: '', contact_type: 'rep' as ContactType })
   const [saving, setSaving] = useState(false)
@@ -286,7 +302,9 @@ function ContactsSection({ vendorId, contacts, canEdit, onChange }: { vendorId: 
               <div className="min-w-0">
                 <p className="font-medium text-stone-900">{c.contact_name || c.email} <Badge tone="neutral" className="ml-1">{CONTACT_TYPE_LABELS[c.contact_type]}</Badge>{c.title ? <span className="ml-2 text-xs font-normal text-stone-500">{c.title}</span> : null}</p>
                 <p className="flex flex-wrap gap-x-4 text-stone-600">
-                  <a href={`mailto:${c.email}`} className="inline-flex items-center gap-1 hover:text-brand"><Mail className="size-3.5" aria-hidden="true" />{c.email}</a>
+                  {canEdit
+                    ? <button type="button" onClick={() => onEmail(c.email)} className="inline-flex items-center gap-1 hover:text-brand" title="Write an email from VMS"><Mail className="size-3.5" aria-hidden="true" />{c.email}</button>
+                    : <a href={`mailto:${c.email}`} className="inline-flex items-center gap-1 hover:text-brand"><Mail className="size-3.5" aria-hidden="true" />{c.email}</a>}
                   {c.phone ? <a href={`tel:${c.phone}`} className="inline-flex items-center gap-1 hover:text-brand"><Phone className="size-3.5" aria-hidden="true" />{c.phone}</a> : null}
                 </p>
               </div>

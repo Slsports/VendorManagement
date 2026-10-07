@@ -4,9 +4,9 @@ import toast from 'react-hot-toast'
 import { RefreshCw } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { getMailStatus, setFollowUpDays, syncMailNow } from '@/services/mail'
+import { getMailStatus, listSignatures, saveSignature, setFollowUpDays, syncMailNow } from '@/services/mail'
 import { errorMessage } from '@/lib/utils'
-import { Alert, Button, FormField, Input, Spinner } from '@/components/ui'
+import { Alert, Button, FormField, Input, Spinner, Textarea } from '@/components/ui'
 
 /** The orders@ connection: is it syncing, how far the 12-month backfill has got, and the follow-up setting. */
 export default function MailSettings() {
@@ -70,6 +70,8 @@ export default function MailSettings() {
         <p className="mt-3 text-xs text-stone-500">Senders to identify wait in the review queue under "Who is this mail from?". One answer files all their mail, now and later.</p>
       </section>
 
+      <Signatures organizationId={organization!.id} />
+
       <section className="rounded-2xl border border-stone-200 bg-white p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Follow-up</h2>
         <p className="mt-1 text-sm text-stone-600">When you email a vendor from VMS and they have not answered after this many days, the thread comes back to your dashboard as "No answer yet".</p>
@@ -81,5 +83,53 @@ export default function MailSettings() {
         </div>
       </section>
     </div>
+  )
+}
+
+/** Each person's signature, added under the mail they send from orders@ through VMS. */
+function Signatures({ organizationId }: { organizationId: string }) {
+  const q = useSupabaseQuery(() => listSignatures(organizationId), [organizationId])
+  const [edits, setEdits] = useState<Record<string, string>>({})
+  const [saving, setSaving] = useState<string | null>(null)
+
+  async function save(id: string, name: string) {
+    setSaving(id)
+    try {
+      await saveSignature(id, edits[id] ?? '')
+      toast.success(`Signature saved for ${name}`)
+      setEdits((all) => {
+        const next = { ...all }
+        delete next[id]
+        return next
+      })
+      await q.refetch()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  return (
+    <section className="rounded-2xl border border-stone-200 bg-white p-5">
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Signatures</h2>
+      <p className="mt-1 text-sm text-stone-600">Added under every email the person sends from orders@ through VMS.</p>
+      {q.isLoading ? <p className="mt-3 text-sm text-stone-500">Loading…</p> : q.error ? <Alert variant="error" className="mt-3">{q.error}</Alert> : (
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          {(q.data ?? []).map((p) => {
+            const value = edits[p.id] ?? p.email_signature ?? ''
+            const changed = p.id in edits && (edits[p.id] ?? '') !== (p.email_signature ?? '')
+            return (
+              <div key={p.id}>
+                <FormField label={p.full_name || p.email} htmlFor={`sig-${p.id}`}>
+                  <Textarea id={`sig-${p.id}`} rows={4} value={value} onChange={(e) => setEdits((all) => ({ ...all, [p.id]: e.target.value }))} placeholder={`${p.full_name || 'Name'}\nShaver Lake Sports\nphone`} />
+                </FormField>
+                {changed ? <Button size="sm" className="mt-2" loading={saving === p.id} onClick={() => void save(p.id, p.full_name || p.email)}>Save</Button> : null}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </section>
   )
 }

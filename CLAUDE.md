@@ -52,6 +52,9 @@ Vite + React 19 + TypeScript + Tailwind 4, Supabase (project `bpdpkytfmpbwpbmpej
   (`pg_ctlcluster 16 main start` first). Add a `.test.sql` for every migration.
 - `NODE_USE_ENV_PROXY=1 npm run db:migrate` — applies pending migrations to the hosted project through
   the Supabase Management API (the cloud proxy injects the token; it throttles, `scripts/db.mjs` retries).
+- `NODE_USE_ENV_PROXY=1 node scripts/deploy-functions.mjs <name>` — deploys an Edge Function (with
+  `supabase/functions/_shared`). Functions see the publishable key, not yours: test them through pg_net
+  with the Vault secret (see `scripts/setup-mail-cron.mjs --run-now`), never by printing secrets.
 - Ad-hoc hosted SQL: write a scratch `.mjs` that imports `query` from `scripts/db.mjs` and run it with
   `NODE_USE_ENV_PROXY=1`. The proxy does **not** carry the service-role key, so `db:create-user` and
   storage uploads do not work from a cloud session; auth users were created with SQL into `auth.users`.
@@ -66,9 +69,11 @@ tags, free-shipping policy and threshold, freight routing, fishing flag, WWD zer
 lines (catalog-only names, never vendors unless promoted), five show listings, Worldwide contacts,
 orders (1,104 from the Seasonal Buying Guide; the Placed Order Summary v2.0 is still to come), review
 queue with assignment rules, vendor scorecards (six dimensions, four automatic), item-level buying
-rules per vendor (seeded for Ty), Lightspeed category standard document.
+rules per vendor (seeded for Ty), Lightspeed category standard document, and Mail: orders@ synced every
+minute (12 months back), sender proposals in the review queue, Mail page, send/reply/forward from orders@
+with signatures, follow-up nudges (see `docs/gmail-connection.md` "As built").
 
 ## Not built yet, in order
-Gmail connection (orders@ on Google Workspace, migration done Oct 7), Placed Order Summary v2.0 import,
+Gmail label write-back and contact enrichment, Placed Order Summary v2.0 import,
 Needs list, Lightspeed API connection, category and item clean-up tool, replenishment check, pattern
 engine, show-prep view. Target: running well by December 2026 for the WWD show Jan 25-28, 2027.

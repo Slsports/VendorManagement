@@ -1125,3 +1125,18 @@ payments in the sample export show), or when a payment is entered by hand.
 - Read, reply, forward, attach and open attachments all inside VMS; Gmail is the backup.
 - Everyone sees every thread on the vendor record; ownership only decides whose list it lands on.
 - No phone or email alerts from VMS for now.
+
+## 2026-10-08 — Mail is live in VMS
+- Built on Dana's go-ahead from the Gmail plan. orders@ syncs every minute; the first load brings in the
+  last 12 months (about 100 emails a minute). Mail from known senders files itself; unknown senders wait
+  in the review queue as "Who is this mail from?", one per sender, with a proposed vendor where the
+  web address or the mail itself names one.
+- Two answers added after the first sync: "Sends for many vendors" (NetSuite, Bill.com, FashionGo: each
+  email filed by the vendor it names, like rep groups), and staff addresses (billing.slsports@gmail.com)
+  always count as ours. A single passing mention no longer makes a proposal.
+- History loaded by the first sync that has been quiet for a week starts as handled, so nobody's list
+  fills with old mail. Threads only land on someone's list once they have an owner (sent it from VMS,
+  an Assigned/<name> label, the assignment rules for its vendor, or handed over).
+- Sending, replying, forwarding and following up happen in VMS from orders@ with the sender's name and
+  signature; Dana writes signatures in Settings > Mail. A one-time self-test ("VMS send test, please
+  ignore", orders@ to orders@) confirmed sending, threading and attachments.

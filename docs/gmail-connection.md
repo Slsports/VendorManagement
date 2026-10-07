@@ -118,6 +118,19 @@ happens, not the place you work.
   what is known and keeps one review item per unknown sender, proposing a vendor only on the web address
   or a name in at least two emails and three in ten of them.
 - Backfilled threads quiet for a week start as handled; newer ones wait on us or on the vendor.
+- Sending: `gmail-send` (signed-in admin, manager or buyer) builds the message (`_shared/mime.ts`), sends it
+  from orders@ as "<Name> | <org>" with Reply-To orders@ and the person's signature, threads replies
+  (threadId + In-Reply-To/References), saves it to `emails` at once, files it to the vendor, makes the
+  sender the thread owner, and the thread waits on the vendor with `follow_up_at`. Attachments from the
+  computer, from the vendor's Links & files, and the original's on a forward.
+- Reading: `gmail-read` returns the formatted (HTML) version of a message, an attachment's file, or copies
+  an attachment into the vendor's Links & files (`vendor_links.source = 'email'`).
+- UI: `/mail` (Mine / Everyone / Nobody's yet, Needs an answer / No answer yet / Waiting on vendor /
+  Handled), `/mail/:id` (owner, handled, file to vendor, Reply / Reply all / Forward / Follow up, formatted
+  view, attachments), vendor page Mail section and Email on every address, dashboard "Mail for you",
+  Mail count in the side menu, Settings > Mail (status, Sync now, signatures, follow-up days).
+- Not built yet: Gmail labels written back (Assigned/<name>, VMS/Handled), the Needs list page and the
+  "Need to Order" label, contact enrichment proposals, the first jobs below.
 
 ## First jobs once connected (from the decisions log)
 1. Find Dana's Aug 2 2026 cancellation emails to Charlene Lal (Ty) and close the ten backordered lines.

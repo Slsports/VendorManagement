@@ -199,3 +199,85 @@ export async function getMailbox(organizationId: string): Promise<string | null>
   if (error) throw error
   return data?.mailbox ?? null
 }
+
+// ---- sending and reading through Gmail ----------------------------------------------
+export interface SendEmailInput {
+  thread_id?: string | null
+  reply_to_email_id?: string | null
+  forward_email_id?: string | null
+  vendor_id?: string | null
+  to: string[]
+  cc?: string[]
+  subject: string
+  body: string
+  attachments?: { name: string; mime: string; base64: string }[]
+  vendor_link_ids?: string[]
+}
+
+async function functionError(error: unknown): Promise<Error> {
+  // supabase-js wraps a non-2xx answer; the function's own message is in the response body.
+  const ctx = (error as { context?: Response }).context
+  if (ctx && typeof ctx.json === 'function') {
+    try {
+      const body = await ctx.json()
+      if (body?.error) return new Error(body.error)
+    } catch { /* fall through */ }
+  }
+  return error instanceof Error ? error : new Error(String(error))
+}
+
+/** Send from orders@ as the signed-in person; returns the conversation it landed in. */
+export async function sendEmail(input: SendEmailInput): Promise<{ thread_id: string; email_id: string }> {
+  const { data, error } = await supabase.functions.invoke('gmail-send', { body: input })
+  if (error) throw await functionError(error)
+  return data
+}
+
+/** The formatted (HTML) version of a message, fetched from Gmail. */
+export async function fetchEmailHtml(emailId: string): Promise<string> {
+  const { data, error } = await supabase.functions.invoke('gmail-read', { body: { action: 'html', email_id: emailId } })
+  if (error) throw await functionError(error)
+  return (data as { html: string }).html
+}
+
+/** Open an attachment in a new tab (the browser shows PDFs and pictures, downloads the rest). */
+export async function openAttachment(attachmentId: string): Promise<void> {
+  // A plain fetch, not functions.invoke: invoke would read a PDF as text and spoil it.
+  const win = window.open('', '_blank')
+  try {
+    const { data: s } = await supabase.auth.getSession()
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-read`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: import.meta.env.VITE_SUPABASE_ANON_KEY, Authorization: `Bearer ${s.session?.access_token ?? ''}` },
+      body: JSON.stringify({ action: 'attachment', attachment_id: attachmentId }),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => null)
+      throw new Error(body?.error ?? `Could not open the attachment (${res.status})`)
+    }
+    const url = URL.createObjectURL(await res.blob())
+    if (win) win.location.href = url
+    else window.location.href = url
+  } catch (err) {
+    win?.close()
+    throw err
+  }
+}
+
+/** Copy an attachment into the vendor's Links & files. */
+export async function fileAttachmentToVendor(attachmentId: string, vendorId: string, kind: string, label?: string): Promise<void> {
+  const { error } = await supabase.functions.invoke('gmail-read', { body: { action: 'file', attachment_id: attachmentId, vendor_id: vendorId, kind, label } })
+  if (error) throw await functionError(error)
+}
+
+/** Everyone's signature, for Settings > Mail (admins edit them). */
+export async function listSignatures(organizationId: string): Promise<{ id: string; full_name: string; email: string; email_signature: string | null }[]> {
+  const { data, error } = await supabase.from('profiles').select('id, full_name, email, email_signature').eq('organization_id', organizationId).eq('is_active', true).order('full_name')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function saveSignature(profileId: string, signature: string): Promise<void> {
+  const { error } = await supabase.from('profiles').update({ email_signature: signature.trim() || null }).eq('id', profileId)
+  if (error) throw error
+}
