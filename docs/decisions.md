@@ -1070,3 +1070,15 @@ payments in the sample export show), or when a payment is entered by hand.
   SLS VMS project only (Dana holds Organization Policy Administrator for that). It stays on elsewhere.
 - Verified: VMS read the orders@ mailbox profile (16,748 messages). Next: build `gmail-sync` per
   `docs/gmail-connection.md`.
+
+## 2026-10-07 — Gmail build: how unmatched mail is matched; first sync is 12 months
+- Only 9 vendors have an email on file, so sender/domain matching alone would leave most mail
+  unmatched. Dana: read the email for clues. VMS proposes a vendor per sender from the domain
+  (wfsports.com → WFS → World Famous Sports), the From name and signature, the subject and
+  attachment file names. One review item per sender, not per email ("@wfsports.com looks like
+  World Famous Sports, named in 38 of 42 emails: Confirm / Pick another / Not a vendor").
+  Confirming links all that sender's mail and remembers the sender so future mail matches on its
+  own; "Not a vendor" hides the sender for good. Nothing is linked without a person's OK.
+- First sync brings in the last 12 months only; older mail stays in Gmail and can be pulled later.
+- Build order (Opus session): tables + sync + matching, then the Mail page, then sending with
+  signatures. Not started yet; resumes the morning of Oct 8.
