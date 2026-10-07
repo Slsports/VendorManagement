@@ -4,6 +4,11 @@ Dana (Oct 7): the WWD member portal (worldwidebuygroup.com, Vendors tab) holds, 
 Contacts & Sales Representatives, Programs, Product Lines and Resources. She wants all of it in VMS, then
 a bulk email asking every vendor to confirm their details through the VMS contact form.
 
+## Rule (Dana, Oct 7): land it, do not queue it
+The portal is WWD's own directory and VMS holds almost no contact data yet, so everything the portal says
+is written straight to the vendor, tagged with its source and date. Only conflicts with values Dana typed
+go to the review queue. Contacts show as unconfirmed until the vendor confirms through the update form.
+
 ## Two scripts
 1. `scripts/scrape-wwd-portal.mjs` — runs on Dana's computer (the cloud sessions cannot reach the portal).
    Playwright, headed browser. It opens the portal, waits for Dana to sign in, then for every vendor in the
@@ -13,8 +18,9 @@ a bulk email asking every vendor to confirm their details through the VMS contac
    first sign of a block. Dana's credentials are typed into the browser window, never into the script.
 2. `scripts/import-wwd-portal.mjs` — runs anywhere with the hosted database. Matches each portal vendor to
    a VMS vendor with `scripts/lib/match.mjs` (exact → alias → generic-word → prefix; unmatched to a
-   report, never auto-created unless Dana says so). Nothing overwrites a value Dana typed; portal values
-   fill empty fields and go into `vendor_portal_data` whole.
+   report, never auto-created unless Dana says so). Portal values land directly on the vendor record,
+   each tagged "from the WWD portal, read on <date>". Where Dana already typed a different value, hers
+   stays and the difference goes to the review queue as a `vendor_conflict` item for her to pick.
 
 ## JSON per vendor (what the scraper writes)
 ```
@@ -31,7 +37,7 @@ Keep every field as the portal shows it (raw strings); the importer does the int
 | Portal | VMS | Rule |
 |---|---|---|
 | Address, city, state, zip, phone, fax | vendors.address/city/state/postal_code/phone/fax | fill if empty |
-| Contacts | review_items kind `vendor_contact` (one per person, with email, phones, title, company, territory) | never written straight to `vendor_emails`; Dana approves. A contact whose company is not the vendor (Harry Spotts, Proactive Sales and Marketing) is a rep: propose a rep group link |
+| Contacts | `vendor_emails` rows (email, name, title, phones, company, territory), source `wwd_portal`, unconfirmed until the vendor answers the update email or someone ticks them | written directly. A contact whose company is not the vendor (Harry Spotts, Proactive Sales and Marketing) is a rep: link or create the rep group |
 | Programs.minimum_order | vendors.minimum_order | fill if empty |
 | Programs.freight_terms "Collect / PPD $4000" | free_shipping_policy `sometimes`, free_shipping_threshold 4000, freight_program = raw text | PPD $N = free freight prepaid at $N; "Collect" alone = never |
 | Programs.billing_terms | payment terms name (match "Net 30 Days" → Net 30) | fill if empty |
@@ -69,6 +75,6 @@ vendor+source) with RLS by `user_in_org`, editors write. The vendor page gets a 
 showing programs, product lines and returns policy with the scrape date.
 
 ## After the import
-- Report: matched / unmatched / fields filled / contacts proposed / zero-upcharge changes.
+- Report: matched / unmatched / fields filled / contacts added / conflicts for review / zero-upcharge changes.
 - Bulk email (through the Gmail connection, from orders@, Dana's signature): "please confirm your contact
   and ordering details" with a link to the VMS vendor form; replies land in the review queue.

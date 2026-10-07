@@ -1159,3 +1159,12 @@ payments in the sample export show), or when a payment is entered by hand.
   green, expiring soon amber, expired gray with the expiry date, shown below the live ones. An order
   keeps a link to the program it was placed under so a shipment six months later can be checked
   against those terms. "I like history." Written into `docs/wwd-portal-import.md`.
+
+## 2026-10-07 — Portal data lands directly; only conflicts go to review
+- Dana: "I have not added hardly anything yet so I don't really want to review all those vendors
+  before they land." For the WWD portal import, everything is written straight to the vendor
+  record tagged "from the WWD portal, read on <date>"; contacts show as unconfirmed until the
+  vendor confirms through the update form; only a portal value that differs from one Dana typed
+  goes to the review queue. The review-queue-first rule stays for email-derived enrichment.
+- WWD told Dana last year they had no vendor export. She will ask their tech department directly
+  this time; the reader script is the fallback.
