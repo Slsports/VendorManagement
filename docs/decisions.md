@@ -1104,3 +1104,10 @@ payments in the sample export show), or when a payment is entered by hand.
   address is also added to the vendor's contact list so the Gmail connection recognises mail from it.
 - Rep groups and Worldwide contacts already had email. Only 9 vendors had any email on file today;
   the Gmail contact backfill (spec §5) will propose the rest through the review queue.
+
+## 2026-10-08 — Email a vendor from the vendor record; the thread saves to the vendor
+- Dana: in a vendor record, a button to email any of that vendor's contact emails directly, and the
+  correspondence saves to the vendor file. Part of the Gmail build: an Email button beside every
+  address on the vendor page and a "New email" in its Mail section; sent from orders@ with the
+  sender's signature, saved to the vendor at once, and replies in the thread follow it to the
+  vendor. Written into `docs/gmail-connection.md`.

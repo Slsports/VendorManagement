@@ -64,7 +64,15 @@ New contacts found in matched mail (signature blocks, From names) go to the revi
   row shows from, subject, snippet, vendor badge, assignee picker (reuse `AssigneeSelect`), attachments.
   Opening a mail shows the body, attachments with "File to vendor" (creates a `vendor_links` row and copies
   the attachment), "Attach to order" (vendor's orders), and Reply, which sends through `gmail-send`.
-- Vendor page: a Mail section listing that vendor's threads, newest first.
+- Vendor page: a Mail section listing that vendor's threads, newest first, plus an **Email** button
+  beside every address on the record (orders email, rep email, shipping contact email, each contact in
+  the contact list) and a "New email" button in the Mail section with a To picker of all of them.
+  It opens a compose box (To, Cc, subject, body, attachments) that sends through `gmail-send` from
+  orders@ with the signed-in person's signature. The sent message is stored in `emails` with
+  `vendor_id` set (`match_how = manual`), so it shows in the vendor's Mail section at once, and
+  replies in that Gmail thread land on the same vendor automatically (thread_id match before any
+  sender rule). Dana, Oct 8: "a button to email any of the contact emails for that record directly
+  and the correspondence saves to the vendor file."
 - Needs page (`/needs`): the list with status chips; dashboard count.
 - Settings > Integrations: connection status (last sync, mailbox, messages count), "Sync now".
 - Dashboard: "Mail waiting on you" count next to the review count.
