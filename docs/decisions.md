@@ -1152,3 +1152,10 @@ payments in the sample export show), or when a payment is entered by hand.
   that fills empty vendor fields, keeps the whole record in `vendor_portal_data`, and puts contacts
   into the review queue. Nothing Dana typed is overwritten. Also worth one email to WWD asking for
   an export.
+
+## 2026-10-07 — Vendor programs: standard and show, with history kept
+- Dana: show vendors list a Standard program and a SHOW program (year, expiry, show discount, show
+  terms, freight tiers, ship-date window). Keep every program, never drop an expired one: active
+  green, expiring soon amber, expired gray with the expiry date, shown below the live ones. An order
+  keeps a link to the program it was placed under so a shipment six months later can be checked
+  against those terms. "I like history." Written into `docs/wwd-portal-import.md`.

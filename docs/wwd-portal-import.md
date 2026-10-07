@@ -40,6 +40,29 @@ Keep every field as the portal shows it (raw strings); the importer does the int
 | Resources.zero_upcharge Y/N | vendors.wwd_zero_upcharge | set; log changes to the decisions log summary |
 | Resources: defective goods policy, RA required, returns address, who pays freight, compensation | vendors.return_notes (one composed paragraph) + vendor_portal_data | fill if empty |
 
+## Programs: standard and show (Dana, Oct 7)
+Show vendors list a "Standard" program and one or more "SHOW - Fall Show" / "SHOW - Spring Show" programs
+with a year, an **Expires** date, a show discount, show billing terms, show freight tiers and **Ship Dates**
+(beginning and ending: the window the show order may be dated into). The scraper writes every program with
+`name`, `year`, `expires`, `ship_begin`, `ship_end` as the portal shows them.
+
+Freight terms are read into tiers: "PPD $5000" = free freight prepaid at $5,000; "50% FA $3000" = half
+freight (50 percent freight allowance) at $3,000; "Collect" alone = we pay; "Excludes Specials" and any
+other words stay as a note. Billing terms stay as text ("2% 30 Net 90 Days").
+
+**History is kept.** Programs are never dropped. Each one carries a status computed from today:
+- **Active** (green): today is within its dates, or it has no expiry (Standard).
+- **Expiring soon** (amber): expiry within 30 days.
+- **Expired** (gray, tag "expired 9/3/26"): shown below the live ones on the vendor page, so a show order
+  that ships six months later can be checked against the terms it was placed under.
+An order placed while a program is active keeps a link to that program (`orders.program_id`), and the
+order page shows the program's terms even after it expires. Each year's show program stacks under the
+last. Table: `vendor_programs` (organization_id, vendor_id, source 'wwd_portal'|'manual', name, kind
+standard|show, year, expires_on, discount, billing_terms, freight_terms raw, freight_tiers jsonb,
+minimum_order, shipping_points, ship_begin, ship_end, notes, scraped_at, unique per vendor+name+year).
+The Standard program fills the vendor's everyday fields (section above); show programs feed the
+show-prep view and the "Show special" reason on an order's free-shipping answer.
+
 ## New table
 `vendor_portal_data` (organization_id, vendor_id, source 'wwd_portal', scraped_at, data jsonb, unique per
 vendor+source) with RLS by `user_in_org`, editors write. The vendor page gets a "Worldwide portal" card
