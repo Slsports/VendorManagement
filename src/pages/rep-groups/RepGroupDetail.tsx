@@ -1,13 +1,14 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { ArrowLeft, ExternalLink, Pencil } from 'lucide-react'
+import { ExternalLink, Pencil } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { getRepGroup, updateRepGroup } from '@/services/lines'
 import { ROUTES } from '@/lib/constants'
 import { errorMessage } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { BackLink } from '@/components/shared/BackLink'
 import { RouteBadges } from '@/components/vendors/RouteBadges'
 import { LineCard } from '@/components/lines/LineCard'
 import { Alert, Badge, Button, FormField, Input, Spinner, Textarea } from '@/components/ui'
@@ -26,9 +27,7 @@ export default function RepGroupDetailPage() {
 
   return (
     <div>
-      <Link to={ROUTES.repGroups} className="mb-3 inline-flex items-center gap-1 text-sm text-stone-500 hover:text-stone-900">
-        <ArrowLeft className="size-4" aria-hidden="true" /> All rep groups
-      </Link>
+      <BackLink fallback={ROUTES.repGroups} fallbackLabel="Rep groups" />
       <PageHeader
         eyebrow="Rep group"
         title={g.name}

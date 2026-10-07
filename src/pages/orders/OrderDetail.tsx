@@ -1,6 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { ArrowLeft } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { getOrder, updateOrder } from '@/services/orders'
@@ -8,6 +7,7 @@ import { ORDER_STATUSES, ORDER_STATUS_LABELS, ROUTES, type OrderStatus } from '@
 import { BILLING_ROUTE_LABELS, PAID_VIA_LABELS, money, showLabel } from '@/lib/vendors'
 import { errorMessage } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { BackLink } from '@/components/shared/BackLink'
 import { OrderStatusBadge } from '@/components/orders/OrderStatusBadge'
 import { OrderDocumentsSection } from '@/components/orders/OrderDocumentsSection'
 import { FreeShippingCard } from '@/components/orders/FreeShippingCard'
@@ -56,7 +56,7 @@ export default function OrderDetailPage() {
 
   return (
     <div>
-      <Link to={ROUTES.orders} className="mb-3 inline-flex items-center gap-1 text-sm text-stone-500 hover:text-stone-900"><ArrowLeft className="size-4" aria-hidden="true" /> All orders</Link>
+      <BackLink fallback={ROUTES.orders} fallbackLabel="Orders" />
       <PageHeader
         eyebrow="Order"
         title={o.vendor ? o.vendor.name : 'Order'}

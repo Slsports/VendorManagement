@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { AlertTriangle, ArrowLeft, Check, Mail, Pencil, Phone, Plus, Trash2 } from 'lucide-react'
+import { AlertTriangle, Check, Mail, Pencil, Phone, Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { addNote, addVendorEmail, deleteVendorEmail, getVendor, listNotes, listReviewQueue, updateVendor } from '@/services/vendors'
@@ -10,6 +10,7 @@ import { BILLING_ROUTE_HELP, CONTACT_TYPE_LABELS, ORDERING_FREQUENCY_LABELS, ORD
 import { errorMessage } from '@/lib/utils'
 import type { ContactType } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { BackLink } from '@/components/shared/BackLink'
 import { RouteBadges } from '@/components/vendors/RouteBadges'
 import { ReviewItemCard } from '@/components/vendors/ReviewItemCard'
 import { VendorLinksSection } from '@/components/vendors/VendorLinksSection'
@@ -68,9 +69,7 @@ export default function VendorDetailPage() {
 
   return (
     <div>
-      <Link to={ROUTES.vendors} className="mb-3 inline-flex items-center gap-1 text-sm text-stone-500 hover:text-stone-900">
-        <ArrowLeft className="size-4" aria-hidden="true" /> All vendors
-      </Link>
+      <BackLink fallback={ROUTES.vendors} fallbackLabel="Vendors" />
       <PageHeader
         eyebrow="Vendor"
         title={v.name}

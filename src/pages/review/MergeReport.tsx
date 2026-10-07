@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { ArrowLeft, Download } from 'lucide-react'
+import { Download } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listVendorMerges, setMergeDoneInLightspeed } from '@/services/vendors'
@@ -10,6 +9,7 @@ import { BILLING_ROUTE_LABELS } from '@/lib/vendors'
 import { cn, errorMessage } from '@/lib/utils'
 import type { VendorMerge } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { BackLink } from '@/components/shared/BackLink'
 import { Alert, Badge, Button, Spinner } from '@/components/ui'
 
 type Filter = 'todo' | 'all'
@@ -23,7 +23,6 @@ const STATUS_LABEL: Record<VendorMerge['status'], { text: string; tone: 'warning
 /** What got merged into what, so Dana can repeat it in Lightspeed and tick each one off. */
 export default function MergeReportPage() {
   const { role, profile, organization } = useAuth()
-  const navigate = useNavigate()
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
   const [filter, setFilter] = useState<Filter>('todo')
   const q = useSupabaseQuery(async () => (organization ? listVendorMerges(organization.id) : []), [organization?.id])
@@ -82,9 +81,7 @@ export default function MergeReportPage() {
 
   return (
     <div>
-      <button type="button" onClick={() => navigate(ROUTES.review)} className="mb-3 inline-flex items-center gap-1 text-sm text-stone-600 hover:text-stone-900">
-        <ArrowLeft className="size-4" aria-hidden="true" /> Review queue
-      </button>
+      <BackLink fallback={ROUTES.review} fallbackLabel="Review queue" />
       <PageHeader
         title="Lightspeed merge report"
         description={`${todoCount} to do in Lightspeed${pendingCount ? `, ${pendingCount} still waiting for your OK in the review queue` : ''}. Tick each one as you merge it in LS.`}

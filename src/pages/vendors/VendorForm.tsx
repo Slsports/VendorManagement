@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { createVendor, deleteOrderWindow, getVendor, listPaymentTerms, listRepGroups, saveOrderWindow, setVendorRoutes, updateVendor, type VendorDetail } from '@/services/vendors'
@@ -10,6 +10,8 @@ import { BILLING_ROUTE_HELP, BILLING_ROUTE_LABELS, MONTHS, ORDERING_FREQUENCY_LA
 import { cn, errorMessage } from '@/lib/utils'
 import type { BillingRoute, OrderingFrequency, OrderWindowKind, PaymentTerms, RepGroup, TablesInsert, FreeShippingPolicy, VendorStanding, StandingTag } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { BackLink } from '@/components/shared/BackLink'
+import { useHasInAppHistory } from '@/hooks/useHasInAppHistory'
 import { Alert, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
 
 const ROUTE_KEYS = Object.keys(BILLING_ROUTE_LABELS) as BillingRoute[]
@@ -124,6 +126,7 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
   const id = v?.id
   const isEdit = !!v
   const navigate = useNavigate()
+  const hasHistory = useHasInAppHistory()
   const { organization, profile } = useAuth()
   const [form, setForm] = useState<FormState>(() => (v ? formFromVendor(v) : EMPTY))
   const [removedWindows, setRemovedWindows] = useState<string[]>([])
@@ -188,7 +191,7 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
         await saveOrderWindow({ ...(w.id ? { id: w.id } : {}), vendor_id: vendorId!, kind: w.kind, label: nz(w.label), months: w.months, notes: nz(w.notes), sort_order: i })
       }
       toast.success(isEdit ? 'Vendor saved' : 'Vendor created')
-      navigate(`${ROUTES.vendors}/${vendorId}`)
+      navigate(`${ROUTES.vendors}/${vendorId}`, { replace: true })
     } catch (err) {
       setError(errorMessage(err))
     } finally {
@@ -198,9 +201,7 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
 
   return (
     <div className="mx-auto max-w-4xl">
-      <Link to={isEdit ? `${ROUTES.vendors}/${id}` : ROUTES.vendors} className="mb-3 inline-flex items-center gap-1 text-sm text-stone-500 hover:text-stone-900">
-        <ArrowLeft className="size-4" aria-hidden="true" /> {isEdit ? 'Back to vendor' : 'All vendors'}
-      </Link>
+      <BackLink fallback={isEdit ? `${ROUTES.vendors}/${id}` : ROUTES.vendors} fallbackLabel={isEdit ? 'Vendor' : 'Vendors'} />
       <PageHeader eyebrow="Vendor" title={isEdit ? `Edit ${v?.name ?? ''}` : 'New vendor'} />
 
       <form onSubmit={handleSubmit} noValidate className="space-y-6">
@@ -364,7 +365,7 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
 
         <div className="flex gap-2">
           <Button type="submit" loading={saving}>{isEdit ? 'Save changes' : 'Create vendor'}</Button>
-          <Button type="button" variant="ghost" onClick={() => navigate(isEdit ? `${ROUTES.vendors}/${id}` : ROUTES.vendors)}>Cancel</Button>
+          <Button type="button" variant="ghost" onClick={() => (hasHistory ? navigate(-1) : navigate(isEdit ? `${ROUTES.vendors}/${id}` : ROUTES.vendors))}>Cancel</Button>
         </div>
       </form>
     </div>
