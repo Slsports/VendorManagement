@@ -11,6 +11,8 @@ by Vercel from the branch `claude/ecstatic-carson-ziz2a9`.
 - `docs/lightspeed-category-standard.md` — mirror of the Claude Doc Dana and Trevor sign off:
   https://claude.ai/code/artifact/81009418-193c-498a-8e62-5c8b7c8a847c
 - `README.md` — script table and setup.
+- `docs/gmail-connection.md`, `docs/orders-and-mail-plan.md`, `docs/wwd-portal-import.md` — build plans
+  for the mail views, orders (five sources, PO stamp, sending, confirmation check) and the WWD portal import.
 
 ## How Dana works with Claude
 - Keep replies brief and plain; she is the shop owner, not a developer. No code in prose.

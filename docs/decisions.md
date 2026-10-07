@@ -1168,3 +1168,20 @@ payments in the sample export show), or when a payment is entered by hand.
   goes to the review queue. The review-queue-first rule stays for email-derived enrichment.
 - WWD told Dana last year they had no vendor export. She will ask their tech department directly
   this time; the reader script is the fallback.
+
+## 2026-10-07 — Mail views, file saving, five order sources, the PO stamp, sending, confirmation check
+- Dana: Outlook sorted mail into Focused and Other; she wants the same in VMS: "Needs attention"
+  (replies, confirmations, invoices, anything to act on) and "Offers & catalogs" (specials, price
+  lists, catalogs), with a toggle, and price lists or catalogs from offers saved into the vendor's
+  files automatically, links included, history kept.
+- An order can start from a sales report, a vendor's order writer (uploaded, taken off an email,
+  or downloaded from the WWD portal at show time; Jarrett uses these because prices and show
+  specials are already right), a plain email we sent (VMS proposes, a person confirms), the
+  "Create an order" form (all the fields a vendor needs, then pick the contact and send from
+  orders@), or typed in after the fact. One order record with lines whatever the source.
+- The Lightspeed PO is the stamp that the order was placed; the source document stays attached.
+  Sending: one button on the order, the vendor's own filled sheet or a clean PO, from orders@ with
+  the sender's signature; orders placed via the portal or a rep are marked so.
+- When a confirmation matches exactly, VMS compares it line by line, shows the differences on the
+  order, saves cost changes to the cost history, and drafts the email to the vendor for the order's
+  owner to edit or send. Written up in `docs/orders-and-mail-plan.md`.
