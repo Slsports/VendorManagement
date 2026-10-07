@@ -11,6 +11,7 @@ import { cn, errorMessage } from '@/lib/utils'
 import type { BillingRoute, OrderingFrequency, OrderWindowKind, PaymentTerms, RepGroup, TablesInsert, FreeShippingPolicy, VendorStanding, StandingTag } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { BackLink } from '@/components/shared/BackLink'
+import { StickySaveBar } from '@/components/shared/StickySaveBar'
 import { resolveEmailSender, setEmailVendor } from '@/services/mail'
 import { useHasInAppHistory } from '@/hooks/useHasInAppHistory'
 import { Alert, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
@@ -382,10 +383,8 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
           </FormField>
         </Section>
 
-        <div className="flex gap-2">
-          <Button type="submit" loading={saving}>{isEdit ? 'Save changes' : 'Create vendor'}</Button>
-          <Button type="button" variant="ghost" onClick={() => (hasHistory ? navigate(-1) : navigate(isEdit ? `${ROUTES.vendors}/${id}` : ROUTES.vendors))}>Cancel</Button>
-        </div>
+        <StickySaveBar saving={saving} label={isEdit ? 'Save changes' : 'Create vendor'} error={error}
+          onCancel={() => (hasHistory ? navigate(-1) : navigate(isEdit ? `${ROUTES.vendors}/${id}` : ROUTES.vendors))} />
       </form>
     </div>
   )

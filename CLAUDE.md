@@ -36,6 +36,9 @@ by Vercel from the branch `claude/ecstatic-carson-ziz2a9`.
 - **Every list sorts by its headers.** Clicking a column header sorts by that column, clicking again
   reverses it, and the arrow shows the sort. One shared hook/component for all tables (orders, vendors,
   lines, rep groups, scores, mail). Default sort stays what it is today.
+- **Save is always in reach.** Long edit forms end with the shared `StickySaveBar` (Save / Cancel pinned to
+  the bottom of the screen, full-width on phones, shows "Saving…" and the error). Short forms and pop-up
+  boxes keep their buttons where they are.
 
 ## Several sessions share one branch
 Dana runs more than one Claude session at a time (a Fable session for big builds, an Opus session for

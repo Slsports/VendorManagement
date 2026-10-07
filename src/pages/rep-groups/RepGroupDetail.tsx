@@ -9,6 +9,7 @@ import { ROUTES } from '@/lib/constants'
 import { errorMessage } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { BackLink } from '@/components/shared/BackLink'
+import { StickySaveBar } from '@/components/shared/StickySaveBar'
 import { RouteBadges } from '@/components/vendors/RouteBadges'
 import { LineCard } from '@/components/lines/LineCard'
 import { Alert, Badge, Button, FormField, Input, Spinner, Textarea } from '@/components/ui'
@@ -106,10 +107,7 @@ function RepGroupForm({ group, onDone, onCancel }: { group: { id: string; name: 
       <FormField label="Website" htmlFor="rg-web"><Input id="rg-web" value={form.website} onChange={(e) => set('website', e.target.value)} /></FormField>
       <FormField label="Address" htmlFor="rg-addr"><Input id="rg-addr" value={form.address} onChange={(e) => set('address', e.target.value)} /></FormField>
       <FormField label="Notes" htmlFor="rg-notes" className="sm:col-span-2"><Textarea id="rg-notes" rows={3} value={form.notes} onChange={(e) => set('notes', e.target.value)} /></FormField>
-      <div className="flex gap-2 sm:col-span-2">
-        <Button type="submit" loading={saving}>Save</Button>
-        <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button>
-      </div>
+      <StickySaveBar saving={saving} onCancel={onCancel} className="sm:col-span-2" />
     </form>
   )
 }
