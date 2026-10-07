@@ -1185,3 +1185,16 @@ payments in the sample export show), or when a payment is entered by hand.
 - When a confirmation matches exactly, VMS compares it line by line, shows the differences on the
   order, saves cost changes to the cost history, and drafts the email to the vendor for the order's
   owner to edit or send. Written up in `docs/orders-and-mail-plan.md`.
+
+## 2026-10-08 — Mail views and files saving themselves are live; orders and vendors from email
+- Built on Dana's go-ahead (Fable's plan sections 1 and 2, Opus session). Mail opens on "Needs
+  attention"; "Offers & catalogs" holds Promotions-tab mail, newsletters and specials; "Everything" for
+  searching. Unsure stays in Needs attention. Moving a conversation teaches that sender; Settings > Mail
+  has "Re-sort all mail". The Claude read waits for an API key.
+- Price lists, catalogs, specials and order forms from email save themselves into the vendor's files
+  with the email linked; newest of each kind is current, older ones stay as history. Every rule runs
+  over the stored mail too, and mail filed to a vendor later catches up on its own.
+- Dana: Tyler bought hats from a new vendor with the company card. Any conversation (or "Who is this
+  mail from?" card) now has "New vendor from this email" (form prefilled from the sender), and orders
+  can be added by hand on the vendor page or from an email, with how they were paid (card, check,
+  Bill.com, WWD, other) and the email linked. Fable's order plan builds lines and sending on top.

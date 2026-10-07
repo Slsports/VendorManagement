@@ -34,6 +34,14 @@ the file name and subject, `season_label` from the subject or date, `received_at
 Nothing is deleted: the newest of a kind is marked current, older ones stay as history. Vendor order
 writers that arrive by email are saved as kind `order_form`, which is also what section 3 reads.
 
+**As built (Oct 8, Opus):** `vendor_links.email_id` and `is_current` (newest per vendor and kind, set by a
+trigger; older ones shown as history), `emails.files_scanned_at` as the queue. The rules are in
+`supabase/functions/_shared/offerFiles.ts`: from offers mail every document (PDF, spreadsheet, Word) and
+real pictures (not signature logos), from other mail only files named price list, catalog, specials or
+order form; links in offers mail that are PDFs/spreadsheets or say catalog, price list, line sheet or
+order form. Files over 15 MB stay in the email. gmail-sync saves a few emails a minute, newest first;
+mail filed later (a sender answered in the review queue) is picked up the same way.
+
 ## 3. Five ways an order starts, one order record
 Every order is one `orders` row with `order_lines` (vendor_item_id = the Vendor ID, description,
 quantity, unit_cost, extended, program_id, notes). Sources, recorded in `orders.source`:

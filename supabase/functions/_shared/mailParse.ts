@@ -39,6 +39,15 @@ export interface ParsedMessage {
 
 export const BODY_LIMIT = 20_000
 
+/** The HTML part of a message, decoded (empty when there is none). */
+export function htmlBody(m: GmailMessage, limit = 1_000_000): string {
+  let html = ''
+  walk(m.payload, (p) => {
+    if (!html && (p.mimeType ?? '').toLowerCase() === 'text/html' && p.body?.data && !p.filename) html = decodeBase64Url(p.body.data, limit)
+  })
+  return html
+}
+
 /** Encoded bodies larger than this are cut before decoding: newsletters can be megabytes of HTML. */
 export const RAW_LIMIT = 300_000
 

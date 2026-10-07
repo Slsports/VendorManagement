@@ -4,8 +4,9 @@
 // Bodies are stored as plain text; matching and thread status happen in SQL (mail_process).
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { Gmail, GmailError, googleAccessToken } from '../_shared/gmail.ts'
-import { clueText, isBulk, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
+import { clueText, htmlBody, isBulk, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
 import { buildVendorIndex, domainVendors, mentionedVendors, type VendorIndex } from '../_shared/mailMatch.ts'
+import { extractLinks, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
 // messages and the scheduler comes back every minute until the 12 months are in.
@@ -105,6 +106,8 @@ async function syncAccount(db: SupabaseClient, acct: Account) {
 
     // Older mail stored before the views existed: read its bulk-mail headers, a few hundred a run.
     if (done && Date.now() - started < TIME_BUDGET_MS) await readBulkHeaders(db, gmail, org)
+    // Price lists, catalogs and order forms into the vendor's files, a few emails a run.
+    if (done && Date.now() - started < TIME_BUDGET_MS) await saveVendorFiles(db, gmail, org, started)
 
     await db.from('mail_accounts').update({
       last_sync_at: new Date().toISOString(), last_error: null, sync_started_at: null, messages_synced: acct.messages_synced + stored,
@@ -233,6 +236,62 @@ async function storeMessages(db: SupabaseClient, gmail: Gmail, ctx: Context, ids
   const newIds = [...idOf.values()]
   if (newIds.length) await check(db.rpc('mail_process', { p_org: ctx.org, p_email_ids: newIds, p_backfill: backfill }))
   return newIds.length
+}
+
+/**
+ * Save price lists, catalogs, specials and order forms from mail filed to a vendor into that vendor's files
+ * (docs/orders-and-mail-plan.md §2), and catalog / price-list links from offers mail. Mail filed later (a
+ * sender answered in the review queue) is picked up the same way, so history catches up on its own.
+ */
+async function saveVendorFiles(db: SupabaseClient, gmail: Gmail, org: string, started: number) {
+  const { data: queue } = await db.from('emails')
+    .select('id, gmail_id, vendor_id, view, subject, received_at, has_attachments, attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
+    .eq('organization_id', org).eq('direction', 'in').not('vendor_id', 'is', null).is('files_scanned_at', null)
+    .order('received_at', { ascending: false }).limit(25)
+  for (const e of queue ?? []) {
+    if (Date.now() - started > TIME_BUDGET_MS) break
+    const atts = (e.attachments ?? []) as { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; vendor_link_id: string | null }[]
+    const wanted = atts.filter((a) => !a.vendor_link_id && a.gmail_attachment_id).map((a) => ({ a, kind: wantAttachment(a, e.view, e.subject) })).filter((x) => x.kind)
+    const lookForLinks = e.view === 'offers'
+    try {
+    if (wanted.length || lookForLinks) {
+      const note = `From an email: ${e.subject ?? '(no subject)'}`
+      const base = { organization_id: org, vendor_id: e.vendor_id, received_at: e.received_at.slice(0, 10), source: 'email', email_id: e.id, notes: note }
+      for (const { a, kind } of wanted) {
+        const part = await gmail.call<{ data: string }>(`messages/${e.gmail_id}/attachments/${a.gmail_attachment_id}`)
+        const b64 = part.data.replace(/-/g, '+').replace(/_/g, '/')
+        const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4))
+        const bytes = new Uint8Array(bin.length)
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+        const path = `${org}/${e.vendor_id}/${crypto.randomUUID()}-${a.file_name.replace(/[^A-Za-z0-9._-]+/g, '_')}`
+        const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: a.mime_type ?? 'application/octet-stream', upsert: false })
+        if (upErr) throw new Error(`Saving ${a.file_name}: ${upErr.message}`)
+        const { data: link } = await db.from('vendor_links').insert({
+          ...base, kind, label: a.file_name.replace(/\.[a-z0-9]{2,5}$/i, ''), storage_path: path, file_name: a.file_name, file_size: bytes.length, mime_type: a.mime_type,
+          season_label: seasonLabel(`${a.file_name} ${e.subject ?? ''}`, e.received_at),
+        }).select('id').single()
+        if (link) await db.from('email_attachments').update({ vendor_link_id: link.id, storage_path: path }).eq('id', a.id)
+      }
+      if (lookForLinks) {
+        const html = htmlBody(await gmail.message(e.gmail_id, 'full') as unknown as GmailMessage)
+        const found = extractLinks(html).map((l) => ({ l, kind: wantLink(l, e.subject) })).filter((x) => x.kind)
+        if (found.length) {
+          const { data: have } = await db.from('vendor_links').select('url').eq('vendor_id', e.vendor_id).in('url', found.map((f) => f.l.url))
+          const known = new Set((have ?? []).map((h) => h.url))
+          const rows = found.filter((f, i) => !known.has(f.l.url) && found.findIndex((g) => g.l.url === f.l.url) === i).slice(0, 10).map(({ l, kind }) => ({
+            ...base, kind, url: l.url, label: (l.text && l.text.length < 120 ? l.text : null) ?? decodeURIComponent(l.url.split(/[?#]/)[0]!.split('/').pop() ?? 'Link'),
+            season_label: seasonLabel(`${l.text} ${e.subject ?? ''}`, e.received_at),
+          }))
+          if (rows.length) await check(db.from('vendor_links').insert(rows))
+        }
+      }
+    }
+    } catch (err) {
+      // One bad file must not hold up the rest; the email is marked looked-at and stays in Mail.
+      console.error(`files from ${e.id}:`, err instanceof Error ? err.message : err)
+    }
+    await db.from('emails').update({ files_scanned_at: new Date().toISOString() }).eq('id', e.id)
+  }
 }
 
 /** Fill emails.is_bulk for mail stored before it was read, then let SQL re-sort those emails. */

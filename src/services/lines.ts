@@ -123,10 +123,14 @@ export async function listVendorShows(vendorId: string): Promise<VendorShow[]> {
 // ---- links & files ----
 const BUCKET = 'vendor-files'
 
-export async function listVendorLinks(vendorId: string): Promise<VendorLink[]> {
-  const { data, error } = await supabase.from('vendor_links').select('*').eq('vendor_id', vendorId).order('created_at', { ascending: false })
+export type VendorLinkRow = VendorLink & { email: { thread_id: string } | null }
+
+/** A vendor's files and links, newest first, with the email conversation each one came from. */
+export async function listVendorLinks(vendorId: string): Promise<VendorLinkRow[]> {
+  const { data, error } = await supabase.from('vendor_links').select('*, email:emails(thread_id)').eq('vendor_id', vendorId)
+    .order('received_at', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false })
   if (error) throw error
-  return data ?? []
+  return (data ?? []) as unknown as VendorLinkRow[]
 }
 
 export async function addVendorLink(input: TablesInsert<'vendor_links'>): Promise<VendorLink> {
