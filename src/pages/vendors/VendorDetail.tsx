@@ -207,7 +207,7 @@ export default function VendorDetailPage() {
         <VendorShowsSection vendorId={v.id} />
         <VendorScorecard organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorItemRulesSection organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
-        <VendorOrdersSection vendorId={v.id} />
+        <VendorOrdersSection vendorId={v.id} vendorName={v.name} canAdd={canEdit} />
         <VendorMailSection vendorId={v.id} organizationId={v.organization_id} onNewEmail={canEdit ? () => compose(suggestions[0] ? [suggestions[0].email] : []) : undefined} />
 
         <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-1">

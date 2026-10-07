@@ -71,7 +71,7 @@ export const LINK_KIND_LABELS: Record<import('@/types').VendorLinkKind, string> 
 }
 
 export const ORDER_SEASON_LABELS: Record<import('@/types').OrderSeason, string> = { summer: 'Summer', winter: 'Winter' }
-export const PAID_VIA_LABELS: Record<NonNullable<import('@/types').Order['paid_via']>, string> = { billcom: 'Bill.com', wwd: 'Worldwide portal', card: 'Credit card', other: 'Other' }
+export const PAID_VIA_LABELS: Record<NonNullable<import('@/types').Order['paid_via']>, string> = { card: 'Credit card', check: 'Check', billcom: 'Bill.com', wwd: 'Worldwide portal', other: 'Other' }
 
 export function showLabel(code: string | null | undefined): string | null {
   if (!code) return null

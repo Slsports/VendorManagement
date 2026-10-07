@@ -1,4 +1,8 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Plus } from 'lucide-react'
+import { AddOrderDialog } from '@/components/orders/AddOrderDialog'
+import { Button } from '@/components/ui'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { vendorOrderSummary } from '@/services/orders'
 import { ROUTES } from '@/lib/constants'
@@ -9,8 +13,9 @@ import { SortHeader } from '@/components/shared/SortHeader'
 import { useTableSort } from '@/hooks/useTableSort'
 
 /** Every order we have placed with this vendor, newest first, with the totals that tell you when they buy. */
-export function VendorOrdersSection({ vendorId }: { vendorId: string }) {
+export function VendorOrdersSection({ vendorId, vendorName, canAdd = false }: { vendorId: string; vendorName?: string; canAdd?: boolean }) {
   const q = useSupabaseQuery(() => vendorOrderSummary(vendorId), [vendorId])
+  const [adding, setAdding] = useState(false)
   const s = q.data
   // Its own address-bar key, so it never fights another table on the vendor page.
   const { sorted, sort, toggle } = useTableSort(s?.orders ?? [], {
@@ -26,7 +31,10 @@ export function VendorOrdersSection({ vendorId }: { vendorId: string }) {
   return (
     <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Order history</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Order history</h2>
+          {canAdd ? <Button size="sm" variant="secondary" onClick={() => setAdding(true)} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add order</Button> : null}
+        </div>
         {s && s.count ? (
           <p className="text-xs text-stone-500">
             {s.count} order{s.count === 1 ? '' : 's'} · {money(s.totalSpend)} · last {s.lastOrderDate ? new Date(s.lastOrderDate).toLocaleDateString() : '—'}
@@ -69,6 +77,7 @@ export function VendorOrdersSection({ vendorId }: { vendorId: string }) {
           </table>
         </div>
       )}
+      {adding ? <AddOrderDialog vendor={{ id: vendorId, name: vendorName ?? 'this vendor' }} onClose={() => setAdding(false)} onSaved={() => void q.refetch()} /> : null}
     </section>
   )
 }

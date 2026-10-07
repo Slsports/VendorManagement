@@ -13,6 +13,7 @@ import { BackLink } from '@/components/shared/BackLink'
 import { ThreadStatusBadge } from '@/components/mail/ThreadStatusBadge'
 import { AssigneeSelect } from '@/components/review/AssigneeSelect'
 import { ComposeDialog, type ComposeDraft } from '@/components/mail/ComposeDialog'
+import { AddOrderDialog } from '@/components/orders/AddOrderDialog'
 import { Alert, Button, Input, Spinner } from '@/components/ui'
 
 /** One conversation: every message, who owns it, which vendor it is filed to, and where it stands. */
@@ -24,6 +25,7 @@ export default function ThreadPage() {
   const people = useSupabaseQuery(async () => (organization ? listPeople(organization.id) : []), [organization?.id])
   const mailbox = useSupabaseQuery(async () => (organization ? getMailbox(organization.id) : null), [organization?.id])
   const [draft, setDraft] = useState<ComposeDraft | null>(null)
+  const [addingOrder, setAddingOrder] = useState(false)
 
   if (q.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading the conversation…" className="text-brand" /></div>
   if (q.error || !q.data) return <Alert variant="error">{q.error ?? 'Conversation not found'}</Alert>
@@ -66,6 +68,7 @@ export default function ThreadPage() {
             ? <Button size="sm" variant="secondary" onClick={() => void act('Opened again', () => setEmailThreadStatus(t.id, 'waiting_on_us'))} leftIcon={<RotateCcw className="size-4" aria-hidden="true" />}>Open again</Button>
             : <Button size="sm" variant="secondary" onClick={() => void act('Marked handled', () => setEmailThreadStatus(t.id, 'handled'))} leftIcon={<CheckCircle2 className="size-4" aria-hidden="true" />}>Mark handled</Button>}
           <VendorPicker current={t.vendor} onPick={(v) => act(v ? `Filed to ${v.name}` : 'Unfiled', () => setEmailVendor(emails[0]!.id, v?.id ?? null))} />
+          {t.vendor ? <Button size="sm" variant="ghost" onClick={() => setAddingOrder(true)}>Add order from this email</Button> : null}
           {!t.vendor ? (
             <Link to={newVendorFromMailUrl(ROUTES.vendors, { ...party, isDomain: true, emailId: emails[0]!.id })} className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline">
               <Building2 className="size-4" aria-hidden="true" /> New vendor from this email
@@ -84,6 +87,7 @@ export default function ThreadPage() {
         ))}
       </ol>
       {draft ? <ComposeDialog draft={draft} onClose={() => setDraft(null)} onSent={() => void q.refetch()} /> : null}
+      {addingOrder && t.vendor ? <AddOrderDialog vendor={t.vendor} threadId={t.id} onClose={() => setAddingOrder(false)} /> : null}
     </div>
   )
 }

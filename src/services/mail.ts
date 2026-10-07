@@ -281,3 +281,8 @@ export async function saveSignature(profileId: string, signature: string): Promi
   const { error } = await supabase.from('profiles').update({ email_signature: signature.trim() || null }).eq('id', profileId)
   if (error) throw error
 }
+
+export async function linkThreadToOrder(threadId: string, orderId: string | null): Promise<void> {
+  const { error } = await supabase.rpc('link_email_thread_order', { p_thread: threadId, p_order: orderId })
+  if (error) throw error
+}
