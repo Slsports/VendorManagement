@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import type { Email, EmailAttachment, EmailSenderKind, EmailThreadStatus, MailAccount, MailView } from '@/types'
+import { TEST_LOGIN_PATTERN } from '@/services/reviews'
 
 export interface NamedRef { id: string; name: string }
 
@@ -276,7 +277,7 @@ export async function fileAttachmentToVendor(attachmentId: string, vendorId: str
 
 /** Everyone's signature, for Settings > Mail (admins edit them). */
 export async function listSignatures(organizationId: string): Promise<{ id: string; full_name: string; email: string; email_signature: string | null }[]> {
-  const { data, error } = await supabase.from('profiles').select('id, full_name, email, email_signature').eq('organization_id', organizationId).eq('is_active', true).order('full_name')
+  const { data, error } = await supabase.from('profiles').select('id, full_name, email, email_signature').eq('organization_id', organizationId).eq('is_active', true).not('email', 'ilike', TEST_LOGIN_PATTERN).order('full_name')
   if (error) throw error
   return data ?? []
 }

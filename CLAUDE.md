@@ -65,6 +65,9 @@ Vite + React 19 + TypeScript + Tailwind 4, Supabase (project `bpdpkytfmpbwpbmpej
   storage uploads do not work from a cloud session; auth users were created with SQL into `auth.users`.
 - Every migration grants explicitly (hosted default privileges give nothing) and adds RLS policies.
   Helpers: `user_in_org`, `user_can_edit` (admin/manager/buyer), `is_admin`.
+- Looking at screens: `NODE_USE_ENV_PROXY=1 node scripts/preview.mjs /vendors/<id>/edit` signs in as the test
+  login "Claude (testing)" (buyer; `VMS_TEST_EMAIL`/`VMS_TEST_PASSWORD` in the environment settings, created by
+  `scripts/create-test-login.mjs`) and screenshots at computer and phone size. Never print the password.
 - Types are hand-maintained in `src/types/database.ts`; add Row/Insert/Update and function Returns for
   every schema change, then aliases in `src/types/index.ts`.
 

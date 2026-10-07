@@ -38,6 +38,8 @@ Migrations are plain SQL in `supabase/migrations/` and apply in filename order.
 | `npm run analyze:ls-categories -- --items items.xlsx --categories categories.xlsx [--min 5] [--json report.json]` | Reads a Lightspeed item export plus category export and reports where size / gender-age breakdowns are missing, items sitting above an existing breakdown, mixed size naming, and item paths that are not real categories. Read-only. |
 | `node scripts/deploy-functions.mjs gmail-sync [...]` | Deploys Supabase Edge Functions (each `supabase/functions/<name>/index.ts` plus `_shared/`) through the Management API. Run with `NODE_USE_ENV_PROXY=1` in a cloud session. |
 | `node scripts/setup-mail-cron.mjs [--every "* * * * *"] [--run-now] [--no-schedule] [--off]` | Schedules `gmail-sync` with pg_cron. Generates the scheduler secret once, keeps it in Vault and as the function secret `MAIL_CRON_SECRET`; never prints it. `--run-now` starts one sync immediately. |
+| `node scripts/create-test-login.mjs` | Creates or updates Claude's test login ("Claude (testing)", buyer) from `VMS_TEST_EMAIL` and `VMS_TEST_PASSWORD` in the cloud environment settings. Kept out of people pickers. Never prints the password. Run with `NODE_USE_ENV_PROXY=1`. |
+| `node scripts/preview.mjs /vendors /mail [--out dir] [--viewport-only]` | Starts the app locally against live data, signs in as the test login and saves screenshots of each page at computer and phone size. Run with `NODE_USE_ENV_PROXY=1`. |
 
 If the Management API token is not available, open the Supabase SQL Editor, paste the contents
 of the migration file, and run it. The result is identical.

@@ -4,6 +4,9 @@ import type { TablesInsert, TablesUpdate } from '@/types/database'
 
 export interface Person { id: string; full_name: string; email: string; role: string }
 
+/** Claude's test login (scripts/create-test-login.mjs) signs in to preview screens; it is never a person to pick. */
+export const TEST_LOGIN_PATTERN = 'claude-test@%'
+
 /** Active people in the organization, for assignee pickers. RLS limits this to the caller's org. */
 export async function listPeople(organizationId: string): Promise<Person[]> {
   const { data, error } = await supabase
@@ -11,6 +14,7 @@ export async function listPeople(organizationId: string): Promise<Person[]> {
     .select('id, full_name, email, role')
     .eq('organization_id', organizationId)
     .eq('is_active', true)
+    .not('email', 'ilike', TEST_LOGIN_PATTERN)
     .order('full_name', { ascending: true })
   if (error) throw error
   return data ?? []

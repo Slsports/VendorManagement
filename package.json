@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "RetailHQ VMS \u2014 vendor management system for Shaver Lake Sports Inc.",
+  "description": "RetailHQ VMS — vendor management system for Shaver Lake Sports Inc.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -49,6 +49,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "jsdom": "^28",
     "oxlint": "^1.81.0",
+    "playwright-core": "1.56",
     "tailwindcss": "^4",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
