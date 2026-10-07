@@ -21,6 +21,9 @@ by Vercel from the branch `claude/ecstatic-carson-ziz2a9`.
 - Only Dana is an admin. Trevor and Jarrett are managers. Do not promote anyone.
 - Dana reviews proposals before data changes: duplicates, renames, category changes go through the
   review queue, never applied silently.
+- **Wait for Dana's go-ahead.** When a task is being discussed, give a short overview and stop. Do not
+  start building, editing files, changing data or pushing until Dana says to go ahead ("go", "do it",
+  "yes, build it"). Questions and overviews are not a go-ahead.
 
 ## Screen rules (Dana, Oct 7)
 - **Back goes to where you came from.** Every detail page (vendor, rep group, order, line, review item)
