@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { Email, EmailAttachment, EmailSenderKind, EmailThreadStatus, MailAccount } from '@/types'
+import type { Email, EmailAttachment, EmailSenderKind, EmailThreadStatus, MailAccount, MailView } from '@/types'
 
 export interface NamedRef { id: string; name: string }
 
@@ -93,6 +93,7 @@ export interface ThreadRow {
   gmail_thread_id: string
   subject: string | null
   status: EmailThreadStatus
+  view: MailView
   vendor_id: string | null
   owner_id: string | null
   message_count: number
@@ -105,6 +106,8 @@ export interface ThreadRow {
 }
 
 export interface ThreadFilters {
+  /** Needs attention, Offers & catalogs, or everything. */
+  view?: MailView | 'all'
   /** 'all' | 'mine' | 'none' | a profile id */
   who: string
   /** needs: waiting on us · waiting · no_answer (waiting past the follow-up date) · handled · open (not handled) · all */
@@ -114,7 +117,7 @@ export interface ThreadFilters {
   q?: string
 }
 
-const THREAD_SELECT = 'id, gmail_thread_id, subject, status, vendor_id, owner_id, message_count, last_message_at, follow_up_at, vendor:vendors(id, name), owner:profiles!email_threads_owner_id_fkey(id, full_name)'
+const THREAD_SELECT = 'id, gmail_thread_id, subject, status, view, vendor_id, owner_id, message_count, last_message_at, follow_up_at, vendor:vendors(id, name), owner:profiles!email_threads_owner_id_fkey(id, full_name)'
 
 async function withLastMessage(rows: Omit<ThreadRow, 'last'>[]): Promise<ThreadRow[]> {
   if (!rows.length) return []
@@ -139,6 +142,7 @@ export async function listThreads(organizationId: string, me: string | undefined
   else if (f.status === 'no_answer') q = q.eq('status', 'waiting_on_vendor').lt('follow_up_at', new Date().toISOString())
   else if (f.status === 'handled') q = q.eq('status', 'handled')
   else if (f.status === 'open') q = q.neq('status', 'handled')
+  if (f.view && f.view !== 'all') q = q.eq('view', f.view)
   if (f.vendorId) q = q.eq('vendor_id', f.vendorId)
   if (f.unmatched) q = q.is('vendor_id', null)
   if (f.q?.trim()) q = q.ilike('subject', `%${f.q.trim().replace(/[%_]/g, '')}%`)
@@ -156,7 +160,7 @@ export function listVendorThreads(organizationId: string, vendorId: string, limi
 export async function listMailForMe(organizationId: string, me: string): Promise<{ needs: ThreadRow[]; noAnswer: ThreadRow[] }> {
   const now = new Date().toISOString()
   const [a, b] = await Promise.all([
-    supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).eq('owner_id', me).eq('status', 'waiting_on_us').order('last_message_at', { ascending: false }).limit(50),
+    supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).eq('owner_id', me).eq('view', 'attention').eq('status', 'waiting_on_us').order('last_message_at', { ascending: false }).limit(50),
     supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).eq('owner_id', me).eq('status', 'waiting_on_vendor').lt('follow_up_at', now).order('follow_up_at', { ascending: true }).limit(50),
   ])
   if (a.error) throw a.error
@@ -169,7 +173,7 @@ export async function listMailForMe(organizationId: string, me: string): Promise
 export async function countMailForMe(organizationId: string, me: string): Promise<number> {
   const now = new Date().toISOString()
   const { count, error } = await supabase.from('email_threads').select('id', { count: 'exact', head: true })
-    .eq('organization_id', organizationId).eq('owner_id', me)
+    .eq('organization_id', organizationId).eq('owner_id', me).eq('view', 'attention')
     .or(`status.eq.waiting_on_us,and(status.eq.waiting_on_vendor,follow_up_at.lt.${now})`)
   if (error) throw error
   return count ?? 0
@@ -285,4 +289,18 @@ export async function saveSignature(profileId: string, signature: string): Promi
 export async function linkThreadToOrder(threadId: string, orderId: string | null): Promise<void> {
   const { error } = await supabase.rpc('link_email_thread_order', { p_thread: threadId, p_order: orderId })
   if (error) throw error
+}
+
+/** Move a conversation between Needs attention and Offers & catalogs; VMS learns the sender. Returns how many of their other emails moved too. */
+export async function setThreadView(threadId: string, view: MailView): Promise<number> {
+  const { data, error } = await supabase.rpc('set_email_thread_view', { p_thread: threadId, p_view: view, p_teach: true })
+  if (error) throw error
+  return data ?? 0
+}
+
+/** Settings > Mail: sort every email again with what VMS knows now. Returns how many changed. */
+export async function reclassifyAllMail(organizationId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('mail_reclassify_all', { p_org: organizationId })
+  if (error) throw error
+  return data ?? 0
 }

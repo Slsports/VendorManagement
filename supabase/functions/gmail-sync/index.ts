@@ -4,7 +4,7 @@
 // Bodies are stored as plain text; matching and thread status happen in SQL (mail_process).
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { Gmail, GmailError, googleAccessToken } from '../_shared/gmail.ts'
-import { clueText, parseMessage, type Address, type GmailMessage, type ParsedMessage } from '../_shared/mailParse.ts'
+import { clueText, isBulk, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
 import { buildVendorIndex, domainVendors, mentionedVendors, type VendorIndex } from '../_shared/mailMatch.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
@@ -102,6 +102,9 @@ async function syncAccount(db: SupabaseClient, acct: Account) {
       done = !pageToken
       await db.from('mail_accounts').update({ backfill_page_token: pageToken ?? null, backfill_done: done }).eq('organization_id', org)
     }
+
+    // Older mail stored before the views existed: read its bulk-mail headers, a few hundred a run.
+    if (done && Date.now() - started < TIME_BUDGET_MS) await readBulkHeaders(db, gmail, org)
 
     await db.from('mail_accounts').update({
       last_sync_at: new Date().toISOString(), last_error: null, sync_started_at: null, messages_synced: acct.messages_synced + stored,
@@ -217,6 +220,7 @@ async function storeMessages(db: SupabaseClient, gmail: Gmail, ctx: Context, ids
     labels: p.label_ids.map((id) => ctx.labelNames.get(id) ?? id),
     has_attachments: p.attachments.length > 0,
     sender_id: senderKey ? senderIds.get(senderKey) ?? null : null,
+    is_bulk: p.is_bulk,
     mentioned_vendor_ids: mentionedVendors(ctx.index, clueText(p)),
   }))
   const { data: inserted, error } = await db.from('emails').upsert(emailRows, { onConflict: 'organization_id,gmail_id', ignoreDuplicates: true }).select('id, gmail_id')
@@ -229,6 +233,27 @@ async function storeMessages(db: SupabaseClient, gmail: Gmail, ctx: Context, ids
   const newIds = [...idOf.values()]
   if (newIds.length) await check(db.rpc('mail_process', { p_org: ctx.org, p_email_ids: newIds, p_backfill: backfill }))
   return newIds.length
+}
+
+/** Fill emails.is_bulk for mail stored before it was read, then let SQL re-sort those emails. */
+async function readBulkHeaders(db: SupabaseClient, gmail: Gmail, org: string) {
+  const { data } = await db.from('emails').select('id, gmail_id').eq('organization_id', org).is('is_bulk', null).eq('direction', 'in').limit(300)
+  if (!data?.length) return
+  const ids: string[] = []
+  const flags: boolean[] = []
+  for (let i = 0; i < data.length; i += PARALLEL * 2) {
+    const batch = await Promise.all(data.slice(i, i + PARALLEL * 2).map(async (e) => {
+      try {
+        const m = await gmail.headers(e.gmail_id, ['List-Unsubscribe', 'Precedence'])
+        return { id: e.id, bulk: isBulk(m.payload as GmailPart | undefined) }
+      } catch (err) {
+        if (err instanceof GmailError && err.status === 404) return { id: e.id, bulk: false } // gone from Gmail
+        throw err
+      }
+    }))
+    for (const b of batch) { ids.push(b.id); flags.push(b.bulk) }
+  }
+  await check(db.rpc('mail_set_bulk', { p_org: org, p_ids: ids, p_bulk: flags }))
 }
 
 /** Labels changed in Gmail (Assigned/<name>, stars): keep ours in step. */

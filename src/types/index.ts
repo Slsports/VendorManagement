@@ -53,3 +53,4 @@ export type EmailThreadStatus = EmailThread['status']
 export type Email = Tables<'emails'>
 export type EmailAttachment = Tables<'email_attachments'>
 export type Need = Tables<'needs'>
+export type MailView = EmailThread['view']

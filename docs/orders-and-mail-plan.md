@@ -16,6 +16,15 @@ How VMS sorts: Gmail's own category labels first (CATEGORY_PROMOTIONS = offers),
 teaches VMS that sender (`mail_sender_rules`: sender → view). Column `emails.view` in
 attention|offers plus `view_how` (gmail|rule|read|manual).
 
+**As built (Oct 8, Opus):** `emails.view` / `view_how` / `is_bulk`, `email_threads.view`, and the sender's
+learned view on `email_senders.view_rule` (instead of a separate `mail_sender_rules` table). Sorting is SQL
+(`mail_view_for`, `mail_classify`): a person's answer for the sender, then conversations we wrote in,
+then order/invoice/shipping words, then Gmail's Promotions tab, then List-Unsubscribe, then offer words;
+anything else stays in Needs attention. The sync reads bulk-mail headers on new mail and works through
+older mail 300 a run. Moving a conversation (`set_email_thread_view`) teaches the sender and moves its
+other mail; Settings > Mail has "Re-sort all mail". The dashboard list and the Mail count only count
+Needs attention. The Claude read is not built: no API key yet.
+
 ## 2. Files and links save themselves
 On an offers email with an attachment (PDF, XLSX, CSV, image): save it into that vendor's Catalogs,
 price lists & files (`vendor_links`) with kind price_list | catalog | specials | order_form guessed from

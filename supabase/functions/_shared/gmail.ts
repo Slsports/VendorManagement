@@ -74,6 +74,11 @@ export class Gmail {
     return this.call<{ messages?: { id: string; threadId: string }[]; nextPageToken?: string }>('messages', { query: { q, pageToken, maxResults } })
   }
   message(id: string, format: 'full' | 'minimal' | 'metadata' = 'full') { return this.call<Record<string, unknown>>(`messages/${id}`, { query: { format } }) }
+  /** Only the named headers: cheap, for reading bulk-mail marks on older mail. */
+  headers(id: string, names: string[]) {
+    const url = `messages/${id}?format=metadata&${names.map((n) => `metadataHeaders=${encodeURIComponent(n)}`).join('&')}`
+    return this.call<{ id: string; payload?: { headers?: { name: string; value: string }[] } }>(url)
+  }
   history(startHistoryId: string, pageToken?: string) {
     return this.call<{ history?: { messagesAdded?: { message: { id: string } }[]; labelsAdded?: { message: { id: string } }[]; labelsRemoved?: { message: { id: string } }[] }[]; historyId: string; nextPageToken?: string }>(
       'history', { query: { startHistoryId, pageToken, maxResults: 500 } })

@@ -11,6 +11,12 @@ import { ThreadTable } from '@/components/mail/ThreadTable'
 import { ComposeDialog } from '@/components/mail/ComposeDialog'
 import { Alert, Button, Select, Spinner } from '@/components/ui'
 
+const VIEWS: { value: NonNullable<ThreadFilters['view']>; label: string; help: string }[] = [
+  { value: 'attention', label: 'Needs attention', help: 'Replies, confirmations, invoices, questions: anything someone has to act on.' },
+  { value: 'offers', label: 'Offers & catalogs', help: 'Specials, price lists, catalogs and newsletters. Move a conversation to teach VMS where that sender belongs.' },
+  { value: 'all', label: 'Everything', help: 'All mail, for searching.' },
+]
+
 const STATUS_TABS: { value: ThreadFilters['status']; label: string }[] = [
   { value: 'needs', label: 'Needs an answer' },
   { value: 'no_answer', label: 'No answer yet' },
@@ -27,14 +33,15 @@ export default function MailPage() {
   const [composing, setComposing] = useState(false)
   const [params, setParams] = useSearchParams()
   const who = params.get('who') ?? 'mine'
-  const status = (params.get('status') ?? 'open') as ThreadFilters['status']
+  const view = (params.get('view') ?? 'attention') as NonNullable<ThreadFilters['view']>
+  const status = (params.get('status') ?? (view === 'attention' ? 'open' : 'all')) as ThreadFilters['status']
   const unmatched = params.get('unmatched') === '1'
   const search = params.get('q') ?? ''
   const [draft, setDraft] = useState(search)
   const people = useSupabaseQuery(async () => (organization ? listPeople(organization.id) : []), [organization?.id])
   const q = useSupabaseQuery(
-    async () => (organization ? listThreads(organization.id, profile?.id, { who, status, unmatched, q: search }) : []),
-    [organization?.id, profile?.id, who, status, unmatched, search],
+    async () => (organization ? listThreads(organization.id, profile?.id, { view, who, status, unmatched, q: search }) : []),
+    [organization?.id, profile?.id, view, who, status, unmatched, search],
   )
 
   function setParam(key: string, value: string) {
@@ -49,11 +56,21 @@ export default function MailPage() {
       <PageHeader title="Mail" description="Everything that comes into orders@, filed by vendor. Answer it here; Gmail is the backup."
         actions={canEdit ? <Button onClick={() => setComposing(true)} leftIcon={<PenLine className="size-4" aria-hidden="true" />}>New email</Button> : undefined} />
       {composing ? <ComposeDialog draft={{ to: [], subject: '', body: '' }} onClose={() => setComposing(false)} onSent={() => void q.refetch()} /> : null}
+      <div role="tablist" aria-label="Mail view" className="mb-2 flex w-full max-w-xl rounded-xl border border-stone-200 bg-white p-1">
+        {VIEWS.map((v) => (
+          <button key={v.value} type="button" role="tab" aria-selected={view === v.value}
+            onClick={() => { const next = new URLSearchParams(params); if (v.value === 'attention') next.delete('view'); else next.set('view', v.value); next.delete('status'); setParams(next, { replace: true }) }}
+            className={cn('flex-1 rounded-lg px-3 py-2 text-sm font-semibold', view === v.value ? 'bg-brand text-white shadow-sm' : 'text-stone-600 hover:text-stone-900')}>
+            {v.label}
+          </button>
+        ))}
+      </div>
+      <p className="mb-4 text-xs text-stone-500">{VIEWS.find((v) => v.value === view)?.help}</p>
       <nav aria-label="Mail status" className="mb-4 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <ul className="flex w-max gap-1 rounded-xl bg-stone-100 p-1">
           {STATUS_TABS.map((t) => (
             <li key={t.value}>
-              <button type="button" onClick={() => setParam('status', t.value === 'open' ? '' : t.value)} aria-current={status === t.value ? 'page' : undefined}
+              <button type="button" onClick={() => setParam('status', t.value)} aria-current={status === t.value ? 'page' : undefined}
                 className={cn('block whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium', status === t.value ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900')}>
                 {t.label}
               </button>

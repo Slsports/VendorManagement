@@ -33,6 +33,8 @@ export interface ParsedMessage {
   received_at: string
   label_ids: string[]
   attachments: ParsedAttachment[]
+  /** Newsletter or bulk mail: a List-Unsubscribe header or Precedence: bulk/list. */
+  is_bulk: boolean
 }
 
 export const BODY_LIMIT = 20_000
@@ -94,6 +96,11 @@ function walk(part: GmailPart | undefined, visit: (p: GmailPart) => void) {
   for (const p of part.parts ?? []) walk(p, visit)
 }
 
+/** List-Unsubscribe or Precedence: bulk / list / junk marks mail sent to many people at once. */
+export function isBulk(part: GmailPart | undefined): boolean {
+  return !!header(part, 'List-Unsubscribe') || /^(bulk|list|junk)$/i.test(header(part, 'Precedence') ?? '')
+}
+
 export function parseMessage(m: GmailMessage): ParsedMessage {
   let plain = ''
   let html = ''
@@ -124,6 +131,7 @@ export function parseMessage(m: GmailMessage): ParsedMessage {
     received_at: new Date(Number(m.internalDate ?? Date.now())).toISOString(),
     label_ids: m.labelIds ?? [],
     attachments,
+    is_bulk: isBulk(m.payload),
   }
 }
 

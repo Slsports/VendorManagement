@@ -83,6 +83,11 @@ describe('message parsing', () => {
     expect(clues.strong).toContain('Confirmation')
     expect(clues.strong).toContain('WFS Confirmation 8 27 26')
   })
+  it('marks newsletters as bulk mail', () => {
+    expect(parseMessage(msg).is_bulk).toBe(false)
+    const news = { ...msg, payload: { ...msg.payload, headers: [...msg.payload!.headers!, { name: 'List-Unsubscribe', value: '<mailto:x@y.com>' }] } }
+    expect(parseMessage(news).is_bulk).toBe(true)
+  })
   it('decodes UTF-8 and handles empty address lists', () => {
     expect(decodeBase64Url(b64(unescape(encodeURIComponent('Café')))).normalize()).toBe('Café')
     expect(parseAddressList(undefined)).toEqual([])

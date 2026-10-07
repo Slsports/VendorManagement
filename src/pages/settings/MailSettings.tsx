@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { RefreshCw } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { getMailStatus, listSignatures, saveSignature, setFollowUpDays, syncMailNow } from '@/services/mail'
+import { getMailStatus, listSignatures, reclassifyAllMail, saveSignature, setFollowUpDays, syncMailNow } from '@/services/mail'
 import { errorMessage } from '@/lib/utils'
 import { Alert, Button, FormField, Input, Spinner, Textarea } from '@/components/ui'
 
@@ -14,6 +14,7 @@ export default function MailSettings() {
   const q = useSupabaseQuery(async () => (organization ? getMailStatus(organization.id) : null), [organization?.id])
   const [syncing, setSyncing] = useState(false)
   const [days, setDays] = useState<string | null>(null)
+  const [resorting, setResorting] = useState(false)
 
   if (q.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading mail status…" className="text-brand" /></div>
   if (q.error) return <Alert variant="error">{q.error}</Alert>
@@ -31,6 +32,18 @@ export default function MailSettings() {
       toast.error(errorMessage(err))
     } finally {
       setSyncing(false)
+    }
+  }
+
+  async function resort() {
+    setResorting(true)
+    try {
+      const n = await reclassifyAllMail(organization!.id)
+      toast.success(n ? `${n.toLocaleString()} email${n === 1 ? '' : 's'} changed view` : 'Everything was already sorted')
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setResorting(false)
     }
   }
 
@@ -68,6 +81,10 @@ export default function MailSettings() {
           <div><dt className="text-xs font-medium text-stone-500">First load</dt><dd className="text-sm font-medium text-stone-900">{m.backfill_done ? 'Done' : `Loading the 12 months since ${m.backfill_after ? new Date(`${m.backfill_after}T12:00:00`).toLocaleDateString() : 'last year'}`}</dd></div>
         </dl>
         <p className="mt-3 text-xs text-stone-500">Senders to identify wait in the review queue under "Who is this mail from?". One answer files all their mail, now and later.</p>
+        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-stone-100 pt-4">
+          <Button size="sm" variant="secondary" loading={resorting} onClick={() => void resort()}>Re-sort all mail</Button>
+          <p className="text-xs text-stone-500">Sorts every email into Needs attention or Offers & catalogs again with what VMS knows now. Conversations you moved by hand stay where you put them.</p>
+        </div>
       </section>
 
       <Signatures organizationId={organization!.id} />
