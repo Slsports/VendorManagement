@@ -6,6 +6,7 @@ import { listReviewItems } from '@/services/vendors'
 import { countOrdersByStatus } from '@/services/orders'
 import { ROUTES } from '@/lib/constants'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { MailForYouPanel } from '@/components/mail/MailForYouPanel'
 
 const KPIS = [
   { label: 'Open orders', icon: ShoppingCart, phase: 4 },
@@ -51,6 +52,7 @@ export default function DashboardPage() {
       </section>
 
       <section className="mt-6 grid gap-4 lg:grid-cols-3">
+        <MailForYouPanel />
         <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
           <h2 className="text-sm font-semibold text-stone-900">Review queue</h2>
           <div className="mt-4 flex items-start gap-3 rounded-xl bg-stone-50 p-4">

@@ -10,6 +10,7 @@ import {
   FolderOpen,
   LayoutDashboard,
   Lightbulb,
+  Mail,
   Settings,
   ShoppingCart,
   Tags,
@@ -34,6 +35,8 @@ export interface NavItem {
   /** Match only the exact path for the active state (used for "/"). */
   end?: boolean
   children?: readonly NavChild[]
+  /** Show a live count beside the label. */
+  badge?: 'mail'
 }
 
 export interface NavGroup {
@@ -52,6 +55,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     label: 'Overview',
     items: [
       { label: 'Dashboard', to: ROUTES.dashboard, icon: LayoutDashboard, end: true },
+      { label: 'Mail', to: ROUTES.mail, icon: Mail, badge: 'mail' },
       { label: 'Review queue', to: ROUTES.review, icon: ClipboardCheck, roles: ['admin', 'manager', 'buyer'] },
     ],
   },

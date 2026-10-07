@@ -18,6 +18,7 @@ import { VendorRepGroupCard } from '@/components/vendors/VendorRepGroupCard'
 import { VendorShowsSection } from '@/components/vendors/VendorShowsSection'
 import { PartnerContactsCard } from '@/components/vendors/PartnerContactsCard'
 import { VendorOrdersSection } from '@/components/vendors/VendorOrdersSection'
+import { VendorMailSection } from '@/components/vendors/VendorMailSection'
 import { VendorScorecard } from '@/components/scores/VendorScorecard'
 import { VendorItemRulesSection } from '@/components/vendors/VendorItemRulesSection'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
@@ -192,6 +193,7 @@ export default function VendorDetailPage() {
         <VendorScorecard organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorItemRulesSection organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorOrdersSection vendorId={v.id} />
+        <VendorMailSection vendorId={v.id} organizationId={v.organization_id} />
 
         <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-1">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Notes</h2>

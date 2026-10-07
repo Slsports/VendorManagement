@@ -42,6 +42,8 @@ const PlaceholderSettings = lazy(() => import('@/pages/settings/PlaceholderSetti
 const PartnerSettings = lazy(() => import('@/pages/settings/PartnerSettings'))
 const ReviewAssignmentSettings = lazy(() => import('@/pages/settings/ReviewAssignmentSettings'))
 const MailSettings = lazy(() => import('@/pages/settings/MailSettings'))
+const MailPage = lazy(() => import('@/pages/mail/MailPage'))
+const ThreadPage = lazy(() => import('@/pages/mail/ThreadPage'))
 const VendorScoresReport = lazy(() => import('@/pages/reports/VendorScoresReport'))
 
 const STAFF = ['admin', 'manager', 'buyer', 'viewer'] as const
@@ -96,6 +98,8 @@ export default function App() {
                 <Route path={`${ROUTES.repGroups}/:id`} element={<RepGroupDetail />} />
                 <Route path={ROUTES.lines} element={<LinesPage />} />
                 <Route path={ROUTES.review} element={<ReviewQueue />} />
+                <Route path={ROUTES.mail} element={<MailPage />} />
+                <Route path={`${ROUTES.mail}/:id`} element={<ThreadPage />} />
                 <Route path={ROUTES.mergeReport} element={<MergeReport />} />
                 <Route path={ROUTES.orders} element={<OrderList />} />
                 <Route path={`${ROUTES.orders}/:id`} element={<OrderDetail />} />

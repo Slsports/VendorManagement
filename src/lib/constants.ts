@@ -76,6 +76,7 @@ export const ROUTES = {
   repGroups: '/rep-groups',
   lines: '/lines',
   review: '/review',
+  mail: '/mail',
   mergeReport: '/review/merges',
 } as const
 

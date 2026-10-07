@@ -1,0 +1,91 @@
+import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { Inbox, Search } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { listThreads, type ThreadFilters } from '@/services/mail'
+import { listPeople } from '@/services/reviews'
+import { cn } from '@/lib/utils'
+import { PageHeader } from '@/components/shared/PageHeader'
+import { ThreadTable } from '@/components/mail/ThreadTable'
+import { Alert, Select, Spinner } from '@/components/ui'
+
+const STATUS_TABS: { value: ThreadFilters['status']; label: string }[] = [
+  { value: 'needs', label: 'Needs an answer' },
+  { value: 'no_answer', label: 'No answer yet' },
+  { value: 'waiting', label: 'Waiting on vendor' },
+  { value: 'open', label: 'All open' },
+  { value: 'handled', label: 'Handled' },
+  { value: 'all', label: 'All' },
+]
+
+/** orders@ inside VMS: whose mail, where it stands, filed to which vendor. Everything is shared; ownership decides whose list. */
+export default function MailPage() {
+  const { organization, profile } = useAuth()
+  const [params, setParams] = useSearchParams()
+  const who = params.get('who') ?? 'mine'
+  const status = (params.get('status') ?? 'open') as ThreadFilters['status']
+  const unmatched = params.get('unmatched') === '1'
+  const search = params.get('q') ?? ''
+  const [draft, setDraft] = useState(search)
+  const people = useSupabaseQuery(async () => (organization ? listPeople(organization.id) : []), [organization?.id])
+  const q = useSupabaseQuery(
+    async () => (organization ? listThreads(organization.id, profile?.id, { who, status, unmatched, q: search }) : []),
+    [organization?.id, profile?.id, who, status, unmatched, search],
+  )
+
+  function setParam(key: string, value: string) {
+    const next = new URLSearchParams(params)
+    if (value) next.set(key, value)
+    else next.delete(key)
+    setParams(next, { replace: true })
+  }
+
+  return (
+    <div>
+      <PageHeader title="Mail" description="Everything that comes into orders@, filed by vendor. Answer it here; Gmail is the backup." />
+      <nav aria-label="Mail status" className="mb-4 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <ul className="flex w-max gap-1 rounded-xl bg-stone-100 p-1">
+          {STATUS_TABS.map((t) => (
+            <li key={t.value}>
+              <button type="button" onClick={() => setParam('status', t.value === 'open' ? '' : t.value)} aria-current={status === t.value ? 'page' : undefined}
+                className={cn('block whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium', status === t.value ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900')}>
+                {t.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <form onSubmit={(e) => { e.preventDefault(); setParam('q', draft.trim()) }} className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-stone-400" aria-hidden="true" />
+          <input type="search" value={draft} onChange={(e) => { setDraft(e.target.value); if (!e.target.value) setParam('q', '') }} placeholder="Search subjects…" aria-label="Search mail" className="h-11 w-full rounded-lg border border-stone-300 bg-white pl-9 pr-3 text-base shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-ring-brand sm:text-sm" />
+        </div>
+        <Select value={who} onChange={(e) => setParam('who', e.target.value === 'mine' ? '' : e.target.value)} aria-label="Whose mail" className="lg:w-56">
+          <option value="mine">Mine</option>
+          <option value="all">Everyone</option>
+          <option value="none">Nobody's yet</option>
+          {(people.data ?? []).filter((p) => p.id !== profile?.id).map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+        </Select>
+        <label className="flex items-center gap-2 text-sm text-stone-700">
+          <input type="checkbox" checked={unmatched} onChange={(e) => setParam('unmatched', e.target.checked ? '1' : '')} className="size-4 rounded border-stone-300" />
+          Not filed to a vendor
+        </label>
+      </form>
+      {q.isLoading ? <div className="flex justify-center py-16"><Spinner label="Loading mail…" className="text-brand" /></div>
+        : q.error ? <Alert variant="error">{q.error}</Alert>
+        : (q.data ?? []).length === 0 ? (
+          <div className="flex flex-col items-center rounded-2xl border border-dashed border-stone-300 py-16 text-center">
+            <Inbox className="size-8 text-stone-400" aria-hidden="true" />
+            <p className="mt-3 text-sm text-stone-600">{who === 'mine' && status === 'open' ? 'Nothing waiting on you.' : 'No mail matches.'}</p>
+            {who === 'mine' ? <button type="button" onClick={() => setParam('who', 'all')} className="mt-2 text-sm font-medium text-brand hover:underline">Show everyone's</button> : null}
+          </div>
+        ) : (
+          <>
+            <ThreadTable rows={q.data ?? []} />
+            {(q.data ?? []).length >= 300 ? <p className="mt-2 text-xs text-stone-500">Showing the newest 300. Search or filter to narrow it down.</p> : null}
+          </>
+        )}
+    </div>
+  )
+}

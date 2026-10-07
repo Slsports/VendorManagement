@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { EmailSenderKind, EmailThreadStatus, MailAccount } from '@/types'
+import type { Email, EmailAttachment, EmailSenderKind, EmailThreadStatus, MailAccount } from '@/types'
 
 export interface NamedRef { id: string; name: string }
 
@@ -85,4 +85,117 @@ export async function setFollowUpDays(organizationId: string, days: number): Pro
 export async function syncMailNow(): Promise<void> {
   const { error } = await supabase.functions.invoke('gmail-sync', { body: {} })
   if (error) throw error
+}
+
+// ---- threads -------------------------------------------------------------------
+export interface ThreadRow {
+  id: string
+  gmail_thread_id: string
+  subject: string | null
+  status: EmailThreadStatus
+  vendor_id: string | null
+  owner_id: string | null
+  message_count: number
+  last_message_at: string | null
+  follow_up_at: string | null
+  vendor: { id: string; name: string } | null
+  owner: { id: string; full_name: string } | null
+  /** The newest message: who, a line of it, and whether it came in or went out. */
+  last: { from_name: string | null; from_email: string | null; snippet: string | null; direction: 'in' | 'out' | 'internal'; has_attachments: boolean } | null
+}
+
+export interface ThreadFilters {
+  /** 'all' | 'mine' | 'none' | a profile id */
+  who: string
+  /** needs: waiting on us · waiting · no_answer (waiting past the follow-up date) · handled · open (not handled) · all */
+  status: 'needs' | 'waiting' | 'no_answer' | 'handled' | 'open' | 'all'
+  vendorId?: string
+  unmatched?: boolean
+  q?: string
+}
+
+const THREAD_SELECT = 'id, gmail_thread_id, subject, status, vendor_id, owner_id, message_count, last_message_at, follow_up_at, vendor:vendors(id, name), owner:profiles!email_threads_owner_id_fkey(id, full_name)'
+
+async function withLastMessage(rows: Omit<ThreadRow, 'last'>[]): Promise<ThreadRow[]> {
+  if (!rows.length) return []
+  const last = new Map<string, ThreadRow['last']>()
+  for (let i = 0; i < rows.length; i += 100) {
+    const ids = rows.slice(i, i + 100).map((r) => r.id)
+    const { data, error } = await supabase.from('emails').select('thread_id, from_name, from_email, snippet, direction, has_attachments, received_at').in('thread_id', ids).order('received_at', { ascending: false })
+    if (error) throw error
+    for (const e of data ?? []) if (!last.has(e.thread_id)) last.set(e.thread_id, e)
+  }
+  return rows.map((r) => ({ ...r, last: last.get(r.id) ?? null }))
+}
+
+/** Threads for the Mail page, newest first, at most `limit`. */
+export async function listThreads(organizationId: string, me: string | undefined, f: ThreadFilters, limit = 300): Promise<ThreadRow[]> {
+  let q = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).not('last_message_at', 'is', null)
+  if (f.who === 'mine' && me) q = q.eq('owner_id', me)
+  else if (f.who === 'none') q = q.is('owner_id', null)
+  else if (f.who !== 'all') q = q.eq('owner_id', f.who)
+  if (f.status === 'needs') q = q.eq('status', 'waiting_on_us')
+  else if (f.status === 'waiting') q = q.eq('status', 'waiting_on_vendor')
+  else if (f.status === 'no_answer') q = q.eq('status', 'waiting_on_vendor').lt('follow_up_at', new Date().toISOString())
+  else if (f.status === 'handled') q = q.eq('status', 'handled')
+  else if (f.status === 'open') q = q.neq('status', 'handled')
+  if (f.vendorId) q = q.eq('vendor_id', f.vendorId)
+  if (f.unmatched) q = q.is('vendor_id', null)
+  if (f.q?.trim()) q = q.ilike('subject', `%${f.q.trim().replace(/[%_]/g, '')}%`)
+  const { data, error } = await q.order('last_message_at', { ascending: false }).limit(limit)
+  if (error) throw error
+  return withLastMessage((data ?? []) as unknown as Omit<ThreadRow, 'last'>[])
+}
+
+/** A vendor's threads, newest first. */
+export function listVendorThreads(organizationId: string, vendorId: string, limit = 50): Promise<ThreadRow[]> {
+  return listThreads(organizationId, undefined, { who: 'all', status: 'all', vendorId }, limit)
+}
+
+/** What is waiting on this person: vendor replies to answer, and sent mail with no answer past the follow-up date. */
+export async function listMailForMe(organizationId: string, me: string): Promise<{ needs: ThreadRow[]; noAnswer: ThreadRow[] }> {
+  const now = new Date().toISOString()
+  const [a, b] = await Promise.all([
+    supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).eq('owner_id', me).eq('status', 'waiting_on_us').order('last_message_at', { ascending: false }).limit(50),
+    supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).eq('owner_id', me).eq('status', 'waiting_on_vendor').lt('follow_up_at', now).order('follow_up_at', { ascending: true }).limit(50),
+  ])
+  if (a.error) throw a.error
+  if (b.error) throw b.error
+  const [needs, noAnswer] = await Promise.all([withLastMessage((a.data ?? []) as unknown as Omit<ThreadRow, 'last'>[]), withLastMessage((b.data ?? []) as unknown as Omit<ThreadRow, 'last'>[])])
+  return { needs, noAnswer }
+}
+
+/** The number on Mail in the side menu: threads waiting on this person. */
+export async function countMailForMe(organizationId: string, me: string): Promise<number> {
+  const now = new Date().toISOString()
+  const { count, error } = await supabase.from('email_threads').select('id', { count: 'exact', head: true })
+    .eq('organization_id', organizationId).eq('owner_id', me)
+    .or(`status.eq.waiting_on_us,and(status.eq.waiting_on_vendor,follow_up_at.lt.${now})`)
+  if (error) throw error
+  return count ?? 0
+}
+
+export interface ThreadDetail {
+  thread: ThreadRow
+  emails: (Email & { attachments: EmailAttachment[] })[]
+}
+
+export async function getThread(threadId: string): Promise<ThreadDetail | null> {
+  const { data: t, error } = await supabase.from('email_threads').select(THREAD_SELECT).eq('id', threadId).maybeSingle()
+  if (error) throw error
+  if (!t) return null
+  const { data: emails, error: e2 } = await supabase.from('emails').select('*, attachments:email_attachments(*)').eq('thread_id', threadId).order('received_at', { ascending: true })
+  if (e2) throw e2
+  const list = (emails ?? []) as unknown as ThreadDetail['emails']
+  const lastE = list[list.length - 1]
+  return {
+    thread: { ...(t as unknown as Omit<ThreadRow, 'last'>), last: lastE ? { from_name: lastE.from_name, from_email: lastE.from_email, snippet: lastE.snippet, direction: lastE.direction, has_attachments: lastE.has_attachments } : null },
+    emails: list,
+  }
+}
+
+export async function getMailbox(organizationId: string): Promise<string | null> {
+  const { data, error } = await supabase.from('mail_accounts').select('mailbox').eq('organization_id', organizationId).maybeSingle()
+  if (error) throw error
+  return data?.mailbox ?? null
 }

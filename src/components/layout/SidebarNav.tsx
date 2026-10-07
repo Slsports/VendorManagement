@@ -6,6 +6,7 @@ import { navForRole, type NavItem } from '@/lib/navigation'
 import { ROLE_LABELS } from '@/lib/constants'
 import { cn, initials } from '@/lib/utils'
 import { BrandMark } from './BrandMark'
+import { useMailCount } from '@/hooks/useMailCount'
 
 export interface SidebarNavProps {
   /** Show labels (expanded) or icons only (rail). */
@@ -19,6 +20,7 @@ export interface SidebarNavProps {
 export function SidebarNav({ expanded, onNavigate, collapseToggle }: SidebarNavProps) {
   const { branding, profile, role } = useAuth()
   const groups = navForRole(role)
+  const mailCount = useMailCount()
 
   return (
     <div className="flex h-full flex-col text-white">
@@ -44,7 +46,7 @@ export function SidebarNav({ expanded, onNavigate, collapseToggle }: SidebarNavP
             )}
             <ul className="space-y-0.5">
               {group.items.map((item) => (
-                <NavEntry key={item.to} item={item} expanded={expanded} onNavigate={onNavigate} />
+                <NavEntry key={item.to} item={item} expanded={expanded} onNavigate={onNavigate} badge={item.badge === 'mail' ? mailCount : 0} />
               ))}
             </ul>
           </div>
@@ -85,7 +87,7 @@ export function SidebarNav({ expanded, onNavigate, collapseToggle }: SidebarNavP
   )
 }
 
-function NavEntry({ item, expanded, onNavigate }: { item: NavItem; expanded: boolean; onNavigate?: () => void }) {
+function NavEntry({ item, expanded, onNavigate, badge = 0 }: { item: NavItem; expanded: boolean; onNavigate?: () => void; badge?: number }) {
   const location = useLocation()
   const Icon = item.icon
   const inSection = location.pathname === item.to || location.pathname.startsWith(`${item.to}/`)
@@ -112,8 +114,16 @@ function NavEntry({ item, expanded, onNavigate }: { item: NavItem; expanded: boo
           title={expanded ? undefined : item.label}
           className={({ isActive }) => linkClasses(isActive)}
         >
-          <Icon className="size-5 shrink-0" aria-hidden="true" />
+          <span className="relative">
+            <Icon className="size-5 shrink-0" aria-hidden="true" />
+            {badge > 0 && !expanded ? <span className="absolute -right-1 -top-1 size-2.5 rounded-full bg-amber-400" aria-hidden="true" /> : null}
+          </span>
           {expanded ? <span className="truncate">{item.label}</span> : <span className="sr-only">{item.label}</span>}
+          {badge > 0 ? (
+            expanded
+              ? <span className="ml-auto rounded-full bg-amber-400 px-2 py-0.5 text-xs font-semibold text-stone-900" aria-label={`${badge} waiting on you`}>{badge}</span>
+              : <span className="sr-only">{badge} waiting on you</span>
+          ) : null}
         </NavLink>
       </li>
     )
