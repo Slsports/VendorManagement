@@ -25,6 +25,15 @@ older mail 300 a run. Moving a conversation (`set_email_thread_view`) teaches th
 other mail; Settings > Mail has "Re-sort all mail". The dashboard list and the Mail count only count
 Needs attention. The Claude read is not built: no API key yet.
 
+**Claude read (Oct 8, Opus):** built once Dana made the API key (secret `ANTHROPIC_API_KEY`, workspace
+SLS VMS, $25/month org limit). `supabase/functions/_shared/ai.ts`: Haiku 5.5 at low effort with structured
+answers (model override `AI_MODEL_MAIL`). Only emails the rules leave unsure (`mail_unsure_emails`: not
+order/invoice/shipping words, not replies or conversations we wrote in, no taught sender) are read, 40 a
+run; the answer is `emails.ai_view`, used by `mail_view_for` just before "unsure stays in Needs
+attention". Senders with no proposal get `email_senders.ai_kind/ai_vendor_id/ai_note`, shown on their
+review card; a vendor from our list becomes the proposal, nothing is filed without a click. Every call
+is logged in `ai_usage`; Settings > Mail shows this month's cost.
+
 ## 2. Files and links save themselves
 On an offers email with an attachment (PDF, XLSX, CSV, image): save it into that vendor's Catalogs,
 price lists & files (`vendor_links`) with kind price_list | catalog | specials | order_form guessed from

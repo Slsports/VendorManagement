@@ -7,6 +7,7 @@ import { Gmail, GmailError, googleAccessToken } from '../_shared/gmail.ts'
 import { clueText, htmlBody, isBulk, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
 import { buildVendorIndex, domainVendors, mentionedVendors, type VendorIndex } from '../_shared/mailMatch.ts'
 import { extractLinks, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
+import { aiEnabled, readSender, sortEmails, type UnsureEmail } from '../_shared/ai.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
 // messages and the scheduler comes back every minute until the 12 months are in.
@@ -108,6 +109,8 @@ async function syncAccount(db: SupabaseClient, acct: Account) {
     if (done && Date.now() - started < TIME_BUDGET_MS) await readBulkHeaders(db, gmail, org)
     // Price lists, catalogs and order forms into the vendor's files, a few emails a run.
     if (done && Date.now() - started < TIME_BUDGET_MS) await saveVendorFiles(db, gmail, org, started)
+    // Claude reads what the rules could not place (only with an API key).
+    if (done && aiEnabled() && Date.now() - started < TIME_BUDGET_MS) await aiSteps(db, org, started)
 
     await db.from('mail_accounts').update({
       last_sync_at: new Date().toISOString(), last_error: null, sync_started_at: null, messages_synced: acct.messages_synced + stored,
@@ -291,6 +294,44 @@ async function saveVendorFiles(db: SupabaseClient, gmail: Gmail, org: string, st
       console.error(`files from ${e.id}:`, err instanceof Error ? err.message : err)
     }
     await db.from('emails').update({ files_scanned_at: new Date().toISOString() }).eq('id', e.id)
+  }
+}
+
+/**
+ * Claude, on the cheapest model: sort emails the rules left unsure, and read "Who is this mail from?"
+ * senders with no guess. A failure here never stops the sync; the work is picked up next run.
+ */
+async function aiSteps(db: SupabaseClient, org: string, started: number) {
+  try {
+    const { data: unsure } = await db.rpc('mail_unsure_emails', { p_org: org, p_limit: 40 })
+    const list = (unsure ?? []) as UnsureEmail[]
+    for (let i = 0; i < list.length && Date.now() - started < TIME_BUDGET_MS; i += 20) {
+      const batch = list.slice(i, i + 20)
+      const views = await sortEmails(db, org, batch)
+      await check(db.rpc('mail_set_ai_views', { p_org: org, p_ids: batch.map((e) => e.id), p_views: batch.map((e) => views.get(e.id) ?? 'unsure') }))
+    }
+
+    const { data: senders } = await db.from('email_senders').select('id, sender_key, display_name')
+      .eq('organization_id', org).eq('kind', 'unknown').is('ai_read_at', null).is('proposed_vendor_id', null).gt('message_count', 0)
+      .order('message_count', { ascending: false }).limit(4)
+    if (!senders?.length) return
+    const { data: vendors } = await db.from('vendors').select('id, name').eq('organization_id', org).eq('is_active', true).order('name').limit(5000)
+    const byName = new Map((vendors ?? []).map((v) => [v.name.toLowerCase().replace(/[^a-z0-9]+/g, ''), v.id as string]))
+    const vendorList = (vendors ?? []).map((v) => v.name).join('\n')
+    for (const s of senders) {
+      if (Date.now() - started > TIME_BUDGET_MS) break
+      const { data: mails } = await db.from('emails').select('subject, body_text, snippet').eq('sender_id', s.id).order('received_at', { ascending: false }).limit(3)
+      const reading = await readSender(db, org, vendorList, {
+        key: s.sender_key, display_name: s.display_name,
+        samples: (mails ?? []).map((m) => ({ subject: m.subject, text: (m.body_text || m.snippet || '').replace(/\s+/g, ' ').slice(0, 600) })),
+      })
+      if (!reading) continue
+      const vendorId = reading.kind === 'vendor' && reading.vendor_name ? byName.get(reading.vendor_name.toLowerCase().replace(/[^a-z0-9]+/g, '')) ?? null : null
+      const note = reading.kind === 'vendor' && reading.vendor_name && !vendorId ? `${reading.vendor_name}, not in your vendor list yet. ${reading.note}` : reading.note
+      await check(db.rpc('mail_set_sender_ai', { p_sender: s.id, p_kind: reading.kind, p_vendor: vendorId, p_note: note }))
+    }
+  } catch (e) {
+    console.error('Claude step:', e instanceof Error ? e.message : e)
   }
 }
 

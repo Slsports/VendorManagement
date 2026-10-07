@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { RefreshCw } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { getMailStatus, listSignatures, reclassifyAllMail, saveSignature, setFollowUpDays, syncMailNow } from '@/services/mail'
+import { getAiUsageThisMonth, getMailStatus, listSignatures, reclassifyAllMail, saveSignature, setFollowUpDays, syncMailNow } from '@/services/mail'
 import { errorMessage } from '@/lib/utils'
 import { Alert, Button, FormField, Input, Spinner, Textarea } from '@/components/ui'
 
@@ -87,6 +87,8 @@ export default function MailSettings() {
         </div>
       </section>
 
+      <ClaudeUsage organizationId={organization!.id} />
+
       <Signatures organizationId={organization!.id} />
 
       <section className="rounded-2xl border border-stone-200 bg-white p-5">
@@ -146,6 +148,31 @@ function Signatures({ organizationId }: { organizationId: string }) {
             )
           })}
         </div>
+      )}
+    </section>
+  )
+}
+
+const PURPOSE_LABELS: Record<string, string> = { mail_sort: 'Sorting unclear emails', sender_guess: 'Reading unknown senders' }
+
+/** What Claude has cost this month, next to the $25 monthly limit set in the Claude Console. */
+function ClaudeUsage({ organizationId }: { organizationId: string }) {
+  const q = useSupabaseQuery(() => getAiUsageThisMonth(organizationId), [organizationId])
+  const u = q.data
+  const money = (n: number) => (n < 0.01 && n > 0 ? 'under 1¢' : `$${n.toFixed(2)}`)
+  return (
+    <section className="rounded-2xl border border-stone-200 bg-white p-5">
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Claude this month</h2>
+      {q.isLoading ? <p className="mt-3 text-sm text-stone-500">Loading…</p> : q.error ? <Alert variant="error" className="mt-3">{q.error}</Alert> : !u || u.calls === 0 ? (
+        <p className="mt-2 text-sm text-stone-600">No Claude use yet this month.</p>
+      ) : (
+        <>
+          <p className="mt-2 text-2xl font-semibold text-stone-900">{money(u.cost)}</p>
+          <p className="text-sm text-stone-600">{u.items.toLocaleString()} emails and senders read in {u.calls.toLocaleString()} calls. Monthly limit $25 (set in the Claude Console).</p>
+          <ul className="mt-3 space-y-1 text-sm text-stone-700">
+            {Object.entries(u.byPurpose).map(([k, v]) => <li key={k}>{PURPOSE_LABELS[k] ?? k}: {v.items.toLocaleString()} · {money(v.cost)}</li>)}
+          </ul>
+        </>
       )}
     </section>
   )

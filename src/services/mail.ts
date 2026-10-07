@@ -304,3 +304,24 @@ export async function reclassifyAllMail(organizationId: string): Promise<number>
   if (error) throw error
   return data ?? 0
 }
+
+export interface AiUsageSummary { cost: number; calls: number; items: number; byPurpose: Record<string, { cost: number; items: number }> }
+
+/** What Claude cost this calendar month, for Settings > Mail. */
+export async function getAiUsageThisMonth(organizationId: string): Promise<AiUsageSummary> {
+  const start = new Date()
+  start.setUTCDate(1)
+  start.setUTCHours(0, 0, 0, 0)
+  const { data, error } = await supabase.from('ai_usage').select('purpose, cost_usd, items').eq('organization_id', organizationId).gte('created_at', start.toISOString()).limit(10000)
+  if (error) throw error
+  const out: AiUsageSummary = { cost: 0, calls: 0, items: 0, byPurpose: {} }
+  for (const r of data ?? []) {
+    out.cost += Number(r.cost_usd)
+    out.calls += 1
+    out.items += r.items
+    const p = (out.byPurpose[r.purpose] ??= { cost: 0, items: 0 })
+    p.cost += Number(r.cost_usd)
+    p.items += r.items
+  }
+  return out
+}

@@ -1198,3 +1198,13 @@ payments in the sample export show), or when a payment is entered by hand.
   mail from?" card) now has "New vendor from this email" (form prefilled from the sender), and orders
   can be added by hand on the vendor page or from an email, with how they were paid (card, check,
   Bill.com, WWD, other) and the email linked. Fable's order plan builds lines and sending on top.
+
+## 2026-10-08 — Claude API key for VMS; Claude reads the unclear mail
+- Dana created the key herself: Claude Console org "Shaver Lake Sports Inc", workspace SLS VMS, key
+  "vms" (no expiry, linked to Dana), $20 credit, auto-reload off, $25 monthly org limit, saved in Supabase
+  as ANTHROPIC_API_KEY. Separate from the accounting automation's key.
+- Dana chose the cheapest model for this work. Claude now sorts the emails the rules leave unsure into
+  Needs attention or Offers, and reads "Who is this mail from?" senders with no guess (vendor from the
+  list, rep group, sends for many vendors, or not a vendor) as a note on the card; Dana still decides.
+  First readings: Bill.com and Faire as platforms, Maryellen as a rep, 4allpromos as not a vendor.
+  Settings > Mail shows what Claude cost this month. The whole backlog costs well under $1.

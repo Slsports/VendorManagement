@@ -21,6 +21,9 @@ export interface EmailSenderDetails {
   proposed_vendor_name: string | null
   proposal_note: string | null
   samples: string[]
+  /** What Claude read in the sender's mail, when the mail itself named no vendor. */
+  ai_kind?: 'vendor' | 'rep_group' | 'platform' | 'not_vendor' | 'unsure' | null
+  ai_note?: string | null
 }
 
 /**
@@ -28,6 +31,8 @@ export interface EmailSenderDetails {
  * rep group or a service that sends for many vendors (each email then matched by the vendor it names),
  * or not a vendor at all. One answer covers every email from that sender, now and later.
  */
+const AI_KIND_LABELS = { vendor: 'a vendor', rep_group: 'a rep group', platform: 'sends for many vendors', not_vendor: 'not a vendor', unsure: 'not sure' } as const
+
 export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem; canEdit: boolean; onDone: () => void | Promise<void> }) {
   const { organization } = useAuth()
   const d = item.details as unknown as EmailSenderDetails
@@ -59,6 +64,11 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
         {d.message_count} email{d.message_count === 1 ? '' : 's'}{d.display_name ? ` · from "${d.display_name}"` : ''}{d.proposal_note ? ` · ${d.proposal_note}` : ''}
       </p>
       {d.samples?.length ? <p className="mt-1 truncate text-xs text-amber-700">Recent: {d.samples.join(' · ')}</p> : null}
+      {d.ai_kind && d.ai_kind !== 'unsure' && !(d.ai_kind === 'vendor' && d.proposed_vendor_id) ? (
+        <p className="mt-1 text-xs text-sky-800">
+          <span className="font-semibold">Claude read the mail:</span> {AI_KIND_LABELS[d.ai_kind]}{d.ai_note ? ` · ${d.ai_note}` : ''}
+        </p>
+      ) : null}
       {canEdit ? (
         <div className="mt-3 border-t border-amber-200 pt-3">
           {mode === 'vendor' ? (
