@@ -21,6 +21,7 @@ describe('vendor names', () => {
     expect(vendorNames(vendors[3]!)).toEqual(['american dream home goods', 'american dream'])
     expect(vendorNames(vendors[4]!)).toEqual(['nationwide wholesale', 'river trail'])
     expect(vendorNames(vendors[8]!)).toEqual(['et products'])
+    expect(vendorNames({ id: 'io', name: 'IMAGE ONE (Maryellen', aliases: [] })).toEqual(['image one'])
   })
 })
 

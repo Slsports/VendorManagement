@@ -36,7 +36,8 @@ export function normalize(text: string): string[] {
 export function vendorNames(v: VendorRef): string[] {
   const out = new Set<string>()
   for (const raw of [v.name, ...v.aliases]) {
-    const base = raw.replace(/\([^)]*\)/g, ' ').replace(/\s+-\s+.*$/, ' ')
+    // "(FAIRE)", "- WWD", and the half-closed "IMAGE ONE (Maryellen" all drop their tags.
+    const base = raw.replace(/\([^)]*\)/g, ' ').replace(/\(.*$/, ' ').replace(/\s+-\s+.*$/, ' ')
     for (const part of base.split('/')) {
       const words = normalize(part)
       while (words.length && CORPORATE.has(words[words.length - 1]!)) words.pop()

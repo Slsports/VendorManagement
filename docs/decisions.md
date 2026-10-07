@@ -1208,3 +1208,11 @@ payments in the sample export show), or when a payment is entered by hand.
   list, rep group, sends for many vendors, or not a vendor) as a note on the card; Dana still decides.
   First readings: Bill.com and Faire as platforms, Maryellen as a rep, 4allpromos as not a vendor.
   Settings > Mail shows what Claude cost this month. The whole backlog costs well under $1.
+
+## 2026-10-08 — Known reps are recognized by their address
+- Dana: "Maryellen reps for more than just Planet Cotton." Her rep group (12 vendors, 13 lines) was on
+  file but her address was not tied to it, so Claude summed her up from her three latest emails. Now a
+  sender writing from a rep group's email on file is that rep group at once (no review card) and each
+  email files to the one line of hers it names; emails naming none or several stay unfiled in Mail.
+  Claude is also told the rep groups and their lines. First run: Maryellen 185 of 238 emails filed,
+  DandyLines/Diverse Marketing (Donna) 13 of 46.

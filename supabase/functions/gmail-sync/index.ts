@@ -318,10 +318,12 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
     const { data: vendors } = await db.from('vendors').select('id, name').eq('organization_id', org).eq('is_active', true).order('name').limit(5000)
     const byName = new Map((vendors ?? []).map((v) => [v.name.toLowerCase().replace(/[^a-z0-9]+/g, ''), v.id as string]))
     const vendorList = (vendors ?? []).map((v) => v.name).join('\n')
+    const { data: reps } = await db.from('rep_groups').select('name, email, vendors(name)').eq('organization_id', org).eq('is_active', true).order('name')
+    const repList = (reps ?? []).map((g) => `${g.name}${g.email ? ` <${g.email}>` : ''}: ${((g.vendors ?? []) as { name: string }[]).map((v) => v.name).join(', ') || 'no lines on file'}`).join('\n')
     for (const s of senders) {
       if (Date.now() - started > TIME_BUDGET_MS) break
       const { data: mails } = await db.from('emails').select('subject, body_text, snippet').eq('sender_id', s.id).order('received_at', { ascending: false }).limit(3)
-      const reading = await readSender(db, org, vendorList, {
+      const reading = await readSender(db, org, vendorList, repList, {
         key: s.sender_key, display_name: s.display_name,
         samples: (mails ?? []).map((m) => ({ subject: m.subject, text: (m.body_text || m.snippet || '').replace(/\s+/g, ' ').slice(0, 600) })),
       })
