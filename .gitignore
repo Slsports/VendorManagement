@@ -30,3 +30,6 @@ supabase/.temp
 *.njsproj
 *.sln
 *.sw?
+
+# WWD portal scrape output (local only)
+wwd-portal-vendors.json

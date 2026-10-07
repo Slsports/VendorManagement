@@ -1140,3 +1140,15 @@ payments in the sample export show), or when a payment is entered by hand.
 - Sending, replying, forwarding and following up happen in VMS from orders@ with the sender's name and
   signature; Dana writes signatures in Settings > Mail. A one-time self-test ("VMS send test, please
   ignore", orders@ to orders@) confirmed sending, threading and attachments.
+
+## 2026-10-07 — Pull the Worldwide vendor portal into VMS
+- Dana: the WWD member portal has, per vendor, address, contacts and sales reps, programs (minimum
+  order, billing terms, freight terms, shipping points), product lines and resources (zero
+  upcharge, defective goods policy, RA, returns address, compensation). She wants it all in VMS,
+  then a bulk email asking vendors to confirm their details through the VMS form, because WWD's
+  data is often stale.
+- Plan in `docs/wwd-portal-import.md`: a reader script that runs on Dana's computer with her signed
+  in (the cloud sessions cannot reach the portal), writing a git-ignored JSON file; an importer
+  that fills empty vendor fields, keeps the whole record in `vendor_portal_data`, and puts contacts
+  into the review queue. Nothing Dana typed is overwritten. Also worth one email to WWD asking for
+  an export.
