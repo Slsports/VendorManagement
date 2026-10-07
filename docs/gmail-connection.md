@@ -111,7 +111,7 @@ happens, not the place you work.
   FashionGo), not a vendor, or ours. `mail_accounts` holds the cursors and `follow_up_days`.
 - `gmail-sync` stores plain-text bodies (20 KB cap) and attachment metadata only; HTML and files are
   fetched from Gmail when opened or filed. Each run takes about 100 messages (Edge Function CPU limits);
-  pg_cron runs it every 2 minutes (`scripts/setup-mail-cron.mjs`) until the 12-month backfill is done.
+  pg_cron runs it every minute (`scripts/setup-mail-cron.mjs`) until the 12-month backfill is done.
 - Vendor clues (`supabase/functions/_shared/mailMatch.ts`): the web address against vendor names
   (initials + last word, whole name), and vendor names in the subject, file names, From name (one-word
   names only here) and the message above the signature (multi-word names). SQL (`mail_process`) links

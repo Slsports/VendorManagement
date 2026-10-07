@@ -1,0 +1,85 @@
+import { useState } from 'react'
+import { formatDistanceToNow } from 'date-fns'
+import toast from 'react-hot-toast'
+import { RefreshCw } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { getMailStatus, setFollowUpDays, syncMailNow } from '@/services/mail'
+import { errorMessage } from '@/lib/utils'
+import { Alert, Button, FormField, Input, Spinner } from '@/components/ui'
+
+/** The orders@ connection: is it syncing, how far the 12-month backfill has got, and the follow-up setting. */
+export default function MailSettings() {
+  const { organization } = useAuth()
+  const q = useSupabaseQuery(async () => (organization ? getMailStatus(organization.id) : null), [organization?.id])
+  const [syncing, setSyncing] = useState(false)
+  const [days, setDays] = useState<string | null>(null)
+
+  if (q.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading mail status…" className="text-brand" /></div>
+  if (q.error) return <Alert variant="error">{q.error}</Alert>
+  const m = q.data
+  if (!m) return <Alert variant="info">No mailbox is connected for this organization yet.</Alert>
+  const pct = m.emails ? Math.round((m.matched / m.emails) * 100) : 0
+
+  async function sync() {
+    setSyncing(true)
+    try {
+      await syncMailNow()
+      toast.success('Mail synced')
+      await q.refetch()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  async function saveDays() {
+    const n = Number(days)
+    if (!Number.isInteger(n) || n < 1 || n > 60) return toast.error('Use a whole number of days from 1 to 60')
+    try {
+      await setFollowUpDays(organization!.id, n)
+      toast.success(`Follow-up after ${n} day${n === 1 ? '' : 's'}`)
+      setDays(null)
+      await q.refetch()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <section className="rounded-2xl border border-stone-200 bg-white p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Mailbox</h2>
+            <p className="mt-1 text-lg font-semibold text-stone-900">{m.mailbox}</p>
+            <p className="text-sm text-stone-600">
+              {m.last_sync_at ? `Last checked ${formatDistanceToNow(new Date(m.last_sync_at), { addSuffix: true })}` : 'Not checked yet'} · checks every minute
+            </p>
+          </div>
+          <Button variant="secondary" loading={syncing} onClick={() => void sync()} leftIcon={<RefreshCw className="size-4" aria-hidden="true" />}>Sync now</Button>
+        </div>
+        {m.last_error ? <Alert variant="error" className="mt-3">Last problem{m.last_error_at ? ` (${formatDistanceToNow(new Date(m.last_error_at), { addSuffix: true })})` : ''}: {m.last_error}</Alert> : null}
+        <dl className="mt-4 grid gap-4 sm:grid-cols-4">
+          <div><dt className="text-xs font-medium text-stone-500">Emails in VMS</dt><dd className="text-xl font-semibold text-stone-900">{m.emails.toLocaleString()}</dd></div>
+          <div><dt className="text-xs font-medium text-stone-500">Filed to a vendor</dt><dd className="text-xl font-semibold text-stone-900">{pct}%</dd></div>
+          <div><dt className="text-xs font-medium text-stone-500">Senders to identify</dt><dd className="text-xl font-semibold text-stone-900">{m.senders_waiting}</dd></div>
+          <div><dt className="text-xs font-medium text-stone-500">First load</dt><dd className="text-sm font-medium text-stone-900">{m.backfill_done ? 'Done' : `Loading the 12 months since ${m.backfill_after ? new Date(`${m.backfill_after}T12:00:00`).toLocaleDateString() : 'last year'}`}</dd></div>
+        </dl>
+        <p className="mt-3 text-xs text-stone-500">Senders to identify wait in the review queue under "Who is this mail from?". One answer files all their mail, now and later.</p>
+      </section>
+
+      <section className="rounded-2xl border border-stone-200 bg-white p-5">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Follow-up</h2>
+        <p className="mt-1 text-sm text-stone-600">When you email a vendor from VMS and they have not answered after this many days, the thread comes back to your dashboard as "No answer yet".</p>
+        <div className="mt-3 flex items-end gap-2">
+          <FormField label="Days to wait" htmlFor="follow-up-days" className="w-32">
+            <Input id="follow-up-days" type="number" min={1} max={60} value={days ?? String(m.follow_up_days)} onChange={(e) => setDays(e.target.value)} />
+          </FormField>
+          {days !== null && days !== String(m.follow_up_days) ? <Button onClick={() => void saveDays()}>Save</Button> : null}
+        </div>
+      </section>
+    </div>
+  )
+}

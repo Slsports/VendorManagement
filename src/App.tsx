@@ -41,6 +41,7 @@ const StoreSettings = lazy(() => import('@/pages/settings/StoreSettings'))
 const PlaceholderSettings = lazy(() => import('@/pages/settings/PlaceholderSettings'))
 const PartnerSettings = lazy(() => import('@/pages/settings/PartnerSettings'))
 const ReviewAssignmentSettings = lazy(() => import('@/pages/settings/ReviewAssignmentSettings'))
+const MailSettings = lazy(() => import('@/pages/settings/MailSettings'))
 const VendorScoresReport = lazy(() => import('@/pages/reports/VendorScoresReport'))
 
 const STAFF = ['admin', 'manager', 'buyer', 'viewer'] as const
@@ -121,6 +122,7 @@ export default function App() {
                   <Route path="stores" element={<StoreSettings />} />
                   <Route path="worldwide" element={<PartnerSettings />} />
                   <Route path="review-assignments" element={<ReviewAssignmentSettings />} />
+                  <Route path="mail" element={<MailSettings />} />
                   <Route path=":tab" element={<PlaceholderSettings />} />
                 </Route>
               </Route>

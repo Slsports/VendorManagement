@@ -6,6 +6,7 @@ export const SETTINGS_TABS = [
   { slug: 'payment-terms', label: 'Payment terms' },
   { slug: 'categories', label: 'Categories' },
   { slug: 'worldwide', label: 'Worldwide' },
+  { slug: 'mail', label: 'Mail' },
   { slug: 'integrations', label: 'Integrations' },
   { slug: 'branding', label: 'Branding' },
 ] as const

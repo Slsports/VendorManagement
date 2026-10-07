@@ -128,7 +128,7 @@ export type Database = {
           is_active: boolean
           created_at: string
           updated_at: string
-        }
+       ; email_signature: string | null }
         Insert: {
           id: string
           organization_id: string
@@ -140,7 +140,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-        }
+       ; email_signature?: string | null }
         Update: {
           id?: string
           organization_id?: string
@@ -152,7 +152,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-        }
+       ; email_signature?: string | null }
         Relationships: [
           {
             foreignKeyName: 'profiles_organization_id_fkey'
@@ -365,6 +365,62 @@ export type Database = {
           { foreignKeyName: 'review_assignment_rules_assignee_id_fkey'; columns: ['assignee_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
         ]
       }
+      mail_accounts: {
+        Row: { organization_id: string; mailbox: string; internal_domains: string[]; history_id: string | null; backfill_after: string | null; backfill_page_token: string | null; backfill_done: boolean; follow_up_days: number; last_sync_at: string | null; sync_started_at: string | null; last_error: string | null; last_error_at: string | null; messages_synced: number; created_at: string; updated_at: string }
+        Insert: { organization_id: string; mailbox: string; internal_domains?: string[]; history_id?: string | null; backfill_after?: string | null; backfill_page_token?: string | null; backfill_done?: boolean; follow_up_days?: number; last_sync_at?: string | null; sync_started_at?: string | null; last_error?: string | null; last_error_at?: string | null; messages_synced?: number; created_at?: string; updated_at?: string }
+        Update: { organization_id?: string; mailbox?: string; internal_domains?: string[]; history_id?: string | null; backfill_after?: string | null; backfill_page_token?: string | null; backfill_done?: boolean; follow_up_days?: number; last_sync_at?: string | null; sync_started_at?: string | null; last_error?: string | null; last_error_at?: string | null; messages_synced?: number; created_at?: string; updated_at?: string }
+        Relationships: [
+        ]
+      }
+      email_senders: {
+        Row: { id: string; organization_id: string; sender_key: string; is_domain: boolean; kind: 'unknown' | 'vendor' | 'rep_group' | 'platform' | 'not_vendor' | 'internal'; vendor_id: string | null; rep_group_id: string | null; display_name: string | null; domain_vendor_ids: string[]; message_count: number; last_seen_at: string | null; proposed_vendor_id: string | null; proposal_note: string | null; review_item_id: string | null; decided_by: string | null; decided_at: string | null; created_at: string }
+        Insert: { id?: string; organization_id: string; sender_key: string; is_domain?: boolean; kind?: 'unknown' | 'vendor' | 'rep_group' | 'platform' | 'not_vendor' | 'internal'; vendor_id?: string | null; rep_group_id?: string | null; display_name?: string | null; domain_vendor_ids?: string[]; message_count?: number; last_seen_at?: string | null; proposed_vendor_id?: string | null; proposal_note?: string | null; review_item_id?: string | null; decided_by?: string | null; decided_at?: string | null; created_at?: string }
+        Update: { id?: string; organization_id?: string; sender_key?: string; is_domain?: boolean; kind?: 'unknown' | 'vendor' | 'rep_group' | 'platform' | 'not_vendor' | 'internal'; vendor_id?: string | null; rep_group_id?: string | null; display_name?: string | null; domain_vendor_ids?: string[]; message_count?: number; last_seen_at?: string | null; proposed_vendor_id?: string | null; proposal_note?: string | null; review_item_id?: string | null; decided_by?: string | null; decided_at?: string | null; created_at?: string }
+        Relationships: [
+          { foreignKeyName: 'email_senders_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+          { foreignKeyName: 'email_senders_rep_group_id_fkey'; columns: ['rep_group_id']; isOneToOne: false; referencedRelation: 'rep_groups'; referencedColumns: ['id'] },
+          { foreignKeyName: 'email_senders_proposed_vendor_id_fkey'; columns: ['proposed_vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+        ]
+      }
+      email_threads: {
+        Row: { id: string; organization_id: string; gmail_thread_id: string; vendor_id: string | null; owner_id: string | null; owner_set_at: string | null; status: 'waiting_on_us' | 'waiting_on_vendor' | 'handled'; subject: string | null; message_count: number; last_in_at: string | null; last_out_at: string | null; last_message_at: string | null; follow_up_at: string | null; status_msg_at: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; gmail_thread_id: string; vendor_id?: string | null; owner_id?: string | null; owner_set_at?: string | null; status?: 'waiting_on_us' | 'waiting_on_vendor' | 'handled'; subject?: string | null; message_count?: number; last_in_at?: string | null; last_out_at?: string | null; last_message_at?: string | null; follow_up_at?: string | null; status_msg_at?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; gmail_thread_id?: string; vendor_id?: string | null; owner_id?: string | null; owner_set_at?: string | null; status?: 'waiting_on_us' | 'waiting_on_vendor' | 'handled'; subject?: string | null; message_count?: number; last_in_at?: string | null; last_out_at?: string | null; last_message_at?: string | null; follow_up_at?: string | null; status_msg_at?: string | null; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'email_threads_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+          { foreignKeyName: 'email_threads_owner_id_fkey'; columns: ['owner_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+        ]
+      }
+      emails: {
+        Row: { id: string; organization_id: string; gmail_id: string; thread_id: string; message_id_header: string | null; in_reply_to: string | null; direction: 'in' | 'out' | 'internal'; from_email: string | null; from_name: string | null; to_emails: string[]; cc_emails: string[]; subject: string | null; snippet: string | null; body_text: string | null; received_at: string; labels: string[]; has_attachments: boolean; sender_id: string | null; vendor_id: string | null; order_id: string | null; mentioned_vendor_ids: string[]; match_how: 'thread' | 'sender' | 'domain' | 'directory' | 'rep_group' | 'platform' | 'manual' | null; sent_by: string | null; created_at: string }
+        Insert: { id?: string; organization_id: string; gmail_id: string; thread_id: string; message_id_header?: string | null; in_reply_to?: string | null; direction: 'in' | 'out' | 'internal'; from_email?: string | null; from_name?: string | null; to_emails?: string[]; cc_emails?: string[]; subject?: string | null; snippet?: string | null; body_text?: string | null; received_at: string; labels?: string[]; has_attachments?: boolean; sender_id?: string | null; vendor_id?: string | null; order_id?: string | null; mentioned_vendor_ids?: string[]; match_how?: 'thread' | 'sender' | 'domain' | 'directory' | 'rep_group' | 'platform' | 'manual' | null; sent_by?: string | null; created_at?: string }
+        Update: { id?: string; organization_id?: string; gmail_id?: string; thread_id?: string; message_id_header?: string | null; in_reply_to?: string | null; direction?: 'in' | 'out' | 'internal'; from_email?: string | null; from_name?: string | null; to_emails?: string[]; cc_emails?: string[]; subject?: string | null; snippet?: string | null; body_text?: string | null; received_at?: string; labels?: string[]; has_attachments?: boolean; sender_id?: string | null; vendor_id?: string | null; order_id?: string | null; mentioned_vendor_ids?: string[]; match_how?: 'thread' | 'sender' | 'domain' | 'directory' | 'rep_group' | 'platform' | 'manual' | null; sent_by?: string | null; created_at?: string }
+        Relationships: [
+          { foreignKeyName: 'emails_thread_id_fkey'; columns: ['thread_id']; isOneToOne: false; referencedRelation: 'email_threads'; referencedColumns: ['id'] },
+          { foreignKeyName: 'emails_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+          { foreignKeyName: 'emails_sender_id_fkey'; columns: ['sender_id']; isOneToOne: false; referencedRelation: 'email_senders'; referencedColumns: ['id'] },
+          { foreignKeyName: 'emails_order_id_fkey'; columns: ['order_id']; isOneToOne: false; referencedRelation: 'orders'; referencedColumns: ['id'] },
+          { foreignKeyName: 'emails_sent_by_fkey'; columns: ['sent_by']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+        ]
+      }
+      email_attachments: {
+        Row: { id: string; organization_id: string; email_id: string; gmail_attachment_id: string | null; part_id: string | null; file_name: string; mime_type: string | null; size: number | null; storage_path: string | null; vendor_link_id: string | null; created_at: string }
+        Insert: { id?: string; organization_id: string; email_id: string; gmail_attachment_id?: string | null; part_id?: string | null; file_name: string; mime_type?: string | null; size?: number | null; storage_path?: string | null; vendor_link_id?: string | null; created_at?: string }
+        Update: { id?: string; organization_id?: string; email_id?: string; gmail_attachment_id?: string | null; part_id?: string | null; file_name?: string; mime_type?: string | null; size?: number | null; storage_path?: string | null; vendor_link_id?: string | null; created_at?: string }
+        Relationships: [
+          { foreignKeyName: 'email_attachments_email_id_fkey'; columns: ['email_id']; isOneToOne: false; referencedRelation: 'emails'; referencedColumns: ['id'] },
+          { foreignKeyName: 'email_attachments_vendor_link_id_fkey'; columns: ['vendor_link_id']; isOneToOne: false; referencedRelation: 'vendor_links'; referencedColumns: ['id'] },
+        ]
+      }
+      needs: {
+        Row: { id: string; organization_id: string; title: string; requester: string | null; store_code: string | null; status: 'needed' | 'ordered' | 'received'; email_id: string | null; order_id: string | null; notes: string | null; created_by: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; title: string; requester?: string | null; store_code?: string | null; status?: 'needed' | 'ordered' | 'received'; email_id?: string | null; order_id?: string | null; notes?: string | null; created_by?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; title?: string; requester?: string | null; store_code?: string | null; status?: 'needed' | 'ordered' | 'received'; email_id?: string | null; order_id?: string | null; notes?: string | null; created_by?: string | null; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'needs_email_id_fkey'; columns: ['email_id']; isOneToOne: false; referencedRelation: 'emails'; referencedColumns: ['id'] },
+          { foreignKeyName: 'needs_order_id_fkey'; columns: ['order_id']; isOneToOne: false; referencedRelation: 'orders'; referencedColumns: ['id'] },
+        ]
+      }
       vendor_merges: {
         Row: { id: string; organization_id: string; kept_vendor_id: string; kept_name: string; kept_lightspeed_name: string | null; merged_name: string; merged_lightspeed_name: string | null; merged_vendor_id: string | null; source: 'import' | 'manual'; status: 'pending' | 'confirmed' | 'split'; route: Database['public']['Enums']['billing_route'] | null; merged_at: string; merged_by: string | null; ls_done_at: string | null; ls_done_by: string | null }
         Insert: { id?: string; organization_id: string; kept_vendor_id: string; kept_name: string; kept_lightspeed_name?: string | null; merged_name: string; merged_lightspeed_name?: string | null; merged_vendor_id?: string | null; source?: 'import' | 'manual'; status?: 'pending' | 'confirmed' | 'split'; route?: Database['public']['Enums']['billing_route'] | null; merged_at?: string; merged_by?: string | null; ls_done_at?: string | null; ls_done_by?: string | null }
@@ -454,6 +510,10 @@ export type Database = {
       confirm_vendor_merge: { Args: { p_vendor: string; p_route?: Database['public']['Enums']['billing_route'] | null }; Returns: undefined }
       resolve_review_item: { Args: { p_item: string; p_status: Database['public']['Enums']['review_status']; p_note?: string | null }; Returns: undefined }
       assign_review_item: { Args: { p_item: string; p_profile?: string | null }; Returns: undefined }
+      resolve_email_sender: { Args: { p_sender: string; p_kind: 'vendor' | 'rep_group' | 'platform' | 'not_vendor' | 'internal'; p_vendor?: string | null; p_rep_group?: string | null }; Returns: number }
+      set_email_vendor: { Args: { p_email: string; p_vendor: string | null }; Returns: undefined }
+      assign_email_thread: { Args: { p_thread: string; p_profile?: string | null }; Returns: undefined }
+      set_email_thread_status: { Args: { p_thread: string; p_status: 'waiting_on_us' | 'waiting_on_vendor' | 'handled' }; Returns: undefined }
       apply_review_rules: { Args: { p_org: string; p_overwrite?: boolean }; Returns: number }
       vendor_scorecards: { Args: { p_org: string; p_vendor?: string | null }; Returns: { vendor_id: string; name: string; standing: 'ok' | 'hold' | 'last_resort' | 'do_not_order'; standing_tags: string[]; standing_reason: string | null; orders: number; received: number; on_time: number; late: number; avg_days_late: number | null; freight_pct: number | null; freight_orders: number; free_violations: number; issue_notes: number; accuracy_issues: number; credits_due: number; credits_resolved: number; avg_credit_days: number | null; auto_fulfilment: number | null; auto_accuracy: number | null; auto_shipping: number | null; auto_resolution: number | null; rated_ease: number | null; rated_communication: number | null; rated_fulfilment: number | null; rated_accuracy: number | null; rated_shipping: number | null; rated_resolution: number | null; note_ease: string | null; note_communication: string | null; note_fulfilment: string | null; note_accuracy: string | null; note_shipping: string | null; note_resolution: string | null; overall: number | null }[] }
       directory_route_for: { Args: { p_org: string; p_name: string; p_domain?: string | null }; Returns: Database['public']['Enums']['billing_route'] | null }

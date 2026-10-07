@@ -1,7 +1,7 @@
-// Schedule gmail-sync on the hosted project: pg_cron calls the function every 2 minutes with a shared
+// Schedule gmail-sync on the hosted project: pg_cron calls the function every minute with a shared
 // secret header. The secret is generated here, stored in Vault and as the function secret
 // MAIL_CRON_SECRET, and never printed. Safe to re-run (keeps an existing secret).
-//   NODE_USE_ENV_PROXY=1 node scripts/setup-mail-cron.mjs [--every "*/2 * * * *"] [--off] [--no-schedule]
+//   NODE_USE_ENV_PROXY=1 node scripts/setup-mail-cron.mjs [--every "* * * * *"] [--off] [--no-schedule]
 // --run-now additionally starts one run immediately (through pg_net, with the secret from Vault).
 import { randomBytes } from 'node:crypto'
 import { query, lit } from './db.mjs'
@@ -11,7 +11,7 @@ loadEnv()
 const ref = requireEnv('SUPABASE_PROJECT_REF')
 const token = process.env.SUPABASE_ACCESS_TOKEN
 const args = process.argv.slice(2)
-const every = args.includes('--every') ? args[args.indexOf('--every') + 1] : '*/2 * * * *'
+const every = args.includes('--every') ? args[args.indexOf('--every') + 1] : '* * * * *'
 
 await query(`create extension if not exists pg_cron; create extension if not exists pg_net with schema extensions;`)
 await query(`select cron.unschedule(jobid) from cron.job where jobname = 'gmail-sync'`)

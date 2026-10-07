@@ -8,7 +8,7 @@ import { clueText, parseMessage, type Address, type GmailMessage, type ParsedMes
 import { buildVendorIndex, domainVendors, mentionedVendors, type VendorIndex } from '../_shared/mailMatch.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
-// messages and the scheduler comes back every two minutes until the 12 months are in.
+// messages and the scheduler comes back every minute until the 12 months are in.
 const TIME_BUDGET_MS = 20_000
 const PAGE = 25
 const PARALLEL = 5
