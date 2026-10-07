@@ -5,12 +5,17 @@ to connect VMS to the orders@ mailbox. Spec §10 chose the Gmail API with read a
 (Oct 7) chose a service account with domain-wide delegation. Dana completes the Google side herself; the
 secret never passes through chat or the repo.
 
-## Prerequisites Dana provides
-- Google Cloud project "RetailHQ VMS", Gmail API enabled, service account `vms-mail` with a JSON key.
+## Prerequisites Dana provides (done Oct 7, verified)
+- Google Cloud project "SLS VMS" (ID `sls-vms`, under the shaverlakesports.com organization), Gmail API
+  enabled, service account `vms-mail@sls-vms.iam.gserviceaccount.com` (unique ID 105836244077506020559)
+  with a JSON key. Key creation is allowed on this project only: the org policy
+  `iam.managed.disableServiceAccountKeyCreation` is overridden to not enforced on `sls-vms`.
 - Domain-wide delegation in the Admin console for that service account's client ID with scopes
   `https://www.googleapis.com/auth/gmail.modify` and `https://www.googleapis.com/auth/gmail.send`.
 - Supabase Edge Function secret `GOOGLE_SERVICE_ACCOUNT_JSON` = the key file. Add `GMAIL_MAILBOX`
   = `orders@shaverlakesports.com` as a second secret (not sensitive, but keeps the mailbox out of code).
+- Both secrets are set. A test function impersonating orders@ read its profile on Oct 7 (16,748 messages,
+  10,286 threads), so delegation and the key work; the test function was deleted.
 
 ## How VMS talks to Gmail
 - Supabase Edge Function `gmail-sync` (Deno). Build a JWT from the service account (`iss` = client email,

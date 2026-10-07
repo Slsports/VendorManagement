@@ -1061,3 +1061,12 @@ payments in the sample export show), or when a payment is entered by hand.
   signed-in user's signature. No per-user OAuth screens. The service-account key goes straight
   into Supabase secrets by Dana, never through chat or the repo. Sync runs as a scheduled
   Supabase Edge Function.
+
+## 2026-10-07 — Google Cloud side of the Gmail connection is done
+- Dana set it up herself: project named **SLS VMS** (her choice over "RetailHQ VMS"; ID `sls-vms`),
+  Gmail API on, service account `vms-mail`, domain-wide delegation for gmail.modify and gmail.send in
+  the Admin console, key stored in Supabase as `GOOGLE_SERVICE_ACCOUNT_JSON`, plus `GMAIL_MAILBOX`.
+- New Google organizations block service-account keys by default; the block was switched off for the
+  SLS VMS project only (Dana holds Organization Policy Administrator for that). It stays on elsewhere.
+- Verified: VMS read the orders@ mailbox profile (16,748 messages). Next: build `gmail-sync` per
+  `docs/gmail-connection.md`.
