@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listScorecards } from '@/services/scores'
@@ -8,6 +7,10 @@ import { SCORE_DIMENSIONS, scoreTone } from '@/lib/scores'
 import { ROUTES } from '@/lib/constants'
 import { standingWhy, STANDING_BADGE } from '@/lib/vendors'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { SortHeader } from '@/components/shared/SortHeader'
+import { useTableSort } from '@/hooks/useTableSort'
+import type { VendorScorecard } from '@/types'
+import { BackLink } from '@/components/shared/BackLink'
 import { Alert, Badge, Select, Spinner } from '@/components/ui'
 
 const TONE = { good: 'text-emerald-700', mid: 'text-amber-700', bad: 'text-red-700', none: 'text-stone-300' }
@@ -16,14 +19,29 @@ export default function VendorScoresReportPage() {
   const { organization } = useAuth()
   const q = useSupabaseQuery(async () => (organization ? listScorecards(organization.id) : []), [organization?.id])
   const [show, setShow] = useState<'scored' | 'all'>('scored')
+  // Default stays best score first; headers re-sort.
+  const base = (q.data ?? []).filter((r) => show === 'all' || r.overall !== null).sort((a, b) => (b.overall ?? -1) - (a.overall ?? -1) || a.name.localeCompare(b.name))
+  const { sorted: rows, sort, toggle } = useTableSort(base, {
+    vendor: (r: VendorScorecard) => r.name,
+    standing: (r) => r.standing,
+    overall: (r) => r.overall,
+    ease: (r) => r.rated_ease,
+    communication: (r) => r.rated_communication,
+    fulfilment: (r) => r.rated_fulfilment ?? r.auto_fulfilment,
+    accuracy: (r) => r.rated_accuracy ?? r.auto_accuracy,
+    shipping: (r) => r.rated_shipping ?? r.auto_shipping,
+    resolution: (r) => r.rated_resolution ?? r.auto_resolution,
+    orders: (r) => r.orders,
+    freight: (r) => r.freight_pct,
+    issues: (r) => r.accuracy_issues + r.issue_notes + r.free_violations || null,
+  }, { descFirst: ['overall', 'ease', 'communication', 'fulfilment', 'accuracy', 'shipping', 'resolution', 'orders', 'freight', 'issues'] })
   if (q.isLoading) return <div className="flex justify-center py-16"><Spinner label="Scoring vendors…" className="text-brand" /></div>
   if (q.error) return <Alert variant="error">{q.error}</Alert>
-  const rows = (q.data ?? []).filter((r) => show === 'all' || r.overall !== null).sort((a, b) => (b.overall ?? -1) - (a.overall ?? -1) || a.name.localeCompare(b.name))
   const cell = (v: number | null) => <td className={`px-3 py-2 text-center ${TONE[scoreTone(v)]}`}>{v ?? '·'}</td>
 
   return (
     <div>
-      <Link to={ROUTES.reports} className="mb-3 inline-flex items-center gap-1 text-sm text-stone-500 hover:text-stone-900"><ArrowLeft className="size-4" aria-hidden="true" /> Reports</Link>
+      <BackLink fallback={ROUTES.reports} fallbackLabel="Reports" />
       <PageHeader
         title="Vendor scores"
         description="Five is best. Fulfilment, accuracy, shipping and resolution score themselves from the order history; ease and communication are staff ratings until Gmail is connected. A staff rating always wins."
@@ -32,7 +50,15 @@ export default function VendorScoresReportPage() {
       <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white">
         <table className="w-full text-sm">
           <thead className="bg-stone-50 text-left text-xs font-semibold uppercase tracking-wide text-stone-500">
-            <tr><th className="px-3 py-2">Vendor</th><th className="px-3 py-2">Standing</th><th className="px-3 py-2 text-center">Overall</th>{SCORE_DIMENSIONS.map((d) => <th key={d.key} className="px-3 py-2 text-center" title={d.help}>{d.label}</th>)}<th className="px-3 py-2 text-right">Orders</th><th className="px-3 py-2 text-right">Freight %</th><th className="px-3 py-2 text-right">Issues</th></tr>
+            <tr>
+              <SortHeader label="Vendor" sortKey="vendor" sort={sort} onSort={toggle} className="px-3 py-2" />
+              <SortHeader label="Standing" sortKey="standing" sort={sort} onSort={toggle} className="px-3 py-2" />
+              <SortHeader label="Overall" sortKey="overall" sort={sort} onSort={toggle} className="px-3 py-2 text-center" />
+              {SCORE_DIMENSIONS.map((d) => <SortHeader key={d.key} label={d.label} sortKey={d.key} sort={sort} onSort={toggle} className="px-3 py-2 text-center" title={d.help} />)}
+              <SortHeader label="Orders" sortKey="orders" sort={sort} onSort={toggle} align="right" className="px-3 py-2 text-right" />
+              <SortHeader label="Freight %" sortKey="freight" sort={sort} onSort={toggle} align="right" className="px-3 py-2 text-right" />
+              <SortHeader label="Issues" sortKey="issues" sort={sort} onSort={toggle} align="right" className="px-3 py-2 text-right" />
+            </tr>
           </thead>
           <tbody className="divide-y divide-stone-100">
             {rows.map((r) => (

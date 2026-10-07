@@ -8,6 +8,8 @@ import { ORDER_STATUSES, ORDER_STATUS_LABELS, ROUTES, type OrderStatus } from '@
 import { money, showLabel } from '@/lib/vendors'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { SortHeader } from '@/components/shared/SortHeader'
+import { useTableSort } from '@/hooks/useTableSort'
 import { OrderStatusBadge } from '@/components/orders/OrderStatusBadge'
 import { Alert, Select, Spinner } from '@/components/ui'
 
@@ -31,6 +33,17 @@ export default function OrderListPage() {
     if (!s) return q.data ?? []
     return (q.data ?? []).filter((o) => (o.vendor?.name ?? '').toLowerCase().includes(s) || (o.description ?? '').toLowerCase().includes(s) || (o.po_number ?? '').toLowerCase().includes(s) || (o.placed_by ?? '').toLowerCase().includes(s))
   }, [q.data, search])
+
+  const { sorted, sort, toggle } = useTableSort(rows, {
+    ordered: (o) => o.order_date,
+    vendor: (o) => o.vendor?.name,
+    status: (o) => ORDER_STATUSES.indexOf(o.status),
+    what: (o) => o.description,
+    store: (o) => o.store_codes.join(', '),
+    cost: (o) => o.final_cost ?? o.est_cost,
+    ship: (o) => o.est_ship_date,
+    paid: (o) => o.paid_date,
+  }, { descFirst: ['ordered', 'cost', 'ship', 'paid'] })
 
   function setParam(key: string, value: string) {
     const next = new URLSearchParams(params)
@@ -69,10 +82,19 @@ export default function OrderListPage() {
           <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white">
             <table className="w-full text-sm">
               <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
-                <tr><th className="px-3 py-2">Ordered</th><th className="px-3 py-2">Vendor</th><th className="px-3 py-2">Status</th><th className="px-3 py-2">What</th><th className="px-3 py-2">Store</th><th className="px-3 py-2 text-right">Cost</th><th className="px-3 py-2">Ship</th><th className="px-3 py-2">Paid</th></tr>
+                <tr>
+                  <SortHeader label="Ordered" sortKey="ordered" sort={sort} onSort={toggle} className="px-3 py-2" />
+                  <SortHeader label="Vendor" sortKey="vendor" sort={sort} onSort={toggle} className="px-3 py-2" />
+                  <SortHeader label="Status" sortKey="status" sort={sort} onSort={toggle} className="px-3 py-2" />
+                  <SortHeader label="What" sortKey="what" sort={sort} onSort={toggle} className="px-3 py-2" />
+                  <SortHeader label="Store" sortKey="store" sort={sort} onSort={toggle} className="px-3 py-2" />
+                  <SortHeader label="Cost" sortKey="cost" sort={sort} onSort={toggle} align="right" className="px-3 py-2 text-right" />
+                  <SortHeader label="Ship" sortKey="ship" sort={sort} onSort={toggle} className="px-3 py-2" />
+                  <SortHeader label="Paid" sortKey="paid" sort={sort} onSort={toggle} className="px-3 py-2" />
+                </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
-                {rows.slice(0, 500).map((o) => (
+                {sorted.slice(0, 500).map((o) => (
                   <tr key={o.id} className="align-top hover:bg-stone-50">
                     <td className="whitespace-nowrap px-3 py-2"><Link to={`${ROUTES.orders}/${o.id}`} className="font-medium text-stone-900 hover:text-brand">{o.order_date ? new Date(o.order_date).toLocaleDateString() : 'no date'}</Link>{o.show_code ? <span className="block text-xs text-stone-500">{showLabel(o.show_code)}{o.show_inferred ? '?' : ''}</span> : o.season ? <span className="block text-xs text-stone-500">{o.season}</span> : null}</td>
                     <td className="px-3 py-2">{o.vendor ? <Link to={`${ROUTES.vendors}/${o.vendor.id}`} className="text-stone-900 hover:text-brand">{o.vendor.name}</Link> : '—'}</td>

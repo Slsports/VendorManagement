@@ -3,12 +3,26 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { vendorOrderSummary } from '@/services/orders'
 import { ROUTES } from '@/lib/constants'
 import { money, showLabel } from '@/lib/vendors'
+import { ORDER_STATUSES } from '@/lib/constants'
 import { OrderStatusBadge } from '@/components/orders/OrderStatusBadge'
+import { SortHeader } from '@/components/shared/SortHeader'
+import { useTableSort } from '@/hooks/useTableSort'
 
 /** Every order we have placed with this vendor, newest first, with the totals that tell you when they buy. */
 export function VendorOrdersSection({ vendorId }: { vendorId: string }) {
   const q = useSupabaseQuery(() => vendorOrderSummary(vendorId), [vendorId])
   const s = q.data
+  // Its own address-bar key, so it never fights another table on the vendor page.
+  const { sorted, sort, toggle } = useTableSort(s?.orders ?? [], {
+    ordered: (o) => o.order_date,
+    status: (o) => ORDER_STATUSES.indexOf(o.status),
+    what: (o) => o.description,
+    store: (o) => o.store_codes.join(', '),
+    by: (o) => o.placed_by,
+    cost: (o) => o.final_cost ?? o.est_cost,
+    ship: (o) => o.est_ship_date,
+    paid: (o) => o.paid_date,
+  }, { param: 'orders_sort', descFirst: ['ordered', 'cost', 'ship', 'paid'] })
   return (
     <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -27,10 +41,19 @@ export function VendorOrdersSection({ vendorId }: { vendorId: string }) {
         <div className="mt-3 overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-xs uppercase tracking-wide text-stone-500">
-              <tr><th className="py-1 pr-3">Ordered</th><th className="py-1 pr-3">Status</th><th className="py-1 pr-3">What</th><th className="py-1 pr-3">Store</th><th className="py-1 pr-3">By</th><th className="py-1 pr-3 text-right">Cost</th><th className="py-1 pr-3">Ship</th><th className="py-1">Paid</th></tr>
+              <tr>
+                <SortHeader label="Ordered" sortKey="ordered" sort={sort} onSort={toggle} className="py-1 pr-3" />
+                <SortHeader label="Status" sortKey="status" sort={sort} onSort={toggle} className="py-1 pr-3" />
+                <SortHeader label="What" sortKey="what" sort={sort} onSort={toggle} className="py-1 pr-3" />
+                <SortHeader label="Store" sortKey="store" sort={sort} onSort={toggle} className="py-1 pr-3" />
+                <SortHeader label="By" sortKey="by" sort={sort} onSort={toggle} className="py-1 pr-3" />
+                <SortHeader label="Cost" sortKey="cost" sort={sort} onSort={toggle} align="right" className="py-1 pr-3 text-right" />
+                <SortHeader label="Ship" sortKey="ship" sort={sort} onSort={toggle} className="py-1 pr-3" />
+                <SortHeader label="Paid" sortKey="paid" sort={sort} onSort={toggle} className="py-1" />
+              </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
-              {s.orders.map((o) => (
+              {sorted.map((o) => (
                 <tr key={o.id} className="align-top">
                   <td className="whitespace-nowrap py-1.5 pr-3"><Link to={`${ROUTES.orders}/${o.id}`} className="font-medium text-stone-900 hover:text-brand">{o.order_date ? new Date(o.order_date).toLocaleDateString() : 'no date'}</Link>{o.season ? <span className="block text-xs text-stone-500">{o.season}{o.show_code ? ` · ${showLabel(o.show_code)}${o.show_inferred ? '?' : ''}` : ''}</span> : null}</td>
                   <td className="py-1.5 pr-3"><OrderStatusBadge status={o.status} /></td>

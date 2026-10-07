@@ -8,6 +8,8 @@ import { createRepGroup, listRepGroupsWithCounts } from '@/services/lines'
 import { ROUTES } from '@/lib/constants'
 import { errorMessage } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { SortPicker } from '@/components/shared/SortHeader'
+import { useTableSort } from '@/hooks/useTableSort'
 import { Alert, Button, FormField, Input, Spinner } from '@/components/ui'
 
 export default function RepGroupListPage() {
@@ -17,6 +19,12 @@ export default function RepGroupListPage() {
   const [adding, setAdding] = useState(false)
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
+  const { sorted: groups, sort, setSort } = useTableSort(q.data ?? [], {
+    name: (g) => g.name,
+    contact: (g) => g.contact_name,
+    vendors: (g) => g.vendor_count,
+    lines: (g) => Math.max(0, g.line_count - g.vendor_count),
+  }, { descFirst: ['vendors', 'lines'] })
 
   async function submit(e: FormEvent) {
     e.preventDefault()
@@ -37,7 +45,6 @@ export default function RepGroupListPage() {
 
   if (q.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading rep groups…" className="text-brand" /></div>
   if (q.error) return <Alert variant="error">{q.error}</Alert>
-  const groups = q.data ?? []
 
   return (
     <div>
@@ -54,6 +61,11 @@ export default function RepGroupListPage() {
             <Button type="button" variant="ghost" onClick={() => setAdding(false)}>Cancel</Button>
           </div>
         </form>
+      ) : null}
+      {groups.length > 1 ? (
+        <div className="mb-3 flex justify-end">
+          <SortPicker sort={sort} onChange={setSort} options={[{ key: 'name', label: 'Name' }, { key: 'contact', label: 'Contact' }, { key: 'vendors', label: 'Vendors' }, { key: 'lines', label: 'Other lines' }]} />
+        </div>
       ) : null}
       {groups.length === 0 ? (
         <div className="flex flex-col items-center rounded-2xl border border-dashed border-stone-300 py-16 text-center">

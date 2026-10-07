@@ -9,6 +9,8 @@ import { BILLING_ROUTE_LABELS, STANDING_BADGE } from '@/lib/vendors'
 import { cn } from '@/lib/utils'
 import type { BillingRoute } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { SortHeader } from '@/components/shared/SortHeader'
+import { useTableSort } from '@/hooks/useTableSort'
 import { RouteBadges } from '@/components/vendors/RouteBadges'
 import { Alert, Badge, Button, Select, Spinner } from '@/components/ui'
 
@@ -39,6 +41,14 @@ export default function VendorListPage() {
     if (fishing) list = list.filter((v) => v.is_fishing)
     return list
   }, [data, search, route, review, dno, fishing])
+
+  const { sorted, sort, toggle } = useTableSort(rows, {
+    name: (v) => v.name,
+    billing: (v) => v.vendor_billing_routes.map((r) => BILLING_ROUTE_LABELS[r.route]).sort().join(', '),
+    rep: (v) => v.rep_groups?.name,
+    phone: (v) => v.phone,
+    flags: (v) => [STANDING_BADGE[v.standing]?.label, v.is_fishing ? 'Fishing' : '', v.needs_review ? 'Review' : ''].filter(Boolean).join(' ') || null,
+  })
 
   function setParam(key: string, value: string) {
     const next = new URLSearchParams(params)
@@ -116,15 +126,15 @@ export default function VendorListPage() {
             <table className="min-w-full divide-y divide-stone-200 text-sm">
               <thead className="bg-stone-50 text-left text-xs font-semibold uppercase tracking-wide text-stone-500">
                 <tr>
-                  <th scope="col" className="px-4 py-2.5">Vendor</th>
-                  <th scope="col" className="px-4 py-2.5">Billing</th>
-                  <th scope="col" className="hidden px-4 py-2.5 md:table-cell">Rep group</th>
-                  <th scope="col" className="hidden px-4 py-2.5 lg:table-cell">Phone</th>
-                  <th scope="col" className="px-4 py-2.5"><span className="sr-only">Flags</span></th>
+                  <SortHeader label="Vendor" sortKey="name" sort={sort} onSort={toggle} className="px-4 py-2.5" />
+                  <SortHeader label="Billing" sortKey="billing" sort={sort} onSort={toggle} className="px-4 py-2.5" />
+                  <SortHeader label="Rep group" sortKey="rep" sort={sort} onSort={toggle} className="hidden px-4 py-2.5 md:table-cell" />
+                  <SortHeader label="Phone" sortKey="phone" sort={sort} onSort={toggle} className="hidden px-4 py-2.5 lg:table-cell" />
+                  <SortHeader label="Flags" sortKey="flags" sort={sort} onSort={toggle} align="right" className="px-4 py-2.5 text-right" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
-                {rows.map((v) => (
+                {sorted.map((v) => (
                   <tr key={v.id} className="hover:bg-stone-50">
                     <td className="px-4 py-2.5">
                       <Link to={`${ROUTES.vendors}/${v.id}`} className={cn('font-medium hover:underline', v.do_not_order ? 'text-red-700 hover:text-red-800' : 'text-stone-900 hover:text-brand')}>{v.name}</Link>
