@@ -104,6 +104,21 @@ happens, not the place you work.
 - Settings > Integrations: connection status (last sync, mailbox, messages count), "Sync now".
 - Dashboard: "Mail waiting on you" count next to the review count.
 
+## As built (Oct 8, Opus session)
+- Tables: migrations `20261008000002_mail.sql` and `…03_mail_senders_platform.sql`. Ownership and status
+  live on `email_threads` only (no `emails.assigned_to`); `email_senders` holds one answer per sending
+  domain (or free-mail address): vendor, rep group, platform (sends for many vendors: NetSuite, Bill.com,
+  FashionGo), not a vendor, or ours. `mail_accounts` holds the cursors and `follow_up_days`.
+- `gmail-sync` stores plain-text bodies (20 KB cap) and attachment metadata only; HTML and files are
+  fetched from Gmail when opened or filed. Each run takes about 100 messages (Edge Function CPU limits);
+  pg_cron runs it every 2 minutes (`scripts/setup-mail-cron.mjs`) until the 12-month backfill is done.
+- Vendor clues (`supabase/functions/_shared/mailMatch.ts`): the web address against vendor names
+  (initials + last word, whole name), and vendor names in the subject, file names, From name (one-word
+  names only here) and the message above the signature (multi-word names). SQL (`mail_process`) links
+  what is known and keeps one review item per unknown sender, proposing a vendor only on the web address
+  or a name in at least two emails and three in ten of them.
+- Backfilled threads quiet for a week start as handled; newer ones wait on us or on the vendor.
+
 ## First jobs once connected (from the decisions log)
 1. Find Dana's Aug 2 2026 cancellation emails to Charlene Lal (Ty) and close the ten backordered lines.
 2. Backfill vendor contacts from the history into the review queue (spec §5).
