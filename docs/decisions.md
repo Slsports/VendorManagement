@@ -1111,3 +1111,17 @@ payments in the sample export show), or when a payment is entered by hand.
   address on the vendor page and a "New email" in its Mail section; sent from orders@ with the
   sender's signature, saved to the vendor at once, and replies in the thread follow it to the
   vendor. Written into `docs/gmail-connection.md`.
+
+## 2026-10-08 — Vendor mail is worked in VMS; replies come back to the sender
+- Dana: "I want us to be able to work directly in VMS most of the time, not having to go to Gmail."
+  Agreed with Fable; written into `docs/gmail-connection.md` ("Working in VMS instead of Gmail").
+- A vendor's reply goes to whoever sent the email, and every later message in that thread stays with
+  the thread's owner; handing a thread to someone moves the rest of it.
+- Sent mail waits on the vendor; no reply in five days puts it back on the owner's dashboard as
+  "No answer yet" with a one-click follow-up (the Daisy credit took seven months).
+- Dashboard "Mail for you" list (not just a count) plus a number on Mail in the side menu. A thread
+  stays on your list until answered, marked handled, or handed to someone else (then it moves to
+  theirs).
+- Read, reply, forward, attach and open attachments all inside VMS; Gmail is the backup.
+- Everyone sees every thread on the vendor record; ownership only decides whose list it lands on.
+- No phone or email alerts from VMS for now.

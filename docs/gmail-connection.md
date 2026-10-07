@@ -59,6 +59,33 @@ New contacts found in matched mail (signature blocks, From names) go to the revi
 - Label `Need to Order` → a `needs` row; marking it ordered in VMS swaps the Gmail label to `Placed Orders`.
 - VMS never deletes or archives Gmail mail. Marking handled in VMS adds label `VMS/Handled` only.
 
+## Working in VMS instead of Gmail (Dana and Fable, Oct 8)
+Goal: people read, answer and chase vendor mail in VMS; Gmail is the backup you open when something odd
+happens, not the place you work.
+- **Thread table.** `email_threads`: organization_id, gmail_thread_id (unique), vendor_id, owner_id
+  (profiles), status in `waiting_on_us` | `waiting_on_vendor` | `handled`, last_in_at, last_out_at,
+  follow_up_at, subject, created_at. Ownership lives on the thread; `emails.assigned_to` mirrors it.
+- **A reply goes to whoever sent the email.** Sending from VMS makes the sender the thread owner.
+- **Threads stay with their owner.** Every later message in the thread goes to the owner, not just the
+  first reply. Handing a thread to someone else (the assignee picker) moves the rest of it with it.
+  New threads with no owner use the assignment rules (fishing vendors to Jarrett) as before.
+- **Waiting on vendor, with a nudge.** Sending sets the thread to `waiting_on_vendor` and
+  `follow_up_at` = sent + 5 days. A vendor reply sets it to `waiting_on_us`. No reply by
+  `follow_up_at` puts it back on the owner's dashboard list as "No answer yet" with a one-click
+  Follow up (a prefilled reply in the same thread). Five days is a setting in Settings > Mail.
+- **Dashboard: "Mail for you".** A list, not just a count: new replies waiting on you and threads with
+  no answer yet, each showing vendor, subject, a one-line preview and how long it has waited; one
+  click opens the thread. Stays until answered, marked handled, or handed to someone else; a handed-over
+  thread leaves your list and lands on the new owner's.
+- **Badge on Mail** in the side menu with the number waiting on you, visible from any page.
+- **Everything inside VMS.** Read, reply, reply all, forward, attach a file (from the computer or from
+  the vendor's Links & files), open or download attachments, on the vendor page and the Mail page.
+- **Shared, not private.** Ownership only decides whose list a thread lands on. Anyone who opens the
+  vendor record sees every thread, its owner and what was said; anyone who can edit (admin, manager,
+  buyer) can reply or take a thread over.
+- **No phone or email alerts** from VMS for now; the dashboard list and the badge are enough, and Gmail
+  already notifies anyone who wants that.
+
 ## UI
 - Mail page (`/mail`): list with filters Mine / Everyone / Unassigned / Unmatched, vendor, status;
   row shows from, subject, snippet, vendor badge, assignee picker (reuse `AssigneeSelect`), attachments.
