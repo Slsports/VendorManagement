@@ -47,7 +47,9 @@ export default function FreightBillListPage() {
               ) : null}
             </div>
             {c.email_domains.length ? <p className="text-xs text-stone-500">Mail from {c.email_domains.join(', ')}</p> : null}
-            {c.account_number ? <p className="text-xs text-stone-500">Account {c.account_number}</p> : null}
+            {c.ups_account ? <p className="mt-1 text-sm text-stone-800">Our UPS # <span className="font-mono font-semibold">{c.ups_account}</span></p> : null}
+            {c.is_default_parcel ? <Badge tone="success" className="mt-1">Default for UPS (parcel)</Badge> : null}
+            {c.account_number ? <p className="text-xs text-stone-500">Our account with them {c.account_number}</p> : null}
             {c.website ? <a href={c.website} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-brand hover:underline">Log in <ExternalLink className="size-3.5" aria-hidden="true" /></a> : null}
           </div>
         ))}
@@ -92,7 +94,7 @@ export default function FreightBillListPage() {
               <li key={b.id}>
                 <Link to={`${ROUTES.freight}/${b.id}`} className="flex flex-col gap-1 px-4 py-3 hover:bg-stone-50 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
-                    <p className="font-medium text-stone-900">{b.carriers?.name ?? 'Carrier'}{b.invoice_number ? <span className="font-normal text-stone-500"> · #{b.invoice_number}</span> : null}</p>
+                    <p className="font-medium text-stone-900">{b.carriers?.name ?? 'Carrier'}{b.carriers?.ups_account ? <span className="font-normal text-stone-500"> · UPS {b.carriers.ups_account}</span> : null}{b.invoice_number ? <span className="font-normal text-stone-500"> · #{b.invoice_number}</span> : null}</p>
                     <p className="truncate text-xs text-stone-500">{shippers.length ? shippers.join(', ') : b.status === 'needs_pdf' ? 'Waiting for the bill PDF' : '—'}</p>
                   </div>
                   <div className="flex items-center gap-3 text-sm">

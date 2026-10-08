@@ -3,7 +3,7 @@ import { TEST_LOGIN_PATTERN } from '@/services/reviews'
 import type { Carrier, FreightBill, FreightBillLine, Order, TablesInsert, TablesUpdate } from '@/types'
 
 export interface FreightBillRow extends FreightBill {
-  carriers: Pick<Carrier, 'id' | 'name' | 'mode' | 'website'> | null
+  carriers: Pick<Carrier, 'id' | 'name' | 'mode' | 'website' | 'ups_account'> | null
   freight_bill_lines: (Pick<FreightBillLine, 'id' | 'shipper_name' | 'amount' | 'confirmed'>)[]
 }
 
@@ -35,8 +35,12 @@ export async function createCarrier(input: TablesInsert<'carriers'>): Promise<Ca
   return data
 }
 
-/** Edit a carrier; new email domains claim their mail too. */
+/** Edit a carrier; new email domains claim their mail too. Only one carrier is the default for UPS (parcel). */
 export async function updateCarrier(id: string, patch: TablesUpdate<'carriers'>): Promise<Carrier> {
+  if (patch.is_default_parcel) {
+    const { error: e0 } = await supabase.from('carriers').update({ is_default_parcel: false }).eq('is_default_parcel', true).neq('id', id)
+    if (e0) throw e0
+  }
   const { data, error } = await supabase.from('carriers').update(patch).eq('id', id).select('*').single()
   if (error) throw error
   await claimCarrierMail(id)
@@ -60,7 +64,7 @@ export type FreightFilter = 'open' | 'unpaid' | 'done' | 'all'
 
 export async function listFreightBills(organizationId: string, filter: FreightFilter, carrierId?: string | null): Promise<FreightBillRow[]> {
   let q = supabase.from('freight_bills')
-    .select('*, carriers(id, name, mode, website), freight_bill_lines(id, shipper_name, amount, confirmed)')
+    .select('*, carriers(id, name, mode, website, ups_account), freight_bill_lines(id, shipper_name, amount, confirmed)')
     .eq('organization_id', organizationId)
   if (carrierId) q = q.eq('carrier_id', carrierId)
   if (filter === 'open') q = q.neq('status', 'done')

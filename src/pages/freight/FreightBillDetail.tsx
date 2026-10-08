@@ -73,6 +73,7 @@ export default function FreightBillDetailPage() {
             <FileText className="size-4" aria-hidden="true" /> {b.file_name ?? 'Bill PDF'}
           </button>
         ) : <span className="text-stone-600">No PDF yet.</span>}
+        {b.carriers?.ups_account ? <span className="text-stone-700">Our UPS # <span className="font-mono font-semibold">{b.carriers.ups_account}</span></span> : null}
         {b.carriers?.website ? <a href={b.carriers.website} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-brand hover:underline">Log in to {b.carriers.name} <ExternalLink className="size-3.5" aria-hidden="true" /></a> : null}
         {b.emails ? <Link to={`${ROUTES.mail}/${b.emails.thread_id}`} className="inline-flex items-center gap-1 text-brand hover:underline"><Mail className="size-4" aria-hidden="true" /> The email</Link> : null}
         {b.receipt_path ? (

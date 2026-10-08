@@ -29,6 +29,8 @@ export function CarrierDialog({ carrier, prefillName, domain, onClose, onDone }:
   const [domains, setDomains] = useState((carrier?.email_domains ?? (domain ? [domain] : [])).join(', '))
   const [website, setWebsite] = useState(carrier?.website ?? (domain ? `https://www.${domain}` : ''))
   const [account, setAccount] = useState(carrier?.account_number ?? '')
+  const [ups, setUps] = useState(carrier?.ups_account ?? '')
+  const [defaultParcel, setDefaultParcel] = useState(carrier?.is_default_parcel ?? false)
   const [owner, setOwner] = useState<string | null | undefined>(carrier ? carrier.owner_id : undefined)
   const [active, setActive] = useState(carrier?.is_active ?? true)
   const [busy, setBusy] = useState(false)
@@ -41,9 +43,9 @@ export function CarrierDialog({ carrier, prefillName, domain, onClose, onDone }:
       if (!name.trim()) { toast.error('Name is required.'); return }
       setBusy(true)
       try {
-        const fields = { name: name.trim(), mode, email_domains: domainsFrom(domains), website: website.trim() || null, account_number: account.trim() || null, owner_id: ownerId }
+        const fields = { name: name.trim(), mode, email_domains: domainsFrom(domains), website: website.trim() || null, account_number: account.trim() || null, ups_account: ups.trim().toUpperCase() || null, owner_id: ownerId }
         const c = carrier
-          ? await updateCarrier(carrier.id, { ...fields, is_active: active })
+          ? await updateCarrier(carrier.id, { ...fields, is_active: active, is_default_parcel: defaultParcel })
           : await createCarrier({ organization_id: organization.id, ...fields })
         toast.success(carrier ? `${c.name} saved` : `${c.name} added`)
         await onDone(c)
@@ -64,13 +66,19 @@ export function CarrierDialog({ carrier, prefillName, domain, onClose, onDone }:
         <Input id="cd-domains" value={domains} onChange={(e) => setDomains(e.target.value)} placeholder="xpo.com" />
       </FormField>
       <FormField label="Website to log in" htmlFor="cd-web"><Input id="cd-web" value={website} onChange={(e) => setWebsite(e.target.value)} /></FormField>
-      <FormField label="Our account number" htmlFor="cd-acct"><Input id="cd-acct" value={account} onChange={(e) => setAccount(e.target.value)} /></FormField>
+      <FormField label="Our UPS account # through them" htmlFor="cd-ups" hint="Our UPS number with this billing company (2K229F for WWEX)."><Input id="cd-ups" value={ups} onChange={(e) => setUps(e.target.value)} /></FormField>
+      <FormField label="Our account with them" htmlFor="cd-acct" hint="Their customer number for us, if they give one."><Input id="cd-acct" value={account} onChange={(e) => setAccount(e.target.value)} /></FormField>
       <FormField label="Its mail goes to" htmlFor="cd-owner">
         <Select id="cd-owner" value={ownerId ?? ''} onChange={(e) => setOwner(e.target.value || null)}>
           <option value="">Nobody in particular</option>
           {(people.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
         </Select>
       </FormField>
+      {carrier && mode === 'parcel' ? (
+        <label className="flex items-center gap-2 text-sm text-stone-700">
+          <input type="checkbox" checked={defaultParcel} onChange={(e) => setDefaultParcel(e.target.checked)} className="accent-brand" /> Our default for UPS (parcel) shipments
+        </label>
+      ) : null}
       {carrier ? (
         <label className="flex items-center gap-2 text-sm text-stone-700">
           <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="accent-brand" /> Active (uncheck to retire a carrier we no longer use)

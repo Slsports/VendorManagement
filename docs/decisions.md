@@ -1401,3 +1401,7 @@ Dana listed these while working the Review queue, then said go.
 - Dana, Oct 8: when UPS is added as a carrier it is **"UPS DIRECT"**: the company's own UPS account, no
   longer used for new shipments because Worldwide Express (WWEX) prices UPS shipments much better. Both are
   UPS, but different account numbers and billing; old UPS Direct invoices are history (2026 catch-up).
+- Dana, Oct 8: our UPS account number through each billing company shows on the Freight bills page (each
+  carrier card, each bill): UPS DIRECT 89787W (our own account, no longer used), PartnerShip V513K4 (used
+  earlier in 2026), Worldwide Express 2K229F, **the default UPS (parcel) shipper**. WWEX's W0003290195 is
+  our account with them, a different number. UPS DIRECT was added as a carrier (no email domain yet).
