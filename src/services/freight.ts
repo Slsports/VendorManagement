@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
-import type { Carrier, FreightBill, FreightBillLine, Order, TablesInsert } from '@/types'
+import { TEST_LOGIN_PATTERN } from '@/services/reviews'
+import type { Carrier, FreightBill, FreightBillLine, Order, TablesInsert, TablesUpdate } from '@/types'
 
 export interface FreightBillRow extends FreightBill {
   carriers: Pick<Carrier, 'id' | 'name' | 'mode' | 'website'> | null
@@ -15,16 +16,42 @@ export interface FreightBillDetail extends FreightBill {
   })[]
 }
 
-export async function listCarriers(organizationId: string): Promise<Carrier[]> {
-  const { data, error } = await supabase.from('carriers').select('*').eq('organization_id', organizationId).eq('is_active', true).order('name')
+/** Active carriers; with `includeInactive`, retired ones too (after the active ones). */
+export async function listCarriers(organizationId: string, includeInactive = false): Promise<Carrier[]> {
+  let q = supabase.from('carriers').select('*').eq('organization_id', organizationId)
+  if (!includeInactive) q = q.eq('is_active', true)
+  const { data, error } = await q.order('is_active', { ascending: false }).order('name')
   if (error) throw error
   return data ?? []
 }
 
+/** Add a carrier, then claim the mail already in VMS from its email domains. */
 export async function createCarrier(input: TablesInsert<'carriers'>): Promise<Carrier> {
   const { data, error } = await supabase.from('carriers').insert(input).select('*').single()
   if (error) throw error
+  await claimCarrierMail(data.id)
   return data
+}
+
+/** Edit a carrier; new email domains claim their mail too. */
+export async function updateCarrier(id: string, patch: TablesUpdate<'carriers'>): Promise<Carrier> {
+  const { data, error } = await supabase.from('carriers').update(patch).eq('id', id).select('*').single()
+  if (error) throw error
+  await claimCarrierMail(id)
+  return data
+}
+
+async function claimCarrierMail(id: string): Promise<number> {
+  const { data, error } = await supabase.rpc('carrier_claim_mail', { p_carrier: id })
+  if (error) throw error
+  return data ?? 0
+}
+
+/** Who can get a carrier's mail: everyone active but the test login. */
+export async function listCarrierOwners(organizationId: string): Promise<{ id: string; full_name: string }[]> {
+  const { data, error } = await supabase.from('profiles').select('id, full_name').eq('organization_id', organizationId).eq('is_active', true).not('email', 'ilike', TEST_LOGIN_PATTERN).order('full_name')
+  if (error) throw error
+  return data ?? []
 }
 
 export type FreightFilter = 'open' | 'unpaid' | 'done' | 'all'

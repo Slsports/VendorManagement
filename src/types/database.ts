@@ -581,6 +581,7 @@ export type Database = {
       delete_vendor: { Args: { p_vendor: string; p_note?: string | null }; Returns: undefined }
       set_sender_carrier: { Args: { p_sender: string; p_carrier: string }; Returns: number }
       freight_set_line: { Args: { p_line: string; p_vendor: string | null; p_order: string | null; p_confirm: boolean }; Returns: undefined }
+      carrier_claim_mail: { Args: { p_carrier: string }; Returns: number }
       file_delivery_receipt: { Args: { p_receipt: string; p_vendor: string }; Returns: undefined }
       tag_email_vendor: { Args: { p_email: string; p_vendor: string; p_on: boolean }; Returns: undefined }
       move_order_vendor: { Args: { p_order: string; p_vendor: string }; Returns: undefined }

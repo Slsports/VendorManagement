@@ -1323,3 +1323,7 @@ Dana listed these while working the Review queue, then said go.
   delivered date as its received date when it had none. A receipt Claude cannot match goes to the review
   queue for the carrier's owner ("which vendor shipped it?"). Receipts are never freight bills. Works for
   any carrier's receipts ("Delivery Receipt", "Proof of delivery" in the subject) (`delivery_receipts`).
+- Dana, Oct 8: freight carriers can be added and edited on the Freight bills page (+ Add carrier, the
+  pencil on each carrier): name, parcel or LTL, email domains, website, account number, who gets its mail
+  (Trevor by default) and Active. Saving claims the mail already in VMS from those domains (undecided
+  senders only), so the carrier's bills and delivery receipts are read too.
