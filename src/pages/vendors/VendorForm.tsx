@@ -59,9 +59,6 @@ interface FormState {
   city: string
   state: string
   postal_code: string
-  rep_name: string
-  rep_phone: string
-  rep_email: string
   pickup_address: string
   pickup_times: string
   shipping_contact: string
@@ -82,7 +79,7 @@ const EMPTY: FormState = {
   name: '', aliases: '', routes: [], defaultRoute: '', rep_group_id: '', assigned_buyer_id: '', payment_terms_id: '', ordering_frequency: '',
   is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, is_fishing: false,
   website: '', phone: '', email: '', fax: '', account_number: '', catalog: '', address: '', city: '', state: '', postal_code: '',
-  rep_name: '', rep_phone: '', rep_email: '', pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', shipping_contact_email: '', minimum_order: '', freight_program: '', free_shipping_policy: '', free_shipping_threshold: '', freight_routing: '', product_types: '',
+  pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', shipping_contact_email: '', minimum_order: '', freight_program: '', free_shipping_policy: '', free_shipping_threshold: '', freight_routing: '', product_types: '',
   notes: '', return_notes: '', windows: [],
 }
 
@@ -110,7 +107,7 @@ function formFromVendor(v: VendorDetail): FormState {
     do_not_order_reason: v.do_not_order_reason ?? '',
     website: v.website ?? '', phone: v.phone ?? '', email: v.email ?? '', fax: v.fax ?? '', account_number: v.account_number ?? '', catalog: v.catalog ?? '',
     address: v.address ?? '', city: v.city ?? '', state: v.state ?? '', postal_code: v.postal_code ?? '',
-    rep_name: v.rep_name ?? '', rep_phone: v.rep_phone ?? '', rep_email: v.rep_email ?? '', pickup_address: v.pickup_address ?? '', pickup_times: v.pickup_times ?? '',
+    pickup_address: v.pickup_address ?? '', pickup_times: v.pickup_times ?? '',
     shipping_contact: v.shipping_contact ?? '', shipping_contact_phone: v.shipping_contact_phone ?? '', shipping_contact_email: v.shipping_contact_email ?? '', minimum_order: v.minimum_order ?? '', freight_program: v.freight_program ?? '', free_shipping_policy: v.free_shipping_policy ?? '', free_shipping_threshold: v.free_shipping_threshold !== null ? String(v.free_shipping_threshold) : '', freight_routing: v.freight_routing ?? '', product_types: v.product_types ?? '',
     notes: v.notes ?? '', return_notes: v.return_notes ?? '',
     windows: v.vendor_order_windows.map((w) => ({ id: w.id, kind: w.kind, label: w.label ?? '', months: w.months, notes: w.notes ?? '' })),
@@ -163,7 +160,7 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
       setError('Name is required.')
       return
     }
-    const badEmail = ([['Orders email', form.email], ['Rep email', form.rep_email], ['Shipping contact email', form.shipping_contact_email]] as const).find(([, e]) => e.trim() && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e.trim()))
+    const badEmail = ([['Orders email', form.email], ['Shipping contact email', form.shipping_contact_email]] as const).find(([, e]) => e.trim() && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e.trim()))
     if (badEmail) {
       setError(`${badEmail[0]} does not look like an email address.`)
       return
@@ -190,7 +187,7 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
       do_not_order_reason: form.standing !== 'ok' ? nz(form.do_not_order_reason) : null,
       website: nz(form.website), phone: nz(form.phone), email: nz(form.email), fax: nz(form.fax), account_number: nz(form.account_number), catalog: nz(form.catalog),
       address: nz(form.address), city: nz(form.city), state: nz(form.state), postal_code: nz(form.postal_code),
-      rep_name: nz(form.rep_name), rep_phone: nz(form.rep_phone), rep_email: nz(form.rep_email), pickup_address: nz(form.pickup_address), pickup_times: nz(form.pickup_times),
+      pickup_address: nz(form.pickup_address), pickup_times: nz(form.pickup_times),
       shipping_contact: nz(form.shipping_contact), shipping_contact_phone: nz(form.shipping_contact_phone), shipping_contact_email: nz(form.shipping_contact_email), minimum_order: nz(form.minimum_order), freight_program: nz(form.freight_program), free_shipping_policy: form.free_shipping_policy || null, free_shipping_threshold: form.free_shipping_threshold.trim() ? Number(form.free_shipping_threshold.replace(/[^0-9.]/g, '')) : null, freight_routing: nz(form.freight_routing), product_types: nz(form.product_types),
       notes: nz(form.notes), return_notes: nz(form.return_notes),
     }
@@ -335,10 +332,8 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
           </div>
         </Section>
 
-        <Section title="Rep and logistics">
-          <FormField label="Rep name" htmlFor="rep_name"><Input id="rep_name" value={form.rep_name} onChange={(e) => set('rep_name', e.target.value)} /></FormField>
-          <FormField label="Rep phone" htmlFor="rep_phone"><Input id="rep_phone" value={form.rep_phone} onChange={(e) => set('rep_phone', e.target.value)} /></FormField>
-          <FormField label="Rep email" htmlFor="rep_email" className="sm:col-span-2"><Input id="rep_email" type="email" value={form.rep_email} onChange={(e) => set('rep_email', e.target.value)} /></FormField>
+        <Section title="Logistics">
+          <p className="text-sm text-stone-500 sm:col-span-2">Reps are on the vendor page under Reps &amp; contacts, where you can add several and star our assigned rep.</p>
           <FormField label="Will-call pickup address" htmlFor="pickup"><Input id="pickup" value={form.pickup_address} onChange={(e) => set('pickup_address', e.target.value)} /></FormField>
           <FormField label="Pickup hours" htmlFor="pickup_times"><Input id="pickup_times" value={form.pickup_times} onChange={(e) => set('pickup_times', e.target.value)} placeholder="e.g. M–F 8–4" /></FormField>
           <FormField label="Shipping contact" htmlFor="ship"><Input id="ship" value={form.shipping_contact} onChange={(e) => set('shipping_contact', e.target.value)} /></FormField>

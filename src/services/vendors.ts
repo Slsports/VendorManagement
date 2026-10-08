@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { BillingRoute, Json, Vendor, VendorBillingRoute, VendorEmail, VendorMerge, VendorOrderWindow, RepGroup, PaymentTerms, Note, ReviewItem, TablesInsert, TablesUpdate } from '@/types'
+import type { BillingRoute, Json, Vendor, VendorBillingRoute, VendorEmail, VendorMerge, VendorOrderWindow, RepGroup, RepGroupContact, PaymentTerms, Note, ReviewItem, TablesInsert, TablesUpdate } from '@/types'
 
 export interface VendorListRow extends Vendor {
   vendor_billing_routes: Pick<VendorBillingRoute, 'route' | 'is_default'>[]
@@ -44,7 +44,7 @@ export interface VendorDetail extends Vendor {
   vendor_billing_routes: VendorBillingRoute[]
   vendor_emails: VendorEmail[]
   vendor_order_windows: VendorOrderWindow[]
-  rep_groups: RepGroup | null
+  rep_groups: (RepGroup & { rep_group_contacts: RepGroupContact[] }) | null
   payment_terms: PaymentTerms | null
   vendor_stores: { store_id: string }[]
 }
@@ -52,7 +52,7 @@ export interface VendorDetail extends Vendor {
 export async function getVendor(id: string): Promise<VendorDetail> {
   const { data, error } = await supabase
     .from('vendors')
-    .select('*, vendor_billing_routes(*), vendor_emails(*), vendor_order_windows(*), rep_groups(*), payment_terms(*), vendor_stores(store_id)')
+    .select('*, vendor_billing_routes(*), vendor_emails(*), vendor_order_windows(*), rep_groups(*, rep_group_contacts(*)), payment_terms(*), vendor_stores(store_id)')
     .eq('id', id)
     .single()
   if (error) throw error

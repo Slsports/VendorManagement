@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { clearPickerCache, listRepGroupNames, type NamedRef } from '@/services/mail'
-import { createRepGroup } from '@/services/lines'
+import { addRepGroupContact, createRepGroup } from '@/services/lines'
 import { errorMessage } from '@/lib/utils'
 import { Modal } from '@/components/shared/Modal'
 import { FormField, Input, Select } from '@/components/ui'
@@ -59,7 +59,8 @@ function QuickRepGroupDialog({ prefill, onClose, onDone }: { prefill?: NewRepGro
       if (email.trim() && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) { toast.error('That email does not look right.'); return }
       setBusy(true)
       try {
-        const g = await createRepGroup({ organization_id: organization.id, name: name.trim(), contact_name: repName.trim() || null, email: email.trim() || null, phone: phone.trim() || null })
+        const g = await createRepGroup({ organization_id: organization.id, name: name.trim() })
+        if (repName.trim() || email.trim() || phone.trim()) await addRepGroupContact({ rep_group_id: g.id, name: repName.trim() || null, email: email.trim().toLowerCase() || null, phone: phone.trim() || null })
         clearPickerCache()
         toast.success(`${g.name} added`)
         await onDone({ id: g.id, name: g.name })

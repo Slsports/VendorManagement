@@ -13,6 +13,7 @@ export type VendorBillingRoute = Tables<'vendor_billing_routes'>
 export type VendorEmail = Tables<'vendor_emails'>
 export type VendorOrderWindow = Tables<'vendor_order_windows'>
 export type RepGroup = Tables<'rep_groups'>
+export type RepGroupContact = Tables<'rep_group_contacts'>
 export type Category = Tables<'categories'>
 export type PaymentTerms = Tables<'payment_terms'>
 export type Note = Tables<'notes'>

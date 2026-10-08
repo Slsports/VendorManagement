@@ -27,6 +27,7 @@ export function AddOrderDialog({ vendor, threadId, onClose, onSaved }: { vendor:
   const [cost, setCost] = useState('')
   const [placedBy, setPlacedBy] = useState(profile?.full_name ?? '')
   const [poNumber, setPoNumber] = useState('')
+  const [takenBy, setTakenBy] = useState('')
   const [paid, setPaid] = useState(false)
   const [paidVia, setPaidVia] = useState<PaidVia | ''>('card')
   const [paidDate, setPaidDate] = useState(today())
@@ -60,6 +61,7 @@ export function AddOrderDialog({ vendor, threadId, onClose, onSaved }: { vendor:
         placed_by: placedBy.trim() || null,
         placed_by_id: person?.id ?? null,
         po_number: poNumber.trim() || null,
+        taken_by: takenBy.trim() || null,
         paid_date: paid ? paidDate || today() : null,
         paid_via: paidVia || null,
         notes: notes.trim() || null,
@@ -92,6 +94,7 @@ export function AddOrderDialog({ vendor, threadId, onClose, onSaved }: { vendor:
             <Input id="ao-by" list="ao-people" value={placedBy} onChange={(e) => setPlacedBy(e.target.value)} />
             <datalist id="ao-people">{(people.data ?? []).map((p) => <option key={p.id} value={p.full_name} />)}</datalist>
           </FormField>
+          <FormField label="Order taken by" htmlFor="ao-taken" hint="The rep who wrote it, e.g. at a show"><Input id="ao-taken" value={takenBy} onChange={(e) => setTakenBy(e.target.value)} /></FormField>
           <FormField label="PO or order number" htmlFor="ao-po"><Input id="ao-po" value={poNumber} onChange={(e) => setPoNumber(e.target.value)} /></FormField>
           <fieldset className="sm:col-span-2">
             <legend className="text-sm font-medium text-stone-700">Store</legend>

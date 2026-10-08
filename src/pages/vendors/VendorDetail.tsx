@@ -1,29 +1,30 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { AlertTriangle, Check, Mail, Pencil, Phone, Plus, Trash2 } from 'lucide-react'
+import { Check, Pencil } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { addNote, addVendorEmail, deleteVendorEmail, getVendor, listNotes, listReviewQueue, setVendorAssignee, updateVendor } from '@/services/vendors'
+import { addNote, getVendor, listNotes, listReviewQueue, setVendorAssignee, updateVendor } from '@/services/vendors'
 import { listOrderers } from '@/services/reviews'
 import { clearPickerCache } from '@/services/mail'
 import { ROUTES } from '@/lib/constants'
-import { BILLING_ROUTE_HELP, CONTACT_TYPE_LABELS, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, monthsLabel, freeShippingRule, standingWhy, STANDING_BADGE } from '@/lib/vendors'
+import { BILLING_ROUTE_HELP, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, monthsLabel, freeShippingRule, standingWhy, STANDING_BADGE } from '@/lib/vendors'
 import { errorMessage } from '@/lib/utils'
-import type { ContactType } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { BackLink } from '@/components/shared/BackLink'
 import { RouteBadges } from '@/components/vendors/RouteBadges'
 import { ReviewItemCard, VENDOR_DELETED } from '@/components/vendors/ReviewItemCard'
 import { VendorLinksSection } from '@/components/vendors/VendorLinksSection'
 import { VendorRepGroupCard } from '@/components/vendors/VendorRepGroupCard'
+import { VendorContactsSection } from '@/components/vendors/VendorContactsSection'
+import { peopleFor } from '@/lib/contacts'
 import { VendorShowsSection } from '@/components/vendors/VendorShowsSection'
 import { VendorOrdersSection } from '@/components/vendors/VendorOrdersSection'
 import { VendorMailSection } from '@/components/vendors/VendorMailSection'
 import { ComposeDialog, type ComposeDraft } from '@/components/mail/ComposeDialog'
 import { VendorScorecard } from '@/components/scores/VendorScorecard'
 import { VendorItemRulesSection } from '@/components/vendors/VendorItemRulesSection'
-import { Alert, Badge, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
+import { Alert, Badge, Button, Select, Spinner, Textarea } from '@/components/ui'
 
 export default function VendorDetailPage() {
   const { id = '' } = useParams()
@@ -40,12 +41,14 @@ export default function VendorDetailPage() {
   if (vendorQ.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading vendor…" className="text-brand" /></div>
   if (vendorQ.error || !v) return <Alert variant="error">{vendorQ.error ?? 'Vendor not found'}</Alert>
 
-  /** Every address on the record, for the To suggestions. */
+  const people = peopleFor(v)
+  const ourRep = people.find((p) => p.starred) ?? null
+  /** Every address on the record for the To suggestions, our assigned rep first. */
   const suggestions = [
+    ...people.filter((p) => p.starred && p.email).map((p) => ({ email: p.email!, label: `★ Our rep ${p.name ?? ''} ${p.email}`.replace(/\s+/g, ' ') })),
     ...(v.email ? [{ email: v.email, label: `Orders ${v.email}` }] : []),
-    ...(v.rep_email ? [{ email: v.rep_email, label: `${v.rep_name || 'Rep'} ${v.rep_email}` }] : []),
     ...(v.shipping_contact_email ? [{ email: v.shipping_contact_email, label: `${v.shipping_contact || 'Shipping'} ${v.shipping_contact_email}` }] : []),
-    ...v.vendor_emails.map((c) => ({ email: c.email, label: `${c.contact_name || c.email}${c.contact_name ? ` ${c.email}` : ''}` })),
+    ...people.filter((p) => p.email).map((p) => ({ email: p.email!, label: `${p.name || p.email}${p.name ? ` ${p.email}` : ''}` })),
   ].filter((s, i, all) => all.findIndex((x) => x.email.toLowerCase() === s.email.toLowerCase()) === i)
   /** Write to this address from VMS (orders@, your signature, filed to this vendor). */
   const compose = (to: string[]) => setDraft({ to, subject: '', body: '', vendor_id: v.id })
@@ -83,7 +86,7 @@ export default function VendorDetailPage() {
     ['Assigned to', assignedTo],
     ['WWD contacts', wwdLink],
     ['Aliases', v.aliases.length ? v.aliases.join(', ') : null],
-    ['Rep', contact(v.rep_name, v.rep_phone, v.rep_email)],
+    ['Our rep', ourRep ? contact(ourRep.name, ourRep.phone, ourRep.email) : null],
     ['Payment terms', v.payment_terms?.name],
     ['Orders email', mail(v.email)],
     ['Phone', v.phone],
@@ -241,7 +244,7 @@ export default function VendorDetailPage() {
         <VendorLinksSection vendorId={v.id} organizationId={v.organization_id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorRepGroupCard vendorId={v.id} group={v.rep_groups} />
 
-        <ContactsSection vendorId={v.id} contacts={v.vendor_emails} canEdit={canEdit} onChange={vendorQ.refetch} onEmail={(email) => compose([email])} />
+        <VendorContactsSection vendor={v} canEdit={canEdit} onChange={vendorQ.refetch} onEmail={(email) => compose([email])} />
         <VendorShowsSection vendorId={v.id} />
         <VendorScorecard organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorItemRulesSection organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
@@ -277,88 +280,6 @@ function normalizeUrl(u: string) {
   return /^https?:\/\//i.test(u) ? u : `https://${u}`
 }
 
-function ContactsSection({ vendorId, contacts, canEdit, onChange, onEmail }: { vendorId: string; contacts: { id: string; email: string; contact_name: string | null; title: string | null; phone: string | null; contact_type: ContactType; source: string }[]; canEdit: boolean; onChange: () => Promise<void>; onEmail: (email: string) => void }) {
-  const [adding, setAdding] = useState(false)
-  const [form, setForm] = useState({ contact_name: '', email: '', phone: '', title: '', contact_type: 'rep' as ContactType })
-  const [saving, setSaving] = useState(false)
-
-  async function submit(e: FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      await addVendorEmail({ vendor_id: vendorId, email: form.email.trim(), contact_name: form.contact_name.trim() || null, phone: form.phone.trim() || null, title: form.title.trim() || null, contact_type: form.contact_type, source: 'manual' })
-      setForm({ contact_name: '', email: '', phone: '', title: '', contact_type: 'rep' })
-      setAdding(false)
-      toast.success('Contact added')
-      await onChange()
-    } catch (err) {
-      toast.error(errorMessage(err))
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  async function remove(id: string) {
-    if (!window.confirm('Remove this contact?')) return
-    try {
-      await deleteVendorEmail(id)
-      await onChange()
-    } catch (err) {
-      toast.error(errorMessage(err))
-    }
-  }
-
-  return (
-    <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-2">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Contacts</h2>
-        {canEdit && !adding ? <Button size="sm" variant="secondary" onClick={() => setAdding(true)} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add contact</Button> : null}
-      </div>
-      {adding ? (
-        <form onSubmit={submit} className="mt-3 grid gap-3 rounded-xl bg-stone-50 p-4 sm:grid-cols-2">
-          <FormField label="Name" htmlFor="c-name"><Input id="c-name" value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} /></FormField>
-          <FormField label="Email" htmlFor="c-email"><Input id="c-email" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></FormField>
-          <FormField label="Phone" htmlFor="c-phone"><Input id="c-phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></FormField>
-          <FormField label="Title" htmlFor="c-type">
-            <Select id="c-type" value={form.contact_type} onChange={(e) => setForm({ ...form, contact_type: e.target.value as ContactType })}>
-              {(Object.keys(CONTACT_TYPE_LABELS) as ContactType[]).map((t) => <option key={t} value={t}>{CONTACT_TYPE_LABELS[t]}</option>)}
-            </Select>
-          </FormField>
-          <FormField label="Job title (optional)" htmlFor="c-title" className="sm:col-span-2"><Input id="c-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Regional Sales Manager" /></FormField>
-          <div className="flex gap-2 sm:col-span-2">
-            <Button type="submit" loading={saving}>Save contact</Button>
-            <Button type="button" variant="ghost" onClick={() => setAdding(false)}>Cancel</Button>
-          </div>
-        </form>
-      ) : null}
-      {contacts.length === 0 && !adding ? (
-        <p className="mt-3 text-sm text-stone-500">No contacts yet. They arrive from the mailbox scan and the vendor form, or add one here.</p>
-      ) : (
-        <ul className="mt-3 divide-y divide-stone-100">
-          {contacts.map((c) => (
-            <li key={c.id} className="flex items-start justify-between gap-3 py-2.5 text-sm">
-              <div className="min-w-0">
-                <p className="font-medium text-stone-900">{c.contact_name || c.email} <Badge tone="neutral" className="ml-1">{CONTACT_TYPE_LABELS[c.contact_type]}</Badge>{c.title ? <span className="ml-2 text-xs font-normal text-stone-500">{c.title}</span> : null}</p>
-                <p className="flex flex-wrap gap-x-4 text-stone-600">
-                  {canEdit
-                    ? <button type="button" onClick={() => onEmail(c.email)} className="inline-flex items-center gap-1 hover:text-brand" title="Write an email from VMS"><Mail className="size-3.5" aria-hidden="true" />{c.email}</button>
-                    : <a href={`mailto:${c.email}`} className="inline-flex items-center gap-1 hover:text-brand"><Mail className="size-3.5" aria-hidden="true" />{c.email}</a>}
-                  {c.phone ? <a href={`tel:${c.phone}`} className="inline-flex items-center gap-1 hover:text-brand"><Phone className="size-3.5" aria-hidden="true" />{c.phone}</a> : null}
-                </p>
-              </div>
-              {canEdit ? (
-                <button type="button" onClick={() => void remove(c.id)} aria-label={`Remove ${c.email}`} className="rounded-md p-1.5 text-stone-400 hover:bg-stone-100 hover:text-red-600">
-                  <Trash2 className="size-4" aria-hidden="true" />
-                </button>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      )}
-      {contacts.length === 0 ? <p className="mt-2 inline-flex items-center gap-1 text-xs text-stone-400"><AlertTriangle className="size-3.5" aria-hidden="true" /> The discrepancy and status emails need a rep contact.</p> : null}
-    </section>
-  )
-}
 
 function NoteForm({ onSubmit }: { onSubmit: (body: string) => Promise<void> }) {
   const [body, setBody] = useState('')

@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { BillingRoute, Line, RepGroup, ShowAppearance, TablesInsert, TablesUpdate, Vendor, VendorLink } from '@/types'
+import type { BillingRoute, Line, RepGroup, RepGroupContact, ShowAppearance, TablesInsert, TablesUpdate, Vendor, VendorLink } from '@/types'
 
 // ---- lines (what reps carry, what shows list; not vendors) ----
 export interface LineRow extends Line {
@@ -57,13 +57,14 @@ export async function listRepGroupsWithCounts(organizationId: string): Promise<R
 }
 
 export interface RepGroupDetail extends RepGroup {
+  rep_group_contacts: RepGroupContact[]
   vendors: (Pick<Vendor, 'id' | 'name' | 'is_active' | 'do_not_order' | 'wwd_zero_upcharge'> & { vendor_billing_routes: { route: BillingRoute; is_default: boolean }[] })[]
   lines: LineRow[]
 }
 
 export async function getRepGroup(id: string): Promise<RepGroupDetail> {
   const [{ data: group, error: e1 }, { data: vendors, error: e2 }, lines] = await Promise.all([
-    supabase.from('rep_groups').select('*').eq('id', id).single(),
+    supabase.from('rep_groups').select('*, rep_group_contacts(*)').eq('id', id).single(),
     supabase.from('vendors').select('id, name, is_active, do_not_order, wwd_zero_upcharge, vendor_billing_routes(route, is_default)').eq('rep_group_id', id).eq('is_active', true).order('name'),
     listLinesForRepGroup(id),
   ])
@@ -74,6 +75,16 @@ export async function getRepGroup(id: string): Promise<RepGroupDetail> {
 
 export async function updateRepGroup(id: string, changes: TablesUpdate<'rep_groups'>): Promise<void> {
   const { error } = await supabase.from('rep_groups').update(changes).eq('id', id)
+  if (error) throw error
+}
+
+export async function addRepGroupContact(input: TablesInsert<'rep_group_contacts'>): Promise<void> {
+  const { error } = await supabase.from('rep_group_contacts').insert(input)
+  if (error) throw error
+}
+
+export async function deleteRepGroupContact(id: string): Promise<void> {
+  const { error } = await supabase.from('rep_group_contacts').delete().eq('id', id)
   if (error) throw error
 }
 
