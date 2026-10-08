@@ -13,7 +13,7 @@ export const REVIEW_KIND_LABELS: Record<string, { title: string; help: string }>
 
 export const REVIEW_RULE_KIND_LABELS: Record<ReviewRuleKind, string> = {
   fishing: 'Fishing vendors',
-  department: 'Lightspeed department',
+  department: 'Lightspeed category',
   vendor: 'One vendor',
   review_kind: 'Kind of review',
   fallback: 'Everything else',
@@ -33,9 +33,23 @@ export const LS_DEPARTMENTS = [
 export function describeRule(rule: { match_kind: ReviewRuleKind; match_value: string | null }, vendorName?: string | null): string {
   switch (rule.match_kind) {
     case 'fishing': return 'Reviews about fishing vendors, or in the FISHING department'
-    case 'department': return `Reviews in the ${rule.match_value ?? ''} department`
+    case 'department': return `${rule.match_value ?? ''}${(rule.match_value ?? '').includes('/') ? '' : ' and its subcategories'}`
     case 'vendor': return `Reviews about ${vendorName ?? 'one vendor'}`
     case 'review_kind': return REVIEW_KIND_LABELS[rule.match_value ?? '']?.title ?? `Reviews of kind ${rule.match_value ?? ''}`
     case 'fallback': return 'Everything no other rule catches'
   }
+}
+
+/**
+ * Suggestions for a category rule as you type: Lightspeed departments and the categories on file, top
+ * levels and subcategories ("Camping", "Camping/Coolers"). Starts-with first, then contains; one entry
+ * per name whatever its case.
+ */
+export function categorySuggestions(typed: string, categories: string[], max = 12): string[] {
+  const q = typed.trim().toLowerCase()
+  const seen = new Set<string>()
+  const all = [...LS_DEPARTMENTS, ...categories].filter((n) => { const k = n.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true })
+  if (!q) return all.slice(0, max)
+  const rank = (n: string) => { const l = n.toLowerCase(); return l.startsWith(q) ? 0 : l.split(/[/\s&-]+/).some((w) => w.startsWith(q)) ? 1 : 2 }
+  return all.filter((n) => n.toLowerCase().includes(q)).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b)).slice(0, max)
 }

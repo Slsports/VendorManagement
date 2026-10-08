@@ -72,3 +72,17 @@ export async function applyReviewRules(organizationId: string, overwrite = false
   if (error) throw error
   return data ?? 0
 }
+
+/** Lightspeed categories on file (top levels and "Top/Sub" subcategories), for the category rule's suggestions. */
+export async function listCategoryNames(organizationId: string): Promise<string[]> {
+  const { data, error } = await supabase.from('categories').select('name').eq('organization_id', organizationId).eq('is_active', true).order('name')
+  if (error) throw error
+  return (data ?? []).map((c) => c.name)
+}
+
+/** After a category rule is added: "who orders from it?" cards for its vendors nobody orders from yet. */
+export async function proposeCategoryAssignments(ruleId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('propose_category_assignments', { p_rule: ruleId })
+  if (error) throw error
+  return data ?? 0
+}

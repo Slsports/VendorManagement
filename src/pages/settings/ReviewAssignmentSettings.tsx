@@ -1,10 +1,11 @@
-import { useState, type FormEvent } from 'react'
+import { useId, useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
 import { Plus, Trash2, Wand2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { applyReviewRules, createReviewRule, deleteReviewRule, listPeople, listReviewRules, updateReviewRule } from '@/services/reviews'
-import { describeRule, LS_DEPARTMENTS, REVIEW_KIND_LABELS, REVIEW_RULE_KIND_LABELS, REVIEW_RULE_PRIORITY } from '@/lib/reviews'
+import { applyReviewRules, createReviewRule, deleteReviewRule, listCategoryNames, listPeople, listReviewRules, proposeCategoryAssignments, updateReviewRule } from '@/services/reviews'
+import { categorySuggestions, describeRule, REVIEW_KIND_LABELS, REVIEW_RULE_KIND_LABELS, REVIEW_RULE_PRIORITY } from '@/lib/reviews'
+import { cn } from '@/lib/utils'
 import { errorMessage } from '@/lib/utils'
 import type { ReviewAssignmentRule, ReviewRuleKind } from '@/types'
 import { AssigneeSelect } from '@/components/review/AssigneeSelect'
@@ -22,6 +23,7 @@ export default function ReviewAssignmentSettings() {
   const isAdmin = role === 'admin'
   const rulesQ = useSupabaseQuery(async () => (organization ? listReviewRules(organization.id) : []), [organization?.id])
   const peopleQ = useSupabaseQuery(async () => (organization ? listPeople(organization.id) : []), [organization?.id])
+  const categoriesQ = useSupabaseQuery(async () => (organization ? listCategoryNames(organization.id) : []), [organization?.id])
   const [form, setForm] = useState<{ kind: ReviewRuleKind; value: string; assignee: string }>({ kind: 'fishing', value: '', assignee: '' })
   const [saving, setSaving] = useState(false)
   const [applying, setApplying] = useState(false)
@@ -41,16 +43,18 @@ export default function ReviewAssignmentSettings() {
     if (!form.assignee || (needsValue && !form.value.trim())) return
     setSaving(true)
     try {
-      await createReviewRule({
+      const rule = await createReviewRule({
         organization_id: organization!.id,
         match_kind: form.kind,
-        match_value: needsValue ? form.value.trim().toUpperCase() : null,
+        // Categories keep their Lightspeed spelling ("Camping/Coolers"); matching ignores case.
+        match_value: needsValue ? form.value.trim() : null,
         assignee_id: form.assignee,
         priority: REVIEW_RULE_PRIORITY[form.kind],
         created_by: profile?.id ?? null,
       })
       setForm({ kind: 'fishing', value: '', assignee: '' })
-      toast.success('Rule added')
+      const proposed = rule.match_kind === 'department' ? await proposeCategoryAssignments(rule.id) : 0
+      toast.success(proposed ? `Rule added. ${proposed} vendor${proposed === 1 ? '' : 's'} in it with nobody ordering went to the review queue.` : 'Rule added')
       await rulesQ.refetch()
     } catch (err) {
       toast.error(errorMessage(err))
@@ -137,11 +141,7 @@ export default function ReviewAssignmentSettings() {
               </Select>
             </label>
             {form.kind === 'department' ? (
-              <label className="flex flex-col gap-1 text-sm text-stone-700">
-                Department
-                <Input list="ls-departments" value={form.value} onChange={(e) => setForm({ ...form, value: e.target.value })} placeholder="FISHING" className="h-9 w-56" required />
-                <datalist id="ls-departments">{LS_DEPARTMENTS.map((d) => <option key={d} value={d} />)}</datalist>
-              </label>
+              <CategoryInput value={form.value} categories={categoriesQ.data ?? []} onChange={(value) => setForm({ ...form, value })} />
             ) : form.kind === 'review_kind' ? (
               <label className="flex flex-col gap-1 text-sm text-stone-700">
                 Kind of review
@@ -171,5 +171,36 @@ export default function ReviewAssignmentSettings() {
         </section>
       ) : null}
     </div>
+  )
+}
+
+/** Type a category; Lightspeed departments and categories (subcategories too) drop down to pick from. */
+function CategoryInput({ value, categories, onChange }: { value: string; categories: string[]; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [active, setActive] = useState(0)
+  const listId = useId()
+  const options = categorySuggestions(value, categories)
+  return (
+    <label className="relative flex flex-col gap-1 text-sm text-stone-700">
+      Category
+      <Input role="combobox" aria-expanded={open} aria-controls={listId} aria-autocomplete="list" value={value} required placeholder="Start typing: Camping, Sunglasses…" className="h-9 w-64"
+        onFocus={() => setOpen(true)} onBlur={() => setTimeout(() => setOpen(false), 150)}
+        onChange={(e) => { onChange(e.target.value); setOpen(true); setActive(0) }}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowDown') { e.preventDefault(); setActive((i) => Math.min(i + 1, options.length - 1)) }
+          else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((i) => Math.max(i - 1, 0)) }
+          else if (e.key === 'Enter' && open && options[active]) { e.preventDefault(); onChange(options[active]!); setOpen(false) }
+          else if (e.key === 'Escape') setOpen(false)
+        }} />
+      {open && options.length ? (
+        <ul id={listId} role="listbox" className="absolute top-full z-40 mt-1 max-h-72 w-72 overflow-y-auto rounded-lg border border-stone-200 bg-white py-1 shadow-lg">
+          {options.map((o, i) => (
+            <li key={o} role="option" aria-selected={i === active} onMouseDown={(e) => { e.preventDefault(); onChange(o); setOpen(false) }}
+              className={cn('cursor-pointer px-3 py-1.5 text-stone-900', i === active && 'bg-stone-100', o.includes('/') && 'pl-6 text-stone-700')}>{o}</li>
+          ))}
+        </ul>
+      ) : null}
+      <span className="text-xs text-stone-500">A top level covers its subcategories.</span>
+    </label>
   )
 }

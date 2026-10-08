@@ -1369,3 +1369,8 @@ Dana listed these while working the Review queue, then said go.
 - Dana, Oct 8: a fourth billing route, **Prepaid Direct** (paid up front, directly), with how it is paid:
   credit card or ACH (`vendor_billing_routes.pay_method`), shown on the route badge ("Prepaid Direct · ACH").
   Orders can be paid via ACH.
+- Dana, Oct 8: the "Lightspeed department" review rule is now **Lightspeed category**, with subcategories:
+  type and pick from the departments and categories on file ("Camping", "Camping/Coolers"). A top level
+  covers its subcategories; the most specific rule wins. It matches the department or category a review
+  names and the vendor's own categories. Adding a rule puts "who orders from it" cards in the review queue
+  for that category's vendors nobody orders from yet (Jarrett: Sunglasses, Knives, Hunting, Camping).

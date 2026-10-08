@@ -583,6 +583,7 @@ export type Database = {
       freight_set_line: { Args: { p_line: string; p_vendor: string | null; p_order: string | null; p_confirm: boolean }; Returns: undefined }
       move_vendor_document: { Args: { p_link: string; p_kind: string; p_year: number | null }; Returns: undefined }
       carrier_claim_mail: { Args: { p_carrier: string }; Returns: number }
+      propose_category_assignments: { Args: { p_rule: string }; Returns: number }
       answer_mail_reply: { Args: { p_item: string; p_needs_answer: boolean }; Returns: undefined }
       file_delivery_receipt: { Args: { p_receipt: string; p_vendor: string }; Returns: undefined }
       tag_email_vendor: { Args: { p_email: string; p_vendor: string; p_on: boolean }; Returns: undefined }
