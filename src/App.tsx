@@ -19,6 +19,7 @@ const VendorDetail = lazy(() => import('@/pages/vendors/VendorDetail'))
 const VendorForm = lazy(() => import('@/pages/vendors/VendorForm'))
 const ReviewQueue = lazy(() => import('@/pages/review/ReviewQueue'))
 const RepGroupList = lazy(() => import('@/pages/rep-groups/RepGroupList'))
+const WorldwideContacts = lazy(() => import('@/pages/contacts/WorldwideContacts'))
 const RepGroupDetail = lazy(() => import('@/pages/rep-groups/RepGroupDetail'))
 const LinesPage = lazy(() => import('@/pages/lines/LinesPage'))
 const MergeReport = lazy(() => import('@/pages/review/MergeReport'))
@@ -95,6 +96,7 @@ export default function App() {
                 <Route path={`${ROUTES.vendors}/:id`} element={<VendorDetail />} />
                 <Route path={`${ROUTES.vendors}/:id/edit`} element={<VendorForm />} />
                 <Route path={ROUTES.repGroups} element={<RepGroupList />} />
+                <Route path={ROUTES.wwdContacts} element={<WorldwideContacts />} />
                 <Route path={`${ROUTES.repGroups}/:id`} element={<RepGroupDetail />} />
                 <Route path={ROUTES.lines} element={<LinesPage />} />
                 <Route path={ROUTES.review} element={<ReviewQueue />} />

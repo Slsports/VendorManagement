@@ -19,19 +19,6 @@ export async function getPartner(organizationId: string, route: BillingRoute): P
   return { ...data, partner_contacts: contacts }
 }
 
-/** Contacts to show on a vendor's page: the flagged ones, with liaisons narrowed to the vendor's initial. */
-export function contactsForVendor(contacts: PartnerContact[], vendorName: string): PartnerContact[] {
-  const initial = (vendorName.trim()[0] ?? 'A').toUpperCase()
-  return contacts.filter((c) => {
-    if (!c.show_on_vendor) return false
-    if (!c.initial_range) return true
-    const m = c.initial_range.match(/^([A-Z])-([A-Z])$/i)
-    if (!m) return true
-    const [from, to] = [m[1].toUpperCase(), m[2].toUpperCase()]
-    return (/[A-Z]/.test(initial) ? initial : 'A') >= from && (/[A-Z]/.test(initial) ? initial : 'A') <= to
-  })
-}
-
 export async function upsertPartner(input: TablesInsert<'partners'>): Promise<Partner> {
   const { data, error } = await supabase.from('partners').upsert(input, { onConflict: 'organization_id,route' }).select('*').single()
   if (error) throw error

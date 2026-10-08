@@ -4,6 +4,7 @@ import { Paperclip, Send, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { sendEmail, type SendEmailInput } from '@/services/mail'
+import { listAddressBook } from '@/services/contacts'
 import { listVendorLinks } from '@/services/lines'
 import { errorMessage } from '@/lib/utils'
 import { Button, FormField, Input, Textarea } from '@/components/ui'
@@ -39,7 +40,7 @@ function readBase64(file: File): Promise<string> {
  * is added when it sends; the conversation is filed to the vendor and waits on them until they answer.
  */
 export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { draft: ComposeDraft; suggestions?: { email: string; label: string }[]; onClose: () => void; onSent?: (threadId: string) => void }) {
-  const { profile } = useAuth()
+  const { profile, organization } = useAuth()
   const [to, setTo] = useState(draft.to.join(', '))
   const [cc, setCc] = useState((draft.cc ?? []).join(', '))
   const [subject, setSubject] = useState(draft.subject)
@@ -49,6 +50,8 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
   const [sending, setSending] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
+  const book = useSupabaseQuery(async () => (organization ? listAddressBook(organization.id) : []), [organization?.id])
+  const [who, setWho] = useState('')
   const links = useSupabaseQuery(async () => (draft.vendor_id ? (await listVendorLinks(draft.vendor_id)).filter((l) => l.storage_path) : []), [draft.vendor_id])
 
   useEffect(() => {
@@ -108,6 +111,19 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
           <FormField label="To" htmlFor="compose-to">
             <Input id="compose-to" value={to} onChange={(e) => setTo(e.target.value)} placeholder="name@vendor.com" autoComplete="off" required />
           </FormField>
+          {(book.data ?? []).length ? (
+            <div className="-mt-1">
+              <Input list="compose-book" value={who} aria-label="Add someone"
+                placeholder="Add someone: type a name or Worldwide"
+                className="h-9"
+                onChange={(e) => {
+                  const v = e.target.value
+                  const hit = (book.data ?? []).find((b) => bookLabel(b) === v)
+                  if (hit) { addTo(hit.email); setWho('') } else setWho(v)
+                }} />
+              <datalist id="compose-book">{(book.data ?? []).map((b) => <option key={`${b.email}-${b.name}`} value={bookLabel(b)} />)}</datalist>
+            </div>
+          ) : null}
           {unused.length ? (
             <div className="-mt-1 flex flex-wrap gap-1">
               {unused.map((s) => <button key={s.email} type="button" onClick={() => addTo(s.email)} className="rounded-full bg-stone-100 px-2.5 py-1 text-xs text-stone-700 hover:bg-stone-200">+ {s.label}</button>)}
@@ -161,3 +177,5 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
     </div>
   )
 }
+
+const bookLabel = (b: { name: string; where: string; email: string }) => `${b.name} (${b.where}) <${b.email}>`

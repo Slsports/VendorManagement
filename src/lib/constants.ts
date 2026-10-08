@@ -75,6 +75,7 @@ export const ROUTES = {
   search: '/search',
   repGroups: '/rep-groups',
   lines: '/lines',
+  wwdContacts: '/contacts/worldwide',
   review: '/review',
   mail: '/mail',
   mergeReport: '/review/merges',

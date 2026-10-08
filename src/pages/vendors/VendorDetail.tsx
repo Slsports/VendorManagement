@@ -18,7 +18,6 @@ import { ReviewItemCard, VENDOR_DELETED } from '@/components/vendors/ReviewItemC
 import { VendorLinksSection } from '@/components/vendors/VendorLinksSection'
 import { VendorRepGroupCard } from '@/components/vendors/VendorRepGroupCard'
 import { VendorShowsSection } from '@/components/vendors/VendorShowsSection'
-import { PartnerContactsCard } from '@/components/vendors/PartnerContactsCard'
 import { VendorOrdersSection } from '@/components/vendors/VendorOrdersSection'
 import { VendorMailSection } from '@/components/vendors/VendorMailSection'
 import { ComposeDialog, type ComposeDraft } from '@/components/mail/ComposeDialog'
@@ -78,9 +77,11 @@ export default function VendorDetailPage() {
         {(orderersQ.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
       </Select>
     : (orderersQ.data ?? []).find((p) => p.id === v.assigned_buyer_id)?.full_name ?? null
+  const wwdLink: ReactNode = v.vendor_billing_routes.some((r) => r.route === 'worldwide') ? <Link to={ROUTES.wwdContacts} className="text-brand hover:underline">Worldwide people and phone numbers</Link> : null
   const facts: [string, ReactNode][] = [
     ['Lightspeed name', v.lightspeed_name],
     ['Assigned to', assignedTo],
+    ['WWD contacts', wwdLink],
     ['Aliases', v.aliases.length ? v.aliases.join(', ') : null],
     ['Rep', contact(v.rep_name, v.rep_phone, v.rep_email)],
     ['Payment terms', v.payment_terms?.name],
@@ -239,7 +240,6 @@ export default function VendorDetailPage() {
 
         <VendorLinksSection vendorId={v.id} organizationId={v.organization_id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorRepGroupCard vendorId={v.id} group={v.rep_groups} />
-        {v.vendor_billing_routes.some((r) => r.route === 'worldwide') ? <PartnerContactsCard route="worldwide" vendorName={v.name} /> : null}
 
         <ContactsSection vendorId={v.id} contacts={v.vendor_emails} canEdit={canEdit} onChange={vendorQ.refetch} onEmail={(email) => compose([email])} />
         <VendorShowsSection vendorId={v.id} />

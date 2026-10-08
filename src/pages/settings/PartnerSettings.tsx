@@ -8,7 +8,7 @@ import { errorMessage } from '@/lib/utils'
 import type { PartnerContact } from '@/types'
 import { Alert, Button, FormField, Input, Spinner } from '@/components/ui'
 
-/** Worldwide Distributors: our member number, their main line, and their roster. Ticked people show on WWD vendor pages. */
+/** Worldwide Distributors: our member number, their main line, and their roster. Ticked people are the key contacts, listed first on the WWD contacts page. */
 export default function PartnerSettings() {
   const { organization } = useAuth()
   const q = useSupabaseQuery(async () => (organization ? getPartner(organization.id, 'worldwide') : null), [organization?.id])
@@ -97,7 +97,7 @@ export default function PartnerSettings() {
         <FormField label="Main phone" htmlFor="pw-phone"><Input id="pw-phone" key={p.main_phone ?? ''} defaultValue={p.main_phone ?? ''} onBlur={(e) => void saveField('main_phone', e.target.value)} /></FormField>
         <FormField label="Website" htmlFor="pw-web"><Input id="pw-web" key={p.website ?? ''} defaultValue={p.website ?? ''} onBlur={(e) => void saveField('website', e.target.value)} /></FormField>
         <FormField label="Notes" htmlFor="pw-notes"><Input id="pw-notes" key={p.notes ?? ''} defaultValue={p.notes ?? ''} onBlur={(e) => void saveField('notes', e.target.value)} /></FormField>
-        <p className="text-xs text-stone-500 sm:col-span-2 lg:col-span-4">Changes save when you leave the box. Ticked people below appear in the "Our contacts at Worldwide" box on every WWD vendor page; vendor liaisons show by the vendor's first letter.</p>
+        <p className="text-xs text-stone-500 sm:col-span-2 lg:col-span-4">Changes save when you leave the box. Ticked people are the key contacts, listed first on the WWD contacts page that everyone sees.</p>
       </section>
 
       <section>
@@ -115,7 +115,7 @@ export default function PartnerSettings() {
             <FormField label="Title" htmlFor="pc-title"><Input id="pc-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></FormField>
             <FormField label="Extension" htmlFor="pc-ext"><Input id="pc-ext" value={form.extension} onChange={(e) => setForm({ ...form, extension: e.target.value })} /></FormField>
             <FormField label="Email" htmlFor="pc-email"><Input id="pc-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></FormField>
-            <label className="flex items-center gap-2 self-end pb-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.show_on_vendor} onChange={(e) => setForm({ ...form, show_on_vendor: e.target.checked })} /> Show on vendor pages</label>
+            <label className="flex items-center gap-2 self-end pb-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.show_on_vendor} onChange={(e) => setForm({ ...form, show_on_vendor: e.target.checked })} /> Key contact</label>
             <div className="flex gap-2 sm:col-span-3">
               <Button type="submit" loading={saving}>Save</Button>
               <Button type="button" variant="ghost" onClick={() => setAdding(false)}>Cancel</Button>
@@ -128,7 +128,7 @@ export default function PartnerSettings() {
             <ul className="divide-y divide-stone-100 rounded-2xl border border-stone-200 bg-white">
               {list.map((c) => (
                 <li key={c.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 text-sm">
-                  <label className="flex items-center gap-2"><input type="checkbox" className="size-4 accent-brand" checked={c.show_on_vendor} onChange={(e) => void toggle(c, e.target.checked)} aria-label={`Show ${c.name} on vendor pages`} /></label>
+                  <label className="flex items-center gap-2"><input type="checkbox" className="size-4 accent-brand" checked={c.show_on_vendor} onChange={(e) => void toggle(c, e.target.checked)} aria-label={`${c.name} is a key contact`} /></label>
                   <span className="w-40 font-medium text-stone-900">{c.name}</span>
                   <span className="min-w-0 flex-1 text-stone-600">{c.title}</span>
                   <span className="text-stone-600">{c.extension ? `ext ${c.extension}` : ''}</span>
