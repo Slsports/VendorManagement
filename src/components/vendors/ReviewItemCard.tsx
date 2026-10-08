@@ -38,6 +38,7 @@ const ROUTE_OPTIONS: { value: RouteChoice; label: string }[] = [
   { value: 'worldwide', label: 'WWD (Worldwide)' },
   { value: 'faire', label: 'Faire' },
   { value: 'direct', label: 'Not WWD (direct)' },
+  { value: 'prepaid_direct', label: 'Prepaid Direct' },
 ]
 
 /**

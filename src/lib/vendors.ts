@@ -4,18 +4,23 @@ export const BILLING_ROUTE_LABELS: Record<BillingRoute, string> = {
   worldwide: 'Worldwide',
   faire: 'Faire',
   direct: 'Direct',
+  prepaid_direct: 'Prepaid Direct',
 }
+
+export const PAY_METHOD_LABELS: Record<'card' | 'ach', string> = { card: 'Credit card', ach: 'ACH' }
 
 export const BILLING_ROUTE_HELP: Record<BillingRoute, string> = {
   worldwide: 'Billed and paid through the Worldwide Distributors portal',
   faire: 'Ordered on Faire, paid by credit card',
   direct: 'Bills SLSI directly, paid through Bill.com',
+  prepaid_direct: 'Paid up front, directly, by credit card or ACH',
 }
 
 export const BILLING_ROUTE_TONE: Record<BillingRoute, 'brand' | 'info' | 'warning'> = {
   worldwide: 'brand',
   faire: 'info',
   direct: 'warning',
+  prepaid_direct: 'warning',
 }
 
 export const ORDERING_FREQUENCY_LABELS: Record<OrderingFrequency, string> = {
@@ -73,7 +78,7 @@ export const LINK_KIND_LABELS: Record<import('@/types').VendorLinkKind, string> 
 }
 
 export const ORDER_SEASON_LABELS: Record<import('@/types').OrderSeason, string> = { summer: 'Summer', winter: 'Winter' }
-export const PAID_VIA_LABELS: Record<NonNullable<import('@/types').Order['paid_via']>, string> = { card: 'Credit card', check: 'Check', billcom: 'Bill.com', wwd: 'Worldwide portal', other: 'Other' }
+export const PAID_VIA_LABELS: Record<NonNullable<import('@/types').Order['paid_via']>, string> = { card: 'Credit card', check: 'Check', ach: 'ACH', billcom: 'Bill.com', wwd: 'Worldwide portal', other: 'Other' }
 
 export function showLabel(code: string | null | undefined): string | null {
   if (!code) return null

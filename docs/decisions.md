@@ -1366,3 +1366,6 @@ Dana listed these while working the Review queue, then said go.
   (a real question still stays). Marketing senders go to Handled without asking. A carrier's status update
   shows on the conversation (Delivered, In transit…) and is filed to the shipper (Origin), never to a name
   in the text. The conversations already waiting are read the same way, 30 a minute.
+- Dana, Oct 8: a fourth billing route, **Prepaid Direct** (paid up front, directly), with how it is paid:
+  credit card or ACH (`vendor_billing_routes.pay_method`), shown on the route badge ("Prepaid Direct · ACH").
+  Orders can be paid via ACH.

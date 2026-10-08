@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { createVendor, deleteOrderWindow, getVendor, listPaymentTerms, saveOrderWindow, setVendorRoutes, updateVendor, type VendorDetail } from '@/services/vendors'
 import { ROUTES } from '@/lib/constants'
-import { BILLING_ROUTE_HELP, BILLING_ROUTE_LABELS, MONTHS, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, FREE_SHIPPING_POLICY_LABELS, STANDING_LABELS, STANDING_TAGS, STANDING_TAG_LABELS } from '@/lib/vendors'
+import { BILLING_ROUTE_HELP, BILLING_ROUTE_LABELS, FREE_SHIPPING_POLICY_LABELS, MONTHS, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, PAY_METHOD_LABELS, STANDING_LABELS, STANDING_TAGS, STANDING_TAG_LABELS } from '@/lib/vendors'
 import { cn, errorMessage } from '@/lib/utils'
 import type { BillingRoute, OrderingFrequency, OrderWindowKind, PaymentTerms, TablesInsert, FreeShippingPolicy, VendorStanding, StandingTag } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -35,6 +35,8 @@ interface FormState {
   aliases: string
   routes: BillingRoute[]
   defaultRoute: BillingRoute | ''
+  /** Prepaid Direct: paid by credit card or ACH. */
+  payMethod: 'card' | 'ach' | ''
   rep_group_id: string
   assigned_buyer_id: string
   payment_terms_id: string
@@ -76,7 +78,7 @@ interface FormState {
 }
 
 const EMPTY: FormState = {
-  name: '', aliases: '', routes: [], defaultRoute: '', rep_group_id: '', assigned_buyer_id: '', payment_terms_id: '', ordering_frequency: '',
+  name: '', aliases: '', routes: [], defaultRoute: '', payMethod: '', rep_group_id: '', assigned_buyer_id: '', payment_terms_id: '', ordering_frequency: '',
   is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, is_fishing: false,
   website: '', phone: '', email: '', fax: '', account_number: '', catalog: '', address: '', city: '', state: '', postal_code: '',
   pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', shipping_contact_email: '', minimum_order: '', freight_program: '', free_shipping_policy: '', free_shipping_threshold: '', freight_routing: '', product_types: '',
@@ -91,6 +93,7 @@ function formFromVendor(v: VendorDetail): FormState {
     aliases: v.aliases.join(', '),
     routes: v.vendor_billing_routes.map((r) => r.route),
     defaultRoute: v.vendor_billing_routes.find((r) => r.is_default)?.route ?? '',
+    payMethod: v.vendor_billing_routes.find((r) => r.route === 'prepaid_direct')?.pay_method ?? '',
     rep_group_id: v.rep_group_id ?? '',
     assigned_buyer_id: v.assigned_buyer_id ?? '',
     payment_terms_id: v.payment_terms_id ?? '',
@@ -203,7 +206,7 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
         if (fromSender) await resolveEmailSender(fromSender, 'vendor', vendorId)
         else if (fromEmail) await setEmailVendor(fromEmail, vendorId)
       }
-      await setVendorRoutes(vendorId!, form.routes.map((r) => ({ route: r, is_default: r === form.defaultRoute })))
+      await setVendorRoutes(vendorId!, form.routes.map((r) => ({ route: r, is_default: r === form.defaultRoute, pay_method: form.payMethod || null })))
       for (const wid of removedWindows) await deleteOrderWindow(wid)
       for (const [i, w] of form.windows.entries()) {
         await saveOrderWindow({ ...(w.id ? { id: w.id } : {}), vendor_id: vendorId!, kind: w.kind, label: nz(w.label), months: w.months, notes: nz(w.notes), sort_order: i })
@@ -234,7 +237,7 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
           <fieldset className="sm:col-span-2">
             <legend className="text-sm font-medium text-stone-800">Billing routes</legend>
             <p className="text-sm text-stone-500">Tick every way SLSI can be billed for this vendor, and pick the usual one.</p>
-            <div className="mt-2 grid gap-2 sm:grid-cols-3">
+            <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {ROUTE_KEYS.map((r) => {
                 const on = form.routes.includes(r)
                 return (
@@ -243,6 +246,15 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
                     <span>
                       <span className="font-medium text-stone-900">{BILLING_ROUTE_LABELS[r]}</span>
                       <span className="block text-xs text-stone-500">{BILLING_ROUTE_HELP[r]}</span>
+                      {on && r === 'prepaid_direct' ? (
+                        <span className="mt-1 flex gap-3 text-xs text-stone-700" role="radiogroup" aria-label="Paid by">
+                          {(['card', 'ach'] as const).map((m) => (
+                            <label key={m} className="flex items-center gap-1">
+                              <input type="radio" name="payMethod" checked={form.payMethod === m} onChange={() => set('payMethod', m)} className="accent-brand" /> {PAY_METHOD_LABELS[m]}
+                            </label>
+                          ))}
+                        </span>
+                      ) : null}
                       {on && form.routes.length > 1 ? (
                         <label className="mt-1 flex items-center gap-1 text-xs text-stone-700">
                           <input type="radio" name="defaultRoute" checked={form.defaultRoute === r} onChange={() => set('defaultRoute', r)} className="accent-brand" /> Usual route

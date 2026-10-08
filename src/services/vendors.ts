@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase'
 import type { BillingRoute, Json, Vendor, VendorBillingRoute, VendorEmail, VendorMerge, VendorOrderWindow, RepGroup, RepGroupContact, PaymentTerms, Note, ReviewItem, TablesInsert, TablesUpdate } from '@/types'
 
 export interface VendorListRow extends Vendor {
-  vendor_billing_routes: Pick<VendorBillingRoute, 'route' | 'is_default'>[]
+  vendor_billing_routes: Pick<VendorBillingRoute, 'route' | 'is_default' | 'pay_method'>[]
   rep_groups: Pick<RepGroup, 'name'> | null
 }
 
@@ -18,7 +18,7 @@ export interface VendorListFilters {
 export async function listVendors(filters: VendorListFilters = {}): Promise<VendorListRow[]> {
   let q = supabase
     .from('vendors')
-    .select('*, vendor_billing_routes(route, is_default), rep_groups(name)')
+    .select('*, vendor_billing_routes(route, is_default, pay_method), rep_groups(name)')
     .order('name', { ascending: true })
     .is('merged_into_id', null)
     .limit(filters.limit ?? 5000)
@@ -74,12 +74,12 @@ export async function updateVendor(id: string, changes: TablesUpdate<'vendors'>)
 }
 
 /** Replace the vendor's billing routes. The first entry is the default unless one is flagged. */
-export async function setVendorRoutes(vendorId: string, routes: { route: BillingRoute; is_default?: boolean }[]) {
+export async function setVendorRoutes(vendorId: string, routes: { route: BillingRoute; is_default?: boolean; pay_method?: 'card' | 'ach' | null }[]) {
   const { error: delError } = await supabase.from('vendor_billing_routes').delete().eq('vendor_id', vendorId)
   if (delError) throw delError
   if (routes.length === 0) return
   const hasDefault = routes.some((r) => r.is_default)
-  const rows = routes.map((r, i) => ({ vendor_id: vendorId, route: r.route, is_default: hasDefault ? !!r.is_default : i === 0 }))
+  const rows = routes.map((r, i) => ({ vendor_id: vendorId, route: r.route, is_default: hasDefault ? !!r.is_default : i === 0, pay_method: r.route === 'prepaid_direct' ? r.pay_method ?? null : null }))
   const { error } = await supabase.from('vendor_billing_routes').insert(rows)
   if (error) throw error
 }
