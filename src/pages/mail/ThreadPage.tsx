@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useHasInAppHistory } from '@/hooks/useHasInAppHistory'
 import toast from 'react-hot-toast'
 import { CheckCircle2, ClipboardList, ExternalLink, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
@@ -31,6 +32,8 @@ export default function ThreadPage() {
   const mailbox = useSupabaseQuery(async () => (organization ? getMailbox(organization.id) : null), [organization?.id])
   const [draft, setDraft] = useState<ComposeDraft | null>(null)
   const [params, setParams] = useSearchParams()
+  const navigate = useNavigate()
+  const hasHistory = useHasInAppHistory()
   // "Add order from this email" after completing a Working on order (Dana, Oct 8).
   const [addingOrder, setAddingOrder] = useState(() => params.get('addOrder') === '1')
 
@@ -41,6 +44,18 @@ export default function ThreadPage() {
   // The outside party, for "New vendor": who wrote in, or who we wrote to. Mail only among us has none.
   const firstIn = emails.find((e) => e.direction === 'in')
   const party = firstIn ? { email: firstIn.from_email, displayName: firstIn.from_name } : lastOut ? { email: lastOut.to_emails[0] ?? null, displayName: null } : { email: null, displayName: null }
+
+  // Handled: out of the inbox and back to the list you came from (Dana, Oct 8).
+  async function markHandledAndLeave() {
+    try {
+      await setEmailThreadStatus(t.id, 'handled')
+      toast.success('Marked handled')
+      if (hasHistory) navigate(-1)
+      else navigate(ROUTES.mail)
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
 
   async function act(label: string, fn: () => Promise<void>) {
     try {
@@ -77,7 +92,7 @@ export default function ThreadPage() {
             : <Button size="sm" variant="ghost" onClick={() => void act('Working on order: it is on your dashboard', () => setWorkingOrder(t.id, 'flag'))} leftIcon={<ClipboardList className="size-4" aria-hidden="true" />}>Working on order</Button>}
           {t.status === 'handled'
             ? <Button size="sm" variant="secondary" onClick={() => void act('Opened again', () => setEmailThreadStatus(t.id, 'waiting_on_us'))} leftIcon={<RotateCcw className="size-4" aria-hidden="true" />}>Open again</Button>
-            : <Button size="sm" variant="secondary" onClick={() => void act('Marked handled', () => setEmailThreadStatus(t.id, 'handled'))} leftIcon={<CheckCircle2 className="size-4" aria-hidden="true" />}>Mark handled</Button>}
+            : <Button size="sm" variant="secondary" onClick={() => void markHandledAndLeave()} leftIcon={<CheckCircle2 className="size-4" aria-hidden="true" />}>Mark handled</Button>}
           <Button size="sm" variant="ghost" onClick={() => void act(
             t.view === 'offers' ? 'Moved to Needs attention' : 'Moved to Offers & catalogs',
             async () => {

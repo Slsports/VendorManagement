@@ -1396,3 +1396,5 @@ Dana listed these while working the Review queue, then said go.
   (bills that came some other way). Freight bills are filed with the carrier (Freight bills page; click a
   carrier for just its bills, every year, paid or unpaid) and, once a line is confirmed, with the vendor
   (Documents → Shipping) and now the matched order too.
+- Dana, Oct 8: handled mail leaves every Mail tab (Needs attention, Offers, Freight, All); it stays under
+  "Handled", on its vendor's page and its carrier's. "Mark handled" in a conversation goes back to the list.

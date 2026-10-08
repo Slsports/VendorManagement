@@ -39,7 +39,8 @@ export default function MailPage() {
   const whoDefault = viewAs.isMe ? 'mine' : viewAs.personId ?? 'all'
   const who = params.get('who') ?? whoDefault
   const view = (params.get('view') ?? 'attention') as NonNullable<ThreadFilters['view']>
-  const status = (params.get('status') ?? (view === 'attention' ? 'open' : 'all')) as ThreadFilters['status']
+  // Handled mail leaves every tab (Dana, Oct 8); it stays under Handled, on its vendor and on its carrier.
+  const status = (params.get('status') ?? 'open') as ThreadFilters['status']
   const unmatched = params.get('unmatched') === '1'
   const search = params.get('q') ?? ''
   const [draft, setDraft] = useState(search)
