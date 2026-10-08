@@ -8,7 +8,7 @@ import { assignEmailThread, fetchEmailHtml, getMailbox, getThread, fetchAttachme
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { SaveToDocumentsDialog } from '@/components/vendors/SaveToDocumentsDialog'
 import { listPeople } from '@/services/reviews'
-import { followUpDraft, forwardDraft, gmailThreadUrl, newVendorPrefill, replyDraft, threadState, waited } from '@/lib/mail'
+import { followUpDraft, forwardDraft, gmailThreadUrl, isInlineImage, newVendorPrefill, replyDraft, splitQuoted, threadState, waited } from '@/lib/mail'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
 import { BackLink } from '@/components/shared/BackLink'
@@ -111,9 +111,27 @@ function Message({ email: e, startOpen, vendor, onCompose }: { email: ThreadDeta
   const [loadingHtml, setLoadingHtml] = useState(false)
   const [saving, setSaving] = useState<{ id: string; file_name: string } | null>(null)
   const [saved, setSaved] = useState<string[]>([])
+  const [showPictures, setShowPictures] = useState(false)
+  const [showQuoted, setShowQuoted] = useState(false)
   const { view, viewer } = useDocumentViewer()
   const { role } = useAuth()
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
+
+  const chip = (a: ThreadDetail['emails'][number]['attachments'][number]) => (
+    <span key={a.id} className="inline-flex items-center gap-1 rounded-lg bg-stone-100 text-xs text-stone-700">
+      <button type="button" onClick={() => view({ name: a.file_name, mime: a.mime_type, load: () => fetchAttachment(a.id) })} disabled={!a.gmail_attachment_id} className="inline-flex items-center gap-1 px-2 py-1 hover:text-brand disabled:cursor-default disabled:hover:text-stone-700" title={a.gmail_attachment_id ? 'Open' : 'Not available from Gmail'}>
+        <Paperclip className="size-3.5" aria-hidden="true" />{a.file_name}{a.size ? <span className="text-stone-400"> · {Math.max(1, Math.round(a.size / 1024))} KB</span> : null}
+      </button>
+      {canEdit && vendor && a.gmail_attachment_id && !a.vendor_link_id && !saved.includes(a.id) ? (
+        <button type="button" onClick={() => setSaving(a)} className="inline-flex items-center gap-1 border-l border-stone-200 px-2 py-1 text-stone-500 hover:text-brand" title={`Save to ${vendor.name}'s documents`}>
+          <FolderInput className="size-3.5" aria-hidden="true" />Save to documents
+        </button>
+      ) : a.vendor_link_id || saved.includes(a.id) ? <span className="border-l border-stone-200 px-2 py-1 text-emerald-700">saved</span> : null}
+    </span>
+  )
+  const files = e.attachments.filter((a) => !isInlineImage(a))
+  const pictures = e.attachments.filter((a) => isInlineImage(a))
+  const body = splitQuoted(e.body_text || e.snippet || '')
 
   async function showFormatted() {
     setLoadingHtml(true)
@@ -141,28 +159,31 @@ function Message({ email: e, startOpen, vendor, onCompose }: { email: ThreadDeta
       {open ? (
         <div className="border-t border-stone-100 px-4 py-3">
           <p className="mb-2 text-xs text-stone-500">To {e.to_emails.join(', ') || '—'}{e.cc_emails.length ? ` · Cc ${e.cc_emails.join(', ')}` : ''}</p>
+          {files.length || pictures.length ? (
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              {files.map(chip)}
+              {pictures.length ? (
+                showPictures ? pictures.map(chip) : (
+                  <button type="button" onClick={() => setShowPictures(true)} className="rounded-lg px-2 py-1 text-xs text-stone-500 hover:bg-stone-100 hover:text-stone-800">+{pictures.length} image{pictures.length === 1 ? '' : 's'}</button>
+                )
+              ) : null}
+            </div>
+          ) : null}
           {html
             ? <iframe title="Formatted message" sandbox="allow-popups allow-popups-to-escape-sandbox" srcDoc={`<base target="_blank">${html}`} className="h-[32rem] w-full rounded-lg border border-stone-200 bg-white" />
-            : <div className="whitespace-pre-wrap break-words text-sm text-stone-800">{e.body_text || e.snippet}</div>}
+            : (
+              <>
+                <div className="whitespace-pre-wrap break-words text-sm text-stone-800">{body.fresh}</div>
+                {body.quoted ? (
+                  showQuoted
+                    ? <div className="mt-2 whitespace-pre-wrap break-words border-l-2 border-stone-200 pl-3 text-sm text-stone-500">{body.quoted}</div>
+                    : <button type="button" onClick={() => setShowQuoted(true)} className="mt-2 text-xs font-medium text-stone-500 hover:text-brand">Show earlier messages in this email</button>
+                ) : null}
+              </>
+            )}
           {viewer}
           {saving && vendor ? (
             <SaveToDocumentsDialog attachment={saving} vendor={vendor} subject={e.subject} receivedAt={e.received_at} onClose={() => setSaving(null)} onSaved={() => { setSaved((x) => [...x, saving.id]); setSaving(null) }} />
-          ) : null}
-          {e.attachments.length ? (
-            <ul className="mt-3 flex flex-wrap gap-2">
-              {e.attachments.map((a) => (
-                <li key={a.id} className="inline-flex items-center gap-1 rounded-lg bg-stone-100 text-xs text-stone-700">
-                  <button type="button" onClick={() => view({ name: a.file_name, mime: a.mime_type, load: () => fetchAttachment(a.id) })} disabled={!a.gmail_attachment_id} className="inline-flex items-center gap-1 px-2 py-1 hover:text-brand disabled:cursor-default disabled:hover:text-stone-700" title={a.gmail_attachment_id ? 'Open' : 'Not available from Gmail'}>
-                    <Paperclip className="size-3.5" aria-hidden="true" />{a.file_name}{a.size ? <span className="text-stone-400"> · {Math.max(1, Math.round(a.size / 1024))} KB</span> : null}
-                  </button>
-                  {canEdit && vendor && a.gmail_attachment_id && !a.vendor_link_id && !saved.includes(a.id) ? (
-                    <button type="button" onClick={() => setSaving(a)} className="inline-flex items-center gap-1 border-l border-stone-200 px-2 py-1 text-stone-500 hover:text-brand" title={`Save to ${vendor.name}'s documents`}>
-                      <FolderInput className="size-3.5" aria-hidden="true" />Save to documents
-                    </button>
-                  ) : a.vendor_link_id || saved.includes(a.id) ? <span className="border-l border-stone-200 px-2 py-1 text-emerald-700">saved</span> : null}
-                </li>
-              ))}
-            </ul>
           ) : null}
           <div className="mt-3 flex flex-wrap gap-2">
             {onCompose ? (

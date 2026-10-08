@@ -121,3 +121,36 @@ export function newVendorFromMailUrl(vendorsRoute: string, p: { email?: string |
   if (p.senderId) q.set('from_sender', p.senderId)
   return `${vendorsRoute}/new?${q.toString()}`
 }
+
+/**
+ * Signature logos and pasted pictures (image001.png, ~WRD0249.jpg, attachment-9.png, small pictures):
+ * folded away under "+N images" so the real files show first.
+ */
+export function isInlineImage(a: { file_name: string; mime_type: string | null; size: number | null }): boolean {
+  const pic = /^image\//i.test(a.mime_type ?? '') || /\.(png|jpe?g|gif|bmp|webp)$/i.test(a.file_name)
+  if (!pic) return false
+  return /^(image|img|attachment|outlook|logo|signature|banner)[-_ ]?\d*\.[a-z]+$/i.test(a.file_name) || /^~WRD\d+/i.test(a.file_name) || /^\d+ \(\d+\)\.[a-z]+$/i.test(a.file_name) || (a.size ?? 0) < 40_000
+}
+
+const QUOTE_START = [
+  /^On .{4,200}wrote:\s*$/m,
+  /^-{2,}\s*Original Message\s*-{2,}/im,
+  /^-{3,}\s*Forwarded message\s*-{3,}/im,
+  /^_{10,}\s*$/m,
+  /^From: .+\r?\n(Sent|Date): /m,
+  /^-{10,}\s*$/m,
+  /^>/m,
+]
+
+/** What the person wrote, and the quoted earlier emails below it (folded away in the thread view). */
+export function splitQuoted(text: string): { fresh: string; quoted: string } {
+  let cut = text.length
+  for (const re of QUOTE_START) {
+    const m = re.exec(text)
+    if (m && m.index < cut) cut = m.index
+  }
+  const fresh = text.slice(0, cut).trimEnd()
+  // Nothing of its own above the quote (a bare forward): show it all.
+  if (fresh.replace(/\s+/g, '').length < 2) return { fresh: text, quoted: '' }
+  return { fresh, quoted: text.slice(cut).trim() }
+}

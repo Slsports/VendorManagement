@@ -1,4 +1,3 @@
-import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Bell, KeyRound, LogOut, Menu, Search, User } from 'lucide-react'
@@ -6,19 +5,12 @@ import { useAuth } from '@/hooks/useAuth'
 import { ROLE_LABELS, ROUTES } from '@/lib/constants'
 import { cn, errorMessage, initials } from '@/lib/utils'
 import { Dropdown } from '@/components/ui'
+import { TopSearch } from './TopSearch'
 
 export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
   const { profile, role, signOut } = useAuth()
   const navigate = useNavigate()
-  const [query, setQuery] = useState('')
   const canSearch = role !== 'uploader'
-
-  function submitSearch(e: FormEvent) {
-    e.preventDefault()
-    const q = query.trim()
-    if (!q) return
-    navigate(`${ROUTES.search}?q=${encodeURIComponent(q)}`)
-  }
 
   async function handleSignOut() {
     try {
@@ -39,19 +31,7 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
         <Menu className="size-5" aria-hidden="true" />
       </button>
 
-      {canSearch ? (
-        <form onSubmit={submitSearch} role="search" className="relative hidden min-w-0 flex-1 sm:block sm:max-w-xl">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-stone-400" aria-hidden="true" />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search vendors, orders, invoices…"
-            aria-label="Search"
-            className="h-10 w-full rounded-lg border border-stone-200 bg-stone-50 pl-9 pr-3 text-sm text-stone-900 placeholder:text-stone-400 focus:border-brand focus:bg-white focus:outline-none focus:ring-2 focus:ring-ring-brand"
-          />
-        </form>
-      ) : null}
+      {canSearch ? <TopSearch /> : null}
 
       <div className="ml-auto flex items-center gap-1 sm:gap-2">
         {canSearch ? (

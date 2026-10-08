@@ -47,3 +47,21 @@ describe('new vendor from mail', () => {
     expect(Object.fromEntries(free.searchParams)).toEqual({ name: 'Joe Hats', email: 'joe.hats@gmail.com', from_sender: 's1' })
   })
 })
+
+describe('email view', async () => {
+  const { isInlineImage, splitQuoted } = await import('./mail')
+  it('folds signature pictures, keeps real files', () => {
+    expect(isInlineImage({ file_name: 'image001.gif', mime_type: 'image/gif', size: 483087 })).toBe(true)
+    expect(isInlineImage({ file_name: '~WRD0249.jpg', mime_type: 'image/jpeg', size: 823 })).toBe(true)
+    expect(isInlineImage({ file_name: '150 (53).png', mime_type: 'image/png', size: 34082 })).toBe(true)
+    expect(isInlineImage({ file_name: '84731 - T1709229 -.pdf', mime_type: 'application/pdf', size: 93878 })).toBe(false)
+    expect(isInlineImage({ file_name: 'damaged box.jpg', mime_type: 'image/jpeg', size: 2_400_000 })).toBe(false)
+  })
+  it('shows what was written, folds the quoted chain', () => {
+    const r = splitQuoted('Hello,\n\nAttached is a copy of the credit.\n\nLORENA\n\n________________________________\nFrom: Dana\nSent: Tuesday\n\nOld text')
+    expect(r.fresh).toBe('Hello,\n\nAttached is a copy of the credit.\n\nLORENA')
+    expect(r.quoted).toMatch(/^_+\nFrom: Dana/)
+    expect(splitQuoted('Thanks!\n\nOn Wed, Oct 7, 2026, 8:42 AM barry aug <b@x.com> wrote:\n> Dana').fresh).toBe('Thanks!')
+    expect(splitQuoted('---------- Forwarded message ---------\nFrom: x').quoted).toBe('')
+  })
+})

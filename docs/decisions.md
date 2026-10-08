@@ -1351,3 +1351,10 @@ Dana listed these while working the Review queue, then said go.
 - Dana, Oct 8: the Vendors page search box is full width on its own row (the filters had squeezed it to a
   sliver) and the list narrows as you type, no Enter. Other list search boxes keep a minimum width.
 - Dana, Oct 8: on the vendor page, Documents sit right below Overview (and Ordering windows), above Emails.
+- Dana, Oct 8: in an email, the real attachments are listed at the top (signature logos and small pictures
+  fold into "+N images") and the quoted earlier emails fold under "Show earlier messages in this email".
+- Dana, Oct 8: the search bar at the top drops down matching vendors as you type; click or Enter opens the
+  vendor; the last row searches everything.
+- Dana, Oct 8: "Harbor Freight is not a vendor, it's a shipping carrier." HARBOR FREIGHT (from Lightspeed,
+  no orders) was deleted and its name excluded from imports; Oak Harbor Freight (OAKH, LTL) is a carrier.
+  Its mail was filed again without it.
