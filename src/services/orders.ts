@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase'
 import type { Order, OrderLine, OrderStatus, OrderStatusHistory, TablesInsert, TablesUpdate, Vendor, VendorLink } from '@/types'
 
 export interface OrderRow extends Order {
-  vendor: Pick<Vendor, 'id' | 'name'> | null
+  vendor: (Pick<Vendor, 'id' | 'name'> & { assigned_buyer_id?: string | null }) | null
 }
 
 export interface OrderFilters {
@@ -15,7 +15,7 @@ export interface OrderFilters {
 
 /** Orders for the list page, newest first. */
 export async function listOrders(organizationId: string, f: OrderFilters = {}): Promise<OrderRow[]> {
-  let q = supabase.from('orders').select('*, vendor:vendors(id, name)').eq('organization_id', organizationId)
+  let q = supabase.from('orders').select('*, vendor:vendors(id, name, assigned_buyer_id)').eq('organization_id', organizationId)
   if (f.status) q = q.eq('status', f.status)
   if (f.vendorId) q = q.eq('vendor_id', f.vendorId)
   if (f.season) q = q.eq('season', f.season)

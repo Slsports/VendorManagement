@@ -1374,3 +1374,14 @@ Dana listed these while working the Review queue, then said go.
   covers its subcategories; the most specific rule wins. It matches the department or category a review
   names and the vendor's own categories. Adding a rule puts "who orders from it" cards in the review queue
   for that category's vendors nobody orders from yet (Jarrett: Sunglasses, Knives, Hunting, Camping).
+- Dana, Oct 8 (keeping tabs while the staff learns):
+  * Mail list: a ✓ on each conversation marks it handled without opening it; checkboxes mark several at once;
+    Undo for a few seconds.
+  * "Working on order" on a conversation puts it on that person's dashboard card "Orders I'm working on";
+    the list shows Needs an answer (the rep wrote last), Waiting on rep (we wrote last), Working (set by hand),
+    Completed (done; it offers "Add order from this email").
+  * Admins get a "Showing" switch (Me / Everyone / one person) in the top bar; the dashboard, Mail, Review
+    queue, Vendors and Orders follow it, with a colored bar while it is not "Me". Staff always see their own.
+  * Team page (admins): per person, Needs an answer, No answer yet, review items, working on, vendors, last
+    email sent; red when something has waited more than 3 days (days off allowed). Numbers open that
+    person's list.

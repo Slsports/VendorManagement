@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { ClipboardCheck, Settings2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { useViewAs } from '@/hooks/useViewAs'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { applyVendorRename, listReviewQueue } from '@/services/vendors'
 import { assignReviewItem, listPeople } from '@/services/reviews'
@@ -31,8 +32,9 @@ export default function ReviewQueuePage() {
   const me = profile?.id
   const mineCount = items.filter((i) => i.assigned_to === me).length
   const noneCount = items.filter((i) => !i.assigned_to).length
-  /** Open on your own items when you have any; otherwise everyone's. */
-  const who: Who = whoChoice ?? (mineCount > 0 ? 'me' : 'all')
+  const viewAs = useViewAs()
+  /** Open on your own items when you have any; otherwise everyone's. An admin looking at someone sees theirs. */
+  const who: Who = whoChoice ?? (viewAs.isMe ? (mineCount > 0 ? 'me' : 'all') : viewAs.personId ?? 'all')
   const shown = items.filter((i) => (who === 'all' ? true : who === 'me' ? i.assigned_to === me : who === 'none' ? !i.assigned_to : i.assigned_to === who))
   const nameOf = (id: string | null) => (id ? (people.find((p) => p.id === id)?.full_name ?? 'Someone') : 'nobody')
 
@@ -82,7 +84,7 @@ export default function ReviewQueuePage() {
               <option value="none">Unassigned ({noneCount})</option>
               {people.filter((p) => p.id !== me).map((p) => {
                 const n = items.filter((i) => i.assigned_to === p.id).length
-                return n ? <option key={p.id} value={p.id}>{p.full_name} ({n})</option> : null
+                return n || p.id === who ? <option key={p.id} value={p.id}>{p.full_name} ({n})</option> : null
               })}
             </Select>
           </label>

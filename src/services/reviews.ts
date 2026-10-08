@@ -86,3 +86,16 @@ export async function proposeCategoryAssignments(ruleId: string): Promise<number
   if (error) throw error
   return data ?? 0
 }
+
+export interface TeamRow {
+  profile_id: string; full_name: string; role: string
+  needs: number; needs_oldest: string | null; no_answer: number; no_answer_oldest: string | null
+  reviews: number; reviews_oldest: string | null; working: number; working_needs: number; vendors: number; last_sent: string | null
+}
+
+/** The Team page (admins): per person, what waits on them and since when. */
+export async function teamOverview(organizationId: string): Promise<TeamRow[]> {
+  const { data, error } = await supabase.rpc('team_overview', { p_org: organizationId })
+  if (error) throw error
+  return (data ?? []) as TeamRow[]
+}

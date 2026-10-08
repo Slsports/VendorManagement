@@ -6,6 +6,7 @@ import { ROLE_LABELS, ROUTES } from '@/lib/constants'
 import { cn, errorMessage, initials } from '@/lib/utils'
 import { Dropdown } from '@/components/ui'
 import { TopSearch } from './TopSearch'
+import { ViewAsSelect } from './ViewAsBar'
 
 export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
   const { profile, role, signOut } = useAuth()
@@ -34,6 +35,7 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
       {canSearch ? <TopSearch /> : null}
 
       <div className="ml-auto flex items-center gap-1 sm:gap-2">
+        <ViewAsSelect />
         {canSearch ? (
           <button
             type="button"

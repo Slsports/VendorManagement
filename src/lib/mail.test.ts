@@ -65,3 +65,15 @@ describe('email view', async () => {
     expect(splitQuoted('---------- Forwarded message ---------\nFrom: x').quoted).toBe('')
   })
 })
+
+describe('working on order status', async () => {
+  const { workingStatus } = await import('./mail')
+  const base = { working_done_at: null, working_mark_at: null, last_in_at: '2026-10-08T10:00:00Z' }
+  it('follows the mail, with Working and Completed set by hand', () => {
+    expect(workingStatus({ ...base, status: 'waiting_on_us' })).toBe('needs')
+    expect(workingStatus({ ...base, status: 'waiting_on_vendor' })).toBe('waiting')
+    expect(workingStatus({ ...base, status: 'waiting_on_us', working_mark_at: '2026-10-08T11:00:00Z' })).toBe('working')
+    expect(workingStatus({ ...base, status: 'waiting_on_us', working_mark_at: '2026-10-08T09:00:00Z' })).toBe('needs')
+    expect(workingStatus({ ...base, status: 'handled', working_done_at: '2026-10-08T12:00:00Z' })).toBe('completed')
+  })
+})

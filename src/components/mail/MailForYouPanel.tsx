@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Mail } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { useViewAs } from '@/hooks/useViewAs'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listMailForMe, type ThreadRow } from '@/services/mail'
 import { senderLabel, waited } from '@/lib/mail'
@@ -9,14 +10,18 @@ import { ROUTES } from '@/lib/constants'
 /** Dashboard: vendor replies waiting on you, and mail you sent that has had no answer past the follow-up date. */
 export function MailForYouPanel() {
   const { organization, profile } = useAuth()
-  const q = useSupabaseQuery(async () => (organization && profile ? listMailForMe(organization.id, profile.id, profile.sees_freight) : { needs: [], noAnswer: [] }), [organization?.id, profile?.id, profile?.sees_freight])
+  const { personId, isMe, personName } = useViewAs()
+  // Your own view adds freight for those who see it; an admin looking at someone sees what they own.
+  const seesFreight = isMe && !!profile?.sees_freight
+  const q = useSupabaseQuery(async () => (organization && profile ? listMailForMe(organization.id, personId, seesFreight) : { needs: [], noAnswer: [] }), [organization?.id, profile?.id, personId, seesFreight])
+  const title = isMe ? 'Mail for you' : personId ? `Mail for ${personName?.split(' ')[0] ?? 'them'}` : "Everyone's mail"
   const needs = q.data?.needs ?? []
   const noAnswer = q.data?.noAnswer ?? []
   const total = needs.length + noAnswer.length
   return (
     <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm lg:col-span-2">
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold text-stone-900">Mail for you{total ? ` (${total})` : ''}</h2>
+        <h2 className="text-sm font-semibold text-stone-900">{title}{total ? ` (${total})` : ''}</h2>
         <Link to={ROUTES.mail} className="text-sm font-medium text-brand hover:underline">Open Mail</Link>
       </div>
       {q.isLoading ? <p className="mt-4 text-sm text-stone-500">Checking…</p>

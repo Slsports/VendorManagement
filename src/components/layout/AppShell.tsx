@@ -9,6 +9,8 @@ import { Sidebar } from './Sidebar'
 import { SidebarNav } from './SidebarNav'
 import { MobileDrawer } from './MobileDrawer'
 import { Topbar } from './Topbar'
+import { ViewAsBanner } from './ViewAsBar'
+import { ViewAsProvider } from '@/context/ViewAsProvider'
 
 /**
  * Responsive application frame (strategy Phase 2, without the store selector):
@@ -29,6 +31,7 @@ export function AppShell() {
   const closeDrawer = useCallback(() => setDrawerOpenedAt(null), [])
 
   return (
+    <ViewAsProvider>
     <div className="min-h-screen bg-surface">
       <Sidebar
         rail={rail}
@@ -40,6 +43,7 @@ export function AppShell() {
 
       <div className={cn('flex min-h-screen flex-col transition-[padding] duration-200', rail ? 'md:pl-16' : 'md:pl-64')}>
         <Topbar onOpenMenu={() => setDrawerOpenedAt(location.key)} />
+        <ViewAsBanner />
         <main id="main" className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-7xl">
             <Suspense
@@ -55,5 +59,6 @@ export function AppShell() {
         </main>
       </div>
     </div>
+    </ViewAsProvider>
   )
 }

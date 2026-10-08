@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { useViewAs } from '@/hooks/useViewAs'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { countOrdersByStatus, listOrders } from '@/services/orders'
 import { ORDER_STATUSES, ORDER_STATUS_LABELS, ROUTES, type OrderStatus } from '@/lib/constants'
@@ -28,11 +29,15 @@ export default function OrderListPage() {
   const q = useSupabaseQuery(async () => (organization ? listOrders(organization.id, { status: status ?? undefined, season: season || undefined }) : []), [organization?.id, status, season])
   const counts = useSupabaseQuery(async (): Promise<Record<string, number>> => (organization ? countOrdersByStatus(organization.id) : {}), [organization?.id])
 
+  const viewAs = useViewAs()
+  // An admin looking at one person: the orders they placed or for vendors assigned to them (Dana, Oct 8).
+  const person = !viewAs.isMe ? viewAs.personId : null
   const rows = useMemo(() => {
     const s = search.trim().toLowerCase()
-    if (!s) return q.data ?? []
-    return (q.data ?? []).filter((o) => (o.vendor?.name ?? '').toLowerCase().includes(s) || (o.description ?? '').toLowerCase().includes(s) || (o.po_number ?? '').toLowerCase().includes(s) || (o.placed_by ?? '').toLowerCase().includes(s))
-  }, [q.data, search])
+    const theirs = person ? (q.data ?? []).filter((o) => o.placed_by_id === person || o.vendor?.assigned_buyer_id === person) : q.data ?? []
+    if (!s) return theirs
+    return theirs.filter((o) => (o.vendor?.name ?? '').toLowerCase().includes(s) || (o.description ?? '').toLowerCase().includes(s) || (o.po_number ?? '').toLowerCase().includes(s) || (o.placed_by ?? '').toLowerCase().includes(s))
+  }, [q.data, search, person])
 
   const { sorted, sort, toggle } = useTableSort(rows, {
     ordered: (o) => o.order_date,

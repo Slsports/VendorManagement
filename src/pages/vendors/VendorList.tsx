@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AlertTriangle, Ban, Fish, FolderUp, Plus, Search } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { useViewAs } from '@/hooks/useViewAs'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listVendors } from '@/services/vendors'
 import { listOrderers } from '@/services/reviews'
@@ -27,7 +28,10 @@ export default function VendorListPage() {
   const dno = params.get('dno') === '1'
   const fishing = params.get('fishing') === '1'
   /** '' everyone, 'me', 'none', or a person's id */
-  const who = params.get('who') ?? ''
+  const viewAs = useViewAs()
+  // An admin looking at one person sees that person's vendors (Dana, Oct 8); a choice made here wins.
+  const whoParam = params.get('who')
+  const who = whoParam === 'all' ? '' : whoParam ?? (!viewAs.isMe && viewAs.personId ? viewAs.personId : '')
   /** '' active (the default), 'inactive' or 'all' */
   const status = params.get('status') ?? ''
   const [draft, setDraft] = useState(search)
@@ -119,7 +123,7 @@ export default function VendorListPage() {
             </Select>
           </div>
           <div className="w-44">
-            <Select value={who} onChange={(e) => setParam('who', e.target.value)} aria-label="Assigned to">
+            <Select value={who} onChange={(e) => setParam('who', e.target.value || 'all')} aria-label="Assigned to">
               <option value="">Everyone's vendors</option>
               {(orderersQ.data ?? []).some((p) => p.id === profile?.id) ? <option value="me">Mine</option> : null}
               {(orderersQ.data ?? []).filter((p) => p.id !== profile?.id).map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}

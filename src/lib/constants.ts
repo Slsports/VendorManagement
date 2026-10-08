@@ -80,10 +80,13 @@ export const ROUTES = {
   wwdContacts: '/contacts/worldwide',
   review: '/review',
   mail: '/mail',
+  workingOrders: '/mail/working',
+  team: '/team',
   mergeReport: '/review/merges',
 } as const
 
 /** localStorage keys for per-device conveniences. Never for data. */
 export const STORAGE_KEYS = {
   sidebarCollapsed: 'vms.sidebar.collapsed',
+  viewAs: 'vms.viewAs',
 } as const

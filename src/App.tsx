@@ -18,6 +18,8 @@ const VendorList = lazy(() => import('@/pages/vendors/VendorList'))
 const VendorDetail = lazy(() => import('@/pages/vendors/VendorDetail'))
 const VendorForm = lazy(() => import('@/pages/vendors/VendorForm'))
 const BulkImportPage = lazy(() => import('@/pages/vendors/BulkImportPage'))
+const WorkingOrdersPage = lazy(() => import('@/pages/mail/WorkingOrdersPage'))
+const TeamPage = lazy(() => import('@/pages/TeamPage'))
 const ReviewQueue = lazy(() => import('@/pages/review/ReviewQueue'))
 const RepGroupList = lazy(() => import('@/pages/rep-groups/RepGroupList'))
 const WorldwideContacts = lazy(() => import('@/pages/contacts/WorldwideContacts'))
@@ -105,6 +107,8 @@ export default function App() {
                 <Route path={ROUTES.lines} element={<LinesPage />} />
                 <Route path={ROUTES.review} element={<ReviewQueue />} />
                 <Route path={ROUTES.mail} element={<MailPage />} />
+                <Route path={ROUTES.workingOrders} element={<WorkingOrdersPage />} />
+                <Route path={ROUTES.team} element={<TeamPage />} />
                 <Route path={`${ROUTES.mail}/:id`} element={<ThreadPage />} />
                 <Route path={ROUTES.mergeReport} element={<MergeReport />} />
                 <Route path={ROUTES.orders} element={<OrderList />} />

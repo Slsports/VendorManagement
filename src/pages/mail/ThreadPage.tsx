@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { CheckCircle2, ExternalLink, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
+import { CheckCircle2, ClipboardList, ExternalLink, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { assignEmailThread, fetchEmailHtml, getMailbox, getThread, fetchAttachment, setEmailThreadStatus, setEmailVendor, setThreadView, type ThreadDetail } from '@/services/mail'
+import { assignEmailThread, fetchEmailHtml, getMailbox, getThread, fetchAttachment, setEmailThreadStatus, setEmailVendor, setThreadView, setWorkingOrder, type ThreadDetail } from '@/services/mail'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { SaveToDocumentsDialog } from '@/components/vendors/SaveToDocumentsDialog'
 import { listPeople } from '@/services/reviews'
@@ -29,7 +29,9 @@ export default function ThreadPage() {
   const people = useSupabaseQuery(async () => (organization ? listPeople(organization.id) : []), [organization?.id])
   const mailbox = useSupabaseQuery(async () => (organization ? getMailbox(organization.id) : null), [organization?.id])
   const [draft, setDraft] = useState<ComposeDraft | null>(null)
-  const [addingOrder, setAddingOrder] = useState(false)
+  const [params, setParams] = useSearchParams()
+  // "Add order from this email" after completing a Working on order (Dana, Oct 8).
+  const [addingOrder, setAddingOrder] = useState(() => params.get('addOrder') === '1')
 
   if (q.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading the conversation…" className="text-brand" /></div>
   if (q.error || !q.data) return <Alert variant="error">{q.error ?? 'Conversation not found'}</Alert>
@@ -69,6 +71,9 @@ export default function ThreadPage() {
             Owner
             <AssigneeSelect value={t.owner_id} people={people.data ?? []} label="Owner" className="h-9 w-48" onChange={(p) => act(p ? `Handed to ${(people.data ?? []).find((x) => x.id === p)?.full_name ?? 'them'}` : 'Owner cleared', () => assignEmailThread(t.id, p))} />
           </label>
+          {t.working_by && !t.working_done_at
+            ? <Button size="sm" variant="secondary" onClick={() => void act('No longer tracked as an order', () => setWorkingOrder(t.id, 'unflag'))} leftIcon={<ClipboardList className="size-4 text-brand" aria-hidden="true" />}>Working on order ✓</Button>
+            : <Button size="sm" variant="ghost" onClick={() => void act('Working on order: it is on your dashboard', () => setWorkingOrder(t.id, 'flag'))} leftIcon={<ClipboardList className="size-4" aria-hidden="true" />}>Working on order</Button>}
           {t.status === 'handled'
             ? <Button size="sm" variant="secondary" onClick={() => void act('Opened again', () => setEmailThreadStatus(t.id, 'waiting_on_us'))} leftIcon={<RotateCcw className="size-4" aria-hidden="true" />}>Open again</Button>
             : <Button size="sm" variant="secondary" onClick={() => void act('Marked handled', () => setEmailThreadStatus(t.id, 'handled'))} leftIcon={<CheckCircle2 className="size-4" aria-hidden="true" />}>Mark handled</Button>}
@@ -100,7 +105,7 @@ export default function ThreadPage() {
         ))}
       </ol>
       {draft ? <ComposeDialog draft={draft} onClose={() => setDraft(null)} onSent={() => void q.refetch()} /> : null}
-      {addingOrder && t.vendor ? <AddOrderDialog vendor={t.vendor} threadId={t.id} onClose={() => setAddingOrder(false)} /> : null}
+      {addingOrder && t.vendor ? <AddOrderDialog vendor={t.vendor} threadId={t.id} onClose={() => { setAddingOrder(false); if (params.has('addOrder')) { params.delete('addOrder'); setParams(params, { replace: true }) } }} /> : null}
     </div>
   )
 }

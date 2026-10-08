@@ -162,3 +162,26 @@ export function splitQuoted(text: string): { fresh: string; quoted: string } {
   if (fresh.replace(/\s+/g, '').length < 2) return { fresh: text, quoted: '' }
   return { fresh, quoted: text.slice(cut).trim() }
 }
+
+/**
+ * Where an order being worked on stands (Dana, Oct 8): Completed when marked done; Needs an answer when the
+ * vendor wrote and nobody has answered (or set it to Working since); Working when set by hand; Waiting on
+ * rep when we wrote last.
+ */
+export function workingStatus(t: { status: EmailThreadStatus; working_done_at: string | null; working_mark_at: string | null; last_in_at: string | null }): 'needs' | 'waiting' | 'working' | 'completed' {
+  if (t.working_done_at) return 'completed'
+  const vendorWroteSince = !t.working_mark_at || (!!t.last_in_at && t.last_in_at > t.working_mark_at)
+  if (t.status === 'waiting_on_us' && vendorWroteSince) return 'needs'
+  if (t.working_mark_at) return 'working'
+  return t.status === 'waiting_on_vendor' ? 'waiting' : 'working'
+}
+
+export const WORKING_STATUS_LABELS: Record<'needs' | 'waiting' | 'working' | 'completed', { label: string; tone: 'warning' | 'info' | 'brand' | 'success' }> = {
+  needs: { label: 'Needs an answer', tone: 'warning' },
+  waiting: { label: 'Waiting on rep', tone: 'info' },
+  working: { label: 'Working', tone: 'brand' },
+  completed: { label: 'Completed', tone: 'success' },
+}
+
+/** On the Team page, waiting longer than this turns red: three days, to allow for days off (Dana, Oct 8). */
+export const LATE_MS = 3 * 86_400_000

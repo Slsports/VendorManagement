@@ -172,15 +172,16 @@ export function listVendorThreads(organizationId: string, vendorId: string, limi
 }
 
 /** What is waiting on this person: vendor replies to answer, and sent mail with no answer past the follow-up date. */
-export async function listMailForMe(organizationId: string, me: string, seesFreight = false): Promise<{ needs: ThreadRow[]; noAnswer: ThreadRow[] }> {
+/** Dashboard: replies waiting on `me` (everyone's when null), and mail with no answer past its follow-up date. */
+export async function listMailForMe(organizationId: string, me: string | null, seesFreight = false): Promise<{ needs: ThreadRow[]; noAnswer: ThreadRow[] }> {
   const now = new Date().toISOString()
-  const [a, b] = await Promise.all([
-    supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).or(mine(me, seesFreight)).eq('view', 'attention').eq('status', 'waiting_on_us').order('last_message_at', { ascending: false }).limit(50),
-    supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).or(mine(me, seesFreight)).eq('status', 'waiting_on_vendor').lt('follow_up_at', now).order('follow_up_at', { ascending: true }).limit(50),
-  ])
-  if (a.error) throw a.error
-  if (b.error) throw b.error
-  const [needs, noAnswer] = await Promise.all([withLastMessage((a.data ?? []) as unknown as Omit<ThreadRow, 'last'>[]), withLastMessage((b.data ?? []) as unknown as Omit<ThreadRow, 'last'>[])])
+  let a = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).eq('view', 'attention').eq('status', 'waiting_on_us')
+  let b = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).eq('status', 'waiting_on_vendor').lt('follow_up_at', now)
+  if (me) { a = a.or(mine(me, seesFreight)); b = b.or(mine(me, seesFreight)) }
+  const [ra, rb] = await Promise.all([a.order('last_message_at', { ascending: false }).limit(50), b.order('follow_up_at', { ascending: true }).limit(50)])
+  if (ra.error) throw ra.error
+  if (rb.error) throw rb.error
+  const [needs, noAnswer] = await Promise.all([withLastMessage((ra.data ?? []) as unknown as Omit<ThreadRow, 'last'>[]), withLastMessage((rb.data ?? []) as unknown as Omit<ThreadRow, 'last'>[])])
   return { needs, noAnswer }
 }
 
@@ -196,12 +197,12 @@ export async function countMailForMe(organizationId: string, me: string, seesFre
 }
 
 export interface ThreadDetail {
-  thread: ThreadRow
+  thread: ThreadRow & { working_by?: string | null; working_done_at?: string | null }
   emails: (Email & { attachments: EmailAttachment[] })[]
 }
 
 export async function getThread(threadId: string): Promise<ThreadDetail | null> {
-  const { data: t, error } = await supabase.from('email_threads').select(THREAD_SELECT).eq('id', threadId).maybeSingle()
+  const { data: t, error } = await supabase.from('email_threads').select(`${THREAD_SELECT}, working_by, working_done_at`).eq('id', threadId).maybeSingle()
   if (error) throw error
   if (!t) return null
   const { data: emails, error: e2 } = await supabase.from('emails').select('*, attachments:email_attachments(*)').eq('thread_id', threadId).order('received_at', { ascending: true })
@@ -386,5 +387,34 @@ export async function reviewSenderEmails(senderId: string, emailIds: string[], a
 /** "Does this need an answer?" card (review queue): yes keeps it in Needs an answer, no handles it. */
 export async function answerMailReply(itemId: string, needsAnswer: boolean): Promise<void> {
   const { error } = await supabase.rpc('answer_mail_reply', { p_item: itemId, p_needs_answer: needsAnswer })
+  if (error) throw error
+}
+
+export type WorkingStatus = 'needs' | 'waiting' | 'working' | 'completed'
+
+export interface WorkingRow extends ThreadRow {
+  working_by: string | null
+  working_since: string | null
+  working_mark_at: string | null
+  working_done_at: string | null
+  last_in_at: string | null
+  last_out_at: string | null
+  working_person: { id: string; full_name: string } | null
+}
+
+/** Conversations flagged "Working on order" by `who` (everyone's when null). Completed ones only when asked. */
+export async function listWorkingOrders(organizationId: string, who: string | null, includeCompleted = false): Promise<WorkingRow[]> {
+  let q = supabase.from('email_threads')
+    .select(`${THREAD_SELECT}, working_by, working_since, working_mark_at, working_done_at, last_in_at, last_out_at, working_person:profiles!email_threads_working_by_fkey(id, full_name)`)
+    .eq('organization_id', organizationId).not('working_by', 'is', null)
+  if (who) q = q.eq('working_by', who)
+  if (!includeCompleted) q = q.is('working_done_at', null)
+  const { data, error } = await q.order('last_message_at', { ascending: false }).limit(200)
+  if (error) throw error
+  return withLastMessage((data ?? []) as unknown as Omit<ThreadRow, 'last'>[]) as Promise<WorkingRow[]>
+}
+
+export async function setWorkingOrder(threadId: string, action: 'flag' | 'working' | 'complete' | 'reopen' | 'unflag'): Promise<void> {
+  const { error } = await supabase.rpc('set_working_order', { p_thread: threadId, p_action: action })
   if (error) throw error
 }

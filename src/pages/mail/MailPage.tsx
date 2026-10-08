@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Inbox, PenLine, Search } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { useViewAs } from '@/hooks/useViewAs'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listThreads, type ThreadFilters } from '@/services/mail'
 import { listPeople } from '@/services/reviews'
@@ -33,7 +34,10 @@ export default function MailPage() {
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
   const [composing, setComposing] = useState(false)
   const [params, setParams] = useSearchParams()
-  const who = params.get('who') ?? 'mine'
+  const viewAs = useViewAs()
+  // Admins see the person chosen in the top bar (Dana, Oct 8); a choice made here wins.
+  const whoDefault = viewAs.isMe ? 'mine' : viewAs.personId ?? 'all'
+  const who = params.get('who') ?? whoDefault
   const view = (params.get('view') ?? 'attention') as NonNullable<ThreadFilters['view']>
   const status = (params.get('status') ?? (view === 'attention' ? 'open' : 'all')) as ThreadFilters['status']
   const unmatched = params.get('unmatched') === '1'
@@ -84,7 +88,7 @@ export default function MailPage() {
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-stone-400" aria-hidden="true" />
           <input type="search" value={draft} onChange={(e) => { setDraft(e.target.value); if (!e.target.value) setParam('q', '') }} placeholder="Search subjects…" aria-label="Search mail" className="h-11 w-full rounded-lg border border-stone-300 bg-white pl-9 pr-3 text-base shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-ring-brand sm:text-sm" />
         </div>
-        <Select value={who} onChange={(e) => setParam('who', e.target.value === 'mine' ? '' : e.target.value)} aria-label="Whose mail" className="lg:w-56">
+        <Select value={who} onChange={(e) => setParam('who', e.target.value === whoDefault ? '' : e.target.value)} aria-label="Whose mail" className="lg:w-56">
           <option value="mine">Mine</option>
           <option value="all">Everyone</option>
           <option value="none">Nobody's yet</option>
@@ -105,7 +109,7 @@ export default function MailPage() {
           </div>
         ) : (
           <>
-            <ThreadTable rows={q.data ?? []} />
+            <ThreadTable rows={q.data ?? []} onChanged={q.refetch} />
             {(q.data ?? []).length >= 300 ? <p className="mt-2 text-xs text-stone-500">Showing the newest 300. Search or filter to narrow it down.</p> : null}
           </>
         )}
