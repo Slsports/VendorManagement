@@ -1231,3 +1231,37 @@ payments in the sample export show), or when a payment is entered by hand.
   department, kind) still wins, and the "everything else" rule comes after the assignee.
 - Logins for Raelee, Cat and Annette wait for go-live; Raelee and Cat get `places_orders`. Jarrett and
   Trevor start troubleshooting once all phases are done.
+
+## 2026-10-08 — Review-queue clean-up list (Dana, evening): vendors, contacts, mail matching, freight, pricing
+Dana listed these while working the Review queue, then said go.
+- **Delete from the Review queue** a vendor that never belonged (e.g. Shaver Lake Sports Internal
+  Consumption): removed completely, and its names are remembered so imports never bring it back.
+  Vendors we have bought from are never deleted.
+- **Active / Inactive** switch on the vendor page; the Vendors list shows Active, Inactive or All.
+  **Inactive vendors stay in every vendor picker, grayed out**; picking one asks "Reactivate this
+  vendor?" (Reactivate and use / Cancel) without leaving the screen. Fewest steps possible.
+- **WWD contacts** leave the vendor page (a small link stays) and get their own page in the menu for
+  everyone; they are offered in the email To box. WWD is emailed only as a last resort.
+- "Sends for many vendors" is renamed **"A service like Bill.com or Faire"**.
+- **Several contacts per rep group and per vendor** (show reps differ from our rep). One rep is starred
+  **Our assigned rep**: follow-ups go to them. Orders record **Order taken by** (e.g. the show rep).
+  Every rep group contact's address is recognized in mail (Donna has two addresses).
+- **Mail routing order**: (1) the full address: the domain counts when it contains a vendor or rep group
+  name (@worldfamoussports.com, @dandylinesllc.com); the part before the @ (angie@) never counts by
+  itself. (2) Subject and body: vendor name, alias, or a PO number, which matches an order on file or the
+  PO convention <vendor name><date> (PNW9126 → PNW USA INC). (3) Still unclear → review, never a guess.
+  Line names that are first names (Angie) count only with corroboration. "Worldwide" alone never
+  decides (it is the billing route), and Worldwide Express (wwex.com) is never Worldwide Distributors.
+  The Star of India vendor is to be renamed Angie Clothes; WWD bills it as STAR OF INDIA/ANGIE/NOSTALGIA.
+- **"+ Add new…" inside every vendor and rep group picker** (small pop-up, prefilled from the email,
+  picked on save) instead of separate buttons.
+- **Freight**: carriers are their own kind: PartnerShip (parcel), ShipStation billed by Worldwide Express
+  do-not-reply@wwex.com (parcel, PDF attached), Priority One (LTL only; anything @pinnacleteam.com is
+  Priority One's scheduling/customer service, run by Dana's son Nick). All freight mail goes to Trevor
+  (receiving and all things freight). A freight bill can cover several vendors: one line per shipper;
+  the per-invoice fee goes to the biggest order (by wholesale cost) on that invoice.
+- **Retail pricing at check-in**: freight % = freight ÷ product invoice; total % = 55% margin + freight %
+  + 1.5% for WWD upcharge vendors; retail = item cost ÷ (1 − total %) (true margin: $5 at 66.5% =
+  $14.93). Show the exact number, no rounding; Trevor edits any price. A summary line at the top shows
+  freight %, margin, upcharge and total; when the freight bill is not in yet it says so and one click
+  recalculates once it arrives.
