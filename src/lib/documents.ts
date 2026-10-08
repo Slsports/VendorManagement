@@ -1,0 +1,59 @@
+import type { VendorLinkKind } from '@/types'
+
+// The vendor's Documents folders (Dana, Oct 8): each holds certain kinds of file, with a year folder inside.
+export type DocFolder = 'price_lists' | 'catalogs' | 'invoices' | 'order_forms' | 'specials' | 'shipping' | 'other'
+
+export const DOC_FOLDERS: { id: DocFolder; label: string; kinds: VendorLinkKind[] }[] = [
+  { id: 'price_lists', label: 'Price lists', kinds: ['price_list'] },
+  { id: 'catalogs', label: 'Catalogs', kinds: ['catalog'] },
+  { id: 'invoices', label: 'Invoices', kinds: ['invoice', 'confirmation', 'order', 'payment'] },
+  { id: 'order_forms', label: 'Order forms', kinds: ['order_form'] },
+  { id: 'specials', label: 'Show specials', kinds: ['specials'] },
+  { id: 'shipping', label: 'Shipping', kinds: ['packing_slip', 'delivery_receipt', 'freight_bill'] },
+  { id: 'other', label: 'Other', kinds: ['other', 'website'] },
+]
+
+export function folderOf(kind: VendorLinkKind): DocFolder {
+  return DOC_FOLDERS.find((f) => f.kinds.includes(kind))?.id ?? 'other'
+}
+
+/** The kind a file gets when put in a folder: its own kind when that already belongs there. */
+export function kindFor(folder: DocFolder, current?: VendorLinkKind): VendorLinkKind {
+  const f = DOC_FOLDERS.find((x) => x.id === folder)!
+  return current && f.kinds.includes(current) ? current : f.kinds[0]!
+}
+
+export const folderLabel = (id: DocFolder) => DOC_FOLDERS.find((f) => f.id === id)!.label
+
+/** Years for the year picker: next year back to six years ago. */
+export function yearChoices(now = new Date()): number[] {
+  const y = now.getFullYear()
+  return Array.from({ length: 8 }, (_, i) => y + 1 - i)
+}
+
+/** Files grouped by year, newest year first. */
+export function byYear<T extends { doc_year: number | null }>(rows: T[]): [number | null, T[]][] {
+  const m = new Map<number | null, T[]>()
+  for (const r of rows) m.set(r.doc_year, [...(m.get(r.doc_year) ?? []), r])
+  return [...m.entries()].sort((a, b) => (b[0] ?? 0) - (a[0] ?? 0))
+}
+
+export const thisYear = () => new Date().getFullYear()
+export const todayIso = () => new Date().toISOString().slice(0, 10)
+
+const GUESS: [DocFolder, RegExp][] = [
+  ['shipping', /packing ?(slip|list)|\bbol\b|bill of lading|delivery receipt|proof of delivery|\bpod\b|tracking/i],
+  ['invoices', /invoice|\binv\b|statement|receipt|remittance|credit memo|order confirmation|confirmation|\bso\b ?\d|sales order/i],
+  ['order_forms', /order ?(form|writer|sheet)|reorder|booking form/i],
+  ['price_lists', /price ?(list|sheet|book)|pricing|\bmsrp\b|wholesale/i],
+  ['specials', /special|promo|close ?out|clearance|show (offer|program)|buy group/i],
+  ['catalogs', /catalog|catalogue|line ?sheet|look ?book|brochure|collection/i],
+]
+
+/** The folder an email attachment most likely belongs in, from its file name and the subject. */
+export function guessFolder(fileName: string, subject?: string | null): DocFolder {
+  const name = fileName.replace(/[_\-.]+/g, ' ')
+  for (const [f, re] of GUESS) if (re.test(name)) return f
+  for (const [f, re] of GUESS) if (re.test(subject ?? '')) return f
+  return 'other'
+}

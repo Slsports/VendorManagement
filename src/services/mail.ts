@@ -280,9 +280,9 @@ export async function openAttachment(attachmentId: string): Promise<void> {
   }
 }
 
-/** Copy an attachment into the vendor's Links & files. */
-export async function fileAttachmentToVendor(attachmentId: string, vendorId: string, kind: string, label?: string): Promise<void> {
-  const { error } = await supabase.functions.invoke('gmail-read', { body: { action: 'file', attachment_id: attachmentId, vendor_id: vendorId, kind, label } })
+/** Copy an attachment into the vendor's documents (folder by kind, and the year folder). */
+export async function fileAttachmentToVendor(attachmentId: string, vendorId: string, kind: string, label?: string, year?: number): Promise<void> {
+  const { error } = await supabase.functions.invoke('gmail-read', { body: { action: 'file', attachment_id: attachmentId, vendor_id: vendorId, kind, label, doc_year: year } })
   if (error) throw await functionError(error)
 }
 

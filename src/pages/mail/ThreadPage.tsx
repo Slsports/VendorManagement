@@ -4,7 +4,8 @@ import toast from 'react-hot-toast'
 import { CheckCircle2, ExternalLink, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { assignEmailThread, fetchEmailHtml, fileAttachmentToVendor, getMailbox, getThread, openAttachment, setEmailThreadStatus, setEmailVendor, setThreadView, type ThreadDetail } from '@/services/mail'
+import { assignEmailThread, fetchEmailHtml, getMailbox, getThread, openAttachment, setEmailThreadStatus, setEmailVendor, setThreadView, type ThreadDetail } from '@/services/mail'
+import { SaveToDocumentsDialog } from '@/components/vendors/SaveToDocumentsDialog'
 import { listPeople } from '@/services/reviews'
 import { followUpDraft, forwardDraft, gmailThreadUrl, newVendorPrefill, replyDraft, threadState, waited } from '@/lib/mail'
 import { ROUTES } from '@/lib/constants'
@@ -106,6 +107,8 @@ function Message({ email: e, startOpen, vendor, onCompose }: { email: ThreadDeta
   const [open, setOpen] = useState(startOpen)
   const [html, setHtml] = useState<string | null>(null)
   const [loadingHtml, setLoadingHtml] = useState(false)
+  const [saving, setSaving] = useState<{ id: string; file_name: string } | null>(null)
+  const [saved, setSaved] = useState<string[]>([])
   const { role } = useAuth()
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
 
@@ -146,6 +149,9 @@ function Message({ email: e, startOpen, vendor, onCompose }: { email: ThreadDeta
           {html
             ? <iframe title="Formatted message" sandbox="allow-popups allow-popups-to-escape-sandbox" srcDoc={`<base target="_blank">${html}`} className="h-[32rem] w-full rounded-lg border border-stone-200 bg-white" />
             : <div className="whitespace-pre-wrap break-words text-sm text-stone-800">{e.body_text || e.snippet}</div>}
+          {saving && vendor ? (
+            <SaveToDocumentsDialog attachment={saving} vendor={vendor} subject={e.subject} receivedAt={e.received_at} onClose={() => setSaving(null)} onSaved={() => { setSaved((x) => [...x, saving.id]); setSaving(null) }} />
+          ) : null}
           {e.attachments.length ? (
             <ul className="mt-3 flex flex-wrap gap-2">
               {e.attachments.map((a) => (
@@ -153,11 +159,11 @@ function Message({ email: e, startOpen, vendor, onCompose }: { email: ThreadDeta
                   <button type="button" onClick={() => void run('', () => openAttachment(a.id))} disabled={!a.gmail_attachment_id} className="inline-flex items-center gap-1 px-2 py-1 hover:text-brand disabled:cursor-default disabled:hover:text-stone-700" title={a.gmail_attachment_id ? 'Open' : 'Not available from Gmail'}>
                     <Paperclip className="size-3.5" aria-hidden="true" />{a.file_name}{a.size ? <span className="text-stone-400"> · {Math.max(1, Math.round(a.size / 1024))} KB</span> : null}
                   </button>
-                  {canEdit && vendor && a.gmail_attachment_id && !a.vendor_link_id ? (
-                    <button type="button" onClick={() => void run(`Saved to ${vendor.name}'s files`, () => fileAttachmentToVendor(a.id, vendor.id, 'other'))} className="border-l border-stone-200 px-2 py-1 text-stone-500 hover:text-brand" title={`Save to ${vendor.name}'s Links & files`}>
-                      <FolderInput className="size-3.5" aria-hidden="true" /><span className="sr-only">Save to {vendor.name}'s files</span>
+                  {canEdit && vendor && a.gmail_attachment_id && !a.vendor_link_id && !saved.includes(a.id) ? (
+                    <button type="button" onClick={() => setSaving(a)} className="inline-flex items-center gap-1 border-l border-stone-200 px-2 py-1 text-stone-500 hover:text-brand" title={`Save to ${vendor.name}'s documents`}>
+                      <FolderInput className="size-3.5" aria-hidden="true" />Save to documents
                     </button>
-                  ) : a.vendor_link_id ? <span className="border-l border-stone-200 px-2 py-1 text-emerald-700">saved</span> : null}
+                  ) : a.vendor_link_id || saved.includes(a.id) ? <span className="border-l border-stone-200 px-2 py-1 text-emerald-700">saved</span> : null}
                 </li>
               ))}
             </ul>

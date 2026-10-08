@@ -179,3 +179,9 @@ export async function deleteVendorLink(link: VendorLink): Promise<void> {
   const { error } = await supabase.from('vendor_links').delete().eq('id', link.id)
   if (error) throw error
 }
+
+/** Move a document to another folder (kind) and year folder. */
+export async function moveVendorDocument(linkId: string, kind: VendorLink['kind'], year: number | null): Promise<void> {
+  const { error } = await supabase.rpc('move_vendor_document', { p_link: linkId, p_kind: kind, p_year: year })
+  if (error) throw error
+}

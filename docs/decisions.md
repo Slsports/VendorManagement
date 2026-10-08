@@ -1327,3 +1327,10 @@ Dana listed these while working the Review queue, then said go.
   pencil on each carrier): name, parcel or LTL, email domains, website, account number, who gets its mail
   (Trevor by default) and Active. Saving claims the mail already in VMS from those domains (undecided
   senders only), so the carrier's bills and delivery receipts are read too.
+- Dana, Oct 8: on the vendor page, Emails move up (right under Overview and Ordering windows) and the
+  files become **Documents** at the bottom: folders Price lists, Catalogs, Invoices, Order forms, Show
+  specials, Shipping (delivery receipts, packing slips, freight bills) and Other, each with a year folder
+  inside, the way Dana files them ("Stansport/Invoices/2026"). The year is the season's year, else the
+  date the file is for or arrived (`vendor_links.doc_year`); the folder follows the kind. Drop files on a
+  folder or Upload (several at once, pick folder and year); Move changes folder and year; an email
+  attachment's "Save to documents" asks the folder (guessed from the file name) and year.

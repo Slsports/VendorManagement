@@ -14,7 +14,7 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { BackLink } from '@/components/shared/BackLink'
 import { RouteBadges } from '@/components/vendors/RouteBadges'
 import { ReviewItemCard, VENDOR_DELETED } from '@/components/vendors/ReviewItemCard'
-import { VendorLinksSection } from '@/components/vendors/VendorLinksSection'
+import { VendorDocumentsSection } from '@/components/vendors/VendorDocumentsSection'
 import { VendorRepGroupCard } from '@/components/vendors/VendorRepGroupCard'
 import { VendorContactsSection } from '@/components/vendors/VendorContactsSection'
 import { peopleFor } from '@/lib/contacts'
@@ -241,7 +241,7 @@ export default function VendorDetailPage() {
           )}
         </section>
 
-        <VendorLinksSection vendorId={v.id} organizationId={v.organization_id} userId={profile?.id ?? null} canEdit={canEdit} />
+        <VendorMailSection vendorId={v.id} organizationId={v.organization_id} onNewEmail={canEdit ? () => compose(suggestions[0] ? [suggestions[0].email] : []) : undefined} />
         <VendorRepGroupCard vendorId={v.id} group={v.rep_groups} />
 
         <VendorContactsSection vendor={v} canEdit={canEdit} onChange={vendorQ.refetch} onEmail={(email) => compose([email])} />
@@ -249,7 +249,7 @@ export default function VendorDetailPage() {
         <VendorScorecard organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorItemRulesSection organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorOrdersSection vendorId={v.id} vendorName={v.name} canAdd={canEdit} />
-        <VendorMailSection vendorId={v.id} organizationId={v.organization_id} onNewEmail={canEdit ? () => compose(suggestions[0] ? [suggestions[0].email] : []) : undefined} />
+        <VendorDocumentsSection vendorId={v.id} organizationId={v.organization_id} userId={profile?.id ?? null} canEdit={canEdit} />
 
         <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-1">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Notes</h2>

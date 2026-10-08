@@ -79,7 +79,7 @@ happens, not the place you work.
   thread leaves your list and lands on the new owner's.
 - **Badge on Mail** in the side menu with the number waiting on you, visible from any page.
 - **Everything inside VMS.** Read, reply, reply all, forward, attach a file (from the computer or from
-  the vendor's Links & files), open or download attachments, on the vendor page and the Mail page.
+  the vendor's Documents), open or download attachments, on the vendor page and the Mail page.
 - **Shared, not private.** Ownership only decides whose list a thread lands on. Anyone who opens the
   vendor record sees every thread, its owner and what was said; anyone who can edit (admin, manager,
   buyer) can reply or take a thread over.
@@ -122,9 +122,9 @@ happens, not the place you work.
   from orders@ as "<Name> | <org>" with Reply-To orders@ and the person's signature, threads replies
   (threadId + In-Reply-To/References), saves it to `emails` at once, files it to the vendor, makes the
   sender the thread owner, and the thread waits on the vendor with `follow_up_at`. Attachments from the
-  computer, from the vendor's Links & files, and the original's on a forward.
+  computer, from the vendor's Documents, and the original's on a forward.
 - Reading: `gmail-read` returns the formatted (HTML) version of a message, an attachment's file, or copies
-  an attachment into the vendor's Links & files (`vendor_links.source = 'email'`).
+  an attachment into the vendor's Documents (`vendor_links.source = 'email'`).
 - UI: `/mail` (Mine / Everyone / Nobody's yet, Needs an answer / No answer yet / Waiting on vendor /
   Handled), `/mail/:id` (owner, handled, file to vendor, Reply / Reply all / Forward / Follow up, formatted
   view, attachments), vendor page Mail section and Email on every address, dashboard "Mail for you",

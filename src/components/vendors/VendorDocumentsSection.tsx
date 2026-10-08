@@ -1,0 +1,259 @@
+import { useState, type DragEvent } from 'react'
+import { Link } from 'react-router-dom'
+import toast from 'react-hot-toast'
+import { ExternalLink, FileText, Folder, FolderInput, FolderOpen, Link2, Mail, Trash2, Upload } from 'lucide-react'
+import { addVendorLink, deleteVendorLink, listVendorLinks, moveVendorDocument, signedFileUrl, uploadVendorFile, type VendorLinkRow } from '@/services/lines'
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { DOC_FOLDERS, byYear, folderLabel, folderOf, kindFor, thisYear, todayIso, yearChoices, type DocFolder } from '@/lib/documents'
+import { LINK_KIND_LABELS } from '@/lib/vendors'
+import { ROUTES } from '@/lib/constants'
+import { cn, errorMessage } from '@/lib/utils'
+import { Badge, Button, FormField, Input, Select } from '@/components/ui'
+import { Modal } from '@/components/shared/Modal'
+
+const MAX_MB = 25
+
+/**
+ * The vendor's documents, filed the way Dana files them: a folder per kind (Price lists, Catalogs,
+ * Invoices…) with a year folder inside. Drop files on a folder or use Upload; files from email land in the
+ * right folder on their own. Move puts a file in another folder or year.
+ */
+export function VendorDocumentsSection({ vendorId, organizationId, userId, canEdit }: { vendorId: string; organizationId: string; userId: string | null; canEdit: boolean }) {
+  const q = useSupabaseQuery(() => listVendorLinks(vendorId), [vendorId])
+  const [openFolder, setOpenFolder] = useState<DocFolder | null>(null)
+  const [adding, setAdding] = useState<{ mode: 'file' | 'link'; folder: DocFolder; files: File[] } | null>(null)
+  const [moving, setMoving] = useState<VendorLinkRow | null>(null)
+  const [dropOn, setDropOn] = useState<DocFolder | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  const links = q.data ?? []
+  const inFolder = (f: DocFolder) => links.filter((l) => folderOf(l.kind) === f)
+
+  async function upload(files: File[], folder: DocFolder, year: number, season: string, notes: string) {
+    const big = files.find((f) => f.size > MAX_MB * 1024 * 1024)
+    if (big) throw new Error(`${big.name} is over ${MAX_MB} MB`)
+    for (const file of files) {
+      const path = await uploadVendorFile(organizationId, vendorId, file)
+      await addVendorLink({
+        organization_id: organizationId, vendor_id: vendorId, kind: kindFor(folder), label: file.name.replace(/\.[a-z0-9]{2,5}$/i, ''),
+        storage_path: path, file_name: file.name, file_size: file.size, mime_type: file.type || null, season_label: season.trim() || null,
+        notes: notes.trim() || null, received_at: todayIso(), doc_year: year, created_by: userId,
+      })
+    }
+  }
+
+  async function drop(e: DragEvent, folder: DocFolder) {
+    e.preventDefault()
+    setDropOn(null)
+    const files = [...e.dataTransfer.files]
+    if (!canEdit || !files.length) return
+    setBusy(true)
+    try {
+      await upload(files, folder, thisYear(), '', '')
+      toast.success(`${files.length === 1 ? files[0]!.name : `${files.length} files`} saved to ${folderLabel(folder)} ${thisYear()}`)
+      setOpenFolder(folder)
+      await q.refetch()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+  const dragProps = (f: DocFolder) => canEdit ? {
+    onDragOver: (e: DragEvent) => { e.preventDefault(); setDropOn(f) },
+    onDragLeave: () => setDropOn((x) => (x === f ? null : x)),
+    onDrop: (e: DragEvent) => void drop(e, f),
+  } : {}
+
+  async function open(link: VendorLinkRow) {
+    try {
+      if (link.storage_path) window.open(await signedFileUrl(link.storage_path), '_blank', 'noopener')
+      else if (link.url) window.open(link.url, '_blank', 'noopener')
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
+
+  async function remove(link: VendorLinkRow) {
+    if (!window.confirm(`Remove "${link.label}"?`)) return
+    try {
+      await deleteVendorLink(link)
+      await q.refetch()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
+
+  const folder = openFolder ? DOC_FOLDERS.find((f) => f.id === openFolder)! : null
+  const row = (l: VendorLinkRow) => (
+    <li key={l.id} className="flex items-center gap-3 py-2">
+      {l.storage_path ? <FileText className="size-5 shrink-0 text-stone-400" aria-hidden="true" /> : <ExternalLink className="size-5 shrink-0 text-stone-400" aria-hidden="true" />}
+      <div className="min-w-0 flex-1">
+        <button type="button" onClick={() => void open(l)} className="max-w-full truncate text-left text-sm font-medium text-stone-900 hover:text-brand">{l.label}</button>
+        <p className="truncate text-xs text-stone-500">
+          {l.is_current ? <Badge tone="success" className="mr-1">Current</Badge> : null}
+          {folder && folder.kinds.length > 1 ? <Badge tone="neutral" className="mr-1">{LINK_KIND_LABELS[l.kind]}</Badge> : null}
+          {l.season_label ? `${l.season_label} · ` : ''}{l.file_name ?? l.url?.replace(/^https?:\/\//, '')}{l.received_at ? ` · ${new Date(`${l.received_at}T12:00:00`).toLocaleDateString()}` : ''}
+          {l.email ? <> · <Link to={`${ROUTES.mail}/${l.email.thread_id}`} className="inline-flex items-center gap-0.5 text-brand hover:underline"><Mail className="inline size-3" aria-hidden="true" />from an email</Link></> : null}
+        </p>
+        {l.notes && !l.email ? <p className="mt-0.5 text-xs text-stone-600">{l.notes}</p> : null}
+      </div>
+      {canEdit ? (
+        <div className="flex shrink-0">
+          <button type="button" onClick={() => setMoving(l)} className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700" aria-label={`Move ${l.label}`} title="Move to another folder or year"><FolderInput className="size-4" aria-hidden="true" /></button>
+          <button type="button" onClick={() => void remove(l)} className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-red-600" aria-label={`Remove ${l.label}`}><Trash2 className="size-4" aria-hidden="true" /></button>
+        </div>
+      ) : null}
+    </li>
+  )
+
+  return (
+    <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Documents</h2>
+        {canEdit ? (
+          <div className="flex gap-2">
+            <Button size="sm" variant="secondary" loading={busy} onClick={() => setAdding({ mode: 'file', folder: openFolder ?? 'invoices', files: [] })} leftIcon={<Upload className="size-4" aria-hidden="true" />}>Upload</Button>
+            <Button size="sm" variant="ghost" onClick={() => setAdding({ mode: 'link', folder: openFolder ?? 'catalogs', files: [] })} leftIcon={<Link2 className="size-4" aria-hidden="true" />}>Add a link</Button>
+          </div>
+        ) : null}
+      </div>
+      <p className="mt-1 text-xs text-stone-500">{canEdit ? 'Open a folder, or drop files on one to save them under this year.' : 'Open a folder to see its files.'}</p>
+
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+        {DOC_FOLDERS.map((f) => {
+          const n = inFolder(f.id).length
+          const Icon = openFolder === f.id ? FolderOpen : Folder
+          return (
+            <button key={f.id} type="button" {...dragProps(f.id)} onClick={() => setOpenFolder((x) => (x === f.id ? null : f.id))} aria-pressed={openFolder === f.id}
+              className={cn('flex flex-col items-start gap-1 rounded-xl border px-3 py-2 text-left text-sm',
+                openFolder === f.id ? 'border-brand bg-brand/5' : 'border-stone-200 hover:bg-stone-50',
+                dropOn === f.id && 'border-brand bg-brand/10 ring-2 ring-brand/30')}>
+              <Icon className={cn('size-5', n ? 'text-amber-500' : 'text-stone-300')} aria-hidden="true" />
+              <span className="font-medium text-stone-900">{f.label}</span>
+              <span className="text-xs text-stone-500">{q.isLoading ? '…' : n === 1 ? '1 file' : `${n} files`}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {folder ? (
+        <div className="mt-4 rounded-xl border border-stone-200 p-3" {...dragProps(folder.id)}>
+          <p className="text-sm font-semibold text-stone-900">{folder.label}</p>
+          {inFolder(folder.id).length === 0 ? (
+            <p className="mt-2 text-sm text-stone-500">Nothing in {folder.label} yet.{canEdit ? ' Drop files here or use Upload.' : ''}</p>
+          ) : byYear(inFolder(folder.id)).map(([year, rows], i) => (
+            <details key={year ?? 'none'} open={i === 0} className="mt-2">
+              <summary className="cursor-pointer text-sm font-medium text-stone-700">
+                <Folder className="mr-1 inline size-4 text-amber-500" aria-hidden="true" />{year ?? 'No year'} <span className="font-normal text-stone-500">({rows.length})</span>
+              </summary>
+              <ul className="ml-1 divide-y divide-stone-100 border-l border-stone-100 pl-3">{rows.map(row)}</ul>
+            </details>
+          ))}
+        </div>
+      ) : null}
+
+      {adding ? (
+        <AddDocumentDialog initial={adding} onClose={() => setAdding(null)} onSave={async (a) => {
+          if (a.mode === 'file') {
+            if (!a.files.length) throw new Error('Choose a file first')
+            await upload(a.files, a.folder, a.year, a.season, a.notes)
+          } else {
+            const url = a.url.trim()
+            if (!url) throw new Error('Paste a link first')
+            await addVendorLink({
+              organization_id: organizationId, vendor_id: vendorId, kind: kindFor(a.folder), label: a.label.trim() || a.season.trim() || folderLabel(a.folder),
+              url: /^https?:\/\//i.test(url) ? url : `https://${url}`, season_label: a.season.trim() || null, notes: a.notes.trim() || null,
+              received_at: todayIso(), doc_year: a.year, created_by: userId,
+            })
+          }
+          toast.success(`Saved to ${folderLabel(a.folder)} ${a.year}`)
+          setAdding(null)
+          setOpenFolder(a.folder)
+          await q.refetch()
+        }} />
+      ) : null}
+      {moving ? (
+        <MoveDocumentDialog link={moving} onClose={() => setMoving(null)} onMoved={async (f) => { setMoving(null); setOpenFolder(f); await q.refetch() }} />
+      ) : null}
+    </section>
+  )
+}
+
+interface AddState { mode: 'file' | 'link'; folder: DocFolder; year: number; files: File[]; url: string; label: string; season: string; notes: string }
+
+function AddDocumentDialog({ initial, onClose, onSave }: { initial: { mode: 'file' | 'link'; folder: DocFolder; files: File[] }; onClose: () => void; onSave: (a: AddState) => Promise<void> }) {
+  const [a, setA] = useState<AddState>(() => ({ ...initial, year: thisYear(), url: '', label: '', season: '', notes: '' }))
+  const [busy, setBusy] = useState(false)
+  const set = <K extends keyof AddState>(k: K, v: AddState[K]) => setA((x) => ({ ...x, [k]: v }))
+  return (
+    <Modal title={a.mode === 'file' ? 'Upload documents' : 'Add a link'} submitLabel="Save" busy={busy} onClose={onClose} onSubmit={async () => {
+      setBusy(true)
+      try {
+        await onSave(a)
+      } catch (err) {
+        toast.error(errorMessage(err))
+        setBusy(false)
+      }
+    }}>
+      {a.mode === 'file' ? (
+        <FormField label={`Files (up to ${MAX_MB} MB each)`} htmlFor="doc-files">
+          <input id="doc-files" type="file" multiple onChange={(e) => set('files', [...(e.target.files ?? [])])}
+            className="block w-full text-sm text-stone-700 file:mr-3 file:rounded-lg file:border-0 file:bg-stone-200 file:px-3 file:py-2 file:text-sm file:font-medium" />
+        </FormField>
+      ) : (
+        <>
+          <FormField label="Link" htmlFor="doc-url"><Input id="doc-url" value={a.url} onChange={(e) => set('url', e.target.value)} placeholder="https://…" autoFocus /></FormField>
+          <FormField label="Label (optional)" htmlFor="doc-label"><Input id="doc-label" value={a.label} onChange={(e) => set('label', e.target.value)} placeholder="Fall 2026 catalog" /></FormField>
+        </>
+      )}
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Folder" htmlFor="doc-folder">
+          <Select id="doc-folder" value={a.folder} onChange={(e) => set('folder', e.target.value as DocFolder)}>
+            {DOC_FOLDERS.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
+          </Select>
+        </FormField>
+        <FormField label="Year" htmlFor="doc-year">
+          <Select id="doc-year" value={a.year} onChange={(e) => set('year', Number(e.target.value))}>
+            {yearChoices().map((y) => <option key={y} value={y}>{y}</option>)}
+          </Select>
+        </FormField>
+      </div>
+      <FormField label="Season (optional)" htmlFor="doc-season" hint="e.g. Fall 2026"><Input id="doc-season" value={a.season} onChange={(e) => set('season', e.target.value)} /></FormField>
+      <FormField label="Notes (optional)" htmlFor="doc-notes"><Input id="doc-notes" value={a.notes} onChange={(e) => set('notes', e.target.value)} /></FormField>
+    </Modal>
+  )
+}
+
+function MoveDocumentDialog({ link, onClose, onMoved }: { link: VendorLinkRow; onClose: () => void; onMoved: (f: DocFolder) => void | Promise<void> }) {
+  const [folder, setFolder] = useState<DocFolder>(folderOf(link.kind))
+  const [year, setYear] = useState<number>(() => link.doc_year ?? thisYear())
+  const [busy, setBusy] = useState(false)
+  const years = [...new Set([...yearChoices(), year])].sort((x, y) => y - x)
+  return (
+    <Modal title={`Move "${link.label}"`} submitLabel="Move" busy={busy} onClose={onClose} onSubmit={async () => {
+      setBusy(true)
+      try {
+        await moveVendorDocument(link.id, kindFor(folder, link.kind), year)
+        toast.success(`Moved to ${folderLabel(folder)} ${year}`)
+        await onMoved(folder)
+      } catch (err) {
+        toast.error(errorMessage(err))
+        setBusy(false)
+      }
+    }}>
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Folder" htmlFor="mv-folder">
+          <Select id="mv-folder" value={folder} onChange={(e) => setFolder(e.target.value as DocFolder)}>
+            {DOC_FOLDERS.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
+          </Select>
+        </FormField>
+        <FormField label="Year" htmlFor="mv-year">
+          <Select id="mv-year" value={year} onChange={(e) => setYear(Number(e.target.value))}>
+            {years.map((y) => <option key={y} value={y}>{y}</option>)}
+          </Select>
+        </FormField>
+      </div>
+    </Modal>
+  )
+}
