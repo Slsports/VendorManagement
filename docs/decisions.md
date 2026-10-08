@@ -1348,3 +1348,5 @@ Dana listed these while working the Review queue, then said go.
   "Imported from <path>" in their notes. Reorganizing Dropbox itself waits on a Dropbox connector.
 - Dana, Oct 8: a conversation shows the newest email first, open; older ones are closed to one line
   (who, date, first words) and open on a click.
+- Dana, Oct 8: the Vendors page search box is full width on its own row (the filters had squeezed it to a
+  sliver) and the list narrows as you type, no Enter. Other list search boxes keep a minimum width.

@@ -65,7 +65,7 @@ export default function OrderListPage() {
         </ul>
       </nav>
       <form onSubmit={(e) => { e.preventDefault(); setParam('q', draft.trim()) }} className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
+        <div className="relative flex-1 sm:min-w-72">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-stone-400" aria-hidden="true" />
           <input type="search" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Search vendor, what was ordered, PO, who placed it…" aria-label="Search orders" className="h-11 w-full rounded-lg border border-stone-300 bg-white pl-9 pr-3 text-base shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-ring-brand sm:text-sm" />
         </div>

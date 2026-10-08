@@ -92,16 +92,18 @@ export default function VendorListPage() {
           e.preventDefault()
           setParam('q', draft.trim())
         }}
-        className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center"
+        className="mb-4 flex flex-col gap-3"
       >
-        <div className="relative flex-1">
+        {/* Full width on its own row: the filters beside it squeezed it to nothing (Dana, Oct 8). */}
+        <div className="relative w-full">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-stone-400" aria-hidden="true" />
           <input
             type="search"
             value={draft}
             onChange={(e) => {
+              // The list narrows as you type; no Enter needed.
               setDraft(e.target.value)
-              if (e.target.value === '') setParam('q', '')
+              setParam('q', e.target.value.trim())
             }}
             placeholder="Search by name, Lightspeed name or alias"
             aria-label="Search vendors"
