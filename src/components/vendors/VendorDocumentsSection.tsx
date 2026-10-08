@@ -142,7 +142,7 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
       </div>
       <p className="mt-1 text-xs text-stone-500">{canEdit ? 'Open a folder, or drop files on one to save them under this year.' : 'Open a folder to see its files.'}</p>
 
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
         {DOC_FOLDERS.map((f) => {
           const n = inFolder(f.id).length
           const Icon = openFolder === f.id ? FolderOpen : Folder

@@ -6,7 +6,7 @@ import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
 import { decodeBase64Url, type GmailMessage, type GmailPart } from '../_shared/mailParse.ts'
 import { CORS, caller, errorResponse, HttpError, json, serviceClient } from '../_shared/caller.ts'
 
-const KINDS = ['catalog', 'price_list', 'order_form', 'specials', 'website', 'other', 'invoice', 'confirmation', 'order', 'packing_slip', 'payment', 'freight_bill', 'delivery_receipt']
+const KINDS = ['catalog', 'price_list', 'order_form', 'specials', 'website', 'other', 'invoice', 'credit', 'confirmation', 'order', 'packing_slip', 'payment', 'freight_bill', 'delivery_receipt']
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })

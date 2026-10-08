@@ -69,6 +69,7 @@ export const LINK_KIND_LABELS: Record<import('@/types').VendorLinkKind, string> 
   website: 'Website',
   other: 'Other',
   invoice: 'Invoice',
+  credit: 'Credit',
   confirmation: 'Order confirmation',
   order: 'Order',
   packing_slip: 'Packing slip',

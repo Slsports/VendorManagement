@@ -1385,3 +1385,6 @@ Dana listed these while working the Review queue, then said go.
   * Team page (admins): per person, Needs an answer, No answer yet, review items, working on, vendors, last
     email sent; red when something has waited more than 3 days (days off allowed). Numbers open that
     person's list.
+- Dana, Oct 8: a **Credits** folder right next to Invoices in a vendor's Documents (credit memos, credit
+  notices, return authorizations). Saving from email, bulk import and Claude's sorting all know it; files
+  already filed as invoices whose name says credit moved there.

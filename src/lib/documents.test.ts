@@ -28,3 +28,16 @@ describe('folder for an email attachment', () => {
     expect(guessFolder('photo.jpg', 'Hello')).toBe('other')
   })
 })
+
+describe('credits folder', () => {
+  it('credit memos go to Credits, invoices stay in Invoices', async () => {
+    const { folderOf, guessFolder } = await import('./documents')
+    const { folderFromName } = await import('./bulkImport')
+    expect(folderOf('credit')).toBe('credits')
+    expect(guessFolder('Credit Memo 84731.pdf')).toBe('credits')
+    expect(guessFolder('scan.pdf', 'Attached is a copy of the credit')).toBe('credits')
+    expect(guessFolder('INV_802289.pdf')).toBe('invoices')
+    expect(folderFromName('Credits')).toBe('credits')
+    expect(folderFromName('Invoices')).toBe('invoices')
+  })
+})

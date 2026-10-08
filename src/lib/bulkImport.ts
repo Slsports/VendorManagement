@@ -9,7 +9,8 @@ export type { VendorIndex }
 
 const FOLDER_WORDS: [DocFolder, RegExp][] = [
   ['shipping', /packing ?(slip|list)s?|\bbols?\b|bills? of lading|delivery receipts?|proof of delivery|\bpods?\b|freight|shipping|tracking/i],
-  ['invoices', /invoices?|\binv\b|statements?|receipts?|remittances?|credit memos?|credits|confirmations?|sales orders?|payments?|paid|billing|bills\b/i],
+  ['credits', /credits?|credit memos?|\bcms?\b|\brmas?\b|return authori[sz]ations?/i],
+  ['invoices', /invoices?|\binv\b|statements?|receipts?|remittances?|confirmations?|sales orders?|payments?|paid|billing|bills\b/i],
   ['order_forms', /order ?(forms?|writers?|sheets?)|reorder|booking forms?|\borders?\b|\bpos?\b|purchase orders?/i],
   ['price_lists', /price ?(lists?|sheets?|books?)|pricing|\bmsrp\b|wholesale|\bprices?\b/i],
   ['specials', /specials?|promos?|promotions?|close ?outs?|clearance|show (offers?|programs?|deals?)|buy group|deals?/i],
