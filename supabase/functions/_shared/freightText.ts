@@ -29,3 +29,24 @@ export function proNumberFrom(subject: string | null): string | null {
   const m = (subject ?? '').match(/(?:receipt|delivery|pro)\b[^0-9\n]{0,12}([0-9][0-9-]{5,})/i)
   return m ? m[1]! : null
 }
+
+/** A carrier's payment receipt ("Priority1 Payment Receipt", "Thank you for your payment"), not a bill. */
+export function looksLikePaymentReceipt(subject: string | null, body: string | null): boolean {
+  const s = subject ?? ''
+  if (/^\s*(re|fw|fwd|aw)\s*:/i.test(s)) return false
+  const re = /payment (receipt|confirmation|received|successful|processed)|receipt for (your )?payment|thank you for your payment|payment .{0,20}success/i
+  return re.test(s) || re.test((body ?? '').slice(0, 600))
+}
+
+/** Our own email says something was paid ("paid by ACH 10/8/26 by Dana"): worth asking Claude. */
+export function mentionsPayment(text: string | null): boolean {
+  return /\bpaid\b|\bpayment\b|\bach\b|\bcheck (no|#|number)|\bpaid via\b/i.test(text ?? '')
+}
+
+/** What a person wrote above the quoted earlier emails. */
+export function freshText(text: string | null): string {
+  const t = text ?? ''
+  const cut = [/^On .{4,200}wrote:\s*$/m, /^-{2,}\s*Original Message/im, /^_{10,}\s*$/m, /^From: .+\r?\n(Sent|Date): /m, /^>/m]
+    .map((re) => re.exec(t)?.index ?? t.length).reduce((a, b) => Math.min(a, b), t.length)
+  return t.slice(0, cut).trim()
+}

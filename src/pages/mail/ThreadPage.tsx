@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { assignEmailThread, fetchEmailHtml, getMailbox, getThread, fetchAttachment, setEmailThreadStatus, setEmailVendor, setThreadView, setWorkingOrder, type ThreadDetail } from '@/services/mail'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
+import { MakeFreightBillDialog } from '@/components/freight/MakeFreightBillDialog'
 import { SaveToDocumentsDialog } from '@/components/vendors/SaveToDocumentsDialog'
 import { listPeople } from '@/services/reviews'
 import { followUpDraft, forwardDraft, gmailThreadUrl, isInlineImage, newVendorPrefill, replyDraft, splitQuoted, threadState, waited } from '@/lib/mail'
@@ -100,7 +101,7 @@ export default function ThreadPage() {
       <ol className="space-y-3">
         {/* Newest first and open; older ones closed to one line (Dana, Oct 8). */}
         {[...emails].reverse().map((e, i) => (
-          <Message key={e.id} email={e} startOpen={i === 0} vendor={t.vendor}
+          <Message key={e.id} email={e} startOpen={i === 0} vendor={t.vendor} carrierId={t.carrier_id ?? null}
             onCompose={canEdit && mailbox.data ? (kind) => setDraft(kind === 'forward' ? forwardDraft(t, e, e.attachments.length) : replyDraft(t, e, mailbox.data!, kind === 'all')) : undefined} />
         ))}
       </ol>
@@ -110,13 +111,14 @@ export default function ThreadPage() {
   )
 }
 
-function Message({ email: e, startOpen, vendor, onCompose }: { email: ThreadDetail['emails'][number]; startOpen: boolean; vendor: { id: string; name: string } | null; onCompose?: (kind: 'reply' | 'all' | 'forward') => void }) {
+function Message({ email: e, startOpen, vendor, carrierId, onCompose }: { email: ThreadDetail['emails'][number]; startOpen: boolean; vendor: { id: string; name: string } | null; carrierId: string | null; onCompose?: (kind: 'reply' | 'all' | 'forward') => void }) {
   const [open, setOpen] = useState(startOpen)
   const [html, setHtml] = useState<string | null>(null)
   const [loadingHtml, setLoadingHtml] = useState(false)
   const [saving, setSaving] = useState<{ id: string; file_name: string } | null>(null)
   const [saved, setSaved] = useState<string[]>([])
   const [showPictures, setShowPictures] = useState(false)
+  const [billFrom, setBillFrom] = useState<{ id: string; file_name: string } | null>(null)
   const [showQuoted, setShowQuoted] = useState(false)
   const { view, viewer } = useDocumentViewer()
   const { role } = useAuth()
@@ -132,6 +134,9 @@ function Message({ email: e, startOpen, vendor, onCompose }: { email: ThreadDeta
           <FolderInput className="size-3.5" aria-hidden="true" />Save to documents
         </button>
       ) : a.vendor_link_id || saved.includes(a.id) ? <span className="border-l border-stone-200 px-2 py-1 text-emerald-700">saved</span> : null}
+      {canEdit && a.gmail_attachment_id && /pdf/i.test(`${a.mime_type ?? ''} ${a.file_name}`) ? (
+        <button type="button" onClick={() => setBillFrom(a)} className="border-l border-stone-200 px-2 py-1 text-stone-500 hover:text-brand" title="Make a freight bill from this PDF">Freight bill</button>
+      ) : null}
     </span>
   )
   const files = e.attachments.filter((a) => !isInlineImage(a))
@@ -187,6 +192,7 @@ function Message({ email: e, startOpen, vendor, onCompose }: { email: ThreadDeta
               </>
             )}
           {viewer}
+          {billFrom ? <MakeFreightBillDialog attachment={billFrom} carrierId={carrierId} onClose={() => setBillFrom(null)} /> : null}
           {saving && vendor ? (
             <SaveToDocumentsDialog attachment={saving} vendor={vendor} subject={e.subject} receivedAt={e.received_at} onClose={() => setSaving(null)} onSaved={() => { setSaved((x) => [...x, saving.id]); setSaving(null) }} />
           ) : null}

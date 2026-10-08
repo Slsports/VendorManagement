@@ -26,8 +26,10 @@ export default function FreightBillListPage() {
   const [params, setParams] = useSearchParams()
   const [editing, setEditing] = useState<Carrier | 'new' | null>(null)
   const filter = (params.get('show') ?? 'open') as FreightFilter
+  // Click a carrier: just its bills, every year, paid or not (its "folder", Dana, Oct 8).
+  const carrierId = params.get('carrier')
   const carriers = useSupabaseQuery(async () => (organization ? listCarriers(organization.id, true) : []), [organization?.id])
-  const q = useSupabaseQuery(async () => (organization ? listFreightBills(organization.id, filter) : []), [organization?.id, filter])
+  const q = useSupabaseQuery(async () => (organization ? listFreightBills(organization.id, filter, carrierId) : []), [organization?.id, filter, carrierId])
 
   return (
     <div>
@@ -35,9 +37,11 @@ export default function FreightBillListPage() {
 
       <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {(carriers.data ?? []).map((c) => (
-          <div key={c.id} className={cn('rounded-2xl border border-stone-200 bg-white p-4 text-sm', !c.is_active && 'opacity-60')}>
+          <div key={c.id} className={cn('rounded-2xl border bg-white p-4 text-sm', carrierId === c.id ? 'border-brand ring-2 ring-brand/20' : 'border-stone-200', !c.is_active && 'opacity-60')}>
             <div className="flex items-start justify-between gap-2">
-              <p className="flex flex-wrap items-center gap-2 font-medium text-stone-900"><Truck className="size-4 text-stone-400" aria-hidden="true" />{c.name}<Badge tone="neutral">{c.mode === 'ltl' ? 'LTL' : 'Parcel'}</Badge>{!c.is_active ? <Badge tone="neutral">Inactive</Badge> : null}</p>
+              <button type="button" onClick={() => { const next = new URLSearchParams(params); if (carrierId === c.id) { next.delete('carrier') } else { next.set('carrier', c.id); next.set('show', 'all') } setParams(next, { replace: true }) }}
+                aria-pressed={carrierId === c.id} title={carrierId === c.id ? 'Show every carrier' : `Show only ${c.name}'s bills`}
+                className="flex flex-wrap items-center gap-2 text-left font-medium text-stone-900 hover:text-brand"><Truck className="size-4 text-stone-400" aria-hidden="true" />{c.name}<Badge tone="neutral">{c.mode === 'ltl' ? 'LTL' : 'Parcel'}</Badge>{!c.is_active ? <Badge tone="neutral">Inactive</Badge> : null}</button>
               {canEdit ? (
                 <button type="button" onClick={() => setEditing(c)} aria-label={`Edit ${c.name}`} className="rounded-lg p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700"><Pencil className="size-4" aria-hidden="true" /></button>
               ) : null}
@@ -57,6 +61,12 @@ export default function FreightBillListPage() {
         <CarrierDialog carrier={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} onDone={async () => { setEditing(null); await carriers.refetch() }} />
       ) : null}
 
+      {carrierId ? (
+        <p className="mb-3 text-sm text-stone-700">
+          Only <span className="font-semibold">{(carriers.data ?? []).find((c) => c.id === carrierId)?.name ?? 'this carrier'}</span>'s bills.{' '}
+          <button type="button" onClick={() => { const next = new URLSearchParams(params); next.delete('carrier'); setParams(next, { replace: true }) }} className="font-medium text-brand hover:underline">Show every carrier</button>
+        </p>
+      ) : null}
       <div role="tablist" aria-label="Which bills" className="mb-4 flex w-full max-w-md rounded-xl border border-stone-200 bg-white p-1">
         {TABS.map((t) => (
           <button key={t.value} type="button" role="tab" aria-selected={filter === t.value}
@@ -89,7 +99,7 @@ export default function FreightBillListPage() {
                     <span className="text-stone-500">{shortDate(b.invoice_date)}</span>
                     <span className="font-medium text-stone-900">{money(b.total)}</span>
                     <Badge tone={st.tone}>{b.status === 'to_match' && open ? `${open} to match` : st.label}</Badge>
-                    {b.paid_date ? <Badge tone="success">Paid</Badge> : b.due_date ? <span className="text-xs text-stone-500">due {shortDate(b.due_date)}</span> : null}
+                    {b.paid_date ? <Badge tone="success">Paid {shortDate(b.paid_date)}</Badge> : <Badge tone="warning">Unpaid{b.due_date ? ` · due ${shortDate(b.due_date)}` : ''}</Badge>}
                   </div>
                 </Link>
               </li>

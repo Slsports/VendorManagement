@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildVendorIndex, domainLabel, domainVendors, mentionedVendors, poVendors, shipperVendors, vendorNames } from './mailMatch.ts'
-import { invoiceNumberFrom, looksLikeBill, looksLikeReceipt, proNumberFrom } from './freightText.ts'
+import { freshText, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom } from './freightText.ts'
 import { bodyAboveSignature, clueText, decodeBase64Url, parseAddressList, parseMessage, type GmailMessage } from './mailParse.ts'
 
 const vendors = [
@@ -191,3 +191,18 @@ describe('vendor names in a Worldwide email', () => {
   })
 })
 
+
+describe('freight payments', () => {
+  it('payment receipts, not bills or replies', () => {
+    expect(looksLikePaymentReceipt('Priority1 Payment Receipt', 'Thank you for your payment.')).toBe(true)
+    expect(looksLikePaymentReceipt('Statement', 'Dear SHAVER LAKE SPORTS INC, Thank you for your payment. Please find the receipt')).toBe(true)
+    expect(looksLikePaymentReceipt('Worldwide Express Invoice 10/07/2026 #261005W105025', 'The requested invoice is attached.')).toBe(false)
+    expect(looksLikePaymentReceipt('RE: Payment Receipt', '')).toBe(false)
+  })
+  it('our "it is paid", above the quoted email', () => {
+    const body = 'This order was paid by ACH 10/8/26 by Dana\n\n\nOn Oct 7, 2026, 12:18 AM, do-not-reply@wwex.com wrote:\n> The requested invoice is attached.'
+    expect(freshText(body)).toBe('This order was paid by ACH 10/8/26 by Dana')
+    expect(mentionsPayment(freshText(body))).toBe(true)
+    expect(mentionsPayment('Can you send the BOL?')).toBe(false)
+  })
+})

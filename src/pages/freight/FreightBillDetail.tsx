@@ -75,6 +75,16 @@ export default function FreightBillDetailPage() {
         ) : <span className="text-stone-600">No PDF yet.</span>}
         {b.carriers?.website ? <a href={b.carriers.website} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-brand hover:underline">Log in to {b.carriers.name} <ExternalLink className="size-3.5" aria-hidden="true" /></a> : null}
         {b.emails ? <Link to={`${ROUTES.mail}/${b.emails.thread_id}`} className="inline-flex items-center gap-1 text-brand hover:underline"><Mail className="size-4" aria-hidden="true" /> The email</Link> : null}
+        {b.receipt_path ? (
+          <button type="button" className="inline-flex items-center gap-1 text-brand hover:underline" onClick={() => view({ name: b.receipt_file_name ?? 'Payment receipt.pdf', mime: 'application/pdf', load: () => downloadVendorFile(b.receipt_path!) })}>
+            <FileText className="size-4" aria-hidden="true" /> Payment receipt
+          </button>
+        ) : null}
+        {b.paid_date && b.paid_email ? (
+          <Link to={`${ROUTES.mail}/${b.paid_email.thread_id}`} className="inline-flex items-center gap-1 text-stone-600 hover:text-brand">
+            <Mail className="size-4" aria-hidden="true" /> {b.paid_source === 'email' ? 'Marked paid from our email' : 'Marked paid from the receipt'}
+          </Link>
+        ) : null}
         {canEdit ? (
           <span className="ml-auto flex gap-2">
             <input ref={fileInput} type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => {

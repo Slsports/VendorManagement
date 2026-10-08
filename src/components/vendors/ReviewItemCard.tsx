@@ -12,6 +12,7 @@ import { EmailSenderReview } from '@/components/mail/EmailSenderReview'
 import { VendorAssignmentActions } from '@/components/vendors/VendorAssignmentActions'
 import { DeliveryReceiptReview } from '@/components/freight/DeliveryReceiptReview'
 import { MailReplyReview } from '@/components/mail/MailReplyReview'
+import { FreightPaymentReview } from '@/components/freight/FreightPaymentReview'
 
 type VendorRef = { id: string; name: string; lightspeed_name: string | null; aliases: string[] } | null
 
@@ -48,6 +49,7 @@ const ROUTE_OPTIONS: { value: RouteChoice; label: string }[] = [
  *  - vendor_assignment (who orders from it): keep the proposed person or pick another.
  *  - delivery_receipt (a carrier receipt Claude could not match): pick the vendor that shipped it.
  *  - mail_reply (Claude not sure an email needs an answer): Needs an answer / No answer needed.
+ *  - freight_payment (a payment Claude could not match to one bill): pick the bill it paid.
  *  - vendor_marker and anything else: Done / Dismiss.
  * Any card about one vendor can also delete it as "not a vendor" (never one with orders).
  * Every merge, confirm or split can state WWD / Faire / Not WWD so the result's usual route is right.
@@ -88,6 +90,18 @@ export function ReviewItemCard({ item, vendor, other, canEdit, onDone, aside }: 
       {ROUTE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
     </Select>
   )
+
+  if (item.kind === 'freight_payment') {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <p className="font-medium text-amber-900">{item.title}</p>
+          {aside ? <div className="shrink-0">{aside}</div> : null}
+        </div>
+        <FreightPaymentReview item={item} canEdit={canEdit} onDone={() => onDone()} />
+      </div>
+    )
+  }
 
   if (item.kind === 'mail_reply') {
     return (

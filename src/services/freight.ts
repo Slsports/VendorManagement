@@ -10,6 +10,8 @@ export interface FreightBillRow extends FreightBill {
 export interface FreightBillDetail extends FreightBill {
   carriers: Carrier | null
   emails: { id: string; thread_id: string; subject: string | null } | null
+  /** Where the payment was read from: a carrier receipt, or our own "it's paid" email. */
+  paid_email: { id: string; thread_id: string; subject: string | null; direction: string } | null
   freight_bill_lines: (FreightBillLine & {
     vendors: { id: string; name: string } | null
     orders: Pick<Order, 'id' | 'order_date' | 'po_number' | 'est_cost' | 'final_cost' | 'description'> | null
@@ -56,10 +58,11 @@ export async function listCarrierOwners(organizationId: string): Promise<{ id: s
 
 export type FreightFilter = 'open' | 'unpaid' | 'done' | 'all'
 
-export async function listFreightBills(organizationId: string, filter: FreightFilter): Promise<FreightBillRow[]> {
+export async function listFreightBills(organizationId: string, filter: FreightFilter, carrierId?: string | null): Promise<FreightBillRow[]> {
   let q = supabase.from('freight_bills')
     .select('*, carriers(id, name, mode, website), freight_bill_lines(id, shipper_name, amount, confirmed)')
     .eq('organization_id', organizationId)
+  if (carrierId) q = q.eq('carrier_id', carrierId)
   if (filter === 'open') q = q.neq('status', 'done')
   else if (filter === 'unpaid') q = q.is('paid_date', null).not('total', 'is', null)
   else if (filter === 'done') q = q.eq('status', 'done')
@@ -70,7 +73,7 @@ export async function listFreightBills(organizationId: string, filter: FreightFi
 
 export async function getFreightBill(id: string): Promise<FreightBillDetail> {
   const { data, error } = await supabase.from('freight_bills')
-    .select('*, carriers(*), emails(id, thread_id, subject), freight_bill_lines(*, vendors:vendor_id(id, name), orders(id, order_date, po_number, est_cost, final_cost, description))')
+    .select('*, carriers(*), emails:emails!freight_bills_email_id_fkey(id, thread_id, subject), paid_email:emails!freight_bills_paid_email_id_fkey(id, thread_id, subject, direction), freight_bill_lines(*, vendors:vendor_id(id, name), orders(id, order_date, po_number, est_cost, final_cost, description))')
     .eq('id', id).single()
   if (error) throw error
   const bill = data as unknown as FreightBillDetail
@@ -130,8 +133,21 @@ export async function setSenderCarrier(senderId: string, carrierId: string): Pro
 }
 
 /** Dana pays the bills: record when and how. Null clears it. */
+/** "Make a freight bill" from a PDF in an email: the mail sync fetches it and Claude reads it (a minute or so). */
+export async function makeFreightBillFromAttachment(attachmentId: string, carrierId: string): Promise<string> {
+  const { data, error } = await supabase.rpc('make_freight_bill_from_attachment', { p_attachment: attachmentId, p_carrier: carrierId })
+  if (error) throw error
+  return data as string
+}
+
+/** The "which bill?" card for a freight payment. */
+export async function answerFreightPayment(itemId: string, billId: string): Promise<void> {
+  const { error } = await supabase.rpc('answer_freight_payment', { p_item: itemId, p_bill: billId })
+  if (error) throw error
+}
+
 export async function setFreightBillPaid(id: string, paid: { paid_date: string; paid_via: FreightBill['paid_via']; paid_ref: string | null; paid_by: string } | null): Promise<void> {
-  const { error } = await supabase.from('freight_bills').update(paid ?? { paid_date: null, paid_via: null, paid_ref: null, paid_by: null }).eq('id', id)
+  const { error } = await supabase.from('freight_bills').update(paid ? { ...paid, paid_source: 'manual' as const } : { paid_date: null, paid_via: null, paid_ref: null, paid_by: null, paid_source: null, paid_email_id: null }).eq('id', id)
   if (error) throw error
 }
 

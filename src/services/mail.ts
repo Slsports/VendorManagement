@@ -197,12 +197,12 @@ export async function countMailForMe(organizationId: string, me: string, seesFre
 }
 
 export interface ThreadDetail {
-  thread: ThreadRow & { working_by?: string | null; working_done_at?: string | null }
+  thread: ThreadRow & { working_by?: string | null; working_done_at?: string | null; carrier_id?: string | null }
   emails: (Email & { attachments: EmailAttachment[] })[]
 }
 
 export async function getThread(threadId: string): Promise<ThreadDetail | null> {
-  const { data: t, error } = await supabase.from('email_threads').select(`${THREAD_SELECT}, working_by, working_done_at`).eq('id', threadId).maybeSingle()
+  const { data: t, error } = await supabase.from('email_threads').select(`${THREAD_SELECT}, working_by, working_done_at, carrier_id`).eq('id', threadId).maybeSingle()
   if (error) throw error
   if (!t) return null
   const { data: emails, error: e2 } = await supabase.from('emails').select('*, attachments:email_attachments(*)').eq('thread_id', threadId).order('received_at', { ascending: true })

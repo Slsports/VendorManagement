@@ -1388,3 +1388,11 @@ Dana listed these while working the Review queue, then said go.
 - Dana, Oct 8: a **Credits** folder right next to Invoices in a vendor's Documents (credit memos, credit
   notices, return authorizations). Saving from email, bulk import and Claude's sorting all know it; files
   already filed as invoices whose name says credit moved there.
+- Dana, Oct 8 (freight payments): a bill is marked paid from a carrier's payment receipt (Claude reads the
+  PDF; the receipt is kept on the bill) or from our own email saying it is paid ("This order was paid by ACH
+  10/8/26 by Dana"). The bill is found by invoice number, else the bill that conversation is about, else the
+  only unpaid bill of that carrier for that amount; otherwise a "which bill?" card in the review queue for
+  the carrier's owner. "Not paid" on the bill undoes it. Any PDF in an email has a "Freight bill" button
+  (bills that came some other way). Freight bills are filed with the carrier (Freight bills page; click a
+  carrier for just its bills, every year, paid or unpaid) and, once a line is confirmed, with the vendor
+  (Documents → Shipping) and now the matched order too.
