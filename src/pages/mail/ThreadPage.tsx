@@ -15,6 +15,7 @@ import { AssigneeSelect } from '@/components/review/AssigneeSelect'
 import { ComposeDialog, type ComposeDraft } from '@/components/mail/ComposeDialog'
 import { AddOrderDialog } from '@/components/orders/AddOrderDialog'
 import { Alert, Button, Spinner } from '@/components/ui'
+import { ThreadVendorTags } from '@/components/mail/ThreadVendorTags'
 import { VendorPicker as SharedVendorPicker, type NewVendorPrefill } from '@/components/vendors/VendorPicker'
 
 /** One conversation: every message, who owns it, which vendor it is filed to, and where it stands. */
@@ -85,6 +86,10 @@ export default function ThreadPage() {
         </section>
       ) : null}
 
+      <ThreadVendorTags threadId={t.id} emailId={(emails.find((e) => e.direction === 'in') ?? emails[0]!).id} filedVendorId={t.vendor?.id ?? null} canEdit={canEdit} />
+      {emails.some((e) => e.freight_pct !== null && e.freight_pct !== undefined) ? (
+        <p className="mb-4 rounded-xl bg-amber-50 px-4 py-2 text-sm text-amber-900">Freight rate quoted here: <span className="font-semibold">{emails.find((e) => e.freight_pct !== null && e.freight_pct !== undefined)!.freight_pct}%</span>. Check-in offers it for each vendor on this shipment.</p>
+      ) : null}
       <ol className="space-y-3">
         {emails.map((e, i) => (
           <Message key={e.id} email={e} startOpen={i === emails.length - 1 || emails.length <= 3} vendor={t.vendor}

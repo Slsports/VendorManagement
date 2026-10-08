@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { getOrder, updateOrder } from '@/services/orders'
+import { getOrder, moveOrderVendor, updateOrder } from '@/services/orders'
 import { ORDER_STATUSES, ORDER_STATUS_LABELS, ROUTES, type OrderStatus } from '@/lib/constants'
 import { BILLING_ROUTE_LABELS, PAID_VIA_LABELS, money, showLabel } from '@/lib/vendors'
 import { errorMessage } from '@/lib/utils'
@@ -13,7 +14,8 @@ import { OrderDocumentsSection } from '@/components/orders/OrderDocumentsSection
 import { OrderRepsCard } from '@/components/orders/OrderRepsCard'
 import { CheckInPricing } from '@/components/orders/CheckInPricing'
 import { FreeShippingCard } from '@/components/orders/FreeShippingCard'
-import { Alert, Badge, Select, Spinner } from '@/components/ui'
+import { VendorPicker } from '@/components/vendors/VendorPicker'
+import { Alert, Badge, Button, Select, Spinner } from '@/components/ui'
 
 const d = (s: string | null | undefined) => (s ? new Date(s).toLocaleDateString() : null)
 
@@ -22,6 +24,7 @@ export default function OrderDetailPage() {
   const { role, profile } = useAuth()
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
   const q = useSupabaseQuery(() => getOrder(id), [id])
+  const [changingVendor, setChangingVendor] = useState(false)
   const o = q.data
   if (q.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading order…" className="text-brand" /></div>
   if (q.error || !o) return <Alert variant="error">{q.error ?? 'Order not found'}</Alert>
@@ -64,9 +67,20 @@ export default function OrderDetailPage() {
         title={o.vendor ? o.vendor.name : 'Order'}
         description={<span className="inline-flex flex-wrap items-center gap-2"><OrderStatusBadge status={o.status} />{o.order_date ? <span>{d(o.order_date)}</span> : null}{o.source !== 'manual' ? <Badge tone="neutral">from {o.source.replaceAll('_', ' ')}</Badge> : null}</span>}
         actions={canEdit ? (
-          <Select value={o.status} onChange={(e) => void setStatus(e.target.value as OrderStatus)} aria-label="Change status" className="h-9 w-52">
-            {ORDER_STATUSES.map((s) => <option key={s} value={s}>{ORDER_STATUS_LABELS[s]}</option>)}
-          </Select>
+          <div className="flex flex-wrap items-center gap-2">
+            {changingVendor ? (
+              <span className="flex items-center gap-2">
+                <VendorPicker autoFocus className="w-60" placeholder="The real vendor" onPick={async (v) => {
+                  setChangingVendor(false)
+                  try { await moveOrderVendor(o.id, v.id); toast.success(`Order moved to ${v.name}`); await q.refetch() } catch (err) { toast.error(errorMessage(err)) }
+                }} />
+                <Button size="sm" variant="ghost" onClick={() => setChangingVendor(false)}>Cancel</Button>
+              </span>
+            ) : <Button size="sm" variant="ghost" onClick={() => setChangingVendor(true)}>Change vendor</Button>}
+            <Select value={o.status} onChange={(e) => void setStatus(e.target.value as OrderStatus)} aria-label="Change status" className="h-9 w-52">
+              {ORDER_STATUSES.map((s) => <option key={s} value={s}>{ORDER_STATUS_LABELS[s]}</option>)}
+            </Select>
+          </div>
         ) : undefined}
       />
       {o.description ? <p className="mb-6 rounded-2xl border border-stone-200 bg-white p-5 text-stone-900">{o.description}</p> : null}
@@ -84,7 +98,7 @@ export default function OrderDetailPage() {
               </section>
             )
           })}
-          <CheckInPricing order={o} canEdit={canEdit} />
+          <CheckInPricing order={o} canEdit={canEdit} onOrderChange={q.refetch} />
           {o.notes ? <section className="rounded-2xl border border-stone-200 bg-white p-5"><h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Dana's notes</h2><p className="mt-2 whitespace-pre-line text-sm text-stone-800">{o.notes}</p></section> : null}
           {extra.length ? <section className="rounded-2xl border border-stone-200 bg-white p-5"><h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Also on the sheet</h2><dl className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">{extra.map(([k, v]) => <div key={k}><dt className="text-xs font-medium text-stone-500">{k}</dt><dd className="text-sm text-stone-900">{v}</dd></div>)}</dl></section> : null}
         </div>

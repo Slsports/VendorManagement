@@ -1293,3 +1293,20 @@ Dana listed these while working the Review queue, then said go.
   switches it per person.
 - Dana pays the bills: "Mark paid" on a freight bill (date, card / check / ACH / Bill.com, reference);
   Freight bills has a To pay tab, and the dashboard lists unpaid bills soonest due first, overdue in red.
+
+## 2026-10-08 — One email, many vendors; Worldwide Warehouse; Marketing and Other
+- Worldwide's mail (worldwidebuygroup.com) had been answered "PNW USA INC" by a slip on a review card: 164
+  emails filed to PNW. Worldwide is now a service (each email files to the vendor it names); May's own PNW
+  conversation stayed with PNW. The company-domain rule never files mail from services or carriers.
+- Emails can be tagged to several vendors (`email_vendor_tags`; a vendor's Mail shows tagged conversations).
+  Mail from services, carriers and rep groups is tagged to every vendor it names; Claude (cheapest model)
+  reads the vendor names and any quoted freight rate in such mail from the last 90 days; "Also tag a
+  vendor" on a conversation adds one by hand (with "+ Add new vendor").
+- "Worldwide Warehouse" is the holding vendor for Worldwide portal orders until the invoice shows the real
+  vendor ("Import Toys" was a Worldwide program, not a vendor; its order notes "WWD program: Import Toys",
+  May Cheong per Sue). The warehouse's own address files to it. "Change vendor" on an order moves it,
+  with its files and mail, to the real vendor.
+- Dana: a Worldwide pallet's freight rate (Sue's 10.7%) is the freight % for each vendor on the pallet.
+  Check-in offers "Use 10.7%" when mail about the vendor quotes a rate after the order date.
+- "Who is this mail from?" gets Marketing (ads from a company we never bought from: always Offers &
+  catalogs, no vendor) and "Other – not a vendor" (always Needs attention, given to Dana, waiting on us).

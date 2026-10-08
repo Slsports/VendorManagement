@@ -5,9 +5,9 @@
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { Gmail, GmailError, googleAccessToken } from '../_shared/gmail.ts'
 import { clueText, htmlBody, isBulk, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
-import { buildVendorIndex, domainVendors, mentionedVendors, type VendorIndex } from '../_shared/mailMatch.ts'
+import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type VendorIndex } from '../_shared/mailMatch.ts'
 import { extractLinks, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
-import { aiEnabled, readSender, sortEmails, type UnsureEmail } from '../_shared/ai.ts'
+import { aiEnabled, readEmailVendors, readSender, sortEmails, type UnsureEmail } from '../_shared/ai.ts'
 import { applyFreightReading, freightIndex, invoiceNumberFrom, looksLikeBill, readFreightPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
@@ -372,6 +372,24 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
       const batch = list.slice(i, i + 20)
       const views = await sortEmails(db, org, batch)
       await check(db.rpc('mail_set_ai_views', { p_org: org, p_ids: batch.map((e) => e.id), p_views: batch.map((e) => views.get(e.id) ?? 'unsure') }))
+    }
+
+    // Mail from Worldwide, carriers, services and rep groups: every vendor it names gets the email too, and a
+    // quoted freight rate (Worldwide's pallet rate) is kept for check-in. Last 90 days, a few a run.
+    const { data: multi } = await db.from('emails')
+      .select('id, subject, body_text, sender:email_senders!inner(kind)')
+      .eq('organization_id', org).eq('direction', 'in').is('vendors_read_at', null).not('is_bulk', 'is', true)
+      .in('sender.kind', ['platform', 'carrier', 'rep_group'])
+      .gte('received_at', new Date(Date.now() - 90 * 86_400_000).toISOString())
+      .order('received_at', { ascending: false }).limit(8)
+    let vIndex: Awaited<ReturnType<typeof freightIndex>> | null = null
+    for (const e of multi ?? []) {
+      if (Date.now() - started > TIME_BUDGET_MS) break
+      const reading = await readEmailVendors(db, org, e)
+      vIndex ??= await freightIndex(db, org)
+      const ids = [...new Set((reading?.vendors ?? []).flatMap((n) => shipperVendors(vIndex!, n)))]
+      if (ids.length) await check(db.from('email_vendor_tags').upsert(ids.map((vendor_id) => ({ email_id: e.id, vendor_id, organization_id: org, how: 'ai' })), { onConflict: 'email_id,vendor_id', ignoreDuplicates: true }))
+      await check(db.from('emails').update({ vendors_read_at: new Date().toISOString(), freight_pct: reading?.freight_pct ?? null }).eq('id', e.id))
     }
 
     const { data: senders } = await db.from('email_senders').select('id, sender_key, display_name')

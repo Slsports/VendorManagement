@@ -51,6 +51,11 @@ describe('EmailSenderReview', () => {
     fireEvent.click(screen.getByRole('button', { name: 'A service like Bill.com or Faire' }))
     await waitFor(() => expect(resolveEmailSender).toHaveBeenCalledWith('s1', 'platform', undefined, undefined))
   })
+  it('Marketing and Other – not a vendor', async () => {
+    render(withAuth('buyer', <EmailSenderReview item={item} canEdit onDone={vi.fn()} />))
+    fireEvent.click(screen.getByRole('button', { name: 'Marketing' }))
+    await waitFor(() => expect(resolveEmailSender).toHaveBeenCalledWith('s1', 'marketing', undefined, undefined))
+  })
   it('viewers see the proposal but no buttons', () => {
     render(withAuth('viewer', <EmailSenderReview item={item} canEdit={false} onDone={vi.fn()} />))
     expect(screen.queryByRole('button')).toBeNull()

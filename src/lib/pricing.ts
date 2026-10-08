@@ -21,8 +21,9 @@ export function freightPct(freight: number | null | undefined, productTotal: num
 
 export interface PriceBreakdown { marginPct: number; freightPct: number | null; upchargePct: number; totalPct: number }
 
-export function breakdown(s: PricingSettings, freight: number | null | undefined, productTotal: number, wwdUpcharge: boolean): PriceBreakdown {
-  const f = freightPct(freight, productTotal)
+/** ratePct: freight quoted as a percent (a Worldwide pallet, 10.7%) wins over freight cost ÷ product. */
+export function breakdown(s: PricingSettings, freight: number | null | undefined, productTotal: number, wwdUpcharge: boolean, ratePct?: number | null): PriceBreakdown {
+  const f = ratePct !== null && ratePct !== undefined ? ratePct : freightPct(freight, productTotal)
   const up = wwdUpcharge ? s.wwd_upcharge_pct : 0
   return { marginPct: s.margin_pct, freightPct: f, upchargePct: up, totalPct: s.margin_pct + (f ?? 0) + up }
 }

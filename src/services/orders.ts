@@ -111,3 +111,25 @@ export async function deleteOrderLine(id: string): Promise<void> {
   if (error) throw error
 }
 
+/** Move an order to its real vendor (a Worldwide Warehouse order once the invoice names it); files and mail go along. */
+export async function moveOrderVendor(orderId: string, vendorId: string): Promise<void> {
+  const { error } = await supabase.rpc('move_order_vendor', { p_order: orderId, p_vendor: vendorId })
+  if (error) throw error
+}
+
+/** A freight rate quoted in mail about this vendor since the order (Worldwide's pallet rate), newest first. */
+export async function quotedFreightRate(vendorId: string, since: string | null): Promise<{ pct: number; subject: string | null; received_at: string; thread_id: string } | null> {
+  const [tagged, filed] = await Promise.all([
+    supabase.from('email_vendor_tags').select('emails!inner(freight_pct, subject, received_at, thread_id)').eq('vendor_id', vendorId).not('emails.freight_pct', 'is', null).limit(20),
+    supabase.from('emails').select('freight_pct, subject, received_at, thread_id').eq('vendor_id', vendorId).not('freight_pct', 'is', null).limit(20),
+  ])
+  if (tagged.error) throw tagged.error
+  if (filed.error) throw filed.error
+  type Hit = { freight_pct: number; subject: string | null; received_at: string; thread_id: string }
+  const hits: Hit[] = [...((tagged.data ?? []) as unknown as { emails: Hit }[]).map((r) => r.emails), ...((filed.data ?? []) as unknown as Hit[])]
+    .filter((h) => !since || h.received_at.slice(0, 10) >= since)
+    .sort((a, b) => b.received_at.localeCompare(a.received_at))
+  const h = hits[0]
+  return h ? { pct: Number(h.freight_pct), subject: h.subject, received_at: h.received_at, thread_id: h.thread_id } : null
+}
+

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { Ban, Check, Layers, Truck, Users } from 'lucide-react'
+import { Check, Layers, Megaphone, MessageCircleQuestion, Truck, Users } from 'lucide-react'
 import { resolveEmailSender } from '@/services/mail'
 import { errorMessage } from '@/lib/utils'
 import { newVendorPrefill } from '@/lib/mail'
@@ -41,7 +41,7 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
   const [repId, setRepId] = useState('')
   const prefill = newVendorPrefill({ senderKey: d.sender_key, isDomain: d.is_domain, displayName: d.display_name })
 
-  async function answer(label: string, kind: 'vendor' | 'rep_group' | 'platform' | 'not_vendor', vendorId?: string, repGroupId?: string) {
+  async function answer(label: string, kind: 'vendor' | 'rep_group' | 'platform' | 'marketing' | 'not_vendor', vendorId?: string, repGroupId?: string) {
     setBusy(true)
     try {
       const linked = await resolveEmailSender(d.sender_id, kind, vendorId, repGroupId)
@@ -104,7 +104,8 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
               <Button size="sm" variant="secondary" disabled={busy} onClick={() => setMode('rep')} leftIcon={<Users className="size-4" aria-hidden="true" />}>A rep group</Button>
               <Button size="sm" variant="secondary" loading={busy} onClick={() => void answer('Each email will be filed by the vendor it names', 'platform')} leftIcon={<Layers className="size-4" aria-hidden="true" />} title="NetSuite, Bill.com, Faire, FashionGo and similar services that send mail for many vendors">A service like Bill.com or Faire</Button>
               <Button size="sm" variant="secondary" disabled={busy} onClick={() => setMode('carrier')} leftIcon={<Truck className="size-4" aria-hidden="true" />}>A freight carrier</Button>
-              <Button size="sm" variant="ghost" loading={busy} onClick={() => void answer('Not a vendor', 'not_vendor')} leftIcon={<Ban className="size-4" aria-hidden="true" />}>Not a vendor</Button>
+              <Button size="sm" variant="secondary" loading={busy} onClick={() => void answer('Marketing: their mail goes to Offers & catalogs', 'marketing')} leftIcon={<Megaphone className="size-4" aria-hidden="true" />} title="Ads from a company we have never bought from">Marketing</Button>
+              <Button size="sm" variant="ghost" loading={busy} onClick={() => void answer('Other: their mail stays in Needs attention for you', 'not_vendor')} leftIcon={<MessageCircleQuestion className="size-4" aria-hidden="true" />} title="Not a vendor, not ads: someone who may need an answer">Other – not a vendor</Button>
             </div>
           )}
         </div>

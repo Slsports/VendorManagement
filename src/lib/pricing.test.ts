@@ -11,6 +11,8 @@ describe('check-in pricing (Dana, Oct 8)', () => {
     expect(breakdown(DEFAULT_PRICING, 100, 1000, true)).toEqual({ marginPct: 55, freightPct: 10, upchargePct: 1.5, totalPct: 66.5 })
     expect(breakdown(DEFAULT_PRICING, 100, 1000, false).totalPct).toBe(65)
     expect(breakdown(DEFAULT_PRICING, null, 1000, true).totalPct).toBe(56.5)
+    // Worldwide's pallet rate is used as the freight % for each vendor on the pallet.
+    expect(breakdown(DEFAULT_PRICING, 100, 1000, true, 10.7).totalPct).toBeCloseTo(67.2)
   })
   it('prices as a true margin, exact to the cent: a $5 toy at 66.5% is $14.93', () => {
     expect(retailPrice(5, 66.5)).toBe(14.93)

@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import { ClipboardPaste, Plus, RefreshCw, RotateCcw, Trash2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { addOrderLines, deleteOrderLine, listOrderLines, updateOrderLine, type OrderDetail } from '@/services/orders'
+import { addOrderLines, deleteOrderLine, listOrderLines, quotedFreightRate, updateOrder, updateOrderLine, type OrderDetail } from '@/services/orders'
 import { breakdown, hasWwdUpcharge, parsePastedLines, pct, pricingSettings, retailPrice } from '@/lib/pricing'
 import { money } from '@/lib/freight'
 import { errorMessage } from '@/lib/utils'
@@ -15,7 +15,7 @@ import { Button, Input, Textarea } from '@/components/ui'
  * where freight landed and the total percent; prices are exact (no rounding) and Trevor edits any of them.
  * Until the freight bill is in, prices use margin and upcharge only; one click recalculates when it arrives.
  */
-export function CheckInPricing({ order: o, canEdit }: { order: OrderDetail; canEdit: boolean }) {
+export function CheckInPricing({ order: o, canEdit, onOrderChange }: { order: OrderDetail; canEdit: boolean; onOrderChange?: () => Promise<void> }) {
   const { organization } = useAuth()
   const q = useSupabaseQuery(() => listOrderLines(o.id), [o.id])
   const [busy, setBusy] = useState(false)
@@ -23,12 +23,14 @@ export function CheckInPricing({ order: o, canEdit }: { order: OrderDetail; canE
   const [pasted, setPasted] = useState('')
   const [draft, setDraft] = useState({ vendor_item_id: '', description: '', quantity: '1', unit_cost: '' })
   const lines = q.data ?? []
+  const quoted = useSupabaseQuery(async () => (o.vendor && o.freight_pct === null ? quotedFreightRate(o.vendor.id, o.order_date) : null), [o.vendor?.id, o.order_date, o.freight_pct])
 
   const settings = pricingSettings(organization?.settings)
   const productTotal = lines.length ? lines.reduce((n, l) => n + Number(l.extended), 0) : Number(o.final_cost ?? o.est_cost ?? 0)
   const freight = o.free_shipping ? 0 : o.freight_cost
   const upcharge = hasWwdUpcharge(o)
-  const b = breakdown(settings, freight, productTotal, upcharge)
+  const rate = o.freight_pct !== null && o.freight_pct !== undefined ? Number(o.freight_pct) : null
+  const b = breakdown(settings, freight, productTotal, upcharge, rate)
   const suggested = (l: OrderLine) => retailPrice(Number(l.unit_cost), b.totalPct)
   const stale = lines.filter((l) => !l.retail_edited && l.retail_price !== null && l.retail_price !== suggested(l)).length
   const unsaved = lines.filter((l) => !l.retail_edited && l.retail_price === null).length
@@ -65,7 +67,8 @@ export function CheckInPricing({ order: o, canEdit }: { order: OrderDetail; canE
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-stone-50 px-4 py-3 text-sm" aria-label="How the prices are figured">
         <span>
           <span className="font-medium text-stone-900">Freight {b.freightPct === null ? 'not billed yet' : pct(b.freightPct)}</span>
-          {b.freightPct !== null ? <span className="text-stone-500"> ({o.free_shipping ? 'free shipping' : `${money(freight)} on ${money(productTotal)}`})</span> : null}
+          {b.freightPct !== null ? <span className="text-stone-500"> ({rate !== null ? (o.freight_pct_note ?? 'quoted rate') : o.free_shipping ? 'free shipping' : `${money(freight)} on ${money(productTotal)}`})</span> : null}
+          {rate !== null && canEdit ? <button type="button" className="ml-1 text-xs text-brand hover:underline" onClick={() => void run('Back to the freight bill', async () => { await updateOrder(o.id, { freight_pct: null, freight_pct_note: null }); await onOrderChange?.() })}>use the freight bill instead</button> : null}
         </span>
         <span className="text-stone-400">·</span>
         <span>Margin {pct(b.marginPct)}</span>
@@ -74,6 +77,15 @@ export function CheckInPricing({ order: o, canEdit }: { order: OrderDetail; canE
         <span className="text-stone-400">·</span>
         <span className="font-semibold text-stone-900">Total {pct(b.totalPct)}</span>
       </div>
+      {quoted.data && rate === null && canEdit ? (
+        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <span>Freight rate quoted in mail: <span className="font-semibold">{quoted.data.pct}%</span> on {new Date(quoted.data.received_at).toLocaleDateString()} ({quoted.data.subject ?? 'an email'}).</span>
+          <Button size="sm" loading={busy} onClick={() => void run(`Freight ${quoted.data!.pct}% used`, async () => {
+            await updateOrder(o.id, { freight_pct: quoted.data!.pct, freight_pct_note: `rate quoted ${new Date(quoted.data!.received_at).toLocaleDateString()}` })
+            await onOrderChange?.()
+          })}>Use {quoted.data.pct}%</Button>
+        </div>
+      ) : null}
       {b.freightPct === null ? <p className="mt-2 text-xs text-stone-500">Prices use margin{upcharge ? ' and upcharge' : ''} only until the freight bill is matched to this order; then recalculate.</p> : null}
 
       {lines.length ? (

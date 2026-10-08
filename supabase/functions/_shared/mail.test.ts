@@ -152,3 +152,23 @@ describe('freight bill emails', () => {
   })
 })
 
+describe('vendor names in a Worldwide email', () => {
+  const idx = buildVendorIndex([
+    { id: 'kg', name: 'KIDGALAXY', aliases: ['KIDGALAXY WWD', 'Kid Galaxy'] },
+    { id: 'cn', name: 'COLEMAN - NEWELL BRANDS', aliases: ['COLEMAN - NEWELL BRANDS - WWD', 'Newell Brands - Coleman'] },
+    { id: 'ln', name: 'LANARD', aliases: ['LANARD - WWD'] },
+    { id: 'ef', name: 'Eastman Footwear', aliases: [] },
+    { id: 'eo', name: 'EASTMAN OUTDOORS', aliases: [] },
+  ], ['Shaver Lake'])
+  it('finds each vendor Sue named', () => {
+    expect(shipperVendors(idx, 'Kids Galaxy')).toEqual(['kg'])
+    expect(shipperVendors(idx, 'Newell')).toEqual(['cn'])
+    expect(shipperVendors(idx, 'Lanard Toys')).toEqual(['ln'])
+    expect(shipperVendors(idx, 'Eastman Footwear')).toEqual(['ef'])
+  })
+  it('a name two vendors share goes to a person', () => {
+    expect(shipperVendors(idx, 'Eastman')).toEqual([])
+    expect(shipperVendors(idx, 'Motor Max')).toEqual([])
+  })
+})
+

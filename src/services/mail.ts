@@ -154,7 +154,7 @@ export async function listThreads(organizationId: string, me: string | undefined
   else if (f.status === 'open') q = q.neq('status', 'handled')
   if (f.view === 'freight') q = q.not('carrier_id', 'is', null)
   else if (f.view && f.view !== 'all') q = q.eq('view', f.view)
-  if (f.vendorId) q = q.eq('vendor_id', f.vendorId)
+  if (f.vendorId) q = q.or(`vendor_id.eq.${f.vendorId},tagged_vendor_ids.cs.{${f.vendorId}}`)
   if (f.unmatched) q = q.is('vendor_id', null)
   if (f.q?.trim()) q = q.ilike('subject', `%${f.q.trim().replace(/[%_]/g, '')}%`)
   const { data, error } = await q.order('last_message_at', { ascending: false }).limit(limit)
@@ -337,3 +337,23 @@ export async function getAiUsageThisMonth(organizationId: string): Promise<AiUsa
   }
   return out
 }
+
+// ---- one email, many vendors ---------------------------------------------------------------
+export interface ThreadTag { email_id: string; vendor_id: string; name: string; how: 'auto' | 'ai' | 'manual' }
+
+/** The vendors a conversation's emails are tagged to, one entry per vendor. */
+export async function listThreadTags(threadId: string): Promise<ThreadTag[]> {
+  const { data, error } = await supabase.from('email_vendor_tags').select('email_id, vendor_id, how, vendors(name), emails!inner(thread_id)').eq('emails.thread_id', threadId)
+  if (error) throw error
+  const seen = new Map<string, ThreadTag>()
+  for (const r of (data ?? []) as unknown as { email_id: string; vendor_id: string; how: ThreadTag['how']; vendors: { name: string } | null }[]) {
+    if (!seen.has(r.vendor_id)) seen.set(r.vendor_id, { email_id: r.email_id, vendor_id: r.vendor_id, how: r.how, name: r.vendors?.name ?? 'Vendor' })
+  }
+  return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name))
+}
+
+export async function tagEmailVendor(emailId: string, vendorId: string, on: boolean): Promise<void> {
+  const { error } = await supabase.rpc('tag_email_vendor', { p_email: emailId, p_vendor: vendorId, p_on: on })
+  if (error) throw error
+}
+
