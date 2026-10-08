@@ -139,7 +139,15 @@ async function loadContext(db: SupabaseClient, acct: Account, labelNames: Map<st
   const staff = new Set((people ?? []).map((p) => (p.email as string).toLowerCase()))
   // Our own names appear in every email (signatures, addresses); they are never a vendor clue.
   const ours = ['Shaver Lake', org?.name ?? ''].filter(Boolean)
-  return { org: acct.organization_id, mailbox: acct.mailbox.toLowerCase(), internal: new Set(acct.internal_domains.map((d) => d.toLowerCase())), staff, index: buildVendorIndex(vendors, ours), labelNames }
+  // PO numbers on file decide which vendor an email is about.
+  const orders: { po_number: string | null; vendor_id: string }[] = []
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await db.from('orders').select('po_number, vendor_id').eq('organization_id', acct.organization_id).not('po_number', 'is', null).range(from, from + 999)
+    if (error) throw new Error(error.message)
+    orders.push(...(data ?? []))
+    if (!data || data.length < 1000) break
+  }
+  return { org: acct.organization_id, mailbox: acct.mailbox.toLowerCase(), internal: new Set(acct.internal_domains.map((d) => d.toLowerCase())), staff, index: buildVendorIndex(vendors, ours, orders), labelNames }
 }
 
 const domainOf = (email: string) => email.split('@')[1]?.toLowerCase() ?? ''

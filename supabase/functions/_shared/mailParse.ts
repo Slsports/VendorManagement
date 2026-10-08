@@ -171,8 +171,9 @@ export function bodyAboveSignature(body: string, maxChars = 4000): string {
 }
 
 /** Clue text for the matcher: strong = subject, file names, From name; body = the message above the signature. */
-export function clueText(p: Pick<ParsedMessage, 'subject' | 'attachments' | 'from' | 'body_text'>): { strong: string; body: string } {
-  const files = p.attachments.map((a) => a.file_name.replace(/\.[a-z0-9]{2,5}$/i, '').replace(/[_\-.]+/g, ' ')).join(' \n ')
+export function clueText(p: Pick<ParsedMessage, 'subject' | 'attachments' | 'from' | 'body_text'>): { strong: string; body: string; from: string } {
+  const files = p.attachments.map((a) => a.file_name.replace(/\.[a-z0-9]{2,5}$/i, '').replace(/[_.]+/g, ' ')).join(' \n ')
   const subject = (p.subject ?? '').replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, '')
-  return { strong: [subject, files, p.from?.name ?? ''].join(' \n '), body: bodyAboveSignature(p.body_text) }
+  // The From name is kept apart: a person's first name there ("Angie Castillo") is not a vendor.
+  return { strong: [subject, files].join(' \n '), body: bodyAboveSignature(p.body_text), from: p.from?.name ?? '' }
 }

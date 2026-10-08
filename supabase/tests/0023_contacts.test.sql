@@ -22,3 +22,12 @@ update public.vendors set assigned_rep_group_contact_id = (select id from public
 \set ON_ERROR_STOP on
 insert into public.orders (organization_id, vendor_id, taken_by) values ('00000000-0000-0000-0000-000000000001', :'cv', 'Show rep Bob') returning taken_by;
 reset role;
+\echo '>>> a web address that contains a rep group name is that rep group (dandylinesllc.com → DandyLines)'
+reset role;
+select set_config('request.jwt.claims', '', false) is not null as as_service;
+select public.mail_name_keys('DandyLines / Diverse Marketing') as keys, public.mail_domain_label('mail.dandylinesllc.com') as label;
+insert into public.rep_groups (organization_id, name) values ('00000000-0000-0000-0000-000000000001', 'Zorbex Lines / Diverse Test Marketing') returning id as dg \gset
+insert into public.email_senders (organization_id, sender_key, is_domain) values ('00000000-0000-0000-0000-000000000001', 'zorbexlinesllc.com', true) returning id as ds, cardinality(domain_rep_group_ids) as groups_found \gset
+select public.mail_match_rep_senders('00000000-0000-0000-0000-000000000001', array[:'ds']::uuid[]) as matched;
+select kind, rep_group_id = :'dg' as is_zorbex from public.email_senders where id = :'ds';
+insert into public.email_senders (organization_id, sender_key, is_domain) values ('00000000-0000-0000-0000-000000000001', 'gmail.com', true) returning cardinality(domain_rep_group_ids) as freemail_groups;

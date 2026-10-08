@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildVendorIndex, domainLabel, domainVendors, mentionedVendors, vendorNames } from './mailMatch.ts'
+import { buildVendorIndex, domainLabel, domainVendors, mentionedVendors, poVendors, vendorNames } from './mailMatch.ts'
 import { bodyAboveSignature, clueText, decodeBase64Url, parseAddressList, parseMessage, type GmailMessage } from './mailParse.ts'
 
 const vendors = [
@@ -82,7 +82,7 @@ describe('message parsing', () => {
     const clues = clueText(p)
     expect(clues.body).toBe('Confirmation attached.\n')
     expect(clues.strong).toContain('Confirmation')
-    expect(clues.strong).toContain('WFS Confirmation 8 27 26')
+    expect(clues.strong).toContain('WFS Confirmation 8-27-26')
   })
   it('marks newsletters as bulk mail', () => {
     expect(parseMessage(msg).is_bulk).toBe(false)
@@ -92,5 +92,33 @@ describe('message parsing', () => {
   it('decodes UTF-8 and handles empty address lists', () => {
     expect(decodeBase64Url(b64(unescape(encodeURIComponent('Café')))).normalize()).toBe('Café')
     expect(parseAddressList(undefined)).toEqual([])
+  })
+})
+
+describe('Dana\'s routing rules (Oct 8)', () => {
+  const v2 = [
+    ...vendors,
+    { id: 'pnw', name: 'PNW USA INC', aliases: ['PNW Inc'] },
+    { id: 'angie', name: 'STAR OF INDIA / ANGIE', aliases: ['STAR OF INDIA/ANGIE/NOSTALGIA'] },
+    { id: 'wwd', name: 'WORLDWIDE', aliases: [] },
+    { id: 'baffin', name: 'BAFFIN', aliases: [] },
+  ]
+  const idx = buildVendorIndex(v2, ['Shaver Lake'], [{ po_number: 'BAFFIN2226', vendor_id: 'baffin' }, { po_number: '58982', vendor_id: 'wfs' }, { po_number: 'SPRING 2026', vendor_id: 'wfs' }])
+  it('a PO number decides: on file, or <vendor name><date>', () => {
+    expect(mentionedVendors(idx, { strong: 'Re: Worldwide shipment from PNW PO#PNW9126', body: '' })).toEqual(['pnw'])
+    expect(poVendors(idx, 'Order BAFFIN2226 shipped')).toEqual(['baffin'])
+    expect(poVendors(idx, '', 'Your PO angie8242025 has shipped')).toEqual(['angie'])
+    expect(poVendors(idx, 'ZIP 93664, call 559')).toEqual([])
+    expect(poVendors(idx, 'Spring 2026 appointment')).toEqual([])
+    expect(poVendors(idx, '', 'see item BAFFIN2226 in the catalog')).toEqual([])
+  })
+  it('"Worldwide" alone never decides', () => {
+    expect(mentionedVendors(idx, { strong: 'Worldwide invoice', body: 'Your Worldwide Express invoice is ready' })).toEqual([])
+    expect(domainVendors(idx, 'wwex.com')).toEqual([])
+  })
+  it('a first-name line name needs another clue; a person named Angie in From is not the vendor', () => {
+    expect(mentionedVendors(idx, { strong: 'World Famous Sports invoice I87727', body: '', from: 'Angie Castillo' })).toEqual(['wfs'])
+    expect(mentionedVendors(idx, { strong: 'Re: Angie at Worldwide', body: '' })).toEqual([])
+    expect(mentionedVendors(idx, { strong: 'STAR OF INDIA/ANGIE/NOSTALGIA invoice', body: '' })).toEqual(['angie'])
   })
 })
