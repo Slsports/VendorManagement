@@ -11,6 +11,7 @@ import { BackLink } from '@/components/shared/BackLink'
 import { OrderStatusBadge } from '@/components/orders/OrderStatusBadge'
 import { OrderDocumentsSection } from '@/components/orders/OrderDocumentsSection'
 import { OrderRepsCard } from '@/components/orders/OrderRepsCard'
+import { CheckInPricing } from '@/components/orders/CheckInPricing'
 import { FreeShippingCard } from '@/components/orders/FreeShippingCard'
 import { Alert, Badge, Select, Spinner } from '@/components/ui'
 
@@ -83,6 +84,7 @@ export default function OrderDetailPage() {
               </section>
             )
           })}
+          <CheckInPricing order={o} canEdit={canEdit} />
           {o.notes ? <section className="rounded-2xl border border-stone-200 bg-white p-5"><h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Dana's notes</h2><p className="mt-2 whitespace-pre-line text-sm text-stone-800">{o.notes}</p></section> : null}
           {extra.length ? <section className="rounded-2xl border border-stone-200 bg-white p-5"><h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Also on the sheet</h2><dl className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">{extra.map(([k, v]) => <div key={k}><dt className="text-xs font-medium text-stone-500">{k}</dt><dd className="text-sm text-stone-900">{v}</dd></div>)}</dl></section> : null}
         </div>

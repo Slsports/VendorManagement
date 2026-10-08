@@ -460,6 +460,14 @@ export type Database = {
           { foreignKeyName: 'freight_bill_lines_order_id_fkey'; columns: ['order_id']; isOneToOne: false; referencedRelation: 'orders'; referencedColumns: ['id'] },
         ]
       }
+      order_lines: {
+        Row: { id: string; organization_id: string; order_id: string; sort_order: number; vendor_item_id: string | null; description: string | null; quantity: number; unit_cost: number; extended: number; retail_price: number | null; retail_edited: boolean; notes: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id?: string; order_id: string; sort_order?: number; vendor_item_id?: string | null; description?: string | null; quantity?: number; unit_cost?: number; retail_price?: number | null; retail_edited?: boolean; notes?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; order_id?: string; sort_order?: number; vendor_item_id?: string | null; description?: string | null; quantity?: number; unit_cost?: number; retail_price?: number | null; retail_edited?: boolean; notes?: string | null; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'order_lines_order_id_fkey'; columns: ['order_id']; isOneToOne: false; referencedRelation: 'orders'; referencedColumns: ['id'] },
+        ]
+      }
       vendor_exclusions: {
         Row: { id: string; organization_id: string; name: string; name_key: string; note: string | null; created_by: string | null; created_at: string }
         Insert: { id?: string; organization_id: string; name: string; note?: string | null; created_by?: string | null; created_at?: string }

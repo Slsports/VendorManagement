@@ -15,6 +15,7 @@ export type VendorOrderWindow = Tables<'vendor_order_windows'>
 export type RepGroup = Tables<'rep_groups'>
 export type RepGroupContact = Tables<'rep_group_contacts'>
 export type Carrier = Tables<'carriers'>
+export type OrderLine = Tables<'order_lines'>
 export type FreightBill = Tables<'freight_bills'>
 export type FreightBillLine = Tables<'freight_bill_lines'>
 export type Category = Tables<'categories'>

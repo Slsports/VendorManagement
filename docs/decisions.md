@@ -1265,3 +1265,23 @@ Dana listed these while working the Review queue, then said go.
   $14.93). Show the exact number, no rounding; Trevor edits any price. A summary line at the top shows
   freight %, margin, upcharge and total; when the freight bill is not in yet it says so and one click
   recalculates once it arrives.
+
+## 2026-10-08 — Built the review-queue clean-up list (how it landed)
+- Deleting from the Review queue: "Not a vendor, delete it" on cards about one vendor; never a vendor with
+  orders. Deleted names are listed in Settings > Organization with "Allow again".
+- One shared vendor picker everywhere a vendor is chosen in Review and Mail: "+ Add new vendor" first,
+  inactive vendors grayed with "Reactivate and use". Rep group dropdowns have "+ Add new rep group".
+- Contacts: `rep_group_contacts` (any number of reps; mail from any of their addresses or company domain is
+  that rep group), vendor contacts may be phone-only, a star marks our assigned rep, orders have
+  `taken_by`. The vendor form's single Rep fields are retired.
+- Mail rules live in `supabase/functions/_shared/mailMatch.ts`; `scripts/rematch-mail.mjs` re-reads stored
+  mail after a rule change. A web address naming a rep group (and no vendor) files to that rep group by
+  itself; when it also looks like a vendor (Eagle Claw, Esco Trading/DandyLines) a person decides.
+- Freight: `carriers` (owner Trevor), carrier mail tagged Freight in Mail and given to Trevor,
+  `freight_bills` / `freight_bill_lines`. Worldwide Express PDFs are read by Claude (Sonnet: money on the
+  page, about two cents a bill); PartnerShip bills wait for the PDF. Replies, reminders and meetings are
+  not bills; PartnerShip's "- 792862" is its customer number, not an invoice number.
+- Check-in pricing sits on the order page (Check-in pricing) until the check-in form is built: order lines
+  typed or pasted from a spreadsheet, the summary line, exact editable prices, recalculate when the freight
+  bill is matched. Reading the product invoice into lines comes with the confirmation check (plan §3, §6).
+- Raelee and Cat need `places_orders` set when their logins are made at go-live.

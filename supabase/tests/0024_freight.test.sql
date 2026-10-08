@@ -30,3 +30,9 @@ select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-4444-4444444
 select public.freight_set_line(:'fl1', :'fv1', :'fo1', false);
 \set ON_ERROR_STOP on
 reset role;
+\echo '>>> order lines: organization filled from the order, extended computed; pricing defaults on the organization'
+set role authenticated;
+select set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', false);
+insert into public.order_lines (order_id, vendor_item_id, description, quantity, unit_cost) values (:'fo2', 'TOY-1', 'Toy', 12, 5) returning organization_id = '00000000-0000-0000-0000-000000000001'::uuid as org_filled, extended;
+reset role;
+select settings->'pricing' as pricing from public.organizations where id = '00000000-0000-0000-0000-000000000001';
