@@ -1398,3 +1398,6 @@ Dana listed these while working the Review queue, then said go.
   (Documents → Shipping) and now the matched order too.
 - Dana, Oct 8: handled mail leaves every Mail tab (Needs attention, Offers, Freight, All); it stays under
   "Handled", on its vendor's page and its carrier's. "Mark handled" in a conversation goes back to the list.
+- Dana, Oct 8: when UPS is added as a carrier it is **"UPS DIRECT"**: the company's own UPS account, no
+  longer used for new shipments because Worldwide Express (WWEX) prices UPS shipments much better. Both are
+  UPS, but different account numbers and billing; old UPS Direct invoices are history (2026 catch-up).
