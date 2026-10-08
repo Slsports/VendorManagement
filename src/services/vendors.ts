@@ -52,7 +52,7 @@ export interface VendorDetail extends Vendor {
 export async function getVendor(id: string): Promise<VendorDetail> {
   const { data, error } = await supabase
     .from('vendors')
-    .select('*, vendor_billing_routes(*), vendor_emails(*), vendor_order_windows(*), rep_groups(*, rep_group_contacts(*)), payment_terms(*), vendor_stores(store_id)')
+    .select('*, vendor_billing_routes(*), vendor_emails!vendor_emails_vendor_id_fkey(*), vendor_order_windows(*), rep_groups(*, rep_group_contacts(*)), payment_terms(*), vendor_stores(store_id)')
     .eq('id', id)
     .single()
   if (error) throw error

@@ -68,6 +68,10 @@ Vite + React 19 + TypeScript + Tailwind 4, Supabase (project `bpdpkytfmpbwpbmpej
 - Looking at screens: `NODE_USE_ENV_PROXY=1 node scripts/preview.mjs /vendors/<id>/edit` signs in as the test
   login "Claude (testing)" (buyer; `VMS_TEST_EMAIL`/`VMS_TEST_PASSWORD` in the environment settings, created by
   `scripts/create-test-login.mjs`) and screenshots at computer and phone size. Never print the password.
+- A new foreign key between two tables that already had one makes `table(*)` embeds ambiguous (PGRST201,
+  the page shows "more than one relationship"). After such a migration run
+  `NODE_USE_ENV_PROXY=1 node scripts/check-embeds.mjs src supabase/functions` and name the key
+  (`vendor_emails!vendor_emails_vendor_id_fkey(*)`).
 - Types are hand-maintained in `src/types/database.ts`; add Row/Insert/Update and function Returns for
   every schema change, then aliases in `src/types/index.ts`.
 
