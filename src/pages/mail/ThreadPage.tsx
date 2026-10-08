@@ -93,8 +93,9 @@ export default function ThreadPage() {
         <p className="mb-4 rounded-xl bg-amber-50 px-4 py-2 text-sm text-amber-900">Freight rate quoted here: <span className="font-semibold">{emails.find((e) => e.freight_pct !== null && e.freight_pct !== undefined)!.freight_pct}%</span>. Check-in offers it for each vendor on this shipment.</p>
       ) : null}
       <ol className="space-y-3">
-        {emails.map((e, i) => (
-          <Message key={e.id} email={e} startOpen={i === emails.length - 1 || emails.length <= 3} vendor={t.vendor}
+        {/* Newest first and open; older ones closed to one line (Dana, Oct 8). */}
+        {[...emails].reverse().map((e, i) => (
+          <Message key={e.id} email={e} startOpen={i === 0} vendor={t.vendor}
             onCompose={canEdit && mailbox.data ? (kind) => setDraft(kind === 'forward' ? forwardDraft(t, e, e.attachments.length) : replyDraft(t, e, mailbox.data!, kind === 'all')) : undefined} />
         ))}
       </ol>

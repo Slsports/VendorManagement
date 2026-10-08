@@ -1346,3 +1346,5 @@ Dana listed these while working the Review queue, then said go.
   under "Need a look" (Claude's unsure answers too, until "Looks right" or a change); files already in VMS
   (same vendor, name and size) are skipped; 25 MB per file. Imported documents have source 'import' and
   "Imported from <path>" in their notes. Reorganizing Dropbox itself waits on a Dropbox connector.
+- Dana, Oct 8: a conversation shows the newest email first, open; older ones are closed to one line
+  (who, date, first words) and open on a click.
