@@ -28,6 +28,8 @@ const OrderDetail = lazy(() => import('@/pages/orders/OrderDetail'))
 const PurchaseOrderList = lazy(() => import('@/pages/purchase-orders/PurchaseOrderList'))
 const ReturnList = lazy(() => import('@/pages/returns/ReturnList'))
 const ShipmentList = lazy(() => import('@/pages/shipments/ShipmentList'))
+const FreightBillList = lazy(() => import('@/pages/freight/FreightBillList'))
+const FreightBillDetail = lazy(() => import('@/pages/freight/FreightBillDetail'))
 const BuyingShowList = lazy(() => import('@/pages/buying-shows/BuyingShowList'))
 const PaymentList = lazy(() => import('@/pages/payments/PaymentList'))
 const SalesReportsHub = lazy(() => import('@/pages/sales-reports/SalesReportsHub'))
@@ -108,6 +110,8 @@ export default function App() {
                 <Route path={ROUTES.purchaseOrders} element={<PurchaseOrderList />} />
                 <Route path={ROUTES.returns} element={<ReturnList />} />
                 <Route path={ROUTES.shipments} element={<ShipmentList />} />
+                <Route path={ROUTES.freight} element={<FreightBillList />} />
+                <Route path={`${ROUTES.freight}/:id`} element={<FreightBillDetail />} />
                 <Route path={ROUTES.buyingShows} element={<BuyingShowList />} />
                 <Route path={ROUTES.salesReports} element={<SalesReportsHub />} />
                 <Route path={ROUTES.reports} element={<ReportList />} />

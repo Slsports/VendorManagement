@@ -8,6 +8,7 @@ import { clueText, htmlBody, isBulk, parseMessage, type Address, type GmailMessa
 import { buildVendorIndex, domainVendors, mentionedVendors, type VendorIndex } from '../_shared/mailMatch.ts'
 import { extractLinks, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
 import { aiEnabled, readSender, sortEmails, type UnsureEmail } from '../_shared/ai.ts'
+import { applyFreightReading, freightIndex, invoiceNumberFrom, looksLikeBill, readFreightPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
 // messages and the scheduler comes back every minute until the 12 months are in.
@@ -109,6 +110,8 @@ async function syncAccount(db: SupabaseClient, acct: Account) {
     if (done && Date.now() - started < TIME_BUDGET_MS) await readBulkHeaders(db, gmail, org)
     // Price lists, catalogs and order forms into the vendor's files, a few emails a run.
     if (done && Date.now() - started < TIME_BUDGET_MS) await saveVendorFiles(db, gmail, org, started)
+    // Freight bills from carriers: a bill per invoice email; Claude reads the PDF when it is attached.
+    if (done && Date.now() - started < TIME_BUDGET_MS) await freightBills(db, gmail, org, started)
     // Claude reads what the rules could not place (only with an API key).
     if (done && aiEnabled() && Date.now() - started < TIME_BUDGET_MS) await aiSteps(db, org, started)
 
@@ -247,6 +250,58 @@ async function storeMessages(db: SupabaseClient, gmail: Gmail, ctx: Context, ids
   const newIds = [...idOf.values()]
   if (newIds.length) await check(db.rpc('mail_process', { p_org: ctx.org, p_email_ids: newIds, p_backfill: backfill }))
   return newIds.length
+}
+
+/**
+ * Freight bills (Oct 8): each invoice email from a carrier becomes a freight bill for Trevor. With the PDF
+ * attached (Worldwide Express), it is saved and Claude reads it into one line per shipper; without it
+ * (PartnerShip), the bill waits for the PDF. A few emails a run; tracking updates are only marked looked-at.
+ */
+async function freightBills(db: SupabaseClient, gmail: Gmail, org: string, started: number) {
+  const { data: queue } = await db.from('emails')
+    .select('id, gmail_id, subject, body_text, received_at, sender:email_senders!inner(kind, carrier_id, carriers(name)), attachments:email_attachments(id, file_name, mime_type, gmail_attachment_id)')
+    .eq('organization_id', org).eq('direction', 'in').eq('sender.kind', 'carrier').is('freight_checked_at', null)
+    .order('received_at', { ascending: false }).limit(6)
+  let index: Awaited<ReturnType<typeof freightIndex>> | null = null
+  for (const e of queue ?? []) {
+    if (Date.now() - started > TIME_BUDGET_MS) break
+    const sender = e.sender as unknown as { carrier_id: string | null; carriers: { name: string } | null }
+    try {
+      const atts = (e.attachments ?? []) as { id: string; file_name: string; mime_type: string | null; gmail_attachment_id: string | null }[]
+      const pdf = atts.find((a) => a.gmail_attachment_id && (/pdf/i.test(a.mime_type ?? '') || /\.pdf$/i.test(a.file_name)))
+      if (looksLikeBill(e.subject, e.body_text, !!pdf)) {
+        const { data: bill, error } = await db.from('freight_bills').upsert({
+          organization_id: org, carrier_id: sender.carrier_id, email_id: e.id, invoice_number: invoiceNumberFrom(e.subject), invoice_date: e.received_at.slice(0, 10),
+          status: pdf ? 'reading' : 'needs_pdf',
+        }, { onConflict: 'email_id', ignoreDuplicates: true }).select('id').maybeSingle()
+        if (error) throw new Error(error.message)
+        if (bill && pdf && aiEnabled()) {
+          const part = await gmail.call<{ data: string }>(`messages/${e.gmail_id}/attachments/${pdf.gmail_attachment_id}`)
+          const b64 = part.data.replace(/-/g, '+').replace(/_/g, '/')
+          const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4))
+          const bytes = new Uint8Array(bin.length)
+          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+          const path = `${org}/freight/${crypto.randomUUID()}-${pdf.file_name.replace(/[^A-Za-z0-9._-]+/g, '_')}`
+          const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: 'application/pdf', upsert: false })
+          if (upErr) throw new Error(`Saving ${pdf.file_name}: ${upErr.message}`)
+          await db.from('freight_bills').update({ storage_path: path, file_name: pdf.file_name }).eq('id', bill.id)
+          await db.from('email_attachments').update({ storage_path: path }).eq('id', pdf.id)
+          try {
+            const reading = await readFreightPdf(db, org, bytes, sender.carriers?.name ?? 'a freight carrier')
+            index ??= await freightIndex(db, org)
+            await applyFreightReading(db, bill.id, org, reading, index)
+          } catch (err) {
+            await db.from('freight_bills').update({ status: 'failed', read_note: (err instanceof Error ? err.message : String(err)).slice(0, 500) }).eq('id', bill.id)
+          }
+        } else if (bill && pdf) {
+          await db.from('freight_bills').update({ status: 'needs_pdf', read_note: 'Claude is not set up; add the lines by hand.' }).eq('id', bill.id)
+        }
+      }
+    } catch (err) {
+      console.error(`freight from ${e.id}:`, err instanceof Error ? err.message : err)
+    }
+    await db.from('emails').update({ freight_checked_at: new Date().toISOString() }).eq('id', e.id)
+  }
 }
 
 /**

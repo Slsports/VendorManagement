@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { Ban, Check, Layers, Users } from 'lucide-react'
+import { Ban, Check, Layers, Truck, Users } from 'lucide-react'
 import { resolveEmailSender } from '@/services/mail'
 import { errorMessage } from '@/lib/utils'
 import { newVendorPrefill } from '@/lib/mail'
 import type { ReviewItem } from '@/types'
 import { VendorPicker } from '@/components/vendors/VendorPicker'
 import { RepGroupPicker } from '@/components/rep-groups/RepGroupPicker'
+import { CarrierPicker } from '@/components/freight/CarrierPicker'
+import { setSenderCarrier } from '@/services/freight'
 import { Button } from '@/components/ui'
 
 export interface EmailSenderDetails {
@@ -33,7 +35,8 @@ const AI_KIND_LABELS = { vendor: 'a vendor', rep_group: 'a rep group', platform:
 
 export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem; canEdit: boolean; onDone: () => void | Promise<void> }) {
   const d = item.details as unknown as EmailSenderDetails
-  const [mode, setMode] = useState<'idle' | 'vendor' | 'rep'>('idle')
+  const [mode, setMode] = useState<'idle' | 'vendor' | 'rep' | 'carrier'>('idle')
+  const [carrierId, setCarrierId] = useState('')
   const [busy, setBusy] = useState(false)
   const [repId, setRepId] = useState('')
   const prefill = newVendorPrefill({ senderKey: d.sender_key, isDomain: d.is_domain, displayName: d.display_name })
@@ -69,6 +72,23 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
               <VendorPicker autoFocus className="sm:w-72" prefill={prefill} onPick={(v) => answer(`Filed to ${v.name}`, 'vendor', v.id)} />
               <Button size="sm" variant="ghost" disabled={busy} onClick={() => setMode('idle')}>Cancel</Button>
             </div>
+          ) : mode === 'carrier' ? (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <CarrierPicker value={carrierId} onChange={setCarrierId} prefillName={prefill.name} domain={d.is_domain ? d.sender_key : ''} />
+              <Button size="sm" loading={busy} disabled={!carrierId} leftIcon={<Check className="size-4" aria-hidden="true" />} onClick={async () => {
+                setBusy(true)
+                try {
+                  const n = await setSenderCarrier(d.sender_id, carrierId)
+                  toast.success(`Freight carrier: ${n} conversation${n === 1 ? '' : 's'} moved to Freight`)
+                  await onDone()
+                } catch (err) {
+                  toast.error(errorMessage(err))
+                } finally {
+                  setBusy(false)
+                }
+              }}>This carrier</Button>
+              <Button size="sm" variant="ghost" onClick={() => setMode('idle')}>Cancel</Button>
+            </div>
           ) : mode === 'rep' ? (
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <RepGroupPicker value={repId} onChange={(id) => setRepId(id)} prefill={{ name: d.is_domain ? prefill.name : '', repName: d.display_name ?? '', email: d.is_domain ? '' : d.sender_key }} />
@@ -83,6 +103,7 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
               <Button size="sm" variant={d.proposed_vendor_id ? 'secondary' : 'primary'} disabled={busy} onClick={() => setMode('vendor')}>{d.proposed_vendor_id ? 'Another vendor' : 'Pick or add the vendor'}</Button>
               <Button size="sm" variant="secondary" disabled={busy} onClick={() => setMode('rep')} leftIcon={<Users className="size-4" aria-hidden="true" />}>A rep group</Button>
               <Button size="sm" variant="secondary" loading={busy} onClick={() => void answer('Each email will be filed by the vendor it names', 'platform')} leftIcon={<Layers className="size-4" aria-hidden="true" />} title="NetSuite, Bill.com, Faire, FashionGo and similar services that send mail for many vendors">A service like Bill.com or Faire</Button>
+              <Button size="sm" variant="secondary" disabled={busy} onClick={() => setMode('carrier')} leftIcon={<Truck className="size-4" aria-hidden="true" />}>A freight carrier</Button>
               <Button size="sm" variant="ghost" loading={busy} onClick={() => void answer('Not a vendor', 'not_vendor')} leftIcon={<Ban className="size-4" aria-hidden="true" />}>Not a vendor</Button>
             </div>
           )}

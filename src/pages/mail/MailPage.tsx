@@ -14,6 +14,7 @@ import { Alert, Button, Select, Spinner } from '@/components/ui'
 const VIEWS: { value: NonNullable<ThreadFilters['view']>; label: string; help: string }[] = [
   { value: 'attention', label: 'Needs attention', help: 'Replies, confirmations, invoices, questions: anything someone has to act on.' },
   { value: 'offers', label: 'Offers & catalogs', help: 'Specials, price lists, catalogs and newsletters. Move a conversation to teach VMS where that sender belongs.' },
+  { value: 'freight', label: 'Freight', help: 'Carriers: PartnerShip, Worldwide Express, Priority One and Pinnacle. Bills also wait under Freight bills.' },
   { value: 'all', label: 'Everything', help: 'All mail, for searching.' },
 ]
 
@@ -56,11 +57,11 @@ export default function MailPage() {
       <PageHeader title="Mail" description="Everything that comes into orders@, filed by vendor. Answer it here; Gmail is the backup."
         actions={canEdit ? <Button onClick={() => setComposing(true)} leftIcon={<PenLine className="size-4" aria-hidden="true" />}>New email</Button> : undefined} />
       {composing ? <ComposeDialog draft={{ to: [], subject: '', body: '' }} onClose={() => setComposing(false)} onSent={() => void q.refetch()} /> : null}
-      <div role="tablist" aria-label="Mail view" className="mb-2 flex w-full max-w-xl rounded-xl border border-stone-200 bg-white p-1">
+      <div role="tablist" aria-label="Mail view" className="mb-2 flex w-full max-w-2xl overflow-x-auto rounded-xl border border-stone-200 bg-white p-1">
         {VIEWS.map((v) => (
           <button key={v.value} type="button" role="tab" aria-selected={view === v.value}
             onClick={() => { const next = new URLSearchParams(params); if (v.value === 'attention') next.delete('view'); else next.set('view', v.value); next.delete('status'); setParams(next, { replace: true }) }}
-            className={cn('flex-1 rounded-lg px-3 py-2 text-sm font-semibold', view === v.value ? 'bg-brand text-white shadow-sm' : 'text-stone-600 hover:text-stone-900')}>
+            className={cn('flex-1 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold', view === v.value ? 'bg-brand text-white shadow-sm' : 'text-stone-600 hover:text-stone-900')}>
             {v.label}
           </button>
         ))}

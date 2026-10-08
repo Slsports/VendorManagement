@@ -222,3 +222,30 @@ export function domainVendors(index: VendorIndex, domain: string): string[] {
   // A label that fits many vendors says nothing.
   return found.size <= 3 ? [...found] : []
 }
+
+/**
+ * The vendor a freight bill's shipper is: "MASTER FISH TACKLE" → Master Fishing Tackle. Every word of one of
+ * the vendor's names must be in the shipper name, a shortened word counting ("fish" for "fishing"). Only an
+ * answer with one vendor counts; anything else goes to a person.
+ */
+export function shipperVendors(index: VendorIndex, shipper: string): string[] {
+  const words = normalize(shipper).filter((w) => !CORPORATE.has(w))
+  if (!words.length) return []
+  const fits = (vw: string) => words.some((w) => w === vw || (w.length >= 4 && vw.startsWith(w)) || (vw.length >= 4 && w.startsWith(vw)))
+  let best = 0
+  const scored = new Map<string, number>()
+  for (const { id, words: vwords } of index.wordsets) {
+    const core = vwords.filter((w) => !CORPORATE.has(w))
+    if (!core.length || core.every((w) => NEVER_ALONE.has(w))) continue
+    if (!core.every(fits)) continue
+    // The more of the shipper's words the name explains, the better. A name of common words only
+    // ("Master Fishing Tackle") must explain the whole shipper name.
+    const score = core.length / words.length
+    if (core.every((w) => GENERIC.has(w)) && (core.length < 2 || score < 1)) continue
+    scored.set(id, Math.max(scored.get(id) ?? 0, score))
+    best = Math.max(best, score)
+  }
+  const top = [...scored.entries()].filter(([, sc]) => sc === best).map(([id]) => id)
+  return best >= 0.5 && top.length === 1 ? top : []
+}
+

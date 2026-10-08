@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { buildVendorIndex, domainLabel, domainVendors, mentionedVendors, poVendors, vendorNames } from './mailMatch.ts'
+import { buildVendorIndex, domainLabel, domainVendors, mentionedVendors, poVendors, shipperVendors, vendorNames } from './mailMatch.ts'
+import { invoiceNumberFrom, looksLikeBill } from './freightText.ts'
 import { bodyAboveSignature, clueText, decodeBase64Url, parseAddressList, parseMessage, type GmailMessage } from './mailParse.ts'
 
 const vendors = [
@@ -122,3 +123,32 @@ describe('Dana\'s routing rules (Oct 8)', () => {
     expect(mentionedVendors(idx, { strong: 'STAR OF INDIA/ANGIE/NOSTALGIA invoice', body: '' })).toEqual(['angie'])
   })
 })
+
+describe('freight bill shippers', () => {
+  const idx = buildVendorIndex([...vendors, { id: 'mft', name: 'MASTER FISHING TACKLE', aliases: ['MASTER FISHING TACKLE - WWD'] }, { id: 'mfp', name: 'MASTER FOOD PRODUCTS', aliases: [] }], ['Shaver Lake'])
+  it('matches the shipper even when spelled short', () => {
+    expect(shipperVendors(idx, 'MASTER FISHING TACKLE')).toEqual(['mft'])
+    expect(shipperVendors(idx, 'MASTER FISH TACKLE')).toEqual(['mft'])
+    expect(shipperVendors(idx, 'World Famous Sports Inc')).toEqual(['wfs'])
+  })
+  it('leaves unknown or vague shippers to a person', () => {
+    expect(shipperVendors(idx, 'MASTER')).toEqual([])
+    expect(shipperVendors(idx, 'Acme Widgets')).toEqual([])
+  })
+})
+
+describe('freight bill emails', () => {
+  it('new bills, not replies, reminders or meetings', () => {
+    expect(looksLikeBill('Your New Invoices from PartnerShip - 792862', '')).toBe(true)
+    expect(looksLikeBill('Worldwide Express Invoice 10/07/2026 #261005W105025 for Shaver Lake Sports Inc #W0003290195', '', true)).toBe(true)
+    expect(looksLikeBill('RE: Your New Invoices from PartnerShip - 792862', '')).toBe(false)
+    expect(looksLikeBill('Outstanding invoice reminder: 1-30 days past due', '')).toBe(false)
+    expect(looksLikeBill('Shaver Lake Sports Invoices | Pricing Meeting', '')).toBe(false)
+    expect(looksLikeBill('Tracking update for Shipment 60115985985', '')).toBe(false)
+  })
+  it('reads an invoice number only after a #', () => {
+    expect(invoiceNumberFrom('Worldwide Express Invoice 10/07/2026 #261005W105025 for Shaver Lake Sports Inc #W0003290195')).toBe('261005W105025')
+    expect(invoiceNumberFrom('Your New Invoices from PartnerShip - 792862')).toBeNull()
+  })
+})
+

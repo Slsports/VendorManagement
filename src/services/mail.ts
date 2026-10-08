@@ -39,7 +39,7 @@ export function listRepGroupNames(organizationId: string): Promise<NamedRef[]> {
 }
 
 /** Answer a sender proposal. Returns how many emails were linked. */
-export async function resolveEmailSender(senderId: string, kind: Exclude<EmailSenderKind, 'unknown'>, vendorId?: string | null, repGroupId?: string | null): Promise<number> {
+export async function resolveEmailSender(senderId: string, kind: Exclude<EmailSenderKind, 'unknown' | 'carrier'>, vendorId?: string | null, repGroupId?: string | null): Promise<number> {
   const { data, error } = await supabase.rpc('resolve_email_sender', { p_sender: senderId, p_kind: kind, p_vendor: vendorId ?? null, p_rep_group: repGroupId ?? null })
   if (error) throw error
   return data ?? 0
@@ -113,8 +113,8 @@ export interface ThreadRow {
 }
 
 export interface ThreadFilters {
-  /** Needs attention, Offers & catalogs, or everything. */
-  view?: MailView | 'all'
+  /** Needs attention, Offers & catalogs, Freight (carrier mail, Trevor's), or everything. */
+  view?: MailView | 'freight' | 'all'
   /** 'all' | 'mine' | 'none' | a profile id */
   who: string
   /** needs: waiting on us · waiting · no_answer (waiting past the follow-up date) · handled · open (not handled) · all */
@@ -149,7 +149,8 @@ export async function listThreads(organizationId: string, me: string | undefined
   else if (f.status === 'no_answer') q = q.eq('status', 'waiting_on_vendor').lt('follow_up_at', new Date().toISOString())
   else if (f.status === 'handled') q = q.eq('status', 'handled')
   else if (f.status === 'open') q = q.neq('status', 'handled')
-  if (f.view && f.view !== 'all') q = q.eq('view', f.view)
+  if (f.view === 'freight') q = q.not('carrier_id', 'is', null)
+  else if (f.view && f.view !== 'all') q = q.eq('view', f.view)
   if (f.vendorId) q = q.eq('vendor_id', f.vendorId)
   if (f.unmatched) q = q.is('vendor_id', null)
   if (f.q?.trim()) q = q.ilike('subject', `%${f.q.trim().replace(/[%_]/g, '')}%`)

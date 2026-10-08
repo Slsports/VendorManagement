@@ -63,6 +63,7 @@ export const ROUTES = {
   purchaseOrders: '/purchase-orders',
   returns: '/returns',
   shipments: '/shipments',
+  freight: '/freight',
   buyingShows: '/buying-shows',
   payments: '/payments',
   salesReports: '/sales-reports',
