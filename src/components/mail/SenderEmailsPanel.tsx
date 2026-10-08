@@ -96,6 +96,7 @@ export function SenderEmailsPanel({ senderId, senderLabel, prefill, canEdit = tr
         ) : null}
 
         <div className="flex-1 overflow-y-auto">
+          {q.error ? <p className="m-4 rounded-lg bg-red-50 p-3 text-sm text-red-800">Could not load the emails: {q.error}</p> : null}
           {q.isLoading ? <div className="flex justify-center py-12"><Spinner label="Loading emails…" className="text-brand" /></div> : (
             <ul className="divide-y divide-stone-100">
               {all.map((e) => {

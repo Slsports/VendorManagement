@@ -366,7 +366,7 @@ export interface SenderEmail {
 
 export async function listSenderEmails(senderId: string): Promise<SenderEmail[]> {
   const { data, error } = await supabase.from('emails')
-    .select('id, thread_id, subject, from_name, from_email, received_at, snippet, has_attachments, vendor_id, disposition, vendors(name)')
+    .select('id, thread_id, subject, from_name, from_email, received_at, snippet, has_attachments, vendor_id, disposition, vendors:vendors!emails_vendor_id_fkey(name)')
     .eq('sender_id', senderId).order('received_at', { ascending: false }).limit(500)
   if (error) throw error
   return (data ?? []) as unknown as SenderEmail[]
