@@ -36,3 +36,6 @@ select set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-2222222
 insert into public.order_lines (order_id, vendor_item_id, description, quantity, unit_cost) values (:'fo2', 'TOY-1', 'Toy', 12, 5) returning organization_id = '00000000-0000-0000-0000-000000000001'::uuid as org_filled, extended;
 reset role;
 select settings->'pricing' as pricing from public.organizations where id = '00000000-0000-0000-0000-000000000001';
+\echo '>>> sees_freight is off for users made after the migration (it set existing admins); a bill can be marked paid'
+select email, sees_freight from public.profiles where id in ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222') order by email;
+update public.freight_bills set paid_date = current_date, paid_via = 'card' where id = :'fb' returning paid_via;

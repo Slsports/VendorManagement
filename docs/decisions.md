@@ -1285,3 +1285,11 @@ Dana listed these while working the Review queue, then said go.
   typed or pasted from a spreadsheet, the summary line, exact editable prices, recalculate when the freight
   bill is matched. Reading the product invoice into lines comes with the confirmation check (plan §3, §6).
 - Raelee and Cat need `places_orders` set when their logins are made at go-live.
+
+## 2026-10-08 — Dana sees all freight while Trevor is new; freight bills are paid in VMS
+- Dana: "Right now, since Trevor is still new, I want to see everything he is seeing." `profiles.sees_freight`
+  (on for Dana): freight conversations show under her Mine and Mail for you (and the Mail count), and the
+  dashboard shows Freight bills (to match, to pay). Trevor stays the owner. Settings > Mail > Freight
+  switches it per person.
+- Dana pays the bills: "Mark paid" on a freight bill (date, card / check / ACH / Bill.com, reference);
+  Freight bills has a To pay tab, and the dashboard lists unpaid bills soonest due first, overdue in red.

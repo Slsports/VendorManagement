@@ -15,6 +15,7 @@ export function withAuth(role: UserRole, ui: ReactNode, initialEntries: string[]
       email: 'test@example.com',
       email_signature: null,
       places_orders: false,
+      sees_freight: false,
       full_name: 'Test Person',
       role,
       avatar_url: null,

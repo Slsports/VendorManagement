@@ -10,8 +10,9 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { Alert, Badge, Spinner } from '@/components/ui'
 
 const TABS: { value: FreightFilter; label: string }[] = [
-  { value: 'open', label: 'To do' },
-  { value: 'done', label: 'Done' },
+  { value: 'open', label: 'To match' },
+  { value: 'unpaid', label: 'To pay' },
+  { value: 'done', label: 'Matched' },
   { value: 'all', label: 'All' },
 ]
 
@@ -39,7 +40,7 @@ export default function FreightBillListPage() {
         </section>
       ) : null}
 
-      <div role="tablist" aria-label="Which bills" className="mb-4 flex w-full max-w-sm rounded-xl border border-stone-200 bg-white p-1">
+      <div role="tablist" aria-label="Which bills" className="mb-4 flex w-full max-w-md rounded-xl border border-stone-200 bg-white p-1">
         {TABS.map((t) => (
           <button key={t.value} type="button" role="tab" aria-selected={filter === t.value}
             onClick={() => { const next = new URLSearchParams(params); if (t.value === 'open') next.delete('show'); else next.set('show', t.value); setParams(next, { replace: true }) }}
@@ -52,7 +53,7 @@ export default function FreightBillListPage() {
       {q.error ? <Alert variant="error">{q.error}</Alert> : null}
       {q.isLoading ? <div className="flex justify-center py-16"><Spinner label="Loading freight bills…" className="text-brand" /></div> : (q.data ?? []).length === 0 ? (
         <div className="rounded-2xl border border-dashed border-stone-300 bg-white/60 px-6 py-12 text-center text-sm text-stone-600">
-          {filter === 'open' ? 'Nothing to do. New bills arrive from the carriers\' emails.' : 'No bills here.'}
+          {filter === 'open' ? 'Nothing to match. New bills arrive from the carriers\' emails.' : filter === 'unpaid' ? 'Nothing to pay.' : 'No bills here.'}
         </div>
       ) : (
         <ul className="divide-y divide-stone-100 overflow-hidden rounded-2xl border border-stone-200 bg-white">
@@ -71,6 +72,7 @@ export default function FreightBillListPage() {
                     <span className="text-stone-500">{shortDate(b.invoice_date)}</span>
                     <span className="font-medium text-stone-900">{money(b.total)}</span>
                     <Badge tone={st.tone}>{b.status === 'to_match' && open ? `${open} to match` : st.label}</Badge>
+                    {b.paid_date ? <Badge tone="success">Paid</Badge> : b.due_date ? <span className="text-xs text-stone-500">due {shortDate(b.due_date)}</span> : null}
                   </div>
                 </Link>
               </li>

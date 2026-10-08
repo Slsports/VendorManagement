@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { Check, ExternalLink, FileText, Mail, RefreshCw, Upload } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { getFreightBill, listVendorOrdersForFreight, readFreightBill, setFreightBillStatus, setFreightLine, uploadFreightPdf, type FreightBillDetail } from '@/services/freight'
+import { getFreightBill, listVendorOrdersForFreight, readFreightBill, setFreightBillPaid, setFreightBillStatus, setFreightLine, uploadFreightPdf, type FreightBillDetail } from '@/services/freight'
 import { signedFileUrl } from '@/services/lines'
 import { ROUTES } from '@/lib/constants'
 import { FREIGHT_STATUS, money, shortDate } from '@/lib/freight'
@@ -12,11 +12,13 @@ import { errorMessage } from '@/lib/utils'
 import { BackLink } from '@/components/shared/BackLink'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { VendorPicker } from '@/components/vendors/VendorPicker'
-import { Alert, Badge, Button, Select, Spinner } from '@/components/ui'
+import { Modal } from '@/components/shared/Modal'
+import { Alert, Badge, Button, FormField, Input, Select, Spinner } from '@/components/ui'
 
 export default function FreightBillDetailPage() {
   const { id = '' } = useParams()
-  const { role } = useAuth()
+  const { role, profile } = useAuth()
+  const [paying, setPaying] = useState(false)
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
   const q = useSupabaseQuery(() => getFreightBill(id), [id])
   const [busy, setBusy] = useState(false)
@@ -50,9 +52,13 @@ export default function FreightBillDetailPage() {
         eyebrow="Freight bill"
         title={`${b.carriers?.name ?? 'Carrier'}${b.invoice_number ? ` #${b.invoice_number}` : ''}`}
         description={<span className="inline-flex flex-wrap items-center gap-2"><Badge tone={st.tone}>{st.label}</Badge>
-          <span>Billed {shortDate(b.invoice_date)}{b.due_date ? ` · due ${shortDate(b.due_date)}` : ''} · {money(b.total)}</span></span>}
+          <span>Billed {shortDate(b.invoice_date)}{b.due_date ? ` · due ${shortDate(b.due_date)}` : ''} · {money(b.total)}</span>
+          {b.paid_date ? <Badge tone="success">Paid {shortDate(b.paid_date)}{b.paid_via ? ` · ${PAID_LABELS[b.paid_via]}` : ''}{b.paid_ref ? ` · ${b.paid_ref}` : ''}</Badge> : null}</span>}
         actions={canEdit ? (
           <div className="flex flex-wrap gap-2">
+            {b.paid_date
+              ? <Button variant="ghost" disabled={busy} onClick={() => void act('Marked not paid', () => setFreightBillPaid(b.id, null))}>Not paid</Button>
+              : <Button disabled={busy} onClick={() => setPaying(true)}>Mark paid</Button>}
             {b.status !== 'done' ? <Button variant="secondary" disabled={busy} onClick={() => void act('Marked done', () => setFreightBillStatus(b.id, 'done'))}>Mark done</Button> : null}
           </div>
         ) : undefined}
@@ -81,6 +87,7 @@ export default function FreightBillDetailPage() {
       {b.status === 'needs_pdf' ? <Alert variant="info" className="mb-6">This carrier does not attach the bill. Log in, download it, and add it here: Claude reads the shippers and amounts.</Alert> : null}
       {b.read_note ? <Alert variant="warning" className="mb-6">{b.read_note}</Alert> : null}
 
+      {paying && profile ? <PaidDialog onClose={() => setPaying(false)} onSave={async (p) => { setPaying(false); await act('Marked paid', () => setFreightBillPaid(b.id, { ...p, paid_by: profile.id })) }} /> : null}
       {b.freight_bill_lines.length ? (
         <section className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
           <ul className="divide-y divide-stone-100">
@@ -93,6 +100,25 @@ export default function FreightBillDetailPage() {
         </section>
       ) : null}
     </div>
+  )
+}
+
+const PAID_LABELS: Record<NonNullable<FreightBillDetail['paid_via']>, string> = { card: 'Card', check: 'Check', ach: 'ACH / bank', billcom: 'Bill.com', other: 'Other' }
+
+function PaidDialog({ onClose, onSave }: { onClose: () => void; onSave: (p: { paid_date: string; paid_via: FreightBillDetail['paid_via']; paid_ref: string | null }) => void | Promise<void> }) {
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [via, setVia] = useState<NonNullable<FreightBillDetail['paid_via']>>('card')
+  const [ref, setRef] = useState('')
+  return (
+    <Modal title="Mark this bill paid" submitLabel="Mark paid" onClose={onClose} onSubmit={() => onSave({ paid_date: date, paid_via: via, paid_ref: ref.trim() || null })}>
+      <FormField label="Paid on" htmlFor="fp-date"><Input id="fp-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required /></FormField>
+      <FormField label="Paid by" htmlFor="fp-via">
+        <Select id="fp-via" value={via} onChange={(e) => setVia(e.target.value as typeof via)}>
+          {(Object.keys(PAID_LABELS) as (keyof typeof PAID_LABELS)[]).map((k) => <option key={k} value={k}>{PAID_LABELS[k]}</option>)}
+        </Select>
+      </FormField>
+      <FormField label="Check or confirmation number (optional)" htmlFor="fp-ref"><Input id="fp-ref" value={ref} onChange={(e) => setRef(e.target.value)} /></FormField>
+    </Modal>
   )
 }
 

@@ -139,9 +139,12 @@ async function withLastMessage(rows: Omit<ThreadRow, 'last'>[]): Promise<ThreadR
 }
 
 /** Threads for the Mail page, newest first, at most `limit`. */
-export async function listThreads(organizationId: string, me: string | undefined, f: ThreadFilters, limit = 300): Promise<ThreadRow[]> {
+/** "Mine": what the person owns, plus all freight for those who also see freight (Dana while Trevor is new). */
+const mine = (me: string, seesFreight?: boolean) => (seesFreight ? `owner_id.eq.${me},carrier_id.not.is.null` : `owner_id.eq.${me}`)
+
+export async function listThreads(organizationId: string, me: string | undefined, f: ThreadFilters, limit = 300, seesFreight = false): Promise<ThreadRow[]> {
   let q = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).not('last_message_at', 'is', null)
-  if (f.who === 'mine' && me) q = q.eq('owner_id', me)
+  if (f.who === 'mine' && me) q = q.or(mine(me, seesFreight))
   else if (f.who === 'none') q = q.is('owner_id', null)
   else if (f.who !== 'all') q = q.eq('owner_id', f.who)
   if (f.status === 'needs') q = q.eq('status', 'waiting_on_us')
@@ -165,11 +168,11 @@ export function listVendorThreads(organizationId: string, vendorId: string, limi
 }
 
 /** What is waiting on this person: vendor replies to answer, and sent mail with no answer past the follow-up date. */
-export async function listMailForMe(organizationId: string, me: string): Promise<{ needs: ThreadRow[]; noAnswer: ThreadRow[] }> {
+export async function listMailForMe(organizationId: string, me: string, seesFreight = false): Promise<{ needs: ThreadRow[]; noAnswer: ThreadRow[] }> {
   const now = new Date().toISOString()
   const [a, b] = await Promise.all([
-    supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).eq('owner_id', me).eq('view', 'attention').eq('status', 'waiting_on_us').order('last_message_at', { ascending: false }).limit(50),
-    supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).eq('owner_id', me).eq('status', 'waiting_on_vendor').lt('follow_up_at', now).order('follow_up_at', { ascending: true }).limit(50),
+    supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).or(mine(me, seesFreight)).eq('view', 'attention').eq('status', 'waiting_on_us').order('last_message_at', { ascending: false }).limit(50),
+    supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).or(mine(me, seesFreight)).eq('status', 'waiting_on_vendor').lt('follow_up_at', now).order('follow_up_at', { ascending: true }).limit(50),
   ])
   if (a.error) throw a.error
   if (b.error) throw b.error
@@ -178,11 +181,12 @@ export async function listMailForMe(organizationId: string, me: string): Promise
 }
 
 /** The number on Mail in the side menu: threads waiting on this person. */
-export async function countMailForMe(organizationId: string, me: string): Promise<number> {
+export async function countMailForMe(organizationId: string, me: string, seesFreight = false): Promise<number> {
   const now = new Date().toISOString()
+  const who = seesFreight ? `or(owner_id.eq.${me},carrier_id.not.is.null)` : `owner_id.eq.${me}`
   const { count, error } = await supabase.from('email_threads').select('id', { count: 'exact', head: true })
-    .eq('organization_id', organizationId).eq('owner_id', me).eq('view', 'attention')
-    .or(`status.eq.waiting_on_us,and(status.eq.waiting_on_vendor,follow_up_at.lt.${now})`)
+    .eq('organization_id', organizationId).eq('view', 'attention')
+    .or(`and(${who},status.eq.waiting_on_us),and(${who},status.eq.waiting_on_vendor,follow_up_at.lt.${now})`)
   if (error) throw error
   return count ?? 0
 }

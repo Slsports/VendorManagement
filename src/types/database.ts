@@ -128,7 +128,7 @@ export type Database = {
           is_active: boolean
           created_at: string
           updated_at: string
-       ; email_signature: string | null; places_orders: boolean }
+       ; email_signature: string | null; places_orders: boolean; sees_freight: boolean }
         Insert: {
           id: string
           organization_id: string
@@ -140,7 +140,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; places_orders?: boolean }
+       ; email_signature?: string | null; places_orders?: boolean; sees_freight?: boolean }
         Update: {
           id?: string
           organization_id?: string
@@ -152,7 +152,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; places_orders?: boolean }
+       ; email_signature?: string | null; places_orders?: boolean; sees_freight?: boolean }
         Relationships: [
           {
             foreignKeyName: 'profiles_organization_id_fkey'
@@ -442,9 +442,9 @@ export type Database = {
         Relationships: []
       }
       freight_bills: {
-        Row: { id: string; organization_id: string; carrier_id: string | null; email_id: string | null; invoice_number: string | null; invoice_date: string | null; due_date: string | null; total: number | null; fee_amount: number; storage_path: string | null; file_name: string | null; status: 'needs_pdf' | 'reading' | 'to_match' | 'done' | 'failed'; read_note: string | null; read_at: string | null; created_at: string; updated_at: string }
-        Insert: { id?: string; organization_id: string; carrier_id?: string | null; email_id?: string | null; invoice_number?: string | null; invoice_date?: string | null; due_date?: string | null; total?: number | null; fee_amount?: number; storage_path?: string | null; file_name?: string | null; status?: 'needs_pdf' | 'reading' | 'to_match' | 'done' | 'failed'; read_note?: string | null; read_at?: string | null; created_at?: string; updated_at?: string }
-        Update: { id?: string; organization_id?: string; carrier_id?: string | null; email_id?: string | null; invoice_number?: string | null; invoice_date?: string | null; due_date?: string | null; total?: number | null; fee_amount?: number; storage_path?: string | null; file_name?: string | null; status?: 'needs_pdf' | 'reading' | 'to_match' | 'done' | 'failed'; read_note?: string | null; read_at?: string | null; created_at?: string; updated_at?: string }
+        Row: { id: string; organization_id: string; carrier_id: string | null; email_id: string | null; invoice_number: string | null; invoice_date: string | null; due_date: string | null; total: number | null; fee_amount: number; storage_path: string | null; file_name: string | null; status: 'needs_pdf' | 'reading' | 'to_match' | 'done' | 'failed'; read_note: string | null; read_at: string | null; paid_date: string | null; paid_via: 'card' | 'check' | 'ach' | 'billcom' | 'other' | null; paid_ref: string | null; paid_by: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; carrier_id?: string | null; email_id?: string | null; invoice_number?: string | null; invoice_date?: string | null; due_date?: string | null; total?: number | null; fee_amount?: number; storage_path?: string | null; file_name?: string | null; status?: 'needs_pdf' | 'reading' | 'to_match' | 'done' | 'failed'; read_note?: string | null; read_at?: string | null; paid_date?: string | null; paid_via?: 'card' | 'check' | 'ach' | 'billcom' | 'other' | null; paid_ref?: string | null; paid_by?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; carrier_id?: string | null; email_id?: string | null; invoice_number?: string | null; invoice_date?: string | null; due_date?: string | null; total?: number | null; fee_amount?: number; storage_path?: string | null; file_name?: string | null; status?: 'needs_pdf' | 'reading' | 'to_match' | 'done' | 'failed'; read_note?: string | null; read_at?: string | null; paid_date?: string | null; paid_via?: 'card' | 'check' | 'ach' | 'billcom' | 'other' | null; paid_ref?: string | null; paid_by?: string | null; created_at?: string; updated_at?: string }
         Relationships: [
           { foreignKeyName: 'freight_bills_carrier_id_fkey'; columns: ['carrier_id']; isOneToOne: false; referencedRelation: 'carriers'; referencedColumns: ['id'] },
           { foreignKeyName: 'freight_bills_email_id_fkey'; columns: ['email_id']; isOneToOne: false; referencedRelation: 'emails'; referencedColumns: ['id'] },

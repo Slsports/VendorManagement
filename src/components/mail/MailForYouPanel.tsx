@@ -9,7 +9,7 @@ import { ROUTES } from '@/lib/constants'
 /** Dashboard: vendor replies waiting on you, and mail you sent that has had no answer past the follow-up date. */
 export function MailForYouPanel() {
   const { organization, profile } = useAuth()
-  const q = useSupabaseQuery(async () => (organization && profile ? listMailForMe(organization.id, profile.id) : { needs: [], noAnswer: [] }), [organization?.id, profile?.id])
+  const q = useSupabaseQuery(async () => (organization && profile ? listMailForMe(organization.id, profile.id, profile.sees_freight) : { needs: [], noAnswer: [] }), [organization?.id, profile?.id, profile?.sees_freight])
   const needs = q.data?.needs ?? []
   const noAnswer = q.data?.noAnswer ?? []
   const total = needs.length + noAnswer.length

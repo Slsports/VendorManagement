@@ -41,8 +41,8 @@ export default function MailPage() {
   const [draft, setDraft] = useState(search)
   const people = useSupabaseQuery(async () => (organization ? listPeople(organization.id) : []), [organization?.id])
   const q = useSupabaseQuery(
-    async () => (organization ? listThreads(organization.id, profile?.id, { view, who, status, unmatched, q: search }) : []),
-    [organization?.id, profile?.id, view, who, status, unmatched, search],
+    async () => (organization ? listThreads(organization.id, profile?.id, { view, who, status, unmatched, q: search }, 300, profile?.sees_freight) : []),
+    [organization?.id, profile?.id, profile?.sees_freight, view, who, status, unmatched, search],
   )
 
   function setParam(key: string, value: string) {

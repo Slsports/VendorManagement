@@ -7,6 +7,7 @@ import { countOrdersByStatus } from '@/services/orders'
 import { ROUTES } from '@/lib/constants'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { MailForYouPanel } from '@/components/mail/MailForYouPanel'
+import { FreightForYouPanel } from '@/components/freight/FreightForYouPanel'
 
 const KPIS = [
   { label: 'Open orders', icon: ShoppingCart, phase: 4 },
@@ -83,6 +84,7 @@ export default function DashboardPage() {
             </div>
           </div>
         ))}
+        <FreightForYouPanel />
       </section>
     </div>
   )

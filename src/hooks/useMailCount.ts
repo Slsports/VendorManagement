@@ -9,7 +9,7 @@ export function useMailCount(): number {
   useEffect(() => {
     if (!organization || !profile || role === 'uploader') return
     let alive = true
-    const load = () => countMailForMe(organization.id, profile.id).then((n) => { if (alive) setCount(n) }).catch(() => {})
+    const load = () => countMailForMe(organization.id, profile.id, profile.sees_freight).then((n) => { if (alive) setCount(n) }).catch(() => {})
     void load()
     const timer = window.setInterval(load, 60_000)
     return () => { alive = false; window.clearInterval(timer) }

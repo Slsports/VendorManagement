@@ -27,13 +27,14 @@ export async function createCarrier(input: TablesInsert<'carriers'>): Promise<Ca
   return data
 }
 
-export type FreightFilter = 'open' | 'done' | 'all'
+export type FreightFilter = 'open' | 'unpaid' | 'done' | 'all'
 
 export async function listFreightBills(organizationId: string, filter: FreightFilter): Promise<FreightBillRow[]> {
   let q = supabase.from('freight_bills')
     .select('*, carriers(id, name, mode, website), freight_bill_lines(id, shipper_name, amount, confirmed)')
     .eq('organization_id', organizationId)
   if (filter === 'open') q = q.neq('status', 'done')
+  else if (filter === 'unpaid') q = q.is('paid_date', null).not('total', 'is', null)
   else if (filter === 'done') q = q.eq('status', 'done')
   const { data, error } = await q.order('invoice_date', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false }).limit(300)
   if (error) throw error
@@ -100,3 +101,43 @@ export async function setSenderCarrier(senderId: string, carrierId: string): Pro
   if (error) throw error
   return data ?? 0
 }
+
+/** Dana pays the bills: record when and how. Null clears it. */
+export async function setFreightBillPaid(id: string, paid: { paid_date: string; paid_via: FreightBill['paid_via']; paid_ref: string | null; paid_by: string } | null): Promise<void> {
+  const { error } = await supabase.from('freight_bills').update(paid ?? { paid_date: null, paid_via: null, paid_ref: null, paid_by: null }).eq('id', id)
+  if (error) throw error
+}
+
+/** Dashboard: bills waiting to be matched (Trevor's side) and bills to pay, soonest due first. */
+export async function freightForDashboard(organizationId: string) {
+  const [m, p] = await Promise.all([
+    supabase.from('freight_bills').select('id, invoice_number, invoice_date, total, status, carriers(name)').eq('organization_id', organizationId).in('status', ['needs_pdf', 'to_match', 'failed', 'reading']).order('invoice_date', { ascending: false, nullsFirst: false }).limit(20),
+    supabase.from('freight_bills').select('id, invoice_number, invoice_date, due_date, total, status, carriers(name)').eq('organization_id', organizationId).is('paid_date', null).not('total', 'is', null).order('due_date', { ascending: true, nullsFirst: false }).limit(20),
+  ])
+  if (m.error) throw m.error
+  if (p.error) throw p.error
+  type Row = { id: string; invoice_number: string | null; invoice_date: string | null; due_date?: string | null; total: number | null; status: FreightBill['status']; carriers: { name: string } | null }
+  return { toMatch: (m.data ?? []) as unknown as Row[], toPay: (p.data ?? []) as unknown as Row[] }
+}
+
+/** Settings > Mail: everyone active (but the test login), whether they also see freight, and who owns it. */
+export async function listFreightWatchers(organizationId: string): Promise<{ people: { id: string; full_name: string; sees_freight: boolean }[]; owners: string[] }> {
+  const [p, c] = await Promise.all([
+    supabase.from('profiles').select('id, full_name, sees_freight, email').eq('organization_id', organizationId).eq('is_active', true).not('email', 'ilike', 'claude-test@%').order('full_name'),
+    supabase.from('carriers').select('owner_id').eq('organization_id', organizationId).eq('is_active', true),
+  ])
+  if (p.error) throw p.error
+  if (c.error) throw c.error
+  const ownerIds = new Set((c.data ?? []).map((x) => x.owner_id).filter(Boolean))
+  const people = p.data ?? []
+  return {
+    people: people.filter((x) => !ownerIds.has(x.id)).map(({ id, full_name, sees_freight }) => ({ id, full_name, sees_freight })),
+    owners: people.filter((x) => ownerIds.has(x.id)).map((x) => x.full_name),
+  }
+}
+
+export async function setSeesFreight(profileId: string, on: boolean): Promise<void> {
+  const { error } = await supabase.from('profiles').update({ sees_freight: on }).eq('id', profileId)
+  if (error) throw error
+}
+
