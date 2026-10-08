@@ -28,15 +28,17 @@ export default function VendorListPage() {
   const fishing = params.get('fishing') === '1'
   /** '' everyone, 'me', 'none', or a person's id */
   const who = params.get('who') ?? ''
+  /** '' active (the default), 'inactive' or 'all' */
+  const status = params.get('status') ?? ''
   const [draft, setDraft] = useState(search)
 
-  const { data, error, isLoading } = useSupabaseQuery(() => listVendors({ includeInactive: false }), [])
+  const { data, error, isLoading } = useSupabaseQuery(() => listVendors({ includeInactive: true }), [])
   const orderersQ = useSupabaseQuery(async () => (organization ? listOrderers(organization.id) : []), [organization?.id])
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
   const nameOf = (id: string | null) => (id ? (orderersQ.data ?? []).find((p) => p.id === id)?.full_name ?? null : null)
 
   const rows = useMemo(() => {
-    let list = data ?? []
+    let list = (data ?? []).filter((v) => (status === 'all' ? true : status === 'inactive' ? !v.is_active : v.is_active))
     const s = search.trim().toLowerCase()
     if (s) list = list.filter((v) => v.name.toLowerCase().includes(s) || (v.lightspeed_name ?? '').toLowerCase().includes(s) || v.aliases.some((a) => a.toLowerCase().includes(s)))
     if (route === 'none') list = list.filter((v) => v.vendor_billing_routes.length === 0)
@@ -47,7 +49,7 @@ export default function VendorListPage() {
     if (who === 'none') list = list.filter((v) => !v.assigned_buyer_id)
     else if (who) list = list.filter((v) => v.assigned_buyer_id === (who === 'me' ? profile?.id : who))
     return list
-  }, [data, search, route, review, dno, fishing, who, profile?.id])
+  }, [data, status, search, route, review, dno, fishing, who, profile?.id])
 
   const { sorted, sort, toggle } = useTableSort(rows, {
     name: (v) => v.name,
@@ -65,16 +67,18 @@ export default function VendorListPage() {
     setParams(next, { replace: true })
   }
 
-  const total = data?.length ?? 0
-  const flagged = data?.filter((v) => v.needs_review).length ?? 0
-  const doNotOrder = data?.filter((v) => v.do_not_order).length ?? 0
-  const fishingCount = data?.filter((v) => v.is_fishing).length ?? 0
+  const activeVendors = (data ?? []).filter((v) => v.is_active)
+  const inactiveCount = (data?.length ?? 0) - activeVendors.length
+  const total = status === 'all' ? (data?.length ?? 0) : status === 'inactive' ? inactiveCount : activeVendors.length
+  const flagged = activeVendors.filter((v) => v.needs_review).length
+  const doNotOrder = activeVendors.filter((v) => v.do_not_order).length
+  const fishingCount = activeVendors.filter((v) => v.is_fishing).length
 
   return (
     <div>
       <PageHeader
         title="Vendors"
-        description={data ? `${total} active vendors${flagged ? `, ${flagged} flagged for review` : ''}.` : undefined}
+        description={data ? `${activeVendors.length} active vendors${flagged ? `, ${flagged} flagged for review` : ''}${inactiveCount ? `, ${inactiveCount} inactive` : ''}.` : undefined}
         actions={canEdit ? <Button onClick={() => navigate(`${ROUTES.vendors}/new`)} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add vendor</Button> : undefined}
       />
 
@@ -100,6 +104,13 @@ export default function VendorListPage() {
           />
         </div>
         <div className="flex flex-wrap gap-2">
+          <div className="w-36">
+            <Select value={status} onChange={(e) => setParam('status', e.target.value)} aria-label="Active or inactive">
+              <option value="">Active</option>
+              <option value="inactive">Inactive{inactiveCount ? ` (${inactiveCount})` : ''}</option>
+              <option value="all">All</option>
+            </Select>
+          </div>
           <div className="w-44">
             <Select value={who} onChange={(e) => setParam('who', e.target.value)} aria-label="Assigned to">
               <option value="">Everyone's vendors</option>
@@ -154,7 +165,8 @@ export default function VendorListPage() {
                 {sorted.map((v) => (
                   <tr key={v.id} className="hover:bg-stone-50">
                     <td className="px-4 py-2.5">
-                      <Link to={`${ROUTES.vendors}/${v.id}`} className={cn('font-medium hover:underline', v.do_not_order ? 'text-red-700 hover:text-red-800' : 'text-stone-900 hover:text-brand')}>{v.name}</Link>
+                      <Link to={`${ROUTES.vendors}/${v.id}`} className={cn('font-medium hover:underline', !v.is_active ? 'text-stone-400' : v.do_not_order ? 'text-red-700 hover:text-red-800' : 'text-stone-900 hover:text-brand')}>{v.name}</Link>
+                      {!v.is_active ? <Badge tone="neutral" className="ml-2">Inactive</Badge> : null}
                       {v.lightspeed_name && v.lightspeed_name !== v.name ? <p className="truncate text-xs text-stone-400">LS: {v.lightspeed_name}</p> : null}
                     </td>
                     <td className="px-4 py-2.5"><RouteBadges routes={v.vendor_billing_routes} /></td>

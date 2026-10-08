@@ -4,16 +4,17 @@ import toast from 'react-hot-toast'
 import { Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { createVendor, deleteOrderWindow, getVendor, listPaymentTerms, listRepGroups, saveOrderWindow, setVendorRoutes, updateVendor, type VendorDetail } from '@/services/vendors'
+import { createVendor, deleteOrderWindow, getVendor, listPaymentTerms, saveOrderWindow, setVendorRoutes, updateVendor, type VendorDetail } from '@/services/vendors'
 import { ROUTES } from '@/lib/constants'
 import { BILLING_ROUTE_HELP, BILLING_ROUTE_LABELS, MONTHS, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, FREE_SHIPPING_POLICY_LABELS, STANDING_LABELS, STANDING_TAGS, STANDING_TAG_LABELS } from '@/lib/vendors'
 import { cn, errorMessage } from '@/lib/utils'
-import type { BillingRoute, OrderingFrequency, OrderWindowKind, PaymentTerms, RepGroup, TablesInsert, FreeShippingPolicy, VendorStanding, StandingTag } from '@/types'
+import type { BillingRoute, OrderingFrequency, OrderWindowKind, PaymentTerms, TablesInsert, FreeShippingPolicy, VendorStanding, StandingTag } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { BackLink } from '@/components/shared/BackLink'
 import { StickySaveBar } from '@/components/shared/StickySaveBar'
 import { resolveEmailSender, setEmailVendor } from '@/services/mail'
 import { listOrderers } from '@/services/reviews'
+import { RepGroupPicker } from '@/components/rep-groups/RepGroupPicker'
 import { useHasInAppHistory } from '@/hooks/useHasInAppHistory'
 import { Alert, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
 
@@ -121,16 +122,15 @@ export default function VendorFormPage() {
   const { id } = useParams()
   const { organization } = useAuth()
   const vendorQ = useSupabaseQuery(async () => (id ? getVendor(id) : null), [id])
-  const repGroupsQ = useSupabaseQuery(async () => (organization ? listRepGroups(organization.id) : []), [organization?.id])
   const termsQ = useSupabaseQuery(async () => (organization ? listPaymentTerms(organization.id) : []), [organization?.id])
 
   if (id && vendorQ.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading vendor…" className="text-brand" /></div>
   if (id && (vendorQ.error || !vendorQ.data)) return <Alert variant="error">{vendorQ.error ?? 'Vendor not found'}</Alert>
 
-  return <VendorFormBody key={id ?? 'new'} vendor={vendorQ.data ?? null} repGroups={repGroupsQ.data ?? []} terms={termsQ.data ?? []} />
+  return <VendorFormBody key={id ?? 'new'} vendor={vendorQ.data ?? null} terms={termsQ.data ?? []} />
 }
 
-function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail | null; repGroups: RepGroup[]; terms: PaymentTerms[] }) {
+function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; terms: PaymentTerms[] }) {
   const id = v?.id
   const isEdit = !!v
   const navigate = useNavigate()
@@ -264,10 +264,7 @@ function VendorFormBody({ vendor: v, repGroups, terms }: { vendor: VendorDetail 
             </Select>
           </FormField>
           <FormField label="Rep group" htmlFor="rep_group">
-            <Select id="rep_group" value={form.rep_group_id} onChange={(e) => set('rep_group_id', e.target.value)}>
-              <option value="">None</option>
-              {repGroups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-            </Select>
+            <RepGroupPicker value={form.rep_group_id} onChange={(id) => set('rep_group_id', id)} className="h-11" emptyLabel="None" />
           </FormField>
           <FormField label="Payment terms" htmlFor="terms">
             <Select id="terms" value={form.payment_terms_id} onChange={(e) => set('payment_terms_id', e.target.value)}>

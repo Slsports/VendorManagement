@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { addNote, addVendorEmail, deleteVendorEmail, getVendor, listNotes, listReviewQueue, setVendorAssignee, updateVendor } from '@/services/vendors'
 import { listOrderers } from '@/services/reviews'
+import { clearPickerCache } from '@/services/mail'
 import { ROUTES } from '@/lib/constants'
 import { BILLING_ROUTE_HELP, CONTACT_TYPE_LABELS, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, monthsLabel, freeShippingRule, standingWhy, STANDING_BADGE } from '@/lib/vendors'
 import { errorMessage } from '@/lib/utils'
@@ -13,7 +14,7 @@ import type { ContactType } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { BackLink } from '@/components/shared/BackLink'
 import { RouteBadges } from '@/components/vendors/RouteBadges'
-import { ReviewItemCard } from '@/components/vendors/ReviewItemCard'
+import { ReviewItemCard, VENDOR_DELETED } from '@/components/vendors/ReviewItemCard'
 import { VendorLinksSection } from '@/components/vendors/VendorLinksSection'
 import { VendorRepGroupCard } from '@/components/vendors/VendorRepGroupCard'
 import { VendorShowsSection } from '@/components/vendors/VendorShowsSection'
@@ -100,6 +101,18 @@ export default function VendorDetailPage() {
     ['Shipping contact', contact(v.shipping_contact, v.shipping_contact_phone, v.shipping_contact_email)],
   ]
 
+  /** Inactive vendors drop out of lists but keep their orders, files and items; pickers still offer them grayed out. */
+  async function setActive(on: boolean) {
+    try {
+      await updateVendor(v!.id, { is_active: on })
+      clearPickerCache()
+      toast.success(on ? `${v!.name} is active` : `${v!.name} is inactive`)
+      await vendorQ.refetch()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
+
   async function clearReview() {
     try {
       await updateVendor(v!.id, { needs_review: false, review_note: null })
@@ -126,7 +139,12 @@ export default function VendorDetailPage() {
             {!v.is_active ? <Badge tone="danger">Inactive</Badge> : null}
           </span>
         }
-        actions={canEdit ? <Button variant="secondary" onClick={() => navigate(`${ROUTES.vendors}/${v.id}/edit`)} leftIcon={<Pencil className="size-4" aria-hidden="true" />}>Edit</Button> : undefined}
+        actions={canEdit ? (
+          <div className="flex items-center gap-3">
+            <ActiveSwitch active={v.is_active} onChange={(on) => void setActive(on)} />
+            <Button variant="secondary" onClick={() => navigate(`${ROUTES.vendors}/${v.id}/edit`)} leftIcon={<Pencil className="size-4" aria-hidden="true" />}>Edit</Button>
+          </div>
+        ) : undefined}
       />
 
       {v.standing !== 'ok' ? (
@@ -169,7 +187,8 @@ export default function VendorDetailPage() {
                 other={mine ? item.other : item.vendor}
                 canEdit={canEdit}
                 onDone={async (resultId) => {
-                  if (resultId && resultId !== v.id) navigate(`${ROUTES.vendors}/${resultId}`)
+                  if (resultId === VENDOR_DELETED) navigate(ROUTES.vendors, { replace: true })
+                  else if (resultId && resultId !== v.id) navigate(`${ROUTES.vendors}/${resultId}`)
                   else await Promise.all([vendorQ.refetch(), reviewQ.refetch()])
                 }}
               />
@@ -364,5 +383,18 @@ function NoteForm({ onSubmit }: { onSubmit: (body: string) => Promise<void> }) {
       <Textarea rows={3} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Add a note…" aria-label="New note" />
       <Button type="submit" size="sm" loading={saving} disabled={!body.trim()}>Add note</Button>
     </form>
+  )
+}
+
+/** Active / Inactive switch for the vendor page header. */
+function ActiveSwitch({ active, onChange }: { active: boolean; onChange: (on: boolean) => void }) {
+  return (
+    <button type="button" role="switch" aria-checked={active} aria-label="Active vendor" onClick={() => onChange(!active)}
+      className="inline-flex items-center gap-2 rounded-full text-sm font-medium text-stone-700">
+      <span className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${active ? 'bg-brand' : 'bg-stone-300'}`}>
+        <span className={`inline-block size-5 rounded-full bg-white shadow transition-transform ${active ? 'translate-x-5' : 'translate-x-0.5'}`} />
+      </span>
+      {active ? 'Active' : 'Inactive'}
+    </button>
   )
 }

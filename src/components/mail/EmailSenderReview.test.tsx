@@ -6,10 +6,10 @@ import type { ReviewItem } from '@/types'
 
 const { resolveEmailSender, listVendorNames, listRepGroupNames } = vi.hoisted(() => ({
   resolveEmailSender: vi.fn(async () => 42),
-  listVendorNames: vi.fn(async () => [{ id: 'v-stan', name: 'STANSPORT' }, { id: 'v-wfs', name: 'WORLD FAMOUS SPORTS' }]),
+  listVendorNames: vi.fn(async () => [{ id: 'v-stan', name: 'STANSPORT', is_active: true }, { id: 'v-wfs', name: 'WORLD FAMOUS SPORTS', is_active: true }, { id: 'v-old', name: 'OLD STAN', is_active: false }]),
   listRepGroupNames: vi.fn(async () => [{ id: 'r-pin', name: 'Pinnacle Team' }]),
 }))
-vi.mock('@/services/mail', () => ({ resolveEmailSender, listVendorNames, listRepGroupNames }))
+vi.mock('@/services/mail', () => ({ resolveEmailSender, listVendorNames, listRepGroupNames, clearPickerCache: vi.fn() }))
 
 const item = {
   id: 'ri1', organization_id: 'o1', kind: 'email_sender', entity_type: 'email_sender', entity_id: 's1', title: 'Mail from @wfsports.com looks like WORLD FAMOUS SPORTS',
@@ -33,6 +33,23 @@ describe('EmailSenderReview', () => {
     fireEvent.change(screen.getByLabelText('Rep group'), { target: { value: 'r-pin' } })
     fireEvent.click(screen.getByRole('button', { name: /This rep group/ }))
     await waitFor(() => expect(resolveEmailSender).toHaveBeenCalledWith('s1', 'rep_group', undefined, 'r-pin'))
+  })
+  it('picks another vendor by typing; an inactive one asks to reactivate first', async () => {
+    render(withAuth('buyer', <EmailSenderReview item={item} canEdit onDone={vi.fn()} />))
+    fireEvent.click(screen.getByRole('button', { name: 'Another vendor' }))
+    const box = screen.getByRole('combobox', { name: 'Vendor' })
+    fireEvent.change(box, { target: { value: 'stan' } })
+    fireEvent.mouseDown(await screen.findByRole('option', { name: 'STANSPORT' }))
+    await waitFor(() => expect(resolveEmailSender).toHaveBeenCalledWith('s1', 'vendor', 'v-stan', undefined))
+    fireEvent.change(box, { target: { value: 'old' } })
+    fireEvent.focus(box)
+    fireEvent.mouseDown(await screen.findByRole('option', { name: /OLD STAN/ }))
+    expect(await screen.findByRole('dialog', { name: 'Reactivate this vendor?' })).toBeInTheDocument()
+  })
+  it('names a service like Bill.com or Faire', async () => {
+    render(withAuth('buyer', <EmailSenderReview item={item} canEdit onDone={vi.fn()} />))
+    fireEvent.click(screen.getByRole('button', { name: 'A service like Bill.com or Faire' }))
+    await waitFor(() => expect(resolveEmailSender).toHaveBeenCalledWith('s1', 'platform', undefined, undefined))
   })
   it('viewers see the proposal but no buttons', () => {
     render(withAuth('viewer', <EmailSenderReview item={item} canEdit={false} onDone={vi.fn()} />))

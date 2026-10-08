@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Building2, CheckCircle2, ExternalLink, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
+import { CheckCircle2, ExternalLink, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { assignEmailThread, fetchEmailHtml, fileAttachmentToVendor, getMailbox, getThread, listVendorNames, openAttachment, setEmailThreadStatus, setEmailVendor, setThreadView, type ThreadDetail } from '@/services/mail'
+import { assignEmailThread, fetchEmailHtml, fileAttachmentToVendor, getMailbox, getThread, openAttachment, setEmailThreadStatus, setEmailVendor, setThreadView, type ThreadDetail } from '@/services/mail'
 import { listPeople } from '@/services/reviews'
-import { followUpDraft, forwardDraft, gmailThreadUrl, newVendorFromMailUrl, replyDraft, threadState, waited } from '@/lib/mail'
+import { followUpDraft, forwardDraft, gmailThreadUrl, newVendorPrefill, replyDraft, threadState, waited } from '@/lib/mail'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
 import { BackLink } from '@/components/shared/BackLink'
@@ -14,7 +14,8 @@ import { ThreadStatusBadge } from '@/components/mail/ThreadStatusBadge'
 import { AssigneeSelect } from '@/components/review/AssigneeSelect'
 import { ComposeDialog, type ComposeDraft } from '@/components/mail/ComposeDialog'
 import { AddOrderDialog } from '@/components/orders/AddOrderDialog'
-import { Alert, Button, Input, Spinner } from '@/components/ui'
+import { Alert, Button, Spinner } from '@/components/ui'
+import { VendorPicker as SharedVendorPicker, type NewVendorPrefill } from '@/components/vendors/VendorPicker'
 
 /** One conversation: every message, who owns it, which vendor it is filed to, and where it stands. */
 export default function ThreadPage() {
@@ -76,13 +77,8 @@ export default function ThreadPage() {
             })}>
             {t.view === 'offers' ? 'Move to Needs attention' : 'Move to Offers & catalogs'}
           </Button>
-          <VendorPicker current={t.vendor} onPick={(v) => act(v ? `Filed to ${v.name}` : 'Unfiled', () => setEmailVendor(emails[0]!.id, v?.id ?? null))} />
+          <ThreadVendorPicker current={t.vendor} prefill={newVendorPrefill({ ...party, isDomain: false })} onPick={(v) => act(v ? `Filed to ${v.name}` : 'Unfiled', () => setEmailVendor(emails[0]!.id, v?.id ?? null))} />
           {t.vendor ? <Button size="sm" variant="ghost" onClick={() => setAddingOrder(true)}>Add order from this email</Button> : null}
-          {!t.vendor ? (
-            <Link to={newVendorFromMailUrl(ROUTES.vendors, { ...party, isDomain: true, emailId: emails[0]!.id })} className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline">
-              <Building2 className="size-4" aria-hidden="true" /> New vendor from this email
-            </Link>
-          ) : null}
           {lastOut && (threadState(t) === 'no_answer' || threadState(t) === 'waiting')
             ? <Button size="sm" variant={threadState(t) === 'no_answer' ? 'primary' : 'secondary'} onClick={() => setDraft(followUpDraft(t, lastOut))} leftIcon={<Send className="size-4" aria-hidden="true" />}>Follow up</Button>
             : null}
@@ -177,18 +173,12 @@ function Message({ email: e, startOpen, vendor, onCompose }: { email: ThreadDeta
   )
 }
 
-function VendorPicker({ current, onPick }: { current: { id: string; name: string } | null; onPick: (v: { id: string; name: string } | null) => void | Promise<void> }) {
-  const { organization } = useAuth()
+function ThreadVendorPicker({ current, prefill, onPick }: { current: { id: string; name: string } | null; prefill?: NewVendorPrefill; onPick: (v: { id: string; name: string } | null) => void | Promise<void> }) {
   const [editing, setEditing] = useState(false)
-  const [name, setName] = useState('')
-  const vendors = useSupabaseQuery(async () => (editing && organization ? listVendorNames(organization.id) : []), [editing, organization?.id])
-  const picked = (vendors.data ?? []).find((v) => v.name.toLowerCase() === name.trim().toLowerCase())
   if (!editing) return <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>{current ? 'File to another vendor' : 'File to a vendor'}</Button>
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-      <Input list="thread-vendors" value={name} onChange={(e) => setName(e.target.value)} placeholder={vendors.isLoading ? 'Loading vendors…' : 'Type a vendor name'} aria-label="Vendor" className="h-9 sm:w-64" autoFocus />
-      <datalist id="thread-vendors">{(vendors.data ?? []).map((v) => <option key={v.id} value={v.name} />)}</datalist>
-      <Button size="sm" disabled={!picked} onClick={() => { void onPick(picked!); setEditing(false) }}>File it</Button>
+      <SharedVendorPicker autoFocus className="sm:w-64" prefill={prefill} onPick={(v) => { setEditing(false); return onPick(v) }} />
       <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
     </div>
   )

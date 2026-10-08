@@ -20,7 +20,8 @@ export async function listVendors(filters: VendorListFilters = {}): Promise<Vend
     .from('vendors')
     .select('*, vendor_billing_routes(route, is_default), rep_groups(name)')
     .order('name', { ascending: true })
-    .limit(filters.limit ?? 1000)
+    .is('merged_into_id', null)
+    .limit(filters.limit ?? 5000)
   if (!filters.includeInactive) q = q.eq('is_active', true)
   if (filters.needsReview) q = q.eq('needs_review', true)
   const s = filters.search?.trim()
@@ -155,6 +156,24 @@ export async function listReviewItems(organizationId: string, status: ReviewItem
     .order('created_at', { ascending: true })
   if (error) throw error
   return data ?? []
+}
+
+/** Delete a vendor that never belonged (not one we bought from); its names are kept out of future imports. */
+export async function deleteVendor(vendorId: string, note?: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_vendor', { p_vendor: vendorId, p_note: note ?? null })
+  if (error) throw error
+}
+
+export async function listVendorExclusions(organizationId: string) {
+  const { data, error } = await supabase.from('vendor_exclusions').select('id, name, created_at').eq('organization_id', organizationId).order('created_at', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+/** Let a deleted name be added or imported again (admins). */
+export async function allowVendorName(exclusionId: string): Promise<void> {
+  const { error } = await supabase.from('vendor_exclusions').delete().eq('id', exclusionId)
+  if (error) throw error
 }
 
 /** Set (or keep) who orders from a vendor; closes its "who orders from this vendor" review. */

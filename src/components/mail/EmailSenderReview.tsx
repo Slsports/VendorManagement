@@ -1,15 +1,13 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Ban, Building2, Check, Layers, Users } from 'lucide-react'
-import { useAuth } from '@/hooks/useAuth'
-import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { listRepGroupNames, listVendorNames, resolveEmailSender } from '@/services/mail'
+import { Ban, Check, Layers, Users } from 'lucide-react'
+import { resolveEmailSender } from '@/services/mail'
 import { errorMessage } from '@/lib/utils'
-import { newVendorFromMailUrl } from '@/lib/mail'
-import { ROUTES } from '@/lib/constants'
+import { newVendorPrefill } from '@/lib/mail'
 import type { ReviewItem } from '@/types'
-import { Button, Input, Select } from '@/components/ui'
+import { VendorPicker } from '@/components/vendors/VendorPicker'
+import { RepGroupPicker } from '@/components/rep-groups/RepGroupPicker'
+import { Button } from '@/components/ui'
 
 export interface EmailSenderDetails {
   sender_id: string
@@ -31,19 +29,14 @@ export interface EmailSenderDetails {
  * rep group or a service that sends for many vendors (each email then matched by the vendor it names),
  * or not a vendor at all. One answer covers every email from that sender, now and later.
  */
-const AI_KIND_LABELS = { vendor: 'a vendor', rep_group: 'a rep group', platform: 'sends for many vendors', not_vendor: 'not a vendor', unsure: 'not sure' } as const
+const AI_KIND_LABELS = { vendor: 'a vendor', rep_group: 'a rep group', platform: 'a service like Bill.com or Faire', not_vendor: 'not a vendor', unsure: 'not sure' } as const
 
 export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem; canEdit: boolean; onDone: () => void | Promise<void> }) {
-  const { organization } = useAuth()
   const d = item.details as unknown as EmailSenderDetails
   const [mode, setMode] = useState<'idle' | 'vendor' | 'rep'>('idle')
   const [busy, setBusy] = useState(false)
-  const [vendorName, setVendorName] = useState('')
   const [repId, setRepId] = useState('')
-  const vendors = useSupabaseQuery(async () => (mode === 'vendor' && organization ? listVendorNames(organization.id) : []), [mode, organization?.id])
-  const reps = useSupabaseQuery(async () => (mode === 'rep' && organization ? listRepGroupNames(organization.id) : []), [mode, organization?.id])
-  const picked = (vendors.data ?? []).find((v) => v.name.toLowerCase() === vendorName.trim().toLowerCase())
-  const listId = `vendors-${item.id}`
+  const prefill = newVendorPrefill({ senderKey: d.sender_key, isDomain: d.is_domain, displayName: d.display_name })
 
   async function answer(label: string, kind: 'vendor' | 'rep_group' | 'platform' | 'not_vendor', vendorId?: string, repGroupId?: string) {
     setBusy(true)
@@ -73,17 +66,12 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
         <div className="mt-3 border-t border-amber-200 pt-3">
           {mode === 'vendor' ? (
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Input list={listId} value={vendorName} onChange={(e) => setVendorName(e.target.value)} placeholder={vendors.isLoading ? 'Loading vendors…' : 'Type a vendor name'} aria-label="Vendor" className="h-9 sm:w-72" autoFocus />
-              <datalist id={listId}>{(vendors.data ?? []).map((v) => <option key={v.id} value={v.name} />)}</datalist>
-              <Button size="sm" loading={busy} disabled={!picked} onClick={() => void answer(`Filed to ${picked!.name}`, 'vendor', picked!.id)} leftIcon={<Check className="size-4" aria-hidden="true" />}>This vendor</Button>
-              <Button size="sm" variant="ghost" onClick={() => setMode('idle')}>Cancel</Button>
+              <VendorPicker autoFocus className="sm:w-72" prefill={prefill} onPick={(v) => answer(`Filed to ${v.name}`, 'vendor', v.id)} />
+              <Button size="sm" variant="ghost" disabled={busy} onClick={() => setMode('idle')}>Cancel</Button>
             </div>
           ) : mode === 'rep' ? (
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Select value={repId} onChange={(e) => setRepId(e.target.value)} aria-label="Rep group" className="h-9 sm:w-72">
-                <option value="">{reps.isLoading ? 'Loading rep groups…' : 'Which rep group?'}</option>
-                {(reps.data ?? []).map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-              </Select>
+              <RepGroupPicker value={repId} onChange={(id) => setRepId(id)} prefill={{ name: d.is_domain ? prefill.name : '', repName: d.display_name ?? '', email: d.is_domain ? '' : d.sender_key }} />
               <Button size="sm" loading={busy} disabled={!repId} onClick={() => void answer('Rep group set; each email filed by the vendor it names', 'rep_group', undefined, repId)} leftIcon={<Check className="size-4" aria-hidden="true" />}>This rep group</Button>
               <Button size="sm" variant="ghost" onClick={() => setMode('idle')}>Cancel</Button>
             </div>
@@ -92,13 +80,9 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
               {d.proposed_vendor_id ? (
                 <Button size="sm" loading={busy} onClick={() => void answer(`Filed to ${d.proposed_vendor_name}`, 'vendor', d.proposed_vendor_id!)} leftIcon={<Check className="size-4" aria-hidden="true" />}>Yes, {d.proposed_vendor_name}</Button>
               ) : null}
-              <Button size="sm" variant={d.proposed_vendor_id ? 'secondary' : 'primary'} disabled={busy} onClick={() => setMode('vendor')}>{d.proposed_vendor_id ? 'Another vendor' : 'Pick the vendor'}</Button>
-              <Link to={newVendorFromMailUrl(ROUTES.vendors, { senderKey: d.sender_key, isDomain: d.is_domain, displayName: d.display_name, senderId: d.sender_id })}
-                className="inline-flex h-8 items-center gap-1 rounded-lg border border-stone-300 bg-white px-3 text-sm font-medium text-stone-700 hover:bg-stone-50">
-                <Building2 className="size-4" aria-hidden="true" /> New vendor
-              </Link>
+              <Button size="sm" variant={d.proposed_vendor_id ? 'secondary' : 'primary'} disabled={busy} onClick={() => setMode('vendor')}>{d.proposed_vendor_id ? 'Another vendor' : 'Pick or add the vendor'}</Button>
               <Button size="sm" variant="secondary" disabled={busy} onClick={() => setMode('rep')} leftIcon={<Users className="size-4" aria-hidden="true" />}>A rep group</Button>
-              <Button size="sm" variant="secondary" loading={busy} onClick={() => void answer('Each email will be filed by the vendor it names', 'platform')} leftIcon={<Layers className="size-4" aria-hidden="true" />} title="NetSuite, Bill.com, FashionGo and similar services that send mail for many vendors">Sends for many vendors</Button>
+              <Button size="sm" variant="secondary" loading={busy} onClick={() => void answer('Each email will be filed by the vendor it names', 'platform')} leftIcon={<Layers className="size-4" aria-hidden="true" />} title="NetSuite, Bill.com, Faire, FashionGo and similar services that send mail for many vendors">A service like Bill.com or Faire</Button>
               <Button size="sm" variant="ghost" loading={busy} onClick={() => void answer('Not a vendor', 'not_vendor')} leftIcon={<Ban className="size-4" aria-hidden="true" />}>Not a vendor</Button>
             </div>
           )}

@@ -427,6 +427,12 @@ export type Database = {
         Update: { id?: string; organization_id?: string; purpose?: string; model?: string; input_tokens?: number; output_tokens?: number; cost_usd?: number; items?: number; created_at?: string }
         Relationships: []
       }
+      vendor_exclusions: {
+        Row: { id: string; organization_id: string; name: string; name_key: string; note: string | null; created_by: string | null; created_at: string }
+        Insert: { id?: string; organization_id: string; name: string; note?: string | null; created_by?: string | null; created_at?: string }
+        Update: { id?: string; organization_id?: string; name?: string; note?: string | null; created_by?: string | null; created_at?: string }
+        Relationships: []
+      }
       vendor_merges: {
         Row: { id: string; organization_id: string; kept_vendor_id: string; kept_name: string; kept_lightspeed_name: string | null; merged_name: string; merged_lightspeed_name: string | null; merged_vendor_id: string | null; source: 'import' | 'manual'; status: 'pending' | 'confirmed' | 'split'; route: Database['public']['Enums']['billing_route'] | null; merged_at: string; merged_by: string | null; ls_done_at: string | null; ls_done_by: string | null }
         Insert: { id?: string; organization_id: string; kept_vendor_id: string; kept_name: string; kept_lightspeed_name?: string | null; merged_name: string; merged_lightspeed_name?: string | null; merged_vendor_id?: string | null; source?: 'import' | 'manual'; status?: 'pending' | 'confirmed' | 'split'; route?: Database['public']['Enums']['billing_route'] | null; merged_at?: string; merged_by?: string | null; ls_done_at?: string | null; ls_done_by?: string | null }
@@ -516,6 +522,7 @@ export type Database = {
       confirm_vendor_merge: { Args: { p_vendor: string; p_route?: Database['public']['Enums']['billing_route'] | null }; Returns: undefined }
       resolve_review_item: { Args: { p_item: string; p_status: Database['public']['Enums']['review_status']; p_note?: string | null }; Returns: undefined }
       assign_review_item: { Args: { p_item: string; p_profile?: string | null }; Returns: undefined }
+      delete_vendor: { Args: { p_vendor: string; p_note?: string | null }; Returns: undefined }
       set_vendor_assignee: { Args: { p_vendor: string; p_profile: string | null }; Returns: undefined }
       resolve_email_sender: { Args: { p_sender: string; p_kind: 'vendor' | 'rep_group' | 'platform' | 'not_vendor' | 'internal'; p_vendor?: string | null; p_rep_group?: string | null }; Returns: number }
       link_email_thread_order: { Args: { p_thread: string; p_order: string | null }; Returns: undefined }

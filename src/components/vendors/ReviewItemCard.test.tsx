@@ -4,14 +4,15 @@ import { MemoryRouter } from 'react-router-dom'
 import { ReviewItemCard } from './ReviewItemCard'
 import type { ReviewItem } from '@/types'
 
-const { mergeVendors, unmergeVendor, confirmVendorMerge, resolveReviewItem, applyVendorRename } = vi.hoisted(() => ({
+const { mergeVendors, unmergeVendor, confirmVendorMerge, resolveReviewItem, applyVendorRename, deleteVendor } = vi.hoisted(() => ({
+  deleteVendor: vi.fn(async () => undefined),
   mergeVendors: vi.fn(async () => 'keep-id'),
   unmergeVendor: vi.fn(async () => 'new-id'),
   confirmVendorMerge: vi.fn(async () => undefined),
   resolveReviewItem: vi.fn(async () => undefined),
   applyVendorRename: vi.fn(async () => undefined),
 }))
-vi.mock('@/services/vendors', () => ({ mergeVendors, unmergeVendor, confirmVendorMerge, resolveReviewItem, applyVendorRename }))
+vi.mock('@/services/vendors', () => ({ mergeVendors, unmergeVendor, confirmVendorMerge, resolveReviewItem, applyVendorRename, deleteVendor }))
 
 const base: ReviewItem = {
   id: 'item-1', organization_id: 'org', kind: 'vendor_duplicate', entity_type: 'vendor', entity_id: 'a', title: 'Possible duplicate: "Crosman" and "Crossman"',
@@ -74,5 +75,17 @@ describe('ReviewItemCard', () => {
     render(<MemoryRouter><ReviewItemCard item={base} vendor={a} other={b} canEdit={false} onDone={vi.fn()} /></MemoryRouter>)
     expect(screen.queryByRole('button')).toBeNull()
     expect(screen.getByRole('link', { name: 'Open Crosman' })).toHaveAttribute('href', '/vendors/a')
+  })
+  it('a name clean-up that is not a vendor can be deleted after a confirm', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const onDone = renderCard({ ...base, kind: 'vendor_rename', details: { current_name: 'SLS INTERNAL', new_name: 'SLS Internal' } })
+    fireEvent.click(screen.getByRole('button', { name: /not a vendor, delete it/i }))
+    await waitFor(() => expect(deleteVendor).toHaveBeenCalledWith('a'))
+    expect(onDone).toHaveBeenCalled()
+  })
+
+  it('possible duplicates offer merge, not delete', () => {
+    renderCard(base)
+    expect(screen.queryByRole('button', { name: /delete it/i })).toBeNull()
   })
 })

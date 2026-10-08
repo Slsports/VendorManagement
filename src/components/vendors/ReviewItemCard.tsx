@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Check, GitMerge, Scissors, X } from 'lucide-react'
-import { applyVendorRename, confirmVendorMerge, mergeVendors, resolveReviewItem, unmergeVendor } from '@/services/vendors'
+import { Check, GitMerge, Scissors, Trash2, X } from 'lucide-react'
+import { applyVendorRename, confirmVendorMerge, deleteVendor, mergeVendors, resolveReviewItem, unmergeVendor } from '@/services/vendors'
 import { ROUTES } from '@/lib/constants'
 import { BILLING_ROUTE_LABELS } from '@/lib/vendors'
 import { errorMessage } from '@/lib/utils'
@@ -26,6 +26,9 @@ export interface ReviewItemCardProps {
   aside?: ReactNode
 }
 
+/** Passed to onDone when the card deleted its vendor, so a vendor page can leave. */
+export const VENDOR_DELETED = 'deleted'
+
 type RouteChoice = '' | BillingRoute
 
 const ROUTE_OPTIONS: { value: RouteChoice; label: string }[] = [
@@ -41,6 +44,7 @@ const ROUTE_OPTIONS: { value: RouteChoice; label: string }[] = [
  *  - vendor_duplicate (two records that look alike): Keep both, or Merge into the one you choose.
  *  - vendor_assignment (who orders from it): keep the proposed person or pick another.
  *  - vendor_marker and anything else: Done / Dismiss.
+ * Any card about one vendor can also delete it as "not a vendor" (never one with orders).
  * Every merge, confirm or split can state WWD / Faire / Not WWD so the result's usual route is right.
  */
 export function ReviewItemCard({ item, vendor, other, canEdit, onDone, aside }: ReviewItemCardProps) {
@@ -172,6 +176,13 @@ export function ReviewItemCard({ item, vendor, other, canEdit, onDone, aside }: 
               <Button size="sm" variant="ghost" loading={busy} onClick={() => void run('Dismissed', () => resolveReviewItem(item.id, 'rejected', 'Dismissed'))}>Dismiss</Button>
             </div>
           )}
+          {item.entity_type === 'vendor' && vendor && item.kind !== 'vendor_duplicate' ? (
+            <div className="mt-2 flex justify-end">
+              <Button size="sm" variant="ghost" disabled={busy} className="text-red-700 hover:bg-red-50"
+                onClick={() => { if (window.confirm(`Delete ${vendor.name}? It never shows in VMS again, and imports skip it. Use this only for names that were never a vendor.`)) void run(`${vendor.name} deleted`, async () => { await deleteVendor(vendor.id); return VENDOR_DELETED }) }}
+                leftIcon={<Trash2 className="size-4" aria-hidden="true" />}>Not a vendor, delete it</Button>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

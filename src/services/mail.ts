@@ -3,20 +3,26 @@ import type { Email, EmailAttachment, EmailSenderKind, EmailThreadStatus, MailAc
 import { TEST_LOGIN_PATTERN } from '@/services/reviews'
 
 export interface NamedRef { id: string; name: string }
+export interface VendorRef extends NamedRef { is_active: boolean }
 
 // Pickers on many review cards share one load per page visit.
 const cache = new Map<string, Promise<NamedRef[]>>()
-function once(key: string, load: () => Promise<NamedRef[]>): Promise<NamedRef[]> {
+function once<T extends NamedRef>(key: string, load: () => Promise<T[]>): Promise<T[]> {
   if (!cache.has(key)) cache.set(key, load().catch((e) => { cache.delete(key); throw e }))
-  return cache.get(key)!
+  return cache.get(key)! as Promise<T[]>
 }
 
-/** Active vendors, id and name, A–Z (for "Pick another vendor"). */
-export function listVendorNames(organizationId: string): Promise<NamedRef[]> {
+/** Forget the cached picker lists after a vendor or rep group is added, renamed or reactivated. */
+export function clearPickerCache() {
+  cache.clear()
+}
+
+/** Every vendor, id, name and active flag, A–Z. Pickers show the inactive ones grayed out. */
+export function listVendorNames(organizationId: string): Promise<VendorRef[]> {
   return once(`v:${organizationId}`, async () => {
-    const out: NamedRef[] = []
+    const out: VendorRef[] = []
     for (let from = 0; ; from += 1000) {
-      const { data, error } = await supabase.from('vendors').select('id, name').eq('organization_id', organizationId).eq('is_active', true).order('name').range(from, from + 999)
+      const { data, error } = await supabase.from('vendors').select('id, name, is_active').eq('organization_id', organizationId).is('merged_into_id', null).order('name').range(from, from + 999)
       if (error) throw error
       out.push(...(data ?? []))
       if (!data || data.length < 1000) return out

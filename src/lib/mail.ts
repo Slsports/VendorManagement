@@ -102,15 +102,21 @@ export function nameFromDomain(domain: string): string {
  * free mail), the address as the orders email, the domain as the website. After saving, the email (or every
  * email from that sender) is filed to the new vendor.
  */
-export function newVendorFromMailUrl(vendorsRoute: string, p: { email?: string | null; displayName?: string | null; senderKey?: string | null; isDomain?: boolean; emailId?: string; senderId?: string }): string {
-  const q = new URLSearchParams()
+/** A new vendor's name, email and website guessed from a sender (the name from a company domain, never a free-mail one). */
+export function newVendorPrefill(p: { email?: string | null; displayName?: string | null; senderKey?: string | null; isDomain?: boolean }): { name: string; email: string; website: string } {
   const address = p.email ?? (p.senderKey && !p.isDomain ? p.senderKey : null)
   const domain = p.isDomain && p.senderKey ? p.senderKey : address ? address.split('@')[1] ?? '' : ''
   const free = /^(gmail|googlemail|yahoo|ymail|outlook|hotmail|live|msn|icloud|me|mac|aol|comcast|att|sbcglobal|verizon)\./.test(domain)
   const name = free ? (p.displayName ?? '') : domain ? nameFromDomain(domain) : (p.displayName ?? '')
-  if (name) q.set('name', name)
-  if (address) q.set('email', address)
-  if (domain && !free) q.set('website', domain)
+  return { name, email: address ?? '', website: domain && !free ? domain : '' }
+}
+
+export function newVendorFromMailUrl(vendorsRoute: string, p: { email?: string | null; displayName?: string | null; senderKey?: string | null; isDomain?: boolean; emailId?: string; senderId?: string }): string {
+  const q = new URLSearchParams()
+  const pre = newVendorPrefill(p)
+  if (pre.name) q.set('name', pre.name)
+  if (pre.email) q.set('email', pre.email)
+  if (pre.website) q.set('website', pre.website)
   if (p.emailId) q.set('from_email', p.emailId)
   if (p.senderId) q.set('from_sender', p.senderId)
   return `${vendorsRoute}/new?${q.toString()}`
