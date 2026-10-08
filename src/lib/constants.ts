@@ -59,6 +59,7 @@ export const ROUTES = {
   resetPassword: '/reset-password',
   dashboard: '/',
   vendors: '/vendors',
+  documentImport: '/vendors/import-documents',
   orders: '/orders',
   purchaseOrders: '/purchase-orders',
   returns: '/returns',

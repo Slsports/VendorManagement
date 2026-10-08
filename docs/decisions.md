@@ -1338,3 +1338,11 @@ Dana listed these while working the Review queue, then said go.
   as tables with a tab per sheet, Word .docx as a page; nothing is sent elsewhere to show them; old .doc
   files download). The viewer has Download; each document has a download icon; a folder and each year
   have "Download all" as one zip (Vendor/Folder/Year/file). Email attachments open in the same viewer.
+- Dana, Oct 8: **Bulk import documents** (Vendors page): drop whole vendor folders from Dropbox (or choose a
+  folder). Each file is sorted from its path the way Dana files ("Stansport/Invoices/2024/…"): the vendor is
+  the first folder name matching a VMS vendor or alias, the folder and year come from folder names, then the
+  file name, then the file's date. "Ask Claude" reads the rest (the path, and PDFs and pictures themselves,
+  on the cheapest model; `docs-sort`). Nothing is filed until a person has seen the list: unsure rows wait
+  under "Need a look" (Claude's unsure answers too, until "Looks right" or a change); files already in VMS
+  (same vendor, name and size) are skipped; 25 MB per file. Imported documents have source 'import' and
+  "Imported from <path>" in their notes. Reorganizing Dropbox itself waits on a Dropbox connector.

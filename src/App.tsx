@@ -17,6 +17,7 @@ const DashboardPage = lazy(() => import('@/pages/Dashboard'))
 const VendorList = lazy(() => import('@/pages/vendors/VendorList'))
 const VendorDetail = lazy(() => import('@/pages/vendors/VendorDetail'))
 const VendorForm = lazy(() => import('@/pages/vendors/VendorForm'))
+const BulkImportPage = lazy(() => import('@/pages/vendors/BulkImportPage'))
 const ReviewQueue = lazy(() => import('@/pages/review/ReviewQueue'))
 const RepGroupList = lazy(() => import('@/pages/rep-groups/RepGroupList'))
 const WorldwideContacts = lazy(() => import('@/pages/contacts/WorldwideContacts'))
@@ -95,6 +96,7 @@ export default function App() {
               <Route element={<RequireRole roles={STAFF} />}>
                 <Route path={ROUTES.vendors} element={<VendorList />} />
                 <Route path={`${ROUTES.vendors}/new`} element={<VendorForm />} />
+                <Route path={ROUTES.documentImport} element={<BulkImportPage />} />
                 <Route path={`${ROUTES.vendors}/:id`} element={<VendorDetail />} />
                 <Route path={`${ROUTES.vendors}/:id/edit`} element={<VendorForm />} />
                 <Route path={ROUTES.repGroups} element={<RepGroupList />} />

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { AlertTriangle, Ban, Fish, Plus, Search } from 'lucide-react'
+import { AlertTriangle, Ban, Fish, FolderUp, Plus, Search } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listVendors } from '@/services/vendors'
@@ -79,7 +79,12 @@ export default function VendorListPage() {
       <PageHeader
         title="Vendors"
         description={data ? `${activeVendors.length} active vendors${flagged ? `, ${flagged} flagged for review` : ''}${inactiveCount ? `, ${inactiveCount} inactive` : ''}.` : undefined}
-        actions={canEdit ? <Button onClick={() => navigate(`${ROUTES.vendors}/new`)} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add vendor</Button> : undefined}
+        actions={canEdit ? (
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => navigate(ROUTES.documentImport)} leftIcon={<FolderUp className="size-4" aria-hidden="true" />}>Bulk import documents</Button>
+            <Button onClick={() => navigate(`${ROUTES.vendors}/new`)} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add vendor</Button>
+          </div>
+        ) : undefined}
       />
 
       <form
