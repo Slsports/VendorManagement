@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
 import { ExternalLink, FileText, Plus, Trash2 } from 'lucide-react'
-import { addVendorLink, deleteVendorLink, signedFileUrl, uploadVendorFile } from '@/services/lines'
+import { addVendorLink, deleteVendorLink, downloadVendorFile, uploadVendorFile } from '@/services/lines'
+import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { LINK_KIND_LABELS } from '@/lib/vendors'
 import { errorMessage } from '@/lib/utils'
 import type { VendorLink, VendorLinkKind } from '@/types'
@@ -12,6 +13,7 @@ const KINDS: VendorLinkKind[] = ['confirmation', 'invoice', 'order', 'packing_sl
 /** The paper behind an order: confirmation, invoice, packing slip, payment proof. Upload or paste a link. */
 export function OrderDocumentsSection({ orderId, vendorId, organizationId, userId, documents, canEdit, onChange }: { orderId: string; vendorId: string; organizationId: string; userId: string | null; documents: VendorLink[]; canEdit: boolean; onChange: () => Promise<void> }) {
   const [adding, setAdding] = useState(false)
+  const { view, viewer } = useDocumentViewer()
   const [kind, setKind] = useState<VendorLinkKind>('confirmation')
   const [label, setLabel] = useState('')
   const [url, setUrl] = useState('')
@@ -38,8 +40,9 @@ export function OrderDocumentsSection({ orderId, vendorId, organizationId, userI
       setSaving(false)
     }
   }
-  async function open(d: VendorLink) {
-    try { window.open(d.storage_path ? await signedFileUrl(d.storage_path) : d.url ?? '', '_blank', 'noopener') } catch (err) { toast.error(errorMessage(err)) }
+  function open(d: VendorLink) {
+    if (d.storage_path) view({ name: d.file_name ?? d.label, mime: d.mime_type, load: () => downloadVendorFile(d.storage_path!) })
+    else if (d.url) window.open(d.url, '_blank', 'noopener')
   }
   async function remove(d: VendorLink) {
     if (!window.confirm(`Remove "${d.label}"?`)) return
@@ -67,7 +70,7 @@ export function OrderDocumentsSection({ orderId, vendorId, organizationId, userI
             <li key={d.id} className="flex items-center gap-3 py-2">
               {d.storage_path ? <FileText className="size-5 shrink-0 text-stone-400" aria-hidden="true" /> : <ExternalLink className="size-5 shrink-0 text-stone-400" aria-hidden="true" />}
               <div className="min-w-0 flex-1">
-                <button type="button" onClick={() => void open(d)} className="truncate text-left text-sm font-medium text-stone-900 hover:text-brand">{d.label}</button>
+                <button type="button" onClick={() => open(d)} className="truncate text-left text-sm font-medium text-stone-900 hover:text-brand">{d.label}</button>
                 <p className="text-xs text-stone-500"><Badge tone="neutral" className="mr-1">{LINK_KIND_LABELS[d.kind]}</Badge>{d.received_at ? new Date(d.received_at).toLocaleDateString() : ''}</p>
               </div>
               {canEdit ? <button type="button" onClick={() => void remove(d)} className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-red-600" aria-label={`Remove ${d.label}`}><Trash2 className="size-4" aria-hidden="true" /></button> : null}
@@ -75,6 +78,7 @@ export function OrderDocumentsSection({ orderId, vendorId, organizationId, userI
           ))}
         </ul>
       )}
+      {viewer}
     </section>
   )
 }

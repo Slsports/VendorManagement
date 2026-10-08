@@ -5,7 +5,8 @@ import { Check, ExternalLink, FileText, Mail, RefreshCw, Upload } from 'lucide-r
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { getFreightBill, listVendorOrdersForFreight, readFreightBill, setFreightBillPaid, setFreightBillStatus, setFreightLine, uploadFreightPdf, type FreightBillDetail } from '@/services/freight'
-import { signedFileUrl } from '@/services/lines'
+import { downloadVendorFile } from '@/services/lines'
+import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { ROUTES } from '@/lib/constants'
 import { FREIGHT_STATUS, money, shortDate } from '@/lib/freight'
 import { errorMessage } from '@/lib/utils'
@@ -22,6 +23,7 @@ export default function FreightBillDetailPage() {
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
   const q = useSupabaseQuery(() => getFreightBill(id), [id])
   const [busy, setBusy] = useState(false)
+  const { view, viewer } = useDocumentViewer()
   const fileInput = useRef<HTMLInputElement>(null)
   const b = q.data
 
@@ -47,6 +49,7 @@ export default function FreightBillDetailPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
+      {viewer}
       <BackLink fallback={ROUTES.freight} fallbackLabel="Freight bills" />
       <PageHeader
         eyebrow="Freight bill"
@@ -66,7 +69,7 @@ export default function FreightBillDetailPage() {
 
       <section className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl border border-stone-200 bg-white p-4 text-sm">
         {b.storage_path ? (
-          <button type="button" className="inline-flex items-center gap-1 text-brand hover:underline" onClick={async () => { try { window.open(await signedFileUrl(b.storage_path!), '_blank') } catch (err) { toast.error(errorMessage(err)) } }}>
+          <button type="button" className="inline-flex items-center gap-1 text-brand hover:underline" onClick={() => view({ name: b.file_name ?? 'Bill.pdf', mime: 'application/pdf', load: () => downloadVendorFile(b.storage_path!) })}>
             <FileText className="size-4" aria-hidden="true" /> {b.file_name ?? 'Bill PDF'}
           </button>
         ) : <span className="text-stone-600">No PDF yet.</span>}

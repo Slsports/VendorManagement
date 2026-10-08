@@ -1334,3 +1334,7 @@ Dana listed these while working the Review queue, then said go.
   date the file is for or arrived (`vendor_links.doc_year`); the folder follows the kind. Drop files on a
   folder or Upload (several at once, pick folder and year); Move changes folder and year; an email
   attachment's "Save to documents" asks the folder (guessed from the file name) and year.
+- Dana, Oct 8: documents open inside VMS without downloading (PDFs and pictures as they are, Excel/CSV
+  as tables with a tab per sheet, Word .docx as a page; nothing is sent elsewhere to show them; old .doc
+  files download). The viewer has Download; each document has a download icon; a folder and each year
+  have "Download all" as one zip (Vendor/Folder/Year/file). Email attachments open in the same viewer.

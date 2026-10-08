@@ -256,28 +256,20 @@ export async function fetchEmailHtml(emailId: string): Promise<string> {
   return (data as { html: string }).html
 }
 
-/** Open an attachment in a new tab (the browser shows PDFs and pictures, downloads the rest). */
-export async function openAttachment(attachmentId: string): Promise<void> {
+/** An attachment's bytes from Gmail, for the in-app viewer and downloads. */
+export async function fetchAttachment(attachmentId: string): Promise<Blob> {
   // A plain fetch, not functions.invoke: invoke would read a PDF as text and spoil it.
-  const win = window.open('', '_blank')
-  try {
-    const { data: s } = await supabase.auth.getSession()
-    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-read`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', apikey: import.meta.env.VITE_SUPABASE_ANON_KEY, Authorization: `Bearer ${s.session?.access_token ?? ''}` },
-      body: JSON.stringify({ action: 'attachment', attachment_id: attachmentId }),
-    })
-    if (!res.ok) {
-      const body = await res.json().catch(() => null)
-      throw new Error(body?.error ?? `Could not open the attachment (${res.status})`)
-    }
-    const url = URL.createObjectURL(await res.blob())
-    if (win) win.location.href = url
-    else window.location.href = url
-  } catch (err) {
-    win?.close()
-    throw err
+  const { data: s } = await supabase.auth.getSession()
+  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gmail-read`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: import.meta.env.VITE_SUPABASE_ANON_KEY, Authorization: `Bearer ${s.session?.access_token ?? ''}` },
+    body: JSON.stringify({ action: 'attachment', attachment_id: attachmentId }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => null)
+    throw new Error(body?.error ?? `Could not open the attachment (${res.status})`)
   }
+  return res.blob()
 }
 
 /** Copy an attachment into the vendor's documents (folder by kind, and the year folder). */

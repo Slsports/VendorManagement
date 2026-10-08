@@ -1,8 +1,10 @@
 import { useState, type DragEvent } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { ExternalLink, FileText, Folder, FolderInput, FolderOpen, Link2, Mail, Trash2, Upload } from 'lucide-react'
-import { addVendorLink, deleteVendorLink, listVendorLinks, moveVendorDocument, signedFileUrl, uploadVendorFile, type VendorLinkRow } from '@/services/lines'
+import { Download, ExternalLink, FileText, Folder, FolderInput, FolderOpen, Link2, Mail, Trash2, Upload } from 'lucide-react'
+import { addVendorLink, deleteVendorLink, downloadVendorFile, listVendorLinks, moveVendorDocument, uploadVendorFile, zipVendorDocuments, type VendorLinkRow } from '@/services/lines'
+import { useDocumentViewer } from '@/hooks/useDocumentViewer'
+import { saveBlob } from '@/lib/viewer'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { DOC_FOLDERS, byYear, folderLabel, folderOf, kindFor, thisYear, todayIso, yearChoices, type DocFolder } from '@/lib/documents'
 import { LINK_KIND_LABELS } from '@/lib/vendors'
@@ -18,13 +20,15 @@ const MAX_MB = 25
  * Invoices…) with a year folder inside. Drop files on a folder or use Upload; files from email land in the
  * right folder on their own. Move puts a file in another folder or year.
  */
-export function VendorDocumentsSection({ vendorId, organizationId, userId, canEdit }: { vendorId: string; organizationId: string; userId: string | null; canEdit: boolean }) {
+export function VendorDocumentsSection({ vendorId, vendorName, organizationId, userId, canEdit }: { vendorId: string; vendorName: string; organizationId: string; userId: string | null; canEdit: boolean }) {
   const q = useSupabaseQuery(() => listVendorLinks(vendorId), [vendorId])
   const [openFolder, setOpenFolder] = useState<DocFolder | null>(null)
   const [adding, setAdding] = useState<{ mode: 'file' | 'link'; folder: DocFolder; files: File[] } | null>(null)
   const [moving, setMoving] = useState<VendorLinkRow | null>(null)
   const [dropOn, setDropOn] = useState<DocFolder | null>(null)
   const [busy, setBusy] = useState(false)
+  const [zipping, setZipping] = useState<string | null>(null)
+  const { view, viewer } = useDocumentViewer()
 
   const links = q.data ?? []
   const inFolder = (f: DocFolder) => links.filter((l) => folderOf(l.kind) === f)
@@ -65,12 +69,29 @@ export function VendorDocumentsSection({ vendorId, organizationId, userId, canEd
     onDrop: (e: DragEvent) => void drop(e, f),
   } : {}
 
-  async function open(link: VendorLinkRow) {
+  function open(link: VendorLinkRow) {
+    if (link.storage_path) view({ name: link.file_name ?? link.label, mime: link.mime_type, load: () => downloadVendorFile(link.storage_path!) })
+    else if (link.url) window.open(link.url, '_blank', 'noopener')
+  }
+
+  async function download(link: VendorLinkRow) {
     try {
-      if (link.storage_path) window.open(await signedFileUrl(link.storage_path), '_blank', 'noopener')
-      else if (link.url) window.open(link.url, '_blank', 'noopener')
+      saveBlob(await downloadVendorFile(link.storage_path!), link.file_name ?? link.label)
     } catch (err) {
       toast.error(errorMessage(err))
+    }
+  }
+
+  /** "Download all" for a folder or one year in it: one zip, foldered like the screen. */
+  async function downloadAll(key: string, rows: VendorLinkRow[], zipName: string) {
+    if (!rows.some((r) => r.storage_path)) { toast('Only links here, nothing to download.'); return }
+    setZipping(key)
+    try {
+      saveBlob(await zipVendorDocuments(rows, vendorName, (l) => folderLabel(folderOf(l.kind))), `${zipName}.zip`)
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setZipping(null)
     }
   }
 
@@ -89,7 +110,7 @@ export function VendorDocumentsSection({ vendorId, organizationId, userId, canEd
     <li key={l.id} className="flex items-center gap-3 py-2">
       {l.storage_path ? <FileText className="size-5 shrink-0 text-stone-400" aria-hidden="true" /> : <ExternalLink className="size-5 shrink-0 text-stone-400" aria-hidden="true" />}
       <div className="min-w-0 flex-1">
-        <button type="button" onClick={() => void open(l)} className="max-w-full truncate text-left text-sm font-medium text-stone-900 hover:text-brand">{l.label}</button>
+        <button type="button" onClick={() => open(l)} className="max-w-full truncate text-left text-sm font-medium text-stone-900 hover:text-brand">{l.label}</button>
         <p className="truncate text-xs text-stone-500">
           {l.is_current ? <Badge tone="success" className="mr-1">Current</Badge> : null}
           {folder && folder.kinds.length > 1 ? <Badge tone="neutral" className="mr-1">{LINK_KIND_LABELS[l.kind]}</Badge> : null}
@@ -98,12 +119,13 @@ export function VendorDocumentsSection({ vendorId, organizationId, userId, canEd
         </p>
         {l.notes && !l.email ? <p className="mt-0.5 text-xs text-stone-600">{l.notes}</p> : null}
       </div>
-      {canEdit ? (
-        <div className="flex shrink-0">
+      <div className="flex shrink-0">
+        {l.storage_path ? <button type="button" onClick={() => void download(l)} className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700" aria-label={`Download ${l.label}`} title="Download"><Download className="size-4" aria-hidden="true" /></button> : null}
+        {canEdit ? (<>
           <button type="button" onClick={() => setMoving(l)} className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700" aria-label={`Move ${l.label}`} title="Move to another folder or year"><FolderInput className="size-4" aria-hidden="true" /></button>
           <button type="button" onClick={() => void remove(l)} className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-red-600" aria-label={`Remove ${l.label}`}><Trash2 className="size-4" aria-hidden="true" /></button>
-        </div>
-      ) : null}
+        </>) : null}
+      </div>
     </li>
   )
 
@@ -139,13 +161,22 @@ export function VendorDocumentsSection({ vendorId, organizationId, userId, canEd
 
       {folder ? (
         <div className="mt-4 rounded-xl border border-stone-200 p-3" {...dragProps(folder.id)}>
-          <p className="text-sm font-semibold text-stone-900">{folder.label}</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-stone-900">{folder.label}</p>
+            {inFolder(folder.id).length ? (
+              <Button size="sm" variant="ghost" loading={zipping === folder.id} disabled={!!zipping} onClick={() => void downloadAll(folder.id, inFolder(folder.id), `${vendorName} ${folder.label}`)} leftIcon={<Download className="size-4" aria-hidden="true" />}>Download all</Button>
+            ) : null}
+          </div>
           {inFolder(folder.id).length === 0 ? (
             <p className="mt-2 text-sm text-stone-500">Nothing in {folder.label} yet.{canEdit ? ' Drop files here or use Upload.' : ''}</p>
           ) : byYear(inFolder(folder.id)).map(([year, rows], i) => (
             <details key={year ?? 'none'} open={i === 0} className="mt-2">
               <summary className="cursor-pointer text-sm font-medium text-stone-700">
                 <Folder className="mr-1 inline size-4 text-amber-500" aria-hidden="true" />{year ?? 'No year'} <span className="font-normal text-stone-500">({rows.length})</span>
+                <button type="button" disabled={!!zipping} onClick={(e) => { e.preventDefault(); void downloadAll(`${folder.id}-${year}`, rows, `${vendorName} ${folder.label} ${year ?? ''}`.trim()) }}
+                  className="ml-2 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-normal text-stone-500 hover:bg-stone-100 hover:text-stone-800">
+                  <Download className="size-3.5" aria-hidden="true" />{zipping === `${folder.id}-${year}` ? 'Zipping…' : 'Download year'}
+                </button>
               </summary>
               <ul className="ml-1 divide-y divide-stone-100 border-l border-stone-100 pl-3">{rows.map(row)}</ul>
             </details>
@@ -173,6 +204,7 @@ export function VendorDocumentsSection({ vendorId, organizationId, userId, canEd
           await q.refetch()
         }} />
       ) : null}
+      {viewer}
       {moving ? (
         <MoveDocumentDialog link={moving} onClose={() => setMoving(null)} onMoved={async (f) => { setMoving(null); setOpenFolder(f); await q.refetch() }} />
       ) : null}

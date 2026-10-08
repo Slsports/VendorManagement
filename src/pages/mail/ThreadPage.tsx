@@ -4,7 +4,8 @@ import toast from 'react-hot-toast'
 import { CheckCircle2, ExternalLink, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { assignEmailThread, fetchEmailHtml, getMailbox, getThread, openAttachment, setEmailThreadStatus, setEmailVendor, setThreadView, type ThreadDetail } from '@/services/mail'
+import { assignEmailThread, fetchEmailHtml, getMailbox, getThread, fetchAttachment, setEmailThreadStatus, setEmailVendor, setThreadView, type ThreadDetail } from '@/services/mail'
+import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { SaveToDocumentsDialog } from '@/components/vendors/SaveToDocumentsDialog'
 import { listPeople } from '@/services/reviews'
 import { followUpDraft, forwardDraft, gmailThreadUrl, newVendorPrefill, replyDraft, threadState, waited } from '@/lib/mail'
@@ -109,6 +110,7 @@ function Message({ email: e, startOpen, vendor, onCompose }: { email: ThreadDeta
   const [loadingHtml, setLoadingHtml] = useState(false)
   const [saving, setSaving] = useState<{ id: string; file_name: string } | null>(null)
   const [saved, setSaved] = useState<string[]>([])
+  const { view, viewer } = useDocumentViewer()
   const { role } = useAuth()
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
 
@@ -122,14 +124,6 @@ function Message({ email: e, startOpen, vendor, onCompose }: { email: ThreadDeta
       toast.error(errorMessage(err))
     } finally {
       setLoadingHtml(false)
-    }
-  }
-  async function run(label: string, fn: () => Promise<void>) {
-    try {
-      await fn()
-      if (label) toast.success(label)
-    } catch (err) {
-      toast.error(errorMessage(err))
     }
   }
   return (
@@ -149,6 +143,7 @@ function Message({ email: e, startOpen, vendor, onCompose }: { email: ThreadDeta
           {html
             ? <iframe title="Formatted message" sandbox="allow-popups allow-popups-to-escape-sandbox" srcDoc={`<base target="_blank">${html}`} className="h-[32rem] w-full rounded-lg border border-stone-200 bg-white" />
             : <div className="whitespace-pre-wrap break-words text-sm text-stone-800">{e.body_text || e.snippet}</div>}
+          {viewer}
           {saving && vendor ? (
             <SaveToDocumentsDialog attachment={saving} vendor={vendor} subject={e.subject} receivedAt={e.received_at} onClose={() => setSaving(null)} onSaved={() => { setSaved((x) => [...x, saving.id]); setSaving(null) }} />
           ) : null}
@@ -156,7 +151,7 @@ function Message({ email: e, startOpen, vendor, onCompose }: { email: ThreadDeta
             <ul className="mt-3 flex flex-wrap gap-2">
               {e.attachments.map((a) => (
                 <li key={a.id} className="inline-flex items-center gap-1 rounded-lg bg-stone-100 text-xs text-stone-700">
-                  <button type="button" onClick={() => void run('', () => openAttachment(a.id))} disabled={!a.gmail_attachment_id} className="inline-flex items-center gap-1 px-2 py-1 hover:text-brand disabled:cursor-default disabled:hover:text-stone-700" title={a.gmail_attachment_id ? 'Open' : 'Not available from Gmail'}>
+                  <button type="button" onClick={() => view({ name: a.file_name, mime: a.mime_type, load: () => fetchAttachment(a.id) })} disabled={!a.gmail_attachment_id} className="inline-flex items-center gap-1 px-2 py-1 hover:text-brand disabled:cursor-default disabled:hover:text-stone-700" title={a.gmail_attachment_id ? 'Open' : 'Not available from Gmail'}>
                     <Paperclip className="size-3.5" aria-hidden="true" />{a.file_name}{a.size ? <span className="text-stone-400"> · {Math.max(1, Math.round(a.size / 1024))} KB</span> : null}
                   </button>
                   {canEdit && vendor && a.gmail_attachment_id && !a.vendor_link_id && !saved.includes(a.id) ? (

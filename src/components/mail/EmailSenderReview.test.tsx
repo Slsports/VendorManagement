@@ -14,7 +14,7 @@ const { resolveEmailSender, listVendorNames, listRepGroupNames, listSenderEmails
   listVendorNames: vi.fn(async () => [{ id: 'v-stan', name: 'STANSPORT', is_active: true }, { id: 'v-wfs', name: 'WORLD FAMOUS SPORTS', is_active: true }, { id: 'v-old', name: 'OLD STAN', is_active: false }]),
   listRepGroupNames: vi.fn(async () => [{ id: 'r-pin', name: 'Pinnacle Team' }]),
 }))
-vi.mock('@/services/mail', () => ({ resolveEmailSender, listVendorNames, listRepGroupNames, listSenderEmails, reviewSenderEmails, getEmailBody: vi.fn(), openAttachment: vi.fn(), clearPickerCache: vi.fn() }))
+vi.mock('@/services/mail', () => ({ resolveEmailSender, listVendorNames, listRepGroupNames, listSenderEmails, reviewSenderEmails, getEmailBody: vi.fn(), fetchAttachment: vi.fn(), clearPickerCache: vi.fn() }))
 
 const item = {
   id: 'ri1', organization_id: 'o1', kind: 'email_sender', entity_type: 'email_sender', entity_id: 's1', title: 'Mail from @wfsports.com looks like WORLD FAMOUS SPORTS',

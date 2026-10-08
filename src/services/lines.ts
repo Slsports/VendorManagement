@@ -165,6 +165,13 @@ export async function uploadVendorFile(organizationId: string, vendorId: string,
   return path
 }
 
+/** A stored document's bytes, for the in-app viewer and zip downloads. */
+export async function downloadVendorFile(storagePath: string): Promise<Blob> {
+  const { data, error } = await supabase.storage.from(BUCKET).download(storagePath)
+  if (error) throw error
+  return data
+}
+
 export async function signedFileUrl(storagePath: string): Promise<string> {
   const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(storagePath, 60 * 60)
   if (error) throw error
@@ -184,4 +191,26 @@ export async function deleteVendorLink(link: VendorLink): Promise<void> {
 export async function moveVendorDocument(linkId: string, kind: VendorLink['kind'], year: number | null): Promise<void> {
   const { error } = await supabase.rpc('move_vendor_document', { p_link: linkId, p_kind: kind, p_year: year })
   if (error) throw error
+}
+
+/**
+ * Several documents as one zip, foldered "<Vendor>/<Folder>/<Year>/<file>". Links go in a links.txt beside
+ * them. `folderOf` names each document's folder.
+ */
+export async function zipVendorDocuments(rows: VendorLink[], vendorName: string, folderName: (l: VendorLink) => string): Promise<Blob> {
+  const { default: JSZip } = await import('jszip')
+  const zip = new JSZip()
+  const clean = (s: string) => s.replace(/[\\/:*?"<>|]+/g, '_').trim() || 'file'
+  const used = new Set<string>()
+  const links: string[] = []
+  for (const l of rows) {
+    const dir = `${clean(vendorName)}/${clean(folderName(l))}/${l.doc_year ?? 'No year'}`
+    if (!l.storage_path) { if (l.url) links.push(`${dir}: ${l.label} ${l.url}`); continue }
+    let name = `${dir}/${clean(l.file_name ?? l.label)}`
+    for (let i = 2; used.has(name); i++) name = `${dir}/${i}-${clean(l.file_name ?? l.label)}`
+    used.add(name)
+    zip.file(name, await downloadVendorFile(l.storage_path))
+  }
+  if (links.length) zip.file(`${clean(vendorName)}/links.txt`, links.join('\n'))
+  return zip.generateAsync({ type: 'blob' })
 }

@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { ChevronDown, ChevronRight, Megaphone, MessageCircleQuestion, Paperclip, X } from 'lucide-react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { getEmailBody, listSenderEmails, openAttachment, resolveEmailSender, reviewSenderEmails, type SenderEmail } from '@/services/mail'
+import { getEmailBody, listSenderEmails, fetchAttachment, resolveEmailSender, reviewSenderEmails, type SenderEmail } from '@/services/mail'
+import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
 import type { NewVendorPrefill } from '@/components/vendors/VendorPicker'
@@ -146,15 +147,17 @@ export function SenderEmailsPanel({ senderId, senderLabel, prefill, canEdit = tr
 
 function EmailBody({ emailId, threadId }: { emailId: string; threadId: string }) {
   const q = useSupabaseQuery(() => getEmailBody(emailId), [emailId])
+  const { view, viewer } = useDocumentViewer()
   return (
     <div className="ml-7 mt-2 rounded-lg border border-stone-200 bg-white p-3 text-sm">
+      {viewer}
       {q.isLoading ? <p className="text-stone-500">Loading…</p> : (
         <>
           <p className="max-h-80 overflow-y-auto whitespace-pre-line text-stone-800">{q.data?.body_text?.trim() || '(no text)'}</p>
           {q.data?.attachments.length ? (
             <ul className="mt-2 flex flex-wrap gap-2">
               {q.data.attachments.map((a) => (
-                <li key={a.id}><button type="button" onClick={() => void openAttachment(a.id)} className="inline-flex items-center gap-1 rounded-md bg-stone-100 px-2 py-1 text-xs text-stone-700 hover:bg-stone-200"><Paperclip className="size-3.5" aria-hidden="true" />{a.file_name}</button></li>
+                <li key={a.id}><button type="button" onClick={() => view({ name: a.file_name, load: () => fetchAttachment(a.id) })} className="inline-flex items-center gap-1 rounded-md bg-stone-100 px-2 py-1 text-xs text-stone-700 hover:bg-stone-200"><Paperclip className="size-3.5" aria-hidden="true" />{a.file_name}</button></li>
               ))}
             </ul>
           ) : null}

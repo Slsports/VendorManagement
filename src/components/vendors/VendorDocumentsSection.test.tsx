@@ -11,12 +11,12 @@ vi.mock('@/services/lines', () => ({
     { ...base, id: 'd2', kind: 'invoice', label: 'INV 647107', storage_path: 'p2', file_name: 'INV_647107.pdf', received_at: '2023-08-21', doc_year: 2023, is_current: false },
     { ...base, id: 'd3', kind: 'price_list', label: 'Fall 2026 price list', storage_path: 'p3', file_name: 'pl.pdf', received_at: '2026-08-01', doc_year: 2026, is_current: true },
   ]),
-  moveVendorDocument, addVendorLink: vi.fn(), deleteVendorLink: vi.fn(), signedFileUrl: vi.fn(), uploadVendorFile: vi.fn(),
+  moveVendorDocument, addVendorLink: vi.fn(), deleteVendorLink: vi.fn(), downloadVendorFile: vi.fn(), zipVendorDocuments: vi.fn(), uploadVendorFile: vi.fn(),
 }))
 
 describe('VendorDocumentsSection', () => {
   it('shows folders with counts, years inside, and moves a file', async () => {
-    render(withAuth('buyer', <VendorDocumentsSection vendorId="v1" organizationId="o1" userId="u1" canEdit />))
+    render(withAuth('buyer', <VendorDocumentsSection vendorId="v1" vendorName="Stansport" organizationId="o1" userId="u1" canEdit />))
     const invoices = await screen.findByRole('button', { name: /Invoices\s*2 files/ })
     expect(screen.getByRole('button', { name: /Price lists\s*1 file/ })).toBeInTheDocument()
     fireEvent.click(invoices)
