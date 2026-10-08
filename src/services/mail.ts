@@ -95,6 +95,8 @@ export async function syncMailNow(): Promise<void> {
 }
 
 // ---- threads -------------------------------------------------------------------
+export type ShipStatus = 'picked_up' | 'in_transit' | 'out_for_delivery' | 'delivered' | 'exception'
+
 export interface ThreadRow {
   id: string
   gmail_thread_id: string
@@ -106,6 +108,8 @@ export interface ThreadRow {
   message_count: number
   last_message_at: string | null
   follow_up_at: string | null
+  /** From a carrier's status update (Dana, Oct 8): shown as Delivered, In transit… */
+  ship_status?: ShipStatus | null
   vendor: { id: string; name: string } | null
   owner: { id: string; full_name: string } | null
   /** The newest message: who, a line of it, and whether it came in or went out. */
@@ -124,7 +128,7 @@ export interface ThreadFilters {
   q?: string
 }
 
-const THREAD_SELECT = 'id, gmail_thread_id, subject, status, view, vendor_id, owner_id, message_count, last_message_at, follow_up_at, vendor:vendors(id, name), owner:profiles!email_threads_owner_id_fkey(id, full_name)'
+const THREAD_SELECT = 'id, gmail_thread_id, subject, status, view, vendor_id, owner_id, message_count, last_message_at, follow_up_at, ship_status, vendor:vendors(id, name), owner:profiles!email_threads_owner_id_fkey(id, full_name)'
 
 async function withLastMessage(rows: Omit<ThreadRow, 'last'>[]): Promise<ThreadRow[]> {
   if (!rows.length) return []
@@ -378,3 +382,9 @@ export async function reviewSenderEmails(senderId: string, emailIds: string[], a
   return data ?? 0
 }
 
+
+/** "Does this need an answer?" card (review queue): yes keeps it in Needs an answer, no handles it. */
+export async function answerMailReply(itemId: string, needsAnswer: boolean): Promise<void> {
+  const { error } = await supabase.rpc('answer_mail_reply', { p_item: itemId, p_needs_answer: needsAnswer })
+  if (error) throw error
+}

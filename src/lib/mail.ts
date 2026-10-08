@@ -16,6 +16,14 @@ export const THREAD_STATE_LABELS: Record<ThreadState, { label: string; tone: 'wa
   handled: { label: 'Handled', tone: 'neutral' },
 }
 
+export const SHIP_STATUS_LABELS: Record<'picked_up' | 'in_transit' | 'out_for_delivery' | 'delivered' | 'exception', { label: string; tone: 'success' | 'info' | 'danger' }> = {
+  picked_up: { label: 'Picked up', tone: 'info' },
+  in_transit: { label: 'In transit', tone: 'info' },
+  out_for_delivery: { label: 'Out for delivery', tone: 'info' },
+  delivered: { label: 'Delivered', tone: 'success' },
+  exception: { label: 'Shipping problem', tone: 'danger' },
+}
+
 /** "3 days", "5 hours": how long something has waited. */
 export function waited(since: string | null, now = Date.now()): string {
   if (!since) return ''

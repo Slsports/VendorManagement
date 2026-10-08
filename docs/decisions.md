@@ -1358,3 +1358,11 @@ Dana listed these while working the Review queue, then said go.
 - Dana, Oct 8: "Harbor Freight is not a vendor, it's a shipping carrier." HARBOR FREIGHT (from Lightspeed,
   no orders) was deleted and its name excluded from imports; Oak Harbor Freight (OAKH, LTL) is a carrier.
   Its mail was filed again without it.
+- Dana, Oct 8: "Needs an answer" only holds email that needs one. Claude (cheapest model) reads the newest
+  email of each conversation waiting on us: sure no reply is needed (tracking updates, delivery notices,
+  automatic invoice notices, receipts, ads, "thanks") → Handled; a question or request → stays; **not 100%
+  sure → a "Does this need an answer?" card in the review queue** for the conversation's owner (Needs an
+  answer / No answer needed). Three "No answer needed" about one sender and its unsure emails go to Handled
+  (a real question still stays). Marketing senders go to Handled without asking. A carrier's status update
+  shows on the conversation (Delivered, In transit…) and is filed to the shipper (Origin), never to a name
+  in the text. The conversations already waiting are read the same way, 30 a minute.

@@ -7,7 +7,7 @@ import { Gmail, GmailError, googleAccessToken } from '../_shared/gmail.ts'
 import { clueText, htmlBody, isBulk, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
 import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type VendorIndex } from '../_shared/mailMatch.ts'
 import { extractLinks, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
-import { aiEnabled, readEmailVendors, readSender, sortEmails, type UnsureEmail } from '../_shared/ai.ts'
+import { aiEnabled, readEmailVendors, readReplyNeeded, readSender, sortEmails, type ReplyEmail, type UnsureEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, invoiceNumberFrom, looksLikeBill, looksLikeReceipt, proNumberFrom, readFreightPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
@@ -402,6 +402,31 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
       const batch = list.slice(i, i + 20)
       const views = await sortEmails(db, org, batch)
       await check(db.rpc('mail_set_ai_views', { p_org: org, p_ids: batch.map((e) => e.id), p_views: batch.map((e) => views.get(e.id) ?? 'unsure') }))
+    }
+
+    // Does the newest email of each conversation waiting on us need an answer? (Dana, Oct 8.) Ads go to
+    // Handled without asking; Claude reads the rest, ten at a time; unsure ones become review cards.
+    const { data: waiting } = await db.rpc('mail_reply_queue', { p_org: org, p_limit: 30 })
+    const replyList = (waiting ?? []) as ReplyEmail[]
+    let rIndex: Awaited<ReturnType<typeof freightIndex>> | null = null
+    for (const e of replyList.filter((x) => x.sender_kind === 'marketing')) {
+      await check(db.rpc('mail_apply_reply', { p_email: e.email_id, p_reply: 'no', p_note: 'Marketing', p_ship: null, p_shipper: null }))
+    }
+    const toRead = replyList.filter((x) => x.sender_kind !== 'marketing')
+    for (let i = 0; i < toRead.length && Date.now() - started < TIME_BUDGET_MS; i += 10) {
+      const batch = toRead.slice(i, i + 10)
+      const readings = await readReplyNeeded(db, org, batch)
+      for (const e of batch) {
+        const r = readings.get(e.email_id)
+        if (!r) continue
+        let shipper: string | null = null
+        if (r.shipper && e.sender_kind === 'carrier') {
+          rIndex ??= await freightIndex(db, org)
+          const ids = shipperVendors(rIndex, r.shipper)
+          if (ids.length === 1) shipper = ids[0]!
+        }
+        await check(db.rpc('mail_apply_reply', { p_email: e.email_id, p_reply: r.reply, p_note: r.note, p_ship: r.ship_status, p_shipper: shipper }))
+      }
     }
 
     // Mail from Worldwide, carriers, services and rep groups: every vendor it names gets the email too, and a
