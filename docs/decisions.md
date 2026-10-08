@@ -1317,3 +1317,9 @@ Dana listed these while working the Review queue, then said go.
   (attachments too). Tick some and file them to a vendor, or mark them Marketing or Other; the rest can go
   another way. Select all is the whole-sender answer (future mail too). The card closes when every email
   is handled; the sender stays undecided, so new mail from them asks again (`emails.disposition`).
+- Dana, Oct 8: XPO (LTL, deliveryreceipt@xpo.com) is a freight carrier for Trevor. Claude reads each
+  delivery receipt PDF: the shipper is the vendor, the PO finds the order. The email is filed to that
+  vendor, the PDF goes into the vendor's and order's files as "Delivery receipt", and the order gets the
+  delivered date as its received date when it had none. A receipt Claude cannot match goes to the review
+  queue for the carrier's owner ("which vendor shipped it?"). Receipts are never freight bills. Works for
+  any carrier's receipts ("Delivery Receipt", "Proof of delivery" in the subject) (`delivery_receipts`).

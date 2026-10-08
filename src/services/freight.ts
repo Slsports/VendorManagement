@@ -141,3 +141,9 @@ export async function setSeesFreight(profileId: string, on: boolean): Promise<vo
   if (error) throw error
 }
 
+
+/** "File to this vendor" on a delivery receipt Claude could not match (review queue). */
+export async function fileDeliveryReceipt(receiptId: string, vendorId: string): Promise<void> {
+  const { error } = await supabase.rpc('file_delivery_receipt', { p_receipt: receiptId, p_vendor: vendorId })
+  if (error) throw error
+}

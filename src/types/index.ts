@@ -18,6 +18,7 @@ export type Carrier = Tables<'carriers'>
 export type OrderLine = Tables<'order_lines'>
 export type FreightBill = Tables<'freight_bills'>
 export type FreightBillLine = Tables<'freight_bill_lines'>
+export type DeliveryReceipt = Tables<'delivery_receipts'>
 export type Category = Tables<'categories'>
 export type PaymentTerms = Tables<'payment_terms'>
 export type Note = Tables<'notes'>

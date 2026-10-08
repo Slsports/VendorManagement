@@ -10,6 +10,7 @@ import type { BillingRoute, ReviewItem } from '@/types'
 import { Button, Input, Select } from '@/components/ui'
 import { EmailSenderReview } from '@/components/mail/EmailSenderReview'
 import { VendorAssignmentActions } from '@/components/vendors/VendorAssignmentActions'
+import { DeliveryReceiptReview } from '@/components/freight/DeliveryReceiptReview'
 
 type VendorRef = { id: string; name: string; lightspeed_name: string | null; aliases: string[] } | null
 
@@ -43,6 +44,7 @@ const ROUTE_OPTIONS: { value: RouteChoice; label: string }[] = [
  *  - vendor_merge (auto-merged at import): Confirm it is one vendor, or Split a name back out.
  *  - vendor_duplicate (two records that look alike): Keep both, or Merge into the one you choose.
  *  - vendor_assignment (who orders from it): keep the proposed person or pick another.
+ *  - delivery_receipt (a carrier receipt Claude could not match): pick the vendor that shipped it.
  *  - vendor_marker and anything else: Done / Dismiss.
  * Any card about one vendor can also delete it as "not a vendor" (never one with orders).
  * Every merge, confirm or split can state WWD / Faire / Not WWD so the result's usual route is right.
@@ -83,6 +85,18 @@ export function ReviewItemCard({ item, vendor, other, canEdit, onDone, aside }: 
       {ROUTE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
     </Select>
   )
+
+  if (item.kind === 'delivery_receipt') {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <p className="font-medium text-amber-900">{item.title}</p>
+          {aside ? <div className="shrink-0">{aside}</div> : null}
+        </div>
+        <DeliveryReceiptReview item={item} canEdit={canEdit} onDone={() => onDone()} />
+      </div>
+    )
+  }
 
   if (item.kind === 'email_sender') {
     return (

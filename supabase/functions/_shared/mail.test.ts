@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildVendorIndex, domainLabel, domainVendors, mentionedVendors, poVendors, shipperVendors, vendorNames } from './mailMatch.ts'
-import { invoiceNumberFrom, looksLikeBill } from './freightText.ts'
+import { invoiceNumberFrom, looksLikeBill, looksLikeReceipt, proNumberFrom } from './freightText.ts'
 import { bodyAboveSignature, clueText, decodeBase64Url, parseAddressList, parseMessage, type GmailMessage } from './mailParse.ts'
 
 const vendors = [
@@ -149,6 +149,25 @@ describe('freight bill emails', () => {
   it('reads an invoice number only after a #', () => {
     expect(invoiceNumberFrom('Worldwide Express Invoice 10/07/2026 #261005W105025 for Shaver Lake Sports Inc #W0003290195')).toBe('261005W105025')
     expect(invoiceNumberFrom('Your New Invoices from PartnerShip - 792862')).toBeNull()
+  })
+})
+
+describe('delivery receipts', () => {
+  it('XPO receipts, not their auto-replies; the pro number from the subject', () => {
+    expect(looksLikeReceipt('Delivery Receipt for 518-563231')).toBe(true)
+    expect(looksLikeReceipt('Automatic reply: Delivery Receipt for 381-292391')).toBe(false)
+    expect(looksLikeReceipt('RE: Delivery Receipt for 381-292391')).toBe(false)
+    expect(looksLikeReceipt('Worldwide Express Invoice 10/07/2026 #261005W105025')).toBe(false)
+    expect(looksLikeBill('Delivery Receipt for 518-563231', 'Attached is your delivery receipt', true)).toBe(false)
+    expect(proNumberFrom('Delivery Receipt for 518-563231')).toBe('518-563231')
+  })
+  it('the shipper on the receipt finds the vendor among look-alikes', () => {
+    const idx = buildVendorIndex([
+      { id: 'rd', name: 'ROYAL DELUXE ACCESSORIES', aliases: [] },
+      { id: 'rb', name: 'ROYAL BRUSH', aliases: [] },
+      { id: 'rw', name: 'ROYAL WEAR', aliases: [] },
+    ], ['Shaver Lake'])
+    expect(shipperVendors(idx, 'ROYAL DELUXE ACCESSORIES LLC')).toEqual(['rd'])
   })
 })
 

@@ -16,3 +16,16 @@ export function invoiceNumberFrom(subject: string | null): string | null {
   const m = (subject ?? '').match(/invoice[^#\n]*#\s*([A-Z0-9-]*\d[A-Z0-9-]*)/i)
   return m ? m[1]! : null
 }
+
+/** "Delivery Receipt for 518-563231" (XPO), proof of delivery, signed BOL: a receipt to file, not a bill. */
+export function looksLikeReceipt(subject: string | null): boolean {
+  const s = subject ?? ''
+  if (/^\s*(re|fw|fwd|aw)\s*:|automatic reply|out of office/i.test(s)) return false
+  return /delivery receipt|proof of delivery|\bpod\b|delivered bill of lading|signed (bol|bill of lading)/i.test(s)
+}
+
+/** "Delivery Receipt for 518-563231" → 518-563231. */
+export function proNumberFrom(subject: string | null): string | null {
+  const m = (subject ?? '').match(/(?:receipt|delivery|pro)\b[^0-9\n]{0,12}([0-9][0-9-]{5,})/i)
+  return m ? m[1]! : null
+}

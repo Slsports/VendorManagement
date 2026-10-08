@@ -8,7 +8,7 @@ import { clueText, htmlBody, isBulk, parseMessage, type Address, type GmailMessa
 import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type VendorIndex } from '../_shared/mailMatch.ts'
 import { extractLinks, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
 import { aiEnabled, readEmailVendors, readSender, sortEmails, type UnsureEmail } from '../_shared/ai.ts'
-import { applyFreightReading, freightIndex, invoiceNumberFrom, looksLikeBill, readFreightPdf } from '../_shared/freight.ts'
+import { applyFreightReading, applyReceiptReading, freightIndex, invoiceNumberFrom, looksLikeBill, looksLikeReceipt, proNumberFrom, readFreightPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
 // messages and the scheduler comes back every minute until the 12 months are in.
@@ -252,10 +252,21 @@ async function storeMessages(db: SupabaseClient, gmail: Gmail, ctx: Context, ids
   return newIds.length
 }
 
+/** An attachment's bytes from Gmail (base64url). */
+async function attachmentBytes(gmail: Gmail, messageId: string, attachmentId: string): Promise<Uint8Array> {
+  const part = await gmail.call<{ data: string }>(`messages/${messageId}/attachments/${attachmentId}`)
+  const b64 = part.data.replace(/-/g, '+').replace(/_/g, '/')
+  const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4))
+  const bytes = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+  return bytes
+}
+
 /**
  * Freight bills (Oct 8): each invoice email from a carrier becomes a freight bill for Trevor. With the PDF
  * attached (Worldwide Express), it is saved and Claude reads it into one line per shipper; without it
- * (PartnerShip), the bill waits for the PDF. A few emails a run; tracking updates are only marked looked-at.
+ * (PartnerShip), the bill waits for the PDF. Delivery receipts (XPO) are read and filed to the shipper's vendor and order.
+ * A few emails a run; tracking updates are only marked looked-at.
  */
 async function freightBills(db: SupabaseClient, gmail: Gmail, org: string, started: number) {
   const { data: queue } = await db.from('emails')
@@ -269,18 +280,37 @@ async function freightBills(db: SupabaseClient, gmail: Gmail, org: string, start
     try {
       const atts = (e.attachments ?? []) as { id: string; file_name: string; mime_type: string | null; gmail_attachment_id: string | null }[]
       const pdf = atts.find((a) => a.gmail_attachment_id && (/pdf/i.test(a.mime_type ?? '') || /\.pdf$/i.test(a.file_name)))
-      if (looksLikeBill(e.subject, e.body_text, !!pdf)) {
+      if (pdf && looksLikeReceipt(e.subject)) {
+        // A delivery receipt (XPO): file it to the shipper's vendor and order, never a bill.
+        const { data: rcpt, error } = await db.from('delivery_receipts').upsert({
+          organization_id: org, carrier_id: sender.carrier_id, email_id: e.id, pro_number: proNumberFrom(e.subject), file_name: pdf.file_name,
+        }, { onConflict: 'email_id', ignoreDuplicates: true }).select('id').maybeSingle()
+        if (error) throw new Error(error.message)
+        if (rcpt) {
+          const bytes = await attachmentBytes(gmail, e.gmail_id, pdf.gmail_attachment_id!)
+          const path = `${org}/freight/${crypto.randomUUID()}-${pdf.file_name.replace(/[^A-Za-z0-9._-]+/g, '_')}`
+          const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: 'application/pdf', upsert: false })
+          if (upErr) throw new Error(`Saving ${pdf.file_name}: ${upErr.message}`)
+          await db.from('delivery_receipts').update({ storage_path: path }).eq('id', rcpt.id)
+          await db.from('email_attachments').update({ storage_path: path }).eq('id', pdf.id)
+          try {
+            if (!aiEnabled()) throw new Error('Claude is not set up; pick the vendor by hand.')
+            const reading = await readReceiptPdf(db, org, bytes, sender.carriers?.name ?? 'a freight carrier')
+            index ??= await freightIndex(db, org)
+            await applyReceiptReading(db, rcpt.id, reading, index)
+          } catch (err) {
+            await db.from('delivery_receipts').update({ status: 'failed', read_note: (err instanceof Error ? err.message : String(err)).slice(0, 500) }).eq('id', rcpt.id)
+            await db.rpc('delivery_receipt_loaded', { p_receipt: rcpt.id })
+          }
+        }
+      } else if (looksLikeBill(e.subject, e.body_text, !!pdf)) {
         const { data: bill, error } = await db.from('freight_bills').upsert({
           organization_id: org, carrier_id: sender.carrier_id, email_id: e.id, invoice_number: invoiceNumberFrom(e.subject), invoice_date: e.received_at.slice(0, 10),
           status: pdf ? 'reading' : 'needs_pdf',
         }, { onConflict: 'email_id', ignoreDuplicates: true }).select('id').maybeSingle()
         if (error) throw new Error(error.message)
         if (bill && pdf && aiEnabled()) {
-          const part = await gmail.call<{ data: string }>(`messages/${e.gmail_id}/attachments/${pdf.gmail_attachment_id}`)
-          const b64 = part.data.replace(/-/g, '+').replace(/_/g, '/')
-          const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4))
-          const bytes = new Uint8Array(bin.length)
-          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+          const bytes = await attachmentBytes(gmail, e.gmail_id, pdf.gmail_attachment_id!)
           const path = `${org}/freight/${crypto.randomUUID()}-${pdf.file_name.replace(/[^A-Za-z0-9._-]+/g, '_')}`
           const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: 'application/pdf', upsert: false })
           if (upErr) throw new Error(`Saving ${pdf.file_name}: ${upErr.message}`)
