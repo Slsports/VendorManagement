@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { ChevronDown, ChevronRight, ExternalLink, Megaphone, MessageCircleQuestion, Paperclip, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Megaphone, MessageCircleQuestion, Paperclip, X } from 'lucide-react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { getEmailBody, listSenderEmails, openAttachment, resolveEmailSender, reviewSenderEmails, type SenderEmail } from '@/services/mail'
 import { ROUTES } from '@/lib/constants'
@@ -158,7 +158,7 @@ function EmailBody({ emailId, threadId }: { emailId: string; threadId: string })
               ))}
             </ul>
           ) : null}
-          <Link to={`${ROUTES.mail}/${threadId}`} target="_blank" className="mt-2 inline-flex items-center gap-1 text-xs text-brand hover:underline">Open the whole conversation <ExternalLink className="size-3.5" aria-hidden="true" /></Link>
+          <Link to={`${ROUTES.mail}/${threadId}`} className="mt-2 inline-flex items-center gap-1 text-xs text-brand hover:underline">Open the whole conversation <ChevronRight className="size-3.5" aria-hidden="true" /></Link>
         </>
       )}
     </div>

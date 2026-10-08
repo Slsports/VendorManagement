@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Check, Layers, Megaphone, MessageCircleQuestion, Truck, Users } from 'lucide-react'
 import { resolveEmailSender } from '@/services/mail'
@@ -38,7 +39,15 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
   const d = item.details as unknown as EmailSenderDetails
   const [mode, setMode] = useState<'idle' | 'vendor' | 'rep' | 'carrier'>('idle')
   const [carrierId, setCarrierId] = useState('')
-  const [reading, setReading] = useState(false)
+  // The open panel lives in the address (?emails=<sender>), so Back from an email returns to it.
+  const [params, setParams] = useSearchParams()
+  const reading = params.get('emails') === d.sender_id
+  const setReading = (on: boolean) => {
+    const next = new URLSearchParams(params)
+    if (on) next.set('emails', d.sender_id)
+    else next.delete('emails')
+    setParams(next, { replace: true })
+  }
   const [busy, setBusy] = useState(false)
   const [repId, setRepId] = useState('')
   const prefill = newVendorPrefill({ senderKey: d.sender_key, isDomain: d.is_domain, displayName: d.display_name })
