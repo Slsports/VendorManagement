@@ -31,3 +31,16 @@ insert into public.email_senders (organization_id, sender_key, is_domain) values
 select public.mail_match_rep_senders('00000000-0000-0000-0000-000000000001', array[:'ds']::uuid[]) as matched;
 select kind, rep_group_id = :'dg' as is_zorbex from public.email_senders where id = :'ds';
 insert into public.email_senders (organization_id, sender_key, is_domain) values ('00000000-0000-0000-0000-000000000001', 'gmail.com', true) returning cardinality(domain_rep_group_ids) as freemail_groups;
+\echo '>>> a rep group that is not one is removed: its vendor stays, unlinked; the viewer cannot (expect 1 error)'
+insert into public.rep_groups (organization_id, name) values ('00000000-0000-0000-0000-000000000001', 'Not A Rep Group') returning id as nrg \gset
+insert into public.vendors (organization_id, name, rep_group_id) values ('00000000-0000-0000-0000-000000000001', 'Not A Rep Vendor', :'nrg') returning id as nrv \gset
+set role authenticated;
+select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-4444-444444444444","role":"authenticated"}', false);
+\set ON_ERROR_STOP off
+select public.delete_rep_group(:'nrg');
+\set ON_ERROR_STOP on
+select set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', false);
+select public.delete_rep_group(:'nrg');
+reset role;
+select count(*) as groups_left from public.rep_groups where id = :'nrg';
+select rep_group_id is null as unlinked from public.vendors where id = :'nrv';

@@ -1,10 +1,11 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { ExternalLink, Pencil } from 'lucide-react'
+import { ExternalLink, Pencil, Trash2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { getRepGroup, updateRepGroup } from '@/services/lines'
+import { deleteRepGroup, getRepGroup, updateRepGroup } from '@/services/lines'
+import { clearPickerCache } from '@/services/mail'
 import { ROUTES } from '@/lib/constants'
 import { errorMessage } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -34,7 +35,23 @@ export default function RepGroupDetailPage() {
         eyebrow="Rep group"
         title={g.name}
         description={[g.rep_group_contacts.length ? `${g.rep_group_contacts.length} rep${g.rep_group_contacts.length === 1 ? '' : 's'}` : 'No reps on file yet', g.phone, g.email].filter(Boolean).join(' · ')}
-        actions={canEdit && !editing ? <Button variant="secondary" onClick={() => setEditing(true)} leftIcon={<Pencil className="size-4" aria-hidden="true" />}>Edit</Button> : undefined}
+        actions={canEdit && !editing ? (
+          <div className="flex gap-2">
+            <Button variant="ghost" className="text-red-700 hover:bg-red-50" leftIcon={<Trash2 className="size-4" aria-hidden="true" />} onClick={async () => {
+              const n = g.vendors.length
+              if (!window.confirm(`Remove ${g.name} as a rep group?${n ? ` Its ${n} vendor${n === 1 ? ' stays a vendor' : 's stay vendors'}, just without this rep group.` : ''} Its reps are removed.`)) return
+              try {
+                await deleteRepGroup(g.id)
+                clearPickerCache()
+                toast.success(`${g.name} removed as a rep group`)
+                navigate(ROUTES.repGroups, { replace: true })
+              } catch (err) {
+                toast.error(errorMessage(err))
+              }
+            }}>Remove rep group</Button>
+            <Button variant="secondary" onClick={() => setEditing(true)} leftIcon={<Pencil className="size-4" aria-hidden="true" />}>Edit</Button>
+          </div>
+        ) : undefined}
       />
 
       {editing ? (

@@ -88,6 +88,12 @@ export async function deleteRepGroupContact(id: string): Promise<void> {
   if (error) throw error
 }
 
+/** Remove a rep group that is not one: its vendors stay vendors, its lines stay, its mail is asked about again. */
+export async function deleteRepGroup(id: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_rep_group', { p_group: id })
+  if (error) throw error
+}
+
 export async function createRepGroup(input: TablesInsert<'rep_groups'>): Promise<RepGroup> {
   const { data, error } = await supabase.from('rep_groups').insert(input).select('*').single()
   if (error) throw error

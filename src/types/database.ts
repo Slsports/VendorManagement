@@ -577,6 +577,7 @@ export type Database = {
       freight_set_line: { Args: { p_line: string; p_vendor: string | null; p_order: string | null; p_confirm: boolean }; Returns: undefined }
       tag_email_vendor: { Args: { p_email: string; p_vendor: string; p_on: boolean }; Returns: undefined }
       move_order_vendor: { Args: { p_order: string; p_vendor: string }; Returns: undefined }
+      delete_rep_group: { Args: { p_group: string }; Returns: undefined }
       set_vendor_assignee: { Args: { p_vendor: string; p_profile: string | null }; Returns: undefined }
       resolve_email_sender: { Args: { p_sender: string; p_kind: 'vendor' | 'rep_group' | 'platform' | 'marketing' | 'not_vendor' | 'internal'; p_vendor?: string | null; p_rep_group?: string | null }; Returns: number }
       link_email_thread_order: { Args: { p_thread: string; p_order: string | null }; Returns: undefined }

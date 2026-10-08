@@ -1310,3 +1310,6 @@ Dana listed these while working the Review queue, then said go.
   Check-in offers "Use 10.7%" when mail about the vendor quotes a rate after the order date.
 - "Who is this mail from?" gets Marketing (ads from a company we never bought from: always Offers &
   catalogs, no vendor) and "Other – not a vendor" (always Needs attention, given to Dana, waiting on us).
+- Dana, Oct 8: Eagle Claw is a vendor, not a rep group; the empty "Eagle Claw" rep group is removed. Rep
+  group pages have "Remove rep group" (vendors stay vendors without it, lines stay, its reps go, mail
+  filed through it is asked about again).
