@@ -8,6 +8,7 @@ import type { ReviewItem } from '@/types'
 import { VendorPicker } from '@/components/vendors/VendorPicker'
 import { RepGroupPicker } from '@/components/rep-groups/RepGroupPicker'
 import { CarrierPicker } from '@/components/freight/CarrierPicker'
+import { SenderEmailsPanel } from '@/components/mail/SenderEmailsPanel'
 import { setSenderCarrier } from '@/services/freight'
 import { Button } from '@/components/ui'
 
@@ -37,6 +38,7 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
   const d = item.details as unknown as EmailSenderDetails
   const [mode, setMode] = useState<'idle' | 'vendor' | 'rep' | 'carrier'>('idle')
   const [carrierId, setCarrierId] = useState('')
+  const [reading, setReading] = useState(false)
   const [busy, setBusy] = useState(false)
   const [repId, setRepId] = useState('')
   const prefill = newVendorPrefill({ senderKey: d.sender_key, isDomain: d.is_domain, displayName: d.display_name })
@@ -57,7 +59,7 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
   return (
     <>
       <p className="text-amber-800">
-        {d.message_count} email{d.message_count === 1 ? '' : 's'}{d.display_name ? ` · from "${d.display_name}"` : ''}{d.proposal_note ? ` · ${d.proposal_note}` : ''}
+        <button type="button" onClick={() => setReading(true)} className="font-medium underline hover:text-amber-950">See the {d.message_count} email{d.message_count === 1 ? '' : 's'}</button>{d.display_name ? ` · from "${d.display_name}"` : ''}{d.proposal_note ? ` · ${d.proposal_note}` : ''}
       </p>
       {d.samples?.length ? <p className="mt-1 truncate text-xs text-amber-700">Recent: {d.samples.join(' · ')}</p> : null}
       {d.ai_kind && d.ai_kind !== 'unsure' && !(d.ai_kind === 'vendor' && d.proposed_vendor_id) ? (
@@ -110,6 +112,7 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
           )}
         </div>
       ) : null}
+      {reading ? <SenderEmailsPanel senderId={d.sender_id} senderLabel={d.display_name || d.sender_key} prefill={prefill} canEdit={canEdit} onClose={() => setReading(false)} onChanged={onDone} /> : null}
     </>
   )
 }

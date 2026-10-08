@@ -38,3 +38,20 @@ set role authenticated;
 select public.move_order_vendor(:'mo', :'tv4');
 reset role;
 select vendor_id = :'tv4' as moved from public.orders where id = :'mo';
+\echo '>>> a sender handled email by email: two to a vendor, one Marketing, one Other; the card closes when none are left'
+reset role;
+insert into public.email_senders (organization_id, sender_key, is_domain) values ('00000000-0000-0000-0000-000000000001', 'mixed@gmail.com', false) returning id as mxs \gset
+insert into public.review_items (organization_id, kind, entity_type, entity_id, title) values ('00000000-0000-0000-0000-000000000001', 'email_sender', 'email_sender', :'mxs', 'Mail from mixed@gmail.com') returning id as mxr \gset
+update public.email_senders set review_item_id = :'mxr' where id = :'mxs';
+insert into public.email_threads (organization_id, gmail_thread_id) values ('00000000-0000-0000-0000-000000000001', 'mx1'), ('00000000-0000-0000-0000-000000000001', 'mx2'), ('00000000-0000-0000-0000-000000000001', 'mx3'), ('00000000-0000-0000-0000-000000000001', 'mx4');
+insert into public.emails (organization_id, gmail_id, thread_id, direction, from_email, subject, received_at, sender_id)
+select '00000000-0000-0000-0000-000000000001', 'mxm' || n, (select id from public.email_threads where gmail_thread_id = 'mx' || n), 'in', 'mixed@gmail.com', 'Mail ' || n, now(), :'mxs' from generate_series(1, 4) n;
+set role authenticated;
+select set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', false);
+select public.review_sender_emails(:'mxs', (select array_agg(id) from public.emails where gmail_id in ('mxm1', 'mxm2')), 'vendor', :'tv1') as filed;
+select status from public.review_items where id = :'mxr';
+select public.review_sender_emails(:'mxs', (select array_agg(id) from public.emails where gmail_id = 'mxm3'), 'marketing') as marketing;
+select public.review_sender_emails(:'mxs', (select array_agg(id) from public.emails where gmail_id = 'mxm4'), 'other') as other;
+reset role;
+select gmail_id, vendor_id = :'tv1' as to_vendor, disposition, view from public.emails where gmail_id like 'mxm%' order by 1;
+select status, (select kind from public.email_senders where id = :'mxs') as sender_still from public.review_items where id = :'mxr';

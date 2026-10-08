@@ -1313,3 +1313,7 @@ Dana listed these while working the Review queue, then said go.
 - Dana, Oct 8: Eagle Claw is a vendor, not a rep group; the empty "Eagle Claw" rep group is removed. Rep
   group pages have "Remove rep group" (vendors stay vendors without it, lines stay, its reps go, mail
   filed through it is asked about again).
+- Dana, Oct 8: on "Who is this mail from?", "See the N emails" opens every email from the sender to read
+  (attachments too). Tick some and file them to a vendor, or mark them Marketing or Other; the rest can go
+  another way. Select all is the whole-sender answer (future mail too). The card closes when every email
+  is handled; the sender stays undecided, so new mail from them asks again (`emails.disposition`).

@@ -357,3 +357,32 @@ export async function tagEmailVendor(emailId: string, vendorId: string, on: bool
   if (error) throw error
 }
 
+// ---- a sender's emails, one by one, in the review queue ------------------------------------
+export interface SenderEmail {
+  id: string; thread_id: string; subject: string | null; from_name: string | null; from_email: string | null; received_at: string
+  snippet: string | null; has_attachments: boolean; vendor_id: string | null; disposition: 'marketing' | 'other' | null
+  vendors: { name: string } | null
+}
+
+export async function listSenderEmails(senderId: string): Promise<SenderEmail[]> {
+  const { data, error } = await supabase.from('emails')
+    .select('id, thread_id, subject, from_name, from_email, received_at, snippet, has_attachments, vendor_id, disposition, vendors(name)')
+    .eq('sender_id', senderId).order('received_at', { ascending: false }).limit(500)
+  if (error) throw error
+  return (data ?? []) as unknown as SenderEmail[]
+}
+
+/** The whole message, for reading it in the review panel. */
+export async function getEmailBody(emailId: string): Promise<{ body_text: string | null; attachments: { id: string; file_name: string }[] }> {
+  const { data, error } = await supabase.from('emails').select('body_text, attachments:email_attachments(id, file_name)').eq('id', emailId).single()
+  if (error) throw error
+  return data as unknown as { body_text: string | null; attachments: { id: string; file_name: string }[] }
+}
+
+/** Handle some of a sender's emails: file them to a vendor, or mark them Marketing or Other. */
+export async function reviewSenderEmails(senderId: string, emailIds: string[], action: 'vendor' | 'marketing' | 'other', vendorId?: string): Promise<number> {
+  const { data, error } = await supabase.rpc('review_sender_emails', { p_sender: senderId, p_email_ids: emailIds, p_action: action, p_vendor: vendorId ?? null })
+  if (error) throw error
+  return data ?? 0
+}
+
