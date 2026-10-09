@@ -13,7 +13,8 @@ const PRICES: Record<string, [number, number]> = { 'claude-haiku-5-5': [0.10, 0.
 
 const Reading = z.object({
   billing_company: z.string().nullable().describe('The company that sent this bill, as printed (PartnerShip, Worldwide Express, UPS, Priority1, Worldwide Distributors…)'),
-  our_ups_account: z.string().nullable().describe('Our UPS account / shipper number printed on the bill, if any (like 2K229F)'),
+  our_ups_account: z.string().nullable().describe('Our UPS shipper number printed on the bill, if any (like 2K229F)'),
+  our_account_number: z.string().nullable().describe("Our customer / account number with the billing company printed on the bill (like W0003290195 or PartnerShip Account # 792862)"),
   invoice_number: z.string().nullable(),
   invoice_date: z.string().nullable().describe('YYYY-MM-DD'),
   due_date: z.string().nullable().describe('YYYY-MM-DD'),
@@ -108,7 +109,7 @@ export async function readStoredBill(db: SupabaseClient, billId: string, index?:
     const reading = await readFreightPdf(db, b.organization_id, new Uint8Array(await file.arrayBuffer()), (b.carriers as { name: string } | null)?.name ?? null)
     await applyFreightReading(db, billId, b.organization_id, reading, index ?? await freightIndex(db, b.organization_id))
     // Uploaded bills: which billing company (our UPS number, else its name), and fill a waiting bill or skip a copy.
-    const { data: settled, error: e3 } = await db.rpc('freight_bill_settle', { p_bill: billId, p_ups: reading.our_ups_account, p_company: reading.billing_company })
+    const { data: settled, error: e3 } = await db.rpc('freight_bill_settle', { p_bill: billId, p_ups: reading.our_ups_account, p_company: reading.billing_company, p_account: reading.our_account_number })
     if (e3) throw new Error(e3.message)
     const [result, other] = String(settled ?? 'new').split(':')
     return { ok: result !== 'no_carrier', result, bill_id: other ?? billId, note: result === 'no_carrier' ? 'Which billing company sent it? Pick it on the bill.' : undefined }

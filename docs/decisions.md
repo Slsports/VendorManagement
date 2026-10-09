@@ -1431,3 +1431,6 @@ Dana listed these while working the Review queue, then said go.
   followed it: the account inside each UPS tracking number (1Z + 6-character shipper account) shows whether a
   shipment went on our number, on the vendor's own account billed to us, or the old account.
   Also waiting: 792862 as our PartnerShip account number (Dana to confirm); the scanned-paper invoice import.
+- Dana, Oct 9: PartnerShip bills show no UPS number of ours, only "PartnerShip Account # 792862": saved as our
+  account with PartnerShip. Uploaded bills now match a billing company by our UPS number or our account
+  number with them, then by name. (UPS tracking numbers carry the shipping account: 1Z + 6 characters.)

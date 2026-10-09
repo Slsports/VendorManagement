@@ -16,3 +16,8 @@ select public.freight_bill_settle(:'up3', '89787-W', 'UPS') as ups_direct;
 select c.name as carrier from public.freight_bills b join public.carriers c on c.id = b.carrier_id where b.id = :'up3';
 insert into public.freight_bills (organization_id, storage_path, file_name, status) values ('00000000-0000-0000-0000-000000000001', 'x/d.pdf', 'd.pdf', 'to_match') returning id as up4 \gset
 select public.freight_bill_settle(:'up4', null, 'Acme Trucking') as unknown;
+\echo '>>> PartnerShip by our account number with them (792862), even with a generic company name'
+update public.carriers set account_number = '792862' where organization_id = '00000000-0000-0000-0000-000000000001' and name = 'PartnerShip';
+insert into public.freight_bills (organization_id, storage_path, file_name, invoice_number, status) values ('00000000-0000-0000-0000-000000000001', 'x/e.pdf', 'e.pdf', 'PS00700001', 'to_match') returning id as up5 \gset
+select public.freight_bill_settle(:'up5', null, 'Parcel billing', '#792862') as by_account;
+select c.name as carrier from public.freight_bills b join public.carriers c on c.id = b.carrier_id where b.id = :'up5';
