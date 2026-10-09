@@ -44,6 +44,27 @@ Deno.serve(async (req) => {
         for (const c of p.parts ?? []) walk(c)
       }
       walk(m.payload)
+      // Pictures pasted into the message (Dana, Oct 9: "no idea what image goes to what price") are cid:
+      // references to inline parts; put each picture back where it sits in the message.
+      const inline = new Map<string, GmailPart>()
+      const collect = (p?: GmailPart) => {
+        if (!p) return
+        const cid = p.headers?.find((h) => h.name.toLowerCase() === 'content-id')?.value?.replace(/^<|>$/g, '').trim()
+        if (cid && /^image\//i.test(p.mimeType ?? '')) inline.set(cid.toLowerCase(), p)
+        for (const c of p.parts ?? []) collect(c)
+      }
+      collect(m.payload)
+      let budget = 20_000_000
+      for (const ref of new Set([...html.matchAll(/cid:([^"'\s)>]+)/gi)].map((x) => x[1]!))) {
+        const part = inline.get(decodeURIComponent(ref).toLowerCase())
+        if (!part) continue
+        let data = part.body?.data
+        if (!data && part.body?.attachmentId) data = (await gmail.call<{ data: string }>(`messages/${e.gmail_id}/attachments/${part.body.attachmentId}`)).data
+        if (!data || data.length > budget) continue
+        budget -= data.length
+        const b64 = data.replace(/-/g, '+').replace(/_/g, '/')
+        html = html.split(`cid:${ref}`).join(`data:${part.mimeType};base64,${b64}`)
+      }
       return json({ html })
     }
 

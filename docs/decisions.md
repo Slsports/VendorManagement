@@ -1486,3 +1486,7 @@ Dana listed these while working the Review queue, then said go.
   the vendor whose goods were carried ("Freight to tie to a vendor"); VMS fills it from the XPO delivery
   receipt with the same PRO number when there is one. Freight companies learn WWD spellings like vendors do;
   "XPO Logistics Freight, Inc" and "XPO SHIPPING" filed themselves to XPO (9 lines).
+- Dana, Oct 9: **after sending a reply** VMS goes back to the list you came from (the inbox); a forward or
+  a new message stays on the conversation. **Pictures in emails** (price photos, signature logos): a message
+  with pictures opens formatted, each picture back in its place in the text (Gmail's inline cid: images
+  are filled in by gmail-read); "Plain text" still switches back.

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useHasInAppHistory } from '@/hooks/useHasInAppHistory'
 import toast from 'react-hot-toast'
@@ -133,7 +133,12 @@ export default function ThreadPage() {
             onCompose={canEdit && mailbox.data ? (kind) => setDraft(kind === 'forward' ? forwardDraft(t, e, e.attachments.length) : replyDraft(t, e, mailbox.data!, kind === 'all')) : undefined} />
         ))}
       </ol>
-      {draft ? <ComposeDialog draft={draft} onClose={() => setDraft(null)} onSent={() => void q.refetch()} /> : null}
+      {draft ? <ComposeDialog draft={draft} onClose={() => setDraft(null)} onSent={() => {
+        // Replied: back to the inbox you came from (Dana, Oct 9); a forward or a new message stays here.
+        if (!draft.reply_to_email_id) { void q.refetch(); return }
+        if (hasHistory) navigate(-1)
+        else navigate(ROUTES.mail)
+      }} /> : null}
       {addingOrder && t.vendor ? <AddOrderDialog vendor={t.vendor} threadId={t.id} onClose={() => { setAddingOrder(false); if (params.has('addOrder')) { params.delete('addOrder'); setParams(params, { replace: true }) } }} /> : null}
     </div>
   )
@@ -170,12 +175,19 @@ function Message({ email: e, startOpen, vendor, carrierId, onCompose }: { email:
   const files = e.attachments.filter((a) => !isInlineImage(a))
   const pictures = e.attachments.filter((a) => isInlineImage(a))
   const body = splitQuoted(e.body_text || e.snippet || '')
+  // Pictures in the message (price photos, signature logos): open it formatted, each picture in its place.
+  const triedFormatted = useRef(false)
+  useEffect(() => {
+    if (!open || !pictures.length || triedFormatted.current) return
+    triedFormatted.current = true
+    void showFormatted(true)
+  })
 
-  async function showFormatted() {
+  async function showFormatted(quiet = false) {
     setLoadingHtml(true)
     try {
       const h = await fetchEmailHtml(e.id)
-      if (!h) toast('This message has no formatted version')
+      if (!h && !quiet) toast('This message has no formatted version')
       setHtml(h || null)
     } catch (err) {
       toast.error(errorMessage(err))
@@ -208,7 +220,7 @@ function Message({ email: e, startOpen, vendor, carrierId, onCompose }: { email:
             </div>
           ) : null}
           {html
-            ? <iframe title="Formatted message" sandbox="allow-popups allow-popups-to-escape-sandbox" srcDoc={`<base target="_blank">${html}`} className="h-[32rem] w-full rounded-lg border border-stone-200 bg-white" />
+            ? <iframe title="Formatted message" sandbox="allow-popups allow-popups-to-escape-sandbox" srcDoc={`<base target="_blank"><style>img{max-width:100%;height:auto}</style>${html}`} className="h-[40rem] w-full resize-y rounded-lg border border-stone-200 bg-white" />
             : (
               <>
                 <div className="whitespace-pre-wrap break-words text-sm text-stone-800">{body.fresh}</div>
