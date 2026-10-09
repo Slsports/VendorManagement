@@ -3,6 +3,7 @@ import { AlertTriangle, Banknote, CalendarClock, ClipboardCheck, Inbox, Shopping
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listReviewItems } from '@/services/vendors'
+import { mySnoozes } from '@/services/snooze'
 import { countOrdersByStatus } from '@/services/orders'
 import { ROUTES } from '@/lib/constants'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -28,7 +29,12 @@ export default function DashboardPage() {
   const { profile, organization, role } = useAuth()
   const first = profile?.full_name?.split(' ')[0]
   const canReview = role === 'admin' || role === 'manager' || role === 'buyer'
-  const reviewQ = useSupabaseQuery(async () => (organization && canReview ? listReviewItems(organization.id) : []), [organization?.id, canReview])
+  // my snoozed review items do not count until they come back (Dana, Oct 9)
+  const reviewQ = useSupabaseQuery(async () => {
+    if (!organization || !canReview || !profile) return []
+    const [items, snoozed] = await Promise.all([listReviewItems(organization.id), mySnoozes(profile.id, 'review')])
+    return items.filter((i) => !snoozed.hidden.has(i.id))
+  }, [organization?.id, canReview, profile?.id])
   const pending = reviewQ.data?.length ?? 0
   const { personId, isMe, personName } = useViewAs()
   const mine = (reviewQ.data ?? []).filter((i) => i.assigned_to === (personId ?? profile?.id)).length

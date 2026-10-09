@@ -125,10 +125,13 @@ export interface ThreadFilters {
   /** 'all' | 'mine' | 'none' | a profile id */
   who: string
   /** needs: waiting on us · waiting · no_answer (waiting past the follow-up date) · handled · open (not handled) · all */
-  status: 'needs' | 'waiting' | 'no_answer' | 'handled' | 'open' | 'all' | 'deleted'
+  status: 'needs' | 'waiting' | 'no_answer' | 'handled' | 'open' | 'all' | 'deleted' | 'snoozed'
   vendorId?: string
   unmatched?: boolean
   q?: string
+  /** Snooze (Dana, Oct 9): leave these out (snoozed by me), or show only these (the Snoozed tab). */
+  hideIds?: string[]
+  onlyIds?: string[]
 }
 
 const THREAD_SELECT = 'id, gmail_thread_id, subject, status, view, vendor_id, owner_id, message_count, last_message_at, follow_up_at, ship_status, vendor:vendors(id, name), owner:profiles!email_threads_owner_id_fkey(id, full_name)'
@@ -143,6 +146,13 @@ async function withLastMessage(rows: Omit<ThreadRow, 'last'>[]): Promise<ThreadR
     for (const e of data ?? []) if (!last.has(e.thread_id)) last.set(e.thread_id, e)
   }
   return rows.map((r) => ({ ...r, last: last.get(r.id) ?? null }))
+}
+
+/** Conversations this person has snoozed that are still hidden. */
+async function snoozedThreadIds(profileId: string): Promise<string[]> {
+  const { data, error } = await supabase.from('snoozes').select('thread_id').eq('profile_id', profileId).not('thread_id', 'is', null).gt('until', new Date().toISOString()).limit(1000)
+  if (error) throw error
+  return (data ?? []).map((r) => r.thread_id!)
 }
 
 /** Threads for the Mail page, newest first, at most `limit`. */
@@ -164,6 +174,8 @@ export async function listThreads(organizationId: string, me: string | undefined
   else if (f.view && f.view !== 'all') q = q.eq('view', f.view)
   if (f.vendorId) q = q.or(`vendor_id.eq.${f.vendorId},tagged_vendor_ids.cs.{${f.vendorId}}`)
   if (f.unmatched) q = q.is('vendor_id', null)
+  if (f.hideIds?.length) q = q.not('id', 'in', `(${f.hideIds.join(',')})`)
+  if (f.onlyIds) q = q.in('id', f.onlyIds.length ? f.onlyIds : ['00000000-0000-0000-0000-000000000000'])
   if (f.q?.trim()) q = q.ilike('subject', `%${f.q.trim().replace(/[%_]/g, '')}%`)
   const { data, error } = await q.order('last_message_at', { ascending: false }).limit(limit)
   if (error) throw error
@@ -182,6 +194,8 @@ export async function listMailForMe(organizationId: string, me: string | null, s
   let a = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).is('deleted_at', null).eq('view', 'attention').eq('status', 'waiting_on_us')
   let b = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).is('deleted_at', null).eq('status', 'waiting_on_vendor').lt('follow_up_at', now)
   if (me) { a = a.or(mine(me, seesFreight)); b = b.or(mine(me, seesFreight)) }
+  const hidden = me ? await snoozedThreadIds(me) : []
+  if (hidden.length) { a = a.not('id', 'in', `(${hidden.join(',')})`); b = b.not('id', 'in', `(${hidden.join(',')})`) }
   const [ra, rb] = await Promise.all([a.order('last_message_at', { ascending: false }).limit(50), b.order('follow_up_at', { ascending: true }).limit(50)])
   if (ra.error) throw ra.error
   if (rb.error) throw rb.error
@@ -193,9 +207,12 @@ export async function listMailForMe(organizationId: string, me: string | null, s
 export async function countMailForMe(organizationId: string, me: string, seesFreight = false): Promise<number> {
   const now = new Date().toISOString()
   const who = seesFreight ? `or(owner_id.eq.${me},carrier_id.not.is.null)` : `owner_id.eq.${me}`
-  const { count, error } = await supabase.from('email_threads').select('id', { count: 'exact', head: true })
+  const hidden = await snoozedThreadIds(me)
+  let q = supabase.from('email_threads').select('id', { count: 'exact', head: true })
     .eq('organization_id', organizationId).is('deleted_at', null).eq('view', 'attention')
     .or(`and(${who},status.eq.waiting_on_us),and(${who},status.eq.waiting_on_vendor,follow_up_at.lt.${now})`)
+  if (hidden.length) q = q.not('id', 'in', `(${hidden.join(',')})`)
+  const { count, error } = await q
   if (error) throw error
   return count ?? 0
 }

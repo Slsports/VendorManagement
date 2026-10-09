@@ -1490,3 +1490,10 @@ Dana listed these while working the Review queue, then said go.
   a new message stays on the conversation. **Pictures in emails** (price photos, signature logos): a message
   with pictures opens formatted, each picture back in its place in the text (Gmail's inline cid: images
   are filled in by gmail-read); "Plain text" still switches back.
+- Dana, Oct 9: **Snooze** an email conversation or a review item: later today (3 hours), tomorrow morning,
+  in 2 days, next Monday (mornings are 8 am) or any date and time. A snooze is the person's own: it leaves
+  their mail lists, review queue, dashboard and Mail count until the time, then comes back at the top marked
+  "Back from snooze" (cleared when the conversation is opened; on a review item until it is settled). A
+  vendor reply ends a conversation's snooze at once. Mail has a **Snoozed** tab (mine, or everyone's with
+  who and until when) and the review queue a **Snoozed** button; "Unsnooze now" from the same menu. Mail
+  rows and ticked rows can be snoozed from the list.

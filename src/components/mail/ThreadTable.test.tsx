@@ -6,6 +6,8 @@ import type { ThreadRow } from '@/services/mail'
 
 const { setEmailThreadStatus } = vi.hoisted(() => ({ setEmailThreadStatus: vi.fn(async () => undefined) }))
 vi.mock('@/services/mail', () => ({ setEmailThreadStatus }))
+// the Snooze menu needs the signed-in person; this test is about marking handled
+vi.mock('@/components/shared/SnoozeButton', () => ({ SnoozeButton: () => null }))
 
 const row = (id: string, subject: string): ThreadRow => ({
   id, gmail_thread_id: id, subject, status: 'waiting_on_us', view: 'attention', vendor_id: null, owner_id: null, message_count: 1,

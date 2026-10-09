@@ -21,11 +21,13 @@ import { AddOrderDialog } from '@/components/orders/AddOrderDialog'
 import { Alert, Button, Spinner } from '@/components/ui'
 import { ThreadVendorTags } from '@/components/mail/ThreadVendorTags'
 import { VendorPicker as SharedVendorPicker, type NewVendorPrefill } from '@/components/vendors/VendorPicker'
+import { clearSnooze, mySnoozes } from '@/services/snooze'
+import { SnoozeButton } from '@/components/shared/SnoozeButton'
 
 /** One conversation: every message, who owns it, which vendor it is filed to, and where it stands. */
 export default function ThreadPage() {
   const { id = '' } = useParams()
-  const { organization, role } = useAuth()
+  const { organization, role, profile } = useAuth()
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
   const q = useSupabaseQuery(() => getThread(id), [id])
   const people = useSupabaseQuery(async () => (organization ? listPeople(organization.id) : []), [organization?.id])
@@ -36,6 +38,13 @@ export default function ThreadPage() {
   const hasHistory = useHasInAppHistory()
   // "Add order from this email" after completing a Working on order (Dana, Oct 8).
   const [addingOrder, setAddingOrder] = useState(() => params.get('addOrder') === '1')
+  // Snooze (Dana, Oct 9): whether I snoozed this; opening it clears "Back from snooze".
+  const snoozeQ = useSupabaseQuery(async () => (profile ? mySnoozes(profile.id, 'thread') : null), [profile?.id, id])
+  const myUntil = snoozeQ.data?.hidden.get(id) ?? null
+  const cameBack = !!snoozeQ.data?.back.has(id)
+  useEffect(() => {
+    if (cameBack && profile) void clearSnooze(profile.id, 'thread', id).catch(() => {})
+  }, [cameBack, profile, id])
 
   if (q.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading the conversation…" className="text-brand" /></div>
   if (q.error || !q.data) return <Alert variant="error">{q.error ?? 'Conversation not found'}</Alert>
@@ -115,6 +124,11 @@ export default function ThreadPage() {
           </Button>
           <ThreadVendorPicker current={t.vendor} prefill={newVendorPrefill({ ...party, isDomain: false })} onPick={(v) => act(v ? `Filed to ${v.name}` : 'Unfiled', () => setEmailVendor(emails[0]!.id, v?.id ?? null))} />
           {t.vendor ? <Button size="sm" variant="ghost" onClick={() => setAddingOrder(true)}>Add order from this email</Button> : null}
+          <SnoozeButton kind="thread" ids={[t.id]} until={myUntil} onDone={async () => {
+            await snoozeQ.refetch()
+            if (hasHistory) navigate(-1)
+            else navigate(ROUTES.mail)
+          }} />
           <Button size="sm" variant="ghost" onClick={() => void deleteAndLeave()} className="text-red-700 hover:bg-red-50" leftIcon={<Trash2 className="size-4" aria-hidden="true" />}>Delete</Button>
           {lastOut && (threadState(t) === 'no_answer' || threadState(t) === 'waiting')
             ? <Button size="sm" variant={threadState(t) === 'no_answer' ? 'primary' : 'secondary'} onClick={() => setDraft(followUpDraft(t, lastOut))} leftIcon={<Send className="size-4" aria-hidden="true" />}>Follow up</Button>

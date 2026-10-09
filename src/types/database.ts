@@ -450,6 +450,16 @@ export type Database = {
           { foreignKeyName: 'freight_bills_email_id_fkey'; columns: ['email_id']; isOneToOne: false; referencedRelation: 'emails'; referencedColumns: ['id'] },
         ]
       }
+      snoozes: {
+        Row: { id: string; organization_id: string; profile_id: string; thread_id: string | null; review_item_id: string | null; until: string; woke_by_reply: boolean; created_at: string }
+        Insert: { id?: string; organization_id: string; profile_id: string; thread_id?: string | null; review_item_id?: string | null; until: string; woke_by_reply?: boolean; created_at?: string }
+        Update: { id?: string; organization_id?: string; profile_id?: string; thread_id?: string | null; review_item_id?: string | null; until?: string; woke_by_reply?: boolean; created_at?: string }
+        Relationships: [
+          { foreignKeyName: 'snoozes_profile_id_fkey'; columns: ['profile_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+          { foreignKeyName: 'snoozes_thread_id_fkey'; columns: ['thread_id']; isOneToOne: false; referencedRelation: 'email_threads'; referencedColumns: ['id'] },
+          { foreignKeyName: 'snoozes_review_item_id_fkey'; columns: ['review_item_id']; isOneToOne: false; referencedRelation: 'review_items'; referencedColumns: ['id'] },
+        ]
+      }
       wwd_payments: {
         Row: { id: string; organization_id: string; ref: string; pay_date: string; total: number | null; created_at: string }
         Insert: { id?: string; organization_id: string; ref: string; pay_date: string; total?: number | null; created_at?: string }

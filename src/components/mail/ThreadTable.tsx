@@ -10,6 +10,8 @@ import { threadState } from '@/lib/mail'
 import { ROUTES } from '@/lib/constants'
 import type { ThreadRow } from '@/services/mail'
 import { SortHeader } from '@/components/shared/SortHeader'
+import { SnoozeButton } from '@/components/shared/SnoozeButton'
+import { snoozeText } from '@/lib/snooze'
 import { ThreadStatusBadge } from './ThreadStatusBadge'
 
 const STATE_ORDER = { needs: 0, no_answer: 1, waiting: 2, handled: 3 }
@@ -18,7 +20,13 @@ const STATE_ORDER = { needs: 0, no_answer: 1, waiting: 2, handled: 3 }
  * Mail threads as a sortable table: who, what, vendor, owner, where it stands, when. With `onChanged`, each
  * row has a ✓ to mark it handled without opening it, and checkboxes mark several at once (Dana, Oct 8).
  */
-export function ThreadTable({ rows, showVendor = true, sortParam, onChanged, deletedMode = false }: { rows: ThreadRow[]; showVendor?: boolean; sortParam?: string; onChanged?: () => void | Promise<unknown>; deletedMode?: boolean }) {
+export function ThreadTable({ rows, showVendor = true, sortParam, onChanged, deletedMode = false, snoozed, back }: {
+  rows: ThreadRow[]; showVendor?: boolean; sortParam?: string; onChanged?: () => void | Promise<unknown>; deletedMode?: boolean
+  /** The Snoozed tab: until when, and who snoozed it when it was not me. */
+  snoozed?: Map<string, { until: string; who: string | null }>
+  /** Came back from snooze and not opened yet. */
+  back?: Set<string>
+}) {
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const [busy, setBusy] = useState(false)
   // Rows that can be ticked: open ones (to mark handled or delete); in the Deleted tab, every row (to restore).
@@ -84,6 +92,7 @@ export function ThreadTable({ rows, showVendor = true, sortParam, onChanged, del
         ) : (
           <>
             <Button size="sm" loading={busy} onClick={() => void markHandled(pickedRows.filter((t) => t.status !== 'handled'))} leftIcon={<Check className="size-4" aria-hidden="true" />}>Mark handled</Button>
+            <SnoozeButton kind="thread" ids={pickedRows.map((t) => t.id)} onDone={async () => { setPicked(new Set()); await onChanged?.() }} />
             <Button size="sm" variant="ghost" disabled={busy} onClick={() => void trash(pickedRows, false)} className="text-red-700 hover:bg-red-50" leftIcon={<Trash2 className="size-4" aria-hidden="true" />}>Delete</Button>
           </>
         )}
@@ -122,6 +131,7 @@ export function ThreadTable({ rows, showVendor = true, sortParam, onChanged, del
                       <button type="button" disabled={busy} onClick={() => void markHandled([t])} title="Mark handled" aria-label={`Mark handled: ${t.subject || 'conversation'}`}
                         className="rounded-md p-1 text-stone-400 hover:bg-emerald-50 hover:text-emerald-700"><Check className="size-4" aria-hidden="true" /></button>
                     ) : <Check className="size-4 text-emerald-600" aria-label="Handled" />}
+                    {!deletedMode ? <SnoozeButton compact kind="thread" ids={[t.id]} until={snoozed?.get(t.id)?.until ?? null} onDone={() => onChanged?.()} /> : null}
                   </span>
                 </td>
               ) : null}
@@ -132,6 +142,8 @@ export function ThreadTable({ rows, showVendor = true, sortParam, onChanged, del
               <td className="max-w-md px-3 py-2">
                 <Link to={`${ROUTES.mail}/${t.id}`} className="font-medium text-stone-900 hover:text-brand">{t.subject || '(no subject)'}</Link>
                 {t.last?.has_attachments ? <Paperclip className="ml-1 inline size-3.5 text-stone-400" aria-label="Has attachments" /> : null}
+                {back?.has(t.id) ? <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800">Back from snooze</span> : null}
+                {snoozed?.has(t.id) ? <span className="ml-2 rounded bg-stone-100 px-1.5 py-0.5 text-xs text-stone-600">Snoozed until {snoozeText(snoozed.get(t.id)!.until)}{snoozed.get(t.id)!.who ? ` by ${snoozed.get(t.id)!.who}` : ''}</span> : null}
                 {t.last?.snippet ? <span className="block truncate text-xs text-stone-500">{t.last.snippet}</span> : null}
               </td>
               {showVendor ? (

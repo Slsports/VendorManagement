@@ -13,6 +13,9 @@ import { errorMessage } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { ReviewItemCard } from '@/components/vendors/ReviewItemCard'
 import { AssigneeSelect } from '@/components/review/AssigneeSelect'
+import { SnoozeButton } from '@/components/shared/SnoozeButton'
+import { listSnoozes, mySnoozes } from '@/services/snooze'
+import { snoozeText } from '@/lib/snooze'
 import { Alert, Button, Select, Spinner } from '@/components/ui'
 
 /** 'all' | 'me' | 'none' | a profile id */
@@ -26,8 +29,17 @@ export default function ReviewQueuePage() {
   const peopleQ = useSupabaseQuery(async () => (organization ? listPeople(organization.id) : []), [organization?.id])
   const [applyingAll, setApplyingAll] = useState(false)
   const [whoChoice, setWhoChoice] = useState<Who | null>(null)
+  // Snooze (Dana, Oct 9): my snoozed items leave the queue until their time, then come back on top.
+  const snoozeQ = useSupabaseQuery(async () => (profile ? mySnoozes(profile.id, 'review') : null), [profile?.id])
+  const allSnoozes = useSupabaseQuery(async () => (organization ? listSnoozes(organization.id, 'review', null) : []), [organization?.id])
+  const [showSnoozed, setShowSnoozed] = useState(false)
+  const hidden = snoozeQ.data?.hidden ?? new Map<string, string>()
+  const back = snoozeQ.data?.back ?? new Set<string>()
+  const snoozedBy = new Map((allSnoozes.data ?? []).map((s) => [s.review_item_id!, s]))
+  const refresh = async () => { await Promise.all([q.refetch(), snoozeQ.refetch(), allSnoozes.refetch()]) }
 
-  const items = q.data ?? []
+  const everything = q.data ?? []
+  const items = showSnoozed ? everything.filter((i) => snoozedBy.has(i.id)) : [...everything.filter((i) => back.has(i.id)), ...everything.filter((i) => !back.has(i.id) && !hidden.has(i.id))]
   const people = peopleQ.data ?? []
   const me = profile?.id
   const mineCount = items.filter((i) => i.assigned_to === me).length
@@ -72,7 +84,10 @@ export default function ReviewQueuePage() {
       <PageHeader
         title="Review queue"
         description={items.length ? `${items.length} item${items.length === 1 ? '' : 's'} waiting for a decision${mineCount ? `, ${mineCount} assigned to you` : ''}.` : 'Nothing waiting. New items land here from imports, the mailbox and the vendor form.'}
-        actions={<Button variant="secondary" onClick={() => navigate(ROUTES.mergeReport)}>Lightspeed merge report</Button>}
+        actions={<span className="flex flex-wrap gap-2">
+          <Button variant={showSnoozed ? 'primary' : 'ghost'} onClick={() => setShowSnoozed((v) => !v)}>{showSnoozed ? 'Back to the queue' : `Snoozed (${snoozedBy.size})`}</Button>
+          <Button variant="secondary" onClick={() => navigate(ROUTES.mergeReport)}>Lightspeed merge report</Button>
+        </span>}
       />
       {items.length > 0 ? (
         <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -125,10 +140,15 @@ export default function ReviewQueuePage() {
                     vendor={item.vendor}
                     other={item.other}
                     canEdit={canEdit}
-                    onDone={() => q.refetch()}
-                    aside={canEdit
-                      ? <AssigneeSelect value={item.assigned_to} people={people} onChange={(id) => assign(item.id, id)} />
-                      : item.assigned_to ? <span className="text-xs text-amber-800">Assigned to {nameOf(item.assigned_to)}</span> : null}
+                    onDone={() => refresh()}
+                    aside={<span className="flex flex-col items-end gap-1">
+                      {back.has(item.id) ? <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800">Back from snooze</span> : null}
+                      {snoozedBy.has(item.id) ? <span className="text-xs text-stone-500">Snoozed until {snoozeText(snoozedBy.get(item.id)!.until)}{snoozedBy.get(item.id)!.profile_id !== me ? ` by ${snoozedBy.get(item.id)!.person?.full_name ?? 'someone'}` : ''}</span> : null}
+                      {canEdit
+                        ? <AssigneeSelect value={item.assigned_to} people={people} onChange={(id) => assign(item.id, id)} />
+                        : item.assigned_to ? <span className="text-xs text-amber-800">Assigned to {nameOf(item.assigned_to)}</span> : null}
+                      <SnoozeButton kind="review" ids={[item.id]} until={hidden.get(item.id) ?? null} onDone={() => refresh()} />
+                    </span>}
                   />
                 ))}
               </div>

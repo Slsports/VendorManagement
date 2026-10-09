@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useViewAs } from '@/hooks/useViewAs'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listThreads, type ThreadFilters } from '@/services/mail'
+import { listSnoozes, mySnoozes } from '@/services/snooze'
 import { listPeople } from '@/services/reviews'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -26,6 +27,7 @@ const STATUS_TABS: { value: ThreadFilters['status']; label: string }[] = [
   { value: 'open', label: 'All open' },
   { value: 'handled', label: 'Handled' },
   { value: 'all', label: 'All' },
+  { value: 'snoozed', label: 'Snoozed' },
   { value: 'deleted', label: 'Deleted' },
 ]
 
@@ -46,10 +48,23 @@ export default function MailPage() {
   const search = params.get('q') ?? ''
   const [draft, setDraft] = useState(search)
   const people = useSupabaseQuery(async () => (organization ? listPeople(organization.id) : []), [organization?.id])
-  const q = useSupabaseQuery(
-    async () => (organization ? listThreads(organization.id, profile?.id, { view, who, status, unmatched, q: search }, 300, profile?.sees_freight) : []),
-    [organization?.id, profile?.id, profile?.sees_freight, view, who, status, unmatched, search],
-  )
+  // Snooze (Dana, Oct 9): my snoozed conversations leave my lists until their time; the Snoozed tab shows
+  // mine, or everyone's when looking at everyone, with who and until when.
+  const q = useSupabaseQuery(async () => {
+    if (!organization || !profile) return { rows: [], snoozed: new Map<string, { until: string; who: string | null }>(), back: new Set<string>() }
+    if (status === 'snoozed') {
+      const list = await listSnoozes(organization.id, 'thread', who === 'all' ? null : who === 'mine' ? profile.id : who === 'none' ? profile.id : who)
+      const rows = await listThreads(organization.id, profile.id, { view: 'all', who: 'all', status: 'all', onlyIds: [...new Set(list.map((x) => x.thread_id!))] }, 300)
+      const snoozed = new Map(list.map((x) => [x.thread_id!, { until: x.until, who: x.profile_id === profile.id ? null : x.person?.full_name ?? 'someone' }]))
+      return { rows, snoozed, back: new Set<string>() }
+    }
+    const mine = await mySnoozes(profile.id, 'thread')
+    const rows = await listThreads(organization.id, profile.id, { view, who, status, unmatched, q: search, hideIds: [...mine.hidden.keys()] }, 300, profile.sees_freight)
+    // back from snooze: to the top of the list
+    const back = rows.filter((t) => mine.back.has(t.id))
+    return { rows: [...back, ...rows.filter((t) => !mine.back.has(t.id))], snoozed: new Map<string, { until: string; who: string | null }>(), back: mine.back }
+  }, [organization?.id, profile?.id, profile?.sees_freight, view, who, status, unmatched, search])
+  const rows = q.data?.rows ?? []
 
   function setParam(key: string, value: string) {
     const next = new URLSearchParams(params)
@@ -103,16 +118,16 @@ export default function MailPage() {
       </form>
       {q.isLoading ? <div className="flex justify-center py-16"><Spinner label="Loading mail…" className="text-brand" /></div>
         : q.error ? <Alert variant="error">{q.error}</Alert>
-        : (q.data ?? []).length === 0 ? (
+        : rows.length === 0 ? (
           <div className="flex flex-col items-center rounded-2xl border border-dashed border-stone-300 py-16 text-center">
             <Inbox className="size-8 text-stone-400" aria-hidden="true" />
-            <p className="mt-3 text-sm text-stone-600">{who === 'mine' && status === 'open' ? 'Nothing waiting on you.' : 'No mail matches.'}</p>
+            <p className="mt-3 text-sm text-stone-600">{status === 'snoozed' ? 'Nothing snoozed.' : who === 'mine' && status === 'open' ? 'Nothing waiting on you.' : 'No mail matches.'}</p>
             {who === 'mine' ? <button type="button" onClick={() => setParam('who', 'all')} className="mt-2 text-sm font-medium text-brand hover:underline">Show everyone's</button> : null}
           </div>
         ) : (
           <>
-            <ThreadTable rows={q.data ?? []} onChanged={q.refetch} deletedMode={status === 'deleted'} />
-            {(q.data ?? []).length >= 300 ? <p className="mt-2 text-xs text-stone-500">Showing the newest 300. Search or filter to narrow it down.</p> : null}
+            <ThreadTable rows={rows} onChanged={q.refetch} deletedMode={status === 'deleted'} snoozed={q.data?.snoozed} back={q.data?.back} />
+            {rows.length >= 300 ? <p className="mt-2 text-xs text-stone-500">Showing the newest 300. Search or filter to narrow it down.</p> : null}
           </>
         )}
     </div>
