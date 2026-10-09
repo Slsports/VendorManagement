@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useHasInAppHistory } from '@/hooks/useHasInAppHistory'
 import toast from 'react-hot-toast'
-import { CheckCircle2, ClipboardList, ExternalLink, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
+import { CheckCircle2, ClipboardList, ExternalLink, Trash2, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { assignEmailThread, fetchEmailHtml, getMailbox, getThread, fetchAttachment, setEmailThreadStatus, setEmailVendor, setThreadView, setWorkingOrder, type ThreadDetail } from '@/services/mail'
+import { assignEmailThread, fetchEmailHtml, getMailbox, getThread, fetchAttachment, setEmailThreadStatus, setEmailVendor, setThreadView, setWorkingOrder, trashThreads, type ThreadDetail } from '@/services/mail'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { MakeFreightBillDialog } from '@/components/freight/MakeFreightBillDialog'
 import { SaveToDocumentsDialog } from '@/components/vendors/SaveToDocumentsDialog'
@@ -50,6 +50,18 @@ export default function ThreadPage() {
     try {
       await setEmailThreadStatus(t.id, 'handled')
       toast.success('Marked handled')
+      if (hasHistory) navigate(-1)
+      else navigate(ROUTES.mail)
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
+
+  async function deleteAndLeave() {
+    if (!window.confirm("Delete this conversation? It goes to Gmail's Trash for 30 days; Restore is under Mail → Deleted.")) return
+    try {
+      await trashThreads([t.id])
+      toast.success('Deleted')
       if (hasHistory) navigate(-1)
       else navigate(ROUTES.mail)
     } catch (err) {
@@ -103,6 +115,7 @@ export default function ThreadPage() {
           </Button>
           <ThreadVendorPicker current={t.vendor} prefill={newVendorPrefill({ ...party, isDomain: false })} onPick={(v) => act(v ? `Filed to ${v.name}` : 'Unfiled', () => setEmailVendor(emails[0]!.id, v?.id ?? null))} />
           {t.vendor ? <Button size="sm" variant="ghost" onClick={() => setAddingOrder(true)}>Add order from this email</Button> : null}
+          <Button size="sm" variant="ghost" onClick={() => void deleteAndLeave()} className="text-red-700 hover:bg-red-50" leftIcon={<Trash2 className="size-4" aria-hidden="true" />}>Delete</Button>
           {lastOut && (threadState(t) === 'no_answer' || threadState(t) === 'waiting')
             ? <Button size="sm" variant={threadState(t) === 'no_answer' ? 'primary' : 'secondary'} onClick={() => setDraft(followUpDraft(t, lastOut))} leftIcon={<Send className="size-4" aria-hidden="true" />}>Follow up</Button>
             : null}

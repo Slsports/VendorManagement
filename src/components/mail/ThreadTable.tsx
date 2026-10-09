@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Check, Paperclip } from 'lucide-react'
-import { setEmailThreadStatus } from '@/services/mail'
+import { Check, Paperclip, RotateCcw, Trash2 } from 'lucide-react'
+import { setEmailThreadStatus, trashThreads } from '@/services/mail'
 import { errorMessage } from '@/lib/utils'
 import { Button } from '@/components/ui'
 import { useTableSort } from '@/hooks/useTableSort'
@@ -18,11 +18,28 @@ const STATE_ORDER = { needs: 0, no_answer: 1, waiting: 2, handled: 3 }
  * Mail threads as a sortable table: who, what, vendor, owner, where it stands, when. With `onChanged`, each
  * row has a ✓ to mark it handled without opening it, and checkboxes mark several at once (Dana, Oct 8).
  */
-export function ThreadTable({ rows, showVendor = true, sortParam, onChanged }: { rows: ThreadRow[]; showVendor?: boolean; sortParam?: string; onChanged?: () => void | Promise<unknown> }) {
+export function ThreadTable({ rows, showVendor = true, sortParam, onChanged, deletedMode = false }: { rows: ThreadRow[]; showVendor?: boolean; sortParam?: string; onChanged?: () => void | Promise<unknown>; deletedMode?: boolean }) {
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const [busy, setBusy] = useState(false)
-  const openRows = rows.filter((t) => t.status !== 'handled')
-  const pickedRows = rows.filter((t) => picked.has(t.id) && t.status !== 'handled')
+  // Rows that can be ticked: open ones (to mark handled or delete); in the Deleted tab, every row (to restore).
+  const openRows = deletedMode ? rows : rows.filter((t) => t.status !== 'handled')
+  const pickedRows = rows.filter((t) => picked.has(t.id))
+
+  async function trash(list: ThreadRow[], restore: boolean) {
+    if (!list.length) return
+    if (!restore && !window.confirm(list.length === 1 ? 'Delete this conversation? It goes to Gmail\'s Trash for 30 days; Restore is under Mail → Deleted.' : `Delete ${list.length} conversations? They go to Gmail's Trash for 30 days; Restore is under Mail → Deleted.`)) return
+    setBusy(true)
+    try {
+      const n = await trashThreads(list.map((t) => t.id), restore)
+      setPicked(new Set())
+      toast.success(restore ? `${n} restored` : `${n} deleted`)
+      await onChanged?.()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setBusy(false)
+    }
+  }
 
   async function markHandled(list: ThreadRow[]) {
     if (!list.length) return
@@ -62,7 +79,14 @@ export function ThreadTable({ rows, showVendor = true, sortParam, onChanged }: {
     {onChanged && pickedRows.length ? (
       <div className="mb-2 flex flex-wrap items-center gap-2 rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm">
         <span className="font-medium text-stone-700">{pickedRows.length} selected</span>
-        <Button size="sm" loading={busy} onClick={() => void markHandled(pickedRows)} leftIcon={<Check className="size-4" aria-hidden="true" />}>Mark handled</Button>
+        {deletedMode ? (
+          <Button size="sm" loading={busy} onClick={() => void trash(pickedRows, true)} leftIcon={<RotateCcw className="size-4" aria-hidden="true" />}>Restore</Button>
+        ) : (
+          <>
+            <Button size="sm" loading={busy} onClick={() => void markHandled(pickedRows.filter((t) => t.status !== 'handled'))} leftIcon={<Check className="size-4" aria-hidden="true" />}>Mark handled</Button>
+            <Button size="sm" variant="ghost" disabled={busy} onClick={() => void trash(pickedRows, false)} className="text-red-700 hover:bg-red-50" leftIcon={<Trash2 className="size-4" aria-hidden="true" />}>Delete</Button>
+          </>
+        )}
         <Button size="sm" variant="ghost" disabled={busy} onClick={() => setPicked(new Set())}>Clear</Button>
       </div>
     ) : null}
@@ -90,8 +114,11 @@ export function ThreadTable({ rows, showVendor = true, sortParam, onChanged }: {
               {onChanged ? (
                 <td className="whitespace-nowrap px-3 py-2">
                   <span className="flex items-center gap-1">
-                    <input type="checkbox" aria-label={`Select ${t.subject || 'conversation'}`} disabled={t.status === 'handled'} checked={picked.has(t.id)} onChange={() => toggle1(t.id)} className="size-4 rounded border-stone-300" />
-                    {t.status !== 'handled' ? (
+                    <input type="checkbox" aria-label={`Select ${t.subject || 'conversation'}`} disabled={!deletedMode && t.status === 'handled'} checked={picked.has(t.id)} onChange={() => toggle1(t.id)} className="size-4 rounded border-stone-300" />
+                    {deletedMode ? (
+                      <button type="button" disabled={busy} onClick={() => void trash([t], true)} title="Restore" aria-label={`Restore: ${t.subject || 'conversation'}`}
+                        className="rounded-md p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-800"><RotateCcw className="size-4" aria-hidden="true" /></button>
+                    ) : t.status !== 'handled' ? (
                       <button type="button" disabled={busy} onClick={() => void markHandled([t])} title="Mark handled" aria-label={`Mark handled: ${t.subject || 'conversation'}`}
                         className="rounded-md p-1 text-stone-400 hover:bg-emerald-50 hover:text-emerald-700"><Check className="size-4" aria-hidden="true" /></button>
                     ) : <Check className="size-4 text-emerald-600" aria-label="Handled" />}
@@ -113,7 +140,9 @@ export function ThreadTable({ rows, showVendor = true, sortParam, onChanged }: {
                 </td>
               ) : null}
               <td className="hidden whitespace-nowrap px-3 py-2 text-stone-600 md:table-cell">{t.owner?.full_name ?? <span className="text-xs text-stone-400">Nobody</span>}</td>
-              <td className="whitespace-nowrap px-3 py-2"><ThreadStatusBadge thread={t} /></td>
+              <td className="whitespace-nowrap px-3 py-2">
+                {deletedMode && t.deleted_at ? <span className="text-xs text-red-700">Deleted {new Date(t.deleted_at).toLocaleDateString()}{t.deleted_by_person ? ` by ${t.deleted_by_person.full_name}` : ''}</span> : <ThreadStatusBadge thread={t} />}
+              </td>
               <td className="whitespace-nowrap px-3 py-2 text-stone-600">{t.last_message_at ? new Date(t.last_message_at).toLocaleDateString() : ''}</td>
             </tr>
           ))}

@@ -1,6 +1,7 @@
 // gmail-read: what VMS does not keep itself, fetched from orders@ when someone asks for it.
 //   { action: 'html', email_id }                       → { html } the formatted message
 //   { action: 'attachment', attachment_id }            → the file itself (download / open)
+//   { action: 'trash' | 'untrash', thread_ids }        → Delete / Restore conversations (Gmail Trash)
 //   { action: 'file', attachment_id, vendor_id, kind, doc_year } → copy it into the vendor's documents (folder by kind, year)
 import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
 import { decodeBase64Url, type GmailMessage, type GmailPart } from '../_shared/mailParse.ts'
@@ -12,11 +13,25 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
   const db = serviceClient()
   try {
-    const body = await req.json() as { action: string; email_id?: string; attachment_id?: string; vendor_id?: string; kind?: string; label?: string; doc_year?: number }
-    const me = await caller(req, db, body.action === 'file')
+    const body = await req.json() as { action: string; email_id?: string; attachment_id?: string; vendor_id?: string; kind?: string; label?: string; doc_year?: number; thread_ids?: string[] }
+    const me = await caller(req, db, ['file', 'trash', 'untrash'].includes(body.action))
     const { data: acct } = await db.from('mail_accounts').select('mailbox').eq('organization_id', me.organization_id).single()
     if (!acct) throw new HttpError(400, 'No mailbox connected')
     const gmail = new Gmail(await googleAccessToken(acct.mailbox))
+
+    // Delete / Restore (Dana, Oct 9): Gmail's Trash for orders@, and out of (or back into) VMS's lists.
+    if (body.action === 'trash' || body.action === 'untrash') {
+      const ids = (body.thread_ids ?? []).slice(0, 200)
+      const { data: threads } = await db.from('email_threads').select('id, gmail_thread_id').eq('organization_id', me.organization_id).in('id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000'])
+      const done: string[] = []
+      for (const t of threads ?? []) {
+        await gmail.call(`threads/${t.gmail_thread_id}/${body.action}`, { method: 'POST' })
+        done.push(t.id)
+      }
+      const { error } = await db.rpc('mark_threads_deleted', { p_threads: done, p_by: me.id, p_deleted: body.action === 'trash' })
+      if (error) throw new Error(error.message)
+      return json({ count: done.length })
+    }
 
     if (body.action === 'html') {
       const { data: e } = await db.from('emails').select('gmail_id, organization_id').eq('id', body.email_id ?? '').single()

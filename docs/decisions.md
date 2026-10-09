@@ -1411,3 +1411,7 @@ Dana listed these while working the Review queue, then said go.
   tracking and delivery receipts are still read. WWD is a billing company: its freight bills come from the
   WWD portal (Trevor uploads them); warehouse@worldwidebuygroup.com and everyone in the WWD directory's
   Warehouse department write WWD freight mail (Freight tab), still filed to the vendors it is about.
+- Dana, Oct 9: **Delete** mail: on a conversation, and for ticked rows in the Mail list. It moves the
+  conversation to Gmail's Trash for orders@ (30 days) and out of every VMS list; the **Deleted** tab shows
+  who deleted what and when, with Restore. Anyone who answers mail can delete. Files already saved stay. A
+  new message in a deleted conversation brings it back.

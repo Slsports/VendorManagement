@@ -26,6 +26,7 @@ const STATUS_TABS: { value: ThreadFilters['status']; label: string }[] = [
   { value: 'open', label: 'All open' },
   { value: 'handled', label: 'Handled' },
   { value: 'all', label: 'All' },
+  { value: 'deleted', label: 'Deleted' },
 ]
 
 /** orders@ inside VMS: whose mail, where it stands, filed to which vendor. Everything is shared; ownership decides whose list. */
@@ -110,7 +111,7 @@ export default function MailPage() {
           </div>
         ) : (
           <>
-            <ThreadTable rows={q.data ?? []} onChanged={q.refetch} />
+            <ThreadTable rows={q.data ?? []} onChanged={q.refetch} deletedMode={status === 'deleted'} />
             {(q.data ?? []).length >= 300 ? <p className="mt-2 text-xs text-stone-500">Showing the newest 300. Search or filter to narrow it down.</p> : null}
           </>
         )}

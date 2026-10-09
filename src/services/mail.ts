@@ -110,6 +110,9 @@ export interface ThreadRow {
   follow_up_at: string | null
   /** From a carrier's status update (Dana, Oct 8): shown as Delivered, In transit… */
   ship_status?: ShipStatus | null
+  /** The Deleted tab: when and by whom. */
+  deleted_at?: string | null
+  deleted_by_person?: { full_name: string } | null
   vendor: { id: string; name: string } | null
   owner: { id: string; full_name: string } | null
   /** The newest message: who, a line of it, and whether it came in or went out. */
@@ -122,7 +125,7 @@ export interface ThreadFilters {
   /** 'all' | 'mine' | 'none' | a profile id */
   who: string
   /** needs: waiting on us · waiting · no_answer (waiting past the follow-up date) · handled · open (not handled) · all */
-  status: 'needs' | 'waiting' | 'no_answer' | 'handled' | 'open' | 'all'
+  status: 'needs' | 'waiting' | 'no_answer' | 'handled' | 'open' | 'all' | 'deleted'
   vendorId?: string
   unmatched?: boolean
   q?: string
@@ -147,7 +150,8 @@ async function withLastMessage(rows: Omit<ThreadRow, 'last'>[]): Promise<ThreadR
 const mine = (me: string, seesFreight?: boolean) => (seesFreight ? `owner_id.eq.${me},carrier_id.not.is.null` : `owner_id.eq.${me}`)
 
 export async function listThreads(organizationId: string, me: string | undefined, f: ThreadFilters, limit = 300, seesFreight = false): Promise<ThreadRow[]> {
-  let q = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).not('last_message_at', 'is', null)
+  let q = supabase.from('email_threads').select(f.status === 'deleted' ? `${THREAD_SELECT}, deleted_at, deleted_by_person:profiles!email_threads_deleted_by_fkey(full_name)` : THREAD_SELECT).eq('organization_id', organizationId).not('last_message_at', 'is', null)
+  q = f.status === 'deleted' ? q.not('deleted_at', 'is', null) : q.is('deleted_at', null)
   if (f.who === 'mine' && me) q = q.or(mine(me, seesFreight))
   else if (f.who === 'none') q = q.is('owner_id', null)
   else if (f.who !== 'all') q = q.eq('owner_id', f.who)
@@ -175,8 +179,8 @@ export function listVendorThreads(organizationId: string, vendorId: string, limi
 /** Dashboard: replies waiting on `me` (everyone's when null), and mail with no answer past its follow-up date. */
 export async function listMailForMe(organizationId: string, me: string | null, seesFreight = false): Promise<{ needs: ThreadRow[]; noAnswer: ThreadRow[] }> {
   const now = new Date().toISOString()
-  let a = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).eq('view', 'attention').eq('status', 'waiting_on_us')
-  let b = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).eq('status', 'waiting_on_vendor').lt('follow_up_at', now)
+  let a = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).is('deleted_at', null).eq('view', 'attention').eq('status', 'waiting_on_us')
+  let b = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).is('deleted_at', null).eq('status', 'waiting_on_vendor').lt('follow_up_at', now)
   if (me) { a = a.or(mine(me, seesFreight)); b = b.or(mine(me, seesFreight)) }
   const [ra, rb] = await Promise.all([a.order('last_message_at', { ascending: false }).limit(50), b.order('follow_up_at', { ascending: true }).limit(50)])
   if (ra.error) throw ra.error
@@ -190,7 +194,7 @@ export async function countMailForMe(organizationId: string, me: string, seesFre
   const now = new Date().toISOString()
   const who = seesFreight ? `or(owner_id.eq.${me},carrier_id.not.is.null)` : `owner_id.eq.${me}`
   const { count, error } = await supabase.from('email_threads').select('id', { count: 'exact', head: true })
-    .eq('organization_id', organizationId).eq('view', 'attention')
+    .eq('organization_id', organizationId).is('deleted_at', null).eq('view', 'attention')
     .or(`and(${who},status.eq.waiting_on_us),and(${who},status.eq.waiting_on_vendor,follow_up_at.lt.${now})`)
   if (error) throw error
   return count ?? 0
@@ -406,7 +410,7 @@ export interface WorkingRow extends ThreadRow {
 export async function listWorkingOrders(organizationId: string, who: string | null, includeCompleted = false): Promise<WorkingRow[]> {
   let q = supabase.from('email_threads')
     .select(`${THREAD_SELECT}, working_by, working_since, working_mark_at, working_done_at, last_in_at, last_out_at, working_person:profiles!email_threads_working_by_fkey(id, full_name)`)
-    .eq('organization_id', organizationId).not('working_by', 'is', null)
+    .eq('organization_id', organizationId).is('deleted_at', null).not('working_by', 'is', null)
   if (who) q = q.eq('working_by', who)
   if (!includeCompleted) q = q.is('working_done_at', null)
   const { data, error } = await q.order('last_message_at', { ascending: false }).limit(200)
@@ -417,4 +421,11 @@ export async function listWorkingOrders(organizationId: string, who: string | nu
 export async function setWorkingOrder(threadId: string, action: 'flag' | 'working' | 'complete' | 'reopen' | 'unflag'): Promise<void> {
   const { error } = await supabase.rpc('set_working_order', { p_thread: threadId, p_action: action })
   if (error) throw error
+}
+
+/** Delete conversations: to Gmail's Trash for orders@ (30 days) and out of VMS's lists. Restore brings them back. */
+export async function trashThreads(threadIds: string[], restore = false): Promise<number> {
+  const { data, error } = await supabase.functions.invoke('gmail-read', { body: { action: restore ? 'untrash' : 'trash', thread_ids: threadIds } })
+  if (error) throw await functionError(error)
+  return (data as { count: number }).count
 }
