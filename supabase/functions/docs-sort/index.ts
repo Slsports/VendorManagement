@@ -3,7 +3,7 @@
 // Dropbox path and, for a PDF or picture already uploaded to the import folder, the file itself, and says
 // vendor, folder and year. The vendor name is matched to VMS vendors here; a person confirms every row.
 import { CORS, caller, errorResponse, HttpError, json, serviceClient } from '../_shared/caller.ts'
-import { readDocumentPlace, readScannedPdf } from '../_shared/ai.ts'
+import { readDocumentPlace, readScannedPdf, readWwdSheetPdf } from '../_shared/ai.ts'
 import { freightIndex } from '../_shared/freight.ts'
 import { shipperVendors } from '../_shared/mailMatch.ts'
 
@@ -15,15 +15,17 @@ Deno.serve(async (req) => {
     const db = serviceClient()
     const me = await caller(req, db, true)
     if (!Deno.env.get('ANTHROPIC_API_KEY')) throw new HttpError(503, 'Claude is not set up for this organization')
-    const { files, mode } = await req.json() as { mode?: 'scan'; files?: { key: string; path: string; storage_path?: string | null; mime?: string | null }[] }
+    const { files, mode } = await req.json() as { mode?: 'scan' | 'wwd'; files?: { key: string; path: string; storage_path?: string | null; mime?: string | null }[] }
 
     // Scanned paper (Dana, Oct 9): one PDF at a time, split into its documents, each with vendor and details.
-    if (mode === 'scan') {
+    if (mode === 'scan' || mode === 'wwd') {
       const f = files?.[0]
       if (!f?.storage_path || !f.storage_path.startsWith(`${me.organization_id}/import/`)) throw new HttpError(400, 'Upload the scan first')
       const { data, error } = await db.storage.from('vendor-files').download(f.storage_path)
       if (error || !data) throw new Error(error?.message ?? 'File not found')
       if (data.size > 30 * 1024 * 1024) throw new HttpError(413, 'Scans up to 30 MB; split bigger ones')
+      // a printed WWD payment sheet (Dana, Oct 9): its payments and invoice lines, for the WWD import
+      if (mode === 'wwd') return json({ key: f.key, ...(await readWwdSheetPdf(db, me.organization_id, new Uint8Array(await data.arrayBuffer()), String(f.path).slice(0, 500))) })
       const r = await readScannedPdf(db, me.organization_id, new Uint8Array(await data.arrayBuffer()), String(f.path).slice(0, 500))
       const index = await freightIndex(db, me.organization_id)
       return json({ key: f.key, documents: r.documents.map((d) => {

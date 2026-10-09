@@ -10,6 +10,8 @@ import { money, shortDate } from '@/lib/freight'
 import { ROUTES } from '@/lib/constants'
 import { errorMessage } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { WwdImportSection } from '@/components/payments/WwdImportSection'
+import { WwdUnsortedNames } from '@/components/payments/WwdUnsortedNames'
 import { Alert, Badge, Button, Spinner } from '@/components/ui'
 
 /**
@@ -25,6 +27,7 @@ export default function PaymentsPage() {
   const [keep, setKeep] = useState<Set<number>>(new Set())
   const [busy, setBusy] = useState(false)
   const input = useRef<HTMLInputElement>(null)
+  const [wwdRun, setWwdRun] = useState(0)
 
   async function read(file: File) {
     setBusy(true)
@@ -58,7 +61,10 @@ export default function PaymentsPage() {
   const count = (f: (m: BillcomMatch) => boolean) => matches.filter((m, i) => keep.has(i) && f(m)).length
   return (
     <div>
-      <PageHeader title="Payments" description="Import the Bill.com Payments export: each payment marks its freight bill or vendor order paid, and stays as history on the vendor." />
+      <PageHeader title="Payments" description="Import Bill.com and Worldwide (WWD) payments: each payment marks its freight bill or vendor order paid, and stays as history on the vendor." />
+
+      <WwdImportSection onImported={() => setWwdRun((n) => n + 1)} />
+      <WwdUnsortedNames refreshKey={wwdRun} />
 
       <section className="mb-6 rounded-2xl border border-stone-200 bg-white p-4">
         <div className="flex flex-wrap items-center gap-3">

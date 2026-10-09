@@ -23,6 +23,7 @@
     "propose:renames": "node scripts/propose-vendor-renames.mjs",
     "import:wwd-roster": "node scripts/import-wwd-roster.mjs",
     "import:order-guide": "node scripts/import-order-guide.mjs",
+    "import:placed-orders": "node scripts/import-placed-orders.mjs",
     "flag:fishing": "node scripts/flag-fishing-vendors.mjs",
     "analyze:ls-categories": "node scripts/analyze-ls-categories.mjs"
   },

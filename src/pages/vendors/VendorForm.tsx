@@ -50,6 +50,7 @@ interface FormState {
   standing_review_date: string
   do_not_order_reason: string
   wwd_zero_upcharge: boolean
+  freight_allowance_on_time: boolean
   is_fishing: boolean
   website: string
   phone: string
@@ -79,7 +80,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   name: '', aliases: '', routes: [], defaultRoute: '', payMethod: '', rep_group_id: '', assigned_buyer_id: '', payment_terms_id: '', ordering_frequency: '',
-  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, is_fishing: false,
+  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, freight_allowance_on_time: false, is_fishing: false,
   website: '', phone: '', email: '', fax: '', account_number: '', catalog: '', address: '', city: '', state: '', postal_code: '',
   pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', shipping_contact_email: '', minimum_order: '', freight_program: '', free_shipping_policy: '', free_shipping_threshold: '', freight_routing: '', product_types: '',
   notes: '', return_notes: '', windows: [],
@@ -106,6 +107,7 @@ function formFromVendor(v: VendorDetail): FormState {
     standing_tags: v.standing_tags as StandingTag[],
     standing_review_date: v.standing_review_date ?? '',
     wwd_zero_upcharge: v.wwd_zero_upcharge,
+    freight_allowance_on_time: v.freight_allowance_on_time,
     is_fishing: v.is_fishing,
     do_not_order_reason: v.do_not_order_reason ?? '',
     website: v.website ?? '', phone: v.phone ?? '', email: v.email ?? '', fax: v.fax ?? '', account_number: v.account_number ?? '', catalog: v.catalog ?? '',
@@ -186,6 +188,7 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
       standing_tags: form.standing === 'ok' ? [] : form.standing_tags,
       standing_review_date: form.standing !== 'ok' && form.standing_review_date ? form.standing_review_date : null,
       wwd_zero_upcharge: form.wwd_zero_upcharge,
+      freight_allowance_on_time: form.freight_allowance_on_time,
       is_fishing: form.is_fishing,
       do_not_order_reason: form.standing !== 'ok' ? nz(form.do_not_order_reason) : null,
       website: nz(form.website), phone: nz(form.phone), email: nz(form.email), fax: nz(form.fax), account_number: nz(form.account_number), catalog: nz(form.catalog),
@@ -301,6 +304,7 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
           <div className="flex flex-col gap-2 sm:col-span-2">
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_delivery_vendor} onChange={(e) => set('is_delivery_vendor', e.target.checked)} /> Delivery vendor (drops goods with a paper invoice, no order placed ahead)</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.wwd_zero_upcharge} onChange={(e) => set('wwd_zero_upcharge', e.target.checked)} /> WWD zero-upcharge vendor (no 1.5% drop-ship upcharge through Worldwide)</label>
+            <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.freight_allowance_on_time} onChange={(e) => set('freight_allowance_on_time', e.target.checked)} /> Credits the freight back when we pay on time (orders show a pay-by reminder)</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_fishing} onChange={(e) => set('is_fishing', e.target.checked)} /> Fishing vendor (Jarrett runs these reports)</label>
             {isEdit ? <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_active} onChange={(e) => set('is_active', e.target.checked)} /> Active</label> : null}
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.needs_review} onChange={(e) => set('needs_review', e.target.checked)} /> Flag for review</label>

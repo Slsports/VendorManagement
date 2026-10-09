@@ -22,6 +22,7 @@ import { VendorShowsSection } from '@/components/vendors/VendorShowsSection'
 import { VendorOrdersSection } from '@/components/vendors/VendorOrdersSection'
 import { VendorMailSection } from '@/components/vendors/VendorMailSection'
 import { VendorPaymentsSection } from '@/components/vendors/VendorPaymentsSection'
+import { WwdInvoiceList } from '@/components/payments/WwdInvoiceList'
 import { ComposeDialog, type ComposeDraft } from '@/components/mail/ComposeDialog'
 import { VendorScorecard } from '@/components/scores/VendorScorecard'
 import { VendorItemRulesSection } from '@/components/vendors/VendorItemRulesSection'
@@ -101,6 +102,7 @@ export default function VendorDetailPage() {
     ['Free shipping', freeShippingRule(v)],
     ['Freight program', v.free_shipping_policy ? v.freight_program : null],
     ['Freight routing', v.freight_routing],
+    ['Freight allowance', v.freight_allowance_on_time ? 'Credits the freight back when paid on time' : null],
     ['Product types', v.product_types],
     ['Pickup', [v.pickup_address, v.pickup_times].filter(Boolean).join(' · ') || null],
     ['Shipping contact', contact(v.shipping_contact, v.shipping_contact_phone, v.shipping_contact_email)],
@@ -252,6 +254,7 @@ export default function VendorDetailPage() {
         <VendorItemRulesSection organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorOrdersSection vendorId={v.id} vendorName={v.name} canAdd={canEdit} />
         <VendorPaymentsSection vendorId={v.id} />
+        <WwdInvoiceList vendorId={v.id} />
 
         <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-1">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Notes</h2>

@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { MailForYouPanel } from '@/components/mail/MailForYouPanel'
 import { FreightForYouPanel } from '@/components/freight/FreightForYouPanel'
 import { WorkingOrdersPanel } from '@/components/mail/WorkingOrdersPanel'
+import { FreightAllowancePanel } from '@/components/orders/FreightAllowancePanel'
 import { useViewAs } from '@/hooks/useViewAs'
 
 const KPIS = [
@@ -59,6 +60,7 @@ export default function DashboardPage() {
       <section className="mt-6 grid gap-4 lg:grid-cols-3">
         <MailForYouPanel />
         <WorkingOrdersPanel />
+        <FreightAllowancePanel />
         <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
           <h2 className="text-sm font-semibold text-stone-900">Review queue</h2>
           <div className="mt-4 flex items-start gap-3 rounded-xl bg-stone-50 p-4">

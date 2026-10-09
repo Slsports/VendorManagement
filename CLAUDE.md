@@ -72,6 +72,10 @@ Vite + React 19 + TypeScript + Tailwind 4, Supabase (project `bpdpkytfmpbwpbmpej
   the page shows "more than one relationship"). After such a migration run
   `NODE_USE_ENV_PROXY=1 node scripts/check-embeds.mjs src supabase/functions` and name the key
   (`vendor_emails!vendor_emails_vendor_id_fkey(*)`).
+- The cloud proxy drops user sign-in tokens to `*.supabase.co`, so `scripts/preview.mjs` and supabase-js calls as
+  the test login fail ("permission denied", 401) from a cloud session. To run an app RPC as a user, use `query`
+  with `select set_config('request.jwt.claims', '{"sub":"<profile id>","role":"authenticated"}', true); set local
+  role authenticated; select …` (the "Claude (testing)" profile), never Dana's.
 - Types are hand-maintained in `src/types/database.ts`; add Row/Insert/Update and function Returns for
   every schema change, then aliases in `src/types/index.ts`.
 
@@ -79,13 +83,13 @@ Vite + React 19 + TypeScript + Tailwind 4, Supabase (project `bpdpkytfmpbwpbmpej
 Vendors (778, with routes WWD / Faire / direct, standing fine/hold/last resort/do-not-order with reason
 tags, free-shipping policy and threshold, freight routing, fishing flag, WWD zero-upcharge), rep groups,
 lines (catalog-only names, never vendors unless promoted), five show listings, Worldwide contacts,
-orders (1,104 from the Seasonal Buying Guide; the Placed Order Summary v2.0 is still to come), review
+orders (Seasonal Buying Guide plus the Placed Order Summary v2.0 tabs 1-4, `import:placed-orders`), WWD invoices and payments (Payments page WWD box: Payment History, EdenRed, Dana's payment sheets, scans), review
 queue with assignment rules, vendor scorecards (six dimensions, four automatic), item-level buying
 rules per vendor (seeded for Ty), Lightspeed category standard document, and Mail: orders@ synced every
 minute (12 months back), sender proposals in the review queue, Mail page, send/reply/forward from orders@
 with signatures, follow-up nudges (see `docs/gmail-connection.md` "As built").
 
 ## Not built yet, in order
-Gmail label write-back and contact enrichment, Placed Order Summary v2.0 import,
+Gmail label write-back and contact enrichment,
 Needs list, Lightspeed API connection, category and item clean-up tool, replenishment check, pattern
 engine, show-prep view. Target: running well by December 2026 for the WWD show Jan 25-28, 2027.

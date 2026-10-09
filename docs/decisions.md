@@ -1440,3 +1440,38 @@ Dana listed these while working the Review queue, then said go.
   the date sets the year folder; faded, handwritten or unclear pages stay under "Need a look". A document
   keeps its number, date and total (`vendor_links.doc_number/doc_date/doc_total`), and each vendor's
   Documents has a search box (number, amount, name). Scans up to 30 MB per file.
+
+## 2026-10-09 — WWD payments, the Placed Order Summary v2.0, freight allowances
+- Dana: Worldwide's portals never show the whole picture. The **Payment History** export (PB payment numbers,
+  dates, totals, the WWD invoice numbers paid, back to 2019) has no vendor names; the **EdenRed** invoice
+  export (Nov 2025 on) has WWD's sequence number with our PO, the vendor, the vendor's own invoice number,
+  amount, terms and due date; Dana's own **payment sheets** (pasted from the pay screen as she pays, 2024 on)
+  have the vendor per WWD number. "Check #" in WWD is not a check: we pay online by ACH; VMS calls it the
+  **WWD payment #**.
+- Payments page has a **WWD box**: drop any mix of those files (Excel, the History "xls", Word copies of the
+  sheets, or scans/photos of printed sheets, which Claude reads). Preview first, then Import; importing a
+  file twice adds nothing. Each WWD number is one invoice in VMS (a credit or debit reuses the number of the
+  invoice it adjusts, so it takes that invoice's vendor and order). The **$275 lines are WWD's monthly
+  membership fee**, filed under WORLDWIDE. Vendor names match VMS names and aliases (also "starts with the
+  VMS name", e.g. "Daisy Outdoor Products" = DAISY); names VMS cannot place are listed under **WWD names to
+  match**: pick the vendor once and the name becomes an alias. Invoices tie to orders by our PO, else the
+  vendor's only order for exactly that amount; an order whose WWD invoices are all paid is marked paid via
+  WWD with the PB number. Vendor pages and order pages list their WWD invoices (WWD #, their invoice #, PO,
+  amount, discount, paid date and PB #); on a vendor page an invoice can be tied to another order or untied.
+- First load (Oct 9): 2,501 WWD invoices and credits, 292 payments (Apr 2019 to Sept 15, 2026), 875 with a
+  vendor (852 of them since 2024), 512 orders tied to their WWD invoices, 82 orders marked paid with the PB
+  number. The 10/8/26 $96,778.41 payment is in from Dana's sheet (paid date 10/8/26); its PB number arrives
+  with the next Payment History export. 1,593 older invoices have no vendor name anywhere (before the sheets
+  start) and stay on file by WWD number. Payment sheets missing for good: 9/3/24, 9/26/24, 6/24/24
+  (Dana: 6/24/24 was Diversified (SLM), filed so); 4/7/25 ($227.53, #5887965) still open. 12/3/24 was Terramar Sports 5875952 ($431.66 less
+  $8.63, from Dana). Dana's 12/27/24 unnamed credits: #6915243 = Continuum, #5871877 still unknown.
+  "NORMARK CORP / RAPALA" set to RAPALA - NORMARK by hand (LUHR JENSEN carries an alias "Rapala" that pulled it).
+- **Placed Order Summary v2.0** loaded, tabs 1-4 only (Dana): 1,069 rows matched orders already on file from
+  the Buying Guide and refreshed, 200 new orders, 3 new vendors (BASIC SPIRIT, KASTKING, TOPHAT CRICKET FARM).
+  Rows the sheet lists twice count once. A second run of the first version added 8 doubled orders and a
+  stray "MASTER FISHING" vendor; they wait on Dana's OK to be removed (the importer no longer does this).
+- **Freight allowance** (Dana): some vendors credit the freight back when the invoice is paid on time (Water
+  Sports, Continuum, Schylling, Marky Sparky, Master Fishing "1/2 freight allowance"). An order can carry the
+  allowance (amount if known, pay-by date); the dashboard lists unpaid ones soonest first, red in the last
+  week; a WWD credit on the order marks it received. The vendor form has "Credits the freight back when we
+  pay on time" so their orders show the reminder. Set from the sheet notes on 9 orders and 6 vendors.
