@@ -8,7 +8,7 @@ import { clueText, htmlBody, isBulk, parseMessage, type Address, type GmailMessa
 import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type VendorIndex } from '../_shared/mailMatch.ts'
 import { extractLinks, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
 import { aiEnabled, readEmailVendors, readPaidNote, readReplyNeeded, readSender, sortEmails, type ReplyEmail, type UnsureEmail } from '../_shared/ai.ts'
-import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
+import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
 // messages and the scheduler comes back every minute until the 12 months are in.
@@ -344,7 +344,9 @@ async function freightBills(db: SupabaseClient, gmail: Gmail, org: string, start
         }
       } else if (looksLikeBill(e.subject, e.body_text, !!pdf)) {
         const { data: bill, error } = await db.from('freight_bills').upsert({
-          organization_id: org, carrier_id: sender.carrier_id, email_id: e.id, invoice_number: invoiceNumberFrom(e.subject), invoice_date: e.received_at.slice(0, 10),
+          // PartnerShip lists the invoice in the email body; WWEX puts the number in the subject.
+          organization_id: org, carrier_id: sender.carrier_id, email_id: e.id, invoice_number: invoiceNumberFrom(e.subject) ?? invoiceFromBody(e.body_text)?.invoice_number ?? null,
+          invoice_date: invoiceFromBody(e.body_text)?.invoice_date ?? e.received_at.slice(0, 10), due_date: invoiceFromBody(e.body_text)?.due_date ?? null, total: invoiceFromBody(e.body_text)?.total ?? null,
           status: pdf ? 'reading' : 'needs_pdf',
         }, { onConflict: 'email_id', ignoreDuplicates: true }).select('id').maybeSingle()
         if (error) throw new Error(error.message)

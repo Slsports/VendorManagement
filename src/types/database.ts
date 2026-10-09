@@ -583,6 +583,7 @@ export type Database = {
       freight_set_line: { Args: { p_line: string; p_vendor: string | null; p_order: string | null; p_confirm: boolean }; Returns: undefined }
       move_vendor_document: { Args: { p_link: string; p_kind: string; p_year: number | null }; Returns: undefined }
       carrier_claim_mail: { Args: { p_carrier: string }; Returns: number }
+      create_uploaded_freight_bill: { Args: { p_path: string; p_file: string; p_carrier: string | null }; Returns: string }
       make_freight_bill_from_attachment: { Args: { p_attachment: string; p_carrier: string }; Returns: string }
       answer_freight_payment: { Args: { p_item: string; p_bill: string }; Returns: undefined }
       set_working_order: { Args: { p_thread: string; p_action: 'flag' | 'working' | 'complete' | 'reopen' | 'unflag' }; Returns: undefined }

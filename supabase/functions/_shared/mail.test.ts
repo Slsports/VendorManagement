@@ -206,3 +206,12 @@ describe('freight payments', () => {
     expect(mentionsPayment('Can you send the BOL?')).toBe(false)
   })
 })
+
+describe('PartnerShip invoice email', async () => {
+  const { invoiceFromBody } = await import('./freightText.ts')
+  it('reads the invoice row', () => {
+    const body = 'Date: 10/05/2026\n\nPartnerShip Statement # 4 \n\n Invoice (link) \n Invoice Date \n Invoice Due \n Invoice Balance \n\n PS00625902 \n 10/05/2026 \n 10/25/2026 \n $416.28 \n\nTotal Balance: $416.28\n'
+    expect(invoiceFromBody(body)).toEqual({ invoice_number: 'PS00625902', invoice_date: '2026-10-05', due_date: '2026-10-25', total: 416.28 })
+    expect(invoiceFromBody('Tracking update')).toBeNull()
+  })
+})

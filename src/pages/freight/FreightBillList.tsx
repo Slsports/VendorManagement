@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ExternalLink, Pencil, Plus, Truck } from 'lucide-react'
+import { ExternalLink, FileUp, Pencil, Plus, Truck } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listCarriers, listFreightBills, type FreightFilter } from '@/services/freight'
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Alert, Badge, Button, Spinner } from '@/components/ui'
 import { CarrierDialog } from '@/components/freight/CarrierDialog'
+import { BulkBillUpload } from '@/components/freight/BulkBillUpload'
 import type { Carrier } from '@/types'
 
 const TABS: { value: FreightFilter; label: string }[] = [
@@ -25,6 +26,7 @@ export default function FreightBillListPage() {
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
   const [params, setParams] = useSearchParams()
   const [editing, setEditing] = useState<Carrier | 'new' | null>(null)
+  const [uploading, setUploading] = useState(false)
   const filter = (params.get('show') ?? 'open') as FreightFilter
   // Click a carrier: just its bills, every year, paid or not (its "folder", Dana, Oct 8).
   const carrierId = params.get('carrier')
@@ -33,7 +35,9 @@ export default function FreightBillListPage() {
 
   return (
     <div>
-      <PageHeader title="Freight bills" description="Bills from our billing companies. Each shipment goes to the vendor that shipped it; the freight lands on that order." />
+      <PageHeader title="Freight bills" description="Bills from our billing companies. Each shipment goes to the vendor that shipped it; the freight lands on that order."
+        actions={canEdit ? <Button variant="secondary" onClick={() => setUploading(true)} leftIcon={<FileUp className="size-4" aria-hidden="true" />}>Upload bills</Button> : undefined} />
+      {uploading ? <BulkBillUpload onClose={() => setUploading(false)} onDone={() => q.refetch()} /> : null}
 
       <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">Billing companies</h2>
       <p className="mb-3 text-xs text-stone-500">Who we book shipments with and pay. Click one for just its bills.</p>

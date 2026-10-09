@@ -50,3 +50,13 @@ export function freshText(text: string | null): string {
     .map((re) => re.exec(t)?.index ?? t.length).reduce((a, b) => Math.min(a, b), t.length)
   return t.slice(0, cut).trim()
 }
+
+/** PartnerShip's "Your New Invoices" email lists the invoice: PS00625902, 10/05/2026, due 10/25/2026, $416.28. */
+export function invoiceFromBody(body: string | null): { invoice_number: string; invoice_date: string | null; due_date: string | null; total: number | null } | null {
+  const t = body ?? ''
+  const m = t.match(/\b(PS\d{6,})\b\s*\n?\s*(\d{2}\/\d{2}\/\d{4})?\s*\n?\s*(\d{2}\/\d{2}\/\d{4})?/)
+  if (!m) return null
+  const iso = (d?: string) => (d ? `${d.slice(6, 10)}-${d.slice(0, 2)}-${d.slice(3, 5)}` : null)
+  const total = t.match(/Total Balance:\s*\$([0-9,]+\.\d{2})/)
+  return { invoice_number: m[1]!, invoice_date: iso(m[2]), due_date: iso(m[3]), total: total ? Number(total[1]!.replace(/,/g, '')) : null }
+}

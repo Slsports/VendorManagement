@@ -194,3 +194,31 @@ export async function fileDeliveryReceipt(receiptId: string, vendorId: string): 
   const { error } = await supabase.rpc('file_delivery_receipt', { p_receipt: receiptId, p_vendor: vendorId })
   if (error) throw error
 }
+
+export interface UploadedBillResult { file: string; result: 'new' | 'filled' | 'duplicate' | 'no_carrier' | 'failed'; billId: string | null; note?: string }
+
+/**
+ * Bulk upload (Dana, Oct 9): one PDF → stored, a bill made, Claude reads it (billing company by our UPS
+ * number), then it fills a bill waiting for its PDF, is skipped as a copy, or stays as a new bill.
+ */
+export async function uploadFreightBill(organizationId: string, file: File): Promise<UploadedBillResult> {
+  const path = `${organizationId}/freight/${crypto.randomUUID()}-${file.name.replace(/[^A-Za-z0-9._-]+/g, '_')}`
+  const { error: upErr } = await supabase.storage.from('vendor-files').upload(path, file, { contentType: file.type || 'application/pdf', upsert: false })
+  if (upErr) throw upErr
+  const { data: id, error } = await supabase.rpc('create_uploaded_freight_bill', { p_path: path, p_file: file.name, p_carrier: null })
+  if (error) throw error
+  const res = await supabase.functions.invoke('freight-read', { body: { bill_id: id } })
+  let body = res.data as { ok: boolean; result?: string; bill_id?: string; note?: string } | null
+  if (res.error) {
+    const ctx = (res.error as { context?: Response }).context
+    body = ctx && typeof ctx.json === 'function' ? await ctx.json().catch(() => null) : null
+    if (!body?.result) return { file: file.name, result: 'failed', billId: id as string, note: body?.note ?? (res.error instanceof Error ? res.error.message : 'Could not read it') }
+  }
+  const result = (body?.result ?? 'new') as UploadedBillResult['result']
+  return { file: file.name, result, billId: body?.bill_id ?? (id as string), note: body?.note }
+}
+
+export async function setFreightBillCarrier(billId: string, carrierId: string): Promise<void> {
+  const { error } = await supabase.from('freight_bills').update({ carrier_id: carrierId, status: 'to_match', read_note: null }).eq('id', billId)
+  if (error) throw error
+}

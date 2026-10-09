@@ -4,7 +4,8 @@ import toast from 'react-hot-toast'
 import { Check, ExternalLink, FileText, Mail, RefreshCw, Upload } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { getFreightBill, listVendorOrdersForFreight, readFreightBill, setFreightBillPaid, setFreightBillStatus, setFreightLine, uploadFreightPdf, type FreightBillDetail } from '@/services/freight'
+import { getFreightBill, listVendorOrdersForFreight, readFreightBill, setFreightBillCarrier, setFreightBillPaid, setFreightBillStatus, setFreightLine, uploadFreightPdf, type FreightBillDetail } from '@/services/freight'
+import { CarrierPicker } from '@/components/freight/CarrierPicker'
 import { downloadVendorFile } from '@/services/lines'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { ROUTES } from '@/lib/constants'
@@ -67,6 +68,12 @@ export default function FreightBillDetailPage() {
         ) : undefined}
       />
 
+      {!b.carrier_id && canEdit ? (
+        <section className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          Which billing company sent this bill?
+          <CarrierPicker value="" billingOnly onChange={(id) => void act('Billing company set', () => setFreightBillCarrier(b.id, id))} />
+        </section>
+      ) : null}
       <section className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl border border-stone-200 bg-white p-4 text-sm">
         {b.storage_path ? (
           <button type="button" className="inline-flex items-center gap-1 text-brand hover:underline" onClick={() => view({ name: b.file_name ?? 'Bill.pdf', mime: 'application/pdf', load: () => downloadVendorFile(b.storage_path!) })}>

@@ -1415,3 +1415,8 @@ Dana listed these while working the Review queue, then said go.
   conversation to Gmail's Trash for orders@ (30 days) and out of every VMS list; the **Deleted** tab shows
   who deleted what and when, with Restore. Anyone who answers mail can delete. Files already saved stay. A
   new message in a deleted conversation brings it back.
+- Dana, Oct 9: **Upload bills** on the Freight bills page: drop a batch of bill PDFs (PartnerShip, UPS DIRECT,
+  WWD, WWEX). Claude reads each, including the billing company and our UPS number printed on it, which picks
+  the billing company; a bill already waiting for its PDF (PartnerShip emails) is filled; a bill already on
+  file is skipped; an unknown company asks on the bill. PartnerShip's invoice emails now give the invoice
+  number, dates and amount (the 12 waiting bills were filled in from theirs).
