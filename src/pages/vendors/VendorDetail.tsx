@@ -21,6 +21,7 @@ import { peopleFor } from '@/lib/contacts'
 import { VendorShowsSection } from '@/components/vendors/VendorShowsSection'
 import { VendorOrdersSection } from '@/components/vendors/VendorOrdersSection'
 import { VendorMailSection } from '@/components/vendors/VendorMailSection'
+import { VendorPaymentsSection } from '@/components/vendors/VendorPaymentsSection'
 import { ComposeDialog, type ComposeDraft } from '@/components/mail/ComposeDialog'
 import { VendorScorecard } from '@/components/scores/VendorScorecard'
 import { VendorItemRulesSection } from '@/components/vendors/VendorItemRulesSection'
@@ -250,6 +251,7 @@ export default function VendorDetailPage() {
         <VendorScorecard organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorItemRulesSection organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorOrdersSection vendorId={v.id} vendorName={v.name} canAdd={canEdit} />
+        <VendorPaymentsSection vendorId={v.id} />
 
         <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-1">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Notes</h2>

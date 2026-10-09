@@ -450,6 +450,12 @@ export type Database = {
           { foreignKeyName: 'freight_bills_email_id_fkey'; columns: ['email_id']; isOneToOne: false; referencedRelation: 'emails'; referencedColumns: ['id'] },
         ]
       }
+      vendor_payments: {
+        Row: { id: string; organization_id: string; source: 'billcom' | 'manual'; confirmation: string | null; payee: string; vendor_id: string | null; carrier_id: string | null; process_date: string | null; arrival_date: string | null; status: string | null; method: string | null; amount: number | null; invoice_number: string | null; paid_from: string | null; freight_bill_id: string | null; order_id: string | null; created_by: string | null; created_at: string }
+        Insert: { id?: string; organization_id: string; source?: 'billcom' | 'manual'; confirmation?: string | null; payee: string; vendor_id?: string | null; carrier_id?: string | null; process_date?: string | null; arrival_date?: string | null; status?: string | null; method?: string | null; amount?: number | null; invoice_number?: string | null; paid_from?: string | null; freight_bill_id?: string | null; order_id?: string | null; created_by?: string | null; created_at?: string }
+        Update: { id?: string; organization_id?: string; source?: 'billcom' | 'manual'; confirmation?: string | null; payee?: string; vendor_id?: string | null; carrier_id?: string | null; process_date?: string | null; arrival_date?: string | null; status?: string | null; method?: string | null; amount?: number | null; invoice_number?: string | null; paid_from?: string | null; freight_bill_id?: string | null; order_id?: string | null; created_by?: string | null; created_at?: string }
+        Relationships: []
+      }
       delivery_receipts: {
         Row: { id: string; organization_id: string; carrier_id: string | null; email_id: string; pro_number: string | null; shipper_name: string | null; po_numbers: string[]; delivered_on: string | null; signed_by: string | null; pieces: number | null; weight_lb: number | null; vendor_candidates: string[]; vendor_id: string | null; order_id: string | null; vendor_link_id: string | null; storage_path: string | null; file_name: string | null; status: 'reading' | 'filed' | 'needs_vendor' | 'failed'; read_note: string | null; review_item_id: string | null; created_at: string }
         Insert: { id?: string; organization_id: string; carrier_id?: string | null; email_id: string; pro_number?: string | null; shipper_name?: string | null; po_numbers?: string[]; delivered_on?: string | null; signed_by?: string | null; pieces?: number | null; weight_lb?: number | null; vendor_candidates?: string[]; vendor_id?: string | null; order_id?: string | null; vendor_link_id?: string | null; storage_path?: string | null; file_name?: string | null; status?: 'reading' | 'filed' | 'needs_vendor' | 'failed'; read_note?: string | null; review_item_id?: string | null; created_at?: string }
@@ -583,6 +589,8 @@ export type Database = {
       freight_set_line: { Args: { p_line: string; p_vendor: string | null; p_order: string | null; p_confirm: boolean }; Returns: undefined }
       move_vendor_document: { Args: { p_link: string; p_kind: string; p_year: number | null }; Returns: undefined }
       carrier_claim_mail: { Args: { p_carrier: string }; Returns: number }
+      billcom_preview: { Args: { p_rows: never }; Returns: unknown }
+      billcom_import: { Args: { p_rows: never }; Returns: number }
       create_uploaded_freight_bill: { Args: { p_path: string; p_file: string; p_carrier: string | null }; Returns: string }
       make_freight_bill_from_attachment: { Args: { p_attachment: string; p_carrier: string }; Returns: string }
       answer_freight_payment: { Args: { p_item: string; p_bill: string }; Returns: undefined }

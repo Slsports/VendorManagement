@@ -1420,3 +1420,8 @@ Dana listed these while working the Review queue, then said go.
   the billing company; a bill already waiting for its PDF (PartnerShip emails) is filled; a bill already on
   file is skipped; an unknown company asks on the bill. PartnerShip's invoice emails now give the invoice
   number, dates and amount (the 12 waiting bills were filled in from theirs).
+- Dana, Oct 9: **Payments** page imports Bill.com's Payments export (Excel or CSV). Each payment is matched
+  to a freight bill (billing company + invoice number, else the only unpaid bill for that amount) or a vendor
+  order (invoice/PO number, else the only unpaid order for that amount) and marked paid via Bill.com with
+  the confirmation number; unmatched ones are kept as history. A preview comes first (untick rows); a
+  payment already imported is skipped. Each vendor page lists its payments.
