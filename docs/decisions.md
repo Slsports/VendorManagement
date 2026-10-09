@@ -1425,3 +1425,9 @@ Dana listed these while working the Review queue, then said go.
   order (invoice/PO number, else the only unpaid order for that amount) and marked paid via Bill.com with
   the confirmation number; unmatched ones are kept as history. A preview comes first (untick rows); a
   payment already imported is skipped. Each vendor page lists its payments.
+- Dana, Oct 9 (idea for next week, not built): **freight routing follow-through**. When we switch who we ship
+  through (now WWEX, UPS 2K229F), every vendor gets a new freight routing letter (Dana will write it) and must
+  ship on our UPS number or ask us for a pickup. VMS should track that each vendor got the letter and then
+  followed it: the account inside each UPS tracking number (1Z + 6-character shipper account) shows whether a
+  shipment went on our number, on the vendor's own account billed to us, or the old account.
+  Also waiting: 792862 as our PartnerShip account number (Dana to confirm); the scanned-paper invoice import.
