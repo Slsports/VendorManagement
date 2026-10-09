@@ -1475,3 +1475,14 @@ Dana listed these while working the Review queue, then said go.
   allowance (amount if known, pay-by date); the dashboard lists unpaid ones soonest first, red in the last
   week; a WWD credit on the order marks it received. The vendor form has "Credits the freight back when we
   pay on time" so their orders show the reminder. Set from the sheet notes on 9 orders and 6 vendors.
+- Dana, Oct 9: **one place for every WWD payment**: Payments page "WWD payments", newest first, sortable by
+  date, WWD payment #, vendors, discounts and amount; click a payment to see each vendor paid (WWD #, their
+  invoice #, invoice amount, discount, credits, the membership fee) and the total. A payment known only from
+  Dana's sheet shows "From your sheet" until the Payment History export brings its PB number. (The 10/8/26
+  sheet adds up to $96,347.48 paid: $98,778.41 of invoices less $2,430.93 discounts; the file name says
+  $96,778.41.)
+- Dana, Oct 9: in "WWD names to match" a name **opens to show its invoices**, and a name can be a **freight
+  company** (XPO is a trucking company, not a vendor). Freight lines are filed to the company and also need
+  the vendor whose goods were carried ("Freight to tie to a vendor"); VMS fills it from the XPO delivery
+  receipt with the same PRO number when there is one. Freight companies learn WWD spellings like vendors do;
+  "XPO Logistics Freight, Inc" and "XPO SHIPPING" filed themselves to XPO (9 lines).

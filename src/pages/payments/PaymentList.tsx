@@ -12,6 +12,7 @@ import { errorMessage } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { WwdImportSection } from '@/components/payments/WwdImportSection'
 import { WwdUnsortedNames } from '@/components/payments/WwdUnsortedNames'
+import { WwdPaymentsList } from '@/components/payments/WwdPaymentsList'
 import { Alert, Badge, Button, Spinner } from '@/components/ui'
 
 /**
@@ -65,6 +66,7 @@ export default function PaymentsPage() {
 
       <WwdImportSection onImported={() => setWwdRun((n) => n + 1)} />
       <WwdUnsortedNames refreshKey={wwdRun} />
+      <WwdPaymentsList refreshKey={wwdRun} />
 
       <section className="mb-6 rounded-2xl border border-stone-200 bg-white p-4">
         <div className="flex flex-wrap items-center gap-3">

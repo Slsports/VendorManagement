@@ -93,11 +93,12 @@ export async function importWwd(batch: WwdBatch, onProgress?: (done: number, tot
 
 export interface WwdInvoiceRow extends WwdInvoice {
   vendor: { id: string; name: string } | null
+  carrier: { id: string; name: string } | null
   order: { id: string; order_date: string | null; po_number: string | null; description: string | null } | null
   wwd_payment_lines: { amount: number; wwd_payments: { ref: string; pay_date: string } | null }[]
 }
 
-const INVOICE_SELECT = '*, vendor:vendors!wwd_invoices_vendor_id_fkey(id, name), order:orders!wwd_invoices_order_id_fkey(id, order_date, po_number, description), wwd_payment_lines(amount, wwd_payments(ref, pay_date))'
+const INVOICE_SELECT = '*, vendor:vendors!wwd_invoices_vendor_id_fkey(id, name), carrier:carriers!wwd_invoices_carrier_id_fkey(id, name), order:orders!wwd_invoices_order_id_fkey(id, order_date, po_number, description), wwd_payment_lines(amount, wwd_payments(ref, pay_date))'
 
 /** A vendor's or an order's WWD invoices, newest first. */
 export async function listWwdInvoices(f: { vendorId?: string; orderId?: string }, limit = 200): Promise<WwdInvoiceRow[]> {
@@ -111,7 +112,7 @@ export async function listWwdInvoices(f: { vendorId?: string; orderId?: string }
 
 /** WWD spellings no vendor is known for yet, with how many invoices and dollars each covers. */
 export async function listWwdUnsorted(organizationId: string): Promise<{ name: string; count: number; total: number; latest: string | null }[]> {
-  const { data, error } = await supabase.from('wwd_invoices').select('wwd_vendor_name, amount, wwd_date').eq('organization_id', organizationId).is('vendor_id', null).not('wwd_vendor_name', 'is', null).limit(5000)
+  const { data, error } = await supabase.from('wwd_invoices').select('wwd_vendor_name, amount, wwd_date').eq('organization_id', organizationId).is('vendor_id', null).is('carrier_id', null).not('wwd_vendor_name', 'is', null).limit(5000)
   if (error) throw error
   const by = new Map<string, { name: string; count: number; total: number; latest: string | null }>()
   for (const r of data ?? []) {
@@ -125,7 +126,7 @@ export async function listWwdUnsorted(organizationId: string): Promise<{ name: s
 }
 
 export async function countWwdNoVendor(organizationId: string): Promise<number> {
-  const { count, error } = await supabase.from('wwd_invoices').select('id', { count: 'exact', head: true }).eq('organization_id', organizationId).is('vendor_id', null)
+  const { count, error } = await supabase.from('wwd_invoices').select('id', { count: 'exact', head: true }).eq('organization_id', organizationId).is('vendor_id', null).is('carrier_id', null)
   if (error) throw error
   return count ?? 0
 }
@@ -134,6 +135,51 @@ export async function listWwdPayments(organizationId: string, limit = 12): Promi
   const { data, error } = await supabase.from('wwd_payments').select('id, ref, pay_date, total').eq('organization_id', organizationId).order('pay_date', { ascending: false }).limit(limit)
   if (error) throw error
   return data ?? []
+}
+
+/** Every WWD invoice with this vendor spelling (any capitals), newest first: what "names to match" opens to. */
+export async function listWwdInvoicesByName(organizationId: string, name: string): Promise<WwdInvoiceRow[]> {
+  const { data, error } = await supabase.from('wwd_invoices').select(INVOICE_SELECT).eq('organization_id', organizationId)
+    .ilike('wwd_vendor_name', name.replace(/[\\%_]/g, (c) => `\\${c}`)).order('wwd_date', { ascending: false, nullsFirst: false }).limit(500)
+  if (error) throw error
+  return (data ?? []) as unknown as WwdInvoiceRow[]
+}
+
+/** WWD lines filed to a freight company (XPO) that do not say yet whose goods it carried. */
+export async function listWwdFreightNoVendor(organizationId: string): Promise<WwdInvoiceRow[]> {
+  const { data, error } = await supabase.from('wwd_invoices').select(INVOICE_SELECT).eq('organization_id', organizationId)
+    .not('carrier_id', 'is', null).is('vendor_id', null).order('wwd_date', { ascending: false, nullsFirst: false }).limit(500)
+  if (error) throw error
+  return (data ?? []) as unknown as WwdInvoiceRow[]
+}
+
+export async function assignWwdNameCarrier(name: string, carrierId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('wwd_assign_name_carrier', { p_name: name, p_carrier: carrierId })
+  if (error) throw error
+  return data ?? 0
+}
+
+export type WwdPaymentSummary = Awaited<ReturnType<typeof listWwdPaymentSummaries>>[number]
+
+/** Every WWD payment, newest first, with vendors paid, discounts and lines with no vendor; sheet-only payments too. */
+export async function listWwdPaymentSummaries() {
+  const { data, error } = await supabase.rpc('wwd_payment_list')
+  if (error) throw error
+  return [...(data ?? [])].sort((a, b) => b.pay_date.localeCompare(a.pay_date))
+}
+
+export interface WwdPaymentLine { amount: number; invoice: WwdInvoiceRow }
+
+/** What one payment paid, line by line with its invoice; for a sheet-only payment, the invoices on that sheet date. */
+export async function listWwdPaymentLines(p: { paymentId: string | null; sheetDate: string; organizationId: string }): Promise<WwdPaymentLine[]> {
+  if (p.paymentId) {
+    const { data, error } = await supabase.from('wwd_payment_lines').select(`amount, invoice:wwd_invoices(${INVOICE_SELECT})`).eq('payment_id', p.paymentId)
+    if (error) throw error
+    return (data ?? []) as unknown as WwdPaymentLine[]
+  }
+  const { data, error } = await supabase.from('wwd_invoices').select(INVOICE_SELECT).eq('organization_id', p.organizationId).is('paid_date', null).eq('sheet_paid_date', p.sheetDate)
+  if (error) throw error
+  return ((data ?? []) as unknown as WwdInvoiceRow[]).map((i) => ({ amount: (i.amount ?? 0) - (i.discount ?? 0), invoice: i }))
 }
 
 export async function assignWwdName(name: string, vendorId: string): Promise<number> {
