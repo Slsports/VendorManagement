@@ -29,8 +29,8 @@ export function MakeFreightBillDialog({ attachment, carrierId, onClose }: { atta
         setBusy(false)
       }
     }}>
-      <p className="text-sm text-stone-600">Which carrier billed it?</p>
-      <CarrierPicker value={carrier} onChange={setCarrier} />
+      <p className="text-sm text-stone-600">Which billing company sent it?</p>
+      <CarrierPicker value={carrier} onChange={setCarrier} billingOnly />
     </Modal>
   )
 }

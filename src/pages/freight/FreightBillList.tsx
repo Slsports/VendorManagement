@@ -33,10 +33,12 @@ export default function FreightBillListPage() {
 
   return (
     <div>
-      <PageHeader title="Freight bills" description="Bills from our carriers. Each shipment goes to the vendor that shipped it; the freight lands on that order." />
+      <PageHeader title="Freight bills" description="Bills from our billing companies. Each shipment goes to the vendor that shipped it; the freight lands on that order." />
 
-      <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {(carriers.data ?? []).map((c) => (
+      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">Billing companies</h2>
+      <p className="mb-3 text-xs text-stone-500">Who we book shipments with and pay. Click one for just its bills.</p>
+      <section className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {(carriers.data ?? []).filter((c) => c.role === 'billing').map((c) => (
           <div key={c.id} className={cn('rounded-2xl border bg-white p-4 text-sm', carrierId === c.id ? 'border-brand ring-2 ring-brand/20' : 'border-stone-200', !c.is_active && 'opacity-60')}>
             <div className="flex items-start justify-between gap-2">
               <button type="button" onClick={() => { const next = new URLSearchParams(params); if (carrierId === c.id) { next.delete('carrier') } else { next.set('carrier', c.id); next.set('show', 'all') } setParams(next, { replace: true }) }}
@@ -59,6 +61,20 @@ export default function FreightBillListPage() {
           </div>
         ) : null}
       </section>
+      {(carriers.data ?? []).some((c) => c.role === 'trucking') ? (
+        <section className="mb-6 rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Trucking companies</h2>
+          <p className="text-xs text-stone-500">They haul the freight, hired by a billing company. Their tracking and delivery receipts are still read.</p>
+          <ul className="mt-2 divide-y divide-stone-100">
+            {(carriers.data ?? []).filter((c) => c.role === 'trucking').map((c) => (
+              <li key={c.id} className={cn('flex items-center justify-between gap-2 py-1.5', !c.is_active && 'opacity-60')}>
+                <span><span className="font-medium text-stone-900">{c.name}</span> <Badge tone="neutral">{c.mode === 'ltl' ? 'LTL' : 'Parcel'}</Badge>{c.hired_by ? <span className="text-xs text-stone-500"> · usually hired by {c.hired_by}</span> : null}</span>
+                {canEdit ? <button type="button" onClick={() => setEditing(c)} aria-label={`Edit ${c.name}`} className="rounded-lg p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700"><Pencil className="size-4" aria-hidden="true" /></button> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       {editing ? (
         <CarrierDialog carrier={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} onDone={async () => { setEditing(null); await carriers.refetch() }} />
       ) : null}

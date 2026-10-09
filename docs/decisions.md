@@ -1405,3 +1405,9 @@ Dana listed these while working the Review queue, then said go.
   carrier card, each bill): UPS DIRECT 89787W (our own account, no longer used), PartnerShip V513K4 (used
   earlier in 2026), Worldwide Express 2K229F, **the default UPS (parcel) shipper**. WWEX's W0003290195 is
   our account with them, a different number. UPS DIRECT was added as a carrier (no email domain yet).
+- Dana, Oct 9: **billing companies** (we book and pay: Priority One, PartnerShip, Worldwide Express / WWEX /
+  ShipStation, UPS DIRECT, Worldwide Distributors) are separate from **trucking companies** (haul it, hired
+  by a billing company: XPO, Oak Harbor Freight). Bills belong to billing companies; trucking companies'
+  tracking and delivery receipts are still read. WWD is a billing company: its freight bills come from the
+  WWD portal (Trevor uploads them); warehouse@worldwidebuygroup.com and everyone in the WWD directory's
+  Warehouse department write WWD freight mail (Freight tab), still filed to the vendors it is about.

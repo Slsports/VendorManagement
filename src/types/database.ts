@@ -436,9 +436,9 @@ export type Database = {
         ]
       }
       carriers: {
-        Row: { id: string; organization_id: string; name: string; mode: 'parcel' | 'ltl'; email_domains: string[]; website: string | null; account_number: string | null; owner_id: string | null; notes: string | null; is_active: boolean; created_at: string; ups_account: string | null; is_default_parcel: boolean }
-        Insert: { id?: string; organization_id: string; name: string; mode?: 'parcel' | 'ltl'; email_domains?: string[]; website?: string | null; account_number?: string | null; owner_id?: string | null; notes?: string | null; is_active?: boolean; created_at?: string; ups_account?: string | null; is_default_parcel?: boolean }
-        Update: { id?: string; organization_id?: string; name?: string; mode?: 'parcel' | 'ltl'; email_domains?: string[]; website?: string | null; account_number?: string | null; owner_id?: string | null; notes?: string | null; is_active?: boolean; created_at?: string; ups_account?: string | null; is_default_parcel?: boolean }
+        Row: { id: string; organization_id: string; name: string; mode: 'parcel' | 'ltl'; email_domains: string[]; website: string | null; account_number: string | null; owner_id: string | null; notes: string | null; is_active: boolean; created_at: string; ups_account: string | null; is_default_parcel: boolean; role: 'billing' | 'trucking'; hired_by: string | null; partner_id: string | null; partner_department: string | null }
+        Insert: { id?: string; organization_id: string; name: string; mode?: 'parcel' | 'ltl'; email_domains?: string[]; website?: string | null; account_number?: string | null; owner_id?: string | null; notes?: string | null; is_active?: boolean; created_at?: string; ups_account?: string | null; is_default_parcel?: boolean; role?: 'billing' | 'trucking'; hired_by?: string | null; partner_id?: string | null; partner_department?: string | null }
+        Update: { id?: string; organization_id?: string; name?: string; mode?: 'parcel' | 'ltl'; email_domains?: string[]; website?: string | null; account_number?: string | null; owner_id?: string | null; notes?: string | null; is_active?: boolean; created_at?: string; ups_account?: string | null; is_default_parcel?: boolean; role?: 'billing' | 'trucking'; hired_by?: string | null; partner_id?: string | null; partner_department?: string | null }
         Relationships: []
       }
       freight_bills: {

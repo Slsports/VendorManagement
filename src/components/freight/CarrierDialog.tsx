@@ -26,6 +26,8 @@ export function CarrierDialog({ carrier, prefillName, domain, onClose, onDone }:
   const others = useSupabaseQuery(async () => (organization && !carrier ? listCarriers(organization.id) : []), [organization?.id, carrier?.id])
   const [name, setName] = useState(carrier?.name ?? prefillName ?? '')
   const [mode, setMode] = useState<'parcel' | 'ltl'>(carrier?.mode ?? 'parcel')
+  const [role, setRole] = useState<'billing' | 'trucking'>(carrier?.role ?? 'billing')
+  const [hiredBy, setHiredBy] = useState(carrier?.hired_by ?? '')
   const [domains, setDomains] = useState((carrier?.email_domains ?? (domain ? [domain] : [])).join(', '))
   const [website, setWebsite] = useState(carrier?.website ?? (domain ? `https://www.${domain}` : ''))
   const [account, setAccount] = useState(carrier?.account_number ?? '')
@@ -43,7 +45,7 @@ export function CarrierDialog({ carrier, prefillName, domain, onClose, onDone }:
       if (!name.trim()) { toast.error('Name is required.'); return }
       setBusy(true)
       try {
-        const fields = { name: name.trim(), mode, email_domains: domainsFrom(domains), website: website.trim() || null, account_number: account.trim() || null, ups_account: ups.trim().toUpperCase() || null, owner_id: ownerId }
+        const fields = { name: name.trim(), mode, email_domains: domainsFrom(domains), website: website.trim() || null, account_number: account.trim() || null, ups_account: ups.trim().toUpperCase() || null, owner_id: ownerId, role, hired_by: role === 'trucking' ? hiredBy.trim() || null : null }
         const c = carrier
           ? await updateCarrier(carrier.id, { ...fields, is_active: active, is_default_parcel: defaultParcel })
           : await createCarrier({ organization_id: organization.id, ...fields })
@@ -55,6 +57,16 @@ export function CarrierDialog({ carrier, prefillName, domain, onClose, onDone }:
       }
     }}>
       <FormField label="Name" htmlFor="cd-name"><Input id="cd-name" value={name} onChange={(e) => setName(e.target.value)} autoFocus required /></FormField>
+      <fieldset>
+        <legend className="text-sm font-medium text-stone-800">What they do</legend>
+        <div className="mt-1 flex flex-col gap-1 text-stone-700 sm:flex-row sm:gap-4">
+          <label className="flex items-center gap-2"><input type="radio" name="cd-role" checked={role === 'billing'} onChange={() => setRole('billing')} className="accent-brand" /> Billing company (we book and pay them)</label>
+          <label className="flex items-center gap-2"><input type="radio" name="cd-role" checked={role === 'trucking'} onChange={() => setRole('trucking')} className="accent-brand" /> Trucking company (hauls it)</label>
+        </div>
+      </fieldset>
+      {role === 'trucking' ? (
+        <FormField label="Usually hired by" htmlFor="cd-hired" hint="e.g. Priority One, PartnerShip"><Input id="cd-hired" value={hiredBy} onChange={(e) => setHiredBy(e.target.value)} /></FormField>
+      ) : null}
       <fieldset>
         <legend className="text-sm font-medium text-stone-800">Ships</legend>
         <div className="mt-1 flex gap-4 text-stone-700">

@@ -294,12 +294,13 @@ async function freightBills(db: SupabaseClient, gmail: Gmail, org: string, start
   }
 
   const { data: queue } = await db.from('emails')
-    .select('id, gmail_id, subject, body_text, received_at, sender:email_senders!inner(kind, carrier_id, carriers(name)), attachments:email_attachments(id, file_name, mime_type, gmail_attachment_id)')
-    .eq('organization_id', org).eq('direction', 'in').eq('sender.kind', 'carrier').is('freight_checked_at', null)
+    .select('id, gmail_id, subject, body_text, received_at, thread:email_threads!inner(carrier_id, carriers(name)), attachments:email_attachments(id, file_name, mime_type, gmail_attachment_id)')
+    .eq('organization_id', org).eq('direction', 'in').not('thread.carrier_id', 'is', null).is('freight_checked_at', null)
     .order('received_at', { ascending: false }).limit(6)
   for (const e of queue ?? []) {
     if (Date.now() - started > TIME_BUDGET_MS) break
-    const sender = e.sender as unknown as { carrier_id: string | null; carriers: { name: string } | null }
+    // Freight mail is the carrier's conversation: its own address, or a partner's freight people (WWD Warehouse).
+    const sender = e.thread as unknown as { carrier_id: string | null; carriers: { name: string } | null }
     try {
       const atts = (e.attachments ?? []) as { id: string; file_name: string; mime_type: string | null; gmail_attachment_id: string | null }[]
       const pdf = atts.find((a) => a.gmail_attachment_id && (/pdf/i.test(a.mime_type ?? '') || /\.pdf$/i.test(a.file_name)))
