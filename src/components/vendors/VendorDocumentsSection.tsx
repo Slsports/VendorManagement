@@ -28,6 +28,7 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
   const [dropOn, setDropOn] = useState<DocFolder | null>(null)
   const [busy, setBusy] = useState(false)
   const [zipping, setZipping] = useState<string | null>(null)
+  const [find, setFind] = useState('')
   const { view, viewer } = useDocumentViewer()
 
   const links = q.data ?? []
@@ -114,6 +115,7 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
         <p className="truncate text-xs text-stone-500">
           {l.is_current ? <Badge tone="success" className="mr-1">Current</Badge> : null}
           {folder && folder.kinds.length > 1 ? <Badge tone="neutral" className="mr-1">{LINK_KIND_LABELS[l.kind]}</Badge> : null}
+          {l.doc_number || l.doc_total != null ? <span className="mr-1 font-medium text-stone-700">{[l.doc_number ? `#${l.doc_number}` : null, l.doc_date ? new Date(`${l.doc_date}T12:00:00`).toLocaleDateString() : null, l.doc_total != null ? `$${Number(l.doc_total).toFixed(2)}` : null].filter(Boolean).join(' · ')} ·</span> : null}
           {l.season_label ? `${l.season_label} · ` : ''}{l.file_name ?? l.url?.replace(/^https?:\/\//, '')}{l.received_at ? ` · ${new Date(`${l.received_at}T12:00:00`).toLocaleDateString()}` : ''}
           {l.email ? <> · <Link to={`${ROUTES.mail}/${l.email.thread_id}`} className="inline-flex items-center gap-0.5 text-brand hover:underline"><Mail className="inline size-3" aria-hidden="true" />from an email</Link></> : null}
         </p>
@@ -142,6 +144,20 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
       </div>
       <p className="mt-1 text-xs text-stone-500">{canEdit ? 'Open a folder, or drop files on one to save them under this year.' : 'Open a folder to see its files.'}</p>
 
+      {links.length > 5 ? (
+        <input type="search" value={find} onChange={(e) => setFind(e.target.value)} placeholder="Find a document: invoice number, amount, name…" aria-label="Find a document"
+          className="mt-3 h-10 w-full rounded-lg border border-stone-300 bg-white px-3 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-ring-brand sm:max-w-md" />
+      ) : null}
+      {find.trim() ? (() => {
+        const q = find.trim().toLowerCase().replace(/^[#$]/, '')
+        const hits = links.filter((l) => [l.label, l.file_name, l.doc_number, l.doc_total != null ? Number(l.doc_total).toFixed(2) : null, l.season_label, l.notes].some((v) => (v ?? '').toString().toLowerCase().includes(q)))
+        return (
+          <div className="mt-3 rounded-xl border border-stone-200 p-3">
+            <p className="text-sm font-semibold text-stone-900">{hits.length} found</p>
+            <ul className="divide-y divide-stone-100">{hits.slice(0, 100).map((l) => <li key={l.id} className="text-xs text-stone-500"><span className="font-medium text-stone-700">{folderLabel(folderOf(l.kind))} · {l.doc_year ?? ''}</span><ul>{row(l)}</ul></li>)}</ul>
+          </div>
+        )
+      })() : null}
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
         {DOC_FOLDERS.map((f) => {
           const n = inFolder(f.id).length

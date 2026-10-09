@@ -1434,3 +1434,9 @@ Dana listed these while working the Review queue, then said go.
 - Dana, Oct 9: PartnerShip bills show no UPS number of ours, only "PartnerShip Account # 792862": saved as our
   account with PartnerShip. Uploaded bills now match a billing company by our UPS number or our account
   number with them, then by name. (UPS tracking numbers carry the shipping account: 1Z + 6 characters.)
+- Dana, Oct 9: **scanned paper invoices** (back to 2010) in Bulk import: tick "Scanned paper" and Claude
+  (the capable model) reads every page of each PDF, splits a stack into its documents (one file each), and
+  gives each its vendor, folder (Invoices, Credits, Shipping for packing slips…), number, date and total;
+  the date sets the year folder; faded, handwritten or unclear pages stay under "Need a look". A document
+  keeps its number, date and total (`vendor_links.doc_number/doc_date/doc_total`), and each vendor's
+  Documents has a search box (number, amount, name). Scans up to 30 MB per file.

@@ -4,9 +4,10 @@ import toast from 'react-hot-toast'
 import { CheckCircle2, FolderUp, Sparkles, Upload } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { askClaudeWhere, docKey, fileImportedDocument, listExistingDocKeys, listVendorsForMatching, removeStagedFiles, stageImportFile } from '@/services/documentImport'
+import { askClaudeScan, askClaudeWhere, docKey, fileImportedDocument, listExistingDocKeys, listVendorsForMatching, removeStagedFiles, stageImportFile, type ScanDocument } from '@/services/documentImport'
 import { clearPickerCache } from '@/services/mail'
 import { guessFromPath, isImportable, vendorMatcher } from '@/lib/bulkImport'
+import { splitPdf } from '@/lib/pdfSplit'
 import { DOC_FOLDERS, folderLabel, kindFor, type DocFolder } from '@/lib/documents'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
@@ -33,6 +34,8 @@ interface Row {
   staged: string | null
   state: 'new' | 'filed' | 'error'
   error: string | null
+  /** Read from a scan: invoice / credit / packing slip number, its date and total. */
+  details?: { number: string | null; date: string | null; total: number | null } | null
 }
 
 /** Walk dropped folders (Chrome, Edge, Safari, Firefox): every file with its path inside the drop. */
@@ -77,6 +80,7 @@ export default function BulkImportPage() {
   const [reading, setReading] = useState(false)
   const [progress, setProgress] = useState<{ label: string; done: number; total: number } | null>(null)
   const [dragging, setDragging] = useState(false)
+  const [scanMode, setScanMode] = useState(false)
   const existing = useRef<Set<string> | null>(null)
   const folderInput = useRef<HTMLInputElement>(null)
   const fileInput = useRef<HTMLInputElement>(null)
@@ -112,6 +116,7 @@ export default function BulkImportPage() {
         })
       }
       setRows((rs) => [...rs, ...fresh])
+      if (scanMode && fresh.length) void readScans(fresh)
       if (skipped) toast(`${skipped} file${skipped === 1 ? '' : 's'} over ${MAX_MB} MB left out`)
       if (!fresh.length) toast('No new files in that drop')
     } catch (err) {
@@ -135,6 +140,55 @@ export default function BulkImportPage() {
   const dups = pending.filter((r) => r.duplicate)
   const filed = rows.filter((r) => r.state === 'filed')
   const toFile = ready.filter((r) => r.include)
+
+  /**
+   * Scanned paper (Dana, Oct 9): Claude reads every page of each PDF, splits a stack into its documents and
+   * gives each its vendor, folder, number, date and total. Unclear pages stay under "Need a look".
+   */
+  async function readScans(list: Row[]) {
+    if (!organization) return
+    const pdfs = list.filter((r) => /pdf/i.test(r.file.type) || /\.pdf$/i.test(r.file.name))
+    setProgress({ label: 'Claude is reading the scans', done: 0, total: pdfs.length })
+    let done = 0
+    await inPool(pdfs, 2, async (r) => {
+      try {
+        const staged = r.staged ?? await stageImportFile(organization.id, r.file)
+        const docs = await askClaudeScan({ key: r.key, path: r.path, storage_path: staged })
+        const fit = (d: ScanDocument, base: Row, file: File, stagedPath: string): Row => {
+          const folder = (DOC_FOLDERS.some((f) => f.id === d.folder) ? d.folder : null) as DocFolder | null
+          const year = d.doc_date && /^\d{4}/.test(d.doc_date) ? Number(d.doc_date.slice(0, 4)) : base.year
+          const vendorId = d.vendor_id ?? base.vendorId
+          const duplicate = isDup(vendorId, file)
+          return {
+            ...base, key: crypto.randomUUID(), file, staged: stagedPath, vendorId, folder: folder ?? base.folder, year, how: 'claude',
+            note: !d.sure ? 'Claude is not sure: faded, handwritten or unclear' : d.vendor_name && !vendorId ? `Claude read "${d.vendor_name}", no vendor by that name` : null,
+            details: { number: d.invoice_number, date: d.doc_date, total: d.total }, duplicate, include: !duplicate,
+          }
+        }
+        if (docs.length <= 1) {
+          const d = docs[0]
+          if (d) setRows((rs) => rs.map((x) => (x.key === r.key ? { ...fit(d, x, x.file, staged), key: x.key } : x)))
+          else update(r.key, { staged, note: 'Claude found nothing to read' })
+        } else {
+          // A stack: one file per document, each filed on its own.
+          const parts = await splitPdf(r.file, docs.map((d) => ({ first: d.first_page, last: d.last_page })))
+          const made: Row[] = []
+          for (const [k, part] of parts.entries()) {
+            const p = await stageImportFile(organization.id, part)
+            made.push(fit(docs[k]!, { ...r, path: `${r.path} (pages ${docs[k]!.first_page}–${docs[k]!.last_page})` }, part, p))
+          }
+          setRows((rs) => rs.flatMap((x) => (x.key === r.key ? made : [x])))
+          await removeStagedFiles([staged])
+        }
+      } catch (err) {
+        update(r.key, { note: `Claude could not read it: ${errorMessage(err)}` })
+      }
+      done++
+      setProgress((p) => (p ? { ...p, done } : p))
+    })
+    setProgress(null)
+    toast.success('Claude has read the scans. Check the list, then file.')
+  }
 
   async function askClaude() {
     if (!organization) return
@@ -187,7 +241,7 @@ export default function BulkImportPage() {
     await inPool(list, 3, async (r) => {
       try {
         const storagePath = r.staged ?? await stageImportFile(organization.id, r.file)
-        await fileImportedDocument({ organizationId: organization.id, vendorId: r.vendorId!, kind: kindFor(r.folder!), year: r.year, originalPath: r.path, storagePath, file: r.file, userId: profile?.id ?? null })
+        await fileImportedDocument({ organizationId: organization.id, vendorId: r.vendorId!, kind: kindFor(r.folder!), year: r.year, originalPath: r.path, storagePath, file: r.file, userId: profile?.id ?? null, details: r.details ?? undefined })
         existing.current?.add(docKey(r.vendorId!, r.file.name, r.file.size))
         update(r.key, { state: 'filed', staged: storagePath, error: null })
       } catch (err) {
@@ -223,6 +277,7 @@ export default function BulkImportPage() {
             <span className="block truncate text-sm text-stone-900" title={r.path}>{r.path}</span>
             <span className="block text-xs text-stone-500">
               {r.how === 'claude' ? <Badge tone="info" className="mr-1">Claude</Badge> : null}
+              {r.details && (r.details.number || r.details.total != null) ? <span className="mr-1 text-stone-600">{[r.details.number ? `#${r.details.number}` : null, r.details.date, r.details.total != null ? `$${r.details.total.toFixed(2)}` : null].filter(Boolean).join(' · ')}</span> : null}
               {r.note ? <span className="text-amber-700">{r.note}</span> : null}
               {r.error ? <span className="text-red-700">{r.error}</span> : null}
             </span>
@@ -261,6 +316,10 @@ export default function BulkImportPage() {
         className={cn('flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed px-6 py-10 text-center', dragging ? 'border-brand bg-brand/5' : 'border-stone-300 bg-white/60')}>
         <FolderUp className="size-10 text-stone-400" aria-hidden="true" />
         <p className="text-sm text-stone-700">Drop vendor folders here, like <span className="font-medium">Stansport</span> with its Invoices and Catalogs folders inside.</p>
+        <label className="flex items-center gap-2 rounded-lg bg-stone-100 px-3 py-1.5 text-sm text-stone-800">
+          <input type="checkbox" checked={scanMode} onChange={(e) => setScanMode(e.target.checked)} className="size-4 accent-brand" />
+          Scanned paper: Claude reads every page, splits stacks into separate invoices, and keeps each invoice's number, date and total
+        </label>
         <div className="flex flex-wrap justify-center gap-2">
           <Button variant="secondary" disabled={busy || vendorsQ.isLoading} onClick={() => folderInput.current?.click()} leftIcon={<FolderUp className="size-4" aria-hidden="true" />}>Choose a folder</Button>
           <Button variant="ghost" disabled={busy || vendorsQ.isLoading} onClick={() => fileInput.current?.click()} leftIcon={<Upload className="size-4" aria-hidden="true" />}>Choose files</Button>

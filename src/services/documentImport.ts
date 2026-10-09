@@ -57,14 +57,31 @@ export async function askClaudeWhere(files: { key: string; path: string; storage
   return (data as { results: ClaudePlace[] }).results
 }
 
-/** File one imported document into a vendor's folder and year. */
+export interface ScanDocument { first_page: number; last_page: number; vendor_name: string | null; vendor_id: string | null; folder: string; invoice_number: string | null; doc_date: string | null; total: number | null; sure: boolean }
+
+/** A scanned PDF (already staged): Claude splits it into its documents and reads each. */
+export async function askClaudeScan(file: { key: string; path: string; storage_path: string }): Promise<ScanDocument[]> {
+  const { data, error } = await supabase.functions.invoke('docs-sort', { body: { mode: 'scan', files: [file] } })
+  if (error) {
+    const ctx = (error as { context?: Response }).context
+    const body = ctx && typeof ctx.json === 'function' ? await ctx.json().catch(() => null) : null
+    throw new Error(body?.error ?? (error instanceof Error ? error.message : String(error)))
+  }
+  return (data as { documents: ScanDocument[] }).documents
+}
+
+/** File one imported document into a vendor's folder and year, with what Claude read from a scan. */
 export async function fileImportedDocument(input: {
   organizationId: string; vendorId: string; kind: VendorLink['kind']; year: number; originalPath: string; storagePath: string; file: File; userId: string | null
+  details?: { number: string | null; date: string | null; total: number | null }
 }): Promise<void> {
+  const d = input.details
+  const label = d?.number ? `${input.kind === 'credit' ? 'Credit' : input.kind === 'packing_slip' ? 'Packing slip' : 'Invoice'} ${d.number}` : input.file.name.replace(/\.[a-z0-9]{2,5}$/i, '')
   const { error } = await supabase.from('vendor_links').insert({
-    organization_id: input.organizationId, vendor_id: input.vendorId, kind: input.kind, label: input.file.name.replace(/\.[a-z0-9]{2,5}$/i, ''),
+    doc_number: d?.number ?? null, doc_date: d?.date ?? null, doc_total: d?.total ?? null,
+    organization_id: input.organizationId, vendor_id: input.vendorId, kind: input.kind, label,
     storage_path: input.storagePath, file_name: input.file.name, file_size: input.file.size, mime_type: input.file.type || null,
-    received_at: new Date(input.file.lastModified).toISOString().slice(0, 10), doc_year: input.year, source: 'import',
+    received_at: d?.date ?? new Date(input.file.lastModified).toISOString().slice(0, 10), doc_year: input.year, source: 'import',
     notes: `Imported from ${input.originalPath}`.slice(0, 1000), created_by: input.userId,
   })
   if (error) throw error
