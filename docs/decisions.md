@@ -1523,3 +1523,8 @@ Dana listed these while working the Review queue, then said go.
   (dates, costs, PO, notes, status, payment…) remembers when it was changed in VMS (`orders.edited_fields`,
   set by a trigger); the sheet imports run with `vms.import = on` and leave those fields alone, updating
   the rest. The Oct 10 date fixes (Scope, World Famous B671437) are marked, so the sheet need not be fixed.
+- Dana, Oct 10: **artwork approvals count only delivered artwork**: the email itself carries the proof,
+  mockup or design (attached, pasted or linked) for us to approve or pick from. Promises ("I'll mock
+  something up"), offers, requests for our logo or a vector file, color options and product photos do not
+  count; an email with nothing but signature logos cannot be one. Everything flagged before was read again
+  under this rule (approved ones kept).

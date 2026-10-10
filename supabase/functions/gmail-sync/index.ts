@@ -504,7 +504,9 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
       const readings = await readArtwork(db, org, batch)
       for (const e of batch) {
         const r = readings.get(e.email_id)
-        const art = e.direction === 'out' ? (r?.art === 'approved' || r?.art === 'changes' ? r.art : 'none') : (r?.art === 'yes' || r?.art === 'unsure' ? r.art : 'no')
+        // delivered artwork only (Dana, Oct 10): an email with no picture or file beyond signature logos and no link cannot be a proof
+        const real = e.attachments.some((a) => !/^(image0\d\d|outlook-|logo|signature)/i.test(a) && !/\((\d|1\d) KB\)$/.test(a)) || /https?:\/\//i.test(e.body_text ?? '')
+        const art = e.direction === 'out' ? (r?.art === 'approved' || r?.art === 'changes' ? r.art : 'none') : (r?.art === 'yes' || r?.art === 'unsure') && real ? r.art : 'no'
         await check(db.rpc('mail_apply_art', { p_email: e.email_id, p_art: art, p_note: r?.note ?? '' }))
       }
     }
