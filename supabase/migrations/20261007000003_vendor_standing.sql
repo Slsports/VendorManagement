@@ -1,0 +1,147 @@
+-- 0019 — Vendor standing (Dana, 2026-10-07): "some of the vendors will be a no way on ordering again,
+-- others may be subjective and only if we can't find the items anywhere else. But I want it to show
+-- on the Stars why they are flagged that way (shipping fees, damaged goods, bad attitude)."
+-- standing replaces the do_not_order flag as the source of truth; the flag follows it so older
+-- screens and the lines page keep working. Tags say why; the free-text reason stays.
+
+alter table public.vendors
+  add column if not exists standing      text not null default 'ok' check (standing in ('ok', 'last_resort', 'do_not_order')),
+  add column if not exists standing_tags text[] not null default '{}';
+alter table public.vendors drop constraint if exists vendors_standing_tags_check;
+alter table public.vendors add constraint vendors_standing_tags_check
+  check (standing_tags <@ array['shipping_fees', 'damaged_goods', 'order_mistakes', 'unreliable_delivery', 'bad_attitude', 'slow_credits', 'out_of_business', 'other']::text[]);
+comment on column public.vendors.standing is 'ok = fine to order; last_resort = only if the items are nowhere else; do_not_order = never again. A warning, never a block.';
+comment on column public.vendors.standing_tags is 'Why the standing is not ok: shipping_fees, damaged_goods, order_mistakes, unreliable_delivery, bad_attitude, slow_credits, out_of_business, other.';
+
+update public.vendors set standing = 'do_not_order' where do_not_order and standing = 'ok';
+
+create or replace function public.vendor_standing_sync()
+returns trigger
+language plpgsql
+as $$
+begin
+  if tg_op = 'INSERT' and new.do_not_order and new.standing = 'ok' then
+    new.standing := 'do_not_order';
+  elsif tg_op = 'UPDATE' and new.standing = old.standing and new.do_not_order is distinct from old.do_not_order then
+    -- an older screen flipped the flag: follow it
+    new.standing := case when new.do_not_order then 'do_not_order' when old.standing = 'do_not_order' then 'ok' else old.standing end;
+  end if;
+  new.do_not_order := (new.standing = 'do_not_order');
+  if new.standing = 'ok' then new.standing_tags := '{}'; end if;
+  return new;
+end;
+$$;
+drop trigger if exists vendors_standing_sync on public.vendors;
+create trigger vendors_standing_sync before insert or update on public.vendors for each row execute function public.vendor_standing_sync();
+
+-- Why, for the vendors already flagged.
+update public.vendors set standing_tags = '{damaged_goods}' where standing <> 'ok' and standing_tags = '{}' and name ilike 'PUKA CREATIONS%';
+update public.vendors set standing_tags = '{unreliable_delivery,shipping_fees}' where standing <> 'ok' and standing_tags = '{}' and name ilike 'AMERICAN DREAM HOME GOODS%';
+update public.vendors set standing_tags = '{out_of_business}' where standing <> 'ok' and standing_tags = '{}' and lower(coalesce(do_not_order_reason, '')) like '%out of biz%';
+update public.vendors set standing_tags = '{other}' where standing <> 'ok' and standing_tags = '{}';
+
+-- Scorecards carry the standing so the stars can say why.
+drop function if exists public.vendor_scorecards(uuid, uuid);
+create function public.vendor_scorecards(p_org uuid, p_vendor uuid default null)
+returns table (
+  vendor_id uuid, name text, standing text, standing_tags text[], standing_reason text,
+  orders integer, received integer, on_time integer, late integer, avg_days_late numeric,
+  freight_pct numeric, freight_orders integer, free_violations integer, issue_notes integer, accuracy_issues integer,
+  credits_due integer, credits_resolved integer, avg_credit_days numeric,
+  auto_fulfilment integer, auto_accuracy integer, auto_shipping integer, auto_resolution integer,
+  rated_ease integer, rated_communication integer, rated_fulfilment integer, rated_accuracy integer, rated_shipping integer, rated_resolution integer,
+  note_ease text, note_communication text, note_fulfilment text, note_accuracy text, note_shipping text, note_resolution text,
+  overall numeric
+)
+language sql stable
+set search_path = public
+as $$
+with o as (
+  select o.vendor_id,
+    count(*)::integer as orders,
+    count(*) filter (where o.date_received is not null and o.est_ship_date is not null)::integer as received,
+    count(*) filter (where o.date_received is not null and o.est_ship_date is not null and o.date_received <= o.est_ship_date + 7)::integer as on_time,
+    count(*) filter (where o.date_received is not null and o.est_ship_date is not null and o.date_received > o.est_ship_date + 7)::integer as late,
+    round(avg(o.date_received - o.est_ship_date) filter (where o.date_received is not null and o.est_ship_date is not null and o.date_received > o.est_ship_date + 7), 0) as avg_days_late,
+    sum(o.freight_cost) filter (where o.freight_cost is not null and coalesce(o.final_cost, o.est_cost) > 0) as freight_known,
+    sum(coalesce(o.final_cost, o.est_cost)) filter (where o.freight_cost is not null and coalesce(o.final_cost, o.est_cost) > 0) as product_known,
+    count(*) filter (where o.freight_cost is not null and coalesce(o.final_cost, o.est_cost) > 0)::integer as freight_orders,
+    count(*) filter (where o.freight_cost > 0 and (o.free_shipping or v.free_shipping_policy = 'always'
+      or (v.free_shipping_policy = 'sometimes' and v.free_shipping_threshold is not null and coalesce(o.final_cost, o.est_cost) >= v.free_shipping_threshold)))::integer as free_violations,
+    count(*) filter (where concat_ws(' ', o.shipment_notes, o.credit_notes, o.freight_notes, o.notes)
+      ~* '(\mlate\M|delay|backorder|\mb/o\M|cancel|\mlost\M|never (arrived|received|shipped)|refus|no (response|answer)|did ?n.t (respond|reply|ship)|ignored|double.?(bill|charg)|overcharg|dispute)')::integer as issue_notes,
+    count(*) filter (where concat_ws(' ', o.shipment_notes, o.credit_notes, o.notes)
+      ~* '(damag|broken|crush|short(ed|age| ship)|missing|wrong|incorrect|mistake|\merror|double.?ship|wrong (item|qty|quantity|size|color|tags?)|hang ?tags?|(no|missing) tags?)')::integer as accuracy_issues,
+    count(*) filter (where o.credits_due)::integer as credits_due,
+    count(*) filter (where o.credits_due and o.date_credits_received is not null)::integer as credits_resolved,
+    round(avg(o.date_credits_received - coalesce(o.date_received, o.order_date)) filter (where o.credits_due and o.date_credits_received is not null), 0) as avg_credit_days
+  from public.orders o join public.vendors v on v.id = o.vendor_id
+  where o.organization_id = p_org and (p_vendor is null or o.vendor_id = p_vendor)
+  group by o.vendor_id
+), r as (
+  select distinct on (vendor_id, dimension) vendor_id, dimension, score, note
+  from public.vendor_ratings
+  where organization_id = p_org and (p_vendor is null or vendor_id = p_vendor)
+  order by vendor_id, dimension, rated_at desc
+), rp as (
+  select vendor_id,
+    max(score) filter (where dimension = 'ease')::integer as rated_ease,
+    max(score) filter (where dimension = 'communication')::integer as rated_communication,
+    max(score) filter (where dimension = 'fulfilment')::integer as rated_fulfilment,
+    max(score) filter (where dimension = 'accuracy')::integer as rated_accuracy,
+    max(score) filter (where dimension = 'shipping')::integer as rated_shipping,
+    max(score) filter (where dimension = 'resolution')::integer as rated_resolution,
+    max(note) filter (where dimension = 'ease') as note_ease,
+    max(note) filter (where dimension = 'communication') as note_communication,
+    max(note) filter (where dimension = 'fulfilment') as note_fulfilment,
+    max(note) filter (where dimension = 'accuracy') as note_accuracy,
+    max(note) filter (where dimension = 'shipping') as note_shipping,
+    max(note) filter (where dimension = 'resolution') as note_resolution
+  from r group by vendor_id
+), base as (
+  select v.id as vendor_id, v.name, v.standing, v.standing_tags, v.do_not_order_reason as standing_reason,
+    coalesce(o.orders, 0) as orders, coalesce(o.received, 0) as received, coalesce(o.on_time, 0) as on_time, coalesce(o.late, 0) as late, o.avg_days_late,
+    case when coalesce(o.freight_orders, 0) >= 2 and o.product_known > 0 then round(100 * coalesce(o.freight_known, 0) / o.product_known, 1) end as freight_pct,
+    coalesce(o.freight_orders, 0) as freight_orders, coalesce(o.free_violations, 0) as free_violations, coalesce(o.issue_notes, 0) as issue_notes, coalesce(o.accuracy_issues, 0) as accuracy_issues,
+    coalesce(o.credits_due, 0) as credits_due, coalesce(o.credits_resolved, 0) as credits_resolved, o.avg_credit_days,
+    rp.rated_ease, rp.rated_communication, rp.rated_fulfilment, rp.rated_accuracy, rp.rated_shipping, rp.rated_resolution,
+    rp.note_ease, rp.note_communication, rp.note_fulfilment, rp.note_accuracy, rp.note_shipping, rp.note_resolution
+  from public.vendors v
+  left join o on o.vendor_id = v.id
+  left join rp on rp.vendor_id = v.id
+  where v.organization_id = p_org and v.is_active and (p_vendor is null or v.id = p_vendor)
+), scored as (
+  select b.*,
+    case when b.received >= 2 then
+      case when b.on_time::numeric / b.received >= 0.9 then 5 when b.on_time::numeric / b.received >= 0.75 then 4
+           when b.on_time::numeric / b.received >= 0.6 then 3 when b.on_time::numeric / b.received >= 0.4 then 2 else 1 end end as auto_fulfilment,
+    case when b.orders >= 3 then
+      case when b.accuracy_issues = 0 then 5 when b.accuracy_issues::numeric / b.orders <= 0.10 then 4
+           when b.accuracy_issues::numeric / b.orders <= 0.25 then 3 when b.accuracy_issues::numeric / b.orders <= 0.50 then 2 else 1 end end as auto_accuracy,
+    case when b.freight_pct is not null then greatest(1,
+      (case when b.freight_pct <= 5 then 5 when b.freight_pct <= 10 then 4 when b.freight_pct <= 20 then 3 when b.freight_pct <= 35 then 2 else 1 end)
+      - (b.free_violations > 0)::integer - (b.issue_notes >= 3)::integer) end as auto_shipping,
+    case when b.credits_due > 0 then
+      case when b.credits_resolved = b.credits_due and coalesce(b.avg_credit_days, 0) <= 30 then 5
+           when b.credits_resolved = b.credits_due then 4
+           when b.credits_resolved::numeric / b.credits_due >= 0.5 then 3
+           when b.credits_resolved > 0 then 2 else 1 end end as auto_resolution
+  from base b
+)
+select s.vendor_id, s.name, s.standing, s.standing_tags, s.standing_reason, s.orders, s.received, s.on_time, s.late, s.avg_days_late,
+  s.freight_pct, s.freight_orders, s.free_violations, s.issue_notes, s.accuracy_issues,
+  s.credits_due, s.credits_resolved, s.avg_credit_days,
+  s.auto_fulfilment, s.auto_accuracy, s.auto_shipping, s.auto_resolution,
+  s.rated_ease, s.rated_communication, s.rated_fulfilment, s.rated_accuracy, s.rated_shipping, s.rated_resolution,
+  s.note_ease, s.note_communication, s.note_fulfilment, s.note_accuracy, s.note_shipping, s.note_resolution,
+  (select round(avg(x), 1) from unnest(array[
+      s.rated_ease::numeric, s.rated_communication::numeric,
+      coalesce(s.rated_fulfilment, s.auto_fulfilment)::numeric,
+      coalesce(s.rated_accuracy, s.auto_accuracy)::numeric,
+      coalesce(s.rated_shipping, s.auto_shipping)::numeric,
+      coalesce(s.rated_resolution, s.auto_resolution)::numeric]) as x) as overall
+from scored s
+order by s.name
+$$;
+comment on function public.vendor_scorecards(uuid, uuid) is 'Vendor scorecards: standing and why, order-history signals, automatic scores (fulfilment, accuracy, shipping, resolution), latest hand ratings, overall. Hand rating wins.';
+grant execute on function public.vendor_scorecards(uuid, uuid) to authenticated, service_role;
