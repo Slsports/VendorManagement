@@ -11,6 +11,7 @@ import { Button, Input, Select } from '@/components/ui'
 import { EmailSenderReview } from '@/components/mail/EmailSenderReview'
 import { VendorAssignmentActions } from '@/components/vendors/VendorAssignmentActions'
 import { DeliveryReceiptReview } from '@/components/freight/DeliveryReceiptReview'
+import { ArtApprovalReview } from '@/components/mail/ArtApprovalReview'
 import { MailReplyReview } from '@/components/mail/MailReplyReview'
 import { FreightPaymentReview } from '@/components/freight/FreightPaymentReview'
 
@@ -49,6 +50,7 @@ const ROUTE_OPTIONS: { value: RouteChoice; label: string }[] = [
  *  - vendor_assignment (who orders from it): keep the proposed person or pick another.
  *  - delivery_receipt (a carrier receipt Claude could not match): pick the vendor that shipped it.
  *  - mail_reply (Claude not sure an email needs an answer): Needs an answer / No answer needed.
+ *  - art_approval (Claude not sure a vendor waits on us to approve artwork): Yes / Not artwork.
  *  - freight_payment (a payment Claude could not match to one bill): pick the bill it paid.
  *  - vendor_marker and anything else: Done / Dismiss.
  * Any card about one vendor can also delete it as "not a vendor" (never one with orders).
@@ -99,6 +101,18 @@ export function ReviewItemCard({ item, vendor, other, canEdit, onDone, aside }: 
           {aside ? <div className="shrink-0">{aside}</div> : null}
         </div>
         <FreightPaymentReview item={item} canEdit={canEdit} onDone={() => onDone()} />
+      </div>
+    )
+  }
+
+  if (item.kind === 'art_approval') {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <p className="font-medium text-amber-900">{item.title}</p>
+          {aside ? <div className="shrink-0">{aside}</div> : null}
+        </div>
+        <ArtApprovalReview item={item} canEdit={canEdit} onDone={() => onDone()} />
       </div>
     )
   }

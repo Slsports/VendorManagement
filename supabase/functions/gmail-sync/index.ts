@@ -7,7 +7,7 @@ import { Gmail, GmailError, googleAccessToken } from '../_shared/gmail.ts'
 import { clueText, htmlBody, isBulk, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
 import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type VendorIndex } from '../_shared/mailMatch.ts'
 import { extractLinks, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
-import { aiEnabled, readEmailVendors, readPaidNote, readReplyNeeded, readSender, sortEmails, type ReplyEmail, type UnsureEmail } from '../_shared/ai.ts'
+import { aiEnabled, readArtwork, readEmailVendors, readPaidNote, readReplyNeeded, readSender, sortEmails, type ArtEmail, type ReplyEmail, type UnsureEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
@@ -492,6 +492,20 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
           if (ids.length === 1) shipper = ids[0]!
         }
         await check(db.rpc('mail_apply_reply', { p_email: e.email_id, p_reply: r.reply, p_note: r.note, p_ship: r.ship_status, p_shipper: shipper }))
+      }
+    }
+
+    // Artwork approvals (Dana, Oct 10): vendor mail waiting on us to approve a proof or design goes to the art
+    // approver's dashboard card; our own "approved" closes it. Last 60 days, a batch a run.
+    const { data: art } = await db.rpc('mail_art_queue', { p_org: org, p_limit: 20 })
+    const artList = (art ?? []) as ArtEmail[]
+    for (let i = 0; i < artList.length && Date.now() - started < TIME_BUDGET_MS; i += 10) {
+      const batch = artList.slice(i, i + 10)
+      const readings = await readArtwork(db, org, batch)
+      for (const e of batch) {
+        const r = readings.get(e.email_id)
+        const art = e.direction === 'out' ? (r?.art === 'approved' || r?.art === 'changes' ? r.art : 'none') : (r?.art === 'yes' || r?.art === 'unsure' ? r.art : 'no')
+        await check(db.rpc('mail_apply_art', { p_email: e.email_id, p_art: art, p_note: r?.note ?? '' }))
       }
     }
 

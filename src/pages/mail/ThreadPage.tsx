@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useHasInAppHistory } from '@/hooks/useHasInAppHistory'
 import toast from 'react-hot-toast'
-import { CheckCircle2, ClipboardList, ExternalLink, Trash2, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
+import { Check, CheckCircle2, ClipboardList, Palette, ExternalLink, Trash2, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { assignEmailThread, fetchEmailHtml, getMailbox, getThread, fetchAttachment, setEmailThreadStatus, setEmailVendor, setThreadView, setWorkingOrder, trashThreads, type ThreadDetail } from '@/services/mail'
+import { assignEmailThread, fetchEmailHtml, getMailbox, getThread, fetchAttachment, setArtStatus, setEmailThreadStatus, setEmailVendor, setThreadView, setWorkingOrder, trashThreads, type ThreadDetail } from '@/services/mail'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { MakeFreightBillDialog } from '@/components/freight/MakeFreightBillDialog'
 import { SaveToDocumentsDialog } from '@/components/vendors/SaveToDocumentsDialog'
@@ -124,6 +124,7 @@ export default function ThreadPage() {
           </Button>
           <ThreadVendorPicker current={t.vendor} prefill={newVendorPrefill({ ...party, isDomain: false })} onPick={(v) => act(v ? `Filed to ${v.name}` : 'Unfiled', () => setEmailVendor(emails[0]!.id, v?.id ?? null))} />
           {t.vendor ? <Button size="sm" variant="ghost" onClick={() => setAddingOrder(true)}>Add order from this email</Button> : null}
+          {!t.art_status ? <Button size="sm" variant="ghost" onClick={() => void act('On the Artwork approvals card', () => setArtStatus(t.id, 'waiting'))} leftIcon={<Palette className="size-4" aria-hidden="true" />}>Artwork to approve</Button> : null}
           <SnoozeButton kind="thread" ids={[t.id]} until={myUntil} onDone={async () => {
             await snoozeQ.refetch()
             if (hasHistory) navigate(-1)
@@ -136,6 +137,22 @@ export default function ThreadPage() {
         </section>
       ) : null}
 
+      {/* Artwork approvals (Dana, Oct 10) */}
+      {t.art_status ? (
+        <div className={`mb-4 flex flex-wrap items-center gap-2 rounded-2xl border px-4 py-3 text-sm ${t.art_status === 'approved' ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900'}`}>
+          <Palette className="size-4" aria-hidden="true" />
+          <span className="font-medium">{t.art_status === 'approved' ? 'Artwork approved' : t.art_status === 'needs_changes' ? 'Changes asked: waiting on a new proof' : `Artwork waiting on your approval${t.art_since ? ` since ${new Date(t.art_since).toLocaleDateString()}` : ''}`}</span>
+          {t.art_note ? <span className="text-xs opacity-80">{t.art_note}</span> : null}
+          {canEdit ? (
+            <span className="ml-auto flex flex-wrap gap-2">
+              {t.art_status !== 'approved' ? <Button size="sm" onClick={() => void act('Artwork approved', () => setArtStatus(t.id, 'approved'))} leftIcon={<Check className="size-4" aria-hidden="true" />}>Approved</Button> : null}
+              {t.art_status === 'waiting' ? <Button size="sm" variant="secondary" onClick={() => void act('Marked: needs changes', () => setArtStatus(t.id, 'needs_changes'))}>Needs changes</Button> : null}
+              {t.art_status !== 'waiting' ? <Button size="sm" variant="ghost" onClick={() => void act('Back on the Artwork approvals card', () => setArtStatus(t.id, 'waiting'))}>Waiting on approval again</Button> : null}
+              <Button size="sm" variant="ghost" onClick={() => void act('Not an artwork approval', () => setArtStatus(t.id, 'none'))}>Not artwork</Button>
+            </span>
+          ) : null}
+        </div>
+      ) : null}
       <ThreadVendorTags threadId={t.id} emailId={(emails.find((e) => e.direction === 'in') ?? emails[0]!).id} filedVendorId={t.vendor?.id ?? null} canEdit={canEdit} />
       {emails.some((e) => e.freight_pct !== null && e.freight_pct !== undefined) ? (
         <p className="mb-4 rounded-xl bg-amber-50 px-4 py-2 text-sm text-amber-900">Freight rate quoted here: <span className="font-semibold">{emails.find((e) => e.freight_pct !== null && e.freight_pct !== undefined)!.freight_pct}%</span>. Check-in offers it for each vendor on this shipment.</p>

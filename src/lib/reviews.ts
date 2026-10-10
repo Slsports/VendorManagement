@@ -8,6 +8,7 @@ export const REVIEW_KIND_LABELS: Record<string, { title: string; help: string }>
   email_sender: { title: 'Who is this mail from?', help: 'One answer per sender files all its mail, now and later. Rep groups and services that send for many vendors are filed email by email, by the vendor each one names.' },
   vendor_assignment: { title: 'Who orders from these vendors?', help: 'Trevor ran their sales reports before the show, so they went to Jarrett. Keep Jarrett, or pick who orders from the vendor.' },
   vendor_marker: { title: 'Lightspeed markers', help: 'Names that carried an asterisk in Lightspeed.' },
+  art_approval: { title: 'Artwork to approve?', help: 'Claude was not sure whether the vendor is waiting on us to approve artwork, a proof or a design. Yes puts it on the Artwork approvals card.' },
   category_change: { title: 'Category clean-up', help: 'Proposed Lightspeed category changes, by batch. Nothing changes in Lightspeed until a batch is approved.' },
 }
 

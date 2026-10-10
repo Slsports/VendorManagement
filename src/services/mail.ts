@@ -218,12 +218,12 @@ export async function countMailForMe(organizationId: string, me: string, seesFre
 }
 
 export interface ThreadDetail {
-  thread: ThreadRow & { working_by?: string | null; working_done_at?: string | null; carrier_id?: string | null }
+  thread: ThreadRow & { working_by?: string | null; working_done_at?: string | null; carrier_id?: string | null; art_status?: 'waiting' | 'needs_changes' | 'approved' | null; art_since?: string | null; art_note?: string | null }
   emails: (Email & { attachments: EmailAttachment[] })[]
 }
 
 export async function getThread(threadId: string): Promise<ThreadDetail | null> {
-  const { data: t, error } = await supabase.from('email_threads').select(`${THREAD_SELECT}, working_by, working_done_at, carrier_id`).eq('id', threadId).maybeSingle()
+  const { data: t, error } = await supabase.from('email_threads').select(`${THREAD_SELECT}, working_by, working_done_at, carrier_id, art_status, art_since, art_note`).eq('id', threadId).maybeSingle()
   if (error) throw error
   if (!t) return null
   const { data: emails, error: e2 } = await supabase.from('emails').select('*, attachments:email_attachments(*)').eq('thread_id', threadId).order('received_at', { ascending: true })
@@ -445,4 +445,24 @@ export async function trashThreads(threadIds: string[], restore = false): Promis
   const { data, error } = await supabase.functions.invoke('gmail-read', { body: { action: restore ? 'untrash' : 'trash', thread_ids: threadIds } })
   if (error) throw await functionError(error)
   return (data as { count: number }).count
+}
+
+// ---- artwork approvals (Dana, Oct 10) ----
+export type ArtStatus = 'waiting' | 'needs_changes' | 'approved'
+export interface ArtRow { id: string; subject: string | null; art_status: ArtStatus; art_since: string | null; art_note: string | null; vendor: { id: string; name: string } | null; owner: { full_name: string } | null }
+
+/** Conversations with artwork waiting on our approval (or waiting on a new proof after changes), oldest first. */
+export async function listArtApprovals(organizationId: string): Promise<ArtRow[]> {
+  const { data, error } = await supabase.from('email_threads')
+    .select('id, subject, art_status, art_since, art_note, vendor:vendors(id, name), owner:profiles!email_threads_owner_id_fkey(full_name)')
+    .eq('organization_id', organizationId).is('deleted_at', null).in('art_status', ['waiting', 'needs_changes'])
+    .order('art_since', { ascending: true, nullsFirst: false }).limit(50)
+  if (error) throw error
+  return (data ?? []) as unknown as ArtRow[]
+}
+
+/** Approved / Needs changes / Artwork to approve, or 'none' when it is not an artwork approval. */
+export async function setArtStatus(threadId: string, status: ArtStatus | 'none'): Promise<void> {
+  const { error } = await supabase.rpc('set_art_status', { p_thread: threadId, p_status: status })
+  if (error) throw error
 }

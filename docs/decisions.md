@@ -1505,3 +1505,11 @@ Dana listed these while working the Review queue, then said go.
   (the [ID] tag on the line). When on, the name ends with the Vendor ID in brackets:
   `MENS HOODIE NAVY [AB1234]` (never added twice). The Lightspeed clean-up's rename proposals follow the same
   setting; nothing changes in LS without an approved batch.
+- Dana, Oct 10: **Artwork approvals.** Claude reads each incoming vendor email (not ads, carriers or "not a
+  vendor" senders): is the vendor waiting on us to approve artwork, a proof, a mockup or a design before the
+  order goes ahead? Yes → the conversation goes to the art approver (Dana: `organizations.settings.
+  art_approver_id`, else the admin), even when someone else handles that vendor, and onto the dashboard card
+  "Artwork approvals" (vendor, subject, days waiting, red after 2 days, link to the email). Unsure → an
+  "Artwork to approve?" review card for her. On the conversation: Approved / Needs changes (stays on the card
+  until the next proof) / Not artwork, and "Artwork to approve" to add one by hand. Our own reply saying it is
+  approved closes it; asking for changes marks Needs changes. The first run reads the last 60 days of mail.
