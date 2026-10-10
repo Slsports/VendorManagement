@@ -2,7 +2,7 @@ import { useState, type DragEvent } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Download, ExternalLink, FileText, Folder, FolderInput, FolderOpen, Link2, Mail, Trash2, Upload } from 'lucide-react'
-import { addVendorLink, deleteVendorLink, downloadVendorFile, listVendorLinks, moveVendorDocument, uploadVendorFile, zipVendorDocuments, type VendorLinkRow } from '@/services/lines'
+import { addVendorLink, deleteVendorLink, downloadVendorFile, listVendorLinks, uploadVendorFile, zipVendorDocuments, type VendorLinkRow } from '@/services/lines'
 import { kickOrderChecks } from '@/services/orderChecks'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { saveBlob } from '@/lib/viewer'
@@ -13,6 +13,7 @@ import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
 import { Badge, Button, FormField, Input, Select } from '@/components/ui'
 import { Modal } from '@/components/shared/Modal'
+import { MoveDocumentDialog } from '@/components/vendors/MoveDocumentDialog'
 
 const MAX_MB = 25
 
@@ -123,13 +124,15 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
           {l.email ? <> · <Link to={`${ROUTES.mail}/${l.email.thread_id}`} className="inline-flex items-center gap-0.5 text-brand hover:underline"><Mail className="inline size-3" aria-hidden="true" />from an email</Link></> : null}
         </p>
         {l.notes && !l.email ? <p className="mt-0.5 text-xs text-stone-600">{l.notes}</p> : null}
-      </div>
-      <div className="flex shrink-0">
-        {l.storage_path ? <button type="button" onClick={() => void download(l)} className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700" aria-label={`Download ${l.label}`} title="Download"><Download className="size-4" aria-hidden="true" /></button> : null}
-        {canEdit ? (<>
-          <button type="button" onClick={() => setMoving(l)} className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700" aria-label={`Move ${l.label}`} title="Move to another folder or year"><FolderInput className="size-4" aria-hidden="true" /></button>
-          <button type="button" onClick={() => void remove(l)} className="rounded p-1 text-stone-400 hover:bg-stone-100 hover:text-red-600" aria-label={`Remove ${l.label}`}><Trash2 className="size-4" aria-hidden="true" /></button>
-        </>) : null}
+        {/* the actions right under the name, in words, at any width (Dana, Oct 10) */}
+        <div className="mt-1 flex flex-wrap items-center gap-x-1 text-xs">
+          <button type="button" onClick={() => open(l)} className="rounded px-1.5 py-0.5 font-medium text-brand hover:bg-stone-100">Open</button>
+          {l.storage_path ? <button type="button" onClick={() => void download(l)} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900"><Download className="size-3.5" aria-hidden="true" />Download</button> : null}
+          {canEdit ? (<>
+            <button type="button" onClick={() => setMoving(l)} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900" title="Move to another folder or year"><FolderInput className="size-3.5" aria-hidden="true" />Move</button>
+            <button type="button" onClick={() => void remove(l)} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-red-50 hover:text-red-700"><Trash2 className="size-3.5" aria-hidden="true" />Remove</button>
+          </>) : null}
+        </div>
       </div>
     </li>
   )
@@ -276,35 +279,3 @@ function AddDocumentDialog({ initial, onClose, onSave }: { initial: { mode: 'fil
   )
 }
 
-function MoveDocumentDialog({ link, onClose, onMoved }: { link: VendorLinkRow; onClose: () => void; onMoved: (f: DocFolder) => void | Promise<void> }) {
-  const [folder, setFolder] = useState<DocFolder>(folderOf(link.kind))
-  const [year, setYear] = useState<number>(() => link.doc_year ?? thisYear())
-  const [busy, setBusy] = useState(false)
-  const years = [...new Set([...yearChoices(), year])].sort((x, y) => y - x)
-  return (
-    <Modal title={`Move "${link.label}"`} submitLabel="Move" busy={busy} onClose={onClose} onSubmit={async () => {
-      setBusy(true)
-      try {
-        await moveVendorDocument(link.id, kindFor(folder, link.kind), year)
-        toast.success(`Moved to ${folderLabel(folder)} ${year}`)
-        await onMoved(folder)
-      } catch (err) {
-        toast.error(errorMessage(err))
-        setBusy(false)
-      }
-    }}>
-      <div className="grid grid-cols-2 gap-3">
-        <FormField label="Folder" htmlFor="mv-folder">
-          <Select id="mv-folder" value={folder} onChange={(e) => setFolder(e.target.value as DocFolder)}>
-            {DOC_FOLDERS.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
-          </Select>
-        </FormField>
-        <FormField label="Year" htmlFor="mv-year">
-          <Select id="mv-year" value={year} onChange={(e) => setYear(Number(e.target.value))}>
-            {years.map((y) => <option key={y} value={y}>{y}</option>)}
-          </Select>
-        </FormField>
-      </div>
-    </Modal>
-  )
-}

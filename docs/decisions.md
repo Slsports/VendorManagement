@@ -1576,3 +1576,10 @@ Real pictures in a vendor's email (60 KB+, not logos, icons or signature picture
 Images › year; the same picture sent again is saved once. Artwork proofs stay in the email: artwork
 conversations are skipped, and a new **Approved proofs** folder holds the final proof, saved by hand once it is
 approved ("we will click to save in that folder"). Migration 0081.
+
+## Oct 10 — Moving files; file buttons in words
+Dana: "I need to be able to move a file to a different folder if Claude puts it in the wrong one" and the
+icons were "too far over". Each file in a vendor's Documents now has **Open · Download · Move · Remove** right
+under its name, at any screen width. In an email, the green "Saved to Images › 2026" tag opens the same Move
+box. Moving a file into Confirmations or Invoices starts Claude's order check; moving it out sets its unfinished
+check aside. Migration 0082.

@@ -9,6 +9,7 @@ import { assignEmailThread, fetchEmailHtml, getMailbox, getThread, fetchAttachme
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { MakeFreightBillDialog } from '@/components/freight/MakeFreightBillDialog'
 import { SaveToDocumentsDialog } from '@/components/vendors/SaveToDocumentsDialog'
+import { MoveDocumentDialog } from '@/components/vendors/MoveDocumentDialog'
 import { listPeople } from '@/services/reviews'
 import { followUpDraft, forwardDraft, gmailThreadUrl, isInlineImage, isOurAddress, mailWithUrl, newVendorPrefill, replyDraft, splitQuoted, threadState, waited } from '@/lib/mail'
 import { ROUTES } from '@/lib/constants'
@@ -184,6 +185,7 @@ function Message({ email: e, startOpen, vendor, carrierId, onCompose }: { email:
   const [loadingHtml, setLoadingHtml] = useState(false)
   const [saving, setSaving] = useState<{ id: string; file_name: string } | null>(null)
   const [saved, setSaved] = useState<Record<string, string>>({})
+  const [movingFile, setMovingFile] = useState<Attachment | null>(null)
   const [showPictures, setShowPictures] = useState(false)
   const [billFrom, setBillFrom] = useState<{ id: string; file_name: string } | null>(null)
   const [showQuoted, setShowQuoted] = useState(false)
@@ -204,7 +206,9 @@ function Message({ email: e, startOpen, vendor, carrierId, onCompose }: { email:
           <button type="button" onClick={() => openFile(a)} disabled={!a.gmail_attachment_id} className="inline-flex max-w-56 items-center gap-1 px-2 py-1 hover:text-brand disabled:cursor-default disabled:hover:text-stone-700" title={a.gmail_attachment_id ? 'Open' : 'Not available from Gmail'}>
             <Paperclip className="size-3.5 shrink-0" aria-hidden="true" /><span className="truncate">{a.file_name}</span>{a.size ? <span className="shrink-0 text-stone-400"> · {Math.max(1, Math.round(a.size / 1024))} KB</span> : null}
           </button>
-          {where ? <span className="border-l border-stone-200 px-2 py-1 text-emerald-700">Saved to {where}</span>
+          {where ? (canEdit && a.vendor_link_id && a.link
+            ? <button type="button" onClick={() => setMovingFile(a)} className="border-l border-stone-200 px-2 py-1 text-emerald-700 hover:text-brand hover:underline" title="Wrong folder? Move it">Saved to {where}</button>
+            : <span className="border-l border-stone-200 px-2 py-1 text-emerald-700">Saved to {where}</span>)
             : canEdit && vendor && a.gmail_attachment_id ? (
               <button type="button" onClick={() => setSaving(a)} className="inline-flex items-center gap-1 border-l border-stone-200 px-2 py-1 text-stone-500 hover:text-brand" title={`Save to ${vendor.name}'s documents`}>
                 <FolderInput className="size-3.5" aria-hidden="true" />Save to documents
@@ -281,6 +285,10 @@ function Message({ email: e, startOpen, vendor, carrierId, onCompose }: { email:
               </>
             )}
           {viewer}
+          {movingFile?.vendor_link_id && movingFile.link ? (
+            <MoveDocumentDialog link={{ id: movingFile.vendor_link_id, label: movingFile.file_name, kind: movingFile.link.kind, doc_year: movingFile.link.doc_year }} onClose={() => setMovingFile(null)}
+              onMoved={(f, year) => { setSaved((x) => ({ ...x, [movingFile.id]: `${folderLabel(f)} › ${year}` })); setMovingFile(null) }} />
+          ) : null}
           {billFrom ? <MakeFreightBillDialog attachment={billFrom} carrierId={carrierId} onClose={() => setBillFrom(null)} /> : null}
           {saving && vendor ? (
             <SaveToDocumentsDialog attachment={saving} vendor={vendor} subject={e.subject} receivedAt={e.received_at} onClose={() => setSaving(null)} onSaved={(where) => { setSaved((x) => ({ ...x, [saving.id]: where })); setSaving(null) }} />
