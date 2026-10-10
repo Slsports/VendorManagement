@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { Email, EmailAttachment, EmailSenderKind, EmailThreadStatus, MailAccount, MailView } from '@/types'
+import type { Email, EmailAttachment, EmailSenderKind, EmailThreadStatus, MailAccount, MailView, VendorLinkKind } from '@/types'
 import { TEST_LOGIN_PATTERN } from '@/services/reviews'
 import type { Database } from '@/types/database'
 
@@ -220,14 +220,14 @@ export async function countMailForMe(organizationId: string, me: string, seesFre
 
 export interface ThreadDetail {
   thread: ThreadRow & { working_by?: string | null; working_done_at?: string | null; carrier_id?: string | null; art_status?: 'waiting' | 'needs_changes' | 'changes_sent' | 'approved' | null; art_since?: string | null; art_note?: string | null }
-  emails: (Email & { attachments: EmailAttachment[] })[]
+  emails: (Email & { attachments: (EmailAttachment & { link?: { kind: VendorLinkKind; doc_year: number | null } | null })[] })[]
 }
 
 export async function getThread(threadId: string): Promise<ThreadDetail | null> {
   const { data: t, error } = await supabase.from('email_threads').select(`${THREAD_SELECT}, working_by, working_done_at, carrier_id, art_status, art_since, art_note`).eq('id', threadId).maybeSingle()
   if (error) throw error
   if (!t) return null
-  const { data: emails, error: e2 } = await supabase.from('emails').select('*, attachments:email_attachments(*)').eq('thread_id', threadId).order('received_at', { ascending: true })
+  const { data: emails, error: e2 } = await supabase.from('emails').select('*, attachments:email_attachments(*, link:vendor_links!email_attachments_vendor_link_id_fkey(kind, doc_year))').eq('thread_id', threadId).order('received_at', { ascending: true })
   if (e2) throw e2
   const list = (emails ?? []) as unknown as ThreadDetail['emails']
   const lastE = list[list.length - 1]

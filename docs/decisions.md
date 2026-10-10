@@ -1560,3 +1560,12 @@ shows the four with a tick when on file.
   anyone else. Dashboard card "Confirmations & invoices to review". Nothing is sent until that person edits and
   presses Send; marking a confirmation looked at sets the order to Confirmed.
 Migrations 0078–0079; Edge Function order-check runs every minute.
+
+## Oct 10 — "Hi Jarrett" routing, picture previews, Images folder, "Saved to" tag
+- An incoming email whose greeting names one of us ("Hi Jarrett", "Dear Dana") goes to that person's mail, even
+  when the vendor is normally someone else's. Claude reads the greeting with the reply check; "Hi all" or no
+  name keeps the usual rule. Migration 0080.
+- Picture attachments show a small preview in the email; click it to open full size.
+- Vendor documents get an **Images** folder (photos, artwork, logos); pictures saved from email go there unless
+  their name says otherwise.
+- A file already filed shows "Saved to Confirmations › 2026" (its folder and year) instead of Save to documents.

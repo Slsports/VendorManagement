@@ -77,6 +77,7 @@ export const LINK_KIND_LABELS: Record<import('@/types').VendorLinkKind, string> 
   payment: 'Payment',
   freight_bill: 'Freight bill',
   delivery_receipt: 'Delivery receipt',
+  image: 'Image',
 }
 
 export const ORDER_SEASON_LABELS: Record<import('@/types').OrderSeason, string> = { summer: 'Summer', winter: 'Winter' }

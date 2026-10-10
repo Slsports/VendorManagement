@@ -25,7 +25,8 @@ describe('folder for an email attachment', () => {
     expect(guessFolder('INV_802289.pdf')).toBe('invoices')
     expect(guessFolder('Fall 2026 Price List.pdf')).toBe('price_lists')
     expect(guessFolder('scan001.pdf', 'Packing slip for PO 60851')).toBe('shipping')
-    expect(guessFolder('photo.jpg', 'Hello')).toBe('other')
+    expect(guessFolder('photo.jpg', 'Hello')).toBe('images')
+    expect(guessFolder('notes.txt', 'Hello')).toBe('other')
   })
 })
 

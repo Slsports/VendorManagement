@@ -12,6 +12,7 @@ import { SaveToDocumentsDialog } from '@/components/vendors/SaveToDocumentsDialo
 import { listPeople } from '@/services/reviews'
 import { followUpDraft, forwardDraft, gmailThreadUrl, isInlineImage, isOurAddress, mailWithUrl, newVendorPrefill, replyDraft, splitQuoted, threadState, waited } from '@/lib/mail'
 import { ROUTES } from '@/lib/constants'
+import { folderLabel, folderOf } from '@/lib/documents'
 import { cn, errorMessage } from '@/lib/utils'
 import { BackLink } from '@/components/shared/BackLink'
 import { ThreadStatusBadge } from '@/components/mail/ThreadStatusBadge'
@@ -181,7 +182,7 @@ function Message({ email: e, startOpen, vendor, carrierId, onCompose }: { email:
   const [html, setHtml] = useState<string | null>(null)
   const [loadingHtml, setLoadingHtml] = useState(false)
   const [saving, setSaving] = useState<{ id: string; file_name: string } | null>(null)
-  const [saved, setSaved] = useState<string[]>([])
+  const [saved, setSaved] = useState<Record<string, string>>({})
   const [showPictures, setShowPictures] = useState(false)
   const [billFrom, setBillFrom] = useState<{ id: string; file_name: string } | null>(null)
   const [showQuoted, setShowQuoted] = useState(false)
@@ -189,21 +190,32 @@ function Message({ email: e, startOpen, vendor, carrierId, onCompose }: { email:
   const { role } = useAuth()
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
 
-  const chip = (a: ThreadDetail['emails'][number]['attachments'][number]) => (
-    <span key={a.id} className="inline-flex items-center gap-1 rounded-lg bg-stone-100 text-xs text-stone-700">
-      <button type="button" onClick={() => view({ name: a.file_name, mime: a.mime_type, load: () => fetchAttachment(a.id) })} disabled={!a.gmail_attachment_id} className="inline-flex items-center gap-1 px-2 py-1 hover:text-brand disabled:cursor-default disabled:hover:text-stone-700" title={a.gmail_attachment_id ? 'Open' : 'Not available from Gmail'}>
-        <Paperclip className="size-3.5" aria-hidden="true" />{a.file_name}{a.size ? <span className="text-stone-400"> · {Math.max(1, Math.round(a.size / 1024))} KB</span> : null}
-      </button>
-      {canEdit && vendor && a.gmail_attachment_id && !a.vendor_link_id && !saved.includes(a.id) ? (
-        <button type="button" onClick={() => setSaving(a)} className="inline-flex items-center gap-1 border-l border-stone-200 px-2 py-1 text-stone-500 hover:text-brand" title={`Save to ${vendor.name}'s documents`}>
-          <FolderInput className="size-3.5" aria-hidden="true" />Save to documents
-        </button>
-      ) : a.vendor_link_id || saved.includes(a.id) ? <span className="border-l border-stone-200 px-2 py-1 text-emerald-700">saved</span> : null}
-      {canEdit && a.gmail_attachment_id && /pdf/i.test(`${a.mime_type ?? ''} ${a.file_name}`) ? (
-        <button type="button" onClick={() => setBillFrom(a)} className="border-l border-stone-200 px-2 py-1 text-stone-500 hover:text-brand" title="Make a freight bill from this PDF">Freight bill</button>
-      ) : null}
-    </span>
-  )
+  // Where a file was saved (Dana, Oct 10): "Saved to Confirmations › 2026" instead of a Save button.
+  const savedTo = (a: Attachment) => saved[a.id] ?? (a.link ? `${folderLabel(folderOf(a.link.kind))}${a.link.doc_year ? ` › ${a.link.doc_year}` : ''}` : a.vendor_link_id ? 'documents' : null)
+  const openFile = (a: Attachment) => view({ name: a.file_name, mime: a.mime_type, load: () => fetchAttachment(a.id) })
+  const chip = (a: Attachment) => {
+    const where = savedTo(a)
+    const picture = isPicture(a)
+    return (
+      <span key={a.id} className={cn('inline-flex rounded-lg bg-stone-100 text-xs text-stone-700', picture ? 'flex-col items-stretch overflow-hidden' : 'items-center gap-1')}>
+        {picture && a.gmail_attachment_id ? <AttachmentThumb attachment={a} onOpen={() => openFile(a)} /> : null}
+        <span className="inline-flex flex-wrap items-center gap-1">
+          <button type="button" onClick={() => openFile(a)} disabled={!a.gmail_attachment_id} className="inline-flex max-w-56 items-center gap-1 px-2 py-1 hover:text-brand disabled:cursor-default disabled:hover:text-stone-700" title={a.gmail_attachment_id ? 'Open' : 'Not available from Gmail'}>
+            <Paperclip className="size-3.5 shrink-0" aria-hidden="true" /><span className="truncate">{a.file_name}</span>{a.size ? <span className="shrink-0 text-stone-400"> · {Math.max(1, Math.round(a.size / 1024))} KB</span> : null}
+          </button>
+          {where ? <span className="border-l border-stone-200 px-2 py-1 text-emerald-700">Saved to {where}</span>
+            : canEdit && vendor && a.gmail_attachment_id ? (
+              <button type="button" onClick={() => setSaving(a)} className="inline-flex items-center gap-1 border-l border-stone-200 px-2 py-1 text-stone-500 hover:text-brand" title={`Save to ${vendor.name}'s documents`}>
+                <FolderInput className="size-3.5" aria-hidden="true" />Save to documents
+              </button>
+            ) : null}
+          {canEdit && a.gmail_attachment_id && /pdf/i.test(`${a.mime_type ?? ''} ${a.file_name}`) ? (
+            <button type="button" onClick={() => setBillFrom(a)} className="border-l border-stone-200 px-2 py-1 text-stone-500 hover:text-brand" title="Make a freight bill from this PDF">Freight bill</button>
+          ) : null}
+        </span>
+      </span>
+    )
+  }
   const files = e.attachments.filter((a) => !isInlineImage(a))
   const pictures = e.attachments.filter((a) => isInlineImage(a))
   const body = splitQuoted(e.body_text || e.snippet || '')
@@ -270,7 +282,7 @@ function Message({ email: e, startOpen, vendor, carrierId, onCompose }: { email:
           {viewer}
           {billFrom ? <MakeFreightBillDialog attachment={billFrom} carrierId={carrierId} onClose={() => setBillFrom(null)} /> : null}
           {saving && vendor ? (
-            <SaveToDocumentsDialog attachment={saving} vendor={vendor} subject={e.subject} receivedAt={e.received_at} onClose={() => setSaving(null)} onSaved={() => { setSaved((x) => [...x, saving.id]); setSaving(null) }} />
+            <SaveToDocumentsDialog attachment={saving} vendor={vendor} subject={e.subject} receivedAt={e.received_at} onClose={() => setSaving(null)} onSaved={(where) => { setSaved((x) => ({ ...x, [saving.id]: where })); setSaving(null) }} />
           ) : null}
           <div className="mt-3 flex flex-wrap gap-2">
             {onCompose ? (
@@ -305,4 +317,29 @@ function AddressLinks({ list }: { list: string[] }) {
   return <>{list.map((a, i) => (
     <span key={a}>{i ? ', ' : ''}{isOurAddress(a) ? a : <Link to={mailWithUrl(ROUTES.mailWith, a)} title={`All mail with ${a}`} className="hover:text-brand hover:underline">{a}</Link>}</span>
   ))}</>
+}
+
+type Attachment = ThreadDetail['emails'][number]['attachments'][number]
+const isPicture = (a: { file_name: string; mime_type: string | null }) => /^image\/(png|jpe?g|gif|webp|bmp)$/i.test(a.mime_type ?? '') || /\.(png|jpe?g|gif|webp|bmp)$/i.test(a.file_name)
+
+/** A small preview of a picture attachment (Dana, Oct 10: "so I don't have to open it before saving"). Loaded when shown. */
+function AttachmentThumb({ attachment, onOpen }: { attachment: Attachment; onOpen: () => void }) {
+  const [src, setSrc] = useState<string | null>(null)
+  const [failed, setFailed] = useState(false)
+  useEffect(() => {
+    let url: string | null = null
+    let live = true
+    fetchAttachment(attachment.id).then((blob) => {
+      if (!live) return
+      url = URL.createObjectURL(blob)
+      setSrc(url)
+    }).catch(() => { if (live) setFailed(true) })
+    return () => { live = false; if (url) URL.revokeObjectURL(url) }
+  }, [attachment.id])
+  if (failed) return null
+  return (
+    <button type="button" onClick={onOpen} className="block h-28 w-44 bg-stone-200" title={`Open ${attachment.file_name}`} aria-label={`Open ${attachment.file_name}`}>
+      {src ? <img src={src} alt={attachment.file_name} className="size-full object-contain" /> : <span className="block size-full animate-pulse" />}
+    </button>
+  )
 }

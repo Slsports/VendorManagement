@@ -531,6 +531,8 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
           if (ids.length === 1) shipper = ids[0]!
         }
         await check(db.rpc('mail_apply_reply', { p_email: e.email_id, p_reply: r.reply, p_note: r.note, p_ship: r.ship_status, p_shipper: shipper }))
+        // "Hi Jarrett" (Dana, Oct 10): the conversation goes to the person the email greets
+        if (r.greets) await check(db.rpc('mail_apply_greeting', { p_email: e.email_id, p_name: r.greets }))
       }
     }
 

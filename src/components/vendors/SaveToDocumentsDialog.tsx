@@ -14,7 +14,7 @@ export function SaveToDocumentsDialog({ attachment, vendor, subject, receivedAt,
   subject: string | null
   receivedAt: string
   onClose: () => void
-  onSaved: () => void
+  onSaved: (where: string) => void
 }) {
   const [folder, setFolder] = useState<DocFolder>(() => guessFolder(attachment.file_name, subject))
   const [year, setYear] = useState(() => new Date(receivedAt).getFullYear())
@@ -29,7 +29,7 @@ export function SaveToDocumentsDialog({ attachment, vendor, subject, receivedAt,
         const checked = folder === 'confirmations' || folder === 'invoices'
         if (checked) kickOrderChecks()
         toast.success(`Saved to ${vendor.name} › ${folderLabel(folder)} › ${year}${checked ? '. Claude is checking it against the order.' : ''}`)
-        onSaved()
+        onSaved(`${folderLabel(folder)} › ${year}`)
       } catch (err) {
         toast.error(errorMessage(err))
         setBusy(false)
