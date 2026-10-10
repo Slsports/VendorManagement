@@ -1528,3 +1528,10 @@ Dana listed these while working the Review queue, then said go.
   something up"), offers, requests for our logo or a vector file, color options and product photos do not
   count; an email with nothing but signature logos cannot be one. Everything flagged before was read again
   under this rule (approved ones kept).
+
+## Oct 10 — Artwork: "Needs changes" means Dana still has something to do
+Dana: on Ace's Ali Hammer proof she clicked Needs changes and it read as waiting on the vendor, but she
+hadn't sent anything yet. Now there are four steps: **Waiting on approval** → **Needs changes** (on her
+Artwork approvals card as "Changes to send", counting days, red after 2) → **Changes sent** (her button, or
+set on its own when our reply asks for changes; listed last in grey, "waiting on a new proof") → a new proof
+from the vendor puts it back to Waiting on approval. Approved closes it. Migration 0076.

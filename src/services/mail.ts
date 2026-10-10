@@ -218,7 +218,7 @@ export async function countMailForMe(organizationId: string, me: string, seesFre
 }
 
 export interface ThreadDetail {
-  thread: ThreadRow & { working_by?: string | null; working_done_at?: string | null; carrier_id?: string | null; art_status?: 'waiting' | 'needs_changes' | 'approved' | null; art_since?: string | null; art_note?: string | null }
+  thread: ThreadRow & { working_by?: string | null; working_done_at?: string | null; carrier_id?: string | null; art_status?: 'waiting' | 'needs_changes' | 'changes_sent' | 'approved' | null; art_since?: string | null; art_note?: string | null }
   emails: (Email & { attachments: EmailAttachment[] })[]
 }
 
@@ -448,14 +448,14 @@ export async function trashThreads(threadIds: string[], restore = false): Promis
 }
 
 // ---- artwork approvals (Dana, Oct 10) ----
-export type ArtStatus = 'waiting' | 'needs_changes' | 'approved'
+export type ArtStatus = 'waiting' | 'needs_changes' | 'changes_sent' | 'approved'
 export interface ArtRow { id: string; subject: string | null; art_status: ArtStatus; art_since: string | null; art_note: string | null; vendor: { id: string; name: string } | null; owner: { full_name: string } | null }
 
 /** Conversations with artwork waiting on our approval (or waiting on a new proof after changes), oldest first. */
 export async function listArtApprovals(organizationId: string): Promise<ArtRow[]> {
   const { data, error } = await supabase.from('email_threads')
     .select('id, subject, art_status, art_since, art_note, vendor:vendors(id, name), owner:profiles!email_threads_owner_id_fkey(full_name)')
-    .eq('organization_id', organizationId).is('deleted_at', null).in('art_status', ['waiting', 'needs_changes'])
+    .eq('organization_id', organizationId).is('deleted_at', null).in('art_status', ['waiting', 'needs_changes', 'changes_sent'])
     .order('art_since', { ascending: true, nullsFirst: false }).limit(50)
   if (error) throw error
   return (data ?? []) as unknown as ArtRow[]
