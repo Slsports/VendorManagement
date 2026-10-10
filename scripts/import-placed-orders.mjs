@@ -9,7 +9,8 @@
  * A matched order is refreshed from the sheet (the sheet is the source of truth until go-live): what the
  * sheet says wins, blanks never erase, and a status only moves forward (paid stays paid) unless the sheet
  * cancelled it. Rows with no match become new orders (source 'placed_order_summary', re-runnable by key).
- * A "freight allowance" note sets the pay-on-time freight allowance on the order.
+ * A "freight allowance" note sets the pay-on-time freight allowance on the order. A field someone changed in
+ * VMS (a fixed date) keeps its VMS value.
  *
  *   node scripts/import-placed-orders.mjs --file summary.xlsx [--dry]
  */
@@ -214,7 +215,8 @@ for (const r of rows) {
     inserted++
   }
 }
-for (let i = 0; i < stmts.length; i += 40) await query(stmts.slice(i, i + 40).join(';\n'))
+// a field someone changed in VMS keeps its VMS value (orders.edited_fields, Dana Oct 10)
+for (let i = 0; i < stmts.length; i += 40) await query(["select set_config('vms.import', 'on', true)", ...stmts.slice(i, i + 40)].join(';\n'))
 // the allowance flag on a vendor whose notes say so, so new orders remind whoever pays
 await query(`update public.vendors v set freight_allowance_on_time = true where v.organization_id = ${lit(ORG)} and not v.freight_allowance_on_time
   and exists (select 1 from public.orders o where o.vendor_id = v.id and o.freight_allowance_offered)`)

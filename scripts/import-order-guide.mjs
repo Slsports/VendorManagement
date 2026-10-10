@@ -179,7 +179,8 @@ const vals = rows.map((r) => {
 }).filter(Boolean)
 const updates = cols.split(', ').filter((c) => !['organization_id', 'source', 'source_key'].includes(c)).map((c) => `${c} = excluded.${c}`).join(', ')
 for (let i = 0; i < vals.length; i += 100) {
-  await query(`insert into public.orders (${cols}) values ${vals.slice(i, i + 100).join(',\n')} on conflict (organization_id, source_key) where source_key is not null do update set ${updates}`)
+  await query(`select set_config('vms.import', 'on', true);
+  insert into public.orders (${cols}) values ${vals.slice(i, i + 100).join(',\n')} on conflict (organization_id, source_key) where source_key is not null do update set ${updates}`)
 }
 await query(`insert into public.activity_log (organization_id, entity_type, action, details) values (${lit(ORG)}, 'order', 'import', ${lit(JSON.stringify({ source: 'order_guide', file: args.file.split('/').pop(), orders: vals.length, vendors_created: toCreate.size }))}::jsonb)`)
 console.log(`orders written ${vals.length}${skipped ? ` (skipped ${skipped} without a vendor)` : ''}`)

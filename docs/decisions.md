@@ -1519,3 +1519,7 @@ Dana listed these while working the Review queue, then said go.
   6/28/2024 (the sheet said 2029; shipped, received 6/29/2024, paid 7/10/2024), and six World Famous Sports
   shipments of show PO B671437 dated 12/31/2025, 12/31/2026 or blank set to the show order date 8/26/2025.
   A re-import of the Placed Order Summary takes the sheet's dates again, so the sheet should be fixed too.
+- Dana, Oct 10: **a re-import keeps what was changed in VMS.** Every order field the sheet also carries
+  (dates, costs, PO, notes, status, payment…) remembers when it was changed in VMS (`orders.edited_fields`,
+  set by a trigger); the sheet imports run with `vms.import = on` and leave those fields alone, updating
+  the rest. The Oct 10 date fixes (Scope, World Famous B671437) are marked, so the sheet need not be fixed.
