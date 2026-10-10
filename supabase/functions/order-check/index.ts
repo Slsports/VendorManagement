@@ -119,6 +119,10 @@ async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
   }
   if (!label) label = (lines ?? []).length ? 'The order lines in VMS' : 'The order record only (total, dates, freight); no order document on file'
 
+  // an order often ships (and bills) in several parts: the other invoices on this order count too
+  const { data: siblings } = await db.from('order_checks').select('doc_number, doc_date, doc_total, reading').eq('order_id', o.id).eq('kind', c.kind).neq('id', c.id).not('reading', 'is', null).limit(8)
+  const others = (siblings ?? []).map((x) => ({ number: x.doc_number, date: x.doc_date, total: x.doc_total, lines: (x.reading as { lines?: unknown[] } | null)?.lines ?? [] }))
+
   // who to write to: whoever sent the document, else the vendor's email
   let contact: string | null = null
   if (c.email_id) contact = (await db.from('emails').select('from_email').eq('id', c.email_id).maybeSingle()).data?.from_email ?? null
@@ -127,7 +131,7 @@ async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
 
   const r = await comparePaperwork(db, c.organization_id, {
     kind: c.kind, vendor: vendor?.name ?? null, order: { ...o, vendor: undefined }, order_lines: lines ?? [], doc, doc_reading: c.reading,
-    against, against_readings: readings, contact,
+    against, against_readings: readings, contact, others,
   })
   const issues = r.issues.filter((x) => x.trim())
   const { error } = await db.rpc('order_check_apply_compare', { p_check: c.id, p_result: {
