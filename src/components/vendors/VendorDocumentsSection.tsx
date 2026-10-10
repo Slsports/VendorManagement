@@ -205,7 +205,7 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
                   <Download className="size-3.5" aria-hidden="true" />{zipping === `${folder.id}-${year}` ? 'Zipping…' : 'Download year'}
                 </button>
               </summary>
-              {folder.id === 'images' || folder.id === 'proofs'
+              {folder.id === 'images' || folder.id === 'damaged' || folder.id === 'proofs'
                 ? <ul className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{rows.map((l) => row(l, true))}</ul>
                 : <ul className="ml-1 divide-y divide-stone-100 border-l border-stone-100 pl-3">{rows.map((l) => row(l))}</ul>}
             </details>

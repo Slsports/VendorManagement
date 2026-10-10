@@ -517,10 +517,12 @@ async function saveItemPictures(db: SupabaseClient, gmail: Gmail, org: string, s
     try {
       const art = !!(e.thread as unknown as { art_status: string | null } | null)?.art_status || e.art_needed === 'yes' || e.art_needed === 'unsure'
       const atts = (e.attachments ?? []) as { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; vendor_link_id: string | null }[]
+      // pictures of damage ("damaged", "broken", a return) go to Damaged Items (Dana, Oct 10)
+      const damaged = /damage|broken|defect|crushed|cracked|\breturn|\bRMA\b|\bRA ?#/i.test(`${e.subject ?? ''} ${atts.map((x) => x.file_name).join(' ')}`)
       for (const a of art ? [] : atts) {
         if (a.vendor_link_id || !a.gmail_attachment_id || !itemPicture(a) || paperworkKind(a, null)) continue
         // the same picture again (replies carry it along): point at the one already saved
-        const { data: same } = await db.from('vendor_links').select('id, storage_path').eq('vendor_id', e.vendor_id).eq('kind', 'image').eq('file_name', a.file_name).eq('file_size', a.size ?? -1).limit(1)
+        const { data: same } = await db.from('vendor_links').select('id, storage_path').eq('vendor_id', e.vendor_id).in('kind', ['image', 'damage_photo']).eq('file_name', a.file_name).eq('file_size', a.size ?? -1).limit(1)
         if (same?.[0]) {
           await db.from('email_attachments').update({ vendor_link_id: same[0].id, storage_path: same[0].storage_path }).eq('id', a.id)
           continue
@@ -530,7 +532,7 @@ async function saveItemPictures(db: SupabaseClient, gmail: Gmail, org: string, s
         const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: a.mime_type ?? 'image/jpeg', upsert: false })
         if (upErr) throw new Error(`Saving ${a.file_name}: ${upErr.message}`)
         const { data: link, error } = await db.from('vendor_links').insert({
-          organization_id: org, vendor_id: e.vendor_id, kind: 'image', label: pictureLabel(a.file_name, e.subject), storage_path: path, file_name: a.file_name,
+          organization_id: org, vendor_id: e.vendor_id, kind: damaged ? 'damage_photo' : 'image', label: pictureLabel(a.file_name, e.subject), storage_path: path, file_name: a.file_name,
           file_size: a.size ?? bytes.length, mime_type: a.mime_type, received_at: e.received_at.slice(0, 10), doc_year: Number(e.received_at.slice(0, 4)),
           source: 'email', email_id: e.id, notes: `From an email: ${e.subject ?? '(no subject)'}`.slice(0, 300),
         }).select('id').single()

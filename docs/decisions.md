@@ -1589,3 +1589,9 @@ Dana: "make anything that is an image in a folder show a preview of the image an
 it" and "I also want to be able to rename them". Pictures in any vendor folder show a preview (click to open
 it large); the Images and Approved proofs folders show them as a grid of large tiles. Every file has
 **Rename** beside Move: it changes the name shown in VMS, not the file.
+
+## Oct 10 — Damaged Items folder
+Dana: "I see images of damaged items which we would use to attach to a vendor return email. So let's call it
+Damaged Items." New vendor folder **Damaged Items** (shown as picture tiles). Pictures from a vendor email whose
+subject talks about damage, defects, breakage or a return go there instead of Images; the 16 already saved
+(Image One, Norty, Water Sports, World Famous Sports) were moved. Migration 0083.
