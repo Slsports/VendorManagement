@@ -1,19 +1,20 @@
 import { useState, type DragEvent } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Download, ExternalLink, FileText, Folder, FolderInput, FolderOpen, Link2, Mail, Trash2, Upload } from 'lucide-react'
-import { addVendorLink, deleteVendorLink, downloadVendorFile, listVendorLinks, uploadVendorFile, zipVendorDocuments, type VendorLinkRow } from '@/services/lines'
+import { Pencil, Download, ExternalLink, FileText, Folder, FolderInput, FolderOpen, Link2, Mail, Trash2, Upload } from 'lucide-react'
+import { addVendorLink, deleteVendorLink, downloadVendorFile, listVendorLinks, renameVendorLink, uploadVendorFile, zipVendorDocuments, type VendorLinkRow } from '@/services/lines'
 import { kickOrderChecks } from '@/services/orderChecks'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { saveBlob } from '@/lib/viewer'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { DOC_FOLDERS, byYear, folderLabel, folderOf, kindFor, thisYear, todayIso, yearChoices, type DocFolder } from '@/lib/documents'
+import { DOC_FOLDERS, byYear, folderLabel, folderOf, isPictureFile, kindFor, thisYear, todayIso, yearChoices, type DocFolder } from '@/lib/documents'
 import { LINK_KIND_LABELS } from '@/lib/vendors'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
 import { Badge, Button, FormField, Input, Select } from '@/components/ui'
 import { Modal } from '@/components/shared/Modal'
 import { MoveDocumentDialog } from '@/components/vendors/MoveDocumentDialog'
+import { FileThumb } from '@/components/shared/FileThumb'
 
 const MAX_MB = 25
 
@@ -27,6 +28,7 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
   const [openFolder, setOpenFolder] = useState<DocFolder | null>(null)
   const [adding, setAdding] = useState<{ mode: 'file' | 'link'; folder: DocFolder; files: File[] } | null>(null)
   const [moving, setMoving] = useState<VendorLinkRow | null>(null)
+  const [renaming, setRenaming] = useState<VendorLinkRow | null>(null)
   const [dropOn, setDropOn] = useState<DocFolder | null>(null)
   const [busy, setBusy] = useState(false)
   const [zipping, setZipping] = useState<string | null>(null)
@@ -111,9 +113,11 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
   }
 
   const folder = openFolder ? DOC_FOLDERS.find((f) => f.id === openFolder)! : null
-  const row = (l: VendorLinkRow) => (
-    <li key={l.id} className="flex items-center gap-3 py-2">
-      {l.storage_path ? <FileText className="size-5 shrink-0 text-stone-400" aria-hidden="true" /> : <ExternalLink className="size-5 shrink-0 text-stone-400" aria-hidden="true" />}
+  // pictures show a preview (Dana, Oct 10); the Images and Approved proofs folders show them as large tiles
+  const row = (l: VendorLinkRow, tile = false) => (
+    <li key={l.id} className={tile ? 'flex min-w-0 flex-col gap-2 rounded-xl border border-stone-200 p-2' : 'flex items-center gap-3 py-2'}>
+      {l.storage_path && isPictureFile(l) ? <FileThumb path={l.storage_path} name={l.label} onOpen={() => open(l)} className={tile ? 'h-40 w-full' : 'h-16 w-20'} />
+        : l.storage_path ? <FileText className="size-5 shrink-0 text-stone-400" aria-hidden="true" /> : <ExternalLink className="size-5 shrink-0 text-stone-400" aria-hidden="true" />}
       <div className="min-w-0 flex-1">
         <button type="button" onClick={() => open(l)} className="max-w-full truncate text-left text-sm font-medium text-stone-900 hover:text-brand">{l.label}</button>
         <p className="truncate text-xs text-stone-500">
@@ -129,6 +133,7 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
           <button type="button" onClick={() => open(l)} aria-label={`Open ${l.label}`} className="rounded px-1.5 py-0.5 font-medium text-brand hover:bg-stone-100">Open</button>
           {l.storage_path ? <button type="button" onClick={() => void download(l)} aria-label={`Download ${l.label}`} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900"><Download className="size-3.5" aria-hidden="true" />Download</button> : null}
           {canEdit ? (<>
+            <button type="button" onClick={() => setRenaming(l)} aria-label={`Rename ${l.label}`} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900"><Pencil className="size-3.5" aria-hidden="true" />Rename</button>
             <button type="button" onClick={() => setMoving(l)} aria-label={`Move ${l.label}`} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900" title="Move to another folder or year"><FolderInput className="size-3.5" aria-hidden="true" />Move</button>
             <button type="button" onClick={() => void remove(l)} aria-label={`Remove ${l.label}`} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-red-50 hover:text-red-700"><Trash2 className="size-3.5" aria-hidden="true" />Remove</button>
           </>) : null}
@@ -200,7 +205,9 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
                   <Download className="size-3.5" aria-hidden="true" />{zipping === `${folder.id}-${year}` ? 'Zipping…' : 'Download year'}
                 </button>
               </summary>
-              <ul className="ml-1 divide-y divide-stone-100 border-l border-stone-100 pl-3">{rows.map(row)}</ul>
+              {folder.id === 'images' || folder.id === 'proofs'
+                ? <ul className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{rows.map((l) => row(l, true))}</ul>
+                : <ul className="ml-1 divide-y divide-stone-100 border-l border-stone-100 pl-3">{rows.map((l) => row(l))}</ul>}
             </details>
           ))}
         </div>
@@ -227,6 +234,7 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
         }} />
       ) : null}
       {viewer}
+      {renaming ? <RenameDialog link={renaming} onClose={() => setRenaming(null)} onDone={async () => { setRenaming(null); await q.refetch() }} /> : null}
       {moving ? (
         <MoveDocumentDialog link={moving} onClose={() => setMoving(null)} onMoved={async (f) => { setMoving(null); setOpenFolder(f); await q.refetch() }} />
       ) : null}
@@ -279,3 +287,26 @@ function AddDocumentDialog({ initial, onClose, onSave }: { initial: { mode: 'fil
   )
 }
 
+
+function RenameDialog({ link, onClose, onDone }: { link: VendorLinkRow; onClose: () => void; onDone: () => void | Promise<void> }) {
+  const [name, setName] = useState(link.label)
+  const [busy, setBusy] = useState(false)
+  return (
+    <Modal title="Rename" submitLabel="Save" busy={busy} onClose={onClose} onSubmit={async () => {
+      setBusy(true)
+      try {
+        await renameVendorLink(link.id, name)
+        toast.success('Renamed')
+        await onDone()
+      } catch (err) {
+        toast.error(errorMessage(err))
+        setBusy(false)
+      }
+    }}>
+      <FormField label="Name" htmlFor="rn-name">
+        <Input id="rn-name" value={name} autoFocus onChange={(e) => setName(e.target.value)} />
+      </FormField>
+      {link.file_name ? <p className="text-xs text-stone-500">File: {link.file_name}</p> : null}
+    </Modal>
+  )
+}

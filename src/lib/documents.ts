@@ -72,3 +72,7 @@ export function guessFolder(fileName: string, subject?: string | null): DocFolde
   for (const [f, re] of GUESS) if (re.test(subject ?? '')) return f
   return 'other'
 }
+
+/** A picture file (not HEIC, which browsers cannot show). */
+export const isPictureFile = (f: { file_name: string | null; mime_type: string | null }) =>
+  /^image\/(png|jpe?g|gif|webp|bmp)$/i.test(f.mime_type ?? '') || /\.(png|jpe?g|gif|webp|bmp)$/i.test(f.file_name ?? '')

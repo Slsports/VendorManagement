@@ -1583,3 +1583,9 @@ icons were "too far over". Each file in a vendor's Documents now has **Open · D
 under its name, at any screen width. In an email, the green "Saved to Images › 2026" tag opens the same Move
 box. Moving a file into Confirmations or Invoices starts Claude's order check; moving it out sets its unfinished
 check aside. Migration 0082.
+
+## Oct 10 — Picture previews in folders; rename files
+Dana: "make anything that is an image in a folder show a preview of the image and I can click on it to enlarge
+it" and "I also want to be able to rename them". Pictures in any vendor folder show a preview (click to open
+it large); the Images and Approved proofs folders show them as a grid of large tiles. Every file has
+**Rename** beside Move: it changes the name shown in VMS, not the file.
