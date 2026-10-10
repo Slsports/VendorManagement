@@ -126,11 +126,11 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
         {l.notes && !l.email ? <p className="mt-0.5 text-xs text-stone-600">{l.notes}</p> : null}
         {/* the actions right under the name, in words, at any width (Dana, Oct 10) */}
         <div className="mt-1 flex flex-wrap items-center gap-x-1 text-xs">
-          <button type="button" onClick={() => open(l)} className="rounded px-1.5 py-0.5 font-medium text-brand hover:bg-stone-100">Open</button>
-          {l.storage_path ? <button type="button" onClick={() => void download(l)} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900"><Download className="size-3.5" aria-hidden="true" />Download</button> : null}
+          <button type="button" onClick={() => open(l)} aria-label={`Open ${l.label}`} className="rounded px-1.5 py-0.5 font-medium text-brand hover:bg-stone-100">Open</button>
+          {l.storage_path ? <button type="button" onClick={() => void download(l)} aria-label={`Download ${l.label}`} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900"><Download className="size-3.5" aria-hidden="true" />Download</button> : null}
           {canEdit ? (<>
-            <button type="button" onClick={() => setMoving(l)} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900" title="Move to another folder or year"><FolderInput className="size-3.5" aria-hidden="true" />Move</button>
-            <button type="button" onClick={() => void remove(l)} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-red-50 hover:text-red-700"><Trash2 className="size-3.5" aria-hidden="true" />Remove</button>
+            <button type="button" onClick={() => setMoving(l)} aria-label={`Move ${l.label}`} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900" title="Move to another folder or year"><FolderInput className="size-3.5" aria-hidden="true" />Move</button>
+            <button type="button" onClick={() => void remove(l)} aria-label={`Remove ${l.label}`} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-red-50 hover:text-red-700"><Trash2 className="size-3.5" aria-hidden="true" />Remove</button>
           </>) : null}
         </div>
       </div>
