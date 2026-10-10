@@ -103,6 +103,7 @@ export default function VendorDetailPage() {
     ['Freight program', v.free_shipping_policy ? v.freight_program : null],
     ['Freight routing', v.freight_routing],
     ['Freight allowance', v.freight_allowance_on_time ? 'Credits the freight back when paid on time' : null],
+    ['Item names', v.vid_in_description ? 'Vendor ID added at the end: NAME [Vendor ID]' : 'No Vendor ID in item names'],
     ['Product types', v.product_types],
     ['Pickup', [v.pickup_address, v.pickup_times].filter(Boolean).join(' · ') || null],
     ['Shipping contact', contact(v.shipping_contact, v.shipping_contact_phone, v.shipping_contact_email)],

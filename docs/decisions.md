@@ -1497,3 +1497,11 @@ Dana listed these while working the Review queue, then said go.
   vendor reply ends a conversation's snooze at once. Mail has a **Snoozed** tab (mine, or everyone's with
   who and until when) and the review queue a **Snoozed** button; "Unsnooze now" from the same menu. Mail
   rows and ticked rows can be snoozed from the list.
+
+## 2026-10-10 — Vendor ID in item names: per vendor, per order, per item
+- Dana: the Vendor ID at the end of an item description helps for some vendors and gets in the way for
+  others. Each vendor has **"Add Vendor ID to item descriptions"** (off unless set); an order can change it
+  before its PO is made (checkbox on the order, pre-set from the vendor); one item can differ from its order
+  (the [ID] tag on the line). When on, the name ends with the Vendor ID in brackets:
+  `MENS HOODIE NAVY [AB1234]` (never added twice). The Lightspeed clean-up's rename proposals follow the same
+  setting; nothing changes in LS without an approved batch.

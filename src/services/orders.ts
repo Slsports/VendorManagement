@@ -60,14 +60,14 @@ export async function vendorOrderSummary(vendorId: string): Promise<VendorOrderS
 }
 
 export interface OrderDetail extends Omit<OrderRow, 'vendor'> {
-  vendor: (Pick<Vendor, 'id' | 'name' | 'free_shipping_policy' | 'free_shipping_threshold' | 'freight_program' | 'freight_routing' | 'wwd_zero_upcharge' | 'freight_allowance_on_time'> & { vendor_billing_routes: { route: string }[] }) | null
+  vendor: (Pick<Vendor, 'id' | 'name' | 'free_shipping_policy' | 'free_shipping_threshold' | 'freight_program' | 'freight_routing' | 'wwd_zero_upcharge' | 'freight_allowance_on_time' | 'vid_in_description'> & { vendor_billing_routes: { route: string }[] }) | null
   order_status_history: OrderStatusHistory[]
   documents: VendorLink[]
 }
 
 export async function getOrder(id: string): Promise<OrderDetail> {
   const [{ data, error }, { data: docs, error: e2 }] = await Promise.all([
-    supabase.from('orders').select('*, vendor:vendors(id, name, free_shipping_policy, free_shipping_threshold, freight_program, freight_routing, wwd_zero_upcharge, freight_allowance_on_time, vendor_billing_routes(route, pay_method)), order_status_history(*)').eq('id', id).single(),
+    supabase.from('orders').select('*, vendor:vendors(id, name, free_shipping_policy, free_shipping_threshold, freight_program, freight_routing, wwd_zero_upcharge, freight_allowance_on_time, vid_in_description, vendor_billing_routes(route, pay_method)), order_status_history(*)').eq('id', id).single(),
     supabase.from('vendor_links').select('*').eq('order_id', id).order('created_at', { ascending: false }),
   ])
   if (error) throw error

@@ -6,6 +6,7 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { addOrderLines, deleteOrderLine, listOrderLines, quotedFreightRate, updateOrder, updateOrderLine, type OrderDetail } from '@/services/orders'
 import { breakdown, hasWwdUpcharge, parsePastedLines, pct, pricingSettings, retailPrice } from '@/lib/pricing'
 import { money } from '@/lib/freight'
+import { itemName, vidOn } from '@/lib/vidName'
 import { errorMessage } from '@/lib/utils'
 import type { OrderLine } from '@/types'
 import { Button, Input, Textarea } from '@/components/ui'
@@ -34,6 +35,13 @@ export function CheckInPricing({ order: o, canEdit, onOrderChange }: { order: Or
   const suggested = (l: OrderLine) => retailPrice(Number(l.unit_cost), b.totalPct)
   const stale = lines.filter((l) => !l.retail_edited && l.retail_price !== null && l.retail_price !== suggested(l)).length
   const unsaved = lines.filter((l) => !l.retail_edited && l.retail_price === null).length
+  // Vendor ID in item names (Dana, Oct 10): the vendor's setting unless this order (or one item) changes it.
+  const vendorVid = !!o.vendor?.vid_in_description
+  const orderVid = vidOn(vendorVid, o.vid_in_description)
+  const setOrderVid = (on: boolean) => run(on ? 'Vendor ID added to item names' : 'No Vendor ID in item names', async () => {
+    await updateOrder(o.id, { vid_in_description: on === vendorVid ? null : on })
+    await onOrderChange?.()
+  })
 
   async function run(label: string, fn: () => Promise<void>) {
     setBusy(true)
@@ -88,6 +96,12 @@ export function CheckInPricing({ order: o, canEdit, onOrderChange }: { order: Or
       ) : null}
       {b.freightPct === null ? <p className="mt-2 text-xs text-stone-500">Prices use margin{upcharge ? ' and upcharge' : ''} only until the freight bill is matched to this order; then recalculate.</p> : null}
 
+      <label className="mt-3 flex flex-wrap items-center gap-2 text-sm text-stone-800">
+        <input type="checkbox" className="size-4 accent-brand" checked={orderVid} disabled={!canEdit || busy} onChange={(e) => void setOrderVid(e.target.checked)} />
+        Add Vendor ID to item names <span className="text-stone-500">(NAME [Vendor ID])</span>
+        <span className="text-xs text-stone-400">{o.vid_in_description === null ? `${o.vendor?.name ?? 'the vendor'}'s setting` : 'changed for this order'}</span>
+      </label>
+
       {lines.length ? (
         <div className="mt-4 overflow-x-auto">
           <table className="min-w-full text-sm">
@@ -102,7 +116,9 @@ export function CheckInPricing({ order: o, canEdit, onOrderChange }: { order: Or
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
-              {lines.map((l) => <PriceRow key={l.id} line={l} suggested={suggested(l)} canEdit={canEdit} busy={busy} onSave={(changes, label) => run(label, () => updateOrderLine(l.id, changes))} onDelete={() => run('Line removed', () => deleteOrderLine(l.id))} />)}
+              {lines.map((l) => <PriceRow key={l.id} line={l} suggested={suggested(l)} canEdit={canEdit} busy={busy} vid={vidOn(vendorVid, o.vid_in_description, l.vid_in_description)}
+                onVid={(on) => run(on ? 'Vendor ID added to this item' : 'Vendor ID left off this item', () => updateOrderLine(l.id, { vid_in_description: on === orderVid ? null : on }))}
+                onSave={(changes, label) => run(label, () => updateOrderLine(l.id, changes))} onDelete={() => run('Line removed', () => deleteOrderLine(l.id))} />)}
             </tbody>
           </table>
         </div>
@@ -144,10 +160,13 @@ export function CheckInPricing({ order: o, canEdit, onOrderChange }: { order: Or
   )
 }
 
-function PriceRow({ line: l, suggested, canEdit, busy, onSave, onDelete }: {
+function PriceRow({ line: l, suggested, canEdit, busy, vid, onVid, onSave, onDelete }: {
   line: OrderLine
   suggested: number | null
   canEdit: boolean
+  /** Whether this item's name carries its Vendor ID, and how to change it for this item only. */
+  vid: boolean
+  onVid: (on: boolean) => Promise<void>
   busy: boolean
   onSave: (changes: Partial<OrderLine>, label: string) => Promise<void>
   onDelete: () => Promise<void>
@@ -166,7 +185,13 @@ function PriceRow({ line: l, suggested, canEdit, busy, onSave, onDelete }: {
   return (
     <tr>
       <td className="py-2 pr-3 text-stone-600">{l.vendor_item_id ?? '—'}</td>
-      <td className="py-2 pr-3 text-stone-900">{l.description ?? '—'}</td>
+      <td className="py-2 pr-3 text-stone-900">
+        {itemName(l.description, l.vendor_item_id, vid) || '—'}
+        {l.vendor_item_id && canEdit ? (
+          <button type="button" disabled={busy} onClick={() => void onVid(!vid)} title={vid ? 'Leave the Vendor ID off this item' : 'Add the Vendor ID to this item'}
+            className={`ml-2 rounded px-1.5 py-0.5 text-xs ${vid ? 'bg-brand-soft text-brand' : 'bg-stone-100 text-stone-400 line-through'} ${l.vid_in_description !== null ? 'ring-1 ring-amber-400' : ''}`}>[ID]</button>
+        ) : null}
+      </td>
       <td className="py-2 pr-3 text-right tabular-nums">{Number(l.quantity)}</td>
       <td className="py-2 pr-3 text-right tabular-nums">{money(Number(l.unit_cost))}</td>
       <td className="py-2 pr-3 text-right">
