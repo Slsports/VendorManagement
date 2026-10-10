@@ -144,6 +144,7 @@ export default function ThreadPage() {
           <Palette className="size-4" aria-hidden="true" />
           <span className="font-medium">{t.art_status === 'approved' ? 'Artwork approved' : t.art_status === 'needs_changes' ? 'Changes to send: you have changes to send the vendor' : t.art_status === 'changes_sent' ? 'Changes sent: waiting on the vendor\'s new proof' : `Artwork waiting on your approval${t.art_since ? ` since ${new Date(t.art_since).toLocaleDateString()}` : ''}`}</span>
           {t.art_note ? <span className="text-xs opacity-80">{t.art_note}</span> : null}
+          {t.art_status === 'approved' ? <span className="text-xs">Save the final proof: Save to documents › Approved proofs.</span> : null}
           {canEdit ? (
             <span className="ml-auto flex flex-wrap gap-2">
               {t.art_status !== 'approved' ? <Button size="sm" onClick={() => void act('Artwork approved', () => setArtStatus(t.id, 'approved'))} leftIcon={<Check className="size-4" aria-hidden="true" />}>Approved</Button> : null}

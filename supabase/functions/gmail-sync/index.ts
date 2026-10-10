@@ -6,7 +6,7 @@ import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { Gmail, GmailError, googleAccessToken } from '../_shared/gmail.ts'
 import { clueText, htmlBody, isBulk, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
 import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type VendorIndex } from '../_shared/mailMatch.ts'
-import { extractLinks, paperworkKind, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
+import { extractLinks, itemPicture, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
 import { aiEnabled, readArtwork, readEmailVendors, readPaidNote, readReplyNeeded, readSender, sortEmails, type ArtEmail, type ReplyEmail, type UnsureEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
@@ -112,6 +112,8 @@ async function syncAccount(db: SupabaseClient, acct: Account) {
     if (done && Date.now() - started < TIME_BUDGET_MS) await saveVendorFiles(db, gmail, org, started)
     // Vendors' order confirmations and invoices into their folders; order-check compares them with the order.
     if (done && Date.now() - started < TIME_BUDGET_MS) await savePaperwork(db, gmail, org, started)
+    // Pictures of items from vendors into their Images folder (12 months back); artwork proofs stay in the email.
+    if (done && Date.now() - started < TIME_BUDGET_MS) await saveItemPictures(db, gmail, org, started)
     // Freight bills from carriers: a bill per invoice email; Claude reads the PDF when it is attached.
     if (done && Date.now() - started < TIME_BUDGET_MS) await freightBills(db, gmail, org, started)
     // Claude reads what the rules could not place (only with an API key).
@@ -492,6 +494,53 @@ async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, star
       console.error(`paperwork from ${e.id}:`, err instanceof Error ? err.message : err)
     }
     await db.from('emails').update({ paper_scanned_at: new Date().toISOString() }).eq('id', e.id)
+  }
+}
+
+/**
+ * Item pictures (Dana, Oct 10): "If a vendor sends images of items they would go in that folder." Real pictures
+ * (not signature logos or icons) in a vendor's email are saved to their Images folder for the year; the same
+ * picture sent again is not saved twice. Artwork proofs stay in the email (Approved proofs is saved by hand),
+ * so an email waits until Claude's artwork check has read it, and artwork conversations are skipped. Files the
+ * other steps save (price lists, confirmations, invoices) are theirs. 12 months back, a batch a run.
+ */
+async function saveItemPictures(db: SupabaseClient, gmail: Gmail, org: string, started: number) {
+  const twoHours = new Date(Date.now() - 2 * 3600_000).toISOString()
+  const { data: queue } = await db.from('emails')
+    .select('id, gmail_id, vendor_id, subject, received_at, art_needed, thread:email_threads!emails_thread_id_fkey(art_status), attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
+    .eq('organization_id', org).eq('direction', 'in').not('vendor_id', 'is', null).eq('has_attachments', true).is('images_scanned_at', null)
+    .not('is_bulk', 'is', true).not('files_scanned_at', 'is', null).or(`art_read_at.not.is.null,received_at.lt.${twoHours}`)
+    .gte('received_at', new Date(Date.now() - 365 * 86_400_000).toISOString())
+    .order('received_at', { ascending: false }).limit(15)
+  for (const e of queue ?? []) {
+    if (Date.now() - started > TIME_BUDGET_MS) break
+    try {
+      const art = !!(e.thread as unknown as { art_status: string | null } | null)?.art_status || e.art_needed === 'yes' || e.art_needed === 'unsure'
+      const atts = (e.attachments ?? []) as { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; vendor_link_id: string | null }[]
+      for (const a of art ? [] : atts) {
+        if (a.vendor_link_id || !a.gmail_attachment_id || !itemPicture(a) || paperworkKind(a, null)) continue
+        // the same picture again (replies carry it along): point at the one already saved
+        const { data: same } = await db.from('vendor_links').select('id, storage_path').eq('vendor_id', e.vendor_id).eq('kind', 'image').eq('file_name', a.file_name).eq('file_size', a.size ?? -1).limit(1)
+        if (same?.[0]) {
+          await db.from('email_attachments').update({ vendor_link_id: same[0].id, storage_path: same[0].storage_path }).eq('id', a.id)
+          continue
+        }
+        const bytes = await attachmentBytes(gmail, e.gmail_id, a.gmail_attachment_id)
+        const path = `${org}/${e.vendor_id}/${crypto.randomUUID()}-${a.file_name.replace(/[^A-Za-z0-9._-]+/g, '_')}`
+        const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: a.mime_type ?? 'image/jpeg', upsert: false })
+        if (upErr) throw new Error(`Saving ${a.file_name}: ${upErr.message}`)
+        const { data: link, error } = await db.from('vendor_links').insert({
+          organization_id: org, vendor_id: e.vendor_id, kind: 'image', label: pictureLabel(a.file_name, e.subject), storage_path: path, file_name: a.file_name,
+          file_size: a.size ?? bytes.length, mime_type: a.mime_type, received_at: e.received_at.slice(0, 10), doc_year: Number(e.received_at.slice(0, 4)),
+          source: 'email', email_id: e.id, notes: `From an email: ${e.subject ?? '(no subject)'}`.slice(0, 300),
+        }).select('id').single()
+        if (error) throw new Error(error.message)
+        await db.from('email_attachments').update({ vendor_link_id: link.id, storage_path: path }).eq('id', a.id)
+      }
+    } catch (err) {
+      console.error(`pictures from ${e.id}:`, err instanceof Error ? err.message : err)
+    }
+    await db.from('emails').update({ images_scanned_at: new Date().toISOString() }).eq('id', e.id)
   }
 }
 

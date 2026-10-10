@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { extractLinks, guessKind, paperworkKind, seasonLabel, wantAttachment, wantLink } from './offerFiles.ts'
+import { extractLinks, guessKind, itemPicture, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from './offerFiles.ts'
 
 describe('what kind of file', () => {
   it('reads the file name first, then the subject', () => {
@@ -20,6 +20,7 @@ describe('what gets saved', () => {
   it('keeps documents from offers mail, only named ones from other mail, never signature logos', () => {
     expect(wantAttachment({ file_name: 'Catalog 2026.pdf', size: 4_000_000 }, 'offers', 'New catalog')).toBe('catalog')
     expect(wantAttachment({ file_name: 'flyer.pdf', size: 200_000 }, 'offers', 'Hello')).toBe('other')
+    expect(wantAttachment({ file_name: 'Blue Kayak.jpg', size: 200_000 }, 'offers', 'Hello')).toBeNull()
     expect(wantAttachment({ file_name: 'Invoice 7787.pdf', size: 90_000 }, 'attention', 'Invoice 7787')).toBeNull()
     expect(wantAttachment({ file_name: 'WFS Order Form.xlsx', size: 90_000 }, 'attention', 'Re: order')).toBe('order_form')
     expect(wantAttachment({ file_name: 'image001.png', size: 300_000 }, 'offers', 'Specials')).toBeNull()
@@ -51,5 +52,19 @@ describe('order paperwork', () => {
     expect(paperworkKind(f('Order Confirmation.xlsx'), null)).toBeNull()
     expect(paperworkKind(f('88123.pdf'), 'Past due invoice reminder')).toBeNull()
     expect(paperworkKind(f('photo.pdf'), 'Hello')).toBeNull()
+  })
+})
+
+describe('item pictures', () => {
+  it('keeps real pictures, not logos or icons', () => {
+    expect(itemPicture({ file_name: 'image003.jpg', size: 250_000 })).toBe(true)
+    expect(itemPicture({ file_name: 'IMG_4471.HEIC', size: 2_000_000 })).toBe(true)
+    expect(itemPicture({ file_name: 'image001.png', size: 9_000 })).toBe(false)
+    expect(itemPicture({ file_name: 'company-logo.png', size: 120_000 })).toBe(false)
+    expect(itemPicture({ file_name: 'specs.pdf', size: 120_000 })).toBe(false)
+  })
+  it('names generic pictures by the email subject', () => {
+    expect(pictureLabel('image003.jpg', 'RE: New hats for spring')).toBe('New hats for spring – image003.jpg')
+    expect(pictureLabel('Blue Kayak.jpg', 'Kayaks')).toBe('Blue Kayak')
   })
 })

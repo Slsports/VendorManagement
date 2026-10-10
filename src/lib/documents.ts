@@ -1,7 +1,7 @@
 import type { VendorLinkKind } from '@/types'
 
 // The vendor's Documents folders (Dana, Oct 8): each holds certain kinds of file, with a year folder inside.
-export type DocFolder = 'price_lists' | 'catalogs' | 'orders' | 'ls_pos' | 'confirmations' | 'invoices' | 'credits' | 'order_forms' | 'specials' | 'shipping' | 'images' | 'other'
+export type DocFolder = 'price_lists' | 'catalogs' | 'orders' | 'ls_pos' | 'confirmations' | 'invoices' | 'credits' | 'order_forms' | 'specials' | 'shipping' | 'images' | 'proofs' | 'other'
 
 export const DOC_FOLDERS: { id: DocFolder; label: string; kinds: VendorLinkKind[] }[] = [
   { id: 'price_lists', label: 'Price lists', kinds: ['price_list'] },
@@ -16,6 +16,8 @@ export const DOC_FOLDERS: { id: DocFolder; label: string; kinds: VendorLinkKind[
   { id: 'specials', label: 'Show specials', kinds: ['specials'] },
   { id: 'shipping', label: 'Shipping', kinds: ['packing_slip', 'delivery_receipt', 'freight_bill'] },
   { id: 'images', label: 'Images', kinds: ['image'] },
+  // the final artwork proof, saved by hand once approved (Dana, Oct 10)
+  { id: 'proofs', label: 'Approved proofs', kinds: ['approved_proof'] },
   { id: 'other', label: 'Other', kinds: ['other', 'website'] },
 ]
 
@@ -58,6 +60,7 @@ const GUESS: [DocFolder, RegExp][] = [
   ['price_lists', /price ?(list|sheet|book)|pricing|\bmsrp\b|wholesale/i],
   ['specials', /special|promo|close ?out|clearance|show (offer|program)|buy group/i],
   ['catalogs', /catalog|catalogue|line ?sheet|look ?book|brochure|collection/i],
+  ['proofs', /\bproofs?\b|mock ?up|virtual sample|art ?approval/i],
   // pictures with no other clue (Dana, Oct 10: "we need an images folder")
   ['images', /\b(png|jpe?g|gif|webp|heic|bmp|tiff?)$/i],
 ]

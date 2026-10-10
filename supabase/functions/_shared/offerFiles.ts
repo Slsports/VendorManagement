@@ -48,6 +48,8 @@ export function wantAttachment(a: { file_name: string; size: number | null }, vi
   const image = IMAGE.test(a.file_name) && !/^(image|img|logo|outlook|signature|banner)[-_ ]?\d*\./i.test(a.file_name) && (a.size ?? 0) >= 100 * 1024
   if (!doc && !image) return null
   const kind = guessKind(a.file_name, view === 'offers' ? subject : null)
+  // plain pictures go to Images through the pictures step (itemPicture), never "Other"
+  if (image && !doc && kind === 'other') return null
   if (view === 'offers') return kind
   return kind === 'other' ? null : kind
 }
@@ -99,4 +101,22 @@ export function paperworkKind(a: { file_name: string; size: number | null }, sub
   if (CONFIRM.test(subject ?? '')) return 'confirmation'
   if (INVOICE.test(subject ?? '') && !/statement|past due|reminder/i.test(subject ?? '')) return 'invoice'
   return null
+}
+
+// ---- item pictures (Dana, Oct 10: "If a vendor sends images of items they would go in that folder") ----
+const PICTURE = /\.(png|jpe?g|gif|webp|heic)$/i
+const NOT_ITEM = /logo|signature|banner|facebook|instagram|linkedin|twitter|youtube|tiktok|pinterest|icon|spacer|pixel/i
+
+/** A real picture (an item photo, not a signature logo or icon): a picture file of 60 KB to 15 MB. */
+export function itemPicture(a: { file_name: string; mime_type?: string | null; size: number | null }): boolean {
+  const pic = PICTURE.test(a.file_name) || /^image\/(png|jpe?g|gif|webp|heic)$/i.test(a.mime_type ?? '')
+  return pic && !NOT_ITEM.test(a.file_name) && (a.size ?? 0) >= 60 * 1024 && (a.size ?? 0) <= 15 * 1024 * 1024
+}
+
+/** "Fall specials – image003.jpg" for the generic names Outlook and phones give pasted pictures. */
+export function pictureLabel(fileName: string, subject: string | null): string {
+  const base = fileName.replace(/\.[a-z0-9]{2,5}$/i, '')
+  const generic = /^(image|img|imag|photo|picture|attachment|unnamed|screenshot)[-_ ]?[\d_ -]*$/i.test(base) || /^\d+$/.test(base)
+  const subj = (subject ?? '').replace(/^\s*((re|fw|fwd|aw)\s*:\s*)+/i, '').trim()
+  return generic && subj ? `${subj.slice(0, 80)} – ${fileName}` : base
 }

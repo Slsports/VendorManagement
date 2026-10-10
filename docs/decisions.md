@@ -1569,3 +1569,10 @@ Migrations 0078–0079; Edge Function order-check runs every minute.
 - Vendor documents get an **Images** folder (photos, artwork, logos); pictures saved from email go there unless
   their name says otherwise.
 - A file already filed shows "Saved to Confirmations › 2026" (its folder and year) instead of Save to documents.
+
+## Oct 10 — Item pictures saved to Images; Approved proofs folder
+Dana: "If a vendor sends images of items they would go in that folder" (Images), including the past 12 months.
+Real pictures in a vendor's email (60 KB+, not logos, icons or signature pictures) are saved to that vendor's
+Images › year; the same picture sent again is saved once. Artwork proofs stay in the email: artwork
+conversations are skipped, and a new **Approved proofs** folder holds the final proof, saved by hand once it is
+approved ("we will click to save in that folder"). Migration 0081.

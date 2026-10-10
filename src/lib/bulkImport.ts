@@ -18,6 +18,7 @@ const FOLDER_WORDS: [DocFolder, RegExp][] = [
   ['price_lists', /price ?(lists?|sheets?|books?)|pricing|\bmsrp\b|wholesale|\bprices?\b/i],
   ['specials', /specials?|promos?|promotions?|close ?outs?|clearance|show (offers?|programs?|deals?)|buy group|deals?/i],
   ['catalogs', /catalogs?|catalogues?|line ?sheets?|look ?books?|brochures?|collections?|new arrivals/i],
+  ['proofs', /approved proofs?|final proofs?|\bproofs?\b/i],
   ['images', /\bimages?\b|photos?|pictures?|\bpics?\b|artwork|logos?\b/i],
   ['other', /^(other|misc|miscellaneous|general|docs?|documents?|files?)$/i],
 ]
