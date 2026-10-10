@@ -51,6 +51,7 @@ const ReviewAssignmentSettings = lazy(() => import('@/pages/settings/ReviewAssig
 const MailSettings = lazy(() => import('@/pages/settings/MailSettings'))
 const MailPage = lazy(() => import('@/pages/mail/MailPage'))
 const ThreadPage = lazy(() => import('@/pages/mail/ThreadPage'))
+const MailWithPage = lazy(() => import('@/pages/mail/MailWithPage'))
 const VendorScoresReport = lazy(() => import('@/pages/reports/VendorScoresReport'))
 
 const STAFF = ['admin', 'manager', 'buyer', 'viewer'] as const
@@ -109,6 +110,7 @@ export default function App() {
                 <Route path={ROUTES.review} element={<ReviewQueue />} />
                 <Route path={ROUTES.mail} element={<MailPage />} />
                 <Route path={ROUTES.workingOrders} element={<WorkingOrdersPage />} />
+                <Route path={ROUTES.mailWith} element={<MailWithPage />} />
                 <Route path={ROUTES.team} element={<TeamPage />} />
                 <Route path={`${ROUTES.mail}/:id`} element={<ThreadPage />} />
                 <Route path={ROUTES.mergeReport} element={<MergeReport />} />

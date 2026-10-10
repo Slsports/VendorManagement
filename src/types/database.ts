@@ -639,6 +639,8 @@ export type Database = {
       team_overview: { Args: { p_org: string }; Returns: { profile_id: string; full_name: string; role: string; needs: number; needs_oldest: string | null; no_answer: number; no_answer_oldest: string | null; reviews: number; reviews_oldest: string | null; working: number; working_needs: number; vendors: number; last_sent: string | null }[] }
       propose_category_assignments: { Args: { p_rule: string }; Returns: number }
       answer_mail_reply: { Args: { p_item: string; p_needs_answer: boolean }; Returns: undefined }
+      mail_with: { Args: { p_org: string; p_email: string; p_company?: boolean; p_limit?: number }; Returns: { id: string; thread_id: string; direction: 'in' | 'out' | 'internal'; from_email: string | null; from_name: string | null; to_emails: string[]; cc_emails: string[]; subject: string | null; snippet: string | null; received_at: string; has_attachments: boolean; vendor_id: string | null; vendor_name: string | null }[] }
+      mail_free_domain: { Args: { p_domain: string }; Returns: boolean }
       set_art_status: { Args: { p_thread: string; p_status: 'waiting' | 'needs_changes' | 'changes_sent' | 'approved' | 'none' }; Returns: undefined }
       file_delivery_receipt: { Args: { p_receipt: string; p_vendor: string }; Returns: undefined }
       tag_email_vendor: { Args: { p_email: string; p_vendor: string; p_on: boolean }; Returns: undefined }

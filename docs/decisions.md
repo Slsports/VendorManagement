@@ -1535,3 +1535,10 @@ hadn't sent anything yet. Now there are four steps: **Waiting on approval** → 
 Artwork approvals card as "Changes to send", counting days, red after 2) → **Changes sent** (her button, or
 set on its own when our reply asks for changes; listed last in grey, "waiting on a new proof") → a new proof
 from the vendor puts it back to Waiting on approval. Approved closes it. Migration 0076.
+
+## Oct 10 — Click a sender to see all mail with them
+Dana: "click on the name of the 'from' email and have it bring up all my emails with them in chronological
+order newest to oldest." On a conversation, the sender's name (and outside To/Cc addresses) opens **Mail
+with** (/mail/with): every email from, to or copied to that address, newest first, sortable by its headers,
+each row opening its conversation. "Everyone at this company" widens it to the whole address ending
+(@acme.com), not offered for Gmail, Yahoo and the like. Our own addresses are not links. Migration 0077.

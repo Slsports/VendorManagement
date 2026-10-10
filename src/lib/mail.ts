@@ -185,3 +185,13 @@ export const WORKING_STATUS_LABELS: Record<'needs' | 'waiting' | 'working' | 'co
 
 /** On the Team page, waiting longer than this turns red: three days, to allow for days off (Dana, Oct 8). */
 export const LATE_MS = 3 * 86_400_000
+
+// ---- all mail with one person (Dana, Oct 10) ----
+const FREE_MAIL = new Set(['gmail.com', 'googlemail.com', 'yahoo.com', 'ymail.com', 'hotmail.com', 'outlook.com', 'live.com', 'msn.com', 'aol.com', 'icloud.com', 'me.com', 'mac.com', 'comcast.net', 'att.net', 'sbcglobal.net', 'verizon.net', 'cox.net', 'charter.net', 'protonmail.com', 'proton.me'])
+export const emailDomain = (email: string) => email.trim().toLowerCase().split('@')[1] ?? ''
+/** Gmail, Yahoo and the like: "everyone at this company" makes no sense there. */
+export const isFreeMail = (email: string) => FREE_MAIL.has(emailDomain(email))
+/** Our own addresses (orders@, dana@…): clicking them would list everything. */
+export const isOurAddress = (email: string | null | undefined) => !!email && emailDomain(email) === 'shaverlakesports.com'
+/** The page listing every email with this address. */
+export const mailWithUrl = (route: string, email: string, company = false) => `${route}?email=${encodeURIComponent(email.trim().toLowerCase())}${company ? '&company=1' : ''}`

@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import type { Email, EmailAttachment, EmailSenderKind, EmailThreadStatus, MailAccount, MailView } from '@/types'
 import { TEST_LOGIN_PATTERN } from '@/services/reviews'
+import type { Database } from '@/types/database'
 
 export interface NamedRef { id: string; name: string }
 export interface VendorRef extends NamedRef { is_active: boolean }
@@ -465,4 +466,14 @@ export async function listArtApprovals(organizationId: string): Promise<ArtRow[]
 export async function setArtStatus(threadId: string, status: ArtStatus | 'none'): Promise<void> {
   const { error } = await supabase.rpc('set_art_status', { p_thread: threadId, p_status: status })
   if (error) throw error
+}
+
+// ---- all mail with one person or company (Dana, Oct 10) ----
+export type MailWithRow = Database['public']['Functions']['mail_with']['Returns'][number]
+
+/** Every email from, to or copied to this address (or anyone at its company), newest first. */
+export async function listMailWith(organizationId: string, email: string, company: boolean): Promise<MailWithRow[]> {
+  const { data, error } = await supabase.rpc('mail_with', { p_org: organizationId, p_email: email, p_company: company })
+  if (error) throw error
+  return data ?? []
 }

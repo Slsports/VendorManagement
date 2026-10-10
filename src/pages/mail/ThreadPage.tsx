@@ -10,7 +10,7 @@ import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { MakeFreightBillDialog } from '@/components/freight/MakeFreightBillDialog'
 import { SaveToDocumentsDialog } from '@/components/vendors/SaveToDocumentsDialog'
 import { listPeople } from '@/services/reviews'
-import { followUpDraft, forwardDraft, gmailThreadUrl, isInlineImage, newVendorPrefill, replyDraft, splitQuoted, threadState, waited } from '@/lib/mail'
+import { followUpDraft, forwardDraft, gmailThreadUrl, isInlineImage, isOurAddress, mailWithUrl, newVendorPrefill, replyDraft, splitQuoted, threadState, waited } from '@/lib/mail'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
 import { BackLink } from '@/components/shared/BackLink'
@@ -229,18 +229,22 @@ function Message({ email: e, startOpen, vendor, carrierId, onCompose }: { email:
   }
   return (
     <li className={cn('rounded-2xl border bg-white', e.direction === 'out' ? 'border-brand/30' : 'border-stone-200')}>
-      <button type="button" onClick={() => setOpen((v) => !v)} className="flex w-full flex-wrap items-baseline justify-between gap-2 px-4 py-3 text-left" aria-expanded={open}>
-        <span className="min-w-0">
-          <span className="font-medium text-stone-900">{e.from_name || e.from_email}</span>
+      {/* The whole header opens and closes the email; the sender's name opens all mail with them (Dana, Oct 10). */}
+      <div className="relative flex w-full flex-wrap items-baseline justify-between gap-2 px-4 py-3 text-left">
+        <button type="button" onClick={() => setOpen((v) => !v)} className="absolute inset-0 rounded-2xl" aria-expanded={open} aria-label={open ? 'Close this email' : 'Open this email'} />
+        <span className="pointer-events-none min-w-0">
+          {e.from_email && !isOurAddress(e.from_email) ? (
+            <Link to={mailWithUrl(ROUTES.mailWith, e.from_email)} title={`All mail with ${e.from_email}`} className="pointer-events-auto relative font-medium text-stone-900 underline-offset-2 hover:text-brand hover:underline">{e.from_name || e.from_email}</Link>
+          ) : <span className="font-medium text-stone-900">{e.from_name || e.from_email}</span>}
           {e.from_name ? <span className="ml-1 text-xs text-stone-500">{e.from_email}</span> : null}
           {e.direction === 'out' ? <span className="ml-2 text-xs font-medium text-brand">sent</span> : null}
           {!open ? <span className="block truncate text-sm text-stone-500">{e.snippet}</span> : null}
         </span>
-        <span className="shrink-0 text-xs text-stone-500" title={new Date(e.received_at).toLocaleString()}>{new Date(e.received_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })} · {waited(e.received_at)} ago</span>
-      </button>
+        <span className="pointer-events-none shrink-0 text-xs text-stone-500" title={new Date(e.received_at).toLocaleString()}>{new Date(e.received_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })} · {waited(e.received_at)} ago</span>
+      </div>
       {open ? (
         <div className="border-t border-stone-100 px-4 py-3">
-          <p className="mb-2 text-xs text-stone-500">To {e.to_emails.join(', ') || '—'}{e.cc_emails.length ? ` · Cc ${e.cc_emails.join(', ')}` : ''}</p>
+          <p className="mb-2 text-xs text-stone-500">To <AddressLinks list={e.to_emails} />{e.cc_emails.length ? <> · Cc <AddressLinks list={e.cc_emails} /></> : null}</p>
           {files.length || pictures.length ? (
             <div className="mb-3 flex flex-wrap items-center gap-2">
               {files.map(chip)}
@@ -293,4 +297,12 @@ function ThreadVendorPicker({ current, prefill, onPick }: { current: { id: strin
       <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
     </div>
   )
+}
+
+/** To / Cc addresses: outside ones open all mail with that person. */
+function AddressLinks({ list }: { list: string[] }) {
+  if (!list.length) return <>—</>
+  return <>{list.map((a, i) => (
+    <span key={a}>{i ? ', ' : ''}{isOurAddress(a) ? a : <Link to={mailWithUrl(ROUTES.mailWith, a)} title={`All mail with ${a}`} className="hover:text-brand hover:underline">{a}</Link>}</span>
+  ))}</>
 }
