@@ -28,6 +28,7 @@ const LinesPage = lazy(() => import('@/pages/lines/LinesPage'))
 const MergeReport = lazy(() => import('@/pages/review/MergeReport'))
 const OrderList = lazy(() => import('@/pages/orders/OrderList'))
 const OrderDetail = lazy(() => import('@/pages/orders/OrderDetail'))
+const OrderEdit = lazy(() => import('@/pages/orders/OrderEdit'))
 const PurchaseOrderList = lazy(() => import('@/pages/purchase-orders/PurchaseOrderList'))
 const ReturnList = lazy(() => import('@/pages/returns/ReturnList'))
 const ShipmentList = lazy(() => import('@/pages/shipments/ShipmentList'))
@@ -113,6 +114,7 @@ export default function App() {
                 <Route path={ROUTES.mergeReport} element={<MergeReport />} />
                 <Route path={ROUTES.orders} element={<OrderList />} />
                 <Route path={`${ROUTES.orders}/:id`} element={<OrderDetail />} />
+                <Route path={`${ROUTES.orders}/:id/edit`} element={<OrderEdit />} />
                 <Route path={ROUTES.purchaseOrders} element={<PurchaseOrderList />} />
                 <Route path={ROUTES.returns} element={<ReturnList />} />
                 <Route path={ROUTES.shipments} element={<ShipmentList />} />

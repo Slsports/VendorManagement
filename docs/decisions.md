@@ -1513,3 +1513,9 @@ Dana listed these while working the Review queue, then said go.
   "Artwork to approve?" review card for her. On the conversation: Approved / Needs changes (stays on the card
   until the next proof) / Not artwork, and "Artwork to approve" to add one by hand. Our own reply saying it is
   approved closes it; asking for changes marks Needs changes. The first run reads the last 60 days of mail.
+- Dana, Oct 10: **orders can be edited**: an Edit button on the order opens every date and detail the sheet
+  tracks (ordered, ship, received, entered in LS, terms and due, paid date/via/reference, costs, freight,
+  credits, notes), Save pinned at the bottom. Fixed from mail and WWD records: Scope PO 1132 ordered
+  6/28/2024 (the sheet said 2029; shipped, received 6/29/2024, paid 7/10/2024), and six World Famous Sports
+  shipments of show PO B671437 dated 12/31/2025, 12/31/2026 or blank set to the show order date 8/26/2025.
+  A re-import of the Placed Order Summary takes the sheet's dates again, so the sheet should be fixed too.

@@ -18,6 +18,7 @@ import { FreightAllowanceCard } from '@/components/orders/FreightAllowanceCard'
 import { WwdInvoiceList } from '@/components/payments/WwdInvoiceList'
 import { VendorPicker } from '@/components/vendors/VendorPicker'
 import { Alert, Badge, Button, Select, Spinner } from '@/components/ui'
+import { Pencil } from 'lucide-react'
 
 const d = (s: string | null | undefined) => (s ? new Date(s).toLocaleDateString() : null)
 
@@ -79,6 +80,7 @@ export default function OrderDetailPage() {
                 <Button size="sm" variant="ghost" onClick={() => setChangingVendor(false)}>Cancel</Button>
               </span>
             ) : <Button size="sm" variant="ghost" onClick={() => setChangingVendor(true)}>Change vendor</Button>}
+            <Link to={`${ROUTES.orders}/${o.id}/edit`} className="inline-flex h-9 items-center gap-1 rounded-lg border border-stone-300 bg-white px-3 text-sm font-medium text-stone-800 hover:bg-stone-50"><Pencil className="size-4" aria-hidden="true" />Edit</Link>
             <Select value={o.status} onChange={(e) => void setStatus(e.target.value as OrderStatus)} aria-label="Change status" className="h-9 w-52">
               {ORDER_STATUSES.map((s) => <option key={s} value={s}>{ORDER_STATUS_LABELS[s]}</option>)}
             </Select>
