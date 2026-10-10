@@ -79,3 +79,24 @@ export function wantLink(l: FoundLink, subject: string | null): FileKind | null 
   if (/catalog|catalogue|price ?list|line ?sheet|order ?form|lookbook|look book/i.test(l.text)) return kind === 'other' ? 'catalog' : kind
   return null
 }
+
+// ---- order paperwork (Dana, Oct 10) ----
+const CONFIRM = /order ?confirm|confirmation|acknowledg|\back\b|sales ?order|\bs\.?o\.? ?#? ?\d|pro ?forma|order ?(receipt|summary)/i
+const INVOICE = /invoice|\binv\b|\binv ?#? ?\d|\binv\d/i
+const PAPER_FILE = /\.(pdf|png|jpe?g)$/i
+
+/**
+ * A vendor's order confirmation or invoice by its file name (then the email subject), PDFs and pictures
+ * only; signature pictures never. Claude reads it afterwards and refiles it if the name was wrong.
+ */
+export function paperworkKind(a: { file_name: string; size: number | null }, subject: string | null): 'confirmation' | 'invoice' | null {
+  if (!PAPER_FILE.test(a.file_name) || /^(image|img|logo|outlook|signature|banner)[-_ ]?\d*\./i.test(a.file_name)) return null
+  if (/\.(png|jpe?g)$/i.test(a.file_name) && (a.size ?? 0) < 100 * 1024) return null
+  if (/credit|statement|price ?list|catalog|packing|\bbol\b|quote|specials?\b/i.test(a.file_name)) return null
+  const name = a.file_name.replace(/[_\-.]+/g, ' ')
+  if (CONFIRM.test(name)) return 'confirmation'
+  if (INVOICE.test(name)) return 'invoice'
+  if (CONFIRM.test(subject ?? '')) return 'confirmation'
+  if (INVOICE.test(subject ?? '') && !/statement|past due|reminder/i.test(subject ?? '')) return 'invoice'
+  return null
+}

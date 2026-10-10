@@ -61,6 +61,7 @@ export const ROUTES = {
   vendors: '/vendors',
   documentImport: '/vendors/import-documents',
   orders: '/orders',
+  orderChecks: '/orders/paperwork',
   purchaseOrders: '/purchase-orders',
   returns: '/returns',
   shipments: '/shipments',

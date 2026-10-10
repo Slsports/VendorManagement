@@ -1542,3 +1542,21 @@ order newest to oldest." On a conversation, the sender's name (and outside To/Cc
 with** (/mail/with): every email from, to or copied to that address, newest first, sortable by its headers,
 each row opening its conversation. "Everyone at this company" widens it to the whole address ending
 (@acme.com), not offered for Gmail, Yahoo and the like. Our own addresses are not links. Migration 0077.
+
+## Oct 10 — Order paperwork: four documents, two checks, the person who placed the order looks
+Dana: "Confirmations are not invoices so they definitely need their own folder." Four documents to an order,
+each with its own vendor folder: **Our orders**, **LS POs**, **Confirmations**, **Invoices**. The order page
+shows the four with a tick when on file.
+- A vendor's confirmation or invoice attached to their email (last 30 days going in) is saved to that folder
+  for the year; a confirmation or invoice uploaded or saved from an email does the same. Old files from the bulk
+  import, or dated more than six months back, are filed without a check.
+- **Check 1, confirmation vs. our order:** Claude reads it, finds the order (PO number, else the vendor's one
+  open order, else the one within 3% of the total; else asks "Which order is this for?"), and compares it with
+  our order or LS PO on file, else the PO we emailed from orders@ (saved to Our orders), else the order record.
+- **Check 2, invoice vs. confirmation:** compared with the final confirmation for the order.
+- Each check is a summary (green when everything matches) with every item and field compared and, with issues,
+  an email Claude drafted to the vendor. It goes to **whoever placed the order** even when clean: Jarrett's
+  orders to Jarrett, everything else (Dana, "D&J", people no longer here) to Dana. "Looked at by" hands it to
+  anyone else. Dashboard card "Confirmations & invoices to review". Nothing is sent until that person edits and
+  presses Send; marking a confirmation looked at sets the order to Confirmed.
+Migrations 0078–0079; Edge Function order-check runs every minute.

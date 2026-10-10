@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { fileAttachmentToVendor } from '@/services/mail'
+import { kickOrderChecks } from '@/services/orderChecks'
 import { DOC_FOLDERS, folderLabel, guessFolder, kindFor, yearChoices, type DocFolder } from '@/lib/documents'
 import { errorMessage } from '@/lib/utils'
 import { Modal } from '@/components/shared/Modal'
@@ -24,7 +25,10 @@ export function SaveToDocumentsDialog({ attachment, vendor, subject, receivedAt,
       setBusy(true)
       try {
         await fileAttachmentToVendor(attachment.id, vendor.id, kindFor(folder), undefined, year)
-        toast.success(`Saved to ${vendor.name} › ${folderLabel(folder)} › ${year}`)
+        // confirmations and invoices: Claude finds the order and checks them (Dana, Oct 10)
+        const checked = folder === 'confirmations' || folder === 'invoices'
+        if (checked) kickOrderChecks()
+        toast.success(`Saved to ${vendor.name} › ${folderLabel(folder)} › ${year}${checked ? '. Claude is checking it against the order.' : ''}`)
         onSaved()
       } catch (err) {
         toast.error(errorMessage(err))

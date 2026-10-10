@@ -10,8 +10,11 @@ export type { VendorIndex }
 const FOLDER_WORDS: [DocFolder, RegExp][] = [
   ['shipping', /packing ?(slip|list)s?|\bbols?\b|bills? of lading|delivery receipts?|proof of delivery|\bpods?\b|freight|shipping|tracking/i],
   ['credits', /credits?|credit memos?|\bcms?\b|\brmas?\b|return authori[sz]ations?/i],
-  ['invoices', /invoices?|\binv\b|statements?|receipts?|remittances?|confirmations?|sales orders?|payments?|paid|billing|bills\b/i],
-  ['order_forms', /order ?(forms?|writers?|sheets?)|reorder|booking forms?|\borders?\b|\bpos?\b|purchase orders?/i],
+  ['confirmations', /confirmations?|acknowledg(e?ments?)?|\backs?\b|sales orders?/i],
+  ['ls_pos', /\bls ?pos?\b|lightspeed/i],
+  ['invoices', /invoices?|\binv\b|statements?|receipts?|remittances?|payments?|paid|billing|bills\b/i],
+  ['order_forms', /order ?(forms?|writers?|sheets?)|reorder|booking forms?/i],
+  ['orders', /\borders?\b|\bpos?\b|purchase orders?/i],
   ['price_lists', /price ?(lists?|sheets?|books?)|pricing|\bmsrp\b|wholesale|\bprices?\b/i],
   ['specials', /specials?|promos?|promotions?|close ?outs?|clearance|show (offers?|programs?|deals?)|buy group|deals?/i],
   ['catalogs', /catalogs?|catalogues?|line ?sheets?|look ?books?|brochures?|collections?|new arrivals/i],

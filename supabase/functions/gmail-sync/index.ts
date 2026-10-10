@@ -6,7 +6,7 @@ import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { Gmail, GmailError, googleAccessToken } from '../_shared/gmail.ts'
 import { clueText, htmlBody, isBulk, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
 import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type VendorIndex } from '../_shared/mailMatch.ts'
-import { extractLinks, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
+import { extractLinks, paperworkKind, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
 import { aiEnabled, readArtwork, readEmailVendors, readPaidNote, readReplyNeeded, readSender, sortEmails, type ArtEmail, type ReplyEmail, type UnsureEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
@@ -110,6 +110,8 @@ async function syncAccount(db: SupabaseClient, acct: Account) {
     if (done && Date.now() - started < TIME_BUDGET_MS) await readBulkHeaders(db, gmail, org)
     // Price lists, catalogs and order forms into the vendor's files, a few emails a run.
     if (done && Date.now() - started < TIME_BUDGET_MS) await saveVendorFiles(db, gmail, org, started)
+    // Vendors' order confirmations and invoices into their folders; order-check compares them with the order.
+    if (done && Date.now() - started < TIME_BUDGET_MS) await savePaperwork(db, gmail, org, started)
     // Freight bills from carriers: a bill per invoice email; Claude reads the PDF when it is attached.
     if (done && Date.now() - started < TIME_BUDGET_MS) await freightBills(db, gmail, org, started)
     // Claude reads what the rules could not place (only with an API key).
@@ -294,7 +296,7 @@ async function freightBills(db: SupabaseClient, gmail: Gmail, org: string, start
   }
 
   const { data: queue } = await db.from('emails')
-    .select('id, gmail_id, subject, body_text, received_at, thread:email_threads!inner(carrier_id, carriers(name)), attachments:email_attachments(id, file_name, mime_type, gmail_attachment_id)')
+    .select('id, gmail_id, subject, body_text, received_at, thread:email_threads!emails_thread_id_fkey!inner(carrier_id, carriers(name)), attachments:email_attachments(id, file_name, mime_type, gmail_attachment_id)')
     .eq('organization_id', org).eq('direction', 'in').not('thread.carrier_id', 'is', null).is('freight_checked_at', null)
     .order('received_at', { ascending: false }).limit(6)
   for (const e of queue ?? []) {
@@ -377,7 +379,7 @@ async function freightBills(db: SupabaseClient, gmail: Gmail, org: string, start
   // Our own "it's paid" on a carrier's conversation (Dana, Oct 8): "This order was paid by ACH 10/8/26 by Dana".
   if (!aiEnabled()) return
   const { data: ours } = await db.from('emails')
-    .select('id, subject, body_text, received_at, thread:email_threads!inner(carrier_id)')
+    .select('id, subject, body_text, received_at, thread:email_threads!emails_thread_id_fkey!inner(carrier_id)')
     .eq('organization_id', org).eq('direction', 'out').is('paid_read_at', null).not('thread.carrier_id', 'is', null)
     .gte('received_at', new Date(Date.now() - 45 * 86_400_000).toISOString()).order('received_at', { ascending: false }).limit(5)
   for (const e of ours ?? []) {
@@ -453,6 +455,43 @@ async function saveVendorFiles(db: SupabaseClient, gmail: Gmail, org: string, st
       console.error(`files from ${e.id}:`, err instanceof Error ? err.message : err)
     }
     await db.from('emails').update({ files_scanned_at: new Date().toISOString() }).eq('id', e.id)
+  }
+}
+
+/**
+ * Order paperwork (Dana, Oct 10): a vendor's confirmation or invoice attached to their email goes into that
+ * vendor's Confirmations or Invoices folder for the year; saving it starts the order check (order-check reads
+ * it, finds the order, compares, and puts it in front of whoever placed the order). Last 30 days, a few a run.
+ */
+async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, started: number) {
+  const { data: queue } = await db.from('emails')
+    .select('id, gmail_id, vendor_id, subject, received_at, attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
+    .eq('organization_id', org).eq('direction', 'in').not('vendor_id', 'is', null).is('paper_scanned_at', null).eq('has_attachments', true).not('is_bulk', 'is', true)
+    .gte('received_at', new Date(Date.now() - 30 * 86_400_000).toISOString())
+    .order('received_at', { ascending: false }).limit(10)
+  for (const e of queue ?? []) {
+    if (Date.now() - started > TIME_BUDGET_MS) break
+    try {
+      const atts = (e.attachments ?? []) as { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; vendor_link_id: string | null }[]
+      for (const a of atts) {
+        const kind = a.vendor_link_id || !a.gmail_attachment_id || (a.size ?? 0) > 15 * 1024 * 1024 ? null : paperworkKind(a, e.subject)
+        if (!kind) continue
+        const bytes = await attachmentBytes(gmail, e.gmail_id, a.gmail_attachment_id!)
+        const path = `${org}/${e.vendor_id}/${crypto.randomUUID()}-${a.file_name.replace(/[^A-Za-z0-9._-]+/g, '_')}`
+        const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: a.mime_type ?? 'application/pdf', upsert: false })
+        if (upErr) throw new Error(`Saving ${a.file_name}: ${upErr.message}`)
+        const { data: link, error } = await db.from('vendor_links').insert({
+          organization_id: org, vendor_id: e.vendor_id, kind, label: a.file_name.replace(/\.[a-z0-9]{2,5}$/i, ''), storage_path: path, file_name: a.file_name,
+          file_size: bytes.length, mime_type: a.mime_type, received_at: e.received_at.slice(0, 10), doc_year: Number(e.received_at.slice(0, 4)),
+          source: 'email', email_id: e.id, notes: `From an email: ${e.subject ?? '(no subject)'}`.slice(0, 300),
+        }).select('id').single()
+        if (error) throw new Error(error.message)
+        await db.from('email_attachments').update({ vendor_link_id: link.id, storage_path: path }).eq('id', a.id)
+      }
+    } catch (err) {
+      console.error(`paperwork from ${e.id}:`, err instanceof Error ? err.message : err)
+    }
+    await db.from('emails').update({ paper_scanned_at: new Date().toISOString() }).eq('id', e.id)
   }
 }
 

@@ -5,7 +5,7 @@ describe('vendor document folders', () => {
   it('puts each kind in its folder', () => {
     expect(folderOf('price_list')).toBe('price_lists')
     expect(folderOf('delivery_receipt')).toBe('shipping')
-    expect(folderOf('confirmation')).toBe('invoices')
+    expect(folderOf('confirmation')).toBe('confirmations')
     expect(folderOf('website')).toBe('other')
   })
   it('keeps a kind that fits the folder, else uses the folder kind', () => {

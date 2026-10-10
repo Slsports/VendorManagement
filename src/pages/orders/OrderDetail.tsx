@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { BackLink } from '@/components/shared/BackLink'
 import { OrderStatusBadge } from '@/components/orders/OrderStatusBadge'
 import { OrderDocumentsSection } from '@/components/orders/OrderDocumentsSection'
+import { OrderPaperworkSection } from '@/components/orders/OrderPaperworkSection'
 import { OrderRepsCard } from '@/components/orders/OrderRepsCard'
 import { CheckInPricing } from '@/components/orders/CheckInPricing'
 import { FreeShippingCard } from '@/components/orders/FreeShippingCard'
@@ -111,6 +112,7 @@ export default function OrderDetailPage() {
           {o.vendor ? <OrderRepsCard orderId={o.id} vendorId={o.vendor.id} takenBy={o.taken_by} canEdit={canEdit} onChange={q.refetch} /> : null}
           <FreeShippingCard order={o} vendor={o.vendor} canEdit={canEdit} onChange={q.refetch} />
           <FreightAllowanceCard key={`${o.freight_allowance_offered}-${o.freight_allowance}-${o.freight_allowance_pay_by}-${o.freight_allowance_received}`} order={o} vendorOffers={!!o.vendor?.freight_allowance_on_time} canEdit={canEdit} onChange={q.refetch} />
+          <OrderPaperworkSection orderId={o.id} documents={o.documents} />
           {o.vendor ? <OrderDocumentsSection orderId={o.id} vendorId={o.vendor.id} organizationId={o.organization_id} userId={profile?.id ?? null} documents={o.documents} canEdit={canEdit} onChange={q.refetch} /> : null}
           <section className="rounded-2xl border border-stone-200 bg-white p-5">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">History</h2>

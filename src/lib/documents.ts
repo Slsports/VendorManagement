@@ -1,12 +1,16 @@
 import type { VendorLinkKind } from '@/types'
 
 // The vendor's Documents folders (Dana, Oct 8): each holds certain kinds of file, with a year folder inside.
-export type DocFolder = 'price_lists' | 'catalogs' | 'invoices' | 'credits' | 'order_forms' | 'specials' | 'shipping' | 'other'
+export type DocFolder = 'price_lists' | 'catalogs' | 'orders' | 'ls_pos' | 'confirmations' | 'invoices' | 'credits' | 'order_forms' | 'specials' | 'shipping' | 'other'
 
 export const DOC_FOLDERS: { id: DocFolder; label: string; kinds: VendorLinkKind[] }[] = [
   { id: 'price_lists', label: 'Price lists', kinds: ['price_list'] },
   { id: 'catalogs', label: 'Catalogs', kinds: ['catalog'] },
-  { id: 'invoices', label: 'Invoices', kinds: ['invoice', 'confirmation', 'order', 'payment'] },
+  // the four documents to an order (Dana, Oct 10): our order, the LS PO, the vendor's confirmation, the invoice
+  { id: 'orders', label: 'Our orders', kinds: ['order'] },
+  { id: 'ls_pos', label: 'LS POs', kinds: ['ls_po'] },
+  { id: 'confirmations', label: 'Confirmations', kinds: ['confirmation'] },
+  { id: 'invoices', label: 'Invoices', kinds: ['invoice', 'payment'] },
   { id: 'credits', label: 'Credits', kinds: ['credit'] },
   { id: 'order_forms', label: 'Order forms', kinds: ['order_form'] },
   { id: 'specials', label: 'Show specials', kinds: ['specials'] },
@@ -45,7 +49,10 @@ export const todayIso = () => new Date().toISOString().slice(0, 10)
 const GUESS: [DocFolder, RegExp][] = [
   ['shipping', /packing ?(slip|list)|\bbol\b|bill of lading|delivery receipt|proof of delivery|\bpod\b|tracking/i],
   ['credits', /credit|\bcm\b ?\d|\brma\b|return authori[sz]ation/i],
-  ['invoices', /invoice|\binv\b|statement|receipt|remittance|order confirmation|confirmation|\bso\b ?\d|sales order/i],
+  ['confirmations', /order ?confirm|confirmation|acknowledg|\bso\b ?#? ?\d|sales ?order|pro ?forma/i],
+  ['ls_pos', /\bls ?po\b|lightspeed/i],
+  ['invoices', /invoice|\binv\b|statement|receipt|remittance/i],
+  ['orders', /purchase ?order|\bpo\b ?#? ?\d/i],
   ['order_forms', /order ?(form|writer|sheet)|reorder|booking form/i],
   ['price_lists', /price ?(list|sheet|book)|pricing|\bmsrp\b|wholesale/i],
   ['specials', /special|promo|close ?out|clearance|show (offer|program)|buy group/i],

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Download, ExternalLink, FileText, Folder, FolderInput, FolderOpen, Link2, Mail, Trash2, Upload } from 'lucide-react'
 import { addVendorLink, deleteVendorLink, downloadVendorFile, listVendorLinks, moveVendorDocument, uploadVendorFile, zipVendorDocuments, type VendorLinkRow } from '@/services/lines'
+import { kickOrderChecks } from '@/services/orderChecks'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { saveBlob } from '@/lib/viewer'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
@@ -45,6 +46,8 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
         notes: notes.trim() || null, received_at: todayIso(), doc_year: year, created_by: userId,
       })
     }
+    // confirmations and invoices: Claude finds the order and checks them (Dana, Oct 10)
+    if (folder === 'confirmations' || folder === 'invoices') kickOrderChecks()
   }
 
   async function drop(e: DragEvent, folder: DocFolder) {

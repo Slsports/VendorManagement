@@ -1,4 +1,4 @@
-// Schedule gmail-sync on the hosted project: pg_cron calls the function every minute with a shared
+// Schedule gmail-sync (and order-check) on the hosted project: pg_cron calls the function every minute with a shared
 // secret header. The secret is generated here, stored in Vault and as the function secret
 // MAIL_CRON_SECRET, and never printed. Safe to re-run (keeps an existing secret).
 //   NODE_USE_ENV_PROXY=1 node scripts/setup-mail-cron.mjs [--every "* * * * *"] [--off] [--no-schedule]
@@ -14,9 +14,9 @@ const args = process.argv.slice(2)
 const every = args.includes('--every') ? args[args.indexOf('--every') + 1] : '* * * * *'
 
 await query(`create extension if not exists pg_cron; create extension if not exists pg_net with schema extensions;`)
-await query(`select cron.unschedule(jobid) from cron.job where jobname = 'gmail-sync'`)
+await query(`select cron.unschedule(jobid) from cron.job where jobname in ('gmail-sync', 'order-check')`)
 if (args.includes('--off')) {
-  console.log('gmail-sync schedule removed')
+  console.log('gmail-sync and order-check schedules removed')
   process.exit(0)
 }
 
@@ -38,9 +38,12 @@ const call = `select net.http_post(
   headers := jsonb_build_object('Content-Type', 'application/json', 'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'mail_cron_secret')),
   body := '{}'::jsonb,
   timeout_milliseconds := 60000)`
+// order-check (Dana, Oct 10): Claude reads and compares confirmations and invoices, one or two a run.
+const checkCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/order-check').replace('timeout_milliseconds := 60000', 'timeout_milliseconds := 150000')
 if (!args.includes('--no-schedule')) {
   await query(`select cron.schedule('gmail-sync', ${lit(every)}, ${lit(call)})`)
-  console.log(`gmail-sync scheduled (${every})`)
+  await query(`select cron.schedule('order-check', ${lit(every)}, ${lit(checkCall)})`)
+  console.log(`gmail-sync and order-check scheduled (${every})`)
 }
 if (args.includes('--run-now')) {
   await query(call)

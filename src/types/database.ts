@@ -4,6 +4,8 @@
  * Hand-written for migration 0001. Once the Supabase CLI is linked, regenerate with:
  *   npx supabase gen types typescript --project-id "$SUPABASE_PROJECT_REF" > src/types/database.ts
  */
+export type OrderCheckStatus = 'reading' | 'needs_order' | 'comparing' | 'to_review' | 'done' | 'not_paperwork' | 'dismissed' | 'failed'
+
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
@@ -450,6 +452,19 @@ export type Database = {
           { foreignKeyName: 'freight_bills_email_id_fkey'; columns: ['email_id']; isOneToOne: false; referencedRelation: 'emails'; referencedColumns: ['id'] },
         ]
       }
+      order_checks: {
+        Row: { id: string; organization_id: string; vendor_id: string | null; order_id: string | null; kind: 'confirmation' | 'invoice'; document_id: string; email_id: string | null; status: OrderCheckStatus; working_at: string | null; reading: Json | null; po_number: string | null; doc_number: string | null; doc_date: string | null; doc_total: number | null; against: string | null; against_ids: string[]; result: 'match' | 'issues' | null; summary: string | null; rows: Json; issues: Json; draft_to: string[]; draft_subject: string | null; draft_body: string | null; read_note: string | null; assigned_to: string | null; assigned_at: string | null; reviewed_by: string | null; reviewed_at: string | null; outcome: 'sent' | 'no_email' | null; sent_thread_id: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; vendor_id?: string | null; order_id?: string | null; kind: 'confirmation' | 'invoice'; document_id: string; email_id?: string | null; status?: OrderCheckStatus; working_at?: string | null; reading?: Json | null; po_number?: string | null; doc_number?: string | null; doc_date?: string | null; doc_total?: number | null; against?: string | null; against_ids?: string[]; result?: 'match' | 'issues' | null; summary?: string | null; rows?: Json; issues?: Json; draft_to?: string[]; draft_subject?: string | null; draft_body?: string | null; read_note?: string | null; assigned_to?: string | null; assigned_at?: string | null; reviewed_by?: string | null; reviewed_at?: string | null; outcome?: 'sent' | 'no_email' | null; sent_thread_id?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; vendor_id?: string | null; order_id?: string | null; kind?: 'confirmation' | 'invoice'; document_id?: string; email_id?: string | null; status?: OrderCheckStatus; working_at?: string | null; reading?: Json | null; po_number?: string | null; doc_number?: string | null; doc_date?: string | null; doc_total?: number | null; against?: string | null; against_ids?: string[]; result?: 'match' | 'issues' | null; summary?: string | null; rows?: Json; issues?: Json; draft_to?: string[]; draft_subject?: string | null; draft_body?: string | null; read_note?: string | null; assigned_to?: string | null; assigned_at?: string | null; reviewed_by?: string | null; reviewed_at?: string | null; outcome?: 'sent' | 'no_email' | null; sent_thread_id?: string | null; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'order_checks_order_id_fkey'; columns: ['order_id']; isOneToOne: false; referencedRelation: 'orders'; referencedColumns: ['id'] },
+          { foreignKeyName: 'order_checks_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+          { foreignKeyName: 'order_checks_document_id_fkey'; columns: ['document_id']; isOneToOne: false; referencedRelation: 'vendor_links'; referencedColumns: ['id'] },
+          { foreignKeyName: 'order_checks_email_id_fkey'; columns: ['email_id']; isOneToOne: false; referencedRelation: 'emails'; referencedColumns: ['id'] },
+          { foreignKeyName: 'order_checks_assigned_to_fkey'; columns: ['assigned_to']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+          { foreignKeyName: 'order_checks_reviewed_by_fkey'; columns: ['reviewed_by']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+        ]
+      }
       snoozes: {
         Row: { id: string; organization_id: string; profile_id: string; thread_id: string | null; review_item_id: string | null; until: string; woke_by_reply: boolean; created_at: string }
         Insert: { id?: string; organization_id: string; profile_id: string; thread_id?: string | null; review_item_id?: string | null; until: string; woke_by_reply?: boolean; created_at?: string }
@@ -639,6 +654,8 @@ export type Database = {
       team_overview: { Args: { p_org: string }; Returns: { profile_id: string; full_name: string; role: string; needs: number; needs_oldest: string | null; no_answer: number; no_answer_oldest: string | null; reviews: number; reviews_oldest: string | null; working: number; working_needs: number; vendors: number; last_sent: string | null }[] }
       propose_category_assignments: { Args: { p_rule: string }; Returns: number }
       answer_mail_reply: { Args: { p_item: string; p_needs_answer: boolean }; Returns: undefined }
+      order_reviewer: { Args: { p_order: string }; Returns: string | null }
+      order_check_action: { Args: { p_check: string; p_action: 'set_order' | 'assign' | 'done' | 'sent' | 'recheck' | 'dismiss' | 'reopen'; p_order?: string | null; p_profile?: string | null; p_thread?: string | null }; Returns: undefined }
       mail_with: { Args: { p_org: string; p_email: string; p_company?: boolean; p_limit?: number }; Returns: { id: string; thread_id: string; direction: 'in' | 'out' | 'internal'; from_email: string | null; from_name: string | null; to_emails: string[]; cc_emails: string[]; subject: string | null; snippet: string | null; received_at: string; has_attachments: boolean; vendor_id: string | null; vendor_name: string | null }[] }
       mail_free_domain: { Args: { p_domain: string }; Returns: boolean }
       set_art_status: { Args: { p_thread: string; p_status: 'waiting' | 'needs_changes' | 'changes_sent' | 'approved' | 'none' }; Returns: undefined }
@@ -671,7 +688,7 @@ export type Database = {
       review_status: 'pending' | 'accepted' | 'rejected'
       order_status: 'open' | 'awaiting_confirmation' | 'confirmed' | 'shipped' | 'received' | 'entered' | 'ready_to_pay' | 'paid' | 'cancelled'
       order_season: 'summer' | 'winter'
-      link_kind: 'catalog' | 'price_list' | 'order_form' | 'specials' | 'website' | 'other' | 'invoice' | 'credit' | 'confirmation' | 'order' | 'packing_slip' | 'payment' | 'freight_bill' | 'delivery_receipt'
+      link_kind: 'catalog' | 'price_list' | 'order_form' | 'specials' | 'website' | 'other' | 'invoice' | 'credit' | 'confirmation' | 'order' | 'ls_po' | 'packing_slip' | 'payment' | 'freight_bill' | 'delivery_receipt'
     }
     CompositeTypes: {
       [_ in never]: never

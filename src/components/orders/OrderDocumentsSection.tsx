@@ -2,15 +2,16 @@ import { useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
 import { ExternalLink, FileText, Plus, Trash2 } from 'lucide-react'
 import { addVendorLink, deleteVendorLink, downloadVendorFile, uploadVendorFile } from '@/services/lines'
+import { kickOrderChecks } from '@/services/orderChecks'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { LINK_KIND_LABELS } from '@/lib/vendors'
 import { errorMessage } from '@/lib/utils'
 import type { VendorLink, VendorLinkKind } from '@/types'
 import { Badge, Button, FormField, Input, Select } from '@/components/ui'
 
-const KINDS: VendorLinkKind[] = ['confirmation', 'invoice', 'order', 'packing_slip', 'payment', 'other']
+const KINDS: VendorLinkKind[] = ['order', 'ls_po', 'confirmation', 'invoice', 'packing_slip', 'payment', 'other']
 
-/** The paper behind an order: confirmation, invoice, packing slip, payment proof. Upload or paste a link. */
+/** The paper behind an order: our order, LS PO, confirmation, invoice, packing slip, payment proof. Upload or paste a link. */
 export function OrderDocumentsSection({ orderId, vendorId, organizationId, userId, documents, canEdit, onChange }: { orderId: string; vendorId: string; organizationId: string; userId: string | null; documents: VendorLink[]; canEdit: boolean; onChange: () => Promise<void> }) {
   const [adding, setAdding] = useState(false)
   const { view, viewer } = useDocumentViewer()
@@ -32,7 +33,9 @@ export function OrderDocumentsSection({ orderId, vendorId, organizationId, userI
         await addVendorLink({ organization_id: organizationId, vendor_id: vendorId, order_id: orderId, kind, label: name, url: /^https?:\/\//i.test(url.trim()) ? url.trim() : `https://${url.trim()}`, received_at: new Date().toISOString().slice(0, 10), created_by: userId })
       } else throw new Error('Choose a file or paste a link')
       setAdding(false); setFile(null); setUrl(''); setLabel('')
-      toast.success('Attached')
+      // a confirmation or invoice: Claude checks it against the order (Dana, Oct 10)
+      if (file && (kind === 'confirmation' || kind === 'invoice')) { kickOrderChecks(); toast.success('Attached. Claude is checking it against the order; the result shows here in a minute or two.') }
+      else toast.success('Attached')
       await onChange()
     } catch (err) {
       toast.error(errorMessage(err))

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { extractLinks, guessKind, seasonLabel, wantAttachment, wantLink } from './offerFiles.ts'
+import { extractLinks, guessKind, paperworkKind, seasonLabel, wantAttachment, wantLink } from './offerFiles.ts'
 
 describe('what kind of file', () => {
   it('reads the file name first, then the subject', () => {
@@ -30,5 +30,26 @@ describe('what gets saved', () => {
     const links = extractLinks('<p><a href="https://brand.example/files/Fall26_PriceList.pdf">here</a> <a href="https://issuu.com/brand/2026">View our catalog</a> <a href="https://brand.example/unsubscribe?u=1">Unsubscribe</a> <a href="https://facebook.com/brand">Facebook</a></p>')
     expect(links).toHaveLength(4)
     expect(links.map((l) => wantLink(l, 'Fall news'))).toEqual(['price_list', 'catalog', null, null])
+  })
+})
+
+describe('order paperwork', () => {
+  const f = (file_name: string, size = 200_000) => ({ file_name, size })
+  it('finds confirmations and invoices by file name, then subject', () => {
+    expect(paperworkKind(f('Order Confirmation 55123.pdf'), null)).toBe('confirmation')
+    expect(paperworkKind(f('SO-55123.pdf'), null)).toBe('confirmation')
+    expect(paperworkKind(f('Sales_Order_Acknowledgement.pdf'), null)).toBe('confirmation')
+    expect(paperworkKind(f('INV_88123.pdf'), null)).toBe('invoice')
+    expect(paperworkKind(f('Invoice 88123.pdf'), 'Your order has shipped')).toBe('invoice')
+    expect(paperworkKind(f('55123.pdf'), 'Order Confirmation for PO SLS-4471')).toBe('confirmation')
+    expect(paperworkKind(f('88123.pdf'), 'Invoice 88123 from Ty')).toBe('invoice')
+  })
+  it('leaves other files alone', () => {
+    expect(paperworkKind(f('Price List 2026.pdf'), 'Invoice attached')).toBeNull()
+    expect(paperworkKind(f('Statement.pdf'), 'Invoice')).toBeNull()
+    expect(paperworkKind(f('image001.png', 5000), 'Order confirmation')).toBeNull()
+    expect(paperworkKind(f('Order Confirmation.xlsx'), null)).toBeNull()
+    expect(paperworkKind(f('88123.pdf'), 'Past due invoice reminder')).toBeNull()
+    expect(paperworkKind(f('photo.pdf'), 'Hello')).toBeNull()
   })
 })

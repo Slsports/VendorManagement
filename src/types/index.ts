@@ -62,3 +62,5 @@ export type Email = Tables<'emails'>
 export type EmailAttachment = Tables<'email_attachments'>
 export type Need = Tables<'needs'>
 export type MailView = EmailThread['view']
+export type OrderCheck = Tables<'order_checks'>
+export type { OrderCheckStatus } from './database'

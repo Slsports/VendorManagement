@@ -257,7 +257,7 @@ export interface SendEmailInput {
   vendor_link_ids?: string[]
 }
 
-async function functionError(error: unknown): Promise<Error> {
+export async function functionError(error: unknown): Promise<Error> {
   // supabase-js wraps a non-2xx answer; the function's own message is in the response body.
   const ctx = (error as { context?: Response }).context
   if (ctx && typeof ctx.json === 'function') {

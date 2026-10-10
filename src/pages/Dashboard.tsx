@@ -12,6 +12,7 @@ import { FreightForYouPanel } from '@/components/freight/FreightForYouPanel'
 import { WorkingOrdersPanel } from '@/components/mail/WorkingOrdersPanel'
 import { FreightAllowancePanel } from '@/components/orders/FreightAllowancePanel'
 import { ArtApprovalsPanel } from '@/components/mail/ArtApprovalsPanel'
+import { PaperworkPanel } from '@/components/orders/PaperworkPanel'
 import { useViewAs } from '@/hooks/useViewAs'
 
 const KPIS = [
@@ -66,6 +67,7 @@ export default function DashboardPage() {
 
       <section className="mt-6 grid gap-4 lg:grid-cols-3">
         <MailForYouPanel />
+        <PaperworkPanel />
         <ArtApprovalsPanel />
         <WorkingOrdersPanel />
         <FreightAllowancePanel />

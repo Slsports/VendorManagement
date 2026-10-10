@@ -52,6 +52,7 @@ const MailSettings = lazy(() => import('@/pages/settings/MailSettings'))
 const MailPage = lazy(() => import('@/pages/mail/MailPage'))
 const ThreadPage = lazy(() => import('@/pages/mail/ThreadPage'))
 const MailWithPage = lazy(() => import('@/pages/mail/MailWithPage'))
+const OrderCheckPage = lazy(() => import('@/pages/orders/OrderCheckPage'))
 const VendorScoresReport = lazy(() => import('@/pages/reports/VendorScoresReport'))
 
 const STAFF = ['admin', 'manager', 'buyer', 'viewer'] as const
@@ -115,6 +116,7 @@ export default function App() {
                 <Route path={`${ROUTES.mail}/:id`} element={<ThreadPage />} />
                 <Route path={ROUTES.mergeReport} element={<MergeReport />} />
                 <Route path={ROUTES.orders} element={<OrderList />} />
+                <Route path={`${ROUTES.orderChecks}/:id`} element={<OrderCheckPage />} />
                 <Route path={`${ROUTES.orders}/:id`} element={<OrderDetail />} />
                 <Route path={`${ROUTES.orders}/:id/edit`} element={<OrderEdit />} />
                 <Route path={ROUTES.purchaseOrders} element={<PurchaseOrderList />} />
