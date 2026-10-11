@@ -69,7 +69,7 @@ export default function DashboardPage() {
         <MailForYouPanel />
         <PaperworkPanel />
         <ArtApprovalsPanel />
-        <PlaceholderPanel p={PANELS[0]} />
+        <WorkingOrdersPanel />
         <FreightAllowancePanel />
         <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
           <h2 className="text-sm font-semibold text-stone-900">Review queue</h2>
@@ -89,10 +89,10 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-        {/* Dana, Oct 11: "switch the future orders card with the orders in progress card" */}
-        <WorkingOrdersPanel />
         {PANELS.slice(1).map((p) => <PlaceholderPanel key={p.title} p={p} />)}
         <FreightForYouPanel />
+        {/* Dana, Oct 11: the future-dated orders card moves down */}
+        <PlaceholderPanel p={PANELS[0]} />
       </section>
     </div>
   )
