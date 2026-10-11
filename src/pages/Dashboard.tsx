@@ -6,7 +6,6 @@ import { listReviewItems } from '@/services/vendors'
 import { mySnoozes } from '@/services/snooze'
 import { countOrdersByStatus } from '@/services/orders'
 import { ROUTES } from '@/lib/constants'
-import { PageHeader } from '@/components/shared/PageHeader'
 import { MailForYouPanel } from '@/components/mail/MailForYouPanel'
 import { FreightForYouPanel } from '@/components/freight/FreightForYouPanel'
 import { WorkingOrdersPanel } from '@/components/mail/WorkingOrdersPanel'
@@ -24,8 +23,10 @@ const KPIS = [
 ] as const
 
 const PANELS = [
-  { title: 'Overdue and future-dated orders', phase: 4, text: 'Orders 30 days past their quoted ship date, and pre-bookings shipping more than 30 days out.' },
+  // two separate cards (Dana, Oct 11)
+  { title: 'Future-dated orders', phase: 4, text: 'Pre-bookings shipping more than 30 days out.' },
   { title: 'Recent activity', phase: 3, text: 'Who changed what, across vendors, orders and payments.' },
+  { title: 'Overdue orders', phase: 4, text: 'Orders 30 days past their quoted ship date.' },
 ] as const
 
 export default function DashboardPage() {
@@ -48,14 +49,11 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <PageHeader
+      <DashboardCards
         title={first ? `Good to see you, ${first}` : 'Dashboard'}
         description="The numbers below go live as each phase lands. Navigation, roles and the shell are in place now."
-      />
-
-      <section aria-label="Key figures" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {KPIS.map(({ label, icon: Icon, phase }) => (
-          <div key={label} className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+        tiles={KPIS.map(({ label, icon: Icon, phase }) => ({ id: `kpi_${label.toLowerCase().replace(/[^a-z]+/g, '_')}`, label, node: (
+          <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-stone-600">{label}</p>
               <Icon className="size-5 text-stone-400" aria-hidden="true" />
@@ -63,10 +61,8 @@ export default function DashboardPage() {
             {label === 'Open orders' ? <p className="mt-3 text-3xl font-semibold tracking-tight text-stone-900">{ordersQ.data ? openOrders : '—'}</p> : label === 'Payments due' ? <p className="mt-3 text-3xl font-semibold tracking-tight text-stone-900">{ordersQ.data ? awaitingPayment : '—'}</p> : <p className="mt-3 text-3xl font-semibold tracking-tight text-stone-300">—</p>}
             {label === 'Open orders' ? <p className="mt-1 text-xs text-stone-400">placed, not yet received</p> : label === 'Payments due' ? <p className="mt-1 text-xs text-stone-400">entered, not yet paid</p> : <p className="mt-1 text-xs text-stone-400">Live in Phase {phase}</p>}
           </div>
-        ))}
-      </section>
-
-      <DashboardCards cards={[
+        ) }))}
+        cards={[
         { id: 'mail', label: 'Mail for you', node: <MailForYouPanel /> },
         { id: 'paperwork', label: 'Confirmations & invoices to review', node: <PaperworkPanel /> },
         { id: 'art', label: 'Artwork approvals', node: <ArtApprovalsPanel /> },
@@ -94,7 +90,8 @@ export default function DashboardPage() {
         ) },
         { id: 'recent_activity', label: 'Recent activity', node: <PlaceholderPanel p={PANELS[1]} /> },
         { id: 'freight', label: 'Freight', node: <FreightForYouPanel /> },
-        { id: 'future_orders', label: 'Overdue and future-dated orders', node: <PlaceholderPanel p={PANELS[0]} /> },
+        { id: 'overdue_orders', label: 'Overdue orders', node: <PlaceholderPanel p={PANELS[2]} /> },
+        { id: 'future_orders', label: 'Future-dated orders', node: <PlaceholderPanel p={PANELS[0]} /> },
       ]} />
     </div>
   )

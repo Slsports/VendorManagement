@@ -1636,3 +1636,8 @@ extra address on orders@) and shows as Dana's "Old Gmail" feed, seen only by her
 Dana: "I want formatted to be the default" and links were not clickable. Every email now opens in its formatted
 version (plain text shows while it loads, or when there is none; "Plain text" still switches). In plain text, web
 addresses are links (new tab) and email addresses start a new email in VMS.
+
+## Oct 11 — Whole dashboard customizable; overdue and future-dated orders split
+Dana: "I want everything customizable" and "Overdue orders and Future-dated orders to be separate cards".
+Customize moved to the top of the dashboard and now covers the number boxes at the top too (reorder, hide),
+saved per login with the cards. The combined card became two: Overdue orders and Future-dated orders.
