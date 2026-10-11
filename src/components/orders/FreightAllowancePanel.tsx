@@ -7,6 +7,7 @@ import { freightAllowancesDue } from '@/services/wwd'
 import { allowanceState } from '@/lib/wwdAllowance'
 import { money, shortDate } from '@/lib/freight'
 import { ROUTES } from '@/lib/constants'
+import { CountCard } from '@/components/dashboard/CountCard'
 
 /** Dashboard (Dana, Oct 9): unpaid orders whose vendor credits the freight if paid by a date, soonest first. */
 export function FreightAllowancePanel() {
@@ -16,9 +17,9 @@ export function FreightAllowancePanel() {
   const rows = q.data ?? []
   if (!rows.length) return null
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
-      <h2 className="flex items-center gap-2 text-sm font-semibold text-stone-900"><BadgeDollarSign className="size-4 text-amber-500" aria-hidden="true" /> Pay on time for the freight back</h2>
-      <ul className="mt-2 divide-y divide-stone-100 text-sm">
+    <CountCard title={<span className="flex items-center gap-2"><BadgeDollarSign className="size-4 text-amber-500" aria-hidden="true" /> Pay on time for the freight back</span>} count={rows.length}
+      alert={rows.some((o) => allowanceState({ freight_allowance_pay_by: o.freight_allowance_pay_by, freight_allowance_received: null, paid_date: null }, today).tone === 'danger')}>
+      <ul className="divide-y divide-stone-100 text-sm">
         {rows.slice(0, 6).map((o) => {
           const s = allowanceState({ freight_allowance_pay_by: o.freight_allowance_pay_by, freight_allowance_received: null, paid_date: null }, today)
           return (
@@ -32,6 +33,6 @@ export function FreightAllowancePanel() {
         })}
       </ul>
       {rows.length > 6 ? <p className="mt-1 text-xs text-stone-500">and {rows.length - 6} more</p> : null}
-    </div>
+    </CountCard>
   )
 }

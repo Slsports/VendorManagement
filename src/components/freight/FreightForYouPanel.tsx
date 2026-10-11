@@ -7,6 +7,7 @@ import { freightForDashboard, listCarriers } from '@/services/freight'
 import { ROUTES } from '@/lib/constants'
 import { FREIGHT_STATUS, money, shortDate } from '@/lib/freight'
 import { Badge } from '@/components/ui'
+import { CountCard } from '@/components/dashboard/CountCard'
 
 /** Dashboard, for the carrier owner (Trevor) and anyone who also sees freight (Dana): bills to match and to pay. */
 export function FreightForYouPanel() {
@@ -19,12 +20,9 @@ export function FreightForYouPanel() {
   const toMatch = q.data?.toMatch ?? []
   const toPay = q.data?.toPay ?? []
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm lg:col-span-3">
-      <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold text-stone-900">Freight bills</h2>
-        <Link to={ROUTES.freight} className="text-sm font-medium text-brand hover:underline">Open Freight bills</Link>
-      </div>
-      {q.isLoading ? <p className="mt-4 text-sm text-stone-500">Checking…</p> : q.error ? <p className="mt-4 text-sm text-red-700">{q.error}</p> : (
+    <CountCard title="Freight bills" count={toMatch.length + toPay.length} loading={q.isLoading} error={q.error} alert={toPay.some((b) => !!b.due_date && b.due_date < today)}>
+      <Link to={ROUTES.freight} className="text-sm font-medium text-brand hover:underline">Open Freight bills</Link>
+      {(
         <div className="mt-3 grid gap-6 md:grid-cols-2">
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wide text-stone-500">To match ({toMatch.length})</h3>
@@ -57,6 +55,6 @@ export function FreightForYouPanel() {
           </div>
         </div>
       )}
-    </div>
+    </CountCard>
   )
 }

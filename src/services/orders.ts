@@ -5,7 +5,33 @@ export interface OrderRow extends Order {
   vendor: (Pick<Vendor, 'id' | 'name'> & { assigned_buyer_id?: string | null }) | null
 }
 
+// The dashboard's number boxes (Dana, Oct 11: "each box show a count and when we open it we see all the items").
+export type OrderView = 'open' | 'overdue' | 'future' | 'payments_due'
+const OPEN_STATUSES: OrderStatus[] = ['open', 'awaiting_confirmation', 'confirmed', 'shipped']
+export const ORDER_VIEW_LABELS: Record<OrderView, { title: string; help: string }> = {
+  open: { title: 'Open orders', help: 'Placed, not yet received.' },
+  overdue: { title: 'Overdue orders', help: 'Not received and more than 30 days past their ship date.' },
+  future: { title: 'Future-dated orders', help: 'Pre-bookings shipping more than 30 days from now.' },
+  payments_due: { title: 'Payments due', help: 'Entered in LS, not yet paid.' },
+}
+const daysFromToday = (n: number) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10) }
+
+function applyView<Q extends { in: (c: string, v: string[]) => Q; lt: (c: string, v: string) => Q; gt: (c: string, v: string) => Q }>(q: Q, view: OrderView): Q {
+  if (view === 'open') return q.in('status', OPEN_STATUSES)
+  if (view === 'overdue') return q.in('status', OPEN_STATUSES).lt('est_ship_date', daysFromToday(-30))
+  if (view === 'future') return q.in('status', ['open', 'awaiting_confirmation', 'confirmed']).gt('est_ship_date', daysFromToday(30))
+  return q.in('status', ['entered', 'ready_to_pay'])
+}
+
+/** The count behind one number box. */
+export async function countOrderView(organizationId: string, view: OrderView): Promise<number> {
+  const { count, error } = await applyView(supabase.from('orders').select('id', { count: 'exact', head: true }).eq('organization_id', organizationId), view)
+  if (error) throw error
+  return count ?? 0
+}
+
 export interface OrderFilters {
+  view?: OrderView
   status?: OrderStatus
   vendorId?: string
   search?: string
@@ -17,6 +43,7 @@ export interface OrderFilters {
 export async function listOrders(organizationId: string, f: OrderFilters = {}): Promise<OrderRow[]> {
   let q = supabase.from('orders').select('*, vendor:vendors(id, name, assigned_buyer_id)').eq('organization_id', organizationId)
   if (f.status) q = q.eq('status', f.status)
+  if (f.view) q = applyView(q, f.view)
   if (f.vendorId) q = q.eq('vendor_id', f.vendorId)
   if (f.season) q = q.eq('season', f.season)
   if (f.search) q = q.or(`description.ilike.%${f.search.replaceAll(',', ' ')}%,po_number.ilike.%${f.search.replaceAll(',', ' ')}%`)

@@ -6,6 +6,7 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listMailForMe, type ThreadRow } from '@/services/mail'
 import { senderLabel, waited } from '@/lib/mail'
 import { ROUTES } from '@/lib/constants'
+import { CountCard } from '@/components/dashboard/CountCard'
 
 /** Dashboard: vendor replies waiting on you, and mail you sent that has had no answer past the follow-up date. */
 export function MailForYouPanel() {
@@ -19,14 +20,9 @@ export function MailForYouPanel() {
   const noAnswer = q.data?.noAnswer ?? []
   const total = needs.length + noAnswer.length
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm lg:col-span-2">
-      <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold text-stone-900">{title}{total ? ` (${total})` : ''}</h2>
-        <Link to={ROUTES.mail} className="text-sm font-medium text-brand hover:underline">Open Mail</Link>
-      </div>
-      {q.isLoading ? <p className="mt-4 text-sm text-stone-500">Checking…</p>
-        : q.error ? <p className="mt-4 text-sm text-red-700">{q.error}</p>
-        : total === 0 ? (
+    <CountCard title={title} count={total} loading={q.isLoading} error={q.error} alert={noAnswer.length > 0}>
+      <Link to={ROUTES.mail} className="text-sm font-medium text-brand hover:underline">Open Mail</Link>
+      {total === 0 ? (
           <div className="mt-4 flex items-start gap-3 rounded-xl bg-stone-50 p-4">
             <Mail className="mt-0.5 size-5 shrink-0 text-stone-400" aria-hidden="true" />
             <p className="text-sm text-stone-600">Nothing waiting on you. Vendor replies to mail you own land here, and so does mail you sent that has had no answer.</p>
@@ -38,7 +34,7 @@ export function MailForYouPanel() {
           </ul>
         )}
       {needs.length > 8 || noAnswer.length > 8 ? <Link to={`${ROUTES.mail}?status=needs`} className="mt-2 inline-block text-xs text-brand hover:underline">See all</Link> : null}
-    </div>
+    </CountCard>
   )
 }
 

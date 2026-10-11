@@ -1648,3 +1648,11 @@ Dana: "a create an order button" on the review queue's "Does this need an answer
 to a vendor yet, it says so (file it first).
 - Same day: "Please make all cards eligible to be on top." Number boxes and cards are now one list in Customize:
   anything can go anywhere, top included. Neighbouring number boxes still share a row of four.
+
+## Oct 11 — Dashboard boxes show a count; click for the list
+Dana: "each box show a count and when we open it we see all the items … the cards should not show any data
+except for the number of items in it. When you click it, the list appears." Every dashboard card and number box
+now shows only its name and count (red when something is late); clicking opens the list across the row, and
+again closes it. The order boxes are live: Open orders, Overdue orders (not received, 30+ days past ship date),
+Payments due (entered, not paid), Future-dated orders (shipping 30+ days out); each opens its orders, with a link
+to the same list on the Orders page (?view=). The duplicate Overdue / Future-dated cards are gone.

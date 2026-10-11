@@ -4,10 +4,11 @@ import { Search } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useViewAs } from '@/hooks/useViewAs'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { countOrdersByStatus, listOrders } from '@/services/orders'
+import { countOrdersByStatus, listOrders, ORDER_VIEW_LABELS, type OrderView } from '@/services/orders'
 import { ORDER_STATUSES, ORDER_STATUS_LABELS, ROUTES, type OrderStatus } from '@/lib/constants'
 import { money, showLabel } from '@/lib/vendors'
 import { cn } from '@/lib/utils'
+import { BackLink } from '@/components/shared/BackLink'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { SortHeader } from '@/components/shared/SortHeader'
 import { useTableSort } from '@/hooks/useTableSort'
@@ -23,10 +24,13 @@ export default function OrderListPage() {
   const [params, setParams] = useSearchParams()
   const raw = params.get('status')
   const status = isOrderStatus(raw) ? raw : null
+  // from a dashboard number box: Open, Overdue, Future-dated or Payments due
+  const viewRaw = params.get('view')
+  const view = viewRaw && viewRaw in ORDER_VIEW_LABELS ? (viewRaw as OrderView) : null
   const season = (params.get('season') ?? '') as '' | 'summer' | 'winter'
   const search = params.get('q') ?? ''
   const [draft, setDraft] = useState(search)
-  const q = useSupabaseQuery(async () => (organization ? listOrders(organization.id, { status: status ?? undefined, season: season || undefined }) : []), [organization?.id, status, season])
+  const q = useSupabaseQuery(async () => (organization ? listOrders(organization.id, { status: status ?? undefined, view: view ?? undefined, season: season || undefined }) : []), [organization?.id, status, view, season])
   const counts = useSupabaseQuery(async (): Promise<Record<string, number>> => (organization ? countOrdersByStatus(organization.id) : {}), [organization?.id])
 
   const viewAs = useViewAs()
@@ -60,7 +64,8 @@ export default function OrderListPage() {
 
   return (
     <div>
-      <PageHeader title="Orders" description={status ? `${ORDER_STATUS_LABELS[status]} orders.` : 'Every order, from placement to payment. Loaded from the Placed Order Summary.'} />
+      <PageHeader title={view ? ORDER_VIEW_LABELS[view].title : 'Orders'} description={view ? ORDER_VIEW_LABELS[view].help : status ? `${ORDER_STATUS_LABELS[status]} orders.` : 'Every order, from placement to payment. Loaded from the Placed Order Summary.'} />
+      {view ? <BackLink fallback={ROUTES.dashboard} fallbackLabel="Dashboard" /> : null}
       <nav aria-label="Order status" className="mb-4 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <ul className="flex w-max gap-1 rounded-xl bg-stone-100 p-1">
           <li><Link to={`${ROUTES.orders}${season ? `?season=${season}` : ''}`} aria-current={!status ? 'page' : undefined} className={tab(!status)}>All{total ? ` (${total})` : ''}</Link></li>

@@ -5,6 +5,7 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listArtApprovals } from '@/services/mail'
 import { artWaitDays } from '@/lib/art'
 import { ROUTES } from '@/lib/constants'
+import { CountCard } from '@/components/dashboard/CountCard'
 
 /**
  * Dashboard (Dana, Oct 10): artwork, proofs and designs a vendor is waiting on us to approve before the order
@@ -19,9 +20,9 @@ export function ArtApprovalsPanel() {
   const todo = rows.filter((t) => t.art_status !== 'changes_sent').length
   if (!rows.length) return null
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
-      <h2 className="flex items-center gap-2 text-sm font-semibold text-stone-900"><Palette className="size-4 text-fuchsia-600" aria-hidden="true" /> Artwork approvals ({todo}{rows.length > todo ? ` + ${rows.length - todo} waiting on vendor` : ''})</h2>
-      <ul className="mt-2 divide-y divide-stone-100 text-sm">
+    <CountCard title={<span className="flex items-center gap-2"><Palette className="size-4 text-fuchsia-600" aria-hidden="true" /> Artwork approvals{rows.length > todo ? <span className="font-normal text-stone-500">+ {rows.length - todo} waiting on vendor</span> : null}</span>} count={todo}
+      alert={rows.some((t) => t.art_status !== 'changes_sent' && artWaitDays(t.art_since) >= 2)}>
+      <ul className="divide-y divide-stone-100 text-sm">
         {rows.slice(0, 8).map((t) => {
           const days = artWaitDays(t.art_since)
           const sent = t.art_status === 'changes_sent'
@@ -42,6 +43,6 @@ export function ArtApprovalsPanel() {
         })}
       </ul>
       {rows.length > 8 ? <p className="mt-1 text-xs text-stone-500">and {rows.length - 8} more</p> : null}
-    </div>
+    </CountCard>
   )
 }

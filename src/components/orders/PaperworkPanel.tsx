@@ -7,6 +7,7 @@ import { listOpenChecks } from '@/services/orderChecks'
 import { CHECK_KIND_LABEL, checkStatusText, daysWaitingNow } from '@/lib/orderChecks'
 import { ROUTES } from '@/lib/constants'
 import { Badge } from '@/components/ui'
+import { CountCard } from '@/components/dashboard/CountCard'
 
 /**
  * Dashboard (Dana, Oct 10): confirmations and invoices Claude has checked against the order, waiting on the
@@ -20,9 +21,9 @@ export function PaperworkPanel() {
   if (!rows.length) return null
   const whose = isMe ? '' : personId ? ` (${personName?.split(' ')[0] ?? 'theirs'})` : ' (everyone)'
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
-      <h2 className="flex items-center gap-2 text-sm font-semibold text-stone-900"><FileCheck2 className="size-4 text-sky-600" aria-hidden="true" /> Confirmations &amp; invoices to review{whose} ({rows.length})</h2>
-      <ul className="mt-2 divide-y divide-stone-100 text-sm">
+    <CountCard title={<span className="flex items-center gap-2"><FileCheck2 className="size-4 text-sky-600" aria-hidden="true" /> Confirmations &amp; invoices to review{whose}</span>} count={rows.length}
+      alert={rows.some((c) => daysWaitingNow(c.created_at) >= 2)}>
+      <ul className="divide-y divide-stone-100 text-sm">
         {rows.slice(0, 8).map((c) => {
           const st = checkStatusText(c)
           const days = daysWaitingNow(c.created_at)
@@ -43,6 +44,6 @@ export function PaperworkPanel() {
         })}
       </ul>
       {rows.length > 8 ? <p className="mt-1 text-xs text-stone-500">and {rows.length - 8} more</p> : null}
-    </div>
+    </CountCard>
   )
 }
