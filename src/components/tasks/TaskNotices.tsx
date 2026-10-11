@@ -35,7 +35,7 @@ export function TaskNotices() {
             <span className="ml-2 text-xs text-stone-600">{t.due_date ? `due ${dueText(t.due_date, today).toLowerCase()}` : ''}{aboutText(t) ? ` · ${aboutText(t)}` : ''}</span>
           </button>
           <TaskSnooze task={t} />
-          <Button size="sm" variant="ghost" onClick={() => void act(() => reminderSeen(t.id))}>Got it</Button>
+          <Button size="sm" variant="ghost" onClick={() => void act(() => reminderSeen(t.id))}>Dismiss</Button>
         </div>
       ))}
       {finished.map((t) => (

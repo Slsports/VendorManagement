@@ -1685,7 +1685,7 @@ custom option; and a + on the task box to add one.
 - Each person sees tasks assigned to them and the ones they gave; Dana sees everyone's and anyone's with "Showing".
 - Tasks page (nav, Overview): My tasks / Given to others / Done, sortable, with "How I get reminders" (dashboard,
   email, text, any mix; default dashboard + email; a cell number for texts). Dashboard "My tasks" box (count, red
-  when one is late, + to add); reminders whose time has come show at the top of the dashboard (Done, Later, Got it).
+  when one is late, + to add); reminders whose time has come show at the top of the dashboard (Done, Later, Dismiss).
   "+ Task" on vendor, order and email pages, with the open tasks about them.
 - When someone finishes a task another person gave them, the giver is told (dashboard, and email/text as they chose),
   with an optional note.
