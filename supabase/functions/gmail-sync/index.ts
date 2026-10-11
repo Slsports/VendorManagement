@@ -517,8 +517,8 @@ async function saveItemPictures(db: SupabaseClient, gmail: Gmail, org: string, s
     try {
       const art = !!(e.thread as unknown as { art_status: string | null } | null)?.art_status || e.art_needed === 'yes' || e.art_needed === 'unsure'
       const atts = (e.attachments ?? []) as { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; vendor_link_id: string | null }[]
-      // pictures of damage ("damaged", "broken", a return) go to Damaged Items (Dana, Oct 10)
-      const damaged = /damage|broken|defect|crushed|cracked|\breturn|\bRMA\b|\bRA ?#/i.test(`${e.subject ?? ''} ${atts.map((x) => x.file_name).join(' ')}`)
+      // pictures of damage or a wrong item ("damaged", "broken", "wrong garment", "order issues", a return) go to Damaged Items (Dana, Oct 10)
+      const damaged = /damage|broken|defect|crushed|cracked|\breturn|\bRMA\b|\bRA ?#|wrong (item|garment|colou?r|size|product|style)|order issues?|issues? with (the |our )?order|mis-?ship|mis-?print|short ?ship/i.test(`${e.subject ?? ''} ${atts.map((x) => x.file_name).join(' ')}`)
       for (const a of art ? [] : atts) {
         if (a.vendor_link_id || !a.gmail_attachment_id || !itemPicture(a) || paperworkKind(a, null)) continue
         // the same picture again (replies carry it along): point at the one already saved
