@@ -1656,3 +1656,12 @@ now shows only its name and count (red when something is late); clicking opens t
 again closes it. The order boxes are live: Open orders, Overdue orders (not received, 30+ days past ship date),
 Payments due (entered, not paid), Future-dated orders (shipping 30+ days out); each opens its orders, with a link
 to the same list on the Orders page (?view=). The duplicate Overdue / Future-dated cards are gone.
+
+## Oct 11 — Sales reports folder; first reports filed
+Dana uploaded her Sales Report Formatting Spec v49 (now `docs/sales-report-spec.md`) and an LS Analytics export
+holding two vendors: "separate them into separate sales reports and attach to their individual vendor record".
+Vendor documents get a **Sales reports** folder (kind sales_report). Filed: DP_10-11-26_PARICON_SALES 365 DAYS
+(17 active, 2 no-data, 9 ignored archived) and DP_10-11-26_SLIPPERY RACER_SALES 365 DAYS (37 active, 4 no-data;
+grouped by product line per Step 7, with a TYPE Size Summary). Report period assumed 365 days (the spec's default).
+Order statuses on the Ordering card (to build): Check stock, To order, Placed orders (sent, no confirmation),
+Confirmed orders, Overdue; the suggested order subtracts what is already coming in. Migration 0087.
