@@ -77,3 +77,17 @@ describe('working on order status', async () => {
     expect(workingStatus({ ...base, status: 'handled', working_done_at: '2026-10-08T12:00:00Z' })).toBe('completed')
   })
 })
+
+import { splitLinks } from './mail'
+
+describe('links in plain-text mail', () => {
+  it('finds web and email addresses, leaving trailing punctuation as text', () => {
+    const p = splitLinks('See https://ty.com/fall.pdf. Or www.ty.com, or write amy@wfsports.com!')
+    expect(p.filter((x) => x.kind !== 'text').map((x) => [x.kind, x.text, x.href])).toEqual([
+      ['url', 'https://ty.com/fall.pdf', 'https://ty.com/fall.pdf'],
+      ['url', 'www.ty.com', 'https://www.ty.com'],
+      ['email', 'amy@wfsports.com', 'mailto:amy@wfsports.com'],
+    ])
+    expect(p.map((x) => x.text).join('')).toBe('See https://ty.com/fall.pdf. Or www.ty.com, or write amy@wfsports.com!')
+  })
+})

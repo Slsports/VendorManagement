@@ -1631,3 +1631,8 @@ extra address on orders@) and shows as Dana's "Old Gmail" feed, seen only by her
 - The same email in orders@ and a personal inbox: the second copy is marked (copy_of) and Claude's file steps skip it.
 - Personal mailboxes loaded their last 90 days. Old Gmail: from when forwarding is turned on; its past year can be
   pulled in later with a one-time sign-in. Migration 0086.
+
+## Oct 11 — Emails open formatted; live links
+Dana: "I want formatted to be the default" and links were not clickable. Every email now opens in its formatted
+version (plain text shows while it loads, or when there is none; "Plain text" still switches). In plain text, web
+addresses are links (new tab) and email addresses start a new email in VMS.

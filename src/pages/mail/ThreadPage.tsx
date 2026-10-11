@@ -11,7 +11,7 @@ import { MakeFreightBillDialog } from '@/components/freight/MakeFreightBillDialo
 import { SaveToDocumentsDialog } from '@/components/vendors/SaveToDocumentsDialog'
 import { MoveDocumentDialog } from '@/components/vendors/MoveDocumentDialog'
 import { listPeople } from '@/services/reviews'
-import { followUpDraft, forwardDraft, gmailThreadUrl, isInlineImage, isOurAddress, mailWithUrl, newVendorPrefill, replyDraft, splitQuoted, threadState, waited } from '@/lib/mail'
+import { followUpDraft, forwardDraft, gmailThreadUrl, isInlineImage, splitLinks, isOurAddress, mailWithUrl, newVendorPrefill, replyDraft, splitQuoted, threadState, waited } from '@/lib/mail'
 import { ROUTES } from '@/lib/constants'
 import { folderLabel, folderOf } from '@/lib/documents'
 import { cn, errorMessage } from '@/lib/utils'
@@ -180,7 +180,8 @@ export default function ThreadPage() {
         {/* Newest first and open; older ones closed to one line (Dana, Oct 8). */}
         {[...emails].reverse().map((e, i) => (
           <Message key={e.id} email={e} startOpen={i === 0} vendor={t.vendor} carrierId={t.carrier_id ?? null}
-            onCompose={canEdit && mayAnswer && mailbox.data ? (kind) => setDraft(kind === 'forward' ? forwardDraft(t, e, e.attachments.length) : replyDraft(t, e, mailbox.data!, kind === 'all')) : undefined} />
+            onCompose={canEdit && mayAnswer && mailbox.data ? (kind) => setDraft(kind === 'forward' ? forwardDraft(t, e, e.attachments.length) : replyDraft(t, e, mailbox.data!, kind === 'all')) : undefined}
+            onEmailAddress={canEdit ? (address) => setDraft({ to: [address], subject: '', body: '', vendor_id: t.vendor?.id ?? null }) : undefined} />
         ))}
       </ol>
       {draft ? <ComposeDialog draft={draft} onClose={() => setDraft(null)} onSent={() => {
@@ -194,7 +195,7 @@ export default function ThreadPage() {
   )
 }
 
-function Message({ email: e, startOpen, vendor, carrierId, onCompose }: { email: ThreadDetail['emails'][number]; startOpen: boolean; vendor: { id: string; name: string } | null; carrierId: string | null; onCompose?: (kind: 'reply' | 'all' | 'forward') => void }) {
+function Message({ email: e, startOpen, vendor, carrierId, onCompose, onEmailAddress }: { email: ThreadDetail['emails'][number]; startOpen: boolean; vendor: { id: string; name: string } | null; carrierId: string | null; onCompose?: (kind: 'reply' | 'all' | 'forward') => void; onEmailAddress?: (address: string) => void }) {
   const [open, setOpen] = useState(startOpen)
   const [html, setHtml] = useState<string | null>(null)
   const [loadingHtml, setLoadingHtml] = useState(false)
@@ -242,7 +243,8 @@ function Message({ email: e, startOpen, vendor, carrierId, onCompose }: { email:
   // Pictures in the message (price photos, signature logos): open it formatted, each picture in its place.
   const triedFormatted = useRef(false)
   useEffect(() => {
-    if (!open || !pictures.length || triedFormatted.current) return
+    // formatted is the default for every email (Dana, Oct 11); plain text shows while it loads, or when there is none
+    if (!open || triedFormatted.current) return
     triedFormatted.current = true
     void showFormatted(true)
   })
@@ -291,10 +293,10 @@ function Message({ email: e, startOpen, vendor, carrierId, onCompose }: { email:
             ? <iframe title="Formatted message" sandbox="allow-popups allow-popups-to-escape-sandbox" srcDoc={`<base target="_blank"><style>img{max-width:100%;height:auto}</style>${html}`} className="h-[40rem] w-full resize-y rounded-lg border border-stone-200 bg-white" />
             : (
               <>
-                <div className="whitespace-pre-wrap break-words text-sm text-stone-800">{body.fresh}</div>
+                <div className="whitespace-pre-wrap break-words text-sm text-stone-800"><LinkedText text={body.fresh} onEmail={onEmailAddress} /></div>
                 {body.quoted ? (
                   showQuoted
-                    ? <div className="mt-2 whitespace-pre-wrap break-words border-l-2 border-stone-200 pl-3 text-sm text-stone-500">{body.quoted}</div>
+                    ? <div className="mt-2 whitespace-pre-wrap break-words border-l-2 border-stone-200 pl-3 text-sm text-stone-500"><LinkedText text={body.quoted} onEmail={onEmailAddress} /></div>
                     : <button type="button" onClick={() => setShowQuoted(true)} className="mt-2 text-xs font-medium text-stone-500 hover:text-brand">Show earlier messages in this email</button>
                 ) : null}
               </>
@@ -366,4 +368,12 @@ function AttachmentThumb({ attachment, onOpen }: { attachment: Attachment; onOpe
       {src ? <img src={src} alt={attachment.file_name} className="size-full object-contain" /> : <span className="block size-full animate-pulse" />}
     </button>
   )
+}
+
+/** Plain-text mail with live links: web addresses open in a new tab, email addresses start a new email. */
+function LinkedText({ text, onEmail }: { text: string; onEmail?: (address: string) => void }) {
+  return <>{splitLinks(text).map((p, i) => p.kind === 'text' ? <span key={i}>{p.text}</span>
+    : p.kind === 'url' ? <a key={i} href={p.href} target="_blank" rel="noreferrer noopener" className="text-brand underline-offset-2 hover:underline">{p.text}</a>
+    : onEmail ? <button key={i} type="button" onClick={() => onEmail(p.text)} className="text-brand underline-offset-2 hover:underline">{p.text}</button>
+    : <a key={i} href={p.href} className="text-brand underline-offset-2 hover:underline">{p.text}</a>)}</>
 }

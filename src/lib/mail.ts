@@ -195,3 +195,25 @@ export const isFreeMail = (email: string) => FREE_MAIL.has(emailDomain(email))
 export const isOurAddress = (email: string | null | undefined) => !!email && emailDomain(email) === 'shaverlakesports.com'
 /** The page listing every email with this address. */
 export const mailWithUrl = (route: string, email: string, company = false) => `${route}?email=${encodeURIComponent(email.trim().toLowerCase())}${company ? '&company=1' : ''}`
+
+// ---- links in plain-text mail (Dana, Oct 11: "links are not live to click on") ----
+export type TextPart = { kind: 'text' | 'url' | 'email'; text: string; href?: string }
+const LINK = /(https?:\/\/[^\s<>"]+|www\.[^\s<>"]+\.[^\s<>"]+|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g
+
+/** Plain text split into text, web addresses and email addresses. Trailing punctuation stays text. */
+export function splitLinks(text: string): TextPart[] {
+  const parts: TextPart[] = []
+  let last = 0
+  for (const m of text.matchAll(LINK)) {
+    let hit = m[0]
+    const trail = /[.,;:!?)\]}>'"]+$/.exec(hit)?.[0] ?? ''
+    if (trail) hit = hit.slice(0, -trail.length)
+    const at = m.index!
+    if (at > last) parts.push({ kind: 'text', text: text.slice(last, at) })
+    if (hit.includes('@') && !/^(https?:|www\.)/i.test(hit)) parts.push({ kind: 'email', text: hit, href: `mailto:${hit}` })
+    else parts.push({ kind: 'url', text: hit, href: /^www\./i.test(hit) ? `https://${hit}` : hit })
+    last = at + hit.length
+  }
+  if (last < text.length) parts.push({ kind: 'text', text: text.slice(last) })
+  return parts
+}
