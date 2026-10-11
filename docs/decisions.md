@@ -1641,3 +1641,8 @@ addresses are links (new tab) and email addresses start a new email in VMS.
 Dana: "I want everything customizable" and "Overdue orders and Future-dated orders to be separate cards".
 Customize moved to the top of the dashboard and now covers the number boxes at the top too (reorder, hide),
 saved per login with the cards. The combined card became two: Overdue orders and Future-dated orders.
+
+## Oct 11 — Create an order from "Does this need an answer?"
+Dana: "a create an order button" on the review queue's "Does this need an answer?" cards. The card now has
+**Create an order**: the add-order form for the email's vendor, linked to that email. If the email is not filed
+to a vendor yet, it says so (file it first).

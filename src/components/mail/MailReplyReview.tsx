@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Check, Mail, MessageCircleReply } from 'lucide-react'
+import { Check, ClipboardPlus, Mail, MessageCircleReply } from 'lucide-react'
 import { answerMailReply } from '@/services/mail'
+import { supabase } from '@/lib/supabase'
+import { AddOrderDialog } from '@/components/orders/AddOrderDialog'
 import { ROUTES } from '@/lib/constants'
 import { errorMessage } from '@/lib/utils'
 import type { ReviewItem } from '@/types'
@@ -17,6 +19,16 @@ interface Details { thread_id?: string; from?: string; subject?: string | null; 
 export function MailReplyReview({ item, canEdit, onDone }: { item: ReviewItem; canEdit: boolean; onDone: () => void | Promise<void> }) {
   const d = (item.details ?? {}) as Details
   const [busy, setBusy] = useState(false)
+  // "Create an order" right from the card (Dana, Oct 11): the order is filed to the email's vendor and linked to it.
+  const [orderFor, setOrderFor] = useState<{ id: string; name: string } | null>(null)
+  async function createOrder() {
+    if (!d.thread_id) return
+    const { data, error } = await supabase.from('email_threads').select('vendor:vendors(id, name)').eq('id', d.thread_id).maybeSingle()
+    const vendor = (data?.vendor ?? null) as unknown as { id: string; name: string } | null
+    if (error) return toast.error(errorMessage(error))
+    if (!vendor) return toast.error('File this email to a vendor first (Open the email › File to a vendor), then create the order.')
+    setOrderFor(vendor)
+  }
   async function answer(needs: boolean) {
     setBusy(true)
     try {
@@ -41,8 +53,10 @@ export function MailReplyReview({ item, canEdit, onDone }: { item: ReviewItem; c
         <div className="flex flex-wrap gap-2 pt-1">
           <Button size="sm" loading={busy} onClick={() => void answer(true)} leftIcon={<MessageCircleReply className="size-4" aria-hidden="true" />}>Needs an answer</Button>
           <Button size="sm" variant="secondary" disabled={busy} onClick={() => void answer(false)} leftIcon={<Check className="size-4" aria-hidden="true" />}>No answer needed</Button>
+          {d.thread_id ? <Button size="sm" variant="secondary" disabled={busy} onClick={() => void createOrder()} leftIcon={<ClipboardPlus className="size-4" aria-hidden="true" />}>Create an order</Button> : null}
         </div>
       ) : null}
+      {orderFor ? <AddOrderDialog vendor={orderFor} threadId={d.thread_id} onClose={() => setOrderFor(null)} /> : null}
     </div>
   )
 }
