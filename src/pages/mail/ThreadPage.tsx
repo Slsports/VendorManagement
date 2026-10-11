@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useHasInAppHistory } from '@/hooks/useHasInAppHistory'
 import toast from 'react-hot-toast'
-import { Check, CheckCircle2, ClipboardList, Palette, ExternalLink, Trash2, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
+import { Check, CheckCircle2, ClipboardList, ListTodo, Palette, ExternalLink, Trash2, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { assignEmailThread, fetchEmailHtml, getMailbox, getThread, fetchAttachment, listMailboxes, shareThreadToOrders, setArtStatus, setEmailThreadStatus, setEmailVendor, setThreadView, setWorkingOrder, trashThreads, type ThreadDetail } from '@/services/mail'
@@ -22,6 +22,8 @@ import { ComposeDialog, type ComposeDraft } from '@/components/mail/ComposeDialo
 import { AddOrderDialog } from '@/components/orders/AddOrderDialog'
 import { Alert, Button, Spinner } from '@/components/ui'
 import { ThreadVendorTags } from '@/components/mail/ThreadVendorTags'
+import { RecordTasks } from '@/components/tasks/RecordTasks'
+import { TaskDialog } from '@/components/tasks/TaskDialog'
 import { VendorPicker as SharedVendorPicker, type NewVendorPrefill } from '@/components/vendors/VendorPicker'
 import { clearSnooze, mySnoozes } from '@/services/snooze'
 import { SnoozeButton } from '@/components/shared/SnoozeButton'
@@ -45,6 +47,7 @@ export default function ThreadPage() {
   const hasHistory = useHasInAppHistory()
   // "Add order from this email" after completing a Working on order (Dana, Oct 8).
   const [addingOrder, setAddingOrder] = useState(() => params.get('addOrder') === '1')
+  const [addingTask, setAddingTask] = useState(false)
   // Snooze (Dana, Oct 9): whether I snoozed this; opening it clears "Back from snooze".
   const snoozeQ = useSupabaseQuery(async () => (profile ? mySnoozes(profile.id, 'thread') : null), [profile?.id, id])
   const myUntil = snoozeQ.data?.hidden.get(id) ?? null
@@ -59,6 +62,7 @@ export default function ThreadPage() {
   const lastOut = [...emails].reverse().find((e) => e.direction === 'out')
   // The outside party, for "New vendor": who wrote in, or who we wrote to. Mail only among us has none.
   const firstIn = emails.find((e) => e.direction === 'in')
+  const taskPreset = { thread: { id: t.id, name: t.subject || '(no subject)' }, vendor: t.vendor ? { id: t.vendor.id, name: t.vendor.name } : null }
   const party = firstIn ? { email: firstIn.from_email, displayName: firstIn.from_name } : lastOut ? { email: lastOut.to_emails[0] ?? null, displayName: null } : { email: null, displayName: null }
 
   // Handled: out of the inbox and back to the list you came from (Dana, Oct 8).
@@ -141,6 +145,7 @@ export default function ThreadPage() {
           </Button>
           <ThreadVendorPicker current={t.vendor} prefill={newVendorPrefill({ ...party, isDomain: false })} onPick={(v) => act(v ? `Filed to ${v.name}` : 'Unfiled', () => setEmailVendor(emails[0]!.id, v?.id ?? null))} />
           {t.vendor ? <Button size="sm" variant="ghost" onClick={() => setAddingOrder(true)}>Add order from this email</Button> : null}
+          <Button size="sm" variant="ghost" onClick={() => setAddingTask(true)} leftIcon={<ListTodo className="size-4" aria-hidden="true" />}>Task</Button>
           {!t.art_status ? <Button size="sm" variant="ghost" onClick={() => void act('On the Artwork approvals card', () => setArtStatus(t.id, 'waiting'))} leftIcon={<Palette className="size-4" aria-hidden="true" />}>Artwork to approve</Button> : null}
           <SnoozeButton kind="thread" ids={[t.id]} until={myUntil} onDone={async () => {
             await snoozeQ.refetch()
@@ -172,6 +177,8 @@ export default function ThreadPage() {
           ) : null}
         </div>
       ) : null}
+      <RecordTasks button={false} className="mb-4 rounded-2xl border border-stone-200 bg-white px-4 py-3" preset={taskPreset} />
+      {addingTask ? <TaskDialog preset={taskPreset} onClose={() => setAddingTask(false)} /> : null}
       <ThreadVendorTags threadId={t.id} emailId={(emails.find((e) => e.direction === 'in') ?? emails[0]!).id} filedVendorId={t.vendor?.id ?? null} canEdit={canEdit} />
       {emails.some((e) => e.freight_pct !== null && e.freight_pct !== undefined) ? (
         <p className="mb-4 rounded-xl bg-amber-50 px-4 py-2 text-sm text-amber-900">Freight rate quoted here: <span className="font-semibold">{emails.find((e) => e.freight_pct !== null && e.freight_pct !== undefined)!.freight_pct}%</span>. Check-in offers it for each vendor on this shipment.</p>

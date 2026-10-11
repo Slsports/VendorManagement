@@ -1,4 +1,4 @@
-// Schedule gmail-sync (and order-check) on the hosted project: pg_cron calls the function every minute with a shared
+// Schedule gmail-sync (and order-check, task-reminders) on the hosted project: pg_cron calls the function every minute with a shared
 // secret header. The secret is generated here, stored in Vault and as the function secret
 // MAIL_CRON_SECRET, and never printed. Safe to re-run (keeps an existing secret).
 //   NODE_USE_ENV_PROXY=1 node scripts/setup-mail-cron.mjs [--every "* * * * *"] [--off] [--no-schedule]
@@ -14,9 +14,9 @@ const args = process.argv.slice(2)
 const every = args.includes('--every') ? args[args.indexOf('--every') + 1] : '* * * * *'
 
 await query(`create extension if not exists pg_cron; create extension if not exists pg_net with schema extensions;`)
-await query(`select cron.unschedule(jobid) from cron.job where jobname in ('gmail-sync', 'order-check')`)
+await query(`select cron.unschedule(jobid) from cron.job where jobname in ('gmail-sync', 'order-check', 'task-reminders')`)
 if (args.includes('--off')) {
-  console.log('gmail-sync and order-check schedules removed')
+  console.log('gmail-sync, order-check and task-reminders schedules removed')
   process.exit(0)
 }
 
@@ -40,10 +40,13 @@ const call = `select net.http_post(
   timeout_milliseconds := 150000)`
 // order-check (Dana, Oct 10): Claude reads and compares confirmations and invoices, one or two a run.
 const checkCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/order-check')
+// task-reminders (Dana, Oct 11): task reminders and "done" notices by email and text.
+const taskCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/task-reminders').replace('timeout_milliseconds := 150000', 'timeout_milliseconds := 60000')
 if (!args.includes('--no-schedule')) {
   await query(`select cron.schedule('gmail-sync', ${lit(every)}, ${lit(call)})`)
   await query(`select cron.schedule('order-check', ${lit(every)}, ${lit(checkCall)})`)
-  console.log(`gmail-sync and order-check scheduled (${every})`)
+  await query(`select cron.schedule('task-reminders', ${lit(every)}, ${lit(taskCall)})`)
+  console.log(`gmail-sync, order-check and task-reminders scheduled (${every})`)
 }
 if (args.includes('--run-now')) {
   await query(call)

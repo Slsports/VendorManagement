@@ -37,6 +37,8 @@ export interface ParsedMessage {
   is_bulk: boolean
   /** Where it was delivered or forwarded to (Delivered-To, X-Forwarded-To / -For, X-Original-To), lowercased. */
   delivered_to: string[]
+  /** VMS's own notice (a task reminder, header X-VMS-Notice): never stored as mail. */
+  vms_notice: boolean
 }
 
 export const BODY_LIMIT = 20_000
@@ -145,6 +147,7 @@ export function parseMessage(m: GmailMessage): ParsedMessage {
     is_bulk: isBulk(m.payload),
     delivered_to: (m.payload?.headers ?? []).filter((h) => /^(delivered-to|x-forwarded-to|x-forwarded-for|x-original-to)$/i.test(h.name))
       .flatMap((h) => h.value.toLowerCase().match(/[^\s<>,;"']+@[^\s<>,;"']+/g) ?? []),
+    vms_notice: !!header(m.payload, 'X-VMS-Notice'),
   }
 }
 

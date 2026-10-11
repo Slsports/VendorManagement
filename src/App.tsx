@@ -42,6 +42,7 @@ const ProductSourcing = lazy(() => import('@/pages/product-sourcing/ProductSourc
 const FileManager = lazy(() => import('@/pages/file-manager/FileManager'))
 const SearchPage = lazy(() => import('@/pages/search/SearchPage'))
 const UploadInvoice = lazy(() => import('@/pages/upload/UploadInvoice'))
+const TasksPage = lazy(() => import('@/pages/tasks/TasksPage'))
 const SettingsLayout = lazy(() => import('@/pages/settings/SettingsLayout'))
 const OrganizationSettings = lazy(() => import('@/pages/settings/OrganizationSettings'))
 const StoreSettings = lazy(() => import('@/pages/settings/StoreSettings'))
@@ -113,6 +114,7 @@ export default function App() {
                 <Route path={ROUTES.workingOrders} element={<WorkingOrdersPage />} />
                 <Route path={ROUTES.mailWith} element={<MailWithPage />} />
                 <Route path={ROUTES.team} element={<TeamPage />} />
+                <Route path={ROUTES.tasks} element={<TasksPage />} />
                 <Route path={`${ROUTES.mail}/:id`} element={<ThreadPage />} />
                 <Route path={ROUTES.mergeReport} element={<MergeReport />} />
                 <Route path={ROUTES.orders} element={<OrderList />} />

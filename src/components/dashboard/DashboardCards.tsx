@@ -37,7 +37,7 @@ function runs(items: DashboardCard[]): DashboardCard[][] {
  * eligible to be on top"): number boxes and cards in one list. Customize moves anything up or down and hides it;
  * it is saved to the person's login. Reset puts the standard order back.
  */
-export function DashboardCards({ title, description, items }: { title: string; description?: string; items: DashboardCard[] }) {
+export function DashboardCards({ title, description, top, items }: { title: string; description?: string; top?: ReactNode; items: DashboardCard[] }) {
   const { profile, refreshProfile } = useAuth()
   const [layout, setLayout] = useState(() => readSaved(profile?.dashboard_layout))
   const [editing, setEditing] = useState(false)
@@ -84,6 +84,7 @@ export function DashboardCards({ title, description, items }: { title: string; d
           <p className="mt-2 text-xs text-stone-500">Some cards only show when they have something in them.</p>
         </section>
       ) : null}
+      {top}
       <div className="space-y-4">
         {runs(view.shown).map((run) => (
           <section key={run[0]!.id} className={run[0]!.size === 'tile' ? 'grid gap-4 sm:grid-cols-2 xl:grid-cols-4' : 'grid gap-4 lg:grid-cols-3'}>

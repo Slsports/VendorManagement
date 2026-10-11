@@ -65,3 +65,5 @@ export type MailView = EmailThread['view']
 export type OrderCheck = Tables<'order_checks'>
 export type { OrderCheckStatus } from './database'
 export type Mailbox = Tables<'mailboxes'>
+export type Task = Tables<'tasks'>
+export type RepeatUnit = NonNullable<Task['repeat_unit']>

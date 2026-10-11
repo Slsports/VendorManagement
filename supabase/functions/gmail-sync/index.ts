@@ -207,8 +207,8 @@ async function storeMessages(db: SupabaseClient, gmail: Gmail, ctx: Context, ids
   const todo = unique.filter((id) => !known.has(id))
   if (!todo.length) return 0
   const parsed = (await fetchAll(gmail, todo, 'full')).map((m) => parseMessage(m as unknown as GmailMessage))
-  // Gmail drafts and chats are not mail.
-  const msgs = parsed.filter((p) => !p.label_ids.includes('DRAFT') && !p.label_ids.includes('CHAT'))
+  // Gmail drafts and chats are not mail, nor VMS's own task reminders.
+  const msgs = parsed.filter((p) => !p.label_ids.includes('DRAFT') && !p.label_ids.includes('CHAT') && !p.vms_notice)
   if (!msgs.length) return 0
 
   // Senders: the other party's domain, or the whole address for free mail. Which mailbox: a personal one, the

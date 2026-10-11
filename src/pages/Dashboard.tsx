@@ -15,6 +15,8 @@ import { useViewAs } from '@/hooks/useViewAs'
 import { DashboardCards } from '@/components/dashboard/DashboardCards'
 import { CountCard } from '@/components/dashboard/CountCard'
 import { OrderCountCard } from '@/components/dashboard/OrderCountCard'
+import { TasksCard } from '@/components/tasks/TasksCard'
+import { TaskNotices } from '@/components/tasks/TaskNotices'
 
 // The order number boxes (ids kept from the first dashboard so saved layouts still match).
 const ORDER_BOXES: { id: string; view: OrderView }[] = [
@@ -48,9 +50,11 @@ export default function DashboardPage() {
       <DashboardCards
         title={first ? `Good to see you, ${first}` : 'Dashboard'}
         description="Each box shows how many; click it to see them."
+        top={isMe ? <TaskNotices /> : null}
         items={[
         // each box is a count; click it for the orders (Dana, Oct 11)
         ...ORDER_BOXES.map((v) => ({ id: v.id, label: ORDER_VIEW_LABELS[v.view].title, size: 'tile' as const, node: <OrderCountCard view={v.view} /> })),
+        { id: 'tasks', label: 'My tasks', node: <TasksCard /> },
         { id: 'mail', label: 'Mail for you', node: <MailForYouPanel /> },
         { id: 'paperwork', label: 'Confirmations & invoices to review', node: <PaperworkPanel /> },
         { id: 'art', label: 'Artwork approvals', node: <ArtApprovalsPanel /> },

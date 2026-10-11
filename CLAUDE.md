@@ -93,7 +93,7 @@ orders (Seasonal Buying Guide plus the Placed Order Summary v2.0 tabs 1-4, `impo
 queue with assignment rules, vendor scorecards (six dimensions, four automatic), item-level buying
 rules per vendor (seeded for Ty), Lightspeed category standard document, and Mail: orders@ synced every
 minute (12 months back), sender proposals in the review queue, Mail page, send/reply/forward from orders@
-with signatures, follow-up nudges (see `docs/gmail-connection.md` "As built").
+with signatures, follow-up nudges (see `docs/gmail-connection.md` "As built"), and Tasks (due date, reminders by dashboard/email/text, assign, tag, repeat; `task-reminders` function).
 
 ## Not built yet, in order
 Gmail label write-back and contact enrichment,

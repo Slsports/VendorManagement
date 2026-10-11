@@ -1,0 +1,32 @@
+import { useState } from 'react'
+import { ListTodo, Plus } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
+import { useTasksQuery } from '@/hooks/useTasksQuery'
+import { listTasksAbout } from '@/services/tasks'
+import { Button } from '@/components/ui'
+import { TaskDialog, type TaskPreset } from './TaskDialog'
+import { TaskList } from './TaskList'
+
+/**
+ * "+ Task" on a vendor, order or email page, with the open tasks already about it. Without the button (the email
+ * page has its own in the action bar) it shows only when there are tasks.
+ */
+export function RecordTasks({ preset, className, button = true }: { preset: TaskPreset; className?: string; button?: boolean }) {
+  const { organization } = useAuth()
+  const about = { vendor_id: preset.order || preset.thread ? null : preset.vendor?.id, order_id: preset.order?.id, thread_id: preset.thread?.id }
+  const key = about.thread_id ?? about.order_id ?? about.vendor_id ?? null
+  const q = useTasksQuery(async () => (organization && key ? listTasksAbout(organization.id, about) : []), [organization?.id, key])
+  const [adding, setAdding] = useState(false)
+  const rows = q.data ?? []
+  if (!button && !rows.length) return null
+  return (
+    <section aria-label="Tasks" className={className}>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-stone-900"><ListTodo className="size-4 text-brand" aria-hidden="true" /> Tasks{rows.length ? ` (${rows.length})` : ''}</h2>
+        {button ? <Button size="sm" variant="secondary" onClick={() => setAdding(true)} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Task</Button> : null}
+      </div>
+      {rows.length ? <div className="mt-1"><TaskList tasks={rows} /></div> : null}
+      {adding ? <TaskDialog preset={preset} onClose={() => setAdding(false)} /> : null}
+    </section>
+  )
+}

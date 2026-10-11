@@ -1671,3 +1671,25 @@ Dana turned on DKIM in Google Admin (google._domainkey TXT in GoDaddy) and added
 rua=mailto:dana@shaverlakesports.com`. SPF already `v=spf1 include:secureserver.net include:_spf.google.com ~all`.
 Next: after 2–4 weeks of clean DMARC reports, move to `p=quarantine`; remove Microsoft leftovers (the lync SRV
 record) once Microsoft is retired.
+
+## Oct 11 — Tasks
+Dana: "in vms we need a task list that we can add things we need to do … a date, to do item and when you want to be
+reminded and the ability to tag it to a vendor, freight co, or something else … and I could assign it to someone
+else." Then: reminders "on dashboard & email is default, but in setting they can select dashboard, email or text …
+one, two or all three"; "each person sees theirs, but I can switch to see their view"; repeating tasks now, with a
+custom option; and a + on the task box to add one.
+- A task: what, due date, remind me (date and time), assigned to (default me), about (vendor, freight company, rep
+  group, order, email, or any text), notes, repeat (none, every week / month / year, or custom: every N days, weeks
+  on chosen weekdays, months or years, until an optional end date). Finishing a repeating task makes the next one,
+  reminded the same time before it is due; late finishes skip dates already gone.
+- Each person sees tasks assigned to them and the ones they gave; Dana sees everyone's and anyone's with "Showing".
+- Tasks page (nav, Overview): My tasks / Given to others / Done, sortable, with "How I get reminders" (dashboard,
+  email, text, any mix; default dashboard + email; a cell number for texts). Dashboard "My tasks" box (count, red
+  when one is late, + to add); reminders whose time has come show at the top of the dashboard (Done, Later, Got it).
+  "+ Task" on vendor, order and email pages, with the open tasks about them.
+- When someone finishes a task another person gave them, the giver is told (dashboard, and email/text as they chose),
+  with an optional note.
+- Reminder emails come from orders@ as "VMS Reminders" (header X-VMS-Notice, so they are never filed as mail).
+  Texts need a texting service (Twilio: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM function secrets); until
+  then a text reminder is skipped and the task says "not all sent". Migration 0088, function task-reminders (every
+  minute).

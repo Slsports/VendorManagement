@@ -12,6 +12,7 @@ import { BackLink } from '@/components/shared/BackLink'
 import { OrderStatusBadge } from '@/components/orders/OrderStatusBadge'
 import { OrderDocumentsSection } from '@/components/orders/OrderDocumentsSection'
 import { OrderPaperworkSection } from '@/components/orders/OrderPaperworkSection'
+import { RecordTasks } from '@/components/tasks/RecordTasks'
 import { OrderRepsCard } from '@/components/orders/OrderRepsCard'
 import { CheckInPricing } from '@/components/orders/CheckInPricing'
 import { FreeShippingCard } from '@/components/orders/FreeShippingCard'
@@ -109,6 +110,7 @@ export default function OrderDetailPage() {
           {extra.length ? <section className="rounded-2xl border border-stone-200 bg-white p-5"><h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Also on the sheet</h2><dl className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">{extra.map(([k, v]) => <div key={k}><dt className="text-xs font-medium text-stone-500">{k}</dt><dd className="text-sm text-stone-900">{v}</dd></div>)}</dl></section> : null}
         </div>
         <div className="space-y-6">
+          <RecordTasks className="rounded-2xl border border-stone-200 bg-white p-5" preset={{ order: { id: o.id, name: [o.po_number ? `PO ${o.po_number}` : null, o.description].filter(Boolean).join(' · ') || 'This order' }, vendor: o.vendor ? { id: o.vendor.id, name: o.vendor.name } : null }} />
           {o.vendor ? <OrderRepsCard orderId={o.id} vendorId={o.vendor.id} takenBy={o.taken_by} canEdit={canEdit} onChange={q.refetch} /> : null}
           <FreeShippingCard order={o} vendor={o.vendor} canEdit={canEdit} onChange={q.refetch} />
           <FreightAllowanceCard key={`${o.freight_allowance_offered}-${o.freight_allowance}-${o.freight_allowance_pay_by}-${o.freight_allowance_received}`} order={o} vendorOffers={!!o.vendor?.freight_allowance_on_time} canEdit={canEdit} onChange={q.refetch} />

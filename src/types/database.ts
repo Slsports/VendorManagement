@@ -130,7 +130,7 @@ export type Database = {
           is_active: boolean
           created_at: string
           updated_at: string
-       ; email_signature: string | null; places_orders: boolean; sees_freight: boolean; dashboard_layout: Json | null }
+       ; email_signature: string | null; places_orders: boolean; sees_freight: boolean; dashboard_layout: Json | null; remind_dashboard: boolean; remind_email: boolean; remind_text: boolean; mobile_phone: string | null }
         Insert: {
           id: string
           organization_id: string
@@ -142,7 +142,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; places_orders?: boolean; sees_freight?: boolean; dashboard_layout?: Json | null }
+       ; email_signature?: string | null; places_orders?: boolean; sees_freight?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null }
         Update: {
           id?: string
           organization_id?: string
@@ -154,7 +154,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; places_orders?: boolean; sees_freight?: boolean; dashboard_layout?: Json | null }
+       ; email_signature?: string | null; places_orders?: boolean; sees_freight?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null }
         Relationships: [
           {
             foreignKeyName: 'profiles_organization_id_fkey'
@@ -471,6 +471,22 @@ export type Database = {
           { foreignKeyName: 'order_checks_reviewed_by_fkey'; columns: ['reviewed_by']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
         ]
       }
+      tasks: {
+        Row: { id: string; organization_id: string; title: string; notes: string | null; due_date: string | null; remind_at: string | null; assigned_to: string; created_by: string | null; vendor_id: string | null; carrier_id: string | null; order_id: string | null; thread_id: string | null; rep_group_id: string | null; tag_other: string | null; repeat_every: number | null; repeat_unit: 'day' | 'week' | 'month' | 'year' | null; repeat_days: number[]; repeat_until: string | null; repeat_of: string | null; reminded_at: string | null; reminder_seen_at: string | null; remind_error: string | null; done_at: string | null; done_by: string | null; done_note: string | null; done_notified_at: string | null; done_seen_at: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; title: string; notes?: string | null; due_date?: string | null; remind_at?: string | null; assigned_to: string; created_by?: string | null; vendor_id?: string | null; carrier_id?: string | null; order_id?: string | null; thread_id?: string | null; rep_group_id?: string | null; tag_other?: string | null; repeat_every?: number | null; repeat_unit?: 'day' | 'week' | 'month' | 'year' | null; repeat_days?: number[]; repeat_until?: string | null; repeat_of?: string | null; reminded_at?: string | null; reminder_seen_at?: string | null; remind_error?: string | null; done_at?: string | null; done_by?: string | null; done_note?: string | null; done_notified_at?: string | null; done_seen_at?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; title?: string; notes?: string | null; due_date?: string | null; remind_at?: string | null; assigned_to?: string; created_by?: string | null; vendor_id?: string | null; carrier_id?: string | null; order_id?: string | null; thread_id?: string | null; rep_group_id?: string | null; tag_other?: string | null; repeat_every?: number | null; repeat_unit?: 'day' | 'week' | 'month' | 'year' | null; repeat_days?: number[]; repeat_until?: string | null; repeat_of?: string | null; reminded_at?: string | null; reminder_seen_at?: string | null; remind_error?: string | null; done_at?: string | null; done_by?: string | null; done_note?: string | null; done_notified_at?: string | null; done_seen_at?: string | null; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'tasks_assigned_to_fkey'; columns: ['assigned_to']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+          { foreignKeyName: 'tasks_created_by_fkey'; columns: ['created_by']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+          { foreignKeyName: 'tasks_done_by_fkey'; columns: ['done_by']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+          { foreignKeyName: 'tasks_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+          { foreignKeyName: 'tasks_carrier_id_fkey'; columns: ['carrier_id']; isOneToOne: false; referencedRelation: 'carriers'; referencedColumns: ['id'] },
+          { foreignKeyName: 'tasks_order_id_fkey'; columns: ['order_id']; isOneToOne: false; referencedRelation: 'orders'; referencedColumns: ['id'] },
+          { foreignKeyName: 'tasks_thread_id_fkey'; columns: ['thread_id']; isOneToOne: false; referencedRelation: 'email_threads'; referencedColumns: ['id'] },
+          { foreignKeyName: 'tasks_rep_group_id_fkey'; columns: ['rep_group_id']; isOneToOne: false; referencedRelation: 'rep_groups'; referencedColumns: ['id'] },
+          { foreignKeyName: 'tasks_repeat_of_fkey'; columns: ['repeat_of']; isOneToOne: false; referencedRelation: 'tasks'; referencedColumns: ['id'] },
+        ]
+      }
       snoozes: {
         Row: { id: string; organization_id: string; profile_id: string; thread_id: string | null; review_item_id: string | null; until: string; woke_by_reply: boolean; created_at: string }
         Insert: { id?: string; organization_id: string; profile_id: string; thread_id?: string | null; review_item_id?: string | null; until: string; woke_by_reply?: boolean; created_at?: string }
@@ -662,6 +678,8 @@ export type Database = {
       answer_mail_reply: { Args: { p_item: string; p_needs_answer: boolean }; Returns: undefined }
       order_reviewer: { Args: { p_order: string }; Returns: string | null }
       order_check_action: { Args: { p_check: string; p_action: 'set_order' | 'assign' | 'done' | 'sent' | 'recheck' | 'dismiss' | 'reopen'; p_order?: string | null; p_profile?: string | null; p_thread?: string | null }; Returns: undefined }
+      complete_task: { Args: { p_task: string; p_note?: string | null }; Returns: string | null }
+      task_next_due: { Args: { p_due: string; p_every: number; p_unit: string; p_days?: number[] }; Returns: string | null }
       share_thread_to_orders: { Args: { p_thread: string; p_share?: boolean }; Returns: undefined }
       can_see_mailbox: { Args: { p_mailbox: string }; Returns: boolean }
       mail_with: { Args: { p_org: string; p_email: string; p_company?: boolean; p_limit?: number }; Returns: { id: string; thread_id: string; direction: 'in' | 'out' | 'internal'; from_email: string | null; from_name: string | null; to_emails: string[]; cc_emails: string[]; subject: string | null; snippet: string | null; received_at: string; has_attachments: boolean; vendor_id: string | null; vendor_name: string | null }[] }

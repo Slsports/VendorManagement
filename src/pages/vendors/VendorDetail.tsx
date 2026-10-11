@@ -15,6 +15,7 @@ import { BackLink } from '@/components/shared/BackLink'
 import { RouteBadges } from '@/components/vendors/RouteBadges'
 import { ReviewItemCard, VENDOR_DELETED } from '@/components/vendors/ReviewItemCard'
 import { VendorDocumentsSection } from '@/components/vendors/VendorDocumentsSection'
+import { RecordTasks } from '@/components/tasks/RecordTasks'
 import { VendorRepGroupCard } from '@/components/vendors/VendorRepGroupCard'
 import { VendorContactsSection } from '@/components/vendors/VendorContactsSection'
 import { peopleFor } from '@/lib/contacts'
@@ -245,6 +246,7 @@ export default function VendorDetailPage() {
           )}
         </section>
 
+        <RecordTasks className="rounded-2xl border border-stone-200 bg-white p-5" preset={{ vendor: { id: v.id, name: v.name } }} />
         <VendorDocumentsSection vendorId={v.id} vendorName={v.name} organizationId={v.organization_id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorMailSection vendorId={v.id} organizationId={v.organization_id} onNewEmail={canEdit ? () => compose(suggestions[0] ? [suggestions[0].email] : []) : undefined} />
         <VendorRepGroupCard vendorId={v.id} group={v.rep_groups} />

@@ -13,6 +13,8 @@ export interface MimeInput {
   references?: string | null
   attachments?: MimeAttachment[]
   boundary?: string
+  /** Extra headers (X-VMS-Notice on task reminders). */
+  headers?: Record<string, string>
 }
 
 export function utf8ToBase64(s: string): string {
@@ -47,6 +49,7 @@ export function buildMime(m: MimeInput): string {
     `Subject: ${encodeHeader(m.subject)}`,
     ...(m.inReplyTo ? [`In-Reply-To: ${m.inReplyTo}`] : []),
     ...(m.references || m.inReplyTo ? [`References: ${[m.references, m.inReplyTo].filter(Boolean).join(' ')}`] : []),
+    ...Object.entries(m.headers ?? {}).map(([k, v]) => `${k}: ${v.replace(/[\r\n]/g, ' ')}`),
     'MIME-Version: 1.0',
   ]
   const textPart = ['Content-Type: text/plain; charset="UTF-8"', 'Content-Transfer-Encoding: base64', '', wrap(utf8ToBase64(m.text))]
