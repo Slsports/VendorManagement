@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Banknote, Building2, CalendarDays, ChartColumn, ClipboardCheck, ClipboardList, Contact, FileText, FolderOpen, LayoutDashboard, Lightbulb, ListTodo, Mail, Receipt, Settings, ShoppingCart, Tags, Truck, Undo2, Upload, Users, UsersRound } from 'lucide-react'
+import { Banknote, CircleHelp, Building2, CalendarDays, ChartColumn, ClipboardCheck, ClipboardList, Contact, FileText, FolderOpen, LayoutDashboard, Lightbulb, ListTodo, Mail, Receipt, Settings, ShoppingCart, Tags, Truck, Undo2, Upload, Users, UsersRound } from 'lucide-react'
 import { ORDER_STATUSES, ORDER_STATUS_LABELS, ROUTES, type UserRole } from './constants'
 
 export interface NavChild {
@@ -76,6 +76,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     items: [
       { label: 'File Manager', to: ROUTES.files, icon: FolderOpen },
       { label: 'Settings', to: ROUTES.settings, icon: Settings, roles: ['admin'] },
+      { label: 'Help', to: ROUTES.help, icon: CircleHelp, roles: ['admin', 'manager', 'buyer', 'viewer', 'uploader'] },
     ],
   },
 ]

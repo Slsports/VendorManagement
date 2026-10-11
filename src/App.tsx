@@ -42,6 +42,7 @@ const ProductSourcing = lazy(() => import('@/pages/product-sourcing/ProductSourc
 const FileManager = lazy(() => import('@/pages/file-manager/FileManager'))
 const SearchPage = lazy(() => import('@/pages/search/SearchPage'))
 const UploadInvoice = lazy(() => import('@/pages/upload/UploadInvoice'))
+const HelpPage = lazy(() => import('@/pages/help/HelpPage'))
 const TasksPage = lazy(() => import('@/pages/tasks/TasksPage'))
 const SettingsLayout = lazy(() => import('@/pages/settings/SettingsLayout'))
 const OrganizationSettings = lazy(() => import('@/pages/settings/OrganizationSettings'))
@@ -155,6 +156,8 @@ export default function App() {
                 <Route path={ROUTES.upload} element={<UploadInvoice />} />
               </Route>
 
+              <Route path={ROUTES.help} element={<HelpPage />} />
+              <Route path={`${ROUTES.help}/:slug`} element={<HelpPage />} />
               <Route path="/home" element={<HomeRedirect />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>

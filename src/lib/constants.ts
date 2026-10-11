@@ -85,6 +85,7 @@ export const ROUTES = {
   mailWith: '/mail/with',
   team: '/team',
   tasks: '/tasks',
+  help: '/help',
   mergeReport: '/review/merges',
 } as const
 

@@ -1693,3 +1693,11 @@ custom option; and a + on the task box to add one.
   Texts need a texting service (Twilio: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM function secrets); until
   then a text reminder is skipped and the task says "not all sent". Migration 0088, function task-reminders (every
   minute).
+
+## Oct 11 — Reminder button "Dismiss"; Help (Knowledge Base)
+Dana: the dashboard reminder's "Got it" is now **Dismiss** (hides the reminder; the task stays open).
+Dana: "create a complete list of features and exactly how to use them as help files so someone could search the
+Knowledge Base to learn how to do things … add and edit this every time we make an update." VMS gets a **Help** page
+(menu → Help, everyone including invoice uploaders): search box across all articles, or browse by topic; each article
+is one "how do I…" with steps and "Good to know". Articles live in `docs/help/` and ship with the app, and every
+session updates them in the same change as the feature (rule in CLAUDE.md).

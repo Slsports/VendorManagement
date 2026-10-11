@@ -56,6 +56,13 @@ private to the owner and the admin (RLS). Never copy their subjects, snippets or
 (review_items, notes, logs); Orders lists filter `mailbox_id is null or shared_at is not null`. Gmail calls use the
 email's `gmail_box`, never the org's single mailbox.
 
+## Help articles (Oct 11)
+The in-app Help page (menu → Help, `/help`) is built from `docs/help/*.md`, one "how do I…" per file, named
+`<section>--<topic>.md`, with a header (title, section, keywords, who) — see any existing file and `src/lib/help.ts`
+(`HELP_SECTIONS`). **Every change people can see updates its help in the same commit**: a new feature gets new
+articles, a renamed button or changed step is fixed in the article, a removed feature's article is deleted. Plain words
+for Dana's staff, exact button names in **bold**, no developer terms. `npm test` checks every article's header.
+
 ## Stack and commands
 Vite + React 19 + TypeScript + Tailwind 4, Supabase (project `bpdpkytfmpbwpbmpejbf`), vitest, oxlint.
 - `npm run lint`, `npm run typecheck`, `npm test` — run all three before every push.
