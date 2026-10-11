@@ -1584,6 +1584,18 @@ under its name, at any screen width. In an email, the green "Saved to Images ›
 box. Moving a file into Confirmations or Invoices starts Claude's order check; moving it out sets its unfinished
 check aside. Migration 0082.
 
+## Oct 10 — Picture previews in folders; rename files
+Dana: "make anything that is an image in a folder show a preview of the image and I can click on it to enlarge
+it" and "I also want to be able to rename them". Pictures in any vendor folder show a preview (click to open
+it large); the Images and Approved proofs folders show them as a grid of large tiles. Every file has
+**Rename** beside Move: it changes the name shown in VMS, not the file.
+
+## Oct 10 — Damaged Items folder
+Dana: "I see images of damaged items which we would use to attach to a vendor return email. So let's call it
+Damaged Items." New vendor folder **Damaged Items** (shown as picture tiles). Pictures from a vendor email whose
+subject talks about damage, defects, breakage or a return go there instead of Images; the 16 already saved
+(Image One, Norty, Water Sports, World Famous Sports) were moved. Migration 0083.
+
 ## Oct 10 — New VMS logo; forest green replaces #00B050
 Dana picked a pin logo ("tracking is the biggest asset"): an amber pin on forest green. Two editions in
 `public/brand/`: **sls/** with the SLSI fish in the pin (the fish's eye redrawn as the original "sly eye":
@@ -1591,5 +1603,8 @@ almond eye, lid line corner to corner, pupil in the back corner looking at you) 
 pin for white-labelling. The favicon is the plain pin with a V for both. Dana: "Final assets should match the
 forest green in the new logos," so organization #1's accent moves from #00B050 to **#2F6B4F**. No gray anywhere:
 shadows under the pin are amber with a green core on light backgrounds, an amber glow on dark ones. The sidebar
-and sign-in screen use the pin alone (`logo-mark`), since the app name already sits beside it. Migration 0062.
+uses the pin alone (`logo-mark`), since the app name already sits beside it. Migration 0084.
 Guide: `docs/brand-assets.md`.
+- **Sign-in page:** the pin beside **Vendor Management System** in large bold print with **Shaver Lake Sports**
+  (no "Inc.") under it, the two lines nearly as tall as the pin; no "RetailHQ". On phones and iPads held upright it
+  sits centered right above the white sign-in box (Dana: "most of my people will be on iPads or phones").

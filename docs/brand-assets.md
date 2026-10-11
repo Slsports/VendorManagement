@@ -47,7 +47,7 @@ There is no gray in the palette. Shadows are amber and green.
 - `index.html` links `/brand/favicon.ico`, `/brand/favicon.svg`, the SLS apple-touch icon and manifest, and sets
   `theme-color` to `#2F6B4F`.
 - `src/lib/theme.ts` defaults to `/brand/sls/logo-mark.svg` and `/brand/sls/logo-mark-dark.svg` with accent
-  `#2F6B4F` (matching `:root` in `src/index.css`). Migration 0062 sets the same on organization #1.
+  `#2F6B4F` (matching `:root` in `src/index.css`). Migration 0084 sets the same on organization #1.
 - For a white-label tenant, point its `logo_url` / `logo_dark_url` at the `vms/` files (or its own upload), or set
   `VITE_LOGO_URL` / `VITE_LOGO_DARK_URL`.
 

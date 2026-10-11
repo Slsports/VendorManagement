@@ -1,5 +1,5 @@
 -- =============================================================================
--- 0062 — Shaver Lake Sports logo and forest green (Dana, Oct 10)
+-- 0084 — Shaver Lake Sports logo and forest green (Dana, Oct 10)
 -- The new pin logo with the SLSI fish (public/brand/sls/) replaces the old fish
 -- PNGs, and the accent moves from #00B050 to the logo's forest green #2F6B4F.
 -- Only replaces the values set by 0005–0007, so a logo or color Dana has since

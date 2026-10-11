@@ -178,6 +178,21 @@ export async function signedFileUrl(storagePath: string): Promise<string> {
   return data.signedUrl
 }
 
+/** A small version of a stored picture for previews (falls back to the file itself if the server cannot resize). */
+export async function signedThumbUrl(storagePath: string): Promise<string> {
+  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(storagePath, 60 * 60, { transform: { width: 480, height: 360, resize: 'contain' } })
+  if (error) return signedFileUrl(storagePath)
+  return data.signedUrl
+}
+
+/** A new name for a saved file (Dana, Oct 10: "I also want to be able to rename them"). The file itself is untouched. */
+export async function renameVendorLink(linkId: string, label: string): Promise<void> {
+  const name = label.trim()
+  if (!name) throw new Error('Type a name')
+  const { error } = await supabase.from('vendor_links').update({ label: name.slice(0, 200) }).eq('id', linkId)
+  if (error) throw error
+}
+
 export async function deleteVendorLink(link: VendorLink): Promise<void> {
   if (link.storage_path) {
     const { error } = await supabase.storage.from(BUCKET).remove([link.storage_path])

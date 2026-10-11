@@ -23,7 +23,7 @@ function envPath(value: string | undefined, fallback: string): string | null {
 
 export const DEFAULT_BRANDING: Branding = {
   appName: import.meta.env.VITE_APP_NAME?.trim() || 'RetailHQ VMS',
-  organizationName: import.meta.env.VITE_ORG_NAME?.trim() || import.meta.env.VITE_APP_NAME?.trim() || 'RetailHQ',
+  organizationName: import.meta.env.VITE_ORG_NAME?.trim() || import.meta.env.VITE_APP_NAME?.trim() || 'Shaver Lake Sports',
   // Pre-login logo. Set VITE_LOGO_URL to a path or URL, or to an empty string for none.
   logoUrl: envPath(import.meta.env.VITE_LOGO_URL, '/brand/sls/logo-mark.svg'),
   logoOnDarkUrl: envPath(import.meta.env.VITE_LOGO_DARK_URL, '/brand/sls/logo-mark-dark.svg'),
