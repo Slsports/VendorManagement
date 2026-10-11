@@ -1,0 +1,13 @@
+{
+  "name": "VMS · Shaver Lake Sports",
+  "short_name": "VMS",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#2F6B4F",
+  "background_color": "#143726",
+  "icons": [
+    { "src": "/brand/sls/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/brand/sls/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/brand/sls/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

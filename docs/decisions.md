@@ -1595,3 +1595,17 @@ Dana: "I see images of damaged items which we would use to attach to a vendor re
 Damaged Items." New vendor folder **Damaged Items** (shown as picture tiles). Pictures from a vendor email whose
 subject talks about damage, defects, breakage, a wrong item, "order issues" or a return go there instead of Images; the 21 already saved
 (Image One, Norty, Water Sports, World Famous Sports, Planet Cotton) were moved. Migration 0083.
+
+## Oct 10 — New VMS logo; forest green replaces #00B050
+Dana picked a pin logo ("tracking is the biggest asset"): an amber pin on forest green. Two editions in
+`public/brand/`: **sls/** with the SLSI fish in the pin (the fish's eye redrawn as the original "sly eye":
+almond eye, lid line corner to corner, pupil in the back corner looking at you) and **vms/** with "VMS" in the
+pin for white-labelling. The favicon is the plain pin with a V for both. Dana: "Final assets should match the
+forest green in the new logos," so organization #1's accent moves from #00B050 to **#2F6B4F**. No gray anywhere:
+shadows under the pin are amber with a green core on light backgrounds, an amber glow on dark ones. The sidebar
+uses the pin alone (`logo-mark`), since the app name already sits beside it. Migration 0084.
+Guide: `docs/brand-assets.md`.
+- **Sign-in page:** the pin beside **Shaver Lake Sports** (no "Inc.") in large bold print with **Vendor Management
+  System** under it, spread letter by letter to the same width without a bigger font ("We nailed it!"). The two
+  lines are nearly as tall as the pin; no "RetailHQ". On phones and iPads held upright it sits centered right above
+  the white sign-in box (Dana: "most of my people will be on iPads or phones").

@@ -10,7 +10,7 @@ export interface Branding {
   appName: string
   organizationName: string
   logoUrl: string | null
-  /** Variant for dark surfaces (typically white on transparent). */
+  /** Variant for dark surfaces. */
   logoOnDarkUrl: string | null
   accentColor: string
 }
@@ -23,12 +23,12 @@ function envPath(value: string | undefined, fallback: string): string | null {
 
 export const DEFAULT_BRANDING: Branding = {
   appName: import.meta.env.VITE_APP_NAME?.trim() || 'RetailHQ VMS',
-  organizationName: import.meta.env.VITE_ORG_NAME?.trim() || import.meta.env.VITE_APP_NAME?.trim() || 'RetailHQ',
+  organizationName: import.meta.env.VITE_ORG_NAME?.trim() || import.meta.env.VITE_APP_NAME?.trim() || 'Shaver Lake Sports',
   // Pre-login logo. Set VITE_LOGO_URL to a path or URL, or to an empty string for none.
-  logoUrl: envPath(import.meta.env.VITE_LOGO_URL, '/brand/slsi-logo.png'),
-  logoOnDarkUrl: envPath(import.meta.env.VITE_LOGO_DARK_URL, '/brand/slsi-logo-white.png'),
-  // Must match the :root default in index.css (organization #1's green).
-  accentColor: '#00b050',
+  logoUrl: envPath(import.meta.env.VITE_LOGO_URL, '/brand/sls/logo-mark.svg'),
+  logoOnDarkUrl: envPath(import.meta.env.VITE_LOGO_DARK_URL, '/brand/sls/logo-mark-dark.svg'),
+  // Must match the :root default in index.css (organization #1's forest green).
+  accentColor: '#2f6b4f',
 }
 
 export function brandingFromOrganization(org: Organization | null | undefined): Branding {
