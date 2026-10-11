@@ -146,7 +146,7 @@ async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
  * number, with a PDF attached. The file is saved to the order as "Our order" so the next check finds it.
  */
 async function sentOrderFiles(db: SupabaseClient, org: string, orderId: string, po: string | null, vendorId: string | null): Promise<{ file: PaperFile; link_id: string }[]> {
-  let q = db.from('emails').select('id, gmail_id, subject, received_at, attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, storage_path, vendor_link_id)')
+  let q = db.from('emails').select('id, gmail_id, gmail_box, subject, received_at, attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, storage_path, vendor_link_id)')
     .eq('organization_id', org).eq('direction', 'out').eq('has_attachments', true)
   const poClean = (po ?? '').trim()
   if (poClean.length >= 3) q = q.or(`order_id.eq.${orderId},subject.ilike.%${poClean.replace(/[%,()]/g, '')}%`)
@@ -154,6 +154,7 @@ async function sentOrderFiles(db: SupabaseClient, org: string, orderId: string, 
   const { data: mails } = await q.order('received_at', { ascending: false }).limit(3)
   const out: { file: PaperFile; link_id: string }[] = []
   let gmail: Gmail | null = null
+  let gmailBox: string | null = null
   for (const m of mails ?? []) {
     for (const a of (m.attachments ?? []) as { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; storage_path: string | null; vendor_link_id: string | null }[]) {
       if (out.length >= 2 || !isReadableFile({ name: a.file_name, mime: a.mime_type }) || /^(image\d+|outlook|logo|signature)/i.test(a.file_name) || (a.size ?? 0) > MAX_FILE) continue
@@ -164,11 +165,11 @@ async function sentOrderFiles(db: SupabaseClient, org: string, orderId: string, 
         bytes = new Uint8Array(await data.arrayBuffer())
       } else {
         if (!a.gmail_attachment_id) continue
-        if (!gmail) {
-          const { data: acct } = await db.from('mail_accounts').select('mailbox').eq('organization_id', org).maybeSingle()
-          if (!acct) return out
-          gmail = new Gmail(await googleAccessToken(acct.mailbox))
-        }
+        // the PO may have gone from orders@ or from someone's own mailbox (Dana, Oct 11)
+        let box = (m as { gmail_box?: string | null }).gmail_box ?? null
+        if (!box) box = (await db.from('mail_accounts').select('mailbox').eq('organization_id', org).maybeSingle()).data?.mailbox ?? null
+        if (!box) return out
+        if (!gmail || gmailBox !== box) { gmail = new Gmail(await googleAccessToken(box)); gmailBox = box }
         const part = await gmail.call<{ data: string }>(`messages/${m.gmail_id}/attachments/${a.gmail_attachment_id}`)
         const b64 = part.data.replace(/-/g, '+').replace(/_/g, '/')
         const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4))

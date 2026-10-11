@@ -7,6 +7,7 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { getAiUsageThisMonth, getMailStatus, listSignatures, reclassifyAllMail, saveSignature, setFollowUpDays, syncMailNow } from '@/services/mail'
 import { errorMessage } from '@/lib/utils'
 import { FreightWatchers } from '@/components/freight/FreightWatchers'
+import { MailboxesStatus } from '@/components/mail/MailboxesStatus'
 import { Alert, Button, FormField, Input, Spinner, Textarea } from '@/components/ui'
 
 /** The orders@ connection: is it syncing, how far the 12-month backfill has got, and the follow-up setting. */
@@ -90,6 +91,7 @@ export default function MailSettings() {
 
       <ClaudeUsage organizationId={organization!.id} />
 
+      <MailboxesStatus />
       <FreightWatchers organizationId={organization!.id} />
       <Signatures organizationId={organization!.id} />
 

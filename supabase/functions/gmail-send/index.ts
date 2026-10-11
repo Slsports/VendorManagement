@@ -1,4 +1,4 @@
-// gmail-send: send from orders@ as the signed-in person (docs/gmail-connection.md). New email, reply,
+// gmail-send: send from orders@ (or the person's own mailbox, Dana Oct 11) as the signed-in person (docs/gmail-connection.md). New email, reply,
 // reply all, forward and follow-up all come through here. The message carries the sender's name and
 // signature, threads with the conversation, is saved to VMS at once (filed to the vendor), and makes the
 // sender the thread's owner; the thread then waits on the vendor until they answer.
@@ -18,6 +18,7 @@ interface SendRequest {
   body: string
   attachments?: MimeAttachment[]     // from the computer, base64
   vendor_link_ids?: string[]         // files from the vendor's Links & files
+  mailbox_id?: string | null         // a new email from my own mailbox instead of orders@
 }
 
 const EMAIL = /^[^@\s,;<>]+@[^@\s,;<>]+\.[^@\s,;<>]+$/
@@ -38,15 +39,25 @@ Deno.serve(async (req) => {
     const { data: acct } = await db.from('mail_accounts').select('mailbox').eq('organization_id', me.organization_id).single()
     if (!acct) throw new HttpError(400, 'No mailbox connected')
     const { data: org } = await db.from('organizations').select('name, app_name').eq('id', me.organization_id).single()
-    const mailbox = acct.mailbox as string
-
     // The conversation and the message being answered.
-    let thread: { id: string; gmail_thread_id: string; vendor_id: string | null } | null = null
+    let thread: { id: string; gmail_thread_id: string; vendor_id: string | null; mailbox_id: string | null } | null = null
     if (r.thread_id) {
-      const { data } = await db.from('email_threads').select('id, gmail_thread_id, vendor_id, organization_id').eq('id', r.thread_id).single()
+      const { data } = await db.from('email_threads').select('id, gmail_thread_id, vendor_id, organization_id, mailbox_id').eq('id', r.thread_id).single()
       if (!data || data.organization_id !== me.organization_id) throw new HttpError(404, 'Conversation not found')
       thread = data
     }
+    // Which mailbox it goes from: the conversation's, or the one picked for a new email. A personal mailbox sends
+    // as its owner only; the old Gmail answers from orders@ (its mail arrives there).
+    const boxId = thread ? thread.mailbox_id : r.mailbox_id ?? null
+    let box: { id: string; kind: string; address: string; owner_id: string; gmail_box: string } | null = null
+    if (boxId) {
+      const { data } = await db.from('mailboxes').select('id, kind, address, owner_id, gmail_box, organization_id').eq('id', boxId).single()
+      if (!data || data.organization_id !== me.organization_id) throw new HttpError(404, 'Mailbox not found')
+      if (data.kind === 'personal' && data.owner_id !== me.id) throw new HttpError(403, 'Only the owner of this mailbox can send from it. Share the conversation to Orders to answer from orders@.')
+      if (data.kind === 'legacy' && me.role !== 'admin' && data.owner_id !== me.id) throw new HttpError(403, 'Only Dana answers the old Gmail')
+      box = data
+    }
+    const mailbox = (box?.kind === 'personal' ? box.address : acct.mailbox) as string
     let inReplyTo: string | null = null
     let references: string | null = null
     if (r.reply_to_email_id) {
@@ -66,11 +77,12 @@ Deno.serve(async (req) => {
       }
     }
     if (r.forward_email_id) {
-      const { data: e } = await db.from('emails').select('gmail_id, organization_id, attachments:email_attachments(file_name, mime_type, gmail_attachment_id)').eq('id', r.forward_email_id).single()
+      const { data: e } = await db.from('emails').select('gmail_id, gmail_box, organization_id, attachments:email_attachments(file_name, mime_type, gmail_attachment_id)').eq('id', r.forward_email_id).single()
       if (e?.organization_id === me.organization_id) {
+        const from = e.gmail_box && e.gmail_box !== mailbox ? new Gmail(await googleAccessToken(e.gmail_box)) : gmail
         for (const a of (e.attachments ?? []) as { file_name: string; mime_type: string | null; gmail_attachment_id: string | null }[]) {
           if (!a.gmail_attachment_id) continue
-          const part = await gmail.call<{ data: string }>(`messages/${e.gmail_id}/attachments/${a.gmail_attachment_id}`)
+          const part = await from.call<{ data: string }>(`messages/${e.gmail_id}/attachments/${a.gmail_attachment_id}`)
           attachments.push({ name: a.file_name, mime: a.mime_type ?? 'application/octet-stream', base64: part.data.replace(/-/g, '+').replace(/_/g, '/') })
         }
       }
@@ -85,15 +97,16 @@ Deno.serve(async (req) => {
 
     // Save it in VMS now, the same way the sync would.
     const full = parseMessage(await gmail.message(sent.id, 'full') as unknown as GmailMessage)
-    const { data: th } = await db.from('email_threads').upsert({ organization_id: me.organization_id, gmail_thread_id: sent.threadId }, { onConflict: 'organization_id,gmail_thread_id', ignoreDuplicates: false }).select('id, vendor_id').single()
+    const { data: th } = await db.from('email_threads').upsert({ organization_id: me.organization_id, gmail_thread_id: sent.threadId, mailbox_id: boxId }, { onConflict: 'organization_id,gmail_thread_id', ignoreDuplicates: false }).select('id, vendor_id').single()
     if (!th) throw new Error('Could not save the conversation')
     const vendorId = r.vendor_id ?? thread?.vendor_id ?? th.vendor_id ?? null
     const domain = to[0]!.split('@')[1]!
     const free = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com', 'aol.com', 'comcast.net', 'att.net', 'sbcglobal.net', 'live.com', 'msn.com', 'me.com'].includes(domain)
-    await db.from('email_senders').upsert({ organization_id: me.organization_id, sender_key: free ? to[0] : domain, is_domain: !free }, { onConflict: 'organization_id,sender_key', ignoreDuplicates: true })
-    const { data: sender } = await db.from('email_senders').select('id').eq('organization_id', me.organization_id).eq('sender_key', free ? to[0] : domain).single()
+    // private mail uses the senders VMS knows and adds none (no "who is this?" cards from it)
+    if (!boxId) await db.from('email_senders').upsert({ organization_id: me.organization_id, sender_key: free ? to[0] : domain, is_domain: !free }, { onConflict: 'organization_id,sender_key', ignoreDuplicates: true })
+    const { data: sender } = await db.from('email_senders').select('id').eq('organization_id', me.organization_id).eq('sender_key', free ? to[0] : domain).maybeSingle()
     const { data: email, error: insErr } = await db.from('emails').insert({
-      organization_id: me.organization_id, gmail_id: sent.id, thread_id: th.id, message_id_header: full.message_id_header, in_reply_to: inReplyTo,
+      organization_id: me.organization_id, mailbox_id: boxId, gmail_box: mailbox.toLowerCase(), gmail_id: sent.id, thread_id: th.id, message_id_header: full.message_id_header, in_reply_to: inReplyTo,
       direction: 'out', from_email: mailbox, from_name: fromName, to_emails: to, cc_emails: cc, subject: r.subject.trim(),
       snippet: text.replace(/\s+/g, ' ').slice(0, 200), body_text: text.slice(0, 20_000), received_at: full.received_at,
       labels: ['SENT'], has_attachments: attachments.length > 0, sender_id: sender?.id ?? null, vendor_id: vendorId, match_how: vendorId ? 'manual' : null, sent_by: me.id,

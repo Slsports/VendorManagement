@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import { Check, CheckCircle2, ClipboardList, Palette, ExternalLink, Trash2, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { assignEmailThread, fetchEmailHtml, getMailbox, getThread, fetchAttachment, setArtStatus, setEmailThreadStatus, setEmailVendor, setThreadView, setWorkingOrder, trashThreads, type ThreadDetail } from '@/services/mail'
+import { assignEmailThread, fetchEmailHtml, getMailbox, getThread, fetchAttachment, listMailboxes, shareThreadToOrders, setArtStatus, setEmailThreadStatus, setEmailVendor, setThreadView, setWorkingOrder, trashThreads, type ThreadDetail } from '@/services/mail'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { MakeFreightBillDialog } from '@/components/freight/MakeFreightBillDialog'
 import { SaveToDocumentsDialog } from '@/components/vendors/SaveToDocumentsDialog'
@@ -33,7 +33,12 @@ export default function ThreadPage() {
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
   const q = useSupabaseQuery(() => getThread(id), [id])
   const people = useSupabaseQuery(async () => (organization ? listPeople(organization.id) : []), [organization?.id])
-  const mailbox = useSupabaseQuery(async () => (organization ? getMailbox(organization.id) : null), [organization?.id])
+  const orders = useSupabaseQuery(async () => (organization ? getMailbox(organization.id) : null), [organization?.id])
+  // Someone's own mailbox or the old Gmail (Dana, Oct 11): its address for Gmail and replies, and who may answer from it.
+  const boxes = useSupabaseQuery(async () => (organization ? listMailboxes(organization.id) : []), [organization?.id])
+  const box = q.data?.thread.mailbox_id ? (boxes.data ?? []).find((b) => b.id === q.data!.thread.mailbox_id) ?? null : null
+  const mailbox = { data: box ? (box.kind === 'personal' ? box.address : orders.data) : orders.data }
+  const mayAnswer = !box || box.kind !== 'personal' || box.owner_id === profile?.id
   const [draft, setDraft] = useState<ComposeDraft | null>(null)
   const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
@@ -100,6 +105,16 @@ export default function ThreadPage() {
           {t.view === 'offers' ? <span className="rounded-md bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800">Offers & catalogs</span> : null}
           {t.vendor ? <Link to={`${ROUTES.vendors}/${t.vendor.id}`} className="font-medium text-brand hover:underline">{t.vendor.name}</Link> : <span className="text-stone-500">Not filed to a vendor</span>}
           <span>· {emails.length} message{emails.length === 1 ? '' : 's'}</span>
+          {box ? (
+            <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${t.shared_at ? 'bg-emerald-50 text-emerald-800' : 'bg-violet-50 text-violet-800'}`}>
+              {box.kind === 'legacy' ? 'Old Gmail' : box.owner_id === profile?.id ? 'My mail' : box.label}{t.shared_at ? ' · shared to Orders' : ' · private'}
+            </span>
+          ) : null}
+          {box && canEdit ? (
+            <button type="button" onClick={() => void act(t.shared_at ? 'Back to private' : 'Shared to Orders: everyone sees it now', () => shareThreadToOrders(t.id, !t.shared_at))} className="text-xs font-medium text-brand hover:underline">
+              {t.shared_at ? 'Take back out of Orders' : 'Share to Orders'}
+            </button>
+          ) : null}
           {mailbox.data ? <a href={gmailThreadUrl(mailbox.data, t.gmail_thread_id)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-stone-500 hover:text-stone-900">· Open in Gmail <ExternalLink className="size-3.5" aria-hidden="true" /></a> : null}
         </div>
       </header>
@@ -165,7 +180,7 @@ export default function ThreadPage() {
         {/* Newest first and open; older ones closed to one line (Dana, Oct 8). */}
         {[...emails].reverse().map((e, i) => (
           <Message key={e.id} email={e} startOpen={i === 0} vendor={t.vendor} carrierId={t.carrier_id ?? null}
-            onCompose={canEdit && mailbox.data ? (kind) => setDraft(kind === 'forward' ? forwardDraft(t, e, e.attachments.length) : replyDraft(t, e, mailbox.data!, kind === 'all')) : undefined} />
+            onCompose={canEdit && mayAnswer && mailbox.data ? (kind) => setDraft(kind === 'forward' ? forwardDraft(t, e, e.attachments.length) : replyDraft(t, e, mailbox.data!, kind === 'all')) : undefined} />
         ))}
       </ol>
       {draft ? <ComposeDialog draft={draft} onClose={() => setDraft(null)} onSent={() => {

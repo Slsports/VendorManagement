@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import { Paperclip, Send, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { sendEmail, type SendEmailInput } from '@/services/mail'
+import { listMailboxes, sendEmail, type SendEmailInput } from '@/services/mail'
 import { listAddressBook } from '@/services/contacts'
 import { listVendorLinks } from '@/services/lines'
 import { errorMessage } from '@/lib/utils'
@@ -18,6 +18,8 @@ export interface ComposeDraft {
   reply_to_email_id?: string | null
   forward_email_id?: string | null
   vendor_id?: string | null
+  /** A new email from my own mailbox instead of orders@ (Dana, Oct 11). Replies always go from their conversation's mailbox. */
+  mailbox_id?: string | null
   /** Shown as a note above the form, e.g. "Forwarding with 2 attachments". */
   note?: string
 }
@@ -52,6 +54,10 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const book = useSupabaseQuery(async () => (organization ? listAddressBook(organization.id) : []), [organization?.id])
   const [who, setWho] = useState('')
+  // From: orders@ or my own mailbox, for a new email
+  const [fromBox, setFromBox] = useState<string>(draft.mailbox_id ?? '')
+  const boxes = useSupabaseQuery(async () => (organization && !draft.thread_id ? listMailboxes(organization.id) : []), [organization?.id, draft.thread_id])
+  const myBox = (boxes.data ?? []).find((b) => b.kind === 'personal' && b.owner_id === profile?.id)
   const links = useSupabaseQuery(async () => (draft.vendor_id ? (await listVendorLinks(draft.vendor_id)).filter((l) => l.storage_path) : []), [draft.vendor_id])
 
   useEffect(() => {
@@ -85,6 +91,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
         body,
         attachments: await Promise.all(files.map(async (f) => ({ name: f.name, mime: f.type || 'application/octet-stream', base64: await readBase64(f) }))),
         vendor_link_ids: linkIds,
+        mailbox_id: draft.thread_id ? null : fromBox || null,
       }
       const res = await sendEmail(input)
       toast.success('Sent')
@@ -108,6 +115,14 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
         </div>
         <div className="space-y-3 overflow-y-auto px-4 py-3">
           {draft.note ? <p className="rounded-lg bg-stone-50 px-3 py-2 text-xs text-stone-600">{draft.note}</p> : null}
+          {myBox ? (
+            <FormField label="From" htmlFor="compose-from">
+              <select id="compose-from" value={fromBox} onChange={(e) => setFromBox(e.target.value)} className="h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-base shadow-sm sm:text-sm">
+                <option value="">Orders (orders@)</option>
+                <option value={myBox.id}>Me ({myBox.address})</option>
+              </select>
+            </FormField>
+          ) : null}
           <FormField label="To" htmlFor="compose-to">
             <Input id="compose-to" value={to} onChange={(e) => setTo(e.target.value)} placeholder="name@vendor.com" autoComplete="off" required />
           </FormField>

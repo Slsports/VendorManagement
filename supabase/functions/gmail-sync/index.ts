@@ -4,7 +4,7 @@
 // Bodies are stored as plain text; matching and thread status happen in SQL (mail_process).
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { Gmail, GmailError, googleAccessToken } from '../_shared/gmail.ts'
-import { clueText, htmlBody, isBulk, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
+import { clueText, htmlBody, isBulk, isOldGmail, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
 import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type VendorIndex } from '../_shared/mailMatch.ts'
 import { extractLinks, itemPicture, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
 import { aiEnabled, readArtwork, readEmailVendors, readPaidNote, readReplyNeeded, readSender, sortEmails, type ArtEmail, type ReplyEmail, type UnsureEmail } from '../_shared/ai.ts'
@@ -21,6 +21,10 @@ const FREEMAIL = new Set(['gmail.com', 'googlemail.com', 'yahoo.com', 'ymail.com
 interface Account {
   organization_id: string; mailbox: string; internal_domains: string[]; history_id: string | null; backfill_after: string | null
   backfill_page_token: string | null; backfill_done: boolean; sync_started_at: string | null; messages_synced: number
+  /** A personal mailbox (Dana, Oct 11): its row in mailboxes and its owner; null for the shared orders@. */
+  box_id: string | null; owner_id: string | null
+  /** The old Gmail, which arrives in orders@ (only on the shared account). */
+  legacy: { id: string; address: string } | null
 }
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info' } })
@@ -46,17 +50,34 @@ Deno.serve(async (req) => {
   if (onlyOrg) q = q.eq('organization_id', onlyOrg)
   const { data: accounts, error } = await q
   if (error) return json({ error: error.message }, 500)
+  // Personal mailboxes and the old Gmail (Dana, Oct 11) after orders@.
+  let mq = db.from('mailboxes').select('id, organization_id, kind, address, owner_id, history_id, backfill_after, backfill_page_token, backfill_done, sync_started_at, messages_synced').eq('is_active', true)
+  if (onlyOrg) mq = mq.eq('organization_id', onlyOrg)
+  const { data: boxes } = await mq
   const results = []
-  for (const acct of (accounts ?? []) as Account[]) results.push(await syncAccount(db, acct))
+  for (const a of (accounts ?? []) as Account[]) {
+    const legacy = (boxes ?? []).find((b) => b.organization_id === a.organization_id && b.kind === 'legacy')
+    results.push(await syncAccount(db, { ...a, box_id: null, owner_id: null, legacy: legacy ? { id: legacy.id, address: legacy.address } : null }))
+  }
+  for (const b of (boxes ?? []).filter((x) => x.kind === 'personal')) {
+    const shared = (accounts ?? []).find((a) => a.organization_id === b.organization_id) as Account | undefined
+    results.push(await syncAccount(db, { ...b, mailbox: b.address, internal_domains: shared?.internal_domains ?? [], box_id: b.id, owner_id: b.owner_id, legacy: null } as Account))
+  }
   return json({ results })
 })
 
+/** Save sync state on the account's own row: mail_accounts for orders@, mailboxes for a personal one. */
+function saveState(db: SupabaseClient, acct: Account, fields: Record<string, unknown>) {
+  return acct.box_id ? db.from('mailboxes').update(fields).eq('id', acct.box_id) : db.from('mail_accounts').update(fields).eq('organization_id', acct.organization_id)
+}
+
 async function syncAccount(db: SupabaseClient, acct: Account) {
-  const started = Date.now()
+  // a personal mailbox gets a short slice of each run (orders@ comes first)
+  const started = acct.box_id ? Date.now() - (TIME_BUDGET_MS - 8_000) : Date.now()
   const org = acct.organization_id
   // One run at a time per mailbox; a run older than five minutes is assumed dead.
-  if (acct.sync_started_at && Date.now() - new Date(acct.sync_started_at).getTime() < 5 * 60_000) return { org, skipped: 'already running' }
-  await db.from('mail_accounts').update({ sync_started_at: new Date().toISOString() }).eq('organization_id', org)
+  if (acct.sync_started_at && Date.now() - new Date(acct.sync_started_at).getTime() < 5 * 60_000) return { org, mailbox: acct.mailbox, skipped: 'already running' }
+  await saveState(db, acct, { sync_started_at: new Date().toISOString() })
   let stored = 0
   try {
     const gmail = new Gmail(await googleAccessToken(acct.mailbox))
@@ -67,7 +88,7 @@ async function syncAccount(db: SupabaseClient, acct: Account) {
     let historyId = acct.history_id
     if (!historyId) {
       historyId = (await gmail.profile()).historyId
-      await db.from('mail_accounts').update({ history_id: historyId }).eq('organization_id', org)
+      await saveState(db, acct, { history_id: historyId })
     } else {
       const fresh: string[] = []
       const relabel = new Set<string>()
@@ -91,7 +112,7 @@ async function syncAccount(db: SupabaseClient, acct: Account) {
       }
       stored += await storeMessages(db, gmail, ctx, fresh, false)
       await updateLabels(db, gmail, ctx, [...relabel].filter((id) => !fresh.includes(id)))
-      await db.from('mail_accounts').update({ history_id: historyId }).eq('organization_id', org)
+      await saveState(db, acct, { history_id: historyId })
     }
 
     // Backfill slices while there is time left in this run.
@@ -103,34 +124,32 @@ async function syncAccount(db: SupabaseClient, acct: Account) {
       stored += await storeMessages(db, gmail, ctx, (page.messages ?? []).map((m) => m.id), true)
       pageToken = page.nextPageToken
       done = !pageToken
-      await db.from('mail_accounts').update({ backfill_page_token: pageToken ?? null, backfill_done: done }).eq('organization_id', org)
+      await saveState(db, acct, { backfill_page_token: pageToken ?? null, backfill_done: done })
     }
 
     // Older mail stored before the views existed: read its bulk-mail headers, a few hundred a run.
-    if (done && Date.now() - started < TIME_BUDGET_MS) await readBulkHeaders(db, gmail, org)
+    if (done && Date.now() - started < TIME_BUDGET_MS) await readBulkHeaders(db, gmail, org, ctx.mailbox)
     // Price lists, catalogs and order forms into the vendor's files, a few emails a run.
-    if (done && Date.now() - started < TIME_BUDGET_MS) await saveVendorFiles(db, gmail, org, started)
+    if (done && Date.now() - started < TIME_BUDGET_MS) await saveVendorFiles(db, gmail, org, started, ctx.mailbox)
     // Vendors' order confirmations and invoices into their folders; order-check compares them with the order.
-    if (done && Date.now() - started < TIME_BUDGET_MS) await savePaperwork(db, gmail, org, started)
+    if (done && Date.now() - started < TIME_BUDGET_MS) await savePaperwork(db, gmail, org, started, ctx.mailbox)
     // Pictures of items from vendors into their Images folder (12 months back); artwork proofs stay in the email.
-    if (done && Date.now() - started < TIME_BUDGET_MS) await saveItemPictures(db, gmail, org, started)
+    if (done && Date.now() - started < TIME_BUDGET_MS) await saveItemPictures(db, gmail, org, started, ctx.mailbox)
     // Freight bills from carriers: a bill per invoice email; Claude reads the PDF when it is attached.
-    if (done && Date.now() - started < TIME_BUDGET_MS) await freightBills(db, gmail, org, started)
+    if (done && Date.now() - started < TIME_BUDGET_MS) await freightBills(db, gmail, org, started, ctx.mailbox)
     // Claude reads what the rules could not place (only with an API key).
-    if (done && aiEnabled() && Date.now() - started < TIME_BUDGET_MS) await aiSteps(db, org, started)
+    if (done && !acct.box_id && aiEnabled() && Date.now() - started < TIME_BUDGET_MS) await aiSteps(db, org, started)
 
-    await db.from('mail_accounts').update({
-      last_sync_at: new Date().toISOString(), last_error: null, sync_started_at: null, messages_synced: acct.messages_synced + stored,
-    }).eq('organization_id', org)
-    return { org, stored, backfill_done: done, ms: Date.now() - started }
+    await saveState(db, acct, { last_sync_at: new Date().toISOString(), last_error: null, sync_started_at: null, messages_synced: acct.messages_synced + stored })
+    return { org, mailbox: acct.mailbox, stored, backfill_done: done, ms: Date.now() - started }
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e)
-    await db.from('mail_accounts').update({ last_error: message.slice(0, 1000), last_error_at: new Date().toISOString(), sync_started_at: null, messages_synced: acct.messages_synced + stored }).eq('organization_id', org)
-    return { org, stored, error: message }
+    await saveState(db, acct, { last_error: message.slice(0, 1000), last_error_at: new Date().toISOString(), sync_started_at: null, messages_synced: acct.messages_synced + stored })
+    return { org, mailbox: acct.mailbox, stored, error: message }
   }
 }
 
-interface Context { org: string; mailbox: string; internal: Set<string>; staff: Set<string>; index: VendorIndex; labelNames: Map<string, string> }
+interface Context { org: string; mailbox: string; internal: Set<string>; staff: Set<string>; index: VendorIndex; labelNames: Map<string, string>; boxId: string | null; legacy: { id: string; address: string } | null }
 
 async function loadContext(db: SupabaseClient, acct: Account, labelNames: Map<string, string>): Promise<Context> {
   const vendors: { id: string; name: string; aliases: string[] }[] = []
@@ -154,7 +173,7 @@ async function loadContext(db: SupabaseClient, acct: Account, labelNames: Map<st
     orders.push(...(data ?? []))
     if (!data || data.length < 1000) break
   }
-  return { org: acct.organization_id, mailbox: acct.mailbox.toLowerCase(), internal: new Set(acct.internal_domains.map((d) => d.toLowerCase())), staff, index: buildVendorIndex(vendors, ours, orders), labelNames }
+  return { org: acct.organization_id, mailbox: acct.mailbox.toLowerCase(), internal: new Set(acct.internal_domains.map((d) => d.toLowerCase())), staff, index: buildVendorIndex(vendors, ours, orders), labelNames, boxId: acct.box_id, legacy: acct.legacy }
 }
 
 const domainOf = (email: string) => email.split('@')[1]?.toLowerCase() ?? ''
@@ -192,39 +211,46 @@ async function storeMessages(db: SupabaseClient, gmail: Gmail, ctx: Context, ids
   const msgs = parsed.filter((p) => !p.label_ids.includes('DRAFT') && !p.label_ids.includes('CHAT'))
   if (!msgs.length) return 0
 
-  // Senders: the other party's domain, or the whole address for free mail.
+  // Senders: the other party's domain, or the whole address for free mail. Which mailbox: a personal one, the
+  // old Gmail (forwarded into orders@), or orders@ (null).
   const rows = msgs.map((p) => {
     const { direction, party } = classify(ctx, p)
     const domain = party ? domainOf(party.email) : ''
     const free = FREEMAIL.has(domain)
-    return { p, direction, party, senderKey: party ? (free ? party.email : domain) : null, isDomain: !free }
+    const boxId = ctx.boxId ?? (ctx.legacy && isOldGmail(p, ctx.legacy.address) ? ctx.legacy.id : null)
+    return { p, direction, party, senderKey: party ? (free ? party.email : domain) : null, isDomain: !free, boxId }
   })
+  // Private mail (personal, old Gmail) never adds new senders: they would ask everyone "who is this?". It still
+  // uses the senders VMS knows.
   const senderRows = new Map<string, { organization_id: string; sender_key: string; is_domain: boolean; display_name: string | null; domain_vendor_ids: string[] }>()
   for (const r of rows) {
-    if (!r.senderKey || senderRows.has(r.senderKey)) continue
+    if (!r.senderKey || senderRows.has(r.senderKey) || r.boxId) continue
     senderRows.set(r.senderKey, {
       organization_id: ctx.org, sender_key: r.senderKey, is_domain: r.isDomain, display_name: r.party?.name ?? null,
       domain_vendor_ids: r.isDomain ? domainVendors(ctx.index, r.senderKey) : [],
     })
   }
   const senderIds = new Map<string, string>()
-  if (senderRows.size) {
-    const keys = [...senderRows.keys()]
-    await check(db.from('email_senders').upsert([...senderRows.values()], { onConflict: 'organization_id,sender_key', ignoreDuplicates: true }))
+  const keys = [...new Set(rows.map((r) => r.senderKey).filter((k): k is string => !!k))]
+  if (keys.length) {
+    if (senderRows.size) await check(db.from('email_senders').upsert([...senderRows.values()], { onConflict: 'organization_id,sender_key', ignoreDuplicates: true }))
     const { data } = await db.from('email_senders').select('id, sender_key').eq('organization_id', ctx.org).in('sender_key', keys)
     for (const s of data ?? []) senderIds.set(s.sender_key, s.id)
   }
 
   const threadKeys = [...new Set(msgs.map((p) => p.gmail_thread_id))]
-  await check(db.from('email_threads').upsert(threadKeys.map((t) => ({ organization_id: ctx.org, gmail_thread_id: t })), { onConflict: 'organization_id,gmail_thread_id', ignoreDuplicates: true }))
+  const threadBox = new Map(rows.map((r) => [r.p.gmail_thread_id, r.boxId]))
+  await check(db.from('email_threads').upsert(threadKeys.map((t) => ({ organization_id: ctx.org, gmail_thread_id: t, mailbox_id: threadBox.get(t) ?? null })), { onConflict: 'organization_id,gmail_thread_id', ignoreDuplicates: true }))
   const threadIds = new Map<string, string>()
   for (let i = 0; i < threadKeys.length; i += 200) {
     const { data } = await db.from('email_threads').select('id, gmail_thread_id').eq('organization_id', ctx.org).in('gmail_thread_id', threadKeys.slice(i, i + 200))
     for (const t of data ?? []) threadIds.set(t.gmail_thread_id, t.id)
   }
 
-  const emailRows = rows.map(({ p, direction, senderKey }) => ({
+  const emailRows = rows.map(({ p, direction, senderKey, boxId }) => ({
     organization_id: ctx.org,
+    mailbox_id: boxId,
+    gmail_box: ctx.mailbox,
     gmail_id: p.gmail_id,
     thread_id: threadIds.get(p.gmail_thread_id)!,
     message_id_header: p.message_id_header,
@@ -272,16 +298,17 @@ async function attachmentBytes(gmail: Gmail, messageId: string, attachmentId: st
  * (PartnerShip), the bill waits for the PDF. Delivery receipts (XPO) are read and filed to the shipper's vendor and order.
  * A few emails a run; tracking updates are only marked looked-at.
  */
-async function freightBills(db: SupabaseClient, gmail: Gmail, org: string, started: number) {
+async function freightBills(db: SupabaseClient, gmail: Gmail, org: string, started: number, box: string) {
   let index: Awaited<ReturnType<typeof freightIndex>> | null = null
 
   // Bills made by hand from a PDF in an email ("Make a freight bill"): fetch it from Gmail and read it.
   const { data: made } = await db.from('freight_bills')
-    .select('id, carriers(name), attachment:email_attachments!freight_bills_source_attachment_id_fkey(id, file_name, gmail_attachment_id, email:emails(gmail_id))')
+    .select('id, carriers(name), attachment:email_attachments!freight_bills_source_attachment_id_fkey(id, file_name, gmail_attachment_id, email:emails(gmail_id, gmail_box))')
     .eq('organization_id', org).eq('status', 'reading').not('source_attachment_id', 'is', null).is('storage_path', null).limit(3)
   for (const b of made ?? []) {
     if (Date.now() - started > TIME_BUDGET_MS) break
-    const a = b.attachment as unknown as { id: string; file_name: string; gmail_attachment_id: string | null; email: { gmail_id: string } | null } | null
+    const a = b.attachment as unknown as { id: string; file_name: string; gmail_attachment_id: string | null; email: { gmail_id: string; gmail_box: string | null } | null } | null
+    if (a?.email?.gmail_box && a.email.gmail_box !== box) continue // another mailbox's run fetches it
     try {
       if (!a?.gmail_attachment_id || !a.email) throw new Error('The PDF is not available from Gmail')
       const bytes = await attachmentBytes(gmail, a.email.gmail_id, a.gmail_attachment_id)
@@ -299,7 +326,7 @@ async function freightBills(db: SupabaseClient, gmail: Gmail, org: string, start
 
   const { data: queue } = await db.from('emails')
     .select('id, gmail_id, subject, body_text, received_at, thread:email_threads!emails_thread_id_fkey!inner(carrier_id, carriers(name)), attachments:email_attachments(id, file_name, mime_type, gmail_attachment_id)')
-    .eq('organization_id', org).eq('direction', 'in').not('thread.carrier_id', 'is', null).is('freight_checked_at', null)
+    .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).eq('direction', 'in').not('thread.carrier_id', 'is', null).is('freight_checked_at', null)
     .order('received_at', { ascending: false }).limit(6)
   for (const e of queue ?? []) {
     if (Date.now() - started > TIME_BUDGET_MS) break
@@ -409,10 +436,10 @@ async function freightBills(db: SupabaseClient, gmail: Gmail, org: string, start
  * (docs/orders-and-mail-plan.md §2), and catalog / price-list links from offers mail. Mail filed later (a
  * sender answered in the review queue) is picked up the same way, so history catches up on its own.
  */
-async function saveVendorFiles(db: SupabaseClient, gmail: Gmail, org: string, started: number) {
+async function saveVendorFiles(db: SupabaseClient, gmail: Gmail, org: string, started: number, box: string) {
   const { data: queue } = await db.from('emails')
     .select('id, gmail_id, vendor_id, view, subject, received_at, has_attachments, attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
-    .eq('organization_id', org).eq('direction', 'in').not('vendor_id', 'is', null).is('files_scanned_at', null)
+    .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).eq('direction', 'in').not('vendor_id', 'is', null).is('files_scanned_at', null)
     .order('received_at', { ascending: false }).limit(25)
   for (const e of queue ?? []) {
     if (Date.now() - started > TIME_BUDGET_MS) break
@@ -465,10 +492,10 @@ async function saveVendorFiles(db: SupabaseClient, gmail: Gmail, org: string, st
  * vendor's Confirmations or Invoices folder for the year; saving it starts the order check (order-check reads
  * it, finds the order, compares, and puts it in front of whoever placed the order). Last 30 days, a few a run.
  */
-async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, started: number) {
+async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, started: number, box: string) {
   const { data: queue } = await db.from('emails')
     .select('id, gmail_id, vendor_id, subject, received_at, attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
-    .eq('organization_id', org).eq('direction', 'in').not('vendor_id', 'is', null).is('paper_scanned_at', null).eq('has_attachments', true).not('is_bulk', 'is', true)
+    .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).eq('direction', 'in').not('vendor_id', 'is', null).is('paper_scanned_at', null).eq('has_attachments', true).not('is_bulk', 'is', true)
     .gte('received_at', new Date(Date.now() - 30 * 86_400_000).toISOString())
     .order('received_at', { ascending: false }).limit(10)
   for (const e of queue ?? []) {
@@ -504,11 +531,11 @@ async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, star
  * so an email waits until Claude's artwork check has read it, and artwork conversations are skipped. Files the
  * other steps save (price lists, confirmations, invoices) are theirs. 12 months back, a batch a run.
  */
-async function saveItemPictures(db: SupabaseClient, gmail: Gmail, org: string, started: number) {
+async function saveItemPictures(db: SupabaseClient, gmail: Gmail, org: string, started: number, box: string) {
   const twoHours = new Date(Date.now() - 2 * 3600_000).toISOString()
   const { data: queue } = await db.from('emails')
     .select('id, gmail_id, vendor_id, subject, received_at, art_needed, thread:email_threads!emails_thread_id_fkey(art_status), attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
-    .eq('organization_id', org).eq('direction', 'in').not('vendor_id', 'is', null).eq('has_attachments', true).is('images_scanned_at', null)
+    .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).eq('direction', 'in').not('vendor_id', 'is', null).eq('has_attachments', true).is('images_scanned_at', null)
     .not('is_bulk', 'is', true).not('files_scanned_at', 'is', null).or(`art_read_at.not.is.null,received_at.lt.${twoHours}`)
     .gte('received_at', new Date(Date.now() - 365 * 86_400_000).toISOString())
     .order('received_at', { ascending: false }).limit(15)
@@ -648,8 +675,8 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
 }
 
 /** Fill emails.is_bulk for mail stored before it was read, then let SQL re-sort those emails. */
-async function readBulkHeaders(db: SupabaseClient, gmail: Gmail, org: string) {
-  const { data } = await db.from('emails').select('id, gmail_id').eq('organization_id', org).is('is_bulk', null).eq('direction', 'in').limit(300)
+async function readBulkHeaders(db: SupabaseClient, gmail: Gmail, org: string, box: string) {
+  const { data } = await db.from('emails').select('id, gmail_id').eq('organization_id', org).eq('gmail_box', box).is('is_bulk', null).eq('direction', 'in').limit(300)
   if (!data?.length) return
   const ids: string[] = []
   const flags: boolean[] = []

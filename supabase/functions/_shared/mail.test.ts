@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildVendorIndex, domainLabel, domainVendors, mentionedVendors, poVendors, shipperVendors, vendorNames } from './mailMatch.ts'
 import { freshText, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom } from './freightText.ts'
-import { bodyAboveSignature, clueText, decodeBase64Url, parseAddressList, parseMessage, type GmailMessage } from './mailParse.ts'
+import { bodyAboveSignature, clueText, decodeBase64Url, isOldGmail, parseAddressList, parseMessage, type GmailMessage } from './mailParse.ts'
 
 const vendors = [
   { id: 'wfs', name: 'WORLD FAMOUS SPORTS', aliases: ['WORLD FAMOUS SPORTS - WWD'] },
@@ -84,6 +84,13 @@ describe('message parsing', () => {
     expect(clues.body).toBe('Confirmation attached.\n')
     expect(clues.strong).toContain('Confirmation')
     expect(clues.strong).toContain('WFS Confirmation 8-27-26')
+  })
+  it('finds mail forwarded from the old Gmail', () => {
+    expect(isOldGmail(parseMessage(msg), 'oldslsgmail@shaverlakesports.com')).toBe(false)
+    const fwd = { ...msg, payload: { ...msg.payload, headers: [{ name: 'From', value: 'CDFW <licensing@wildlife.ca.gov>' }, { name: 'To', value: 'shaverlakesports@gmail.com' }, { name: 'X-Forwarded-To', value: 'oldslsgmail@shaverlakesports.com' }] } }
+    const p = parseMessage(fwd)
+    expect(p.delivered_to).toEqual(['oldslsgmail@shaverlakesports.com'])
+    expect(isOldGmail(p, 'oldslsgmail@shaverlakesports.com')).toBe(true)
   })
   it('marks newsletters as bulk mail', () => {
     expect(parseMessage(msg).is_bulk).toBe(false)

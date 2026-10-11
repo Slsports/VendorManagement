@@ -4,7 +4,7 @@ import { Inbox, PenLine, Search } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useViewAs } from '@/hooks/useViewAs'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { listThreads, type ThreadFilters } from '@/services/mail'
+import { listMailboxes, listThreads, ORDERS, type ThreadFilters } from '@/services/mail'
 import { listSnoozes, mySnoozes } from '@/services/snooze'
 import { listPeople } from '@/services/reviews'
 import { cn } from '@/lib/utils'
@@ -48,6 +48,12 @@ export default function MailPage() {
   const search = params.get('q') ?? ''
   const [draft, setDraft] = useState(search)
   const people = useSupabaseQuery(async () => (organization ? listPeople(organization.id) : []), [organization?.id])
+  // Which mail (Dana, Oct 11): the shared Orders mail, my own mailbox, and for the admin everyone's and the old Gmail.
+  const boxes = useSupabaseQuery(async () => (organization ? listMailboxes(organization.id) : []), [organization?.id])
+  const mailbox = params.get('box') ?? ORDERS
+  const ownBox = mailbox !== ORDERS
+  const boxLabel = (b: { owner_id: string; label: string; kind: string }) => (b.kind === 'personal' && b.owner_id === profile?.id ? 'My mail' : b.label)
+  const myBoxes = [...(boxes.data ?? [])].sort((a, b) => Number(b.owner_id === profile?.id && b.kind === 'personal') - Number(a.owner_id === profile?.id && a.kind === 'personal'))
   // Snooze (Dana, Oct 9): my snoozed conversations leave my lists until their time; the Snoozed tab shows
   // mine, or everyone's when looking at everyone, with who and until when.
   const q = useSupabaseQuery(async () => {
@@ -59,11 +65,12 @@ export default function MailPage() {
       return { rows, snoozed, back: new Set<string>() }
     }
     const mine = await mySnoozes(profile.id, 'thread')
-    const rows = await listThreads(organization.id, profile.id, { view, who, status, unmatched, q: search, hideIds: [...mine.hidden.keys()] }, 300, profile.sees_freight)
+    // in someone's own mailbox every conversation is theirs: no "whose" filter
+    const rows = await listThreads(organization.id, profile.id, { view, who: ownBox ? 'all' : who, status, unmatched, q: search, hideIds: [...mine.hidden.keys()], mailbox }, 300, profile.sees_freight)
     // back from snooze: to the top of the list
     const back = rows.filter((t) => mine.back.has(t.id))
     return { rows: [...back, ...rows.filter((t) => !mine.back.has(t.id))], snoozed: new Map<string, { until: string; who: string | null }>(), back: mine.back }
-  }, [organization?.id, profile?.id, profile?.sees_freight, view, who, status, unmatched, search])
+  }, [organization?.id, profile?.id, profile?.sees_freight, view, who, status, unmatched, search, mailbox])
   const rows = q.data?.rows ?? []
 
   function setParam(key: string, value: string) {
@@ -75,9 +82,21 @@ export default function MailPage() {
 
   return (
     <div>
-      <PageHeader title="Mail" description="Everything that comes into orders@, filed by vendor. Answer it here; Gmail is the backup."
+      <PageHeader title="Mail" description="orders@ (shared) and your own mailbox, filed by vendor. Answer it here; Gmail is the backup."
         actions={canEdit ? <Button onClick={() => setComposing(true)} leftIcon={<PenLine className="size-4" aria-hidden="true" />}>New email</Button> : undefined} />
-      {composing ? <ComposeDialog draft={{ to: [], subject: '', body: '' }} onClose={() => setComposing(false)} onSent={() => void q.refetch()} /> : null}
+      {composing ? <ComposeDialog draft={{ to: [], subject: '', body: '', mailbox_id: ownBox && myBoxes.some((b) => b.id === mailbox && b.kind === 'personal' && b.owner_id === profile?.id) ? mailbox : null }} onClose={() => setComposing(false)} onSent={() => void q.refetch()} /> : null}
+      {myBoxes.length ? (
+        <div role="tablist" aria-label="Mailbox" className="mb-3 flex flex-wrap gap-1">
+          {[{ id: ORDERS, label: 'Orders (shared)' }, ...myBoxes.map((b) => ({ id: b.id, label: boxLabel(b) }))].map((b) => (
+            <button key={b.id} type="button" role="tab" aria-selected={mailbox === b.id}
+              onClick={() => { const next = new URLSearchParams(params); if (b.id === ORDERS) next.delete('box'); else next.set('box', b.id); next.delete('who'); setParams(next, { replace: true }) }}
+              className={cn('rounded-full border px-3 py-1 text-sm font-medium', mailbox === b.id ? 'border-brand bg-brand-soft text-brand' : 'border-stone-200 bg-white text-stone-600 hover:text-stone-900')}>
+              {b.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {ownBox ? <p className="mb-3 text-xs text-stone-500">{myBoxes.find((b) => b.id === mailbox)?.kind === 'legacy' ? 'The old shaverlakesports@gmail.com, forwarded here. Only you see it. Needs attention holds what matters; ads and spam stay under Offers & catalogs.' : 'Private: only its owner and the admin see this mail. "Share to Orders" on a conversation puts it in the shared mail.'}</p> : null}
       <div role="tablist" aria-label="Mail view" className="mb-2 flex w-full max-w-2xl overflow-x-auto rounded-xl border border-stone-200 bg-white p-1">
         {VIEWS.map((v) => (
           <button key={v.value} type="button" role="tab" aria-selected={view === v.value}
@@ -105,12 +124,12 @@ export default function MailPage() {
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-stone-400" aria-hidden="true" />
           <input type="search" value={draft} onChange={(e) => { setDraft(e.target.value); if (!e.target.value) setParam('q', '') }} placeholder="Search subjects…" aria-label="Search mail" className="h-11 w-full rounded-lg border border-stone-300 bg-white pl-9 pr-3 text-base shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-ring-brand sm:text-sm" />
         </div>
-        <Select value={who} onChange={(e) => setParam('who', e.target.value === whoDefault ? '' : e.target.value)} aria-label="Whose mail" className="lg:w-56">
+        {ownBox ? null : <Select value={who} onChange={(e) => setParam('who', e.target.value === whoDefault ? '' : e.target.value)} aria-label="Whose mail" className="lg:w-56">
           <option value="mine">Mine</option>
           <option value="all">Everyone</option>
           <option value="none">Nobody's yet</option>
           {(people.data ?? []).filter((p) => p.id !== profile?.id).map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
-        </Select>
+        </Select>}
         <label className="flex items-center gap-2 text-sm text-stone-700">
           <input type="checkbox" checked={unmatched} onChange={(e) => setParam('unmatched', e.target.checked ? '1' : '')} className="size-4 rounded border-stone-300" />
           Not filed to a vendor
@@ -121,8 +140,8 @@ export default function MailPage() {
         : rows.length === 0 ? (
           <div className="flex flex-col items-center rounded-2xl border border-dashed border-stone-300 py-16 text-center">
             <Inbox className="size-8 text-stone-400" aria-hidden="true" />
-            <p className="mt-3 text-sm text-stone-600">{status === 'snoozed' ? 'Nothing snoozed.' : who === 'mine' && status === 'open' ? 'Nothing waiting on you.' : 'No mail matches.'}</p>
-            {who === 'mine' ? <button type="button" onClick={() => setParam('who', 'all')} className="mt-2 text-sm font-medium text-brand hover:underline">Show everyone's</button> : null}
+            <p className="mt-3 text-sm text-stone-600">{status === 'snoozed' ? 'Nothing snoozed.' : ownBox ? 'No mail here yet. New mail shows up within a few minutes of arriving.' : who === 'mine' && status === 'open' ? 'Nothing waiting on you.' : 'No mail matches.'}</p>
+            {who === 'mine' && !ownBox ? <button type="button" onClick={() => setParam('who', 'all')} className="mt-2 text-sm font-medium text-brand hover:underline">Show everyone's</button> : null}
           </div>
         ) : (
           <>

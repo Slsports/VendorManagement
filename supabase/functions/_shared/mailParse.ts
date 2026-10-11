@@ -35,6 +35,8 @@ export interface ParsedMessage {
   attachments: ParsedAttachment[]
   /** Newsletter or bulk mail: a List-Unsubscribe header or Precedence: bulk/list. */
   is_bulk: boolean
+  /** Where it was delivered or forwarded to (Delivered-To, X-Forwarded-To / -For, X-Original-To), lowercased. */
+  delivered_to: string[]
 }
 
 export const BODY_LIMIT = 20_000
@@ -141,7 +143,16 @@ export function parseMessage(m: GmailMessage): ParsedMessage {
     label_ids: m.labelIds ?? [],
     attachments,
     is_bulk: isBulk(m.payload),
+    delivered_to: (m.payload?.headers ?? []).filter((h) => /^(delivered-to|x-forwarded-to|x-forwarded-for|x-original-to)$/i.test(h.name))
+      .flatMap((h) => h.value.toLowerCase().match(/[^\s<>,;"']+@[^\s<>,;"']+/g) ?? []),
   }
+}
+
+/** Mail from the old shaverlakesports@gmail.com (Dana, Oct 10): it forwards to oldslsgmail@ on orders@. */
+export function isOldGmail(p: Pick<ParsedMessage, 'to' | 'cc' | 'delivered_to'>, legacyAddress: string): boolean {
+  const legacy = legacyAddress.toLowerCase()
+  const all = [...p.to.map((a) => a.email), ...p.cc.map((a) => a.email), ...p.delivered_to].map((x) => x.toLowerCase())
+  return all.some((a) => a === legacy || a === 'shaverlakesports@gmail.com')
 }
 
 const CUT = [

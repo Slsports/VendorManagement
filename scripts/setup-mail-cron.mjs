@@ -37,9 +37,9 @@ const call = `select net.http_post(
   url := 'https://${ref}.supabase.co/functions/v1/gmail-sync',
   headers := jsonb_build_object('Content-Type', 'application/json', 'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'mail_cron_secret')),
   body := '{}'::jsonb,
-  timeout_milliseconds := 60000)`
+  timeout_milliseconds := 150000)`
 // order-check (Dana, Oct 10): Claude reads and compares confirmations and invoices, one or two a run.
-const checkCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/order-check').replace('timeout_milliseconds := 60000', 'timeout_milliseconds := 150000')
+const checkCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/order-check')
 if (!args.includes('--no-schedule')) {
   await query(`select cron.schedule('gmail-sync', ${lit(every)}, ${lit(call)})`)
   await query(`select cron.schedule('order-check', ${lit(every)}, ${lit(checkCall)})`)

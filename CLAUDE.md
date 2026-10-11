@@ -50,6 +50,12 @@ small fixes, a Sonnet session for questions). All code goes to `claude/ecstatic-
   session's database view matches; it skips what is already applied.
 - Append to `docs/decisions.md` for decisions, and to `CLAUDE.md` only for rules every session needs.
 
+## Private mail (Oct 11)
+Personal mailboxes and the old Gmail live in `mailboxes`; their threads/emails have `mailbox_id` set and are
+private to the owner and the admin (RLS). Never copy their subjects, snippets or senders into org-wide tables
+(review_items, notes, logs); Orders lists filter `mailbox_id is null or shared_at is not null`. Gmail calls use the
+email's `gmail_box`, never the org's single mailbox.
+
 ## Stack and commands
 Vite + React 19 + TypeScript + Tailwind 4, Supabase (project `bpdpkytfmpbwpbmpejbf`), vitest, oxlint.
 - `npm run lint`, `npm run typecheck`, `npm test` — run all three before every push.

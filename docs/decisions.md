@@ -1616,3 +1616,18 @@ go. **Customize** on the dashboard lists the cards with up/down arrows and a tic
 saved to that person's login (profiles.dashboard_layout) and follows them to any device. "Reset to the standard
 order" clears it. Cards added later appear after their own. The key-figure tiles at the top stay as they are.
 Migration 0085.
+
+## Oct 11 — Personal mailboxes and the old Gmail
+Dana: personal inboxes for Dana, Trevor and Jarrett ("private from everyone except admin"), Claude reads them for
+documents like orders@; the old shaverlakesports@gmail.com forwards to **oldslsgmail@shaverlakesports.com** (an
+extra address on orders@) and shows as Dana's "Old Gmail" feed, seen only by her.
+- `mailboxes` table (personal / legacy); `mail_accounts` stays the one shared orders@. Threads and emails carry
+  `mailbox_id` (null = orders@); emails carry `gmail_box`, the Gmail mailbox their ids live in.
+- Privacy by RLS: owner and admin only, or everyone once **Share to Orders** is pressed on a conversation. Private
+  mail adds no senders and no review cards (subjects and snippets would leak); its conversations always belong
+  to the mailbox owner; the team page counts Orders mail only.
+- Mail page: Orders (shared) / My mail / (admin) everyone's and Old Gmail. New email: From orders@ or me.
+  Replies go from the conversation's mailbox; only the owner sends from a personal one.
+- The same email in orders@ and a personal inbox: the second copy is marked (copy_of) and Claude's file steps skip it.
+- Personal mailboxes loaded their last 90 days. Old Gmail: from when forwarding is turned on; its past year can be
+  pulled in later with a one-time sign-in. Migration 0086.

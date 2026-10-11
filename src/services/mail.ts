@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { Email, EmailAttachment, EmailSenderKind, EmailThreadStatus, MailAccount, MailView, VendorLinkKind } from '@/types'
+import type { Email, EmailAttachment, EmailSenderKind, EmailThreadStatus, MailAccount, Mailbox, MailView, VendorLinkKind } from '@/types'
 import { TEST_LOGIN_PATTERN } from '@/services/reviews'
 import type { Database } from '@/types/database'
 
@@ -116,6 +116,9 @@ export interface ThreadRow {
   deleted_by_person?: { full_name: string } | null
   vendor: { id: string; name: string } | null
   owner: { id: string; full_name: string } | null
+  /** Someone's own mailbox or the old Gmail (null = orders@); shared to Orders when shared_at is set. */
+  mailbox_id?: string | null
+  shared_at?: string | null
   /** The newest message: who, a line of it, and whether it came in or went out. */
   last: { from_name: string | null; from_email: string | null; snippet: string | null; direction: 'in' | 'out' | 'internal'; has_attachments: boolean } | null
 }
@@ -133,9 +136,11 @@ export interface ThreadFilters {
   /** Snooze (Dana, Oct 9): leave these out (snoozed by me), or show only these (the Snoozed tab). */
   hideIds?: string[]
   onlyIds?: string[]
+  /** Which mail (Dana, Oct 11): the shared Orders mail (default), or one personal mailbox / the old Gmail by id. */
+  mailbox?: string
 }
 
-const THREAD_SELECT = 'id, gmail_thread_id, subject, status, view, vendor_id, owner_id, message_count, last_message_at, follow_up_at, ship_status, vendor:vendors(id, name), owner:profiles!email_threads_owner_id_fkey(id, full_name)'
+const THREAD_SELECT = 'id, gmail_thread_id, subject, status, view, vendor_id, owner_id, message_count, last_message_at, follow_up_at, ship_status, mailbox_id, shared_at, vendor:vendors(id, name), owner:profiles!email_threads_owner_id_fkey(id, full_name)'
 
 async function withLastMessage(rows: Omit<ThreadRow, 'last'>[]): Promise<ThreadRow[]> {
   if (!rows.length) return []
@@ -156,6 +161,10 @@ async function snoozedThreadIds(profileId: string): Promise<string[]> {
   return (data ?? []).map((r) => r.thread_id!)
 }
 
+/** The shared Orders mail: orders@, plus conversations shared to it from someone's own mailbox. */
+export const ORDERS = 'orders'
+const ORDERS_MAIL = 'mailbox_id.is.null,shared_at.not.is.null'
+
 /** Threads for the Mail page, newest first, at most `limit`. */
 /** "Mine": what the person owns, plus all freight for those who also see freight (Dana while Trevor is new). */
 const mine = (me: string, seesFreight?: boolean) => (seesFreight ? `owner_id.eq.${me},carrier_id.not.is.null` : `owner_id.eq.${me}`)
@@ -163,6 +172,7 @@ const mine = (me: string, seesFreight?: boolean) => (seesFreight ? `owner_id.eq.
 export async function listThreads(organizationId: string, me: string | undefined, f: ThreadFilters, limit = 300, seesFreight = false): Promise<ThreadRow[]> {
   let q = supabase.from('email_threads').select(f.status === 'deleted' ? `${THREAD_SELECT}, deleted_at, deleted_by_person:profiles!email_threads_deleted_by_fkey(full_name)` : THREAD_SELECT).eq('organization_id', organizationId).not('last_message_at', 'is', null)
   q = f.status === 'deleted' ? q.not('deleted_at', 'is', null) : q.is('deleted_at', null)
+  q = !f.mailbox || f.mailbox === ORDERS ? q.or(ORDERS_MAIL) : q.eq('mailbox_id', f.mailbox)
   if (f.who === 'mine' && me) q = q.or(mine(me, seesFreight))
   else if (f.who === 'none') q = q.is('owner_id', null)
   else if (f.who !== 'all') q = q.eq('owner_id', f.who)
@@ -192,8 +202,8 @@ export function listVendorThreads(organizationId: string, vendorId: string, limi
 /** Dashboard: replies waiting on `me` (everyone's when null), and mail with no answer past its follow-up date. */
 export async function listMailForMe(organizationId: string, me: string | null, seesFreight = false): Promise<{ needs: ThreadRow[]; noAnswer: ThreadRow[] }> {
   const now = new Date().toISOString()
-  let a = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).is('deleted_at', null).eq('view', 'attention').eq('status', 'waiting_on_us')
-  let b = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).is('deleted_at', null).eq('status', 'waiting_on_vendor').lt('follow_up_at', now)
+  let a = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).is('deleted_at', null).or(ORDERS_MAIL).eq('view', 'attention').eq('status', 'waiting_on_us')
+  let b = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).is('deleted_at', null).or(ORDERS_MAIL).eq('status', 'waiting_on_vendor').lt('follow_up_at', now)
   if (me) { a = a.or(mine(me, seesFreight)); b = b.or(mine(me, seesFreight)) }
   const hidden = me ? await snoozedThreadIds(me) : []
   if (hidden.length) { a = a.not('id', 'in', `(${hidden.join(',')})`); b = b.not('id', 'in', `(${hidden.join(',')})`) }
@@ -210,7 +220,7 @@ export async function countMailForMe(organizationId: string, me: string, seesFre
   const who = seesFreight ? `or(owner_id.eq.${me},carrier_id.not.is.null)` : `owner_id.eq.${me}`
   const hidden = await snoozedThreadIds(me)
   let q = supabase.from('email_threads').select('id', { count: 'exact', head: true })
-    .eq('organization_id', organizationId).is('deleted_at', null).eq('view', 'attention')
+    .eq('organization_id', organizationId).is('deleted_at', null).or(ORDERS_MAIL).eq('view', 'attention')
     .or(`and(${who},status.eq.waiting_on_us),and(${who},status.eq.waiting_on_vendor,follow_up_at.lt.${now})`)
   if (hidden.length) q = q.not('id', 'in', `(${hidden.join(',')})`)
   const { count, error } = await q
@@ -255,6 +265,8 @@ export interface SendEmailInput {
   body: string
   attachments?: { name: string; mime: string; base64: string }[]
   vendor_link_ids?: string[]
+  /** A new email from my own mailbox instead of orders@ (Dana, Oct 11). */
+  mailbox_id?: string | null
 }
 
 export async function functionError(error: unknown): Promise<Error> {
@@ -476,4 +488,21 @@ export async function listMailWith(organizationId: string, email: string, compan
   const { data, error } = await supabase.rpc('mail_with', { p_org: organizationId, p_email: email, p_company: company })
   if (error) throw error
   return data ?? []
+}
+
+// ---- personal mailboxes and the old Gmail (Dana, Oct 11) ----
+export type MailboxRow = Pick<Mailbox, 'id' | 'kind' | 'address' | 'label' | 'owner_id' | 'last_sync_at' | 'last_error' | 'backfill_done' | 'messages_synced'>
+
+/** The mailboxes I may open: my own, and every one for the admin. */
+export async function listMailboxes(organizationId: string): Promise<MailboxRow[]> {
+  const { data, error } = await supabase.from('mailboxes').select('id, kind, address, label, owner_id, last_sync_at, last_error, backfill_done, messages_synced')
+    .eq('organization_id', organizationId).eq('is_active', true).order('kind', { ascending: false }).order('label')
+  if (error) throw error
+  return data ?? []
+}
+
+/** "Share to Orders": a conversation from my own mailbox joins the shared Orders mail (or leaves it). */
+export async function shareThreadToOrders(threadId: string, share = true): Promise<void> {
+  const { error } = await supabase.rpc('share_thread_to_orders', { p_thread: threadId, p_share: share })
+  if (error) throw error
 }

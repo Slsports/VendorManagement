@@ -1,4 +1,4 @@
-// gmail-read: what VMS does not keep itself, fetched from orders@ when someone asks for it.
+// gmail-read: what VMS does not keep itself, fetched from Gmail (orders@, or a personal mailbox) when someone asks for it.
 //   { action: 'html', email_id }                       → { html } the formatted message
 //   { action: 'attachment', attachment_id }            → the file itself (download / open)
 //   { action: 'trash' | 'untrash', thread_ids }        → Delete / Restore conversations (Gmail Trash)
@@ -17,14 +17,32 @@ Deno.serve(async (req) => {
     const me = await caller(req, db, ['file', 'trash', 'untrash'].includes(body.action))
     const { data: acct } = await db.from('mail_accounts').select('mailbox').eq('organization_id', me.organization_id).single()
     if (!acct) throw new HttpError(400, 'No mailbox connected')
-    const gmail = new Gmail(await googleAccessToken(acct.mailbox))
+    // Each email's ids live in the Gmail mailbox it came from (orders@, or someone's own: Dana, Oct 11).
+    const clients = new Map<string, Gmail>()
+    const gmailFor = async (box: string | null | undefined) => {
+      const key = (box || acct.mailbox).toLowerCase()
+      if (!clients.has(key)) clients.set(key, new Gmail(await googleAccessToken(key)))
+      return clients.get(key)!
+    }
+    // Personal mail is for its owner and the admin, or everyone once shared to Orders.
+    const boxes = new Map<string, { owner_id: string; gmail_box: string }>()
+    const { data: mbx } = await db.from('mailboxes').select('id, owner_id, gmail_box').eq('organization_id', me.organization_id)
+    for (const m of mbx ?? []) boxes.set(m.id, m)
+    const mayOpen = async (mailboxId: string | null, threadId: string | null) => {
+      if (!mailboxId || me.role === 'admin' || boxes.get(mailboxId)?.owner_id === me.id) return true
+      if (!threadId) return false
+      const { data: t } = await db.from('email_threads').select('shared_at').eq('id', threadId).maybeSingle()
+      return !!t?.shared_at
+    }
 
     // Delete / Restore (Dana, Oct 9): Gmail's Trash for orders@, and out of (or back into) VMS's lists.
     if (body.action === 'trash' || body.action === 'untrash') {
       const ids = (body.thread_ids ?? []).slice(0, 200)
-      const { data: threads } = await db.from('email_threads').select('id, gmail_thread_id').eq('organization_id', me.organization_id).in('id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000'])
+      const { data: threads } = await db.from('email_threads').select('id, gmail_thread_id, mailbox_id').eq('organization_id', me.organization_id).in('id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000'])
       const done: string[] = []
       for (const t of threads ?? []) {
+        if (!(await mayOpen(t.mailbox_id, t.id))) continue
+        const gmail = await gmailFor(t.mailbox_id ? boxes.get(t.mailbox_id)?.gmail_box : null)
         await gmail.call(`threads/${t.gmail_thread_id}/${body.action}`, { method: 'POST' })
         done.push(t.id)
       }
@@ -34,8 +52,9 @@ Deno.serve(async (req) => {
     }
 
     if (body.action === 'html') {
-      const { data: e } = await db.from('emails').select('gmail_id, organization_id').eq('id', body.email_id ?? '').single()
-      if (!e || e.organization_id !== me.organization_id) throw new HttpError(404, 'Email not found')
+      const { data: e } = await db.from('emails').select('gmail_id, organization_id, gmail_box, mailbox_id, thread_id').eq('id', body.email_id ?? '').single()
+      if (!e || e.organization_id !== me.organization_id || !(await mayOpen(e.mailbox_id, e.thread_id))) throw new HttpError(404, 'Email not found')
+      const gmail = await gmailFor(e.gmail_box)
       const m = await gmail.message(e.gmail_id, 'full') as unknown as GmailMessage
       let html = ''
       const walk = (p?: GmailPart) => {
@@ -68,10 +87,13 @@ Deno.serve(async (req) => {
       return json({ html })
     }
 
-    const { data: a } = await db.from('email_attachments').select('id, organization_id, file_name, mime_type, gmail_attachment_id, storage_path, email_id, email:emails(gmail_id)').eq('id', body.attachment_id ?? '').single()
+    const { data: a } = await db.from('email_attachments').select('id, organization_id, file_name, mime_type, gmail_attachment_id, storage_path, email_id, email:emails(gmail_id, gmail_box, mailbox_id, thread_id)').eq('id', body.attachment_id ?? '').single()
     if (!a || a.organization_id !== me.organization_id) throw new HttpError(404, 'Attachment not found')
-    const gmailId = (a.email as unknown as { gmail_id: string } | null)?.gmail_id
+    const em = a.email as unknown as { gmail_id: string; gmail_box: string | null; mailbox_id: string | null; thread_id: string } | null
+    if (em && !(await mayOpen(em.mailbox_id, em.thread_id))) throw new HttpError(404, 'Attachment not found')
+    const gmailId = em?.gmail_id
     if (!a.gmail_attachment_id || !gmailId) throw new HttpError(404, 'This attachment is not available from Gmail')
+    const gmail = await gmailFor(em?.gmail_box)
     const part = await gmail.call<{ data: string }>(`messages/${gmailId}/attachments/${a.gmail_attachment_id}`)
     const b64 = part.data.replace(/-/g, '+').replace(/_/g, '/')
     const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4))
