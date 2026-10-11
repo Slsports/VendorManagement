@@ -14,6 +14,7 @@ import { FreightAllowancePanel } from '@/components/orders/FreightAllowancePanel
 import { ArtApprovalsPanel } from '@/components/mail/ArtApprovalsPanel'
 import { PaperworkPanel } from '@/components/orders/PaperworkPanel'
 import { useViewAs } from '@/hooks/useViewAs'
+import { DashboardCards } from '@/components/dashboard/DashboardCards'
 
 const KPIS = [
   { label: 'Open orders', icon: ShoppingCart, phase: 4 },
@@ -65,35 +66,36 @@ export default function DashboardPage() {
         ))}
       </section>
 
-      <section className="mt-6 grid gap-4 lg:grid-cols-3">
-        <MailForYouPanel />
-        <PaperworkPanel />
-        <ArtApprovalsPanel />
-        <WorkingOrdersPanel />
-        <FreightAllowancePanel />
-        <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
-          <h2 className="text-sm font-semibold text-stone-900">Review queue</h2>
-          <div className="mt-4 flex items-start gap-3 rounded-xl bg-stone-50 p-4">
-            <ClipboardCheck className={pending ? 'mt-0.5 size-5 shrink-0 text-amber-500' : 'mt-0.5 size-5 shrink-0 text-stone-400'} aria-hidden="true" />
-            <div>
-              {canReview ? (
-                <>
-                  <p className="text-sm text-stone-600">
-                    {reviewQ.isLoading ? 'Checking…' : pending ? `${pending} item${pending === 1 ? '' : 's'} waiting for a decision${whose && mine ? `, ${mine} assigned ${whose}` : ''}.` : 'Nothing waiting. Imports, the mailbox and the vendor form add items here.'}
-                  </p>
-                  <Link to={ROUTES.review} className="mt-2 inline-block text-sm font-medium text-brand hover:underline">Open the review queue</Link>
-                </>
-              ) : (
-                <p className="text-sm text-stone-600">Admins, managers and buyers settle the review queue.</p>
-              )}
+      <DashboardCards cards={[
+        { id: 'mail', label: 'Mail for you', node: <MailForYouPanel /> },
+        { id: 'paperwork', label: 'Confirmations & invoices to review', node: <PaperworkPanel /> },
+        { id: 'art', label: 'Artwork approvals', node: <ArtApprovalsPanel /> },
+        { id: 'working', label: "Orders I'm working on", node: <WorkingOrdersPanel /> },
+        { id: 'freight_allowance', label: 'Freight allowances', node: <FreightAllowancePanel /> },
+        { id: 'review', label: 'Review queue', node: (
+          <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+            <h2 className="text-sm font-semibold text-stone-900">Review queue</h2>
+            <div className="mt-4 flex items-start gap-3 rounded-xl bg-stone-50 p-4">
+              <ClipboardCheck className={pending ? 'mt-0.5 size-5 shrink-0 text-amber-500' : 'mt-0.5 size-5 shrink-0 text-stone-400'} aria-hidden="true" />
+              <div>
+                {canReview ? (
+                  <>
+                    <p className="text-sm text-stone-600">
+                      {reviewQ.isLoading ? 'Checking…' : pending ? `${pending} item${pending === 1 ? '' : 's'} waiting for a decision${whose && mine ? `, ${mine} assigned ${whose}` : ''}.` : 'Nothing waiting. Imports, the mailbox and the vendor form add items here.'}
+                    </p>
+                    <Link to={ROUTES.review} className="mt-2 inline-block text-sm font-medium text-brand hover:underline">Open the review queue</Link>
+                  </>
+                ) : (
+                  <p className="text-sm text-stone-600">Admins, managers and buyers settle the review queue.</p>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-        {PANELS.slice(1).map((p) => <PlaceholderPanel key={p.title} p={p} />)}
-        <FreightForYouPanel />
-        {/* Dana, Oct 11: the future-dated orders card moves down */}
-        <PlaceholderPanel p={PANELS[0]} />
-      </section>
+        ) },
+        { id: 'recent_activity', label: 'Recent activity', node: <PlaceholderPanel p={PANELS[1]} /> },
+        { id: 'freight', label: 'Freight', node: <FreightForYouPanel /> },
+        { id: 'future_orders', label: 'Overdue and future-dated orders', node: <PlaceholderPanel p={PANELS[0]} /> },
+      ]} />
     </div>
   )
 }

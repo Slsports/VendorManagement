@@ -130,7 +130,7 @@ export type Database = {
           is_active: boolean
           created_at: string
           updated_at: string
-       ; email_signature: string | null; places_orders: boolean; sees_freight: boolean }
+       ; email_signature: string | null; places_orders: boolean; sees_freight: boolean; dashboard_layout: Json | null }
         Insert: {
           id: string
           organization_id: string
@@ -142,7 +142,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; places_orders?: boolean; sees_freight?: boolean }
+       ; email_signature?: string | null; places_orders?: boolean; sees_freight?: boolean; dashboard_layout?: Json | null }
         Update: {
           id?: string
           organization_id?: string
@@ -154,7 +154,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; places_orders?: boolean; sees_freight?: boolean }
+       ; email_signature?: string | null; places_orders?: boolean; sees_freight?: boolean; dashboard_layout?: Json | null }
         Relationships: [
           {
             foreignKeyName: 'profiles_organization_id_fkey'

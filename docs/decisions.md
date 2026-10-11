@@ -1609,3 +1609,10 @@ Guide: `docs/brand-assets.md`.
   System** under it, spread letter by letter to the same width without a bigger font ("We nailed it!"). The two
   lines are nearly as tall as the pin; no "RetailHQ". On phones and iPads held upright it sits centered right above
   the white sign-in box (Dana: "most of my people will be on iPads or phones").
+
+## Oct 11 — Each person orders their own dashboard
+Dana: "Is it possible for each ee to have the ability to see the dashboard in different order of cards?" —
+go. **Customize** on the dashboard lists the cards with up/down arrows and a tick to show or hide each; it is
+saved to that person's login (profiles.dashboard_layout) and follows them to any device. "Reset to the standard
+order" clears it. Cards added later appear after their own. The key-figure tiles at the top stay as they are.
+Migration 0085.
