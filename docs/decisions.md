@@ -1665,3 +1665,9 @@ Vendor documents get a **Sales reports** folder (kind sales_report). Filed: DP_1
 grouped by product line per Step 7, with a TYPE Size Summary). Report period assumed 365 days (the spec's default).
 Order statuses on the Ordering card (to build): Check stock, To order, Placed orders (sent, no confirmation),
 Confirmed orders, Overdue; the suggested order subtracts what is already coming in. Migration 0087.
+
+## Oct 11 — DKIM and DMARC on for shaverlakesports.com
+Dana turned on DKIM in Google Admin (google._domainkey TXT in GoDaddy) and added `_dmarc` = `v=DMARC1; p=none;
+rua=mailto:dana@shaverlakesports.com`. SPF already `v=spf1 include:secureserver.net include:_spf.google.com ~all`.
+Next: after 2–4 weeks of clean DMARC reports, move to `p=quarantine`; remove Microsoft leftovers (the lync SRV
+record) once Microsoft is retired.
