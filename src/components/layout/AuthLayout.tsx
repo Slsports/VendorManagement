@@ -42,7 +42,7 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
 
   return (
     <div className="flex min-h-screen bg-surface">
-      <aside className="relative hidden w-[42%] max-w-xl flex-col justify-between overflow-hidden bg-sidebar p-10 text-white lg:flex">
+      <aside className="relative hidden w-[46%] max-w-2xl flex-col justify-between overflow-hidden bg-sidebar p-10 text-white lg:flex">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 opacity-30"
