@@ -10,23 +10,38 @@ function displayOrgName(name: string) {
   return name.replace(/,?\s+inc\.?$/i, '').trim() || name
 }
 
+/** One line of text spread letter by letter to fill its container's width (font size unchanged). */
+function SpreadLine({ text, className }: { text: string; className?: string }) {
+  return (
+    <p aria-label={text} className={cn('flex justify-between whitespace-nowrap', className)}>
+      {Array.from(text).map((ch, i) =>
+        ch === ' ' ? <span key={i} aria-hidden="true" className="w-[0.28em]" /> : <span key={i} aria-hidden="true">{ch}</span>,
+      )}
+    </p>
+  )
+}
+
 /**
- * Sign-in logo: the tenant's mark beside "Vendor Management System" and the
- * organization's name. Sizes follow the container width, so the two lines stay
- * nearly as tall as the mark on a phone, an iPad or a computer.
+ * Sign-in logo: the tenant's mark beside the organization's name, with
+ * "Vendor Management System" spread to the same width underneath. Sizes follow the
+ * container width, so the two lines stay nearly as tall as the mark on a phone,
+ * an iPad or a computer.
  */
 function SignInBrand({ branding, onDark = false, className }: { branding: Branding; onDark?: boolean; className?: string }) {
   const logo = onDark ? (branding.logoOnDarkUrl ?? branding.logoUrl) : branding.logoUrl
   return (
     <div className={cn('@container w-full', className)}>
-      {/* "Vendor Management System" is ~13.8em wide; with the mark and gap the row is ~16.1em, so 5.8cqw fits with room for wider system fonts. */}
-      <div className="flex items-center justify-center gap-[0.45em] text-[clamp(0.875rem,5.8cqw,2.5rem)]">
+      {/* "Shaver Lake Sports" is ~9.1em wide; with the mark and gap the row is ~11.5em, so 8.2cqw fits with room for wider system fonts. */}
+      <div className="flex items-center justify-center gap-[0.45em] text-[clamp(1rem,8.2cqw,3rem)]">
         {logo ? <img src={logo} alt={`${branding.organizationName} logo`} className="h-[2.55em] w-auto shrink-0" /> : null}
-        <div className="min-w-0">
-          <p className={cn('whitespace-nowrap font-extrabold leading-[1.05] tracking-tight', onDark ? 'text-white' : 'text-brand')}>Vendor Management System</p>
-          <p className={cn('mt-[0.12em] whitespace-nowrap text-[0.74em] font-semibold leading-tight', onDark ? 'text-white/75' : 'text-accent')}>
+        <div className="w-fit min-w-0">
+          <p className={cn('whitespace-nowrap font-extrabold leading-[1.05] tracking-tight', onDark ? 'text-white' : 'text-brand')}>
             {displayOrgName(branding.organizationName)}
           </p>
+          <SpreadLine
+            text="Vendor Management System"
+            className={cn('mt-[0.12em] text-[0.62em] font-semibold leading-tight', onDark ? 'text-white/75' : 'text-accent')}
+          />
         </div>
       </div>
     </div>

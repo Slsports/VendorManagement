@@ -1605,6 +1605,7 @@ forest green in the new logos," so organization #1's accent moves from #00B050 t
 shadows under the pin are amber with a green core on light backgrounds, an amber glow on dark ones. The sidebar
 uses the pin alone (`logo-mark`), since the app name already sits beside it. Migration 0084.
 Guide: `docs/brand-assets.md`.
-- **Sign-in page:** the pin beside **Vendor Management System** in large bold print with **Shaver Lake Sports**
-  (no "Inc.") under it, the two lines nearly as tall as the pin; no "RetailHQ". On phones and iPads held upright it
-  sits centered right above the white sign-in box (Dana: "most of my people will be on iPads or phones").
+- **Sign-in page:** the pin beside **Shaver Lake Sports** (no "Inc.") in large bold print with **Vendor Management
+  System** under it, spread letter by letter to the same width without a bigger font ("We nailed it!"). The two
+  lines are nearly as tall as the pin; no "RetailHQ". On phones and iPads held upright it sits centered right above
+  the white sign-in box (Dana: "most of my people will be on iPads or phones").
