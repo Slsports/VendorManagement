@@ -52,7 +52,7 @@ export default function DashboardPage() {
       <DashboardCards
         title={first ? `Good to see you, ${first}` : 'Dashboard'}
         description="The numbers below go live as each phase lands. Navigation, roles and the shell are in place now."
-        tiles={KPIS.map(({ label, icon: Icon, phase }) => ({ id: `kpi_${label.toLowerCase().replace(/[^a-z]+/g, '_')}`, label, node: (
+        items={[...KPIS.map(({ label, icon: Icon, phase }) => ({ id: `kpi_${label.toLowerCase().replace(/[^a-z]+/g, '_')}`, label, size: 'tile' as const, node: (
           <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-stone-600">{label}</p>
@@ -61,8 +61,7 @@ export default function DashboardPage() {
             {label === 'Open orders' ? <p className="mt-3 text-3xl font-semibold tracking-tight text-stone-900">{ordersQ.data ? openOrders : '—'}</p> : label === 'Payments due' ? <p className="mt-3 text-3xl font-semibold tracking-tight text-stone-900">{ordersQ.data ? awaitingPayment : '—'}</p> : <p className="mt-3 text-3xl font-semibold tracking-tight text-stone-300">—</p>}
             {label === 'Open orders' ? <p className="mt-1 text-xs text-stone-400">placed, not yet received</p> : label === 'Payments due' ? <p className="mt-1 text-xs text-stone-400">entered, not yet paid</p> : <p className="mt-1 text-xs text-stone-400">Live in Phase {phase}</p>}
           </div>
-        ) }))}
-        cards={[
+        ) })),
         { id: 'mail', label: 'Mail for you', node: <MailForYouPanel /> },
         { id: 'paperwork', label: 'Confirmations & invoices to review', node: <PaperworkPanel /> },
         { id: 'art', label: 'Artwork approvals', node: <ArtApprovalsPanel /> },

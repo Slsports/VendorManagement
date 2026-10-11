@@ -1646,3 +1646,5 @@ saved per login with the cards. The combined card became two: Overdue orders and
 Dana: "a create an order button" on the review queue's "Does this need an answer?" cards. The card now has
 **Create an order**: the add-order form for the email's vendor, linked to that email. If the email is not filed
 to a vendor yet, it says so (file it first).
+- Same day: "Please make all cards eligible to be on top." Number boxes and cards are now one list in Customize:
+  anything can go anywhere, top included. Neighbouring number boxes still share a row of four.
