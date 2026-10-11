@@ -69,7 +69,7 @@ export default function DashboardPage() {
         <MailForYouPanel />
         <PaperworkPanel />
         <ArtApprovalsPanel />
-        <WorkingOrdersPanel />
+        <PlaceholderPanel p={PANELS[0]} />
         <FreightAllowancePanel />
         <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
           <h2 className="text-sm font-semibold text-stone-900">Review queue</h2>
@@ -89,20 +89,26 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-        {PANELS.map((p) => (
-          <div key={p.title} className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-stone-900">{p.title}</h2>
-            <div className="mt-4 flex items-start gap-3 rounded-xl bg-stone-50 p-4">
-              <Inbox className="mt-0.5 size-5 shrink-0 text-stone-400" aria-hidden="true" />
-              <div>
-                <p className="text-sm text-stone-600">{p.text}</p>
-                <p className="mt-1 text-xs text-stone-400">Phase {p.phase}</p>
-              </div>
-            </div>
-          </div>
-        ))}
+        {/* Dana, Oct 11: "switch the future orders card with the orders in progress card" */}
+        <WorkingOrdersPanel />
+        {PANELS.slice(1).map((p) => <PlaceholderPanel key={p.title} p={p} />)}
         <FreightForYouPanel />
       </section>
+    </div>
+  )
+}
+
+function PlaceholderPanel({ p }: { p: (typeof PANELS)[number] }) {
+  return (
+    <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+      <h2 className="text-sm font-semibold text-stone-900">{p.title}</h2>
+      <div className="mt-4 flex items-start gap-3 rounded-xl bg-stone-50 p-4">
+        <Inbox className="mt-0.5 size-5 shrink-0 text-stone-400" aria-hidden="true" />
+        <div>
+          <p className="text-sm text-stone-600">{p.text}</p>
+          <p className="mt-1 text-xs text-stone-400">Phase {p.phase}</p>
+        </div>
+      </div>
     </div>
   )
 }
