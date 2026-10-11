@@ -1593,5 +1593,5 @@ it large); the Images and Approved proofs folders show them as a grid of large t
 ## Oct 10 — Damaged Items folder
 Dana: "I see images of damaged items which we would use to attach to a vendor return email. So let's call it
 Damaged Items." New vendor folder **Damaged Items** (shown as picture tiles). Pictures from a vendor email whose
-subject talks about damage, defects, breakage or a return go there instead of Images; the 16 already saved
-(Image One, Norty, Water Sports, World Famous Sports) were moved. Migration 0083.
+subject talks about damage, defects, breakage, a wrong item, "order issues" or a return go there instead of Images; the 21 already saved
+(Image One, Norty, Water Sports, World Famous Sports, Planet Cotton) were moved. Migration 0083.
