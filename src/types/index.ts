@@ -71,3 +71,4 @@ export type SalesReport = Tables<'sales_reports'>
 export type LsPo = Tables<'ls_pos'>
 export type RepeatUnit = NonNullable<Task['repeat_unit']>
 export type SupplyRequest = Tables<'supply_requests'>
+export type AmazonOrder = Tables<'amazon_orders'>

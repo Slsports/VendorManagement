@@ -6,6 +6,7 @@ import { addItemRule, deleteItemRule, listItemRules } from '@/services/itemRules
 import { errorMessage } from '@/lib/utils'
 import type { ItemRule, VendorItemRule } from '@/types'
 import { Badge, Button, Input, Select, Spinner } from '@/components/ui'
+import { FoldSection } from '@/components/shared/FoldSection'
 
 const ITEM_RULE_LABELS: Record<ItemRule, string> = { reorder_first: 'Reorder first', keep: 'Keep ordering', watch: 'Watch', stop: 'Stop ordering' }
 const RULE_TONE: Record<ItemRule, 'success' | 'brand' | 'warning' | 'danger'> = { reorder_first: 'success', keep: 'brand', watch: 'warning', stop: 'danger' }
@@ -28,6 +29,7 @@ export function VendorItemRulesSection({ organizationId, vendorId, userId, canEd
   const [adding, setAdding] = useState(false)
   const [form, setForm] = useState<{ scope: 'type' | 'item'; vendor_item_id: string; name: string; rule: ItemRule; reason: string }>({ scope: 'type', vendor_item_id: '', name: '', rule: 'keep', reason: '' })
   const [saving, setSaving] = useState(false)
+  const [shown, setShown] = useState(false)
   const rules = q.data ?? []
   if (!q.isLoading && !q.error && rules.length === 0 && !canEdit) return null
 
@@ -61,12 +63,10 @@ export function VendorItemRulesSection({ organizationId, vendorId, userId, canEd
   const sources = [...new Set(rules.map((r) => r.source).filter(Boolean))]
 
   return (
-    <section className="rounded-2xl border border-stone-200 bg-white p-5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">What to order from them</h2>
-        {canEdit && !adding ? <Button size="sm" variant="secondary" onClick={() => setAdding(true)} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add rule</Button> : null}
-      </div>
-      <p className="mt-1 text-xs text-stone-500">Product types and single items to reorder first, keep, watch or stop. The standing above says whether to order from the vendor at all.{sources.length ? ` From: ${sources.join('; ')}.` : ''}</p>
+    <FoldSection title="What to order from them" open={shown} onOpenChange={setShown}
+      summary={q.isLoading ? null : rules.length === 0 ? 'None' : `${rules.length} rule${rules.length === 1 ? '' : 's'}`}
+      actions={canEdit && !adding ? <Button size="sm" variant="secondary" onClick={() => { setAdding(true); setShown(true) }} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add rule</Button> : null}>
+      <p className="text-xs text-stone-500">Product types and single items to reorder first, keep, watch or stop. The standing above says whether to order from the vendor at all.{sources.length ? ` From: ${sources.join('; ')}.` : ''}</p>
       {q.isLoading ? <div className="flex justify-center py-6"><Spinner label="Loading…" className="text-brand" /></div> : q.error ? <p className="mt-2 text-sm text-red-700">{q.error}</p> : null}
       {adding ? (
         <form onSubmit={(e) => void submit(e)} className="mt-3 flex flex-col gap-2 rounded-xl border border-stone-200 p-3 sm:flex-row sm:flex-wrap sm:items-end">
@@ -98,6 +98,6 @@ export function VendorItemRulesSection({ organizationId, vendorId, userId, canEd
           </ul>
         </div>
       ) : null)}
-    </section>
+    </FoldSection>
   )
 }

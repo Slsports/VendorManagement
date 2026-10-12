@@ -1,4 +1,6 @@
 // supplies: store supply requests (Dana, Oct 12). Runs every minute from pg_cron (header x-cron-secret).
+//   0. amazon        — Claude reads Amazon order emails: order #, PO (initials + store, Dana Oct 12), total, items, dates
+//                      (Supplies › Amazon). Tyler's and Greg's orders stop there; Dana's (DP) go on to step 2.
 //   1. requests      — Claude reads staff emails to orders@ (senders marked Ours, or a login's email): a supply request
 //                      becomes a Supplies request and, when new, a task for Dana due in 2 days.
 //   2. orders        — Claude reads order, shipping and delivery emails (orders@ and Dana's own inboxes) against the open
@@ -7,7 +9,7 @@
 //                      (marked X-VMS-Notice so the sync never files it). Requests from before today get none.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, errorResponse, json, serviceClient } from '../_shared/caller.ts'
-import { aiEnabled, readSupplyOrders, readSupplyRequests, type OpenSupply, type SupplyOrderEmail, type SupplyRequestEmail } from '../_shared/ai.ts'
+import { aiEnabled, readAmazonOrders, readSupplyOrders, readSupplyRequests, type AmazonEmail, type OpenSupply, type SupplyOrderEmail, type SupplyRequestEmail } from '../_shared/ai.ts'
 import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
 import { buildMime, formatAddress } from '../_shared/mime.ts'
 
@@ -35,6 +37,7 @@ Deno.serve(async (req) => {
     for (const a of accounts ?? []) {
       const org = a.organization_id as string
       out[org] = {
+        amazon: await amazonStep(db, org, started),
         requests: await requestStep(db, org, started),
         orders: await orderStep(db, org, started),
         told: await tellStep(db, org, a.mailbox as string),
@@ -45,6 +48,26 @@ Deno.serve(async (req) => {
     return errorResponse(e)
   }
 })
+
+const isoDay = (s: string | null | undefined) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null)
+
+async function amazonStep(db: SupabaseClient, org: string, started: number) {
+  let read = 0
+  while (Date.now() - started < TIME_BUDGET_MS * 0.25) {
+    const list = (await check(db.rpc('amazon_queue', { p_org: org, p_limit: 10 }))) as AmazonEmail[] | null
+    if (!list?.length) break
+    const readings = new Map((await readAmazonOrders(db, org, list)).map((r) => [r.id, r]))
+    for (const e of list) {
+      const r = readings.get(e.email_id)
+      await check(db.rpc('amazon_apply', {
+        p_email: e.email_id, p_kind: r?.kind ?? 'other', p_order: r?.order_number ?? null, p_po: r?.po ?? null, p_total: r?.total ?? null,
+        p_items: r?.items ?? null, p_ordered: isoDay(r?.ordered_on), p_expected: isoDay(r?.expected),
+      }))
+      read++
+    }
+  }
+  return read
+}
 
 async function requestStep(db: SupabaseClient, org: string, started: number) {
   let made = 0

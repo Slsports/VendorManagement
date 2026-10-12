@@ -13,6 +13,7 @@ import { SortHeader } from '@/components/shared/SortHeader'
 import { Modal } from '@/components/shared/Modal'
 import { Alert, Badge, Button, FormField, Input, Spinner } from '@/components/ui'
 import type { SupplyRequest } from '@/types'
+import { AmazonTab } from './AmazonTab'
 
 const TABS: { v: SupplyView; label: string }[] = [
   { v: 'requested', label: 'To order' },
@@ -20,6 +21,7 @@ const TABS: { v: SupplyView; label: string }[] = [
   { v: 'arrived', label: 'Arrived' },
   { v: 'all', label: 'All' },
 ]
+type Tab = SupplyView | 'amazon'
 const date = (d: string | null) => (d ? new Date(d.length === 10 ? `${d}T12:00:00` : d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '')
 const STATUS: Record<SupplyRequest['status'], { label: string; tone: 'warning' | 'info' | 'success' | 'neutral' }> = {
   requested: { label: 'To order', tone: 'warning' }, ordered: { label: 'Ordered', tone: 'info' }, arrived: { label: 'Arrived', tone: 'success' }, closed: { label: 'Closed', tone: 'neutral' },
@@ -34,7 +36,8 @@ export default function SuppliesPage() {
   const { organization, role } = useAuth()
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
   const [params, setParams] = useSearchParams()
-  const view = (TABS.find((t) => t.v === params.get('show'))?.v ?? 'requested') as SupplyView
+  const tab: Tab = params.get('show') === 'amazon' ? 'amazon' : (TABS.find((t) => t.v === params.get('show'))?.v ?? 'requested')
+  const view: SupplyView = tab === 'amazon' ? 'all' : tab
   const q = useSupabaseQuery(async () => (organization ? listSupplies(organization.id, view) : []), [organization?.id, view])
   const counts = useSupabaseQuery(async () => (organization ? countSupplies(organization.id) : null), [organization?.id])
   const [adding, setAdding] = useState(false)
@@ -45,7 +48,7 @@ export default function SuppliesPage() {
     from: (r) => r.ordered_from, expected: (r) => r.expected_at,
   }, { descFirst: ['asked', 'expected'] })
 
-  function setView(v: SupplyView) {
+  function setView(v: Tab) {
     const next = new URLSearchParams(params)
     if (v === 'requested') next.delete('show'); else next.set('show', v)
     setParams(next, { replace: true })
@@ -60,11 +63,11 @@ export default function SuppliesPage() {
         actions={canEdit ? <Button onClick={() => setAdding(true)} leftIcon={<Plus className="size-4" aria-hidden="true" />}>New request</Button> : undefined} />
       <nav aria-label="Which requests" className="mb-4 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <ul className="flex w-max gap-1 rounded-xl bg-stone-100 p-1">
-          {TABS.map((t) => {
-            const n = t.v === 'all' ? null : counts.data?.[t.v]
+          {[...TABS, { v: 'amazon' as const, label: 'Amazon' }].map((t) => {
+            const n = t.v === 'all' || t.v === 'amazon' ? null : counts.data?.[t.v]
             return (
-              <li key={t.v}><button type="button" onClick={() => setView(t.v)} aria-current={view === t.v ? 'page' : undefined}
-                className={cn('block whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium', view === t.v ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900')}>
+              <li key={t.v}><button type="button" onClick={() => setView(t.v)} aria-current={tab === t.v ? 'page' : undefined}
+                className={cn('block whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium', tab === t.v ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900')}>
                 {t.label}{n !== null && n !== undefined ? <span className="ml-1.5 text-xs font-normal text-stone-500">{n}</span> : null}
               </button></li>
             )
@@ -72,7 +75,8 @@ export default function SuppliesPage() {
         </ul>
       </nav>
 
-      {q.isLoading ? <div className="flex justify-center py-16"><Spinner label="Loading supplies…" className="text-brand" /></div>
+      {tab === 'amazon' ? <AmazonTab />
+        : q.isLoading ? <div className="flex justify-center py-16"><Spinner label="Loading supplies…" className="text-brand" /></div>
         : q.error ? <Alert variant="error">{q.error}</Alert>
         : rows.length === 0 ? <p className="rounded-2xl border border-dashed border-stone-300 py-12 text-center text-sm text-stone-600">{view === 'requested' ? 'Nothing to order.' : 'Nothing here.'}</p>
         : (

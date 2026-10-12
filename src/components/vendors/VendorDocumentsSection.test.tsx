@@ -17,6 +17,7 @@ vi.mock('@/services/lines', () => ({
 describe('VendorDocumentsSection', () => {
   it('shows folders with counts, years inside, and moves a file', async () => {
     render(withAuth('buyer', <VendorDocumentsSection vendorId="v1" vendorName="Stansport" organizationId="o1" userId="u1" canEdit />))
+    fireEvent.click(await screen.findByRole('button', { name: /Documents\s*3 files/ }))
     const invoices = await screen.findByRole('button', { name: /Invoices\s*2 files/ })
     expect(screen.getByRole('button', { name: /Price lists\s*1 file/ })).toBeInTheDocument()
     fireEvent.click(invoices)

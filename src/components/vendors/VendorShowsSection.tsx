@@ -2,18 +2,18 @@ import { Link } from 'react-router-dom'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listVendorShows } from '@/services/lines'
 import { ROUTES } from '@/lib/constants'
+import { FoldSection } from '@/components/shared/FoldSection'
 
 /** Which Worldwide shows this vendor exhibited at, the booth, and who shared it. */
 export function VendorShowsSection({ vendorId }: { vendorId: string }) {
   const q = useSupabaseQuery(() => listVendorShows(vendorId), [vendorId])
   const shows = q.data ?? []
   return (
-    <section className="rounded-2xl border border-stone-200 bg-white p-5">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Worldwide shows</h2>
+    <FoldSection title="Worldwide shows" summary={q.isLoading ? null : shows.length === 0 ? 'None' : `${shows.length} show${shows.length === 1 ? '' : 's'}`}>
       {shows.length === 0 ? (
-        <p className="mt-3 text-sm text-stone-500">Not on a show list we have loaded. That does not mean they are not WWD.</p>
+        <p className="text-sm text-stone-500">Not on a show list we have loaded. That does not mean they are not WWD.</p>
       ) : (
-        <ul className="mt-3 space-y-3 text-sm">
+        <ul className="space-y-3 text-sm">
           {shows.map((s) => (
             <li key={s.id}>
               <p className="font-medium text-stone-900">{s.show_label}{s.booth ? <span className="font-normal text-stone-600"> · booth {s.booth}</span> : null}{s.is_new ? <span className="ml-1 rounded bg-sky-100 px-1.5 py-0.5 text-xs text-sky-800">new exhibitor</span> : null}</p>
@@ -28,6 +28,6 @@ export function VendorShowsSection({ vendorId }: { vendorId: string }) {
           ))}
         </ul>
       )}
-    </section>
+    </FoldSection>
   )
 }

@@ -13,6 +13,7 @@ import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
 import { Badge, Button, FormField, Input, Select } from '@/components/ui'
 import { Modal } from '@/components/shared/Modal'
+import { FoldSection } from '@/components/shared/FoldSection'
 import { MoveDocumentDialog } from '@/components/vendors/MoveDocumentDialog'
 import { FileThumb } from '@/components/shared/FileThumb'
 
@@ -33,6 +34,7 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
   const [busy, setBusy] = useState(false)
   const [zipping, setZipping] = useState<string | null>(null)
   const [find, setFind] = useState('')
+  const [shown, setShown] = useState(false)
   const { view, viewer } = useDocumentViewer()
 
   const links = q.data ?? []
@@ -142,77 +144,76 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
     </li>
   )
 
+  const summary = q.isLoading ? null : links.length === 0 ? 'None' : links.length === 1 ? '1 file' : `${links.length} files`
   return (
-    <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Documents</h2>
-        {canEdit ? (
-          <div className="flex gap-2">
-            <Button size="sm" variant="secondary" loading={busy} onClick={() => setAdding({ mode: 'file', folder: openFolder ?? 'invoices', files: [] })} leftIcon={<Upload className="size-4" aria-hidden="true" />}>Upload</Button>
-            <Button size="sm" variant="ghost" onClick={() => setAdding({ mode: 'link', folder: openFolder ?? 'catalogs', files: [] })} leftIcon={<Link2 className="size-4" aria-hidden="true" />}>Add a link</Button>
+    <>
+      <FoldSection title="Documents" summary={summary} className="lg:col-span-3" open={shown} onOpenChange={setShown}
+        actions={canEdit ? (<>
+          <Button size="sm" variant="secondary" loading={busy} onClick={() => setAdding({ mode: 'file', folder: openFolder ?? 'invoices', files: [] })} leftIcon={<Upload className="size-4" aria-hidden="true" />}>Upload</Button>
+          <Button size="sm" variant="ghost" onClick={() => setAdding({ mode: 'link', folder: openFolder ?? 'catalogs', files: [] })} leftIcon={<Link2 className="size-4" aria-hidden="true" />}>Add a link</Button>
+        </>) : null}>
+        <p className="text-xs text-stone-500">{canEdit ? 'Open a folder, or drop files on one to save them under this year.' : 'Open a folder to see its files.'}</p>
+
+        {links.length > 5 ? (
+          <input type="search" value={find} onChange={(e) => setFind(e.target.value)} placeholder="Find a document: invoice number, amount, name…" aria-label="Find a document"
+            className="mt-3 h-10 w-full rounded-lg border border-stone-300 bg-white px-3 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-ring-brand sm:max-w-md" />
+        ) : null}
+        {find.trim() ? (() => {
+          const q = find.trim().toLowerCase().replace(/^[#$]/, '')
+          const hits = links.filter((l) => [l.label, l.file_name, l.doc_number, l.doc_total != null ? Number(l.doc_total).toFixed(2) : null, l.season_label, l.notes].some((v) => (v ?? '').toString().toLowerCase().includes(q)))
+          return (
+            <div className="mt-3 rounded-xl border border-stone-200 p-3">
+              <p className="text-sm font-semibold text-stone-900">{hits.length} found</p>
+              <ul className="divide-y divide-stone-100">{hits.slice(0, 100).map((l) => <li key={l.id} className="text-xs text-stone-500"><span className="font-medium text-stone-700">{folderLabel(folderOf(l.kind))} · {l.doc_year ?? ''}</span><ul>{row(l)}</ul></li>)}</ul>
+            </div>
+          )
+        })() : null}
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+          {DOC_FOLDERS.map((f) => {
+            const n = inFolder(f.id).length
+            const Icon = openFolder === f.id ? FolderOpen : Folder
+            return (
+              <button key={f.id} type="button" {...dragProps(f.id)} onClick={() => setOpenFolder((x) => (x === f.id ? null : f.id))} aria-pressed={openFolder === f.id}
+                className={cn('flex flex-col items-start gap-1 rounded-xl border px-3 py-2 text-left text-sm',
+                  openFolder === f.id ? 'border-brand bg-brand/5' : 'border-stone-200 hover:bg-stone-50',
+                  dropOn === f.id && 'border-brand bg-brand/10 ring-2 ring-brand/30')}>
+                <Icon className={cn('size-5', n ? 'text-amber-500' : 'text-stone-300')} aria-hidden="true" />
+                <span className="font-medium text-stone-900">{f.label}</span>
+                <span className="text-xs text-stone-500">{q.isLoading ? '…' : n === 1 ? '1 file' : `${n} files`}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        {folder ? (
+          <div className="mt-4 rounded-xl border border-stone-200 p-3" {...dragProps(folder.id)}>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-stone-900">{folder.label}</p>
+              {inFolder(folder.id).length ? (
+                <Button size="sm" variant="ghost" loading={zipping === folder.id} disabled={!!zipping} onClick={() => void downloadAll(folder.id, inFolder(folder.id), `${vendorName} ${folder.label}`)} leftIcon={<Download className="size-4" aria-hidden="true" />}>Download all</Button>
+              ) : null}
+            </div>
+            {inFolder(folder.id).length === 0 ? (
+              <p className="mt-2 text-sm text-stone-500">Nothing in {folder.label} yet.{canEdit ? ' Drop files here or use Upload.' : ''}</p>
+            ) : byYear(inFolder(folder.id)).map(([year, rows], i) => (
+              <details key={year ?? 'none'} open={i === 0} className="mt-2">
+                <summary className="cursor-pointer text-sm font-medium text-stone-700">
+                  <Folder className="mr-1 inline size-4 text-amber-500" aria-hidden="true" />{year ?? 'No year'} <span className="font-normal text-stone-500">({rows.length})</span>
+                  <button type="button" disabled={!!zipping} onClick={(e) => { e.preventDefault(); void downloadAll(`${folder.id}-${year}`, rows, `${vendorName} ${folder.label} ${year ?? ''}`.trim()) }}
+                    className="ml-2 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-normal text-stone-500 hover:bg-stone-100 hover:text-stone-800">
+                    <Download className="size-3.5" aria-hidden="true" />{zipping === `${folder.id}-${year}` ? 'Zipping…' : 'Download year'}
+                  </button>
+                </summary>
+                {folder.id === 'images' || folder.id === 'damaged' || folder.id === 'proofs'
+                  ? <ul className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{rows.map((l) => row(l, true))}</ul>
+                  : <ul className="ml-1 divide-y divide-stone-100 border-l border-stone-100 pl-3">{rows.map((l) => row(l))}</ul>}
+              </details>
+            ))}
           </div>
         ) : null}
-      </div>
-      <p className="mt-1 text-xs text-stone-500">{canEdit ? 'Open a folder, or drop files on one to save them under this year.' : 'Open a folder to see its files.'}</p>
+      </FoldSection>
 
-      {links.length > 5 ? (
-        <input type="search" value={find} onChange={(e) => setFind(e.target.value)} placeholder="Find a document: invoice number, amount, name…" aria-label="Find a document"
-          className="mt-3 h-10 w-full rounded-lg border border-stone-300 bg-white px-3 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-ring-brand sm:max-w-md" />
-      ) : null}
-      {find.trim() ? (() => {
-        const q = find.trim().toLowerCase().replace(/^[#$]/, '')
-        const hits = links.filter((l) => [l.label, l.file_name, l.doc_number, l.doc_total != null ? Number(l.doc_total).toFixed(2) : null, l.season_label, l.notes].some((v) => (v ?? '').toString().toLowerCase().includes(q)))
-        return (
-          <div className="mt-3 rounded-xl border border-stone-200 p-3">
-            <p className="text-sm font-semibold text-stone-900">{hits.length} found</p>
-            <ul className="divide-y divide-stone-100">{hits.slice(0, 100).map((l) => <li key={l.id} className="text-xs text-stone-500"><span className="font-medium text-stone-700">{folderLabel(folderOf(l.kind))} · {l.doc_year ?? ''}</span><ul>{row(l)}</ul></li>)}</ul>
-          </div>
-        )
-      })() : null}
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
-        {DOC_FOLDERS.map((f) => {
-          const n = inFolder(f.id).length
-          const Icon = openFolder === f.id ? FolderOpen : Folder
-          return (
-            <button key={f.id} type="button" {...dragProps(f.id)} onClick={() => setOpenFolder((x) => (x === f.id ? null : f.id))} aria-pressed={openFolder === f.id}
-              className={cn('flex flex-col items-start gap-1 rounded-xl border px-3 py-2 text-left text-sm',
-                openFolder === f.id ? 'border-brand bg-brand/5' : 'border-stone-200 hover:bg-stone-50',
-                dropOn === f.id && 'border-brand bg-brand/10 ring-2 ring-brand/30')}>
-              <Icon className={cn('size-5', n ? 'text-amber-500' : 'text-stone-300')} aria-hidden="true" />
-              <span className="font-medium text-stone-900">{f.label}</span>
-              <span className="text-xs text-stone-500">{q.isLoading ? '…' : n === 1 ? '1 file' : `${n} files`}</span>
-            </button>
-          )
-        })}
-      </div>
-
-      {folder ? (
-        <div className="mt-4 rounded-xl border border-stone-200 p-3" {...dragProps(folder.id)}>
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-stone-900">{folder.label}</p>
-            {inFolder(folder.id).length ? (
-              <Button size="sm" variant="ghost" loading={zipping === folder.id} disabled={!!zipping} onClick={() => void downloadAll(folder.id, inFolder(folder.id), `${vendorName} ${folder.label}`)} leftIcon={<Download className="size-4" aria-hidden="true" />}>Download all</Button>
-            ) : null}
-          </div>
-          {inFolder(folder.id).length === 0 ? (
-            <p className="mt-2 text-sm text-stone-500">Nothing in {folder.label} yet.{canEdit ? ' Drop files here or use Upload.' : ''}</p>
-          ) : byYear(inFolder(folder.id)).map(([year, rows], i) => (
-            <details key={year ?? 'none'} open={i === 0} className="mt-2">
-              <summary className="cursor-pointer text-sm font-medium text-stone-700">
-                <Folder className="mr-1 inline size-4 text-amber-500" aria-hidden="true" />{year ?? 'No year'} <span className="font-normal text-stone-500">({rows.length})</span>
-                <button type="button" disabled={!!zipping} onClick={(e) => { e.preventDefault(); void downloadAll(`${folder.id}-${year}`, rows, `${vendorName} ${folder.label} ${year ?? ''}`.trim()) }}
-                  className="ml-2 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-normal text-stone-500 hover:bg-stone-100 hover:text-stone-800">
-                  <Download className="size-3.5" aria-hidden="true" />{zipping === `${folder.id}-${year}` ? 'Zipping…' : 'Download year'}
-                </button>
-              </summary>
-              {folder.id === 'images' || folder.id === 'damaged' || folder.id === 'proofs'
-                ? <ul className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{rows.map((l) => row(l, true))}</ul>
-                : <ul className="ml-1 divide-y divide-stone-100 border-l border-stone-100 pl-3">{rows.map((l) => row(l))}</ul>}
-            </details>
-          ))}
-        </div>
-      ) : null}
-
+      {/* dialogs sit outside the box so Upload works while it is closed */}
       {adding ? (
         <AddDocumentDialog initial={adding} onClose={() => setAdding(null)} onSave={async (a) => {
           if (a.mode === 'file') {
@@ -230,6 +231,7 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
           toast.success(`Saved to ${folderLabel(a.folder)} ${a.year}`)
           setAdding(null)
           setOpenFolder(a.folder)
+          setShown(true)
           await q.refetch()
         }} />
       ) : null}
@@ -238,7 +240,7 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
       {moving ? (
         <MoveDocumentDialog link={moving} onClose={() => setMoving(null)} onMoved={async (f) => { setMoving(null); setOpenFolder(f); await q.refetch() }} />
       ) : null}
-    </section>
+    </>
   )
 }
 

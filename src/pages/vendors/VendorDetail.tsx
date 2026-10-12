@@ -1,10 +1,10 @@
 import { useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Check, Pencil } from 'lucide-react'
+import { Check, Mail, Pencil, Phone } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { addNote, getVendor, listNotes, listReviewQueue, setVendorAssignee, updateVendor } from '@/services/vendors'
+import { addNote, getVendor, listNotes, listReviewQueue, setVendorAssignee, updateVendor, type VendorDetail } from '@/services/vendors'
 import { listOrderers } from '@/services/reviews'
 import { clearPickerCache } from '@/services/mail'
 import { ROUTES } from '@/lib/constants'
@@ -12,6 +12,7 @@ import { BILLING_ROUTE_HELP, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS
 import { errorMessage } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { BackLink } from '@/components/shared/BackLink'
+import { FoldSection } from '@/components/shared/FoldSection'
 import { RouteBadges } from '@/components/vendors/RouteBadges'
 import { ReviewItemCard, VENDOR_DELETED } from '@/components/vendors/ReviewItemCard'
 import { VendorDocumentsSection } from '@/components/vendors/VendorDocumentsSection'
@@ -19,7 +20,7 @@ import { RecordTasks } from '@/components/tasks/RecordTasks'
 import { VendorOrderingPanel } from '@/components/ordering/VendorOrderingPanel'
 import { VendorRepGroupCard } from '@/components/vendors/VendorRepGroupCard'
 import { VendorContactsSection } from '@/components/vendors/VendorContactsSection'
-import { peopleFor } from '@/lib/contacts'
+import { ourReps, peopleFor } from '@/lib/contacts'
 import { VendorShowsSection } from '@/components/vendors/VendorShowsSection'
 import { VendorOrdersSection } from '@/components/vendors/VendorOrdersSection'
 import { VendorMailSection } from '@/components/vendors/VendorMailSection'
@@ -157,6 +158,9 @@ export default function VendorDetailPage() {
         ) : undefined}
       />
 
+      {/* Our rep, always at the top (Dana, Oct 12): name, email and phone. */}
+      <OurRepStrip vendor={v} canEdit={canEdit} onEmail={(email) => compose([email])} />
+
       {v.standing !== 'ok' ? (
         <Alert variant={v.standing === 'do_not_order' ? 'error' : v.standing === 'hold' ? 'info' : 'warning'} title={v.standing === 'do_not_order' ? 'Do not order from this vendor' : v.standing === 'hold' ? `On hold${v.standing_review_date ? `: look again on ${new Date(v.standing_review_date + 'T12:00:00').toLocaleDateString()}` : ''}` : 'Last resort: order only if the items are nowhere else'} className="mb-6">
           {v.standing_tags.length ? <p className="font-medium">{standingWhy(v.standing_tags)}</p> : null}
@@ -231,12 +235,11 @@ export default function VendorDetailPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-stone-200 bg-white p-5">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Ordering windows</h2>
+        <FoldSection title="Ordering windows" summary={v.vendor_order_windows.length === 0 ? 'None' : `${v.vendor_order_windows.length} window${v.vendor_order_windows.length === 1 ? '' : 's'}`}>
           {v.vendor_order_windows.length === 0 ? (
-            <p className="mt-3 text-sm text-stone-500">None recorded. Add them on the edit page.</p>
+            <p className="text-sm text-stone-500">None recorded. Add them on the edit page.</p>
           ) : (
-            <ul className="mt-3 space-y-2 text-sm">
+            <ul className="space-y-2 text-sm">
               {v.vendor_order_windows.map((w) => (
                 <li key={w.id} className="rounded-lg bg-stone-50 px-3 py-2">
                   <p className="font-medium text-stone-900">{w.label || ORDER_WINDOW_KIND_LABELS[w.kind]}</p>
@@ -245,10 +248,10 @@ export default function VendorDetailPage() {
               ))}
             </ul>
           )}
-        </section>
+        </FoldSection>
 
-        <VendorOrderingPanel className="rounded-2xl border border-stone-200 bg-white p-5" vendor={{ id: v.id, name: v.name, aliases: v.aliases }} assignedBuyerId={v.assigned_buyer_id} canEdit={canEdit} />
-        <RecordTasks className="rounded-2xl border border-stone-200 bg-white p-5" preset={{ vendor: { id: v.id, name: v.name } }} />
+        <VendorOrderingPanel vendor={{ id: v.id, name: v.name, aliases: v.aliases }} assignedBuyerId={v.assigned_buyer_id} canEdit={canEdit} />
+        <RecordTasks fold preset={{ vendor: { id: v.id, name: v.name } }} />
         <VendorDocumentsSection vendorId={v.id} vendorName={v.name} organizationId={v.organization_id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorMailSection vendorId={v.id} organizationId={v.organization_id} onNewEmail={canEdit ? () => compose(suggestions[0] ? [suggestions[0].email] : []) : undefined} />
         <VendorRepGroupCard vendorId={v.id} group={v.rep_groups} />
@@ -259,10 +262,9 @@ export default function VendorDetailPage() {
         <VendorItemRulesSection organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorOrdersSection vendorId={v.id} vendorName={v.name} canAdd={canEdit} />
         <VendorPaymentsSection vendorId={v.id} />
-        <WwdInvoiceList vendorId={v.id} />
+        <WwdInvoiceList fold vendorId={v.id} />
 
-        <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-1">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Notes</h2>
+        <FoldSection title="Notes" summary={notesQ.isLoading ? null : notesQ.data?.length ? `${notesQ.data.length} note${notesQ.data.length === 1 ? '' : 's'}` : 'None'} className="lg:col-span-1">
           {canEdit && profile && organization ? (
             <NoteForm onSubmit={async (body) => { await addNote({ organization_id: organization.id, entity_type: 'vendor', entity_id: v.id, body, created_by: profile.id }); await notesQ.refetch() }} />
           ) : null}
@@ -278,7 +280,7 @@ export default function VendorDetailPage() {
           ) : (
             <p className="mt-3 text-sm text-stone-500">No notes yet.</p>
           )}
-        </section>
+        </FoldSection>
       </div>
       {draft ? <ComposeDialog draft={draft} suggestions={suggestions} onClose={() => setDraft(null)} onSent={() => void vendorQ.refetch()} /> : null}
     </div>
@@ -327,5 +329,28 @@ function ActiveSwitch({ active, onChange }: { active: boolean; onChange: (on: bo
       </span>
       {active ? 'Active' : 'Inactive'}
     </button>
+  )
+}
+
+function OurRepStrip({ vendor: v, canEdit, onEmail }: { vendor: VendorDetail; canEdit: boolean; onEmail: (email: string) => void }) {
+  const reps = ourReps(v)
+  return (
+    <section className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/60 px-5 py-3 text-sm">
+      {reps.length === 0 ? (
+        <p className="text-stone-600">
+          <span className="font-semibold text-stone-800">Our rep:</span> none yet.
+          {canEdit ? <> <Link to={`${ROUTES.vendors}/${v.id}/edit`} className="font-medium text-brand hover:underline">Add our rep</Link></> : null}
+          {v.rep_groups ? <span className="text-stone-500"> · Rep group: <Link to={`${ROUTES.repGroups}/${v.rep_groups.id}`} className="hover:underline">{v.rep_groups.name}</Link></span> : null}
+        </p>
+      ) : reps.map((p) => (
+        <p key={p.key} className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span><span className="font-semibold text-stone-800">{p.starred ? 'Our rep' : 'Rep'}:</span> <span className="font-medium text-stone-900">{p.name || p.email || p.phone}</span>
+            {p.kind === 'group' && v.rep_groups ? <span className="text-stone-500"> · <Link to={`${ROUTES.repGroups}/${v.rep_groups.id}`} className="hover:underline">{v.rep_groups.name}</Link></span> : null}</span>
+          {p.email ? <button type="button" onClick={() => onEmail(p.email!)} className="inline-flex items-center gap-1 text-brand hover:underline" title="Write an email from VMS"><Mail className="size-3.5" aria-hidden="true" />{p.email}</button> : null}
+          {p.phone ? <a href={`tel:${p.phone}`} className="inline-flex items-center gap-1 text-brand hover:underline"><Phone className="size-3.5" aria-hidden="true" />{p.phone}</a> : null}
+          {!p.email && !p.phone && canEdit ? <Link to={`${ROUTES.vendors}/${v.id}/edit`} className="text-xs text-brand hover:underline">Add email and phone</Link> : null}
+        </p>
+      ))}
+    </section>
   )
 }

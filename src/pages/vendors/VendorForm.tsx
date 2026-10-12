@@ -4,6 +4,8 @@ import toast from 'react-hot-toast'
 import { Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { VendorContactsSection } from '@/components/vendors/VendorContactsSection'
+import { ComposeDialog, type ComposeDraft } from '@/components/mail/ComposeDialog'
 import { createVendor, deleteOrderWindow, getVendor, listPaymentTerms, saveOrderWindow, setVendorRoutes, updateVendor, type VendorDetail } from '@/services/vendors'
 import { ROUTES } from '@/lib/constants'
 import { BILLING_ROUTE_HELP, BILLING_ROUTE_LABELS, FREE_SHIPPING_POLICY_LABELS, MONTHS, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, PAY_METHOD_LABELS, STANDING_LABELS, STANDING_TAGS, STANDING_TAG_LABELS } from '@/lib/vendors'
@@ -147,6 +149,10 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
   const [form, setForm] = useState<FormState>(() => (v ? formFromVendor(v) : { ...EMPTY, name: params.get('name') ?? '', email: params.get('email') ?? '', website: params.get('website') ?? '' }))
   const orderersQ = useSupabaseQuery(async () => (organization ? listOrderers(organization.id) : []), [organization?.id])
   const [removedWindows, setRemovedWindows] = useState<string[]>([])
+  // Reps & contacts on the edit page too (Dana, Oct 12); they save on their own, apart from the form below.
+  const contactsQ = useSupabaseQuery(async () => (id ? getVendor(id) : null), [id])
+  const [draft, setDraft] = useState<ComposeDraft | null>(null)
+  const canEditContacts = profile?.role === 'admin' || profile?.role === 'manager' || profile?.role === 'buyer'
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -231,6 +237,14 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
       <BackLink fallback={isEdit ? `${ROUTES.vendors}/${id}` : ROUTES.vendors} fallbackLabel={isEdit ? 'Vendor' : 'Vendors'} />
       <PageHeader eyebrow="Vendor" title={isEdit ? `Edit ${v?.name ?? ''}` : 'New vendor'} />
       {fromEmail || fromSender ? <Alert variant="info" className="mb-4">Started from an email. Check the name: it is a guess from their web address. When you save, {fromSender ? 'all mail from this sender is' : 'the email is'} filed to this vendor.</Alert> : null}
+
+      {v ? (
+        <div className="mb-6 grid">
+          <VendorContactsSection defaultOpen vendor={contactsQ.data ?? v} canEdit={canEditContacts} onChange={async () => { await contactsQ.refetch() }}
+            onEmail={(email) => setDraft({ to: [email], subject: '', body: '', vendor_id: v.id })} />
+        </div>
+      ) : null}
+      {draft ? <ComposeDialog draft={draft} onClose={() => setDraft(null)} /> : null}
 
       <form onSubmit={handleSubmit} noValidate className="space-y-6">
         {error ? <Alert variant="error">{error}</Alert> : null}

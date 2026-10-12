@@ -1885,3 +1885,12 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   automatically; a vendor with another rep group, or a brand that is not a vendor, becomes a "Rep group lines" card.
 - Rep mail is tagged to every line it names and filed to the vendor when it names one. All "Who is this?" senders were
   sorted again with these rules.
+
+## Oct 12 — Vendor page, contacts, Amazon
+- Vendor page: **Our rep** (name, email, phone) right under the vendor's name; every box except Overview starts closed with
+  a count ("Mail · 142 conversations"), click to open. Reps & contacts also sits at the top of the Edit page.
+- A contact can be several kinds at once (checkboxes: Rep, Owner, Orders…); the pencil edits a contact.
+- Amazon: POs start with the buyer's initials and the store (TP = Tyler Powell, GP = Greg Powell, DP = Dana; SLS, SLH,
+  SLM, GS). Claude reads every Amazon order email into Supplies › Amazon with monthly spending by store and person. DP
+  orders also go through Supplies; TP and GP orders only to the Amazon list. Tyler will see the list once he has a login.
+  Old Amazon mail in sls@gmail can't be scanned; Dana will forward Amazon confirmations to orders@ with a Gmail filter.

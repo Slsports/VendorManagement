@@ -9,6 +9,7 @@ import { money, shortDate } from '@/lib/freight'
 import { ROUTES } from '@/lib/constants'
 import { errorMessage } from '@/lib/utils'
 import { Badge, Button, Select } from '@/components/ui'
+import { FoldSection } from '@/components/shared/FoldSection'
 
 const KIND = { invoice: null, credit: { label: 'Credit', tone: 'success' }, debit: { label: 'Debit', tone: 'warning' }, fee: { label: 'Membership fee', tone: 'neutral' } } as const
 
@@ -24,7 +25,7 @@ function paidText(i: WwdInvoiceRow): string {
  * PO, amount, discount and when it was paid with which WWD payment. On a vendor page each invoice can be
  * tied to one of the vendor's orders (or untied); VMS ties them itself by PO or amount when it can.
  */
-export function WwdInvoiceList({ vendorId, orderId, title = 'WWD invoices' }: { vendorId?: string; orderId?: string; title?: string }) {
+export function WwdInvoiceList({ vendorId, orderId, title = 'WWD invoices', fold = false }: { vendorId?: string; orderId?: string; title?: string; fold?: boolean }) {
   const { role } = useAuth()
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
   const q = useSupabaseQuery(() => listWwdInvoices({ vendorId, orderId }), [vendorId, orderId])
@@ -47,13 +48,10 @@ export function WwdInvoiceList({ vendorId, orderId, title = 'WWD invoices' }: { 
     }
   }
 
-  return (
-    <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">{title}</h2>
-        <span className="text-sm text-stone-600">{rows.length}{open ? ` · ${money(open)} not paid yet` : ''}</span>
-      </div>
-      <ul className="mt-2 divide-y divide-stone-100 text-sm">
+  const summary = `${rows.length}${open ? ` · ${money(open)} not paid yet` : ''}`
+  const list = (
+    <>
+      <ul className="divide-y divide-stone-100 text-sm">
         {shown.map((i) => {
           const k = KIND[i.kind]
           return (
@@ -92,6 +90,18 @@ export function WwdInvoiceList({ vendorId, orderId, title = 'WWD invoices' }: { 
         })}
       </ul>
       {rows.length > 8 ? <Button size="sm" variant="ghost" className="mt-2" onClick={() => setAll((a) => !a)}>{all ? 'Show fewer' : `Show all ${rows.length}`}</Button> : null}
+    </>
+  )
+
+  // on the vendor page it starts closed with the count (Dana, Oct 12); on an order page it stays open
+  if (fold) return <FoldSection title={title} summary={summary} className="lg:col-span-3">{list}</FoldSection>
+  return (
+    <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">{title}</h2>
+        <span className="text-sm text-stone-600">{summary}</span>
+      </div>
+      <div className="mt-2">{list}</div>
     </section>
   )
 }

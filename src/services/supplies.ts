@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { SupplyRequest } from '@/types'
+import type { AmazonOrder, SupplyRequest } from '@/types'
 
 // Supplies (Dana, Oct 12): staff supply requests, from the email asking for them to the order and its arrival.
 
@@ -31,4 +31,18 @@ export async function addSupply(organizationId: string, summary: string, request
 export async function setSupply(id: string, status: SupplyStatus, ordered?: { from: string | null; order: string | null; expected: string | null }): Promise<void> {
   const { error } = await supabase.rpc('supply_set', { p_request: id, p_status: status, p_from: ordered?.from ?? null, p_order: ordered?.order ?? null, p_expected: ordered?.expected ?? null })
   if (error) throw error
+}
+
+// Amazon (Dana, Oct 12): every Amazon order from the confirmation emails, with the PO's person and store.
+export async function listAmazonOrders(organizationId: string): Promise<AmazonOrder[]> {
+  const { data, error } = await supabase.from('amazon_orders').select('*').eq('organization_id', organizationId).order('ordered_at', { ascending: false }).limit(1000)
+  if (error) throw error
+  return data ?? []
+}
+
+export interface AmazonMonth { month: string; store_code: string; person_name: string; orders: number; total: number }
+export async function amazonMonthly(organizationId: string, months = 12): Promise<AmazonMonth[]> {
+  const { data, error } = await supabase.rpc('amazon_monthly', { p_org: organizationId, p_months: months })
+  if (error) throw error
+  return ((data ?? []) as AmazonMonth[]).map((r) => ({ ...r, orders: Number(r.orders), total: Number(r.total) }))
 }
