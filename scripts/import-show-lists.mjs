@@ -7,6 +7,7 @@
  *   node scripts/import-show-lists.mjs --show wwd_fall_2026 --label "Fall 2026 (Reno, Sept 1-3)" --date 2026-09-01 \
  *        --exhibitors ExhibitorListing.pdf --lines ShowTime.pdf --lines-pages 6-9 [--new-pages 18] [--dry]
  *   --skip "Name;Other name" leaves those listing names unmatched (look-alikes of a different vendor).
+ *   --exhibitors-min-x 0.35 skips what sits left of the listing (the Pre-Show page has the schedule there).
  *   Page lists may be ranges and commas: --lines-pages 8-11,14,16-19. When the packet has no separate
  *   exhibitor listing, leave --exhibitors out: booth holders are then unknown (booth-mates still work).
  *
@@ -38,7 +39,7 @@ function decode(s) { return s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').repla
 function pageRanges(spec) {
   return String(spec).split(',').map((part) => { const [a, b] = part.trim().split('-').map(Number); return [a, b || a] })
 }
-function parseListing(pdf, pages, columns, maxX = 1) {
+function parseListing(pdf, pages, columns, maxX = 1, minX = 0) {
   const xml = pageRanges(pages).map(([pFrom, pTo]) => execFileSync('pdftotext', ['-bbox-layout', '-f', String(pFrom), '-l', String(pTo), pdf, '-']).toString()).join('\n')
   const out = []
   for (const page of xml.split('<page ').slice(1)) {
@@ -46,8 +47,8 @@ function parseListing(pdf, pages, columns, maxX = 1) {
     const cols = Array.from({ length: columns }, () => [])
     for (const wm of page.matchAll(/<word xMin="([\d.]+)" yMin="([\d.]+)" xMax="([\d.]+)" yMax="([\d.]+)">([^<]*)<\/word>/g)) {
       const x = Number(wm[1]), yc = (Number(wm[2]) + Number(wm[4])) / 2, text = decode(wm[5]).trim()
-      if (!text || x > width * maxX) continue   // decorative vertical titles sit past the booth column
-      cols[Math.min(columns - 1, Math.floor(x / (width * maxX / columns)))].push({ x, y: yc, text })
+      if (!text || x > width * maxX || x < width * minX) continue   // decorative vertical titles sit past the booth column; a schedule may sit left of it
+      cols[Math.min(columns - 1, Math.floor((x - width * minX) / (width * (maxX - minX) / columns)))].push({ x, y: yc, text })
     }
     for (const col of cols) {
       col.sort((a, b) => a.y - b.y || a.x - b.x)
@@ -79,7 +80,7 @@ function parseListing(pdf, pages, columns, maxX = 1) {
 }
 
 const exhibitorByBooth = new Map()
-const exhibitors = args.exhibitors ? parseListing(args.exhibitors, args['exhibitors-pages'] || '1-99', Number(args['exhibitors-columns'] || 2), Number(args['exhibitors-max-x'] || 1)) : []
+const exhibitors = args.exhibitors ? parseListing(args.exhibitors, args['exhibitors-pages'] || '1-99', Number(args['exhibitors-columns'] || 2), Number(args['exhibitors-max-x'] || 1), Number(args['exhibitors-min-x'] || 0)) : []
 for (const e of exhibitors) for (const b of e.booth.split(',')) exhibitorByBooth.set(b, e.name)
 // Without a line listing, every exhibitor is a line; "Carolina/Double H/Phantom Rider" is three lines in one booth.
 const lines = args.lines

@@ -1912,3 +1912,10 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   Royal Deluxe toy order after Spring 2026 (likely while Perry was not at the show). Sunny's Royal Deluxe emails are
   tagged to Royal Deluxe Accessories.
 - Toy & Home exhibitor lists: Dana is sending the ones she can find; load them and run the matching again.
+- Oct 12, later: Spring 2026 **Pre-Show** (Toy & Home, Feb 1–2) loaded from page 3 of the Feb 2026 ShowTime packet (28
+  booths; Royal Deluxe T215). WWD had no line listing sheets for Fall 2024 and Fall 2025, and those Toy & Home lists were
+  not downloaded. "ORB Toys" and "American Plastic Toys" added as other names of ORB and AMERICAN PLASTIC.
+- **Booths** (Dana): "Always double check the booth number. If they are in the same booth, it is generally the same rep
+  group." Claude sees booth and booth-mates when matching show lines; a vendor with no rep group that shared a booth (2–15
+  lines) with two or more lines of one rep group gets a "Booth-mates" card. Zero upcharge is carried to every vendor whose
+  show line is on Worldwide's zero-upcharge list.

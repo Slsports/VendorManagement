@@ -16,6 +16,7 @@ import { MailReplyReview } from '@/components/mail/MailReplyReview'
 import { FreightPaymentReview } from '@/components/freight/FreightPaymentReview'
 import { RepLineReview } from '@/components/review/RepLineReview'
 import { ShowLineReview } from '@/components/review/ShowLineReview'
+import { BoothRepReview } from '@/components/review/BoothRepReview'
 
 type VendorRef = { id: string; name: string; lightspeed_name: string | null; aliases: string[] } | null
 
@@ -54,6 +55,7 @@ const ROUTE_OPTIONS: { value: RouteChoice; label: string }[] = [
  *  - mail_reply (Claude not sure an email needs an answer): Needs an answer / No answer needed.
  *  - art_approval (Claude not sure a vendor waits on us to approve artwork): Yes / Not artwork.
  *  - freight_payment (a payment Claude could not match to one bill): pick the bill it paid.
+ *  - booth_rep (a vendor in a booth with a rep group's lines): Add to that rep group / No.
  *  - show_line (a show list line that may be one of our vendors): Yes / No.
  *  - rep_line (a rep's mail names another group's vendor, or a brand we do not have): move/keep, or add/skip.
  *  - vendor_marker and anything else: Done / Dismiss.
@@ -105,6 +107,18 @@ export function ReviewItemCard({ item, vendor, other, canEdit, onDone, aside }: 
           {aside ? <div className="shrink-0">{aside}</div> : null}
         </div>
         <FreightPaymentReview item={item} canEdit={canEdit} onDone={() => onDone()} />
+      </div>
+    )
+  }
+
+  if (item.kind === 'booth_rep') {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <p className="font-medium text-amber-900">{item.title}</p>
+          {aside ? <div className="shrink-0">{aside}</div> : null}
+        </div>
+        <BoothRepReview item={item} canEdit={canEdit} onDone={() => onDone()} />
       </div>
     )
   }

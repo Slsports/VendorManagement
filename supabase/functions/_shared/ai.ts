@@ -163,7 +163,7 @@ const ShowMatchAnswer = z.object({
 export type ShowMatchReading = z.infer<typeof ShowMatchAnswer>['results'][number]
 
 /** Worldwide show list lines (brand names with their booth holder): which of our vendors is each one, if any? */
-export async function matchShowLines(db: SupabaseClient, org: string, vendorList: string, lines: { id: string; name: string; exhibitors: string | null }[]): Promise<ShowMatchReading[]> {
+export async function matchShowLines(db: SupabaseClient, org: string, vendorList: string, lines: { id: string; name: string; exhibitors: string | null; shows: string | null; booth_mates: string | null }[]): Promise<ShowMatchReading[]> {
   if (!lines.length) return []
   const res = await claude().messages.parse({
     model: SCAN_MODEL,
@@ -174,7 +174,7 @@ export async function matchShowLines(db: SupabaseClient, org: string, vendorList
         type: 'text',
         text: `${STORE}
 
-Each item is a line (a brand) from a Worldwide Distributors buying show list, with the exhibitor whose booth it was in. Say which vendor on our list below it is: the same company or brand, under a shorter, longer or slightly different name ("Royal Deluxe" is ROYAL DELUXE ACCESSORIES). The booth holder is often a rep agency or distributor showing many brands: it does not make the line that company. Copy the vendor name exactly. sure is true only when it is plainly the same; false for a likely but uncertain match. Most lines are not our vendors: answer null for them.
+Each item is a line (a brand) from a Worldwide Distributors buying show list, with the exhibitor whose booth it was in, the shows and booth numbers, and our vendors that shared that booth (booth_mates). Always check the booth: lines in the same booth are generally the same rep group, so booth-mates help confirm or rule out a match. Say which vendor on our list below it is: the same company or brand, under a shorter, longer or slightly different name ("Royal Deluxe" is ROYAL DELUXE ACCESSORIES). The booth holder is often a rep agency or distributor showing many brands: it does not make the line that company. Copy the vendor name exactly. sure is true only when it is plainly the same; false for a likely but uncertain match. Most lines are not our vendors: answer null for them.
 Answer for every id.
 
 Vendor list:

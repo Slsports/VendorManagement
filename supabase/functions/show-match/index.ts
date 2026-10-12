@@ -1,6 +1,7 @@
 // show-match: show list lines to vendors (Dana, Oct 12: Royal Deluxe was on the Spring lists but not on its vendor page).
 // Run on demand after a show list is loaded (header x-cron-secret): Claude compares the lines with no vendor against the
-// vendor list, 80 at a time; sure matches are tied, maybes become "Show line" cards. Returns how many are left.
+// vendor list, 80 at a time, with each line's booth and booth-mates; sure matches are tied, maybes become "Show line" cards;
+// then booth-mate cards ("add it to that rep group?"). Returns how many are left.
 import { CORS, errorResponse, json, serviceClient } from '../_shared/caller.ts'
 import { aiEnabled, matchShowLines } from '../_shared/ai.ts'
 
@@ -25,9 +26,9 @@ Deno.serve(async (req) => {
       while (Date.now() - started < TIME_BUDGET_MS) {
         const { data: lines, error } = await db.rpc('show_line_queue', { p_org: org, p_limit: 80 })
         if (error) throw new Error(error.message)
-        const list = (lines ?? []) as { line_id: string; name: string; exhibitors: string | null }[]
+        const list = (lines ?? []) as { line_id: string; name: string; exhibitors: string | null; shows: string | null; booth_mates: string | null }[]
         if (!list.length) break
-        const readings = new Map((await matchShowLines(db, org, vendorList, list.map((l) => ({ id: l.line_id, name: l.name, exhibitors: l.exhibitors })))).map((r) => [r.id, r]))
+        const readings = new Map((await matchShowLines(db, org, vendorList, list.map((l) => ({ id: l.line_id, name: l.name, exhibitors: l.exhibitors, shows: l.shows, booth_mates: l.booth_mates })))).map((r) => [r.id, r]))
         for (const l of list) {
           const r = readings.get(l.line_id)
           const vendorId = r?.vendor_name ? byName.get(r.vendor_name.toLowerCase()) ?? null : null
@@ -36,8 +37,10 @@ Deno.serve(async (req) => {
           counts[(res as 'linked' | 'asked' | 'none') ?? 'none'] = (counts[(res as 'linked' | 'asked' | 'none') ?? 'none'] ?? 0) + 1
         }
       }
+      // booth-mates: a vendor with no rep group in a booth with a rep group's lines (Dana, Oct 12)
+      const { data: cards } = await db.rpc('show_booth_rep_cards', { p_org: org })
       const { count } = await db.from('vendor_directory').select('id', { count: 'exact', head: true }).eq('organization_id', org).is('matched_vendor_id', null).is('show_match_read_at', null)
-      out[org] = { ...counts, left: count }
+      out[org] = { ...counts, booth_cards: cards, left: count }
     }
     return json(out)
   } catch (e) {
