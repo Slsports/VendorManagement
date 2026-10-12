@@ -1,0 +1,22 @@
+---
+title: Review a confirmation or invoice check
+section: Order paperwork
+keywords: review, looks good, done, no email needed, summary, differences, check page, mark looked at
+who: Admin, managers and buyers
+---
+Look over what Claude found and either send the vendor an email or mark it done.
+
+## How to
+1. Open the check: click it on the Dashboard card **Confirmations & invoices to review**, or in the order's **Paperwork** box.
+2. Read the **Summary** and the table. Click a column header to sort it. Rows that differ are shaded red.
+3. To see the papers themselves, click the file names under **This confirmation** (or invoice) and **Compared with**.
+4. Then pick one:
+   - **Looks good, done** when everything matches.
+   - **Review & send email** when there are issues and the vendor needs to hear about it.
+   - **Done, no email needed** when there are issues but no email is needed.
+
+## Good to know
+- The link at the top opens the order (PO, date and cost).
+- Done checks stay on the order's **Paperwork** box marked "Done" or "Done, email sent".
+- Marking a confirmation done sets an Open or Awaiting confirmation order to **Confirmed**.
+- **Check again** asks Claude to compare once more, for example after you attached our order.
