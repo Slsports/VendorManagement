@@ -54,3 +54,36 @@ export function categorySuggestions(typed: string, categories: string[], max = 1
   const rank = (n: string) => { const l = n.toLowerCase(); return l.startsWith(q) ? 0 : l.split(/[/\s&-]+/).some((w) => w.startsWith(q)) ? 1 : 2 }
   return all.filter((n) => n.toLowerCase().includes(q)).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b)).slice(0, max)
 }
+
+/**
+ * The Review card and the Review queue tabs (Dana, Oct 12): one place for everything waiting on a decision.
+ * Paperwork tabs list Claude's order checks (each opens its check page); the rest list review items by kind.
+ * "Never bought from" is only on the Review queue page, not a dashboard count.
+ */
+export type ReviewTab = 'confirmations' | 'invoices' | 'hand' | 'answer' | 'who' | 'vendor' | 'freight' | 'never'
+export const REVIEW_TABS: { id: ReviewTab; label: string; help: string }[] = [
+  { id: 'confirmations', label: 'Confirmations', help: 'Vendor confirmations Claude checked against our order. Open one to look it over.' },
+  { id: 'invoices', label: 'Invoices', help: 'Invoices Claude checked against the confirmation. Open one to look it over.' },
+  { id: 'hand', label: 'Needs a hand', help: 'Paperwork Claude could not read, or could not match to an order.' },
+  { id: 'answer', label: 'Needs an answer?', help: 'Claude is not sure these need an answer from us.' },
+  { id: 'who', label: 'Who is this?', help: 'Senders Claude could not place. One answer files all their mail.' },
+  { id: 'vendor', label: 'Vendor changes', help: 'Possible duplicates, name and category clean-ups, Lightspeed markers.' },
+  { id: 'freight', label: 'Freight', help: 'Delivery receipts and freight Claude could not match to a vendor.' },
+  { id: 'never', label: 'Never bought from', help: 'Companies Claude thinks we have never bought from. Their mail goes to Promotions. If one is a vendor under another name, click This is… and pick it.' },
+]
+
+/** Which tab a review item kind belongs to. */
+export function reviewTabOfKind(kind: string): ReviewTab {
+  switch (kind) {
+    case 'mail_reply': case 'art_approval': return 'answer'
+    case 'email_sender': return 'who'
+    case 'delivery_receipt': case 'freight_card': return 'freight'
+    default: return 'vendor'
+  }
+}
+
+/** Which tab an open order check belongs to. */
+export function reviewTabOfCheck(c: { kind: 'confirmation' | 'invoice'; status: string }): ReviewTab {
+  if (c.status !== 'to_review') return 'hand'
+  return c.kind === 'confirmation' ? 'confirmations' : 'invoices'
+}

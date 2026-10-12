@@ -14,4 +14,4 @@ Each card can be handed to a person, so everyone sees their own list.
 ## Good to know
 - Most cards are assigned on their own when they are made: by the vendor's **Assigned to** person or by the assignment rules (see "Set review assignment rules").
 - **Show** at the top filters to **Mine**, **Unassigned** or one person.
-- The dashboard's **Review queue** card counts the ones assigned to you.
+- The dashboard's **Review** card shows how many on each tab are assigned to you.

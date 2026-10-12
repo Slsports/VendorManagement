@@ -1829,3 +1829,10 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - Companies marked Marketing (never bought from) always go to Promotions. "Other – not a vendor" senders' ads go to
   Promotions; their regular mail stays in Primary.
 - The last 12 months, personal inboxes included, were re-sorted; Claude re-read the emails it had kept in Primary.
+
+## Oct 12 — One Review card and Review queue tabs
+- The dashboard's "Confirmations & invoices to review" and "Review queue" cards are now one full-width **Review** card
+  with counts: Confirmations, Invoices, Needs a hand (unreadable or unmatched paperwork), Needs an answer?, Who is this?,
+  Vendor changes (duplicates, renames, categories, LS markers), Freight. Each shows "N with you" in amber, following the
+  Showing switch. Clicking a count opens the Review queue on that tab.
+- The Review queue page has the same tabs; paperwork tabs list the checks, each opening its check page.

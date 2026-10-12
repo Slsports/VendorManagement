@@ -14,4 +14,4 @@ Dana can look at the Orders page the way one person sees their work: the orders 
 ## Good to know
 - "Their orders" means orders they placed, plus orders for vendors where they are the assigned buyer.
 - A coloured bar across the top reminds you whose view you are looking at.
-- The Dashboard's **Confirmations & invoices to review** card follows the same switch.
+- The Dashboard's **Review** card follows the same switch.

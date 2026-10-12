@@ -15,5 +15,5 @@ Every check goes to one person to look over, even when everything matches.
 ## Good to know
 - The person's name shows beside the check in the order's **Paperwork** box, and in **Looked at by** on the check page.
 - Admin, managers and buyers can hand it to someone else (see "Hand a check to someone else").
-- Their checks show on their Dashboard card **Confirmations & invoices to review**.
+- Their checks count on their Dashboard **Review** card (Confirmations, Invoices, Needs a hand).
 - Nothing is ever sent to the vendor until that person reviews the email and presses **Send**.

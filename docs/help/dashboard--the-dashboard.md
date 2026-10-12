@@ -14,7 +14,7 @@ The dashboard is the first page after you sign in. Each box shows only its name 
 
 ## Good to know
 - The **Ordering** card follows orders from "do we need it?" to confirmed (see "The Ordering card"). Two number boxes count **Payments due** and **Future-dated orders**.
-- The cards are: My tasks, Mail for you, Confirmations & invoices to review, Artwork approvals, Ordering, Review queue and Freight bills.
+- The cards are: Ordering, Review, My tasks, Mail for you, Artwork approvals and Freight bills.
 - Some cards only show when they have something in them (confirmations and invoices, artwork, freight allowances), and Freight bills only shows for people who handle freight.
 - Task reminders that are due show at the very top until you deal with them. See the Tasks section.
 - **Recent activity** is a placeholder card for now ("Coming in phase 3").
