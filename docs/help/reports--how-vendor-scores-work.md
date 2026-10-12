@@ -18,4 +18,4 @@ Each vendor is scored 1 to 5 on six things. Four score themselves from the order
 
 ## Good to know
 - A staff rating always replaces the automatic score for that line.
-- **Overall** combines the six. The vendor's standing (on hold, last resort, do not order) shows beside it.
+- **Overall** is the average of the scores the vendor has, to one decimal. The vendor's standing (on hold, last resort, do not order) shows beside it.

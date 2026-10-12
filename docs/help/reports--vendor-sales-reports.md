@@ -10,7 +10,7 @@ Claude turns a raw LS Analytics sales export into a formatted sales report, foll
 1. Run the sales export in LS Analytics (one vendor, or a category).
 2. In a Claude session, upload it and say "format as a Vendor sales report" (or "Category sales report"). One export holding several vendors can be split into one report per vendor.
 3. Claude formats it and saves it to each vendor's Documents, in the **Sales reports** folder.
-4. To open one: open the vendor, go to **Documents**, and click **Sales reports**.
+4. To open one: open the vendor, find the **Documents** box, and open the **Sales reports** folder.
 
 ## What is in a report
 - Tabs such as **By Category**, **By Description**, **Active**, **No Data**, **Flags** and **Archived** (plus a Size Summary for sized items).
