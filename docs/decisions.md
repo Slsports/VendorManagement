@@ -1845,3 +1845,8 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - Never bought from tab on the Review queue (no dashboard count): one row per company with every address, website and
   phone from signatures, email count and latest email; search and sort; **This is…** (files to a vendor, keeps the
   name as an alias), **Make it a vendor**, **Leave it** (checked; Check again). New companies land there on their own.
+- Oct 12, later: moves teach everyone jointly ("No one wants to sift through junk mail"). A move in any inbox, personal
+  ones included, sorts that kind of mail from that address in every inbox; the newest move wins. A rule taught in a
+  personal inbox is readable only by its owner and the admin.
+  Pending (Dana, Oct 12): "I want the last say in where it goes": Dana's move should win over anyone else's. Waiting
+  for her go-ahead.
