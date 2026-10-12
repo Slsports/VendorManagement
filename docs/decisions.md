@@ -1768,3 +1768,4 @@ discounts), all already in VMS, marked paid 10/8 from the sheet. Pay-by reminder
 paid (like Payment History and EdenRed): 20 of the 21 closed as Paid; Rapala (Jan 13, 6%) stays. Motormax Toy Factory
 is not matched to a vendor yet. Migration 0091.
 - Same day: Motormax Toy Factory added as a new vendor (WWD route; ships out of WWD's warehouse) and WWD invoice 1786001 ($120, PO IMPORTTOYS-2-1-26) filed to it.
+- Same day: WWD only posts an invoice to pay once it has shipped to us (Dana). Lanard Toys 1787024 ($114.48) also carries PO IMPORTTOYS-2-1-26; the parked Import Toys order waits on Trevor's check of that pallet (ask Dana Tue Oct 13 pm).
