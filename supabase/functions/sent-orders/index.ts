@@ -182,14 +182,13 @@ async function matchOrder(db: SupabaseClient, m: Mail, r: SentOrderReading): Pro
     const same = orders.filter((o) => norm(o.po_number) === po)
     if (same.length === 1) return same[0]!.id
   }
+  // the vendor's order within 5 days of the email (the sheet's date and total often differ a little from the email's):
+  // the closest date, then the closest total
   const sent = day(m.received_at)
-  const near = orders.filter((o) => {
-    const d = o.order_date ?? o.created_at.slice(0, 10)
-    if (d < plusDays(sent, -5) || d > plusDays(sent, 5)) return false
-    const cost = Number(o.est_cost ?? o.final_cost ?? NaN)
-    return r.total === null || !Number.isFinite(cost) || Math.abs(cost - r.total) <= Math.max(5, r.total * 0.03)
-  })
-  if (near.length === 1) return near[0]!.id
+  const dist = (d: string) => Math.abs(new Date(`${d}T12:00:00Z`).getTime() - new Date(`${sent}T12:00:00Z`).getTime()) / 86_400_000
+  const near = orders.filter((o) => o.order_date && dist(o.order_date) <= 5)
+    .sort((a, b) => dist(a.order_date!) - dist(b.order_date!) || Math.abs(Number(a.est_cost ?? a.final_cost ?? 1e9) - (r.total ?? 0)) - Math.abs(Number(b.est_cost ?? b.final_cost ?? 1e9) - (r.total ?? 0)))
+  if (near.length) return near[0]!.id
   // an order typed on Dana's sheet without a date ("PAJAMAS - WAITING ON CONFIRM"): the vendor's one open undated order
   const { data: open } = await db.from('orders').select('id').eq('vendor_id', m.vendor_id!).in('status', ['open', 'awaiting_confirmation']).is('order_date', null)
   return open?.length === 1 ? open[0]!.id : null

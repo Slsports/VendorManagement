@@ -1813,3 +1813,8 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   to Terms and Privacy) and the button reads "Yes, sign me up for texts". Every text ends "Reply STOP to stop."
 - Public pages for the Twilio toll-free verification: /sms/ (opt-in proof, with /sms/opt-in.png), /sms/terms.html,
   /sms/privacy.html. Vercel no longer rewrites /sms/ and /brand/ to the app (that is why /sms/ asked for a login).
+- Same day: the sent-orders sort asked Claude for a list keyed by email id and its answer was cut off (stuck 05:10–05:40
+  UTC); it now answers with item numbers. Matching was too strict on totals (sheet totals differ from the email's):
+  the vendor's order within 5 days of the email now counts (closest date, then closest total). Five added orders that
+  were already on Dana's sheets were merged into them (Nationwide 8/21, Royal Deluxe 7/13, Hendrix 7/19 and 6/28,
+  one more 5/6).
