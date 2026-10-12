@@ -347,7 +347,7 @@ export async function linkThreadToOrder(threadId: string, orderId: string | null
   if (error) throw error
 }
 
-/** Move a conversation between Primary and Promotions; VMS learns that kind of mail from those addresses. Returns how many other emails moved too. */
+/** Move a conversation between Primary and Promotions; VMS learns that kind of mail from those addresses for everyone. Returns how many other emails moved too, or -1 when the admin's earlier choice kept them (Dana has the last say). */
 export async function setThreadView(threadId: string, view: MailView): Promise<number> {
   const { data, error } = await supabase.rpc('set_email_thread_view', { p_thread: threadId, p_view: view, p_teach: true })
   if (error) throw error

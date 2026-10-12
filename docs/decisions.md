@@ -1848,5 +1848,5 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - Oct 12, later: moves teach everyone jointly ("No one wants to sift through junk mail"). A move in any inbox, personal
   ones included, sorts that kind of mail from that address in every inbox; the newest move wins. A rule taught in a
   personal inbox is readable only by its owner and the admin.
-  Pending (Dana, Oct 12): "I want the last say in where it goes": Dana's move should win over anyone else's. Waiting
-  for her go-ahead.
+  Dana has the last say ("I want the last say in where it goes", go Oct 12): a rule Dana set is changed only by
+  Dana; anyone else's move then moves just that conversation. Between the others the newest move wins.

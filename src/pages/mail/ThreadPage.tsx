@@ -139,7 +139,8 @@ export default function ThreadPage() {
             t.view === 'offers' ? 'Moved to Primary' : 'Moved to Promotions',
             async () => {
               const moved = await setThreadView(t.id, t.view === 'offers' ? 'attention' : 'offers')
-              if (moved) toast(`${moved} more email${moved === 1 ? '' : 's'} from the same address moved too; new mail like it will follow.`)
+              if (moved === -1) toast('Only this conversation moved: Dana already decided where this sender\'s mail goes.')
+              else if (moved) toast(`${moved} more email${moved === 1 ? '' : 's'} from the same address moved too; new mail like it will follow.`)
             })}>
             {t.view === 'offers' ? 'Move to Primary' : 'Move to Promotions'}
           </Button>
