@@ -7,7 +7,7 @@ who: Admin, managers and buyers
 Two answers on a "Who is this mail from?" card are for senders that are not vendors.
 
 ## Which one to pick
-- **Marketing**: ads from a company we have never bought from. Their mail always goes to **Promotions** in Mail, out of the way.
+- **Marketing**: ads from a company we have never bought from. Their mail always goes to **Promotions** in Mail, out of the way, and the company shows on the **Never bought from** tab.
 - **Other – not a vendor**: not a vendor and not ads, but someone who may need an answer (a customer, the bank, a neighbor). Their mail stays in **Primary** for you; their newsletters and ads go to **Promotions**.
 
 ## How to

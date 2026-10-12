@@ -7,7 +7,7 @@ import { Gmail, GmailError, googleAccessToken } from '../_shared/gmail.ts'
 import { clueText, htmlBody, isBulk, isOldGmail, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
 import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type VendorIndex } from '../_shared/mailMatch.ts'
 import { extractLinks, itemPicture, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
-import { aiEnabled, readArtwork, readEmailVendors, readPaidNote, readReplyNeeded, readSender, sortEmails, type ArtEmail, type ReplyEmail, type UnsureEmail } from '../_shared/ai.ts'
+import { aiEnabled, readArtwork, readEmailVendors, readPaidNote, readReplyNeeded, sortEmails, sortSenders, type ArtEmail, type ReplyEmail, type SenderToSort, type UnsureEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
@@ -648,26 +648,45 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
       await check(db.from('emails').update({ vendors_read_at: new Date().toISOString(), freight_pct: reading?.freight_pct ?? null }).eq('id', e.id))
     }
 
-    const { data: senders } = await db.from('email_senders').select('id, sender_key, display_name')
-      .eq('organization_id', org).eq('kind', 'unknown').is('ai_read_at', null).is('proposed_vendor_id', null).gt('message_count', 0)
-      .order('message_count', { ascending: false }).limit(4)
-    if (!senders?.length) return
-    const { data: vendors } = await db.from('vendors').select('id, name').eq('organization_id', org).eq('is_active', true).order('name').limit(5000)
+    // "Who is this?" (Dana, Oct 12): Claude sorts each unknown sender once: one of our vendors (filed, undoable from
+    // the vendor page), never bought from (Promotions and the Never bought from list), or unsure (the card stays).
+    // Marketing senders get their company, website and phone read for the list. Only orders@ mail is read.
+    const { data: senders } = await db.from('email_senders').select('id, sender_key, is_domain, display_name, message_count, ai_note, proposal_note, proposed_vendor:vendors!email_senders_proposed_vendor_id_fkey(name)')
+      .eq('organization_id', org).in('kind', ['unknown', 'marketing']).is('sorted_at', null).gt('message_count', 0)
+      .order('message_count', { ascending: false }).limit(6)
+    if (!senders?.length || Date.now() - started > TIME_BUDGET_MS) return
+    const { data: vendors } = await db.from('vendors').select('id, name').eq('organization_id', org).eq('is_active', true).is('merged_into_id', null).order('name').limit(5000)
     const byName = new Map((vendors ?? []).map((v) => [v.name.toLowerCase().replace(/[^a-z0-9]+/g, ''), v.id as string]))
     const vendorList = (vendors ?? []).map((v) => v.name).join('\n')
     const { data: reps } = await db.from('rep_groups').select('name, email, vendors(name)').eq('organization_id', org).eq('is_active', true).order('name')
     const repList = (reps ?? []).map((g) => `${g.name}${g.email ? ` <${g.email}>` : ''}: ${((g.vendors ?? []) as { name: string }[]).map((v) => v.name).join(', ') || 'no lines on file'}`).join('\n')
+    const toSort: SenderToSort[] = []
     for (const s of senders) {
-      if (Date.now() - started > TIME_BUDGET_MS) break
-      const { data: mails } = await db.from('emails').select('subject, body_text, snippet').eq('sender_id', s.id).order('received_at', { ascending: false }).limit(3)
-      const reading = await readSender(db, org, vendorList, repList, {
-        key: s.sender_key, display_name: s.display_name,
-        samples: (mails ?? []).map((m) => ({ subject: m.subject, text: (m.body_text || m.snippet || '').replace(/\s+/g, ' ').slice(0, 600) })),
+      const { data: mails } = await db.from('emails').select('subject, body_text, snippet').eq('sender_id', s.id).is('mailbox_id', null).order('received_at', { ascending: false }).limit(4)
+      if (!mails?.length) {
+        // only in someone's own inbox: private, so Claude does not read it here
+        await check(db.rpc('mail_apply_sender_sort', { p_sender: s.id, p_decision: 'unsure', p_vendor: null, p_company: null, p_website: null, p_phone: null, p_note: null }))
+        continue
+      }
+      const { data: sent } = await db.rpc('mail_sent_to_count', { p_org: org, p_key: s.sender_key, p_is_domain: s.is_domain })
+      const proposed = (s.proposed_vendor as { name: string } | null)?.name
+      toSort.push({
+        id: s.id, sender: s.is_domain ? `@${s.sender_key}` : s.sender_key, from_name: s.display_name, emails_from_them: s.message_count, emails_we_sent_them: (sent as number | null) ?? 0,
+        hint: proposed ? `Looks like ${proposed}: ${s.proposal_note ?? ''}` : null, earlier_note: s.ai_note,
+        emails: mails.map((m) => {
+          const t = (m.body_text || m.snippet || '').replace(/\s+/g, ' ')
+          return { subject: m.subject, text: t.length > 900 ? `${t.slice(0, 500)} … ${t.slice(-400)}` : t }
+        }),
       })
-      if (!reading) continue
-      const vendorId = reading.kind === 'vendor' && reading.vendor_name ? byName.get(reading.vendor_name.toLowerCase().replace(/[^a-z0-9]+/g, '')) ?? null : null
-      const note = reading.kind === 'vendor' && reading.vendor_name && !vendorId ? `${reading.vendor_name}, not in your vendor list yet. ${reading.note}` : reading.note
-      await check(db.rpc('mail_set_sender_ai', { p_sender: s.id, p_kind: reading.kind, p_vendor: vendorId, p_note: note }))
+    }
+    const readings = await sortSenders(db, org, vendorList, repList, toSort)
+    for (const r of readings) {
+      if (!toSort.some((x) => x.id === r.id)) continue
+      const vendorId = r.decision === 'vendor' && r.vendor_name ? byName.get(r.vendor_name.toLowerCase().replace(/[^a-z0-9]+/g, '')) ?? null : null
+      await check(db.rpc('mail_apply_sender_sort', {
+        p_sender: r.id, p_decision: r.decision === 'vendor' && !vendorId ? 'unsure' : r.decision, p_vendor: vendorId,
+        p_company: r.company, p_website: r.website, p_phone: r.phone, p_note: r.note,
+      }))
     }
   } catch (e) {
     console.error('Claude step:', e instanceof Error ? e.message : e)

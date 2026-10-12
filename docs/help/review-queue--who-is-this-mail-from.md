@@ -1,13 +1,13 @@
 ---
 title: Answer "Who is this mail from?"
 section: Review queue
-keywords: new sender, who is this, email sender, file mail, vendor, rep group, Bill.com, Faire, carrier, sender proposal
+keywords: new sender, claude sorted, never bought from, who is this, email sender, file mail, vendor, rep group, Bill.com, Faire, carrier, sender proposal
 who: Admin, managers and buyers
 ---
-When mail comes to orders@ from a sender VMS does not know, a card asks who they are. One answer files all their mail, now and later.
+When mail comes to orders@ from a sender VMS does not know, Claude reads it first. If it is clearly one of our vendors, Claude files it there (you can undo it on the vendor page). If it is a company we have never bought from, it goes to the **Never bought from** tab. Only the senders Claude is unsure about get a card here. One answer files all their mail, now and later.
 
 ## How to
-1. Open **Review queue** and find **Who is this mail from?**
+1. Open **Review queue** and click the **Who is this?** tab.
 2. Read the card: how many emails, the sender's name, recent subjects, and what Claude made of the mail.
 3. Click one answer:
    - **Yes, (vendor)**: VMS's guess is right.

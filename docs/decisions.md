@@ -1836,3 +1836,12 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   Vendor changes (duplicates, renames, categories, LS markers), Freight. Each shows "N with you" in amber, following the
   Showing switch. Clicking a count opens the Review queue on that tab.
 - The Review queue page has the same tabs; paperwork tabs list the checks, each opening its check page.
+
+## Oct 12 — Claude sorts "Who is this?"; Never bought from list
+- Claude (Sonnet) reads each unknown sender once, orders@ mail only: one of our vendors → filed there, listed on the
+  vendor page's Mail box with **Undo** (back to "Who is this?"); a company we have never bought from → Marketing (always
+  Promotions) and the **Never bought from** tab; unsure (reps for several lines, platforms, carriers, banks, personal,
+  not enough to tell) → the card stays.
+- Never bought from tab on the Review queue (no dashboard count): one row per company with every address, website and
+  phone from signatures, email count and latest email; search and sort; **This is…** (files to a vendor, keeps the
+  name as an alias), **Make it a vendor**, **Leave it** (checked; Check again). New companies land there on their own.

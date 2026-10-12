@@ -10,6 +10,8 @@ import { assignReviewItem, listPeople } from '@/services/reviews'
 import { REVIEW_KIND_LABELS, REVIEW_TABS, reviewTabOfCheck, reviewTabOfKind, type ReviewTab } from '@/lib/reviews'
 import { listOpenChecks } from '@/services/orderChecks'
 import { ChecksList } from '@/components/orders/ChecksList'
+import { NeverBoughtList } from '@/components/review/NeverBoughtList'
+import { listNeverBought } from '@/services/neverBought'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -30,6 +32,8 @@ export default function ReviewQueuePage() {
   const q = useSupabaseQuery(async () => (organization ? listReviewQueue(organization.id) : []), [organization?.id])
   const checksQ = useSupabaseQuery(async () => (organization ? listOpenChecks(organization.id, null) : []), [organization?.id])
   const [params, setParams] = useSearchParams()
+  const neverQ = useSupabaseQuery(async () => (organization ? listNeverBought(organization.id) : []), [organization?.id])
+  const neverToCheck = (neverQ.data ?? []).filter((r) => !r.checked_at).length
   const peopleQ = useSupabaseQuery(async () => (organization ? listPeople(organization.id) : []), [organization?.id])
   const [applyingAll, setApplyingAll] = useState(false)
   const [whoChoice, setWhoChoice] = useState<Who | null>(null)
@@ -50,9 +54,9 @@ export default function ReviewQueuePage() {
   // Tabs (Dana, Oct 12): the same kinds as the dashboard Review card; ?tab= opens one.
   const tabCount = (t: ReviewTab, list: { tab: ReviewTab }[]) => list.filter((x) => x.tab === t).length
   const tagged = [...items.map((i) => ({ tab: reviewTabOfKind(i.kind), assigned_to: i.assigned_to })), ...checks.map((c) => ({ tab: reviewTabOfCheck(c), assigned_to: c.assigned_to }))]
-  const pageTabs = REVIEW_TABS.filter((t) => t.id !== 'never')
+  const pageTabs = REVIEW_TABS
   const asked = pageTabs.find((t) => t.id === params.get('tab'))?.id
-  const tab: ReviewTab = asked ?? pageTabs.find((t) => tabCount(t.id, tagged) > 0)?.id ?? 'confirmations'
+  const tab: ReviewTab = asked ?? pageTabs.find((t) => t.id !== 'never' && tabCount(t.id, tagged) > 0)?.id ?? 'confirmations'
   const inTab = tagged.filter((x) => x.tab === tab)
   const total = tagged.length
   const mineCount = inTab.filter((i) => i.assigned_to === me).length
@@ -114,7 +118,7 @@ export default function ReviewQueuePage() {
       <nav aria-label="Kinds of review" className="mb-4 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <ul className="flex w-max gap-1 rounded-xl bg-stone-100 p-1">
           {pageTabs.map((t) => {
-            const n = tabCount(t.id, tagged)
+            const n = t.id === 'never' ? neverToCheck : tabCount(t.id, tagged)
             const mine = tagged.filter((x) => x.tab === t.id && x.assigned_to === (viewAs.personId ?? me)).length
             return (
               <li key={t.id}><button type="button" onClick={() => setTab(t.id)} aria-current={tab === t.id ? 'page' : undefined} title={t.help}
@@ -126,7 +130,8 @@ export default function ReviewQueuePage() {
         </ul>
       </nav>
       <p className="mb-3 text-sm text-stone-600">{REVIEW_TABS.find((t) => t.id === tab)!.help}</p>
-      {inTab.length > 0 ? (
+      {tab === 'never' ? <NeverBoughtList canEdit={canEdit} /> : null}
+      {tab !== 'never' && inTab.length > 0 ? (
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-sm text-stone-600">
             Show
@@ -147,7 +152,7 @@ export default function ReviewQueuePage() {
           ) : null}
         </div>
       ) : null}
-      {inTab.length === 0 ? (
+      {tab === 'never' ? null : inTab.length === 0 ? (
         <div className="flex flex-col items-center rounded-2xl border border-dashed border-stone-300 py-16 text-center">
           <ClipboardCheck className="size-8 text-stone-400" aria-hidden="true" />
           <p className="mt-3 text-sm text-stone-600">All clear.</p>
