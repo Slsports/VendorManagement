@@ -1805,3 +1805,11 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   are still coming); older than 4 months they note "Added from sent mail, check status." The scan also reads sent mail
   in the personal mailboxes (Jarrett sent orders from jarrett@ for a while); only the order is shared, the email stays
   private. Jarrett's mailbox is pulled back 12 months (it started at Jul 13).
+
+## Oct 12 — Notifications page; text reminder consent for Twilio (Dana: "Go")
+- Each person's reminder choices (dashboard, email, text, cell number) live on **Notifications**, under the name menu at the
+  top right. Dana also has it as **Settings → Notifications**. The Tasks page keeps a link to it.
+- **By text** starts unticked for everyone. Ticking it shows the full consent text (what, how often, rates, HELP/STOP, links
+  to Terms and Privacy) and the button reads "Yes, sign me up for texts". Every text ends "Reply STOP to stop."
+- Public pages for the Twilio toll-free verification: /sms/ (opt-in proof, with /sms/opt-in.png), /sms/terms.html,
+  /sms/privacy.html. Vercel no longer rewrites /sms/ and /brand/ to the app (that is why /sms/ asked for a login).

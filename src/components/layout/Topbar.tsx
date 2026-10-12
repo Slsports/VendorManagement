@@ -111,6 +111,16 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
                 type="button"
                 onClick={() => {
                   close()
+                  navigate(ROUTES.notifications)
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-stone-700 hover:bg-stone-100"
+              >
+                <Bell className="size-4" aria-hidden="true" /> Notifications
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  close()
                   navigate(ROUTES.resetPassword)
                 }}
                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-stone-700 hover:bg-stone-100"

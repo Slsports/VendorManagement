@@ -20,6 +20,7 @@ const VendorForm = lazy(() => import('@/pages/vendors/VendorForm'))
 const BulkImportPage = lazy(() => import('@/pages/vendors/BulkImportPage'))
 const WorkingOrdersPage = lazy(() => import('@/pages/mail/WorkingOrdersPage'))
 const TeamPage = lazy(() => import('@/pages/TeamPage'))
+const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'))
 const ReviewQueue = lazy(() => import('@/pages/review/ReviewQueue'))
 const RepGroupList = lazy(() => import('@/pages/rep-groups/RepGroupList'))
 const WorldwideContacts = lazy(() => import('@/pages/contacts/WorldwideContacts'))
@@ -118,6 +119,7 @@ export default function App() {
                 <Route path={ROUTES.mailWith} element={<MailWithPage />} />
                 <Route path={ROUTES.team} element={<TeamPage />} />
                 <Route path={ROUTES.tasks} element={<TasksPage />} />
+                <Route path={ROUTES.notifications} element={<NotificationsPage />} />
                 <Route path={`${ROUTES.mail}/:id`} element={<ThreadPage />} />
                 <Route path={ROUTES.mergeReport} element={<MergeReport />} />
                 <Route path={ROUTES.orders} element={<OrderList />} />
@@ -149,6 +151,7 @@ export default function App() {
                   <Route path="organization" element={<OrganizationSettings />} />
                   <Route path="stores" element={<StoreSettings />} />
                   <Route path="users" element={<UserSettings />} />
+                  <Route path="notifications" element={<NotificationsPage embedded />} />
                   <Route path="worldwide" element={<PartnerSettings />} />
                   <Route path="review-assignments" element={<ReviewAssignmentSettings />} />
                   <Route path="mail" element={<MailSettings />} />

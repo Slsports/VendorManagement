@@ -2,6 +2,7 @@ export const SETTINGS_TABS = [
   { slug: 'organization', label: 'Organization' },
   { slug: 'stores', label: 'Stores' },
   { slug: 'users', label: 'Users' },
+  { slug: 'notifications', label: 'Notifications' },
   { slug: 'review-assignments', label: 'Review assignments' },
   { slug: 'payment-terms', label: 'Payment terms' },
   { slug: 'categories', label: 'Categories' },

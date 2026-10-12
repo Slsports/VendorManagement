@@ -85,6 +85,7 @@ export const ROUTES = {
   mailWith: '/mail/with',
   team: '/team',
   tasks: '/tasks',
+  notifications: '/notifications',
   lsPos: '/ls-pos',
   help: '/help',
   mergeReport: '/review/merges',
