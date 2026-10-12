@@ -7,7 +7,7 @@ who: Admin, managers and buyers
 A freight bill can cover several shipments from different vendors. Each line is one shipment; you tell VMS which vendor shipped it and, if you know it, which order it was for.
 
 ## How to
-1. Open the bill from **Freight bills** (the **To match** tab).
+1. Open the bill from the **Freight** page (the **To match** tab).
 2. For each line, look at the shipper, date, pieces, weight and tracking numbers.
 3. If no vendor is filled in, click **Which vendor shipped it?** and pick the vendor. To change a vendor Claude picked, click its name and pick another.
 4. In the order box, pick the order (date, PO, amount), or leave **No order (vendor only)**.

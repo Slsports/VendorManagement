@@ -26,7 +26,7 @@ export function CarrierDialog({ carrier, prefillName, domain, onClose, onDone }:
   const others = useSupabaseQuery(async () => (organization && !carrier ? listCarriers(organization.id) : []), [organization?.id, carrier?.id])
   const [name, setName] = useState(carrier?.name ?? prefillName ?? '')
   const [mode, setMode] = useState<'parcel' | 'ltl'>(carrier?.mode ?? 'parcel')
-  const [role, setRole] = useState<'billing' | 'trucking'>(carrier?.role ?? 'billing')
+  const [role, setRole] = useState<'billing' | 'trucking' | 'other'>(carrier?.role ?? 'billing')
   const [hiredBy, setHiredBy] = useState(carrier?.hired_by ?? '')
   const [domains, setDomains] = useState((carrier?.email_domains ?? (domain ? [domain] : [])).join(', '))
   const [website, setWebsite] = useState(carrier?.website ?? (domain ? `https://www.${domain}` : ''))
@@ -62,6 +62,7 @@ export function CarrierDialog({ carrier, prefillName, domain, onClose, onDone }:
         <div className="mt-1 flex flex-col gap-1 text-stone-700 sm:flex-row sm:gap-4">
           <label className="flex items-center gap-2"><input type="radio" name="cd-role" checked={role === 'billing'} onChange={() => setRole('billing')} className="accent-brand" /> Billing company (we book and pay them)</label>
           <label className="flex items-center gap-2"><input type="radio" name="cd-role" checked={role === 'trucking'} onChange={() => setRole('trucking')} className="accent-brand" /> Trucking company (hauls it)</label>
+          <label className="flex items-center gap-2"><input type="radio" name="cd-role" checked={role === 'other'} onChange={() => setRole('other')} className="accent-brand" /> Other freight company (no account; we just get their mail)</label>
         </div>
       </fieldset>
       {role === 'trucking' ? (

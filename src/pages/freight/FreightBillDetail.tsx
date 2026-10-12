@@ -51,7 +51,7 @@ export default function FreightBillDetailPage() {
   return (
     <div className="mx-auto max-w-5xl">
       {viewer}
-      <BackLink fallback={ROUTES.freight} fallbackLabel="Freight bills" />
+      <BackLink fallback={ROUTES.freight} fallbackLabel="Freight" />
       <PageHeader
         eyebrow="Freight bill"
         title={`${b.carriers?.name ?? 'Carrier'}${b.invoice_number ? ` #${b.invoice_number}` : ''}`}

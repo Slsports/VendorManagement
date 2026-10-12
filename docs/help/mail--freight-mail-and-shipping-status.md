@@ -8,7 +8,7 @@ Mail from freight carriers is sorted, read and tied to vendors on its own.
 
 ## How to
 1. Click **Mail**, then the **Freight** tab to see carrier mail.
-2. Bills are waiting on the Freight bills page; for an odd one, use **Freight bill** on the PDF.
+2. Bills are waiting on the Freight page; for an odd one, use **Freight bill** on the PDF.
 
 ## Good to know
 - Carrier mail goes to Trevor; Dana sees it all for now.

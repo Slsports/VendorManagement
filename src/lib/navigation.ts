@@ -58,7 +58,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     items: [
       { label: 'Returns & Credits', to: ROUTES.returns, icon: Undo2 },
       { label: 'Incoming Shipments', to: ROUTES.shipments, icon: Truck },
-      { label: 'Freight bills', to: ROUTES.freight, icon: Receipt },
+      { label: 'Freight', to: ROUTES.freight, icon: Receipt },
       { label: 'Buying Shows', to: ROUTES.buyingShows, icon: CalendarDays },
       { label: 'Payments', to: ROUTES.payments, icon: Banknote, roles: ['admin', 'manager'] },
     ],

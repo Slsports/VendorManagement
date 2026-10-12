@@ -649,7 +649,8 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
     }
 
     // "Who is this?" (Dana, Oct 12): Claude sorts each unknown sender once: one of our vendors (filed, undoable from
-    // the vendor page), never bought from (Promotions and the Never bought from list), or unsure (the card stays).
+    // the vendor page), never bought from (Promotions and the Never bought from list), a freight company (Other freight
+    // companies on the Freight page, mail to Trevor), or unsure (the card stays).
     // Marketing senders get their company, website and phone read for the list. Only orders@ mail is read.
     const { data: senders } = await db.from('email_senders').select('id, sender_key, is_domain, display_name, message_count, ai_note, proposal_note, proposed_vendor:vendors!email_senders_proposed_vendor_id_fkey(name)')
       .eq('organization_id', org).in('kind', ['unknown', 'marketing']).is('sorted_at', null).gt('message_count', 0)

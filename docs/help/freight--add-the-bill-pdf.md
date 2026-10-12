@@ -7,7 +7,7 @@ who: Admin, managers and buyers
 Some carriers email that a bill is ready but do not attach it. Those bills show **Needs the PDF** until you add it.
 
 ## How to
-1. Open the bill from **Freight bills**.
+1. Open the bill from the **Freight** page.
 2. Click **Log in to (carrier)** on the bill, download the bill PDF from their website.
 3. Back on the bill, click **Add the bill PDF** and choose the file.
 4. Claude reads it and fills in the shippers and amounts. Check the lines below and confirm them.

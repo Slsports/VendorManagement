@@ -1854,3 +1854,11 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   (FedEx, UPS, USPS, Cainiao, Speedco), software and services (Dropbox, GoDaddy, Google, Verizon, Avalara, Microsoft,
   Cvent, Link, Frontier) and two bounce senders. Their regular mail stays in Primary for Dana; ads go to Promotions.
   Staff, customers, reps and anything unclear stay as cards (88 left).
+
+## Oct 12 — Freight menu and other freight companies
+- The menu item "Freight bills" is now **Freight**.
+- New section at the bottom of the Freight page: **Other freight companies** (no account with us): FedEx, USPS, UPS
+  (tracking notices; UPS DIRECT stays our billing company), Cainiao, Speedco to start. Their mail is freight mail for
+  Trevor ("He receives all the orders so it's good for him to see what we have coming"). Claude adds new freight
+  companies it finds in the mail.
+- Clicking any freight company's name (or **Emails** on a billing company's card) opens its page with every email from it.

@@ -131,6 +131,8 @@ export interface ThreadFilters {
   /** needs: waiting on us · waiting · no_answer (waiting past the follow-up date) · handled · open (not handled) · all */
   status: 'needs' | 'waiting' | 'no_answer' | 'handled' | 'open' | 'all' | 'deleted' | 'snoozed'
   vendorId?: string
+  /** One freight company's conversations (Freight page, Dana, Oct 12). */
+  carrierId?: string
   unmatched?: boolean
   q?: string
   /** Snooze (Dana, Oct 9): leave these out (snoozed by me), or show only these (the Snoozed tab). */
@@ -184,6 +186,7 @@ export async function listThreads(organizationId: string, me: string | undefined
   if (f.view === 'freight') q = q.not('carrier_id', 'is', null)
   else if (f.view && f.view !== 'all') q = q.eq('view', f.view)
   if (f.vendorId) q = q.or(`vendor_id.eq.${f.vendorId},tagged_vendor_ids.cs.{${f.vendorId}}`)
+  if (f.carrierId) q = q.eq('carrier_id', f.carrierId)
   if (f.unmatched) q = q.is('vendor_id', null)
   if (f.hideIds?.length) q = q.not('id', 'in', `(${f.hideIds.join(',')})`)
   if (f.onlyIds) q = q.in('id', f.onlyIds.length ? f.onlyIds : ['00000000-0000-0000-0000-000000000000'])
@@ -191,6 +194,11 @@ export async function listThreads(organizationId: string, me: string | undefined
   const { data, error } = await q.order('last_message_at', { ascending: false }).limit(limit)
   if (error) throw error
   return withLastMessage((data ?? []) as unknown as Omit<ThreadRow, 'last'>[])
+}
+
+/** A freight company's conversations, newest first. */
+export function listCarrierThreads(organizationId: string, carrierId: string, limit = 100): Promise<ThreadRow[]> {
+  return listThreads(organizationId, undefined, { who: 'all', status: 'all', carrierId }, limit)
 }
 
 /** A vendor's threads in Primary or Promotions, newest first. */

@@ -24,7 +24,7 @@ Every item in the side menu, in order, with one line about each. "Not ready yet"
 ## Operations
 - **Returns & Credits**: not ready yet (returns, credits and RMAs).
 - **Incoming Shipments**: not ready yet (what is due to arrive, on a calendar).
-- **Freight bills**: bills from our freight companies, matched to orders, and what's left to pay.
+- **Freight**: bills from our freight companies, matched to orders, what's left to pay, and every freight company's emails.
 - **Buying Shows**: not ready yet (show planning and prep).
 - **Payments**: Bill.com and WWD payments that mark bills and orders paid. Admin and managers.
 

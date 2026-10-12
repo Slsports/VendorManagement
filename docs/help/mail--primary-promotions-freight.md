@@ -22,4 +22,4 @@ The four big tabs split mail by what kind it is, the way Outlook had Focused and
 - If something lands in the wrong tab, open it and click **Move to Promotions** (or **Move to Primary**). A move by anyone sorts it for everyone. See "Move mail to Promotions (or back)".
 - Your own inbox has the same tabs.
 - Price lists and catalogs from promotions are saved to the vendor's Documents on their own.
-- Freight bills also wait on the Freight bills page.
+- Freight bills also wait on the Freight page.

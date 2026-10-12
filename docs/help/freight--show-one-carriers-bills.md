@@ -7,7 +7,7 @@ who: Everyone
 Each billing company works like a folder: click it to see only its bills, every year, paid or not.
 
 ## How to
-1. Click **Freight bills** in the menu.
+1. Click **Freight** in the menu.
 2. Under **Billing companies**, click the company's name. Its card gets a colored outline and the list switches to **All**.
 3. Use the tabs (**To match**, **To pay**, **Matched**, **All**) to narrow it further.
 4. To go back to every company, click **Show every carrier** above the tabs, or click the same name again.

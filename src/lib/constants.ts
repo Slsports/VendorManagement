@@ -66,6 +66,7 @@ export const ROUTES = {
   returns: '/returns',
   shipments: '/shipments',
   freight: '/freight',
+  freightCarriers: '/freight/carriers',
   buyingShows: '/buying-shows',
   payments: '/payments',
   salesReports: '/sales-reports',

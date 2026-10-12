@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ExternalLink, FileUp, Pencil, Plus, Truck } from 'lucide-react'
+import { ExternalLink, FileUp, Mail, Pencil, Plus, Truck } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listCarriers, listFreightBills, type FreightFilter } from '@/services/freight'
@@ -20,7 +20,10 @@ const TABS: { value: FreightFilter; label: string }[] = [
   { value: 'all', label: 'All' },
 ]
 
-/** Freight bills from the carriers, for Trevor: match each shipment to its vendor and order. */
+/**
+ * Freight, for Trevor: bills from the billing companies (match each shipment to its vendor and order), the trucking
+ * companies, and other freight companies we only get mail from (Dana, Oct 12). Click a company for its emails.
+ */
 export default function FreightBillListPage() {
   const { organization, role } = useAuth()
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
@@ -35,7 +38,7 @@ export default function FreightBillListPage() {
 
   return (
     <div>
-      <PageHeader title="Freight bills" description="Bills from our billing companies. Each shipment goes to the vendor that shipped it; the freight lands on that order."
+      <PageHeader title="Freight" description="Bills from our billing companies, and every freight company's emails. Each shipment goes to the vendor that shipped it; the freight lands on that order."
         actions={canEdit ? <Button variant="secondary" onClick={() => setUploading(true)} leftIcon={<FileUp className="size-4" aria-hidden="true" />}>Upload bills</Button> : undefined} />
       {uploading ? <BulkBillUpload onClose={() => setUploading(false)} onDone={() => q.refetch()} /> : null}
 
@@ -53,6 +56,7 @@ export default function FreightBillListPage() {
               ) : null}
             </div>
             {c.email_domains.length ? <p className="text-xs text-stone-500">Mail from {c.email_domains.join(', ')}</p> : null}
+            <Link to={`${ROUTES.freightCarriers}/${c.id}`} className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline"><Mail className="size-3.5" aria-hidden="true" /> Emails</Link>
             {c.ups_account ? <p className="mt-1 text-sm text-stone-800">Our UPS # <span className="font-mono font-semibold">{c.ups_account}</span></p> : null}
             {c.is_default_parcel ? <Badge tone="success" className="mt-1">Default for UPS (parcel)</Badge> : null}
             {c.account_number ? <p className="text-xs text-stone-500">Our account with them {c.account_number}</p> : null}
@@ -72,7 +76,7 @@ export default function FreightBillListPage() {
           <ul className="mt-2 divide-y divide-stone-100">
             {(carriers.data ?? []).filter((c) => c.role === 'trucking').map((c) => (
               <li key={c.id} className={cn('flex items-center justify-between gap-2 py-1.5', !c.is_active && 'opacity-60')}>
-                <span><span className="font-medium text-stone-900">{c.name}</span> <Badge tone="neutral">{c.mode === 'ltl' ? 'LTL' : 'Parcel'}</Badge>{c.hired_by ? <span className="text-xs text-stone-500"> · usually hired by {c.hired_by}</span> : null}</span>
+                <span><Link to={`${ROUTES.freightCarriers}/${c.id}`} className="font-medium text-stone-900 hover:text-brand">{c.name}</Link> <Badge tone="neutral">{c.mode === 'ltl' ? 'LTL' : 'Parcel'}</Badge>{c.hired_by ? <span className="text-xs text-stone-500"> · usually hired by {c.hired_by}</span> : null}</span>
                 {canEdit ? <button type="button" onClick={() => setEditing(c)} aria-label={`Edit ${c.name}`} className="rounded-lg p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700"><Pencil className="size-4" aria-hidden="true" /></button> : null}
               </li>
             ))}
@@ -129,6 +133,21 @@ export default function FreightBillListPage() {
           })}
         </ul>
       )}
+
+      {(carriers.data ?? []).some((c) => c.role === 'other') ? (
+        <section className="mt-8 rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Other freight companies</h2>
+          <p className="text-xs text-stone-500">No account with them; we get their tracking and delivery mail. Click a name for its emails. Claude adds new ones it finds in the mail.</p>
+          <ul className="mt-2 divide-y divide-stone-100">
+            {(carriers.data ?? []).filter((c) => c.role === 'other').map((c) => (
+              <li key={c.id} className={cn('flex items-center justify-between gap-2 py-1.5', !c.is_active && 'opacity-60')}>
+                <span><Link to={`${ROUTES.freightCarriers}/${c.id}`} className="font-medium text-stone-900 hover:text-brand">{c.name}</Link>{c.email_domains.length ? <span className="text-xs text-stone-500"> · {c.email_domains.join(', ')}</span> : null}</span>
+                {canEdit ? <button type="button" onClick={() => setEditing(c)} aria-label={`Edit ${c.name}`} className="rounded-lg p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700"><Pencil className="size-4" aria-hidden="true" /></button> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </div>
   )
 }

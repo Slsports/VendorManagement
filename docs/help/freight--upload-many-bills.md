@@ -7,7 +7,7 @@ who: Admin, managers and buyers
 Use this to catch up: drop a pile of freight bill PDFs at once and Claude reads each one.
 
 ## How to
-1. Click **Freight bills** in the menu, then **Upload bills** at the top right.
+1. Click **Freight** in the menu, then **Upload bills** at the top right.
 2. Drag the PDFs into the box, or click **Choose PDFs**.
 3. Wait while each says **Reading…**. Each file then gets a result:
    - **New bill**: added.

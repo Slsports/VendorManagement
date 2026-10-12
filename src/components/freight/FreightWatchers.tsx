@@ -14,7 +14,7 @@ export function FreightWatchers({ organizationId }: { organizationId: string }) 
   return (
     <section className="rounded-2xl border border-stone-200 bg-white p-5">
       <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Freight</h2>
-      <p className="mt-1 text-sm text-stone-600">Freight mail and bills go to {q.data?.owners.length ? q.data.owners.join(' and ') : 'the carrier owner'}. Anyone ticked here sees all of it too: under Mine in Mail, in Mail for you, and Freight bills on the dashboard.</p>
+      <p className="mt-1 text-sm text-stone-600">Freight mail and bills go to {q.data?.owners.length ? q.data.owners.join(' and ') : 'the carrier owner'}. Anyone ticked here sees all of it too: under Mine in Mail, in Mail for you, and the Freight bills card on the dashboard.</p>
       <ul className="mt-3 space-y-2">
         {(q.data?.people ?? []).map((p) => (
           <li key={p.id}>

@@ -16,7 +16,7 @@ import { Alert, Button, Select, Spinner } from '@/components/ui'
 const VIEWS: { value: NonNullable<ThreadFilters['view']>; label: string; help: string }[] = [
   { value: 'attention', label: 'Primary', help: 'Real correspondence: replies, reps writing to us, confirmations, invoices, shipping, questions.' },
   { value: 'offers', label: 'Promotions', help: 'Ads of any kind: specials, what is new or in stock, price lists, catalogs and newsletters. Move a conversation to teach VMS where that kind of mail from that address belongs.' },
-  { value: 'freight', label: 'Freight', help: 'Carriers: PartnerShip, Worldwide Express, Priority One and Pinnacle. Bills also wait under Freight bills.' },
+  { value: 'freight', label: 'Freight', help: 'Freight companies: PartnerShip, Worldwide Express, Priority One, FedEx, USPS and the rest. Bills wait on the Freight page.' },
   { value: 'all', label: 'Everything', help: 'All mail, for searching.' },
 ]
 

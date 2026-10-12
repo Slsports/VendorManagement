@@ -21,7 +21,7 @@ export function FreightForYouPanel() {
   const toPay = q.data?.toPay ?? []
   return (
     <CountCard title="Freight bills" count={toMatch.length + toPay.length} loading={q.isLoading} error={q.error} alert={toPay.some((b) => !!b.due_date && b.due_date < today)}>
-      <Link to={ROUTES.freight} className="text-sm font-medium text-brand hover:underline">Open Freight bills</Link>
+      <Link to={ROUTES.freight} className="text-sm font-medium text-brand hover:underline">Open Freight</Link>
       {(
         <div className="mt-3 grid gap-6 md:grid-cols-2">
           <div>

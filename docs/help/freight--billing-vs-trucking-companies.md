@@ -8,7 +8,7 @@ VMS keeps two kinds of freight companies apart, because the company that bills u
 
 ## Billing companies
 - We book shipments with them and pay them: Priority One, PartnerShip, Worldwide Express (WWEX / ShipStation), UPS DIRECT and WWD.
-- Freight bills always belong to a billing company. They show as cards at the top of **Freight bills**.
+- Freight bills always belong to a billing company. They show as cards at the top of the **Freight** page.
 
 ## Trucking companies
 - They haul the freight, hired by a billing company: for example XPO and Oak Harbor Freight.

@@ -7,9 +7,9 @@ who: Everyone
 PartnerShip's emails tell us a bill is ready but do not attach it, so each one waits as **Needs the PDF** until the PDF is added.
 
 ## How to
-1. Open the waiting PartnerShip bill from **Freight bills**. The email already filled in the invoice number, dates and amount.
+1. Open the waiting PartnerShip bill from the **Freight** page. The email already filled in the invoice number, dates and amount.
 2. Click **Log in to PartnerShip**, download the bill, then click **Add the bill PDF**.
-3. Or, to catch up on many at once, use **Upload bills** on the Freight bills page: each PDF fills the bill already waiting for it.
+3. Or, to catch up on many at once, use **Upload bills** on the Freight page: each PDF fills the bill already waiting for it.
 
 ## Good to know
 - PartnerShip bills print our PartnerShip account number (792862), not a UPS number. VMS uses it to know the bill is PartnerShip's.

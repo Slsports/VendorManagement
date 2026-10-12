@@ -7,7 +7,7 @@ who: Admin, managers and buyers
 When a freight bill is paid, record when and how, so it leaves the **To pay** list.
 
 ## How to
-1. Open the bill from **Freight bills** (the **To pay** tab lists unpaid ones).
+1. Open the bill from the **Freight** page (the **To pay** tab lists unpaid ones).
 2. Click **Mark paid**.
 3. Fill in **Paid on** (today is filled in), **Paid by** (Card, Check, ACH / bank, Bill.com or Other) and, if you like, the **Check or confirmation number**.
 4. Click **Mark paid**.
