@@ -14,6 +14,6 @@ Some vendors credit the freight back when the invoice is paid by a date. Record 
 
 ## Good to know
 - The box tells you where things stand: days left to pay, "Pay today to keep it", "Paid on time. Watch for the credit", or a red warning if it was paid late.
-- The Dashboard card **Pay on time for the freight back** lists unpaid orders with an allowance, soonest first, and turns red in the last week.
+- With a pay-by date, Dana gets a task "Pay … by … to get the freight back", reminded 5 days before (see "Pay-by reminders").
 - A WWD credit on the order marks the credit as received.
 - To have every order from a vendor show this, tick "Credits the freight back when we pay on time" on the vendor's edit form.

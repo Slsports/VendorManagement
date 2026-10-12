@@ -7,7 +7,6 @@ import { ORDER_VIEW_LABELS, type OrderView } from '@/services/orders'
 import { ROUTES } from '@/lib/constants'
 import { MailForYouPanel } from '@/components/mail/MailForYouPanel'
 import { FreightForYouPanel } from '@/components/freight/FreightForYouPanel'
-import { FreightAllowancePanel } from '@/components/orders/FreightAllowancePanel'
 import { ArtApprovalsPanel } from '@/components/mail/ArtApprovalsPanel'
 import { PaperworkPanel } from '@/components/orders/PaperworkPanel'
 import { useViewAs } from '@/hooks/useViewAs'
@@ -58,7 +57,6 @@ export default function DashboardPage() {
         { id: 'mail', label: 'Mail for you', node: <MailForYouPanel /> },
         { id: 'paperwork', label: 'Confirmations & invoices to review', node: <PaperworkPanel /> },
         { id: 'art', label: 'Artwork approvals', node: <ArtApprovalsPanel /> },
-        { id: 'freight_allowance', label: 'Freight allowances', node: <FreightAllowancePanel /> },
         { id: 'review', label: 'Review queue', node: (
           <CountCard title="Review queue" count={canReview ? (whose ? mine : pending) : null} loading={reviewQ.isLoading}>
             {canReview ? (

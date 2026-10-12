@@ -1745,3 +1745,12 @@ the confirmed lines, Dana approves it, VMS sends it and saves the PO number back
 Dana: the Ordering card and the "Orders I'm working on" card overlapped. The emails flagged "Working on order" are now
 the **Working on** count on the Ordering card (between To order and Placed, with how many need an answer); the separate
 dashboard card is gone. The full list page stays (Open the full list, and the Team page link to it).
+
+## Oct 12 — Pay-by reminders replace the Freight allowances card
+Dana: "Pay on time for freight back is not a necessary card, it should just flag the dashboard as a to do … We also
+have other discounts we get if we pay earlier than the due date." Dana is the only one who pays; reminders 5 days
+ahead. VMS keeps one task per bill, assigned to the admin, due on the pay-by date: WWD invoices with discount terms
+(best tier still open, then the next, then the net due date), orders with discount terms in AR due (no WWD invoice),
+and freight back for paying on time. Tasks close themselves when the bill is paid; checking one off by hand ends
+reminders for that bill. Hourly (pg_cron payment-tasks). First run made 21 tasks (Oct 14 – Jan 13). Migration 0090.
+The Freight allowances dashboard card is gone; the order's Freight allowance box stays.
