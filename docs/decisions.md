@@ -1755,3 +1755,8 @@ and freight back for paying on time. Tasks close themselves when the bill is pai
 reminders for that bill. Hourly (pg_cron payment-tasks). First run made 21 tasks (Oct 14 – Jan 13). Migration 0090.
 The Freight allowances dashboard card is gone; the order's Freight allowance box stays.
 - Same day: Dana wants every early-pay discount reminded, however small (no minimum).
+
+## Oct 12 — "New version ready" bar
+Dana's iPad kept an old copy of VMS (signing out does not reload the app). VMS now checks every 5 minutes and when the
+app comes back into view whether a newer version is live, and shows a green bar "A new version of VMS is ready. Tap
+here to refresh." at the top.
