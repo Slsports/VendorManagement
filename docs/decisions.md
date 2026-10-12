@@ -1877,3 +1877,11 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - When a new request's confirmation arrives, the person who asked is emailed automatically from orders@. Old requests
   (before Oct 12) were loaded and matched without emails. Requests whose confirmation came from a private inbox show
   only to Dana. Amazon Business confirmations only reach VMS through the old Gmail feed (since Oct 12).
+
+## Oct 12 — Rep groups learned from the mail
+- A rep group is recognized by its email, any rep contact's email, or Claude reading the name, signature or rep (Steve
+  Newman / pssagency.com → Premier Sales Solutions). The people writing join the rep group's contacts.
+- Claude reads a rep's lines from its mail (again after every 10 new emails): vendors with no rep group join it
+  automatically; a vendor with another rep group, or a brand that is not a vendor, becomes a "Rep group lines" card.
+- Rep mail is tagged to every line it names and filed to the vendor when it names one. All "Who is this?" senders were
+  sorted again with these rules.

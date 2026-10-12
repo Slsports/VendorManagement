@@ -4,7 +4,7 @@ section: Review queue
 keywords: new sender, claude sorted, never bought from, who is this, email sender, file mail, vendor, rep group, Bill.com, Faire, carrier, sender proposal
 who: Admin, managers and buyers
 ---
-When mail comes to orders@ from a sender VMS does not know, Claude reads it first. If it is clearly one of our vendors, Claude files it there (you can undo it on the vendor page). If it is a company we have never bought from, it goes to the **Never bought from** tab. Only the senders Claude is unsure about get a card here. One answer files all their mail, now and later.
+When mail comes to orders@ from a sender VMS does not know, Claude reads it first. If it is clearly one of our vendors, Claude files it there (you can undo it on the vendor page). If it is a company we have never bought from, it goes to the **Never bought from** tab. If it is one of our rep groups, Claude files it to the rep group and adds the lines it reps (see "Rep group lines Claude finds in the mail"). Freight companies go to the Freight page. Only the senders Claude is unsure about get a card here. One answer files all their mail, now and later.
 
 ## How to
 1. Open **Review queue** and click the **Who is this?** tab.

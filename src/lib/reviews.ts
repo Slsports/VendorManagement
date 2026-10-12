@@ -9,6 +9,7 @@ export const REVIEW_KIND_LABELS: Record<string, { title: string; help: string }>
   vendor_assignment: { title: 'Who orders from these vendors?', help: 'Trevor ran their sales reports before the show, so they went to Jarrett. Keep Jarrett, or pick who orders from the vendor.' },
   vendor_marker: { title: 'Lightspeed markers', help: 'Names that carried an asterisk in Lightspeed.' },
   art_approval: { title: 'Artwork to approve?', help: 'Claude was not sure whether the vendor is waiting on us to approve artwork, a proof or a design. Yes puts it on the Artwork approvals card.' },
+  rep_line: { title: 'Rep group lines', help: 'A rep\'s emails name a line that is with another rep group, or a brand that is not one of our vendors yet. Lines with no rep group are added on their own.' },
   category_change: { title: 'Category clean-up', help: 'Proposed Lightspeed category changes, by batch. Nothing changes in Lightspeed until a batch is approved.' },
 }
 

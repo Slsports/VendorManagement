@@ -7,7 +7,7 @@ import { Gmail, GmailError, googleAccessToken } from '../_shared/gmail.ts'
 import { clueText, htmlBody, isBulk, isOldGmail, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
 import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type VendorIndex } from '../_shared/mailMatch.ts'
 import { extractLinks, itemPicture, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
-import { aiEnabled, readArtwork, readEmailVendors, readPaidNote, readPromises, readReplyNeeded, sortEmails, sortSenders, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type UnsureEmail } from '../_shared/ai.ts'
+import { aiEnabled, readArtwork, readEmailVendors, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type UnsureEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
@@ -663,6 +663,29 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
       }
     }
 
+    // A rep group's lines (Dana, Oct 12): read from its mail; vendors with no rep group join it, the rest are cards;
+    // then its mail is tagged to every line it names.
+    if (Date.now() - started < TIME_BUDGET_MS) {
+      const { data: repSenders } = await db.rpc('rep_lines_queue', { p_org: org, p_limit: 2 })
+      let lineIndex: Awaited<ReturnType<typeof freightIndex>> | null = null
+      for (const rs of (repSenders ?? []) as { sender_id: string; rep_group_id: string; rep_group_name: string }[]) {
+        const { data: mails } = await db.from('emails').select('subject, body_text, snippet').eq('sender_id', rs.sender_id).eq('direction', 'in').is('mailbox_id', null).order('received_at', { ascending: false }).limit(12)
+        const names = await readRepLines(db, org, rs.rep_group_name, (mails ?? []).map((m) => {
+          const t = (m.body_text || m.snippet || '').replace(/\s+/g, ' ')
+          return { subject: m.subject, text: t.length > 1200 ? `${t.slice(0, 700)} … ${t.slice(-500)}` : t }
+        }))
+        lineIndex ??= await freightIndex(db, org)
+        const ids = new Set<string>()
+        const unknown: string[] = []
+        for (const n of names) {
+          const hit = shipperVendors(lineIndex, n)
+          if (hit.length === 1) ids.add(hit[0]!)
+          else if (!hit.length && n.trim().toLowerCase() !== rs.rep_group_name.toLowerCase()) unknown.push(n)
+        }
+        await check(db.rpc('rep_group_apply_lines', { p_sender: rs.sender_id, p_vendor_ids: [...ids], p_unknown: unknown }))
+      }
+    }
+
     // "Who is this?" (Dana, Oct 12): Claude sorts each unknown sender once: one of our vendors (filed, undoable from
     // the vendor page), never bought from (Promotions and the Never bought from list), a freight company (Other freight
     // companies on the Freight page, mail to Trevor), or unsure (the card stays).
@@ -674,8 +697,8 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
     const { data: vendors } = await db.from('vendors').select('id, name').eq('organization_id', org).eq('is_active', true).is('merged_into_id', null).order('name').limit(5000)
     const byName = new Map((vendors ?? []).map((v) => [v.name.toLowerCase().replace(/[^a-z0-9]+/g, ''), v.id as string]))
     const vendorList = (vendors ?? []).map((v) => v.name).join('\n')
-    const { data: reps } = await db.from('rep_groups').select('name, email, vendors(name)').eq('organization_id', org).eq('is_active', true).order('name')
-    const repList = (reps ?? []).map((g) => `${g.name}${g.email ? ` <${g.email}>` : ''}: ${((g.vendors ?? []) as { name: string }[]).map((v) => v.name).join(', ') || 'no lines on file'}`).join('\n')
+    const { data: reps } = await db.from('rep_groups').select('id, name, email, vendors(name), rep_group_contacts(name, email)').eq('organization_id', org).eq('is_active', true).order('name')
+    const repList = (reps ?? []).map((g) => `${g.name}${g.email ? ` <${g.email}>` : ''}${((g.rep_group_contacts ?? []) as { name: string | null; email: string | null }[]).length ? ` (reps: ${((g.rep_group_contacts ?? []) as { name: string | null; email: string | null }[]).map((c) => [c.name, c.email].filter(Boolean).join(' ')).join('; ')})` : ''}: ${((g.vendors ?? []) as { name: string }[]).map((v) => v.name).join(', ') || 'no lines on file'}`).join('\n')
     const toSort: SenderToSort[] = []
     for (const s of senders) {
       const { data: mails } = await db.from('emails').select('subject, body_text, snippet').eq('sender_id', s.id).is('mailbox_id', null).order('received_at', { ascending: false }).limit(4)
@@ -696,8 +719,15 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
       })
     }
     const readings = await sortSenders(db, org, vendorList, repList, toSort)
+    const groupByName = new Map((reps ?? []).map((g) => [g.name.toLowerCase().replace(/[^a-z0-9]+/g, ''), g.id as string]))
     for (const r of readings) {
       if (!toSort.some((x) => x.id === r.id)) continue
+      // one of our rep groups (Dana, Oct 12: Steve Newman at Premier Sales Solutions)
+      const groupId = r.decision === 'rep_group' && r.rep_group_name ? groupByName.get(r.rep_group_name.toLowerCase().replace(/[^a-z0-9]+/g, '')) ?? null : null
+      if (groupId) {
+        await check(db.rpc('mail_apply_sender_rep', { p_sender: r.id, p_group: groupId, p_company: r.company, p_website: r.website, p_phone: r.phone, p_note: r.note }))
+        continue
+      }
       const vendorId = r.decision === 'vendor' && r.vendor_name ? byName.get(r.vendor_name.toLowerCase().replace(/[^a-z0-9]+/g, '')) ?? null : null
       await check(db.rpc('mail_apply_sender_sort', {
         p_sender: r.id, p_decision: r.decision === 'vendor' && !vendorId ? 'unsure' : r.decision, p_vendor: vendorId,
