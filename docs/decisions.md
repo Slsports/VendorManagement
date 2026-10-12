@@ -1701,3 +1701,9 @@ Knowledge Base to learn how to do things … add and edit this every time we mak
 (menu → Help, everyone including invoice uploaders): search box across all articles, or browse by topic; each article
 is one "how do I…" with steps and "Good to know". Articles live in `docs/help/` and ship with the app, and every
 session updates them in the same change as the feature (rule in CLAUDE.md).
+
+## Oct 12 — LS PO comes after the confirmation (Ordering card, to build)
+Dana: the LS PO is created "after its been confirmed", so it matches what the vendor is shipping. On the Ordering
+card, a confirmed order with no LS PO is marked "LS PO needed" until its PO number is typed on the order or the LS PO
+file is saved to its LS POs folder. Once LS is connected, the order gets "Create PO in LS": VMS builds the PO from
+the confirmed lines, Dana approves it, VMS sends it and saves the PO number back.
