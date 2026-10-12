@@ -1919,3 +1919,11 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   group." Claude sees booth and booth-mates when matching show lines; a vendor with no rep group that shared a booth (2–15
   lines) with two or more lines of one rep group gets a "Booth-mates" card. Zero upcharge is carried to every vendor whose
   show line is on Worldwide's zero-upcharge list.
+
+## Oct 12 — Drafts
+- Mail has a **Drafts** tab. **Save draft** on every email; emails Claude prepares for someone land there marked
+  "Prepared by Claude" (owner = the person who will send). A draft can also be copied to orders@'s Gmail Drafts; sending
+  from VMS removes the copy. Drafts are private to their owner and the admin.
+- First one: the Gold Medal packaging/freight email to Jessica Kane (jkane@goldmedal-intl.com, now a Gold Medal contact).
+- Gap found (fix waiting on Dana's go): order emails from NuORDER and similar services do not become orders, and the vendor
+  contact they name is not saved (Gold Medal's $798 order of Feb 4 and $636 order; Mykos Sept 1).

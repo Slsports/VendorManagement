@@ -9,7 +9,7 @@ The Mail page is orders@ inside VMS, filed by vendor. You read, answer and sort 
 ## How to
 1. Click **Mail** in the menu. The number beside it is how many conversations are waiting on you.
 2. Across the top, pick the mailbox: **Orders (shared)**, **My mail**, and (for Dana) the other mailboxes and **Old Gmail**.
-3. Pick the view: **Primary**, **Promotions**, **Freight**, **Everything** or **Sent**.
+3. Pick the view: **Primary**, **Promotions**, **Freight**, **Everything**, **Drafts** or **Sent**.
 4. Pick where it stands: **Needs an answer**, **No answer yet**, **Waiting on vendor**, **All open**, **Handled**, **All**, **Snoozed** or **Deleted**.
 5. Click a subject to open the conversation.
 

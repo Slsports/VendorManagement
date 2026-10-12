@@ -288,6 +288,8 @@ export interface SendEmailInput {
   vendor_link_ids?: string[]
   /** A new email from my own mailbox instead of orders@ (Dana, Oct 11). */
   mailbox_id?: string | null
+  /** Sent from Mail › Drafts: the draft goes away once it is sent. */
+  draft_id?: string | null
 }
 
 export async function functionError(error: unknown): Promise<Error> {
@@ -538,4 +540,39 @@ export async function listSentEmails(organizationId: string, opts: { mailbox?: s
   })
   if (error) throw error
   return (data ?? []) as SentRow[]
+}
+
+// ---- drafts (Dana, Oct 12) ------------------------------------------------------------------------
+export interface DraftRow {
+  id: string; owner_id: string; created_by: string | null; to_emails: string[]; cc_emails: string[]; subject: string; body: string
+  thread_id: string | null; reply_to_email_id: string | null; forward_email_id: string | null; vendor_id: string | null; mailbox_id: string | null
+  note: string | null; gmail_draft_id: string | null; updated_at: string
+  vendor: { id: string; name: string } | null; owner: { full_name: string } | null
+}
+
+/** My drafts (the admin can ask for everyone's), newest first. */
+export async function listDrafts(organizationId: string, ownerId: string | null): Promise<DraftRow[]> {
+  let q = supabase.from('email_drafts').select('*, vendor:vendors!email_drafts_vendor_id_fkey(id, name), owner:profiles!email_drafts_owner_id_fkey(full_name)').eq('organization_id', organizationId)
+  if (ownerId) q = q.eq('owner_id', ownerId)
+  const { data, error } = await q.order('updated_at', { ascending: false }).limit(200)
+  if (error) throw error
+  return (data ?? []) as unknown as DraftRow[]
+}
+
+/** Save (or update) a draft from the compose window. Returns its id. */
+export async function saveDraft(organizationId: string, ownerId: string, d: { id?: string | null; to: string[]; cc: string[]; subject: string; body: string; thread_id?: string | null; reply_to_email_id?: string | null; forward_email_id?: string | null; vendor_id?: string | null; mailbox_id?: string | null }): Promise<string> {
+  const row = { organization_id: organizationId, owner_id: ownerId, to_emails: d.to, cc_emails: d.cc, subject: d.subject, body: d.body, thread_id: d.thread_id ?? null, reply_to_email_id: d.reply_to_email_id ?? null, forward_email_id: d.forward_email_id ?? null, vendor_id: d.vendor_id ?? null, mailbox_id: d.mailbox_id ?? null }
+  if (d.id) {
+    const { error } = await supabase.from('email_drafts').update(row).eq('id', d.id)
+    if (error) throw error
+    return d.id
+  }
+  const { data, error } = await supabase.from('email_drafts').insert({ ...row, created_by: ownerId }).select('id').single()
+  if (error) throw error
+  return data.id
+}
+
+export async function deleteDraft(id: string): Promise<void> {
+  const { error } = await supabase.from('email_drafts').delete().eq('id', id)
+  if (error) throw error
 }

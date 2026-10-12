@@ -4,10 +4,11 @@
 // (Twilio, once TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_FROM are set).
 //   reminders: open tasks whose remind time has come, to the person it is assigned to
 //   done:      tasks someone finished that another person gave them, to the giver
+//   drafts:    emails Claude prepared (Mail › Drafts) that also go in the mailbox's Gmail Drafts (gmail_copy), Dana Oct 12
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, errorResponse, json, serviceClient } from '../_shared/caller.ts'
 import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
-import { buildMime, formatAddress } from '../_shared/mime.ts'
+import { buildMime, formatAddress, withSignature } from '../_shared/mime.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://vms.shaverlakesports.com'
 const TZ = 'America/Los_Angeles'
@@ -50,7 +51,8 @@ Deno.serve(async (req) => {
       const who = (await sender.person(t.done_by ?? t.assigned_to))?.full_name?.split(' ')[0] ?? 'Someone'
       await sender.notify(t.organization_id, t.created_by, `Done: ${t.title}`, doneText(t, who), `VMS: ${who} finished "${t.title}"${t.done_note ? ` — ${t.done_note}` : ''}`)
     }
-    return json({ reminded: reminded.length, done: finished.length })
+    const drafts = await copyDrafts(db)
+    return json({ reminded: reminded.length, done: finished.length, drafts })
   } catch (e) {
     return errorResponse(e)
   }
@@ -153,4 +155,23 @@ class Sender {
     }
     return errors
   }
+}
+
+/** Drafts that should also sit in Gmail Drafts: written as the draft's owner (name and signature), from orders@. */
+async function copyDrafts(db: SupabaseClient): Promise<number> {
+  const { data } = await db.from('email_drafts').select('id, organization_id, owner_id, to_emails, cc_emails, subject, body').eq('gmail_copy', true).is('gmail_draft_id', null).limit(10)
+  let n = 0
+  for (const d of data ?? []) {
+    const { data: acct } = await db.from('mail_accounts').select('mailbox').eq('organization_id', d.organization_id).maybeSingle()
+    const { data: owner } = await db.from('profiles').select('full_name, email_signature').eq('id', d.owner_id).maybeSingle()
+    const { data: org } = await db.from('organizations').select('name, app_name').eq('id', d.organization_id).maybeSingle()
+    if (!acct?.mailbox) continue
+    const brand = (org?.app_name || org?.name || '').trim()
+    const raw = buildMime({ from: formatAddress([owner?.full_name, brand].filter(Boolean).join(' | '), acct.mailbox), to: d.to_emails, cc: d.cc_emails, replyTo: acct.mailbox, subject: d.subject, text: withSignature(d.body, owner?.email_signature ?? null) })
+    const gmail = new Gmail(await googleAccessToken(acct.mailbox))
+    const made = await gmail.call<{ id: string }>('drafts', { method: 'POST', body: JSON.stringify({ message: { raw: btoa(raw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') } }) })
+    await db.from('email_drafts').update({ gmail_draft_id: made.id }).eq('id', d.id)
+    n++
+  }
+  return n
 }

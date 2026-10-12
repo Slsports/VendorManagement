@@ -411,6 +411,15 @@ export type Database = {
         Update: { organization_id?: string; initials?: string; person_name?: string; profile_id?: string | null; goes_to_supplies?: boolean }
         Relationships: []
       }
+      email_drafts: {
+        Row: { id: string; organization_id: string; owner_id: string; created_by: string | null; to_emails: string[]; cc_emails: string[]; subject: string; body: string; thread_id: string | null; reply_to_email_id: string | null; forward_email_id: string | null; vendor_id: string | null; mailbox_id: string | null; note: string | null; gmail_copy: boolean; gmail_draft_id: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; owner_id: string; created_by?: string | null; to_emails?: string[]; cc_emails?: string[]; subject?: string; body?: string; thread_id?: string | null; reply_to_email_id?: string | null; forward_email_id?: string | null; vendor_id?: string | null; mailbox_id?: string | null; note?: string | null; gmail_copy?: boolean; gmail_draft_id?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; owner_id?: string; created_by?: string | null; to_emails?: string[]; cc_emails?: string[]; subject?: string; body?: string; thread_id?: string | null; reply_to_email_id?: string | null; forward_email_id?: string | null; vendor_id?: string | null; mailbox_id?: string | null; note?: string | null; gmail_copy?: boolean; gmail_draft_id?: string | null; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'email_drafts_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+          { foreignKeyName: 'email_drafts_owner_id_fkey'; columns: ['owner_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+        ]
+      }
       mail_address_rules: {
         Row: { id: string; organization_id: string; mailbox_id: string | null; address: string; mail_kind: 'bulk' | 'offer' | 'regular'; view: 'attention' | 'offers'; created_by: string | null; created_at: string }
         Insert: { id?: string; organization_id: string; mailbox_id?: string | null; address: string; mail_kind: 'bulk' | 'offer' | 'regular'; view: 'attention' | 'offers'; created_by?: string | null; created_at?: string }

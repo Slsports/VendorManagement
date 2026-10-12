@@ -19,6 +19,7 @@ interface SendRequest {
   attachments?: MimeAttachment[]     // from the computer, base64
   vendor_link_ids?: string[]         // files from the vendor's Links & files
   mailbox_id?: string | null         // a new email from my own mailbox instead of orders@
+  draft_id?: string | null           // sent from Mail › Drafts: the draft (and its Gmail copy) goes away
 }
 
 const EMAIL = /^[^@\s,;<>]+@[^@\s,;<>]+\.[^@\s,;<>]+$/
@@ -115,6 +116,13 @@ Deno.serve(async (req) => {
     if (full.attachments.length) await db.from('email_attachments').insert(full.attachments.map((a) => ({ ...a, organization_id: me.organization_id, email_id: email.id })))
     await db.from('email_threads').update({ vendor_id: vendorId ?? undefined, owner_id: me.id, owner_set_at: new Date().toISOString() }).eq('id', th.id)
     await db.rpc('mail_process', { p_org: me.organization_id, p_email_ids: [email.id], p_backfill: false })
+    if (r.draft_id) {
+      const { data: d } = await db.from('email_drafts').select('id, owner_id, organization_id, gmail_draft_id').eq('id', r.draft_id).maybeSingle()
+      if (d && d.organization_id === me.organization_id && (d.owner_id === me.id || me.role === 'admin')) {
+        if (d.gmail_draft_id) await gmail.call(`drafts/${d.gmail_draft_id}`, { method: 'DELETE' }).catch(() => undefined)
+        await db.from('email_drafts').delete().eq('id', d.id)
+      }
+    }
     return json({ thread_id: th.id, email_id: email.id })
   } catch (e) {
     return errorResponse(e)

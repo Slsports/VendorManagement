@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
-import { Paperclip, Send, X } from 'lucide-react'
+import { FileText, Paperclip, Send, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { listMailboxes, sendEmail, type SendEmailInput } from '@/services/mail'
+import { listMailboxes, saveDraft, sendEmail, type SendEmailInput } from '@/services/mail'
 import { listAddressBook } from '@/services/contacts'
 import { listVendorLinks } from '@/services/lines'
 import { errorMessage } from '@/lib/utils'
@@ -22,6 +22,8 @@ export interface ComposeDraft {
   mailbox_id?: string | null
   /** Shown as a note above the form, e.g. "Forwarding with 2 attachments". */
   note?: string
+  /** Opened from Mail › Drafts (Dana, Oct 12): Save draft updates it, Send removes it. */
+  draft_id?: string | null
 }
 
 const MAX_BYTES = 20 * 1024 * 1024
@@ -50,6 +52,8 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
   const [files, setFiles] = useState<File[]>([])
   const [linkIds, setLinkIds] = useState<string[]>([])
   const [sending, setSending] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [draftId, setDraftId] = useState<string | null>(draft.draft_id ?? null)
   const fileInput = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const book = useSupabaseQuery(async () => (organization ? listAddressBook(organization.id) : []), [organization?.id])
@@ -92,6 +96,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
         attachments: await Promise.all(files.map(async (f) => ({ name: f.name, mime: f.type || 'application/octet-stream', base64: await readBase64(f) }))),
         vendor_link_ids: linkIds,
         mailbox_id: draft.thread_id ? null : fromBox || null,
+        draft_id: draftId,
       }
       const res = await sendEmail(input)
       toast.success('Sent')
@@ -101,6 +106,26 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
       toast.error(errorMessage(err))
     } finally {
       setSending(false)
+    }
+  }
+
+  /** Save draft (Dana, Oct 12): keep it in Mail › Drafts to finish or send later. Attachments picked from the computer are not kept. */
+  async function keepDraft() {
+    if (!organization || !profile) return
+    setSaving(true)
+    try {
+      const id = await saveDraft(organization.id, profile.id, {
+        id: draftId, to: splitAddresses(to), cc: splitAddresses(cc), subject, body,
+        thread_id: draft.thread_id ?? null, reply_to_email_id: draft.reply_to_email_id ?? null, forward_email_id: draft.forward_email_id ?? null,
+        vendor_id: draft.vendor_id ?? null, mailbox_id: draft.thread_id ? null : fromBox || null,
+      })
+      setDraftId(id)
+      toast.success(files.length ? 'Saved in Drafts (attach the files again when you send)' : 'Saved in Drafts')
+      onClose()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -184,7 +209,8 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
         <div className="flex items-center justify-between gap-2 border-t border-stone-200 px-4 py-3">
           <p className="text-xs text-stone-500">Sends from orders@ as {profile?.full_name ?? 'you'}.</p>
           <div className="flex gap-2">
-            <Button type="button" variant="ghost" onClick={onClose} disabled={sending}>Cancel</Button>
+            <Button type="button" variant="ghost" onClick={onClose} disabled={sending || saving}>Cancel</Button>
+            <Button type="button" variant="secondary" onClick={() => void keepDraft()} loading={saving} disabled={sending} leftIcon={<FileText className="size-4" aria-hidden="true" />}>Save draft</Button>
             <Button type="submit" loading={sending} leftIcon={<Send className="size-4" aria-hidden="true" />}>Send</Button>
           </div>
         </div>
