@@ -70,7 +70,8 @@ async function sortStep(db: SupabaseClient) {
 }
 
 async function nextPending(db: SupabaseClient): Promise<Mail | null> {
-  const { data } = await db.from('emails').select(SELECT).eq('order_scan->>result', 'pending').is('order_scanned_at', null).order('received_at', { ascending: false }).limit(1)
+  // oldest first, so an order is on file before the "add to order" emails that follow it
+  const { data } = await db.from('emails').select(SELECT).eq('order_scan->>result', 'pending').is('order_scanned_at', null).order('received_at', { ascending: true }).limit(1)
   const m = (data?.[0] ?? null) as unknown as Mail | null
   if (!m) return null
   // claim it: a run that dies leaves it 'reading' for 10 minutes, then it is tried again
@@ -146,11 +147,13 @@ async function readStep(db: SupabaseClient, m: Mail) {
     }
     const r = await readSentOrder(db, m.organization_id, { vendor: vendor?.name ?? 'Unknown vendor', subject: m.subject, sent_on: day(m.received_at), text: m.body_text ?? '', files, sheets })
     if (!r.is_order) return await finish(db, m, { result: 'not_order' })
-    const orderId = await matchOrder(db, m, r)
+    let orderId = await matchOrder(db, m, r)
+    let adding = false
+    if (!orderId && r.adds_to_earlier) { orderId = await earlierOrder(db, m); adding = !!orderId }
     if (orderId) {
-      await fileOn(db, m, orderId, r, used, false)
+      await fileOn(db, m, orderId, r, used, adding)
       await db.rpc('order_checks_refind', { p_org: m.organization_id, p_vendor: m.vendor_id })
-      return await finish(db, m, { result: 'linked', order_id: orderId, po: r.po_number })
+      return await finish(db, m, { result: adding ? 'added_to' : 'linked', order_id: orderId, po: r.po_number })
     }
     if (day(m.received_at) < plusDays(day(new Date().toISOString()), -CREATE_DAYS)) {
       return await finish(db, m, { result: 'old_not_in_vms', po: r.po_number, total: r.total, description: r.description, sent_on: day(m.received_at) })
@@ -187,7 +190,18 @@ async function matchOrder(db: SupabaseClient, m: Mail, r: SentOrderReading): Pro
     const cost = Number(o.est_cost ?? o.final_cost ?? NaN)
     return r.total === null || !Number.isFinite(cost) || Math.abs(cost - r.total) <= Math.max(5, r.total * 0.03)
   })
-  return near.length === 1 ? near[0]!.id : null
+  if (near.length === 1) return near[0]!.id
+  // an order typed on Dana's sheet without a date ("PAJAMAS - WAITING ON CONFIRM"): the vendor's one open undated order
+  const { data: open } = await db.from('orders').select('id').eq('vendor_id', m.vendor_id!).in('status', ['open', 'awaiting_confirmation']).is('order_date', null)
+  return open?.length === 1 ? open[0]!.id : null
+}
+
+/** "Add to order": the vendor's latest order from the 45 days before this email. */
+async function earlierOrder(db: SupabaseClient, m: Mail): Promise<string | null> {
+  const sent = day(m.received_at)
+  const { data } = await db.from('orders').select('id, order_date').eq('vendor_id', m.vendor_id!).neq('status', 'cancelled')
+    .gte('order_date', plusDays(sent, -45)).lte('order_date', sent).order('order_date', { ascending: false }).limit(1)
+  return data?.[0]?.id ?? null
 }
 
 async function createOrder(db: SupabaseClient, m: Mail, r: SentOrderReading): Promise<string> {

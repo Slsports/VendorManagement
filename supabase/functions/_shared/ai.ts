@@ -554,6 +554,7 @@ export async function sortSentEmails(db: SupabaseClient, org: string, emails: Se
 
 const SentOrderAnswer = z.object({
   is_order: z.boolean().describe('True when this places a purchase order with the vendor'),
+  adds_to_earlier: z.boolean().describe('True when it adds items to, changes or re-sends an order already sent to this vendor ("add to order", "please also add", "revised order")'),
   po_number: z.string().nullable().describe("The store's PO or order number, as written"),
   ship_date: z.string().nullable().describe('Requested ship date YYYY-MM-DD, if any'),
   total: z.number().nullable().describe('Order total in dollars, if stated or computable from the lines'),
