@@ -573,7 +573,7 @@ export async function readSentOrder(db: SupabaseClient, org: string, input: { ve
   const blocks = input.files.map((f) => fileBlock(f)).filter((b): b is NonNullable<ReturnType<typeof fileBlock>> => !!b)
   const res = await claude().messages.parse({
     model: SCAN_MODEL,
-    max_tokens: 8000,
+    max_tokens: 32000,
     output_config: { format: zodOutputFormat(SentOrderAnswer) },
     system: `${STORE.replace(' This is its orders@ mailbox, where vendors, sales reps, distributors and service companies write.', '')}
 
