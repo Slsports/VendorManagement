@@ -384,6 +384,12 @@ export type Database = {
           { foreignKeyName: 'email_senders_proposed_vendor_id_fkey'; columns: ['proposed_vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
         ]
       }
+      mail_address_rules: {
+        Row: { id: string; organization_id: string; mailbox_id: string | null; address: string; mail_kind: 'bulk' | 'offer' | 'regular'; view: 'attention' | 'offers'; created_by: string | null; created_at: string }
+        Insert: { id?: string; organization_id: string; mailbox_id?: string | null; address: string; mail_kind: 'bulk' | 'offer' | 'regular'; view: 'attention' | 'offers'; created_by?: string | null; created_at?: string }
+        Update: { id?: string; organization_id?: string; mailbox_id?: string | null; address?: string; mail_kind?: 'bulk' | 'offer' | 'regular'; view?: 'attention' | 'offers'; created_by?: string | null; created_at?: string }
+        Relationships: []
+      }
       mailboxes: {
         Row: { id: string; organization_id: string; kind: 'personal' | 'legacy'; address: string; label: string; owner_id: string; gmail_box: string; is_active: boolean; history_id: string | null; backfill_after: string | null; backfill_page_token: string | null; backfill_done: boolean; last_sync_at: string | null; sync_started_at: string | null; last_error: string | null; last_error_at: string | null; messages_synced: number; created_at: string; updated_at: string }
         Insert: { id?: string; organization_id: string; kind: 'personal' | 'legacy'; address: string; label: string; owner_id: string; gmail_box: string; is_active?: boolean; history_id?: string | null; backfill_after?: string | null; backfill_page_token?: string | null; backfill_done?: boolean; last_sync_at?: string | null; sync_started_at?: string | null; last_error?: string | null; last_error_at?: string | null; messages_synced?: number; created_at?: string; updated_at?: string }

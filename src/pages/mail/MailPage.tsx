@@ -14,8 +14,8 @@ import { ComposeDialog } from '@/components/mail/ComposeDialog'
 import { Alert, Button, Select, Spinner } from '@/components/ui'
 
 const VIEWS: { value: NonNullable<ThreadFilters['view']>; label: string; help: string }[] = [
-  { value: 'attention', label: 'Needs attention', help: 'Replies, confirmations, invoices, questions: anything someone has to act on.' },
-  { value: 'offers', label: 'Offers & catalogs', help: 'Specials, price lists, catalogs and newsletters. Move a conversation to teach VMS where that sender belongs.' },
+  { value: 'attention', label: 'Primary', help: 'Real correspondence: replies, reps writing to us, confirmations, invoices, shipping, questions.' },
+  { value: 'offers', label: 'Promotions', help: 'Ads of any kind: specials, what is new or in stock, price lists, catalogs and newsletters. Move a conversation to teach VMS where that kind of mail from that address belongs.' },
   { value: 'freight', label: 'Freight', help: 'Carriers: PartnerShip, Worldwide Express, Priority One and Pinnacle. Bills also wait under Freight bills.' },
   { value: 'all', label: 'Everything', help: 'All mail, for searching.' },
 ]
@@ -96,7 +96,7 @@ export default function MailPage() {
           ))}
         </div>
       ) : null}
-      {ownBox ? <p className="mb-3 text-xs text-stone-500">{myBoxes.find((b) => b.id === mailbox)?.kind === 'legacy' ? 'The old shaverlakesports@gmail.com, forwarded here. Only you see it. Needs attention holds what matters; ads and spam stay under Offers & catalogs.' : 'Private: only its owner and the admin see this mail. "Share to Orders" on a conversation puts it in the shared mail.'}</p> : null}
+      {ownBox ? <p className="mb-3 text-xs text-stone-500">{myBoxes.find((b) => b.id === mailbox)?.kind === 'legacy' ? 'The old shaverlakesports@gmail.com, forwarded here. Only you see it. Primary holds what matters; ads and spam stay under Promotions.' : 'Private: only its owner and the admin see this mail. "Share to Orders" on a conversation puts it in the shared mail.'}</p> : null}
       <div role="tablist" aria-label="Mail view" className="mb-2 flex w-full max-w-2xl overflow-x-auto rounded-xl border border-stone-200 bg-white p-1">
         {VIEWS.map((v) => (
           <button key={v.value} type="button" role="tab" aria-selected={view === v.value}

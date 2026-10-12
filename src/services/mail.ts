@@ -124,7 +124,7 @@ export interface ThreadRow {
 }
 
 export interface ThreadFilters {
-  /** Needs attention, Offers & catalogs, Freight (carrier mail, Trevor's), or everything. */
+  /** Primary ('attention'), Promotions ('offers'), Freight (carrier mail, Trevor's), or everything. */
   view?: MailView | 'freight' | 'all'
   /** 'all' | 'mine' | 'none' | a profile id */
   who: string
@@ -193,9 +193,22 @@ export async function listThreads(organizationId: string, me: string | undefined
   return withLastMessage((data ?? []) as unknown as Omit<ThreadRow, 'last'>[])
 }
 
-/** A vendor's threads, newest first. */
-export function listVendorThreads(organizationId: string, vendorId: string, limit = 50): Promise<ThreadRow[]> {
-  return listThreads(organizationId, undefined, { who: 'all', status: 'all', vendorId }, limit)
+/** A vendor's threads in Primary or Promotions, newest first. */
+export function listVendorThreads(organizationId: string, vendorId: string, view: MailView, limit = 50): Promise<ThreadRow[]> {
+  return listThreads(organizationId, undefined, { who: 'all', status: 'all', vendorId, view }, limit)
+}
+
+/** How many of a vendor's conversations are in Primary and in Promotions (the vendor page Mail tabs). */
+export async function countVendorThreads(organizationId: string, vendorId: string): Promise<Record<MailView, number>> {
+  const one = async (view: MailView) => {
+    const { count, error } = await supabase.from('email_threads').select('id', { count: 'exact', head: true })
+      .eq('organization_id', organizationId).is('deleted_at', null).not('last_message_at', 'is', null).or(ORDERS_MAIL)
+      .or(`vendor_id.eq.${vendorId},tagged_vendor_ids.cs.{${vendorId}}`).eq('view', view)
+    if (error) throw error
+    return count ?? 0
+  }
+  const [attention, offers] = await Promise.all([one('attention'), one('offers')])
+  return { attention, offers }
 }
 
 /** What is waiting on this person: vendor replies to answer, and sent mail with no answer past the follow-up date. */
@@ -334,7 +347,7 @@ export async function linkThreadToOrder(threadId: string, orderId: string | null
   if (error) throw error
 }
 
-/** Move a conversation between Needs attention and Offers & catalogs; VMS learns the sender. Returns how many of their other emails moved too. */
+/** Move a conversation between Primary and Promotions; VMS learns that kind of mail from those addresses. Returns how many other emails moved too. */
 export async function setThreadView(threadId: string, view: MailView): Promise<number> {
   const { data, error } = await supabase.rpc('set_email_thread_view', { p_thread: threadId, p_view: view, p_teach: true })
   if (error) throw error

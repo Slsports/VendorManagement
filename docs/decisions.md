@@ -1818,3 +1818,14 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   the vendor's order within 5 days of the email now counts (closest date, then closest total). Five added orders that
   were already on Dana's sheets were merged into them (Nationwide 8/21, Royal Deluxe 7/13, Hendrix 7/19 and 6/28,
   one more 5/6).
+
+## Oct 12 — Mail: Primary and Promotions
+- The Mail tabs are **Primary** (was Needs attention) and **Promotions** (was Offers & catalogs), like Outlook's Focused and
+  Other; Freight and Everything stay. The vendor page Mail box has the same two tabs with counts and opens on Primary.
+- Mail is sorted email by email: a vendor's promos (even from a rep's own address) go to Promotions; rep notes,
+  confirmations, invoices and shipping stay in Primary; conversations we wrote in stay in Primary; Claude decides the rest.
+- **Move to Promotions / Move to Primary** teaches that kind of mail (newsletters, offers, regular mail) from that
+  **address** only, not the whole vendor. A move in a personal inbox teaches that inbox only.
+- Companies marked Marketing (never bought from) always go to Promotions. "Other – not a vendor" senders' ads go to
+  Promotions; their regular mail stays in Primary.
+- The last 12 months, personal inboxes included, were re-sorted; Claude re-read the emails it had kept in Primary.

@@ -106,7 +106,7 @@ export default function ThreadPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-stone-900">{t.subject || '(no subject)'}</h1>
         <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-stone-600">
           <ThreadStatusBadge thread={t} />
-          {t.view === 'offers' ? <span className="rounded-md bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800">Offers & catalogs</span> : null}
+          {t.view === 'offers' ? <span className="rounded-md bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-800">Promotions</span> : null}
           {t.vendor ? <Link to={`${ROUTES.vendors}/${t.vendor.id}`} className="font-medium text-brand hover:underline">{t.vendor.name}</Link> : <span className="text-stone-500">Not filed to a vendor</span>}
           <span>· {emails.length} message{emails.length === 1 ? '' : 's'}</span>
           {box ? (
@@ -136,12 +136,12 @@ export default function ThreadPage() {
             ? <Button size="sm" variant="secondary" onClick={() => void act('Opened again', () => setEmailThreadStatus(t.id, 'waiting_on_us'))} leftIcon={<RotateCcw className="size-4" aria-hidden="true" />}>Open again</Button>
             : <Button size="sm" variant="secondary" onClick={() => void markHandledAndLeave()} leftIcon={<CheckCircle2 className="size-4" aria-hidden="true" />}>Mark handled</Button>}
           <Button size="sm" variant="ghost" onClick={() => void act(
-            t.view === 'offers' ? 'Moved to Needs attention' : 'Moved to Offers & catalogs',
+            t.view === 'offers' ? 'Moved to Primary' : 'Moved to Promotions',
             async () => {
               const moved = await setThreadView(t.id, t.view === 'offers' ? 'attention' : 'offers')
-              if (moved) toast(`${moved} more email${moved === 1 ? '' : 's'} from this sender moved too; their new mail will follow.`)
+              if (moved) toast(`${moved} more email${moved === 1 ? '' : 's'} from the same address moved too; new mail like it will follow.`)
             })}>
-            {t.view === 'offers' ? 'Move to Needs attention' : 'Move to Offers & catalogs'}
+            {t.view === 'offers' ? 'Move to Primary' : 'Move to Promotions'}
           </Button>
           <ThreadVendorPicker current={t.vendor} prefill={newVendorPrefill({ ...party, isDomain: false })} onPick={(v) => act(v ? `Filed to ${v.name}` : 'Unfiled', () => setEmailVendor(emails[0]!.id, v?.id ?? null))} />
           {t.vendor ? <Button size="sm" variant="ghost" onClick={() => setAddingOrder(true)}>Add order from this email</Button> : null}

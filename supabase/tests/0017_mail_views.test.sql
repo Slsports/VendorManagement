@@ -2,12 +2,12 @@
 \pset footer off
 \echo '>>> mail views: Promotions and bulk mail go to offers, orders and replies stay in attention'
 reset role;
-select public.mail_view_for('in', array['CATEGORY_PROMOTIONS'], 'Fall catalog is here', 'news@brand.com', null, null, false) as promo,
-       public.mail_view_for('in', array['CATEGORY_PROMOTIONS'], 'Your order #123 has shipped', 'noreply@brand.com', true, null, false) as shipped,
-       public.mail_view_for('in', '{}', 'Today''s New Product Alert', 'info@x.com', null, null, false) as alert,
-       public.mail_view_for('in', '{}', 'Re: Spring catalog', 'amy@x.com', true, null, false) as reply,
-       public.mail_view_for('in', '{}', 'Hello', 'amy@x.com', null, null, false) as unsure,
-       public.mail_view_for('in', '{}', 'Hello', 'amy@x.com', null, 'offers', false) as taught;
+select public.mail_view_for('in', array['CATEGORY_PROMOTIONS'], 'Fall catalog is here', null, null, null, null, false) as promo,
+       public.mail_view_for('in', array['CATEGORY_PROMOTIONS'], 'Your order #123 has shipped', true, null, null, null, false) as shipped,
+       public.mail_view_for('in', '{}', 'Today''s New Product Alert', null, null, null, null, false) as alert,
+       public.mail_view_for('in', '{}', 'Re: Spring order', true, null, null, null, false) as reply,
+       public.mail_view_for('in', '{}', 'Hello', null, null, null, null, false) as unsure,
+       public.mail_view_for('in', '{}', 'Hello', null, 'offers', null, null, false) as taught;
 \echo '>>> moving a conversation teaches the sender; its other mail follows; a conversation we wrote in stays in attention'
 insert into public.vendors (organization_id, name) values ('00000000-0000-0000-0000-000000000001', 'View Test Co') returning id as vv \gset
 insert into public.email_senders (organization_id, sender_key) values ('00000000-0000-0000-0000-000000000001', 'viewtest.example') returning id as vs \gset

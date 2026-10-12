@@ -85,7 +85,7 @@ export default function MailSettings() {
         <p className="mt-3 text-xs text-stone-500">Senders to identify wait in the review queue under "Who is this mail from?". One answer files all their mail, now and later.</p>
         <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-stone-100 pt-4">
           <Button size="sm" variant="secondary" loading={resorting} onClick={() => void resort()}>Re-sort all mail</Button>
-          <p className="text-xs text-stone-500">Sorts every email into Needs attention or Offers & catalogs again with what VMS knows now. Conversations you moved by hand stay where you put them.</p>
+          <p className="text-xs text-stone-500">Sorts every email into Primary or Promotions again with what VMS knows now. Conversations you moved by hand stay where you put them.</p>
         </div>
       </section>
 

@@ -59,13 +59,13 @@ export function SenderEmailsPanel({ senderId, senderLabel, prefill, canEdit = tr
         // Every open email: the answer for the sender, their future mail included.
         const kind = action === 'vendor' ? 'vendor' : action === 'marketing' ? 'marketing' : 'not_vendor'
         await resolveEmailSender(senderId, kind, vendor?.id)
-        toast.success(action === 'vendor' ? `All of ${senderLabel}'s mail goes to ${vendor!.name}` : action === 'marketing' ? 'Marketing: all their mail goes to Offers & catalogs' : 'Other: all their mail stays in Needs attention for you')
+        toast.success(action === 'vendor' ? `All of ${senderLabel}'s mail goes to ${vendor!.name}` : action === 'marketing' ? 'Marketing: all their mail goes to Promotions' : 'Other: their mail stays in Primary for you')
         await onChanged()
         onClose()
         return
       }
       const n = await reviewSenderEmails(senderId, ids, action, vendor?.id)
-      toast.success(`${n} email${n === 1 ? '' : 's'} ${action === 'vendor' ? `filed to ${vendor!.name}` : action === 'marketing' ? 'moved to Offers & catalogs' : 'kept in Needs attention for you'}`)
+      toast.success(`${n} email${n === 1 ? '' : 's'} ${action === 'vendor' ? `filed to ${vendor!.name}` : action === 'marketing' ? 'moved to Promotions' : 'kept in Primary for you'}`)
       setPicked(new Set())
       setFiling(false)
       await q.refetch()
