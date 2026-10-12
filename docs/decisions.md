@@ -1740,3 +1740,8 @@ the confirmed lines, Dana approves it, VMS sends it and saves the PO number back
 ## Oct 12 — Dana's VMS login is dana@shaverlakesports.com
 - Switched from billing.slsports@gmail.com (same profile, same password). Dana is moving her Supabase, Vercel and GitHub
   account emails to dana@ as well; Claude stays on billing.slsports.
+
+## Oct 12 — "Working on" joins the Ordering card
+Dana: the Ordering card and the "Orders I'm working on" card overlapped. The emails flagged "Working on order" are now
+the **Working on** count on the Ordering card (between To order and Placed, with how many need an answer); the separate
+dashboard card is gone. The full list page stays (Open the full list, and the Team page link to it).

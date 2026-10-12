@@ -4,11 +4,12 @@ section: Ordering
 keywords: ordering, dashboard, check stock, to order, placed, confirmed, overdue, LS PO needed, reorder
 who: Everyone
 ---
-The **Ordering** card on the dashboard follows a vendor from "do we need anything?" to a confirmed order. It shows six counts; click one to see its list.
+The **Ordering** card on the dashboard follows a vendor from "do we need anything?" to a confirmed order. It shows seven counts; click one to see its list.
 
 ## The counts
 - **Check stock**: vendors flagged **Check if we need it**. Upload the LS sales report to see what to order.
 - **To order**: vendors flagged **Remind me to order**, or ones where the stock check said we need something.
+- **Working on**: emails flagged **Working on order** while an order goes back and forth with the rep. It also says how many need an answer; **Open the full list** opens the Orders I'm working on page.
 - **Placed**: orders sent to the rep with no confirmation yet.
 - **Confirmed**: orders the vendor confirmed.
 - **Overdue**: confirmed orders more than 30 days past their ship date (red).
@@ -20,4 +21,4 @@ The **Ordering** card on the dashboard follows a vendor from "do we need anythin
 3. In **Check stock** and **To order**, use the buttons on each row: **Upload sales report**, **Suggested order**, **Order it**, **Order placed**, **Don't need it** or **Remove**.
 
 ## Good to know
-- When Dana uses **Showing** for one person, Check stock and To order show only that person's flags. Placed, Confirmed and Overdue always show every order.
+- When Dana uses **Showing** for one person, Check stock and To order show only that person's flags, and Working on only their emails. Placed, Confirmed and Overdue always show every order.

@@ -13,7 +13,7 @@ When an email is about an order, create the order right from it. The email conve
 
 ## Other places to start from
 - **Review queue**: on a "Does this need an answer?" card, click **Remind me to order** to put the vendor on the Ordering card first.
-- **Orders I'm working on**: when you mark one complete, the message that pops up has a link **Add order from this email**.
+- **Orders I'm working on** page: when you mark one complete, the message that pops up has a link **Add order from this email**.
 
 ## Good to know
 - The button appears only when the email is filed to a vendor. If it is not, VMS says to file it first (open the email and file it to a vendor), then create the order.
