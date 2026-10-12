@@ -14,9 +14,9 @@ const args = process.argv.slice(2)
 const every = args.includes('--every') ? args[args.indexOf('--every') + 1] : '* * * * *'
 
 await query(`create extension if not exists pg_cron; create extension if not exists pg_net with schema extensions;`)
-await query(`select cron.unschedule(jobid) from cron.job where jobname in ('gmail-sync', 'order-check', 'task-reminders', 'sent-orders')`)
+await query(`select cron.unschedule(jobid) from cron.job where jobname in ('gmail-sync', 'order-check', 'task-reminders', 'sent-orders', 'supplies')`)
 if (args.includes('--off')) {
-  console.log('gmail-sync, order-check, task-reminders and sent-orders schedules removed')
+  console.log('gmail-sync, order-check, task-reminders, sent-orders and supplies schedules removed')
   process.exit(0)
 }
 
@@ -43,13 +43,16 @@ const checkCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/order-
 // task-reminders (Dana, Oct 11): task reminders and "done" notices by email and text.
 // sent-orders (Dana, Oct 12): orders we email to vendors become orders.
 const sentCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/sent-orders')
+// supplies (Dana, Oct 12): staff supply requests, their order confirmations, and the email to whoever asked.
+const supplyCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/supplies')
 const taskCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/task-reminders').replace('timeout_milliseconds := 150000', 'timeout_milliseconds := 60000')
 if (!args.includes('--no-schedule')) {
   await query(`select cron.schedule('gmail-sync', ${lit(every)}, ${lit(call)})`)
   await query(`select cron.schedule('order-check', ${lit(every)}, ${lit(checkCall)})`)
   await query(`select cron.schedule('task-reminders', ${lit(every)}, ${lit(taskCall)})`)
   await query(`select cron.schedule('sent-orders', ${lit(every)}, ${lit(sentCall)})`)
-  console.log(`gmail-sync, order-check, task-reminders and sent-orders scheduled (${every})`)
+  await query(`select cron.schedule('supplies', ${lit(every)}, ${lit(supplyCall)})`)
+  console.log(`gmail-sync, order-check, task-reminders, sent-orders and supplies scheduled (${every})`)
 }
 if (args.includes('--run-now')) {
   await query(call)

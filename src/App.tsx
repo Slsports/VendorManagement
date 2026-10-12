@@ -47,6 +47,7 @@ const UploadInvoice = lazy(() => import('@/pages/upload/UploadInvoice'))
 const LsPoPage = lazy(() => import('@/pages/orders/LsPoPage'))
 const HelpPage = lazy(() => import('@/pages/help/HelpPage'))
 const TasksPage = lazy(() => import('@/pages/tasks/TasksPage'))
+const SuppliesPage = lazy(() => import('@/pages/supplies/SuppliesPage'))
 const SettingsLayout = lazy(() => import('@/pages/settings/SettingsLayout'))
 const OrganizationSettings = lazy(() => import('@/pages/settings/OrganizationSettings'))
 const StoreSettings = lazy(() => import('@/pages/settings/StoreSettings'))
@@ -120,6 +121,7 @@ export default function App() {
                 <Route path={ROUTES.mailWith} element={<MailWithPage />} />
                 <Route path={ROUTES.team} element={<TeamPage />} />
                 <Route path={ROUTES.tasks} element={<TasksPage />} />
+                <Route path={ROUTES.supplies} element={<SuppliesPage />} />
                 <Route path={ROUTES.notifications} element={<NotificationsPage />} />
                 <Route path={`${ROUTES.mail}/:id`} element={<ThreadPage />} />
                 <Route path={ROUTES.mergeReport} element={<MergeReport />} />

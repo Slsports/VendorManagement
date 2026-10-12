@@ -1868,3 +1868,12 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   **waiting on us**, not waiting on vendor, and whoever signed the reply gets a task due that day, end of business =
   **6 pm** (Dana). Tagged to the vendor and the email; reminder 9 am that day. Finishing the task, or sending another
   reply, ends the promise. Orders@ mail only. Started with the last two days' replies (WFS S102112 among them).
+
+## Oct 12 — Supplies
+- New **Supplies** page (Operations). Staff emails to orders@ asking for supplies (Annette Reinhart's Yahoo address marked
+  as staff; others with the new **Our staff** button) become requests: To order → Ordered → Arrived. Each new request is
+  a task for Dana due in **2 days**. Claude matches order confirmations, shipping and delivery emails (orders@ and Dana's
+  own inboxes) to fill in where it was ordered, the order number and the expected arrival, and finishes the task.
+- When a new request's confirmation arrives, the person who asked is emailed automatically from orders@. Old requests
+  (before Oct 12) were loaded and matched without emails. Requests whose confirmation came from a private inbox show
+  only to Dana. Amazon Business confirmations only reach VMS through the old Gmail feed (since Oct 12).

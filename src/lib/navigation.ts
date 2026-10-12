@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Banknote, CircleHelp, Building2, CalendarDays, ChartColumn, ClipboardCheck, ClipboardList, Contact, FileText, FolderOpen, LayoutDashboard, Lightbulb, ListTodo, Mail, Receipt, Settings, ShoppingCart, Tags, Truck, Undo2, Upload, Users, UsersRound } from 'lucide-react'
+import { Banknote, Building2, CalendarDays, ChartColumn, CircleHelp, ClipboardCheck, ClipboardList, Contact, FileText, FolderOpen, LayoutDashboard, Lightbulb, ListTodo, Mail, Package, Receipt, Settings, ShoppingCart, Tags, Truck, Undo2, Upload, Users, UsersRound } from 'lucide-react'
 import { ORDER_STATUSES, ORDER_STATUS_LABELS, ROUTES, type UserRole } from './constants'
 
 export interface NavChild {
@@ -59,6 +59,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       { label: 'Returns & Credits', to: ROUTES.returns, icon: Undo2 },
       { label: 'Incoming Shipments', to: ROUTES.shipments, icon: Truck },
       { label: 'Freight', to: ROUTES.freight, icon: Receipt },
+      { label: 'Supplies', to: ROUTES.supplies, icon: Package },
       { label: 'Buying Shows', to: ROUTES.buyingShows, icon: CalendarDays },
       { label: 'Payments', to: ROUTES.payments, icon: Banknote, roles: ['admin', 'manager'] },
     ],

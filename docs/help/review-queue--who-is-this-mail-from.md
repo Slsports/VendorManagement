@@ -15,6 +15,7 @@ When mail comes to orders@ from a sender VMS does not know, Claude reads it firs
    - **A rep group**: pick the rep group. Each email is then filed by the vendor it names.
    - **A service like Bill.com or Faire**: sends mail for many vendors; each email is filed by the vendor it names.
    - **A freight carrier**: pick or add the carrier, then **This carrier**. Their mail moves to Freight.
+   - **Our staff**: someone who works for us, writing from their own email. Their supply requests go to **Supplies**.
    - **Marketing** or **Other – not a vendor**: see "Marketing or Other – not a vendor".
 4. A message says how many emails were filed.
 

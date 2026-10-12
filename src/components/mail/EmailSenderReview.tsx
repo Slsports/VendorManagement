@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Check, Layers, Megaphone, MessageCircleQuestion, Truck, Users } from 'lucide-react'
+import { Check, Layers, Megaphone, MessageCircleQuestion, Truck, UserRound, Users } from 'lucide-react'
 import { resolveEmailSender } from '@/services/mail'
 import { errorMessage } from '@/lib/utils'
 import { newVendorPrefill } from '@/lib/mail'
@@ -52,7 +52,7 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
   const [repId, setRepId] = useState('')
   const prefill = newVendorPrefill({ senderKey: d.sender_key, isDomain: d.is_domain, displayName: d.display_name })
 
-  async function answer(label: string, kind: 'vendor' | 'rep_group' | 'platform' | 'marketing' | 'not_vendor', vendorId?: string, repGroupId?: string) {
+  async function answer(label: string, kind: 'vendor' | 'rep_group' | 'platform' | 'marketing' | 'not_vendor' | 'internal', vendorId?: string, repGroupId?: string) {
     setBusy(true)
     try {
       const linked = await resolveEmailSender(d.sender_id, kind, vendorId, repGroupId)
@@ -116,6 +116,7 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
               <Button size="sm" variant="secondary" loading={busy} onClick={() => void answer('Each email will be filed by the vendor it names', 'platform')} leftIcon={<Layers className="size-4" aria-hidden="true" />} title="NetSuite, Bill.com, Faire, FashionGo and similar services that send mail for many vendors">A service like Bill.com or Faire</Button>
               <Button size="sm" variant="secondary" disabled={busy} onClick={() => setMode('carrier')} leftIcon={<Truck className="size-4" aria-hidden="true" />}>A freight carrier</Button>
               <Button size="sm" variant="secondary" loading={busy} onClick={() => void answer('Marketing: their mail goes to Promotions', 'marketing')} leftIcon={<Megaphone className="size-4" aria-hidden="true" />} title="Ads from a company we have never bought from">Marketing</Button>
+              <Button size="sm" variant="secondary" loading={busy} onClick={() => void answer('Our staff: supply requests in their mail go to Supplies', 'internal')} leftIcon={<UserRound className="size-4" aria-hidden="true" />} title="Someone who works for us, writing from their own address">Our staff</Button>
               <Button size="sm" variant="ghost" loading={busy} onClick={() => void answer('Other: their mail stays in Primary for you (their ads go to Promotions)', 'not_vendor')} leftIcon={<MessageCircleQuestion className="size-4" aria-hidden="true" />} title="Not a vendor, not ads: someone who may need an answer">Other – not a vendor</Button>
             </div>
           )}
