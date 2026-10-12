@@ -527,3 +527,15 @@ export async function shareThreadToOrders(threadId: string, share = true): Promi
   const { error } = await supabase.rpc('share_thread_to_orders', { p_thread: threadId, p_share: share })
   if (error) throw error
 }
+
+// ---- sent mail (Dana, Oct 12) --------------------------------------------------------------------
+export interface SentRow { id: string; thread_id: string; to_emails: string[]; cc_emails: string[]; subject: string | null; snippet: string | null; sent_at: string; vendor_id: string | null; vendor_name: string | null; sent_by_name: string | null; has_attachments: boolean }
+
+/** Emails we sent, newest first: the shared Orders mail, or one mailbox; one vendor's; found by address, subject or vendor. */
+export async function listSentEmails(organizationId: string, opts: { mailbox?: string | null; vendorId?: string | null; q?: string | null; limit?: number } = {}): Promise<SentRow[]> {
+  const { data, error } = await supabase.rpc('list_sent_emails', {
+    p_org: organizationId, p_mailbox: opts.mailbox && opts.mailbox !== ORDERS ? opts.mailbox : null, p_vendor: opts.vendorId ?? null, p_q: opts.q?.trim() || null, p_limit: opts.limit ?? 300,
+  })
+  if (error) throw error
+  return (data ?? []) as SentRow[]
+}

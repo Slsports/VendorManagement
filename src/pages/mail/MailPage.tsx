@@ -4,20 +4,23 @@ import { Inbox, PenLine, Search } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useViewAs } from '@/hooks/useViewAs'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { listMailboxes, listThreads, ORDERS, type ThreadFilters } from '@/services/mail'
+import { listMailboxes, listSentEmails, listThreads, ORDERS, type ThreadFilters } from '@/services/mail'
 import { listSnoozes, mySnoozes } from '@/services/snooze'
 import { listPeople } from '@/services/reviews'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { ThreadTable } from '@/components/mail/ThreadTable'
+import { SentTable } from '@/components/mail/SentTable'
 import { ComposeDialog } from '@/components/mail/ComposeDialog'
 import { Alert, Button, Select, Spinner } from '@/components/ui'
 
-const VIEWS: { value: NonNullable<ThreadFilters['view']>; label: string; help: string }[] = [
+type MailTab = NonNullable<ThreadFilters['view']> | 'sent'
+const VIEWS: { value: MailTab; label: string; help: string }[] = [
   { value: 'attention', label: 'Primary', help: 'Real correspondence: replies, reps writing to us, confirmations, invoices, shipping, questions.' },
   { value: 'offers', label: 'Promotions', help: 'Ads of any kind: specials, what is new or in stock, price lists, catalogs and newsletters. Move a conversation to teach VMS where that kind of mail from that address belongs.' },
   { value: 'freight', label: 'Freight', help: 'Freight companies: PartnerShip, Worldwide Express, Priority One, FedEx, USPS and the rest. Bills wait on the Freight page.' },
   { value: 'all', label: 'Everything', help: 'All mail, for searching.' },
+  { value: 'sent', label: 'Sent', help: 'Every email we sent, newest first. Search by who it went to (name, email address or vendor) or the subject.' },
 ]
 
 const STATUS_TABS: { value: ThreadFilters['status']; label: string }[] = [
@@ -41,7 +44,9 @@ export default function MailPage() {
   // Admins see the person chosen in the top bar (Dana, Oct 8); a choice made here wins.
   const whoDefault = viewAs.isMe ? 'mine' : viewAs.personId ?? 'all'
   const who = params.get('who') ?? whoDefault
-  const view = (params.get('view') ?? 'attention') as NonNullable<ThreadFilters['view']>
+  const tab = (params.get('view') ?? 'attention') as MailTab
+  const sent = tab === 'sent'
+  const view: NonNullable<ThreadFilters['view']> = sent ? 'all' : tab
   // Handled mail leaves every tab (Dana, Oct 8); it stays under Handled, on its vendor and on its carrier.
   const status = (params.get('status') ?? 'open') as ThreadFilters['status']
   const unmatched = params.get('unmatched') === '1'
@@ -57,7 +62,7 @@ export default function MailPage() {
   // Snooze (Dana, Oct 9): my snoozed conversations leave my lists until their time; the Snoozed tab shows
   // mine, or everyone's when looking at everyone, with who and until when.
   const q = useSupabaseQuery(async () => {
-    if (!organization || !profile) return { rows: [], snoozed: new Map<string, { until: string; who: string | null }>(), back: new Set<string>() }
+    if (!organization || !profile || sent) return { rows: [], snoozed: new Map<string, { until: string; who: string | null }>(), back: new Set<string>() }
     if (status === 'snoozed') {
       const list = await listSnoozes(organization.id, 'thread', who === 'all' ? null : who === 'mine' ? profile.id : who === 'none' ? profile.id : who)
       const rows = await listThreads(organization.id, profile.id, { view: 'all', who: 'all', status: 'all', onlyIds: [...new Set(list.map((x) => x.thread_id!))] }, 300)
@@ -70,7 +75,9 @@ export default function MailPage() {
     // back from snooze: to the top of the list
     const back = rows.filter((t) => mine.back.has(t.id))
     return { rows: [...back, ...rows.filter((t) => !mine.back.has(t.id))], snoozed: new Map<string, { until: string; who: string | null }>(), back: mine.back }
-  }, [organization?.id, profile?.id, profile?.sees_freight, view, who, status, unmatched, search, mailbox])
+  }, [organization?.id, profile?.id, profile?.sees_freight, view, who, status, unmatched, search, mailbox, sent])
+  // Sent (Dana, Oct 12): every email we sent, found by who it went to
+  const sentQ = useSupabaseQuery(async () => (organization && sent ? listSentEmails(organization.id, { mailbox, q: search }) : []), [organization?.id, sent, mailbox, search])
   const rows = q.data?.rows ?? []
 
   function setParam(key: string, value: string) {
@@ -99,15 +106,15 @@ export default function MailPage() {
       {ownBox ? <p className="mb-3 text-xs text-stone-500">{myBoxes.find((b) => b.id === mailbox)?.kind === 'legacy' ? 'The old shaverlakesports@gmail.com, forwarded here. Only you see it. Primary holds what matters; ads and spam stay under Promotions.' : 'Private: only its owner and the admin see this mail. "Share to Orders" on a conversation puts it in the shared mail.'}</p> : null}
       <div role="tablist" aria-label="Mail view" className="mb-2 flex w-full max-w-2xl overflow-x-auto rounded-xl border border-stone-200 bg-white p-1">
         {VIEWS.map((v) => (
-          <button key={v.value} type="button" role="tab" aria-selected={view === v.value}
+          <button key={v.value} type="button" role="tab" aria-selected={tab === v.value}
             onClick={() => { const next = new URLSearchParams(params); if (v.value === 'attention') next.delete('view'); else next.set('view', v.value); next.delete('status'); setParams(next, { replace: true }) }}
-            className={cn('flex-1 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold', view === v.value ? 'bg-brand text-white shadow-sm' : 'text-stone-600 hover:text-stone-900')}>
+            className={cn('flex-1 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold', tab === v.value ? 'bg-brand text-white shadow-sm' : 'text-stone-600 hover:text-stone-900')}>
             {v.label}
           </button>
         ))}
       </div>
-      <p className="mb-4 text-xs text-stone-500">{VIEWS.find((v) => v.value === view)?.help}</p>
-      <nav aria-label="Mail status" className="mb-4 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+      <p className="mb-4 text-xs text-stone-500">{VIEWS.find((v) => v.value === tab)?.help}</p>
+      {sent ? null : <nav aria-label="Mail status" className="mb-4 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <ul className="flex w-max gap-1 rounded-xl bg-stone-100 p-1">
           {STATUS_TABS.map((t) => (
             <li key={t.value}>
@@ -118,24 +125,32 @@ export default function MailPage() {
             </li>
           ))}
         </ul>
-      </nav>
+      </nav>}
       <form onSubmit={(e) => { e.preventDefault(); setParam('q', draft.trim()) }} className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
         <div className="relative flex-1 sm:min-w-72">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-stone-400" aria-hidden="true" />
-          <input type="search" value={draft} onChange={(e) => { setDraft(e.target.value); if (!e.target.value) setParam('q', '') }} placeholder="Search subjects…" aria-label="Search mail" className="h-11 w-full rounded-lg border border-stone-300 bg-white pl-9 pr-3 text-base shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-ring-brand sm:text-sm" />
+          <input type="search" value={draft} onChange={(e) => { setDraft(e.target.value); if (!e.target.value) setParam('q', '') }} placeholder={sent ? 'Who it went to, vendor or subject…' : 'Search subjects…'} aria-label="Search mail" className="h-11 w-full rounded-lg border border-stone-300 bg-white pl-9 pr-3 text-base shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-ring-brand sm:text-sm" />
         </div>
-        {ownBox ? null : <Select value={who} onChange={(e) => setParam('who', e.target.value === whoDefault ? '' : e.target.value)} aria-label="Whose mail" className="lg:w-56">
+        {ownBox || sent ? null : <Select value={who} onChange={(e) => setParam('who', e.target.value === whoDefault ? '' : e.target.value)} aria-label="Whose mail" className="lg:w-56">
           <option value="mine">Mine</option>
           <option value="all">Everyone</option>
           <option value="none">Nobody's yet</option>
           {(people.data ?? []).filter((p) => p.id !== profile?.id).map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
         </Select>}
-        <label className="flex items-center gap-2 text-sm text-stone-700">
+        {sent ? null : <label className="flex items-center gap-2 text-sm text-stone-700">
           <input type="checkbox" checked={unmatched} onChange={(e) => setParam('unmatched', e.target.checked ? '1' : '')} className="size-4 rounded border-stone-300" />
           Not filed to a vendor
-        </label>
+        </label>}
       </form>
-      {q.isLoading ? <div className="flex justify-center py-16"><Spinner label="Loading mail…" className="text-brand" /></div>
+      {sent ? (
+        sentQ.isLoading ? <div className="flex justify-center py-16"><Spinner label="Loading sent mail…" className="text-brand" /></div>
+          : sentQ.error ? <Alert variant="error">{sentQ.error}</Alert>
+          : (sentQ.data ?? []).length === 0 ? <p className="rounded-2xl border border-dashed border-stone-300 py-12 text-center text-sm text-stone-600">{search ? 'Nothing sent matches.' : 'Nothing sent yet.'}</p>
+          : <>
+              <SentTable rows={sentQ.data ?? []} />
+              {(sentQ.data ?? []).length >= 300 ? <p className="mt-2 text-xs text-stone-500">Showing the newest 300. Search to find older ones.</p> : null}
+            </>
+      ) : q.isLoading ? <div className="flex justify-center py-16"><Spinner label="Loading mail…" className="text-brand" /></div>
         : q.error ? <Alert variant="error">{q.error}</Alert>
         : rows.length === 0 ? (
           <div className="flex flex-col items-center rounded-2xl border border-dashed border-stone-300 py-16 text-center">

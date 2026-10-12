@@ -1895,3 +1895,7 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   orders also go through Supplies; TP and GP orders only to the Amazon list. Tyler will see the list once he has a login.
   Old Amazon mail in sls@gmail can't be scanned; Dana will forward Amazon confirmations to orders@ with a Gmail filter.
 - Rep lines: a line already a vendor under a longer name ("Rapala" = RAPALA - NORMARK) joins the rep group instead of asking.
+
+## Oct 12 — Sent mail
+- Mail has a **Sent** tab: every email we sent, newest first, searchable by who it went to (name, address, vendor) or
+  subject; works per mailbox (private stays private). Each vendor's Mail box has a **Sent** tab too.
