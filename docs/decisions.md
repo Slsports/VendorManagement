@@ -1754,3 +1754,4 @@ ahead. VMS keeps one task per bill, assigned to the admin, due on the pay-by dat
 and freight back for paying on time. Tasks close themselves when the bill is paid; checking one off by hand ends
 reminders for that bill. Hourly (pg_cron payment-tasks). First run made 21 tasks (Oct 14 – Jan 13). Migration 0090.
 The Freight allowances dashboard card is gone; the order's Freight allowance box stays.
+- Same day: Dana wants every early-pay discount reminded, however small (no minimum).
