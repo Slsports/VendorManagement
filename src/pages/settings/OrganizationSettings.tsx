@@ -1,6 +1,7 @@
 import { DeletedVendorNames } from '@/components/vendors/DeletedVendorNames'
 import { useAuth } from '@/hooks/useAuth'
 import { ComingSoon } from '@/components/shared/ComingSoon'
+import { LsPoReviewers } from '@/components/ordering/LsPoReviewers'
 
 export default function OrganizationSettings() {
   const { organization } = useAuth()
@@ -26,6 +27,7 @@ export default function OrganizationSettings() {
           </div>
         ))}
       </dl>
+      <LsPoReviewers organizationId={organization.id} />
       <DeletedVendorNames organizationId={organization.id} />
       <ComingSoon phase={6} title="Editing arrives with Settings">Name, legal name, timezone and defaults become editable here.</ComingSoon>
     </div>

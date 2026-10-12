@@ -42,6 +42,7 @@ const ProductSourcing = lazy(() => import('@/pages/product-sourcing/ProductSourc
 const FileManager = lazy(() => import('@/pages/file-manager/FileManager'))
 const SearchPage = lazy(() => import('@/pages/search/SearchPage'))
 const UploadInvoice = lazy(() => import('@/pages/upload/UploadInvoice'))
+const LsPoPage = lazy(() => import('@/pages/orders/LsPoPage'))
 const HelpPage = lazy(() => import('@/pages/help/HelpPage'))
 const TasksPage = lazy(() => import('@/pages/tasks/TasksPage'))
 const SettingsLayout = lazy(() => import('@/pages/settings/SettingsLayout'))
@@ -121,6 +122,7 @@ export default function App() {
                 <Route path={ROUTES.mergeReport} element={<MergeReport />} />
                 <Route path={ROUTES.orders} element={<OrderList />} />
                 <Route path={`${ROUTES.orderChecks}/:id`} element={<OrderCheckPage />} />
+                <Route path={`${ROUTES.lsPos}/:id`} element={<LsPoPage />} />
                 <Route path={`${ROUTES.orders}/:id`} element={<OrderDetail />} />
                 <Route path={`${ROUTES.orders}/:id/edit`} element={<OrderEdit />} />
                 <Route path={ROUTES.purchaseOrders} element={<PurchaseOrderList />} />

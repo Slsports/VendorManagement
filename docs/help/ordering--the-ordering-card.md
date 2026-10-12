@@ -1,7 +1,7 @@
 ---
 title: The Ordering card
 section: Ordering
-keywords: ordering, dashboard, check stock, to order, placed, confirmed, overdue, LS PO needed, reorder
+keywords: ordering, dashboard, check stock, to order, placed, confirmed, LS PO, overdue, reorder
 who: Everyone
 ---
 The **Ordering** card on the dashboard follows a vendor from "do we need anything?" to a confirmed order. It shows seven counts; click one to see its list.
@@ -12,8 +12,8 @@ The **Ordering** card on the dashboard follows a vendor from "do we need anythin
 - **Working on**: emails flagged **Working on order** while an order goes back and forth with the rep. It also says how many need an answer; **Open the full list** opens the Orders I'm working on page.
 - **Placed**: orders sent to the rep with no confirmation yet.
 - **Confirmed**: orders the vendor confirmed.
+- **LS PO**: LS POs on their way (Claude drafts, the person who placed the order approves, Trevor reviews and enters it in LS), with how many wait on you.
 - **Overdue**: confirmed orders more than 30 days past their ship date (red).
-- **LS PO needed**: confirmed orders with no LS PO yet (amber).
 
 ## How to
 1. Click a count. Its list opens across the dashboard.

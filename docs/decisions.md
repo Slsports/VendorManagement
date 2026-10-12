@@ -1769,3 +1769,15 @@ paid (like Payment History and EdenRed): 20 of the 21 closed as Paid; Rapala (Ja
 is not matched to a vendor yet. Migration 0091.
 - Same day: Motormax Toy Factory added as a new vendor (WWD route; ships out of WWD's warehouse) and WWD invoice 1786001 ($120, PO IMPORTTOYS-2-1-26) filed to it.
 - Same day: WWD only posts an invoice to pay once it has shipped to us (Dana). Lanard Toys 1787024 ($114.48) also carries PO IMPORTTOYS-2-1-26; the parked Import Toys order waits on Trevor's check of that pallet (ask Dana Tue Oct 13 pm).
+
+## Oct 12 — LS POs drafted by Claude, approved by the orderer, reviewed by Trevor
+Dana: "Once an order is marked as Placed (confirmed), Claude should create the PO and send it to the person who
+ordered it. Once they approve it, it goes to Trevor who will review the naming conventions, etc and send it to LS."
+- A confirmed order starts an LS PO draft. order-check (every minute) builds it from the vendor's confirmation (else
+  our order's lines); items matched to LS by Vendor ID/UPC in the vendor's latest sales report keep their LS name and
+  category; Claude (Sonnet) names new items per the LS category standard (docs mirror in _shared/lsStandard.ts).
+- To approve → the person who placed the order (Jarrett's orders to Jarrett, else Dana); To review → the LS PO reviewer
+  (Settings › Organization; Trevor ticked); Send to LS → until LS is connected, Download for LS / Print, enter it,
+  type the LS PO number (saved on the order). Each step is a task for that person.
+- Ordering card: the LS PO box sits after Confirmed (replaces "LS PO needed"), with how many wait on you.
+  Migration 0092.
