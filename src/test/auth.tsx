@@ -51,6 +51,7 @@ export function withAuth(role: UserRole, ui: ReactNode, initialEntries: string[]
     profileError: null,
     passwordRecoveryPending: false,
     signIn: async () => {},
+    signInWithGoogle: async () => {},
     signOut: async () => {},
     sendPasswordReset: async () => {},
     updatePassword: async () => {},

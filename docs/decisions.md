@@ -1722,3 +1722,17 @@ the confirmed lines, Dana approves it, VMS sends it and saves the PO number back
   order column names each order and its ship date; open orders without item lists are named to check by hand.
   Quantities can be changed; **Order placed** opens the order form filled in (lines included) and closes the flag.
 - Orders get an **LS PO** number box; the LS PO is made after the confirmation. Migration 0089.
+
+## Oct 12 — Sign in with Google and the staff list (Dana: "go")
+- Nick's suggestion: everyone signs in the same way through Google, no VMS passwords to manage. Dana: yes.
+- Login page gets **Sign in with Google**. Any Google account works (Tyler and Greg do not have @shaverlakesports.com
+  addresses), but only an email already on the staff list gets in: sign-ups stay off on the project, so an unknown
+  Google account is refused with "not on the staff list, ask Dana". Password login stays as the backup for everyone.
+- **Settings → Users** is the staff list: add a person (name, email, role, stores), change role, stores, deactivate,
+  send a set-password email. Roles offered: manager, buyer, viewer, uploader. Admin is never offered; only Dana is admin.
+  Adding a person creates their login through the `admin-users` Edge Function (admin-only). Existing logins
+  (Trevor, Jarrett) link to their Google account on first Google sign-in because the email matches.
+- Dana's own VMS login is billing.slsports@gmail.com, so her Google button works with that Google account, not with
+  dana@shaverlakesports.com, unless she asks to switch her login email.
+- Dana's side: create the Google sign-in credential in Google Cloud (Sonnet prompt) and switch on the Google provider
+  in Supabase. Nothing in VMS changes until then; the button shows an error from Google.

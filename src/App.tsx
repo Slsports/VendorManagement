@@ -48,6 +48,7 @@ const SettingsLayout = lazy(() => import('@/pages/settings/SettingsLayout'))
 const OrganizationSettings = lazy(() => import('@/pages/settings/OrganizationSettings'))
 const StoreSettings = lazy(() => import('@/pages/settings/StoreSettings'))
 const PlaceholderSettings = lazy(() => import('@/pages/settings/PlaceholderSettings'))
+const UserSettings = lazy(() => import('@/pages/settings/UserSettings'))
 const PartnerSettings = lazy(() => import('@/pages/settings/PartnerSettings'))
 const ReviewAssignmentSettings = lazy(() => import('@/pages/settings/ReviewAssignmentSettings'))
 const MailSettings = lazy(() => import('@/pages/settings/MailSettings'))
@@ -145,6 +146,7 @@ export default function App() {
                   <Route index element={<Navigate to="organization" replace />} />
                   <Route path="organization" element={<OrganizationSettings />} />
                   <Route path="stores" element={<StoreSettings />} />
+                  <Route path="users" element={<UserSettings />} />
                   <Route path="worldwide" element={<PartnerSettings />} />
                   <Route path="review-assignments" element={<ReviewAssignmentSettings />} />
                   <Route path="mail" element={<MailSettings />} />

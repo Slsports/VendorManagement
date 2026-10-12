@@ -23,6 +23,8 @@ export interface AuthContextValue {
   /** True after the user arrives via a password-recovery link, until they set a new password. */
   passwordRecoveryPending: boolean
   signIn: (email: string, password: string) => Promise<void>
+  /** Sends the browser to Google; Supabase links the Google account to the profile with the same email. */
+  signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
   sendPasswordReset: (email: string) => Promise<void>
   updatePassword: (newPassword: string) => Promise<void>
@@ -100,6 +102,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error
   }, [])
 
+  const signInWithGoogle = useCallback(async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${appUrl}/login`, queryParams: { prompt: 'select_account' } },
+    })
+    if (error) throw error
+  }, [])
+
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut()
     if (error) throw error
@@ -136,12 +146,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profileError,
       passwordRecoveryPending,
       signIn,
+      signInWithGoogle,
       signOut,
       sendPasswordReset,
       updatePassword,
       refreshProfile,
     }),
-    [session, data, branding, profileError, passwordRecoveryPending, signIn, signOut, sendPasswordReset, updatePassword, refreshProfile],
+    [session, data, branding, profileError, passwordRecoveryPending, signIn, signInWithGoogle, signOut, sendPasswordReset, updatePassword, refreshProfile],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
