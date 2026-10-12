@@ -12,7 +12,7 @@ When an email is about an order, create the order right from it. The email conve
 3. Fill in the add-order form (what was ordered, date, cost, placed by, PO, store) and click **Add order**.
 
 ## Other places to start from
-- **Review queue**: on a "Does this need an answer?" card, click **Create an order**.
+- **Review queue**: on a "Does this need an answer?" card, click **Remind me to order** to put the vendor on the Ordering card first.
 - **Orders I'm working on**: when you mark one complete, the message that pops up has a link **Add order from this email**.
 
 ## Good to know

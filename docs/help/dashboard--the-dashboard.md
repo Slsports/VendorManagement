@@ -13,7 +13,7 @@ The dashboard is the first page after you sign in. Each box shows only its name 
 4. Click any line in the list to open that order, email, bill or check.
 
 ## Good to know
-- The four number boxes at the top are about orders: Open orders, Overdue orders, Payments due and Future-dated orders.
+- The **Ordering** card follows orders from "do we need it?" to confirmed (see "The Ordering card"). Two number boxes count **Payments due** and **Future-dated orders**.
 - The cards are: My tasks, Mail for you, Confirmations & invoices to review, Artwork approvals, Orders I'm working on, Freight allowances, Review queue and Freight bills.
 - Some cards only show when they have something in them (confirmations and invoices, artwork, freight allowances), and Freight bills only shows for people who handle freight.
 - Task reminders that are due show at the very top until you deal with them. See the Tasks section.

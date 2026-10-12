@@ -3,7 +3,7 @@
 
 export const HELP_SECTIONS = [
   'Getting started', 'Dashboard', 'Tasks', 'Mail', 'Vendors', 'Documents', 'Rep groups & lines',
-  'Orders', 'Order paperwork', 'Freight', 'Payments', 'Review queue', 'Reports', 'Settings',
+  'Ordering', 'Orders', 'Order paperwork', 'Freight', 'Payments', 'Review queue', 'Reports', 'Settings',
 ] as const
 
 export interface HelpArticle {

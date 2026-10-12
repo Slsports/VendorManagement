@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Check, ClipboardPlus, Mail, MessageCircleReply } from 'lucide-react'
+import { Check, ClipboardList, Mail, MessageCircleReply, PackageSearch } from 'lucide-react'
 import { answerMailReply } from '@/services/mail'
 import { supabase } from '@/lib/supabase'
-import { AddOrderDialog } from '@/components/orders/AddOrderDialog'
+import { FlagDialog } from '@/components/ordering/FlagButtons'
+import { FLAG_PROMPT, type OrderingStage } from '@/services/ordering'
 import { ROUTES } from '@/lib/constants'
 import { errorMessage } from '@/lib/utils'
 import type { ReviewItem } from '@/types'
@@ -19,15 +20,15 @@ interface Details { thread_id?: string; from?: string; subject?: string | null; 
 export function MailReplyReview({ item, canEdit, onDone }: { item: ReviewItem; canEdit: boolean; onDone: () => void | Promise<void> }) {
   const d = (item.details ?? {}) as Details
   const [busy, setBusy] = useState(false)
-  // "Create an order" right from the card (Dana, Oct 11): the order is filed to the email's vendor and linked to it.
-  const [orderFor, setOrderFor] = useState<{ id: string; name: string } | null>(null)
-  async function createOrder() {
+  // Dana, Oct 11: from the card, flag the email's vendor "Check if we need it" or "Remind me to order" (the Ordering card).
+  const [orderFor, setOrderFor] = useState<{ vendor: { id: string; name: string; assigned_buyer_id: string | null }; stage: OrderingStage } | null>(null)
+  async function flag(stage: OrderingStage) {
     if (!d.thread_id) return
-    const { data, error } = await supabase.from('email_threads').select('vendor:vendors(id, name)').eq('id', d.thread_id).maybeSingle()
-    const vendor = (data?.vendor ?? null) as unknown as { id: string; name: string } | null
+    const { data, error } = await supabase.from('email_threads').select('vendor:vendors!email_threads_vendor_id_fkey(id, name, assigned_buyer_id)').eq('id', d.thread_id).maybeSingle()
+    const vendor = (data?.vendor ?? null) as unknown as { id: string; name: string; assigned_buyer_id: string | null } | null
     if (error) return toast.error(errorMessage(error))
-    if (!vendor) return toast.error('File this email to a vendor first (Open the email › File to a vendor), then create the order.')
-    setOrderFor(vendor)
+    if (!vendor) return toast.error('File this email to a vendor first (Open the email › File to a vendor).')
+    setOrderFor({ vendor, stage })
   }
   async function answer(needs: boolean) {
     setBusy(true)
@@ -53,10 +54,11 @@ export function MailReplyReview({ item, canEdit, onDone }: { item: ReviewItem; c
         <div className="flex flex-wrap gap-2 pt-1">
           <Button size="sm" loading={busy} onClick={() => void answer(true)} leftIcon={<MessageCircleReply className="size-4" aria-hidden="true" />}>Needs an answer</Button>
           <Button size="sm" variant="secondary" disabled={busy} onClick={() => void answer(false)} leftIcon={<Check className="size-4" aria-hidden="true" />}>No answer needed</Button>
-          {d.thread_id ? <Button size="sm" variant="secondary" disabled={busy} onClick={() => void createOrder()} leftIcon={<ClipboardPlus className="size-4" aria-hidden="true" />}>Create an order</Button> : null}
+          {d.thread_id ? <Button size="sm" variant="secondary" disabled={busy} onClick={() => void flag('check')} leftIcon={<PackageSearch className="size-4" aria-hidden="true" />}>{FLAG_PROMPT.check.button}</Button> : null}
+          {d.thread_id ? <Button size="sm" variant="secondary" disabled={busy} onClick={() => void flag('to_order')} leftIcon={<ClipboardList className="size-4" aria-hidden="true" />}>{FLAG_PROMPT.to_order.button}</Button> : null}
         </div>
       ) : null}
-      {orderFor ? <AddOrderDialog vendor={orderFor} threadId={d.thread_id} onClose={() => setOrderFor(null)} /> : null}
+      {orderFor ? <FlagDialog vendor={orderFor.vendor} stage={orderFor.stage} threadId={d.thread_id} assignedBuyerId={orderFor.vendor.assigned_buyer_id} onClose={() => setOrderFor(null)} /> : null}
     </div>
   )
 }

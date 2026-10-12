@@ -66,4 +66,6 @@ export type OrderCheck = Tables<'order_checks'>
 export type { OrderCheckStatus } from './database'
 export type Mailbox = Tables<'mailboxes'>
 export type Task = Tables<'tasks'>
+export type OrderingItem = Tables<'ordering_items'>
+export type SalesReport = Tables<'sales_reports'>
 export type RepeatUnit = NonNullable<Task['repeat_unit']>

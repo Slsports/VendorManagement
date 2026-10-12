@@ -14,4 +14,4 @@ These four pages are in the menu but are not built yet. Each one shows a "coming
 
 ## Until then
 - Track credits on the order itself (**Edit** › Credits due, Credit notes, Credits received).
-- See what is coming with the Dashboard boxes **Open orders**, **Overdue orders** and **Future-dated orders**.
+- See what is coming on the dashboard: the **Ordering** card (Placed, Confirmed, Overdue) and the **Future-dated orders** box.

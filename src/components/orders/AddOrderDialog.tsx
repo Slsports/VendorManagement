@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import { X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { createOrder } from '@/services/orders'
+import { addOrderLines, createOrder } from '@/services/orders'
 import { listPeople } from '@/services/reviews'
 import { linkThreadToOrder } from '@/services/mail'
 import { PAID_VIA_LABELS } from '@/lib/vendors'
@@ -18,13 +18,20 @@ const today = () => new Date().toISOString().slice(0, 10)
  * An order typed in after the fact (Tyler bought hats online with the company card). The short version:
  * Fable's order plan adds line items, sending and confirmation checks on top of the same record.
  */
-export function AddOrderDialog({ vendor, threadId, onClose, onSaved }: { vendor: { id: string; name: string }; threadId?: string; onClose: () => void; onSaved?: (order: Order) => void }) {
+/** Filled in from a suggested order (Ordering card, "Order placed"): what, cost and the item lines. */
+export interface OrderPrefill {
+  description: string
+  cost: number | null
+  lines: { vendor_item_id: string | null; description: string; quantity: number; unit_cost: number }[]
+}
+
+export function AddOrderDialog({ vendor, threadId, prefill, onClose, onSaved }: { vendor: { id: string; name: string }; threadId?: string; prefill?: OrderPrefill; onClose: () => void; onSaved?: (order: Order) => void | Promise<void> }) {
   const { organization, profile, stores } = useAuth()
   const people = useSupabaseQuery(async () => (organization ? listPeople(organization.id) : []), [organization?.id])
   const [orderDate, setOrderDate] = useState(today())
-  const [description, setDescription] = useState('')
+  const [description, setDescription] = useState(prefill?.description ?? '')
   const [storeCodes, setStoreCodes] = useState<string[]>([])
-  const [cost, setCost] = useState('')
+  const [cost, setCost] = useState(prefill?.cost ? prefill.cost.toFixed(2) : '')
   const [placedBy, setPlacedBy] = useState(profile?.full_name ?? '')
   const [poNumber, setPoNumber] = useState('')
   const [takenBy, setTakenBy] = useState('')
@@ -69,8 +76,14 @@ export function AddOrderDialog({ vendor, threadId, onClose, onSaved }: { vendor:
         created_by: profile?.id ?? null,
       })
       if (threadId) await linkThreadToOrder(threadId, order.id)
+      if (prefill?.lines.length) {
+        await addOrderLines(prefill.lines.map((l, i) => ({
+          organization_id: organization.id, order_id: order.id, sort_order: i, vendor_item_id: l.vendor_item_id, description: l.description,
+          quantity: l.quantity, unit_cost: l.unit_cost,
+        })))
+      }
       toast.success(`Order added to ${vendor.name}`)
-      onSaved?.(order)
+      await onSaved?.(order)
       onClose()
     } catch (err) {
       toast.error(errorMessage(err))
@@ -121,6 +134,7 @@ export function AddOrderDialog({ vendor, threadId, onClose, onSaved }: { vendor:
           </div>
           <FormField label="Notes" htmlFor="ao-notes" className="sm:col-span-2"><Textarea id="ao-notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} /></FormField>
           {threadId ? <p className="text-xs text-stone-500 sm:col-span-2">The email conversation is linked to this order.</p> : null}
+          {prefill?.lines.length ? <p className="text-xs text-stone-500 sm:col-span-2">{prefill.lines.length} item line{prefill.lines.length === 1 ? '' : 's'} from the suggested order are added to the order.</p> : null}
         </div>
         <div className="flex justify-end gap-2 border-t border-stone-200 px-4 py-3">
           <Button type="button" variant="ghost" onClick={onClose} disabled={saving}>Cancel</Button>

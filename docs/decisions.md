@@ -1707,3 +1707,18 @@ Dana: the LS PO is created "after its been confirmed", so it matches what the ve
 card, a confirmed order with no LS PO is marked "LS PO needed" until its PO number is typed on the order or the LS PO
 file is saved to its LS POs folder. Once LS is connected, the order gets "Create PO in LS": VMS builds the PO from
 the confirmed lines, Dana approves it, VMS sends it and saves the PO number back.
+
+## Oct 12 — Ordering card built (Dana: "Go on all of it")
+- Dashboard **Ordering** card with six counts: Check stock, To order, Placed (sent, no confirmation), Confirmed,
+  Overdue (confirmed, 30+ days past ship date, red), LS PO needed (confirmed, no LS PO number or document, amber).
+  It replaces the Open orders and Overdue orders boxes; Payments due and Future-dated stay boxes.
+- Flags **Check if we need it** / **Remind me to order** on the vendor page (new Ordering box) and on "Does this need
+  an answer?" cards (they replace that card's "Create an order"). Who handles it starts as the vendor's assigned buyer.
+- **Upload sales report** on the vendor page: VMS reads the raw LS Analytics export, formats it per spec v49 in the
+  browser (same tabs and look as the reports made by hand on Oct 11), files it in Sales reports and keeps the items.
+  Apparel gender/size grouping (spec steps 1–6) is not automatic yet.
+- **Suggested order** = Need (sold − in stock) minus what is coming in: confirmed orders (confirmation lines),
+  shipped/received not yet entered in LS (invoice lines), placed orders (our order lines), matched on Vendor ID. On
+  order column names each order and its ship date; open orders without item lists are named to check by hand.
+  Quantities can be changed; **Order placed** opens the order form filled in (lines included) and closes the flag.
+- Orders get an **LS PO** number box; the LS PO is made after the confirmation. Migration 0089.

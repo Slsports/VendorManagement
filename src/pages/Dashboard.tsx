@@ -16,12 +16,12 @@ import { DashboardCards } from '@/components/dashboard/DashboardCards'
 import { CountCard } from '@/components/dashboard/CountCard'
 import { OrderCountCard } from '@/components/dashboard/OrderCountCard'
 import { TasksCard } from '@/components/tasks/TasksCard'
+import { OrderingCard } from '@/components/ordering/OrderingCard'
 import { TaskNotices } from '@/components/tasks/TaskNotices'
 
 // The order number boxes (ids kept from the first dashboard so saved layouts still match).
+// Open and Overdue now live on the Ordering card (Dana, Oct 12); Payments due and Future-dated stay boxes.
 const ORDER_BOXES: { id: string; view: OrderView }[] = [
-  { id: 'kpi_open_orders', view: 'open' },
-  { id: 'kpi_overdue_orders', view: 'overdue' },
   { id: 'kpi_payments_due', view: 'payments_due' },
   { id: 'kpi_future_dated_orders', view: 'future' },
 ]
@@ -54,6 +54,7 @@ export default function DashboardPage() {
         items={[
         // each box is a count; click it for the orders (Dana, Oct 11)
         ...ORDER_BOXES.map((v) => ({ id: v.id, label: ORDER_VIEW_LABELS[v.view].title, size: 'tile' as const, node: <OrderCountCard view={v.view} /> })),
+        { id: 'ordering', label: 'Ordering', node: <OrderingCard /> },
         { id: 'tasks', label: 'My tasks', node: <TasksCard /> },
         { id: 'mail', label: 'Mail for you', node: <MailForYouPanel /> },
         { id: 'paperwork', label: 'Confirmations & invoices to review', node: <PaperworkPanel /> },
