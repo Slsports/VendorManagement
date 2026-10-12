@@ -1767,3 +1767,4 @@ Dana's sheet "10-8-26_WORLDWIDE_PAYMENT_96778.41": 58 invoices ($98,778.41 invoi
 discounts), all already in VMS, marked paid 10/8 from the sheet. Pay-by reminders now treat a payment-sheet date as
 paid (like Payment History and EdenRed): 20 of the 21 closed as Paid; Rapala (Jan 13, 6%) stays. Motormax Toy Factory
 is not matched to a vendor yet. Migration 0091.
+- Same day: Motormax Toy Factory added as a new vendor (WWD route; ships out of WWD's warehouse) and WWD invoice 1786001 ($120, PO IMPORTTOYS-2-1-26) filed to it.
