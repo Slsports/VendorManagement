@@ -59,19 +59,20 @@ export function OrderingCard() {
   const loading = flags.isLoading || orders.isLoading || working.isLoading
 
   return (
-    <div className={cn('rounded-2xl border bg-white shadow-sm', open ? 'col-span-full border-brand/40' : 'border-stone-200')}>
+    // always the full width of the dashboard, so the seven counts sit side by side (Dana, Oct 12: squeezed on the iPad)
+    <div className={cn('col-span-full rounded-2xl border bg-white shadow-sm', open ? 'border-brand/40' : 'border-stone-200')}>
       <div className="px-5 pt-4">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-stone-900"><ShoppingCart className="size-4 text-brand" aria-hidden="true" /> Ordering</h3>
       </div>
-      <div className="grid grid-cols-4 gap-1 p-3 sm:grid-cols-7">
+      <div className="grid grid-cols-4 items-start gap-1 p-3 md:grid-cols-7">
         {ROWS.map((r) => {
           const n = lists[r.id].length
           return (
             <button key={r.id} type="button" onClick={() => setOpen(open === r.id ? null : r.id)} aria-expanded={open === r.id}
               className={cn('rounded-xl px-2 py-2 text-center hover:bg-stone-50', open === r.id && 'bg-stone-100')}>
               <span className={cn('block text-2xl font-semibold tracking-tight', loading ? 'text-stone-300' : r.id === 'overdue' && n ? 'text-red-700' : 'text-stone-900')}>{loading ? '…' : n}</span>
-              {r.id === 'working' && needsAnswer ? <span className="block text-[11px] font-semibold text-amber-700">{needsAnswer} need{needsAnswer === 1 ? 's' : ''} an answer</span> : null}
               <span className="block text-xs text-stone-600">{r.label}</span>
+              {r.id === 'working' && needsAnswer ? <span className="block text-[11px] font-semibold text-amber-700">{needsAnswer} need{needsAnswer === 1 ? 's' : ''} an answer</span> : null}
             </button>
           )
         })}

@@ -1760,3 +1760,4 @@ The Freight allowances dashboard card is gone; the order's Freight allowance box
 Dana's iPad kept an old copy of VMS (signing out does not reload the app). VMS now checks every 5 minutes and when the
 app comes back into view whether a newer version is live, and shows a green bar "A new version of VMS is ready. Tap
 here to refresh." at the top.
+- Same day: the Ordering card always spans the full dashboard width (seven counts side by side; two rows on phones).
