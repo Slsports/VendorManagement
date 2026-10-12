@@ -1736,3 +1736,7 @@ the confirmed lines, Dana approves it, VMS sends it and saves the PO number back
   dana@shaverlakesports.com, unless she asks to switch her login email.
 - Dana's side: create the Google sign-in credential in Google Cloud (Sonnet prompt) and switch on the Google provider
   in Supabase. Nothing in VMS changes until then; the button shows an error from Google.
+
+## Oct 12 — Dana's VMS login is dana@shaverlakesports.com
+- Switched from billing.slsports@gmail.com (same profile, same password). Dana is moving her Supabase, Vercel and GitHub
+  account emails to dana@ as well; Claude stays on billing.slsports.
