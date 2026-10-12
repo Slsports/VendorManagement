@@ -1761,3 +1761,9 @@ Dana's iPad kept an old copy of VMS (signing out does not reload the app). VMS n
 app comes back into view whether a newer version is live, and shows a green bar "A new version of VMS is ready. Tap
 here to refresh." at the top.
 - Same day: the Ordering card always spans the full dashboard width (seven counts side by side; two rows on phones).
+
+## Oct 12 — WWD payment 10-8-26 posted; payment sheets count as paid for reminders
+Dana's sheet "10-8-26_WORLDWIDE_PAYMENT_96778.41": 58 invoices ($98,778.41 invoiced, $96,347.48 after $2,430.93 in
+discounts), all already in VMS, marked paid 10/8 from the sheet. Pay-by reminders now treat a payment-sheet date as
+paid (like Payment History and EdenRed): 20 of the 21 closed as Paid; Rapala (Jan 13, 6%) stays. Motormax Toy Factory
+is not matched to a vendor yet. Migration 0091.
