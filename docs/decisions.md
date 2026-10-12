@@ -1899,3 +1899,16 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 ## Oct 12 — Sent mail
 - Mail has a **Sent** tab: every email we sent, newest first, searchable by who it went to (name, address, vendor) or
   subject; works per mailbox (private stays private). Each vendor's Mail box has a **Sent** tab too.
+
+## Oct 12 — Worldwide show formats, show list matching
+- **Old format (through Spring 2026):** Toy & Home show Sunday–Monday (a day before the main show); main show
+  Tuesday–Thursday. Mondays also had the corporate meetings, the Hot Show and the verbal meetings (specials put up and bid
+  on until none are left: usually great deals).
+- **New format (since August/September 2026):** no separate Toy & Home show; we are there Monday–Thursday. Monday is still
+  corporate meetings, Hot Show and verbals. The Jan 25–28, 2027 show is Monday–Thursday.
+- Show lists are tied to vendors by name, other names (aliases), or Claude (sure → tied; maybe → "Show list lines" card).
+  "Royal Deluxe" on the lists is ROYAL DELUXE ACCESSORIES. Booth holders stay as listed: Manufacturers Exchange is Sunny
+  Lakhani (Bluestone, Becker Gloves, Silver Star…); Royal Deluxe was in his booth at Spring 2025, and Sunny took the
+  Royal Deluxe toy order after Spring 2026 (likely while Perry was not at the show). Sunny's Royal Deluxe emails are
+  tagged to Royal Deluxe Accessories.
+- Toy & Home exhibitor lists: Dana is sending the ones she can find; load them and run the matching again.

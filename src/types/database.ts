@@ -714,6 +714,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      resolve_show_line: { Args: { p_item: string; p_yes: boolean }; Returns: undefined }
       list_sent_emails: { Args: { p_org: string; p_mailbox?: string | null; p_vendor?: string | null; p_q?: string | null; p_limit?: number }; Returns: { id: string; thread_id: string; to_emails: string[]; cc_emails: string[]; subject: string | null; snippet: string | null; sent_at: string; vendor_id: string | null; vendor_name: string | null; sent_by_name: string | null; has_attachments: boolean }[] }
       amazon_monthly: { Args: { p_org: string; p_months?: number }; Returns: { month: string; store_code: string; person_name: string; orders: number; total: number }[] }
       resolve_rep_line: { Args: { p_item: string; p_action: string }; Returns: string | null }
