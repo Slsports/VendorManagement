@@ -1,9 +1,11 @@
 // sent-orders: orders we email to vendors become orders (Dana, Oct 12). Runs every minute from pg_cron (header
-// x-cron-secret). Our sent Orders mail (not private mailboxes), 12 months back and then as it arrives:
+// x-cron-secret). Our sent mail, 12 months back and then as it arrives: orders@ and the personal mailboxes (Jarrett sent
+// orders from jarrett@ for a while). Nothing from a private email is copied but the order itself (Claude's own words):
 //   1. sort  — Claude (cheapest model) picks the emails that place an order, 30 at a time
 //   2. read  — Claude reads each one: the email text and its attachments (PDF, picture, or order writer spreadsheet)
 //   3. file  — the order on file with the same PO (or same vendor, date and total) gets the email, its file and its
-//              lines; otherwise a Placed order is added (sent in the last 120 days; older ones are only listed).
+//              lines; otherwise a Placed order is added (Dana: long buying cycle, so every age; older than 120 days
+//              notes "Added from sent mail, check status.").
 //              Confirmations and invoices waiting for their order are matched again.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import * as XLSX from 'npm:xlsx@0.18.5'
@@ -14,7 +16,7 @@ import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
 const TIME_BUDGET_MS = 100_000
 const MAX_FILE = 15 * 1024 * 1024
 const BACK_DAYS = 365
-const CREATE_DAYS = 120
+const CHECK_STATUS_DAYS = 120
 
 interface Att { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; storage_path: string | null; vendor_link_id: string | null }
 interface Mail { id: string; organization_id: string; gmail_id: string; gmail_box: string | null; vendor_id: string | null; subject: string | null; body_text: string | null; to_emails: string[]; received_at: string; attachments: Att[] }
@@ -48,7 +50,7 @@ const looksLikeJunk = (a: Att) => /^(image\d*|outlook|logo|signature|att\d+)\b/i
 
 /** Sort a batch of our sent mail: which emails place an order. */
 async function sortStep(db: SupabaseClient) {
-  const { data } = await db.from('emails').select(SELECT).eq('direction', 'out').is('mailbox_id', null).is('copy_of', null).is('order_scanned_at', null).is('order_scan', null)
+  const { data } = await db.from('emails').select(SELECT).eq('direction', 'out').is('copy_of', null).is('order_scanned_at', null).is('order_scan', null)
     .gte('received_at', since()).order('received_at', { ascending: false }).limit(30)
   const mails = (data ?? []) as unknown as Mail[]
   if (!mails.length) return 0
@@ -155,9 +157,6 @@ async function readStep(db: SupabaseClient, m: Mail) {
       await db.rpc('order_checks_refind', { p_org: m.organization_id, p_vendor: m.vendor_id })
       return await finish(db, m, { result: adding ? 'added_to' : 'linked', order_id: orderId, po: r.po_number })
     }
-    if (day(m.received_at) < plusDays(day(new Date().toISOString()), -CREATE_DAYS)) {
-      return await finish(db, m, { result: 'old_not_in_vms', po: r.po_number, total: r.total, description: r.description, sent_on: day(m.received_at) })
-    }
     const created = await createOrder(db, m, r)
     await fileOn(db, m, created, r, used, true)
     await db.rpc('order_checks_refind', { p_org: m.organization_id, p_vendor: m.vendor_id })
@@ -215,7 +214,7 @@ async function createOrder(db: SupabaseClient, m: Mail, r: SentOrderReading): Pr
     po_number: r.po_number, description: r.description, est_cost: r.total ?? (lineTotal > 0 ? Math.round(lineTotal * 100) / 100 : null),
     est_ship_date: /^\d{4}-\d{2}-\d{2}$/.test(r.ship_date ?? '') ? r.ship_date : null,
     placed_by: who?.full_name ?? r.placed_by, placed_by_id: who?.id ?? null, store_codes: store,
-    notes: ['Added from the order we emailed the vendor.', r.note].filter(Boolean).join(' '),
+    notes: [day(m.received_at) < plusDays(day(new Date().toISOString()), -CHECK_STATUS_DAYS) ? 'Added from sent mail, check status.' : 'Added from sent mail.', r.note].filter(Boolean).join(' '),
   }).select('id').single()
   if (error) throw new Error(error.message)
   return data.id

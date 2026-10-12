@@ -1801,3 +1801,7 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - Attn: only Dana, Jarrett or Tyler.
 - Wanted (proposal pending go): when Claude reads a vendor's confirmation or invoice and any of this is wrong, it
   drafts a correction email to the sender and the rep (or the rep alone).
+- Same day (Dana, "Go on all 3"): orders not in VMS are added whatever their age (long buying cycle; February orders
+  are still coming); older than 4 months they note "Added from sent mail, check status." The scan also reads sent mail
+  in the personal mailboxes (Jarrett sent orders from jarrett@ for a while); only the order is shared, the email stays
+  private. Jarrett's mailbox is pulled back 12 months (it started at Jul 13).
