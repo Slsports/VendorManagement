@@ -1781,3 +1781,13 @@ ordered it. Once they approve it, it goes to Trevor who will review the naming c
   type the LS PO number (saved on the order). Each step is a task for that person.
 - Ordering card: the LS PO box sits after Confirmed (replaces "LS PO needed"), with how many wait on you.
   Migration 0092.
+
+## Oct 12 — Orders we email to vendors become orders
+Jarrett's Mack's Lure early-buy order (9/23, order writer attached, PO MACKS092326) was in Mail but never an order, so
+its confirmation (#90351) waited for an order. Dana: "Go and definitely scan the email too". New function sent-orders
+(every minute): Claude (Haiku) sorts our sent Orders mail (12 months back, then new) for emails that place an order;
+Claude (Sonnet) reads the email text and attachments (PDF, picture, order writer spreadsheet as text); the order on
+file (same PO, else same vendor ±5 days and total) gets the email, file (Our orders) and lines; otherwise a new Open
+(Placed) order, placed_by from the signature. Sent more than 120 days ago and not in VMS: listed only
+(emails.order_scan = old_not_in_vms) for Dana. Confirmations waiting for an order are matched again
+(order_checks_refind). Private mailboxes are not read unless shared to Orders. Migration 0093.
