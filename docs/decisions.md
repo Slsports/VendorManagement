@@ -1791,3 +1791,13 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 (Placed) order, placed_by from the signature. Sent more than 120 days ago and not in VMS: listed only
 (emails.order_scan = old_not_in_vms) for Dana. Confirmations waiting for an order are matched again
 (order_checks_refind). Private mailboxes are not read unless shared to Orders. Migration 0093.
+
+## Oct 12 — How vendors must address us (Dana)
+- Name: "Shaver Lake Sports" or "Shaver Lake Sports Inc" (incorporated 2004; never "LLC").
+- Ship to (SLS): 41777 Tollhouse Road, Shaver Lake, CA 93664. 41698 Tollhouse Rd is the old SLS address (until
+  2019) and is now the Hardware store, across the street.
+- Bill to (when not billed through WWD): P.O. Box 60, Shaver Lake, CA 93664.
+- Phone: always the store, 559-841-2740.
+- Attn: only Dana, Jarrett or Tyler.
+- Wanted (proposal pending go): when Claude reads a vendor's confirmation or invoice and any of this is wrong, it
+  drafts a correction email to the sender and the rep (or the rep alone).
