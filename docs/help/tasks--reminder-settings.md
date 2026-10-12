@@ -10,8 +10,8 @@ Each person picks how they get task reminders: on the dashboard, by email, by te
 1. Click **Tasks** in the menu.
 2. Scroll to **How I get reminders** at the bottom.
 3. Tick **On my dashboard**, **By email** and/or **By text**.
-4. For texts, type your **Cell number**. The small print under it says what you are agreeing to: reminder texts only, message and data rates may apply, reply STOP or untick **By text** to stop.
-5. Click **Save**.
+4. For texts, type your **Cell number**. The small print under it says what you are agreeing to: reminder texts only, how often, message and data rates may apply, reply STOP or untick **By text** to stop, with links to the Terms and Privacy Policy.
+5. Click **Yes, sign me up for texts** (it says **Save** when you are only changing the other boxes).
 
 ## Good to know
 - Everyone starts with dashboard and email.

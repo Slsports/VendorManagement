@@ -146,7 +146,7 @@ class Sender {
         const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
           method: 'POST',
           headers: { Authorization: `Basic ${btoa(`${sid}:${token}`)}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({ To: to, From: from, Body: sms.slice(0, 300) }),
+          body: new URLSearchParams({ To: to, From: from, Body: `${sms.slice(0, 280)} Reply STOP to stop.` }),
         })
         if (!res.ok) errors.push(`text: ${res.status} ${(await res.text()).slice(0, 200)}`)
       }

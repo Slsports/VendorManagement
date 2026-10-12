@@ -182,13 +182,22 @@ function ReminderSettings() {
         <div className="mt-3 max-w-xs">
           <label htmlFor="remind-phone" className="block text-sm font-medium text-stone-800">Cell number</label>
           <Input id="remind-phone" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="559-555-1234" className="mt-1" />
-          <p className="mt-1.5 text-xs text-stone-500">
-            By saving with this box checked you agree to receive task reminder texts from Shaver Lake Sports VMS at this number.
-            Message and data rates may apply. Reply STOP to stop or untick By text here any time.
-          </p>
+          <div className="mt-2 space-y-1 text-xs text-stone-500">
+            <p><b>What you get:</b> task reminders and a note when a task you handed off is finished, from Shaver Lake Sports VMS. Nothing promotional.</p>
+            <p><b>How often:</b> varies with your tasks, typically a few texts a week; one text per reminder.</p>
+            <p><b>Standard rates:</b> message and data rates may apply depending on your mobile plan.</p>
+            <p><b>Help &amp; stop:</b> reply HELP for help or STOP to cancel any time, or untick By text here and save.</p>
+            <p>
+              By entering your number, ticking By text and clicking the button below, you agree to receive these texts. Consent is not a condition of employment.{' '}
+              <a href="/sms/terms.html" target="_blank" rel="noreferrer" className="text-brand underline">Terms of Service</a> ·{' '}
+              <a href="/sms/privacy.html" target="_blank" rel="noreferrer" className="text-brand underline">Privacy Policy</a>
+            </p>
+          </div>
         </div>
       ) : null}
-      <Button size="sm" className="mt-3" disabled={!changed} loading={busy} onClick={() => void save()}>Save</Button>
+      <Button size="sm" className="mt-3" disabled={!changed} loading={busy} onClick={() => void save()}>
+        {text && !profile.remind_text ? 'Yes, sign me up for texts' : 'Save'}
+      </Button>
     </section>
   )
 }
