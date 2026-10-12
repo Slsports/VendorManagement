@@ -68,4 +68,5 @@ export type Mailbox = Tables<'mailboxes'>
 export type Task = Tables<'tasks'>
 export type OrderingItem = Tables<'ordering_items'>
 export type SalesReport = Tables<'sales_reports'>
+export type LsPo = Tables<'ls_pos'>
 export type RepeatUnit = NonNullable<Task['repeat_unit']>

@@ -7,7 +7,7 @@ who: Admin, managers and buyers
 This page lists every conversation you flagged "Working on order", with where each one stands.
 
 ## How to
-1. On the dashboard, open **Orders I'm working on** and click **Open the list**.
+1. On the dashboard, on the **Ordering** card, click **Working on**, then **Open the full list**.
 2. Each row shows the status, the vendor, the subject and who wrote last. Click the subject to open the email.
 3. Click **Working** when you are busy on it yourself, or **Completed** when the order is done.
 4. After **Completed**, click **Add order from this email** in the message to record the order.

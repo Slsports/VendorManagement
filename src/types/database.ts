@@ -130,7 +130,7 @@ export type Database = {
           is_active: boolean
           created_at: string
           updated_at: string
-       ; email_signature: string | null; places_orders: boolean; sees_freight: boolean; dashboard_layout: Json | null; remind_dashboard: boolean; remind_email: boolean; remind_text: boolean; mobile_phone: string | null }
+       ; email_signature: string | null; places_orders: boolean; sees_freight: boolean; dashboard_layout: Json | null; remind_dashboard: boolean; remind_email: boolean; remind_text: boolean; mobile_phone: string | null; reviews_ls_pos: boolean }
         Insert: {
           id: string
           organization_id: string
@@ -142,7 +142,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; places_orders?: boolean; sees_freight?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null }
+       ; email_signature?: string | null; places_orders?: boolean; sees_freight?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
         Update: {
           id?: string
           organization_id?: string
@@ -154,7 +154,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; places_orders?: boolean; sees_freight?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null }
+       ; email_signature?: string | null; places_orders?: boolean; sees_freight?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
         Relationships: [
           {
             foreignKeyName: 'profiles_organization_id_fkey'
@@ -495,6 +495,19 @@ export type Database = {
           { foreignKeyName: 'sales_reports_created_by_fkey'; columns: ['created_by']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
         ]
       }
+      ls_pos: {
+        Row: { id: string; organization_id: string; order_id: string; vendor_id: string | null; status: 'drafting' | 'to_approve' | 'to_review' | 'ready' | 'sent'; approver_id: string | null; reviewer_id: string | null; store_code: string | null; lines: Json; draft_note: string | null; draft_error: string | null; working_at: string | null; approved_by: string | null; approved_at: string | null; reviewed_by: string | null; reviewed_at: string | null; ls_po_number: string | null; sent_at: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; order_id: string; vendor_id?: string | null; status?: 'drafting' | 'to_approve' | 'to_review' | 'ready' | 'sent'; approver_id?: string | null; reviewer_id?: string | null; store_code?: string | null; lines?: Json; draft_note?: string | null; draft_error?: string | null; working_at?: string | null; approved_by?: string | null; approved_at?: string | null; reviewed_by?: string | null; reviewed_at?: string | null; ls_po_number?: string | null; sent_at?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; order_id?: string; vendor_id?: string | null; status?: 'drafting' | 'to_approve' | 'to_review' | 'ready' | 'sent'; approver_id?: string | null; reviewer_id?: string | null; store_code?: string | null; lines?: Json; draft_note?: string | null; draft_error?: string | null; working_at?: string | null; approved_by?: string | null; approved_at?: string | null; reviewed_by?: string | null; reviewed_at?: string | null; ls_po_number?: string | null; sent_at?: string | null; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'ls_pos_order_id_fkey'; columns: ['order_id']; isOneToOne: false; referencedRelation: 'orders'; referencedColumns: ['id'] },
+          { foreignKeyName: 'ls_pos_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+          { foreignKeyName: 'ls_pos_approver_id_fkey'; columns: ['approver_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+          { foreignKeyName: 'ls_pos_reviewer_id_fkey'; columns: ['reviewer_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+          { foreignKeyName: 'ls_pos_approved_by_fkey'; columns: ['approved_by']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+          { foreignKeyName: 'ls_pos_reviewed_by_fkey'; columns: ['reviewed_by']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+        ]
+      }
       tasks: {
         Row: { id: string; organization_id: string; title: string; notes: string | null; due_date: string | null; remind_at: string | null; assigned_to: string; created_by: string | null; vendor_id: string | null; carrier_id: string | null; order_id: string | null; thread_id: string | null; rep_group_id: string | null; tag_other: string | null; repeat_every: number | null; repeat_unit: 'day' | 'week' | 'month' | 'year' | null; repeat_days: number[]; repeat_until: string | null; repeat_of: string | null; reminded_at: string | null; reminder_seen_at: string | null; remind_error: string | null; done_at: string | null; done_by: string | null; done_note: string | null; done_notified_at: string | null; done_seen_at: string | null; created_at: string; updated_at: string }
         Insert: { id?: string; organization_id: string; title: string; notes?: string | null; due_date?: string | null; remind_at?: string | null; assigned_to: string; created_by?: string | null; vendor_id?: string | null; carrier_id?: string | null; order_id?: string | null; thread_id?: string | null; rep_group_id?: string | null; tag_other?: string | null; repeat_every?: number | null; repeat_unit?: 'day' | 'week' | 'month' | 'year' | null; repeat_days?: number[]; repeat_until?: string | null; repeat_of?: string | null; reminded_at?: string | null; reminder_seen_at?: string | null; remind_error?: string | null; done_at?: string | null; done_by?: string | null; done_note?: string | null; done_notified_at?: string | null; done_seen_at?: string | null; created_at?: string; updated_at?: string }
@@ -702,6 +715,8 @@ export type Database = {
       answer_mail_reply: { Args: { p_item: string; p_needs_answer: boolean }; Returns: undefined }
       order_reviewer: { Args: { p_order: string }; Returns: string | null }
       order_check_action: { Args: { p_check: string; p_action: 'set_order' | 'assign' | 'done' | 'sent' | 'recheck' | 'dismiss' | 'reopen'; p_order?: string | null; p_profile?: string | null; p_thread?: string | null }; Returns: undefined }
+      ls_po_start: { Args: { p_order: string }; Returns: string | null }
+      ls_po_action: { Args: { p_id: string; p_action: string; p_lines?: Json | null; p_number?: string | null }; Returns: undefined }
       complete_task: { Args: { p_task: string; p_note?: string | null }; Returns: string | null }
       task_next_due: { Args: { p_due: string; p_every: number; p_unit: string; p_days?: number[] }; Returns: string | null }
       share_thread_to_orders: { Args: { p_thread: string; p_share?: boolean }; Returns: undefined }

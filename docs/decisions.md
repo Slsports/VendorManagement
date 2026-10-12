@@ -1740,3 +1740,68 @@ the confirmed lines, Dana approves it, VMS sends it and saves the PO number back
 ## Oct 12 — Dana's VMS login is dana@shaverlakesports.com
 - Switched from billing.slsports@gmail.com (same profile, same password). Dana is moving her Supabase, Vercel and GitHub
   account emails to dana@ as well; Claude stays on billing.slsports.
+
+## Oct 12 — "Working on" joins the Ordering card
+Dana: the Ordering card and the "Orders I'm working on" card overlapped. The emails flagged "Working on order" are now
+the **Working on** count on the Ordering card (between To order and Placed, with how many need an answer); the separate
+dashboard card is gone. The full list page stays (Open the full list, and the Team page link to it).
+
+## Oct 12 — Pay-by reminders replace the Freight allowances card
+Dana: "Pay on time for freight back is not a necessary card, it should just flag the dashboard as a to do … We also
+have other discounts we get if we pay earlier than the due date." Dana is the only one who pays; reminders 5 days
+ahead. VMS keeps one task per bill, assigned to the admin, due on the pay-by date: WWD invoices with discount terms
+(best tier still open, then the next, then the net due date), orders with discount terms in AR due (no WWD invoice),
+and freight back for paying on time. Tasks close themselves when the bill is paid; checking one off by hand ends
+reminders for that bill. Hourly (pg_cron payment-tasks). First run made 21 tasks (Oct 14 – Jan 13). Migration 0090.
+The Freight allowances dashboard card is gone; the order's Freight allowance box stays.
+- Same day: Dana wants every early-pay discount reminded, however small (no minimum).
+
+## Oct 12 — "New version ready" bar
+Dana's iPad kept an old copy of VMS (signing out does not reload the app). VMS now checks every 5 minutes and when the
+app comes back into view whether a newer version is live, and shows a green bar "A new version of VMS is ready. Tap
+here to refresh." at the top.
+- Same day: the Ordering card always spans the full dashboard width (seven counts side by side; two rows on phones).
+
+## Oct 12 — WWD payment 10-8-26 posted; payment sheets count as paid for reminders
+Dana's sheet "10-8-26_WORLDWIDE_PAYMENT_96778.41": 58 invoices ($98,778.41 invoiced, $96,347.48 after $2,430.93 in
+discounts), all already in VMS, marked paid 10/8 from the sheet. Pay-by reminders now treat a payment-sheet date as
+paid (like Payment History and EdenRed): 20 of the 21 closed as Paid; Rapala (Jan 13, 6%) stays. Motormax Toy Factory
+is not matched to a vendor yet. Migration 0091.
+- Same day: Motormax Toy Factory added as a new vendor (WWD route; ships out of WWD's warehouse) and WWD invoice 1786001 ($120, PO IMPORTTOYS-2-1-26) filed to it.
+- Same day: WWD only posts an invoice to pay once it has shipped to us (Dana). Lanard Toys 1787024 ($114.48) also carries PO IMPORTTOYS-2-1-26; the parked Import Toys order waits on Trevor's check of that pallet (ask Dana Tue Oct 13 pm).
+
+## Oct 12 — LS POs drafted by Claude, approved by the orderer, reviewed by Trevor
+Dana: "Once an order is marked as Placed (confirmed), Claude should create the PO and send it to the person who
+ordered it. Once they approve it, it goes to Trevor who will review the naming conventions, etc and send it to LS."
+- A confirmed order starts an LS PO draft. order-check (every minute) builds it from the vendor's confirmation (else
+  our order's lines); items matched to LS by Vendor ID/UPC in the vendor's latest sales report keep their LS name and
+  category; Claude (Sonnet) names new items per the LS category standard (docs mirror in _shared/lsStandard.ts).
+- To approve → the person who placed the order (Jarrett's orders to Jarrett, else Dana); To review → the LS PO reviewer
+  (Settings › Organization; Trevor ticked); Send to LS → until LS is connected, Download for LS / Print, enter it,
+  type the LS PO number (saved on the order). Each step is a task for that person.
+- Ordering card: the LS PO box sits after Confirmed (replaces "LS PO needed"), with how many wait on you.
+  Migration 0092.
+
+## Oct 12 — Orders we email to vendors become orders
+Jarrett's Mack's Lure early-buy order (9/23, order writer attached, PO MACKS092326) was in Mail but never an order, so
+its confirmation (#90351) waited for an order. Dana: "Go and definitely scan the email too". New function sent-orders
+(every minute): Claude (Haiku) sorts our sent Orders mail (12 months back, then new) for emails that place an order;
+Claude (Sonnet) reads the email text and attachments (PDF, picture, order writer spreadsheet as text); the order on
+file (same PO, else same vendor ±5 days and total) gets the email, file (Our orders) and lines; otherwise a new Open
+(Placed) order, placed_by from the signature. Sent more than 120 days ago and not in VMS: listed only
+(emails.order_scan = old_not_in_vms) for Dana. Confirmations waiting for an order are matched again
+(order_checks_refind). Private mailboxes are not read unless shared to Orders. Migration 0093.
+
+## Oct 12 — How vendors must address us (Dana)
+- Name: "Shaver Lake Sports" or "Shaver Lake Sports Inc" (incorporated 2004; never "LLC").
+- Ship to (SLS): 41777 Tollhouse Road, Shaver Lake, CA 93664. 41698 Tollhouse Rd is the old SLS address (until
+  2019) and is now the Hardware store, across the street.
+- Bill to (when not billed through WWD): P.O. Box 60, Shaver Lake, CA 93664.
+- Phone: always the store, 559-841-2740.
+- Attn: only Dana, Jarrett or Tyler.
+- Wanted (proposal pending go): when Claude reads a vendor's confirmation or invoice and any of this is wrong, it
+  drafts a correction email to the sender and the rep (or the rep alone).
+- Same day (Dana, "Go on all 3"): orders not in VMS are added whatever their age (long buying cycle; February orders
+  are still coming); older than 4 months they note "Added from sent mail, check status." The scan also reads sent mail
+  in the personal mailboxes (Jarrett sent orders from jarrett@ for a while); only the order is shared, the email stays
+  private. Jarrett's mailbox is pulled back 12 months (it started at Jul 13).

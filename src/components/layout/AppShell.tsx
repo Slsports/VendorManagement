@@ -10,6 +10,7 @@ import { SidebarNav } from './SidebarNav'
 import { MobileDrawer } from './MobileDrawer'
 import { Topbar } from './Topbar'
 import { ViewAsBanner } from './ViewAsBar'
+import { NewVersionBar } from './NewVersionBar'
 import { ViewAsProvider } from '@/context/ViewAsProvider'
 
 /**
@@ -42,6 +43,7 @@ export function AppShell() {
       </MobileDrawer>
 
       <div className={cn('flex min-h-screen flex-col transition-[padding] duration-200', rail ? 'md:pl-16' : 'md:pl-64')}>
+        <NewVersionBar />
         <Topbar onOpenMenu={() => setDrawerOpenedAt(location.key)} />
         <ViewAsBanner />
         <main id="main" className="flex-1 px-4 py-6 sm:px-6 lg:px-8">

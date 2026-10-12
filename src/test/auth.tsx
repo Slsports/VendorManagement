@@ -19,6 +19,7 @@ export function withAuth(role: UserRole, ui: ReactNode, initialEntries: string[]
       remind_email: true,
       remind_text: false,
       mobile_phone: null,
+      reviews_ls_pos: false,
       places_orders: false,
       sees_freight: false,
       full_name: 'Test Person',

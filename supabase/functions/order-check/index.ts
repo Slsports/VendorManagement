@@ -6,7 +6,8 @@
 // Nothing is ever sent from here.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, caller, errorResponse, json, serviceClient } from '../_shared/caller.ts'
-import { aiEnabled, comparePaperwork, isReadableFile, readPaperwork, type PaperFile, type PaperReading } from '../_shared/ai.ts'
+import { aiEnabled, comparePaperwork, isReadableFile, nameNewItems, readPaperwork, type PaperFile, type PaperReading } from '../_shared/ai.ts'
+import { LS_STANDARD } from '../_shared/lsStandard.ts'
 import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
 
 const TIME_BUDGET_MS = 100_000
@@ -34,7 +35,14 @@ Deno.serve(async (req) => {
       done.push(await work(db, c))
       if (body.check_id && c.status === 'comparing') break
     }
-    return json({ done })
+    // LS PO drafts for confirmed orders (Dana, Oct 12), with the time left
+    const drafted: unknown[] = []
+    while (!body.check_id && Date.now() - started < TIME_BUDGET_MS * 0.8) {
+      const p = await nextDraft(db, org)
+      if (!p) break
+      drafted.push(await draftLsPo(db, p))
+    }
+    return json({ done, drafted })
   } catch (e) {
     return errorResponse(e)
   }
@@ -196,4 +204,81 @@ async function sentOrderFiles(db: SupabaseClient, org: string, orderId: string, 
     if (out.length) break
   }
   return out
+}
+
+// ---- LS PO drafts ----------------------------------------------------------------------------------------------
+interface Draft { id: string; organization_id: string; order_id: string; vendor_id: string | null }
+interface PoLine { vid: string | null; upc: string | null; desc: string; qty: number; cost: number | null; system_id: string | null; name: string; category: string; is_new: boolean; note: string | null }
+interface ReportItem { sid: string; upc: string; vid: string; desc: string; cat: string; cost: number | null; archived: boolean }
+
+async function nextDraft(db: SupabaseClient, org: string | null): Promise<Draft | null> {
+  let q = db.from('ls_pos').select('id, organization_id, order_id, vendor_id').eq('status', 'drafting')
+    .or(`working_at.is.null,working_at.lt.${new Date(Date.now() - 5 * 60_000).toISOString()}`)
+  if (org) q = q.eq('organization_id', org)
+  const { data } = await q.order('created_at').limit(1)
+  const p = data?.[0] as Draft | undefined
+  if (!p) return null
+  const { data: claimed } = await db.from('ls_pos').update({ working_at: new Date().toISOString() }).eq('id', p.id).eq('status', 'drafting').select('id')
+  return claimed?.length ? p : null
+}
+
+const itemKey = (s: string | null | undefined) => (s ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '')
+const itemKeyNoZeros = (s: string | null | undefined) => itemKey(s).replace(/^0+(?=\d)/, '')
+
+/** Build the PO from the confirmation (else our order's lines), match LS items, have Claude name the new ones. */
+async function draftLsPo(db: SupabaseClient, p: Draft) {
+  try {
+    const { data: checks } = await db.from('order_checks').select('reading, created_at').eq('order_id', p.order_id).eq('kind', 'confirmation').not('reading', 'is', null).order('created_at', { ascending: false }).limit(1)
+    const reading = checks?.[0]?.reading as { lines?: { vendor_item_id?: string | null; description?: string | null; quantity?: number | null; unit_cost?: number | null; upc?: string | null }[] } | undefined
+    let source = 'the vendor\'s confirmation'
+    let raw = (reading?.lines ?? []).map((l) => ({ vid: l.vendor_item_id ?? null, upc: l.upc ?? null, desc: l.description ?? '', qty: Number(l.quantity ?? 0), cost: l.unit_cost ?? null }))
+    if (!raw.length) {
+      const { data: ours } = await db.from('order_lines').select('vendor_item_id, description, quantity, unit_cost').eq('order_id', p.order_id).order('sort_order')
+      raw = (ours ?? []).map((l) => ({ vid: l.vendor_item_id, upc: null, desc: l.description ?? '', qty: Number(l.quantity), cost: Number(l.unit_cost) }))
+      source = 'our order'
+    }
+    raw = raw.filter((l) => l.qty > 0 && (l.desc || l.vid))
+    if (!raw.length) {
+      await db.from('ls_pos').update({ status: 'to_approve', lines: [], draft_note: 'No item list yet: the confirmation could not be read and the order has no items. Add the items, or click Redraft once the confirmation is in.', working_at: null }).eq('id', p.id)
+      return { id: p.id, lines: 0 }
+    }
+    // what the vendor already has in LS, from its latest sales report
+    const { data: report } = p.vendor_id ? await db.from('sales_reports').select('items').eq('vendor_id', p.vendor_id).order('created_at', { ascending: false }).limit(1).maybeSingle() : { data: null }
+    const items = ((report?.items ?? []) as ReportItem[])
+    const byVid = new Map<string, ReportItem>()
+    const byUpc = new Map<string, ReportItem>()
+    for (const x of items) {
+      if (x.vid) { byVid.set(itemKey(x.vid), x); byVid.set(itemKeyNoZeros(x.vid), x) }
+      if (x.upc) byUpc.set(itemKey(x.upc), x)
+    }
+    const lines: PoLine[] = raw.map((l) => {
+      const hit = (l.vid ? byVid.get(itemKey(l.vid)) ?? byVid.get(itemKeyNoZeros(l.vid)) : undefined) ?? (l.upc ? byUpc.get(itemKey(l.upc)) : undefined)
+      return hit
+        ? { ...l, system_id: hit.sid, name: hit.desc, category: hit.cat, is_new: false, note: hit.archived ? 'Archived in LS: unarchive it' : null }
+        : { ...l, system_id: null, name: l.desc, category: '', is_new: true, note: null }
+    })
+    const fresh = lines.map((l, i) => ({ l, i })).filter((x) => x.l.is_new)
+    if (fresh.length) {
+      const { data: vendor } = p.vendor_id ? await db.from('vendors').select('name').eq('id', p.vendor_id).maybeSingle() : { data: null }
+      const named = await nameNewItems(db, p.organization_id, {
+        standard: LS_STANDARD, vendor: vendor?.name ?? 'Unknown vendor',
+        existing: items.filter((x) => !x.archived).map((x) => ({ name: x.desc, category: x.cat })),
+        items: fresh.map((x) => ({ i: x.i, vendor_id: x.l.vid, description: x.l.desc, cost: x.l.cost })),
+      })
+      for (const n of named.items) {
+        const l = lines[n.i]
+        if (l?.is_new) { l.name = n.name; l.category = n.category; l.note = n.note }
+      }
+    }
+    const newCount = lines.filter((l) => l.is_new).length
+    await db.from('ls_pos').update({
+      status: 'to_approve', lines, working_at: null, draft_error: null,
+      draft_note: `From ${source}: ${lines.length} item${lines.length === 1 ? '' : 's'}, ${newCount} new to LS${items.length ? '' : ' (no sales report for this vendor, so every item is treated as new)'}.`,
+    }).eq('id', p.id)
+    return { id: p.id, lines: lines.length, new: newCount }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e)
+    await db.from('ls_pos').update({ draft_error: message.slice(0, 500), working_at: new Date(Date.now() + 25 * 60_000).toISOString() }).eq('id', p.id)
+    return { id: p.id, error: message }
+  }
 }
