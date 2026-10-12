@@ -1862,3 +1862,9 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   Trevor ("He receives all the orders so it's good for him to see what we have coming"). Claude adds new freight
   companies it finds in the mail.
 - Clicking any freight company's name (or **Emails** on a billing company's card) opens its page with every email from it.
+
+## Oct 12 — Promises in our replies become tasks
+- When our reply promises something ("I will have a chance to look at this by tomorrow"), the conversation stays
+  **waiting on us**, not waiting on vendor, and whoever signed the reply gets a task due that day, end of business =
+  **6 pm** (Dana). Tagged to the vendor and the email; reminder 9 am that day. Finishing the task, or sending another
+  reply, ends the promise. Orders@ mail only. Started with the last two days' replies (WFS S102112 among them).

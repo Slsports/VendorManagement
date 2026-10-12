@@ -10,7 +10,7 @@ The row of small tabs under the views shows mail by where it stands.
 1. On the Mail page, click a tab:
    - **Needs an answer**: the vendor wrote last and we owe a reply.
    - **No answer yet**: we wrote, and the vendor has not answered within the follow-up days.
-   - **Waiting on vendor**: we wrote last and are still inside the follow-up time.
+   - **Waiting on vendor**: we wrote last and are still inside the follow-up time. If our last reply promised something ("I'll look at it tomorrow"), it stays with us instead; see "Tasks from promises in your replies".
    - **All open**: everything not handled (the standard view).
    - **Handled**: done.
    - **All**: open and handled together.

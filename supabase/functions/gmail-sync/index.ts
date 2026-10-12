@@ -7,7 +7,7 @@ import { Gmail, GmailError, googleAccessToken } from '../_shared/gmail.ts'
 import { clueText, htmlBody, isBulk, isOldGmail, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
 import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type VendorIndex } from '../_shared/mailMatch.ts'
 import { extractLinks, itemPicture, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
-import { aiEnabled, readArtwork, readEmailVendors, readPaidNote, readReplyNeeded, sortEmails, sortSenders, type ArtEmail, type ReplyEmail, type SenderToSort, type UnsureEmail } from '../_shared/ai.ts'
+import { aiEnabled, readArtwork, readEmailVendors, readPaidNote, readPromises, readReplyNeeded, sortEmails, sortSenders, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type UnsureEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
@@ -646,6 +646,21 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
       const ids = [...new Set((reading?.vendors ?? []).flatMap((n) => shipperVendors(vIndex!, n)))]
       if (ids.length) await check(db.from('email_vendor_tags').upsert(ids.map((vendor_id) => ({ email_id: e.id, vendor_id, organization_id: org, how: 'ai' })), { onConflict: 'email_id,vendor_id', ignoreDuplicates: true }))
       await check(db.from('emails').update({ vendors_read_at: new Date().toISOString(), freight_pct: reading?.freight_pct ?? null }).eq('id', e.id))
+    }
+
+    // Our own promises (Dana, Oct 12): a reply like "I'll look at it tomorrow" keeps the conversation on us and gives
+    // the writer a task due that day (6 pm), instead of "waiting on vendor".
+    if (Date.now() - started < TIME_BUDGET_MS) {
+      const { data: replies } = await db.rpc('mail_promise_queue', { p_org: org, p_limit: 15 })
+      const promiseList = (replies ?? []) as PromiseEmail[]
+      if (promiseList.length) {
+        const readings = new Map((await readPromises(db, org, promiseList)).map((r) => [r.id, r]))
+        for (const e of promiseList) {
+          const r = readings.get(e.email_id)
+          const due = r?.due && /^\d{4}-\d{2}-\d{2}$/.test(r.due) ? r.due : null
+          await check(db.rpc('mail_apply_promise', { p_email: e.email_id, p_promise: !!r?.promise, p_task: r?.task ?? null, p_due: due, p_quote: r?.quote ?? null, p_writer: r?.writer ?? null }))
+        }
+      }
     }
 
     // "Who is this?" (Dana, Oct 12): Claude sorts each unknown sender once: one of our vendors (filed, undoable from
