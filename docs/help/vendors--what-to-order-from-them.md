@@ -1,5 +1,5 @@
 ---
-title: Item buying rules: what to order from a vendor
+title: Item buying rules (what to order from a vendor)
 section: Vendors
 keywords: item rules, reorder first, keep ordering, watch, stop ordering, product type, Vendor ID, what to order
 who: Admin, managers and buyers
