@@ -14,6 +14,6 @@ When a confirmation or invoice does not match, Claude drafts an email to the ven
 
 ## Good to know
 - The email goes to whoever sent the paper, or the vendor's email if it came another way. If there is no address on file, the box says so; add one before sending.
-- It is sent as a reply in the same email conversation, and your signature is added when it sends.
+- When the paper came by email, it is sent as a reply in that conversation. Your signature is added when it sends.
 - Once sent, the check is marked "Done, email sent" and you go back to where you were.
 - Nothing is sent until you press **Send**.

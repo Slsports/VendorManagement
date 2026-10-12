@@ -12,5 +12,5 @@ If someone else should look at a confirmation or invoice, hand it to them.
 3. A message confirms "Handed over". It now shows on their Dashboard card.
 
 ## Good to know
-- Pick the blank choice to leave it unassigned.
+- Pick **Unassigned** to take it off everyone's list until someone picks it up.
 - Viewers see who it is with but cannot change it.
