@@ -1850,3 +1850,7 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   personal inbox is readable only by its owner and the admin.
   Dana has the last say ("I want the last say in where it goes", go Oct 12): a rule Dana set is changed only by
   Dana; anyone else's move then moves just that conversation. Between the others the newest move wins.
+- Oct 12, later: Claude marked 18 clear non-vendors from "Who is this?" as Other – not a vendor (go from Dana): carriers
+  (FedEx, UPS, USPS, Cainiao, Speedco), software and services (Dropbox, GoDaddy, Google, Verizon, Avalara, Microsoft,
+  Cvent, Link, Frontier) and two bounce senders. Their regular mail stays in Primary for Dana; ads go to Promotions.
+  Staff, customers, reps and anything unclear stay as cards (88 left).
