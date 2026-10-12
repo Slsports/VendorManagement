@@ -32,3 +32,9 @@ select name, rep_group_id = :'g' as in_group from public.vendors where name in (
 insert into public.email_senders (organization_id, sender_key, is_domain) values ('00000000-0000-0000-0000-000000000001', 'steve@rltest.example', false) returning id as s2 \gset
 update public.email_senders set kind = 'unknown' where id = :'s2';
 select public.mail_match_rep_senders('00000000-0000-0000-0000-000000000001', array[:'s2']::uuid[]) as matched;
+\echo '>>> a line already a vendor under a longer name is not asked about'
+reset role;
+insert into public.vendors (organization_id, name) values ('00000000-0000-0000-0000-000000000001', 'LOOSE LURES - NORTH') returning id as lv \gset
+select public.rep_group_apply_lines(:'s', null, array['Loose Lures']) as lines;
+select rep_group_id = :'g' as joined from public.vendors where id = :'lv';
+select count(*) as cards from public.review_items where kind = 'rep_line' and details->>'line_name' = 'Loose Lures';

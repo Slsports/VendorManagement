@@ -1894,3 +1894,4 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   SLM, GS). Claude reads every Amazon order email into Supplies › Amazon with monthly spending by store and person. DP
   orders also go through Supplies; TP and GP orders only to the Amazon list. Tyler will see the list once he has a login.
   Old Amazon mail in sls@gmail can't be scanned; Dana will forward Amazon confirmations to orders@ with a Gmail filter.
+- Rep lines: a line already a vendor under a longer name ("Rapala" = RAPALA - NORMARK) joins the rep group instead of asking.
