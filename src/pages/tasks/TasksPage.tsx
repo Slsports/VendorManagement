@@ -182,6 +182,10 @@ function ReminderSettings() {
         <div className="mt-3 max-w-xs">
           <label htmlFor="remind-phone" className="block text-sm font-medium text-stone-800">Cell number</label>
           <Input id="remind-phone" type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="559-555-1234" className="mt-1" />
+          <p className="mt-1.5 text-xs text-stone-500">
+            By saving with this box checked you agree to receive task reminder texts from Shaver Lake Sports VMS at this number.
+            Message and data rates may apply. Reply STOP to stop or untick By text here any time.
+          </p>
         </div>
       ) : null}
       <Button size="sm" className="mt-3" disabled={!changed} loading={busy} onClick={() => void save()}>Save</Button>

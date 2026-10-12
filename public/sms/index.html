@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Text reminders · Shaver Lake Sports VMS</title>
+  <link rel="icon" href="/brand/favicon.ico" sizes="48x48" />
+  <style>
+    :root { --brand: #2f6b4f; --brand-soft: #e6edea; --ink: #1c1917; --muted: #78716c; --line: #e7e5e4; --bg: #fafaf9; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; background: #fff; border-bottom: 1px solid var(--line); }
+    header img { height: 32px; }
+    header strong { font-size: 15px; }
+    main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+    h1 { font-size: 22px; margin: 0 0 6px; }
+    .lead { color: var(--muted); margin: 0 0 20px; }
+    .shot { border: 1px solid var(--line); border-radius: 16px; background: #fff; overflow: hidden; }
+    .shot .bar { padding: 10px 16px; border-bottom: 1px solid var(--line); background: #fff; font-size: 13px; color: var(--muted); }
+    .shot .bar b { color: var(--ink); }
+    .box { margin: 16px; border: 1px solid var(--line); border-radius: 16px; background: #fff; padding: 16px; }
+    .box h2 { font-size: 14px; margin: 0; }
+    .box .sub { font-size: 12px; color: var(--muted); margin: 2px 0 12px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 14px; }
+    .row label { display: flex; align-items: center; gap: 8px; }
+    .row small { font-size: 12px; color: var(--muted); }
+    .chk { width: 16px; height: 16px; border: 1.5px solid #a8a29e; border-radius: 4px; display: inline-block; background: #fff; }
+    .chk.on { background: var(--brand); border-color: var(--brand); position: relative; }
+    .chk.on::after { content: ""; position: absolute; left: 4.5px; top: 1px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+    .phone { margin-top: 12px; max-width: 320px; }
+    .phone label { display: block; font-size: 14px; font-weight: 500; }
+    .phone .input { margin-top: 4px; height: 40px; border: 1px solid #d6d3d1; border-radius: 8px; padding: 0 14px; display: flex; align-items: center; font-size: 14px; background: #fff; }
+    .consent { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+    .btn { display: inline-block; margin-top: 12px; background: var(--brand); color: #fff; font-weight: 600; font-size: 13px; padding: 7px 14px; border-radius: 8px; }
+    section.text { margin-top: 28px; }
+    section.text h2 { font-size: 16px; margin: 0 0 6px; }
+    section.text p, section.text li { color: #44403c; }
+    footer { margin-top: 32px; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="/brand/slsi-logo.png" alt="Shaver Lake Sports" />
+    <strong>RetailHQ VMS · Text reminders</strong>
+  </header>
+  <main>
+    <h1>How staff opt in to text reminders</h1>
+    <p class="lead">RetailHQ VMS is the internal vendor management app of Shaver Lake Sports Inc. Only our employees have logins. Each employee chooses, on their own Tasks page, whether task reminders reach them by text.</p>
+
+    <div class="shot" id="shot">
+      <div class="bar">vms.shaverlakesports.com/tasks &nbsp;·&nbsp; <b>Tasks</b> &nbsp;·&nbsp; bottom of the page</div>
+      <div class="box">
+        <h2>How I get reminders</h2>
+        <p class="sub">Pick one, two or all three. Also used to tell you when someone finishes a task you gave them.</p>
+        <div class="row">
+          <label><span class="chk on"></span> On my dashboard</label>
+          <label><span class="chk on"></span> By email <small>(dana@shaverlakesports.com)</small></label>
+          <label><span class="chk on"></span> By text</label>
+        </div>
+        <div class="phone">
+          <label>Cell number</label>
+          <div class="input">559-555-1234</div>
+          <p class="consent">By saving with this box checked you agree to receive task reminder texts from Shaver Lake Sports VMS at this number. Message and data rates may apply. Reply STOP to stop or untick By text here any time.</p>
+        </div>
+        <span class="btn">Save</span>
+      </div>
+    </div>
+
+    <section class="text">
+      <h2>What the texts are</h2>
+      <p>Reminders for tasks the employee set or was given inside VMS (for example a vendor call-back or an order to send), and a note when a task they handed off is finished. Nothing promotional, never sent to customers.</p>
+      <h2>Opting out</h2>
+      <ul>
+        <li>Untick <b>By text</b> on the Tasks page and click <b>Save</b>, or</li>
+        <li>reply <b>STOP</b> to any reminder. Reply <b>HELP</b> for help.</li>
+      </ul>
+      <h2>Example messages</h2>
+      <ul>
+        <li>VMS reminder: Call Columbia rep about backorder — due today. https://vms.shaverlakesports.com/tasks</li>
+        <li>VMS: Jarrett marked "Send Smith Optics order" done.</li>
+      </ul>
+    </section>
+    <footer>Shaver Lake Sports Inc. · Shaver Lake, California · dana@shaverlakesports.com</footer>
+  </main>
+</body>
+</html>

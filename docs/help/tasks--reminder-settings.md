@@ -10,10 +10,11 @@ Each person picks how they get task reminders: on the dashboard, by email, by te
 1. Click **Tasks** in the menu.
 2. Scroll to **How I get reminders** at the bottom.
 3. Tick **On my dashboard**, **By email** and/or **By text**.
-4. For texts, type your **Cell number**.
+4. For texts, type your **Cell number**. The small print under it says what you are agreeing to: reminder texts only, message and data rates may apply, reply STOP or untick **By text** to stop.
 5. Click **Save**.
 
 ## Good to know
 - Everyone starts with dashboard and email.
 - The same choices are used when someone finishes a task you gave them.
 - Texts start working once the texting service is set up; until then the Tasks page shows "not all sent" under the reminder time.
+- The public page vms.shaverlakesports.com/sms/ explains the text opt-in (needed by the texting service).
