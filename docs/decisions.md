@@ -1968,3 +1968,19 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 
 ## Oct 13 — Nick
 - Dana: "Nick isn't helping me on this so you can stop referring to him." Every step is planned for Dana herself.
+
+## Oct 13 — Freight plan (Dana: "Go!")
+- Freight companies join the automatic sharing; an email naming one of our PO numbers is tagged to that vendor and order.
+- Freight quotes: no order ships without an approved freight quote. Matching a quote to an order: our PO → the vendor's own
+  order/confirmation/invoice number → the conversation → Claude's comparison with the vendor's open orders (never "only one
+  open order" alone) → freight-company tracking/PRO or ship-from → Trevor picks. Trevor's task: "Get freight quote: <vendor>,
+  PO <number>", due 1 business day.
+- Routing letter: versions kept; every send records date, name and email; each email has an "I received the routing
+  instructions" button (one reminder after 7 days); a new version goes again to everyone who had an earlier one.
+- Order of sending: freight letter now to vendors with open orders (39 with email); WWD list in → confirmation emails →
+  about a week later the freight letter to everyone else at their confirmed shipping contacts.
+- Confirmation form: their details and phones; company details and coworkers; who gets POs, freight quotes/tracking,
+  invoices; how they take orders (email, phone, NuORDER, website); minimum order and any freight programs; other vendors
+  they represent (one per box); product categories they sell. "Looks good" or "Submit changes" → Confirmed with the date.
+- All WWD vendors are imported; ones never bought from are kept apart as lines ("not bought from yet"), found by search,
+  "Make it a vendor" moves one over; emails go only to vendors we buy from.
