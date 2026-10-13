@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Check, Mail, Pencil, Phone } from 'lucide-react'
+import { Check, Mail, Pencil } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { addNote, getVendor, listNotes, listReviewQueue, setVendorAssignee, updateVendor, type VendorDetail } from '@/services/vendors'
@@ -29,6 +29,7 @@ import { WwdInvoiceList } from '@/components/payments/WwdInvoiceList'
 import { ComposeDialog, type ComposeDraft } from '@/components/mail/ComposeDialog'
 import { VendorScorecard } from '@/components/scores/VendorScorecard'
 import { VendorItemRulesSection } from '@/components/vendors/VendorItemRulesSection'
+import { PhoneLinks } from '@/components/shared/Phones'
 import { Alert, Badge, Button, Select, Spinner, Textarea } from '@/components/ui'
 
 export default function VendorDetailPage() {
@@ -349,8 +350,8 @@ function OurRepStrip({ vendor: v, canEdit, onEmail, onAddRep }: { vendor: Vendor
           <span><span className="font-semibold text-stone-800">{p.starred ? 'Our rep' : 'Rep'}:</span> <span className="font-medium text-stone-900">{p.name || p.email || p.phone}</span>
             {p.kind === 'group' && v.rep_groups ? <span className="text-stone-500"> · <Link to={`${ROUTES.repGroups}/${v.rep_groups.id}`} className="hover:underline">{v.rep_groups.name}</Link></span> : null}</span>
           {p.email ? <button type="button" onClick={() => onEmail(p.email!)} className="inline-flex items-center gap-1 text-brand hover:underline" title="Write an email from VMS"><Mail className="size-3.5" aria-hidden="true" />{p.email}</button> : null}
-          {p.phone ? <a href={`tel:${p.phone}`} className="inline-flex items-center gap-1 text-brand hover:underline"><Phone className="size-3.5" aria-hidden="true" />{p.phone}</a> : null}
-          {!p.email && !p.phone && canEdit ? <Link to={`${ROUTES.vendors}/${v.id}/edit`} className="text-xs text-brand hover:underline">Add email and phone</Link> : null}
+          <PhoneLinks phones={p.phones} className="text-brand hover:underline" />
+          {!p.email && !p.phones.length && canEdit ? <Link to={`${ROUTES.vendors}/${v.id}/edit`} className="text-xs text-brand hover:underline">Add email and phone</Link> : null}
         </p>
       ))}
     </section>

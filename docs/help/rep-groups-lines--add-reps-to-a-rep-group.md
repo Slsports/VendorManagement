@@ -9,7 +9,7 @@ List the people at a rep group. Mail from any of their addresses is filed to the
 ## How to
 1. Open the rep group's page and find **Reps**.
 2. Click **Add rep**.
-3. Fill in a **Name**, **Title** (optional, like "Show rep"), **Email** and/or **Phone**.
+3. Fill in a **Name**, **Title** (optional, like "Show rep") and **Email**. Under **Phone numbers**, pick **Work**, **Cell**, **Fax** or **Other** (type what it is) for each number; **Add phone** adds another.
 4. Click **Save rep**.
 5. To remove a rep, click the trash can on their row and confirm.
 

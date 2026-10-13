@@ -1,24 +1,26 @@
 import { useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
-import { Mail, Phone, Plus, Trash2 } from 'lucide-react'
+import { Mail, Plus, Trash2 } from 'lucide-react'
 import { addRepGroupContact, deleteRepGroupContact } from '@/services/lines'
 import { errorMessage } from '@/lib/utils'
+import { cleanPhones, phonesOf, type ContactPhone } from '@/lib/phones'
+import { PhoneLinks, PhonesEditor } from '@/components/shared/Phones'
 import type { RepGroupContact } from '@/types'
 import { Button, FormField, Input } from '@/components/ui'
 
 /** The reps at a rep group. Mail from any of their addresses files to the rep group. */
 export function RepGroupPeople({ repGroupId, people, canEdit, onChange }: { repGroupId: string; people: RepGroupContact[]; canEdit: boolean; onChange: () => Promise<void> }) {
   const [adding, setAdding] = useState(false)
-  const [form, setForm] = useState({ name: '', title: '', email: '', phone: '' })
+  const [form, setForm] = useState({ name: '', title: '', email: '', phones: [] as ContactPhone[] })
   const [saving, setSaving] = useState(false)
 
   async function submit(e: FormEvent) {
     e.preventDefault()
-    if (!form.name.trim() && !form.email.trim() && !form.phone.trim()) { toast.error('Add a name, email or phone.'); return }
+    if (!form.name.trim() && !form.email.trim() && !cleanPhones(form.phones).length) { toast.error('Add a name, email or phone.'); return }
     setSaving(true)
     try {
-      await addRepGroupContact({ rep_group_id: repGroupId, name: form.name.trim() || null, title: form.title.trim() || null, email: form.email.trim().toLowerCase() || null, phone: form.phone.trim() || null })
-      setForm({ name: '', title: '', email: '', phone: '' })
+      await addRepGroupContact({ rep_group_id: repGroupId, name: form.name.trim() || null, title: form.title.trim() || null, email: form.email.trim().toLowerCase() || null, phones: cleanPhones(form.phones) })
+      setForm({ name: '', title: '', email: '', phones: [] })
       setAdding(false)
       toast.success('Rep added')
       await onChange()
@@ -51,7 +53,7 @@ export function RepGroupPeople({ repGroupId, people, canEdit, onChange }: { repG
           <FormField label="Name" htmlFor="rp-name"><Input id="rp-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus /></FormField>
           <FormField label="Title (optional)" htmlFor="rp-title"><Input id="rp-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Show rep" /></FormField>
           <FormField label="Email" htmlFor="rp-email"><Input id="rp-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></FormField>
-          <FormField label="Phone" htmlFor="rp-phone"><Input id="rp-phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></FormField>
+          <div className="sm:col-span-2"><PhonesEditor idPrefix="rp" value={form.phones} onChange={(phones) => setForm({ ...form, phones })} /></div>
           <div className="flex gap-2 sm:col-span-2">
             <Button type="submit" loading={saving}>Save rep</Button>
             <Button type="button" variant="ghost" onClick={() => setAdding(false)}>Cancel</Button>
@@ -66,7 +68,7 @@ export function RepGroupPeople({ repGroupId, people, canEdit, onChange }: { repG
                 <p className="font-medium text-stone-900">{p.name || p.email || p.phone}{p.title ? <span className="ml-2 text-xs font-normal text-stone-500">{p.title}</span> : null}</p>
                 <p className="flex flex-wrap gap-x-4 text-stone-600">
                   {p.email ? <a href={`mailto:${p.email}`} className="inline-flex items-center gap-1 hover:text-brand"><Mail className="size-3.5" aria-hidden="true" />{p.email}</a> : null}
-                  {p.phone ? <a href={`tel:${p.phone}`} className="inline-flex items-center gap-1 hover:text-brand"><Phone className="size-3.5" aria-hidden="true" />{p.phone}</a> : null}
+                  <PhoneLinks phones={phonesOf(p)} />
                 </p>
               </div>
               {canEdit ? (

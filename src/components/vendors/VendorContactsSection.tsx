@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { AlertTriangle, Mail, Pencil, Phone, Plus, Star, Trash2 } from 'lucide-react'
+import { AlertTriangle, Mail, Pencil, Plus, Star, Trash2 } from 'lucide-react'
 import { addVendorEmail, deleteVendorEmail, updateVendor, updateVendorEmail } from '@/services/vendors'
 import { ROUTES } from '@/lib/constants'
 import { CONTACT_TYPE_LABELS } from '@/lib/vendors'
@@ -10,6 +10,8 @@ import type { ContactType } from '@/types'
 import { peopleFor, type ContactsVendor, type PersonRow } from '@/lib/contacts'
 import { Badge, Button, FormField, Input } from '@/components/ui'
 import { FoldSection } from '@/components/shared/FoldSection'
+import { PhoneLinks, PhonesEditor } from '@/components/shared/Phones'
+import { cleanPhones, type ContactPhone } from '@/lib/phones'
 
 /**
  * Reps & contacts: any number of people, one starred as our assigned rep (follow-ups go to them). Each person can be
@@ -23,7 +25,7 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
   const [open, setOpen] = useState(defaultOpen)
   /** The contact being edited (its id), or null when adding a new one. */
   const [editingId, setEditingId] = useState<string | null>(null)
-  const blank = { contact_name: '', email: '', phone: '', title: '', roles: ['rep'] as ContactType[] }
+  const blank = { contact_name: '', email: '', phones: [] as ContactPhone[], title: '', roles: ['rep'] as ContactType[] }
   const [form, setForm] = useState(blank)
   const [saving, setSaving] = useState(false)
   const people = peopleFor(v)
@@ -33,7 +35,7 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
   if (addRep !== seenAddRep) {
     setSeenAddRep(addRep)
     if (canEdit) {
-      setForm({ contact_name: '', email: '', phone: '', title: '', roles: ['rep'] })
+      setForm({ contact_name: '', email: '', phones: [], title: '', roles: ['rep'] })
       setEditingId(null)
       setAsOurRep(true)
       setAdding(true)
@@ -46,11 +48,11 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
 
   async function submit(e: FormEvent) {
     e.preventDefault()
-    if (!form.contact_name.trim() && !form.email.trim() && !form.phone.trim()) { toast.error('Add a name, email or phone.'); return }
+    if (!form.contact_name.trim() && !form.email.trim() && !cleanPhones(form.phones).length) { toast.error('Add a name, email or phone.'); return }
     if (!form.roles.length) { toast.error('Tick at least one box: Rep, Owner, Orders…'); return }
     setSaving(true)
     try {
-      const fields = { email: form.email.trim().toLowerCase() || null, contact_name: form.contact_name.trim() || null, phone: form.phone.trim() || null, title: form.title.trim() || null, roles: form.roles, contact_type: form.roles[0]! }
+      const fields = { email: form.email.trim().toLowerCase() || null, contact_name: form.contact_name.trim() || null, phones: cleanPhones(form.phones), title: form.title.trim() || null, roles: form.roles, contact_type: form.roles[0]! }
       if (editingId) await updateVendorEmail(editingId, fields)
       else {
         const made = await addVendorEmail({ vendor_id: v.id, ...fields, source: 'manual' })
@@ -82,7 +84,7 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
   }
 
   function edit(p: PersonRow) {
-    setForm({ contact_name: p.name ?? '', email: p.email ?? '', phone: p.phone ?? '', title: p.title ?? '', roles: p.roles })
+    setForm({ contact_name: p.name ?? '', email: p.email ?? '', phones: p.phones, title: p.title ?? '', roles: p.roles })
     setEditingId(p.id)
     setAdding(true)
   }
@@ -108,7 +110,7 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
         <form onSubmit={submit} className="mt-3 grid gap-3 rounded-xl bg-stone-50 p-4 sm:grid-cols-2">
           <FormField label="Name" htmlFor="c-name"><Input id="c-name" value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} autoFocus /></FormField>
           <FormField label="Email" htmlFor="c-email"><Input id="c-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></FormField>
-          <FormField label="Phone" htmlFor="c-phone"><Input id="c-phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></FormField>
+          <div className="sm:col-span-2"><PhonesEditor idPrefix="c" value={form.phones} onChange={(phones) => setForm({ ...form, phones })} /></div>
           <fieldset className="sm:col-span-2">
             <legend className="text-sm font-medium text-stone-700">They are our… (tick all that fit)</legend>
             <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-2">
@@ -142,16 +144,17 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
                 ) : p.starred ? <Star className="mt-1 size-4 fill-amber-400 text-amber-500" aria-label="Our assigned rep" /> : null}
                 <div className="min-w-0">
                   <p className="font-medium text-stone-900">
-                    {p.name || p.email || p.phone}
+                    {p.name || p.email || p.phones[0]?.number}
                     {p.starred ? <Badge tone="warning" className="ml-1">Our rep</Badge> : null}
                     <Badge tone="neutral" className="ml-1">{p.kind === 'group' ? <Link to={`${ROUTES.repGroups}/${v.rep_groups!.id}`} className="hover:underline">{p.type}</Link> : p.type}</Badge>
                     {p.title ? <span className="ml-2 text-xs font-normal text-stone-500">{p.title}</span> : null}
+                    {p.learned ? <span className="ml-2 text-xs font-normal text-stone-400" title={p.note ?? undefined}>Learned from email</span> : null}
                   </p>
                   <p className="flex flex-wrap gap-x-4 text-stone-600">
                     {p.email ? (canEdit
                       ? <button type="button" onClick={() => onEmail(p.email!)} className="inline-flex items-center gap-1 hover:text-brand" title="Write an email from VMS"><Mail className="size-3.5" aria-hidden="true" />{p.email}</button>
                       : <a href={`mailto:${p.email}`} className="inline-flex items-center gap-1 hover:text-brand"><Mail className="size-3.5" aria-hidden="true" />{p.email}</a>) : null}
-                    {p.phone ? <a href={`tel:${p.phone}`} className="inline-flex items-center gap-1 hover:text-brand"><Phone className="size-3.5" aria-hidden="true" />{p.phone}</a> : null}
+                    <PhoneLinks phones={p.phones} />
                   </p>
                 </div>
               </div>
