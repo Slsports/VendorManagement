@@ -10,6 +10,7 @@ import { checkIssues, checkRows, getOrderCheck, listCheckConversation, listCheck
 import { listOrders } from '@/services/orders'
 import { listPeople } from '@/services/reviews'
 import { downloadVendorFile } from '@/services/lines'
+import { shareThreadToOrders } from '@/services/mail'
 import { CHECK_KIND_LABEL, CHECK_TITLE, checkStatusText } from '@/lib/orderChecks'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
@@ -132,7 +133,7 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
         <DocCard title={`Compared with: ${c.against ?? (working ? '…' : 'nothing yet')}`} docs={against.data ?? []} onOpen={open} />
       </section>
 
-      <Conversation emailId={c.email?.id ?? null} orderId={c.order?.id ?? null} />
+      <Conversation emailId={c.email?.id ?? null} orderId={c.order?.id ?? null} canEdit={canEdit} onShared={() => void act('Shared to Orders; Claude compares again', 'recheck', {}, () => void checkNow())} />
 
       {c.summary ? (
         <section className={cn('mb-4 rounded-2xl border p-5', c.result === 'match' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50')}>
@@ -203,15 +204,35 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
  * The emails behind this check (Dana, Oct 13: "I have to be able to see the emails threads for this so I can properly
  * review the email Claude puts together"), oldest first, each without the mail quoted under it. Claude read the same.
  */
-function Conversation({ emailId, orderId }: { emailId: string | null; orderId: string | null }) {
+function Conversation({ emailId, orderId, canEdit, onShared }: { emailId: string | null; orderId: string | null; canEdit: boolean; onShared: () => void }) {
   const q = useSupabaseQuery(() => listCheckConversation(emailId, orderId), [emailId, orderId])
-  const mails = q.data ?? []
+  const mails = q.data?.emails ?? []
+  const priv = q.data?.privateThreads ?? []
+  const [sharing, setSharing] = useState(false)
+  async function share() {
+    setSharing(true)
+    try {
+      for (const t of priv) await shareThreadToOrders(t.id)
+      await q.refetch()
+      onShared()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setSharing(false)
+    }
+  }
   if (!q.isLoading && !mails.length) return null
   const threads = [...new Set(mails.map((m) => m.thread_id))]
   return (
     <FoldSection title="The email conversation" defaultOpen className="mb-4"
       summary={q.isLoading ? 'Loading…' : `${mails.length} email${mails.length === 1 ? '' : 's'}`}
       actions={threads.length ? <Link to={`${ROUTES.mail}/${threads[threads.length - 1]}`} className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline"><Mail className="size-4" aria-hidden="true" />Open in Mail</Link> : null}>
+      {priv.length ? (
+        <Alert variant="warning" className="mb-3">
+          {priv.length === 1 ? 'This conversation is' : 'Some of these conversations are'} in {priv.map((t) => t.owner ? `${t.owner.split(' ')[0]}'s` : 'someone\'s').filter((x, i, a) => a.indexOf(x) === i).join(' and ')} own mailbox, so Claude did not read {priv.length === 1 ? 'it' : 'them'} for this check. It is vendor business: share it to Orders and Claude compares again with the whole conversation.
+          {canEdit ? <Button size="sm" variant="secondary" className="ml-3" loading={sharing} onClick={() => void share()}>Share to Orders</Button> : null}
+        </Alert>
+      ) : null}
       {q.error ? <Alert variant="error">{q.error}</Alert> : (
         <ol className="space-y-3">
           {mails.map((m, i) => <ConversationItem key={m.id} m={m} showSubject={i === 0 || stripRe(m.subject) !== stripRe(mails[i - 1]!.subject)} />)}

@@ -21,4 +21,5 @@ Look over what Claude found and either send the vendor an email or mark it done.
 - Done checks stay on the order's **Paperwork** box marked "Done" or "Done, email sent".
 - Marking a confirmation done sets an Open or Awaiting confirmation order to **Confirmed**.
 - **Check again** asks Claude to compare once more, for example after you attached our order.
+- If the emails are in someone's own mailbox (like Jarrett's), Claude can't use them for the check. A yellow note says so: click **Share to Orders** and Claude compares again with the whole conversation.
 - Each issue ends with where Claude found it, like "(Sonal's email, Sept 24)".

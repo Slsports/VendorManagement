@@ -82,7 +82,7 @@ export interface ConversationEmail {
  * The email conversation behind a check (Dana, Oct 13): the conversation the document came in plus any other
  * conversation filed to the order, oldest first. Private mail the viewer may not see is left out by the database.
  */
-export async function listCheckConversation(emailId: string | null, orderId: string | null): Promise<ConversationEmail[]> {
+export async function listCheckConversation(emailId: string | null, orderId: string | null): Promise<{ emails: ConversationEmail[]; privateThreads: { id: string; owner: string | null }[] }> {
   const threads = new Set<string>()
   if (emailId) {
     const { data } = await supabase.from('emails').select('thread_id').eq('id', emailId).maybeSingle()
@@ -92,10 +92,21 @@ export async function listCheckConversation(emailId: string | null, orderId: str
     const { data } = await supabase.from('emails').select('thread_id').eq('order_id', orderId).limit(20)
     for (const e of data ?? []) if (e.thread_id) threads.add(e.thread_id)
   }
-  if (!threads.size) return []
+  if (!threads.size) return { emails: [], privateThreads: [] }
   const { data, error } = await supabase.from('emails')
     .select('id, thread_id, received_at, direction, from_name, from_email, subject, body_text, snippet, attachments:email_attachments(file_name)')
     .in('thread_id', [...threads]).is('copy_of', null).neq('direction', 'internal').order('received_at').limit(60)
   if (error) throw error
-  return (data ?? []) as unknown as ConversationEmail[]
+  // conversations still in someone's own mailbox: Claude leaves them out until they are shared to Orders
+  const { data: t } = await supabase.from('email_threads').select('id, mailbox_id, shared_at').in('id', [...threads])
+  const priv = (t ?? []).filter((x) => x.mailbox_id && !x.shared_at)
+  let owners = new Map<string, string>()
+  if (priv.length) {
+    const { data: boxes } = await supabase.from('mailboxes').select('id, owner:profiles!mailboxes_owner_id_fkey(full_name)').in('id', priv.map((x) => x.mailbox_id!))
+    owners = new Map((boxes ?? []).map((b) => [b.id, (b.owner as unknown as { full_name: string } | null)?.full_name ?? '']))
+  }
+  return {
+    emails: (data ?? []) as unknown as ConversationEmail[],
+    privateThreads: priv.map((x) => ({ id: x.id, owner: owners.get(x.mailbox_id!) || null })),
+  }
 }
