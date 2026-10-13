@@ -11,12 +11,12 @@ export interface ContactsVendor {
 }
 
 /** One person on the vendor page: the vendor's own contact, or someone at its rep group. */
-export interface PersonRow { key: string; kind: 'vendor' | 'group'; id: string; name: string | null; email: string | null; phone: string | null; phones: ContactPhone[]; title: string | null; type: string; roles: ContactType[]; starred: boolean; learned: boolean; note: string | null }
+export interface PersonRow { key: string; kind: 'vendor' | 'group'; id: string; name: string | null; email: string | null; phone: string | null; phones: ContactPhone[]; title: string | null; type: string; roles: ContactType[]; starred: boolean; learned: boolean; note: string | null; confirmedAt: string | null; badEmail: boolean }
 
 /** The vendor's contacts plus its rep group's people, our assigned rep (starred) first. */
 export function peopleFor(v: ContactsVendor): PersonRow[] {
-  const own: PersonRow[] = v.vendor_emails.map((c) => ({ key: `v:${c.id}`, kind: 'vendor', id: c.id, name: c.contact_name, email: c.email, phone: c.phone, phones: phonesOf(c), title: c.title, type: (c.roles?.length ? c.roles : [c.contact_type]).map((r) => CONTACT_TYPE_LABELS[r as ContactType] ?? r).join(' · '), roles: (c.roles?.length ? c.roles : [c.contact_type]) as ContactType[], starred: v.assigned_rep_contact_id === c.id, learned: c.source === 'email_enrichment', note: c.notes }))
-  const group: PersonRow[] = (v.rep_groups?.rep_group_contacts ?? []).map((c) => ({ key: `g:${c.id}`, kind: 'group', id: c.id, name: c.name, email: c.email, phone: c.phone, phones: phonesOf(c), title: c.title, type: `Rep · ${v.rep_groups!.name}`, roles: ['rep'] as ContactType[], starred: v.assigned_rep_group_contact_id === c.id, learned: false, note: c.notes }))
+  const own: PersonRow[] = v.vendor_emails.map((c) => ({ key: `v:${c.id}`, kind: 'vendor', id: c.id, name: c.contact_name, email: c.email, phone: c.phone, phones: phonesOf(c), title: c.title, type: (c.roles?.length ? c.roles : [c.contact_type]).map((r) => CONTACT_TYPE_LABELS[r as ContactType] ?? r).join(' · '), roles: (c.roles?.length ? c.roles : [c.contact_type]) as ContactType[], starred: v.assigned_rep_contact_id === c.id, learned: c.source === 'email_enrichment', note: c.notes, confirmedAt: c.confirmed_at, badEmail: !!c.bad_email_at }))
+  const group: PersonRow[] = (v.rep_groups?.rep_group_contacts ?? []).map((c) => ({ key: `g:${c.id}`, kind: 'group', id: c.id, name: c.name, email: c.email, phone: c.phone, phones: phonesOf(c), title: c.title, type: `Rep · ${v.rep_groups!.name}`, roles: ['rep'] as ContactType[], starred: v.assigned_rep_group_contact_id === c.id, learned: false, note: c.notes, confirmedAt: null, badEmail: false }))
   return [...own, ...group].sort((a, b) => Number(b.starred) - Number(a.starred))
 }
 

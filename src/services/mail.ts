@@ -298,6 +298,8 @@ export interface SendEmailInput {
   routing_send_id?: string | null
   /** Attach the current routing letter. */
   attach_routing_letter?: boolean
+  /** A "please confirm your contact info" email: recorded as sent. */
+  confirmation_id?: string | null
 }
 
 export type SendResult = { thread_id: string; email_id: string; needs_choice?: undefined } | { needs_choice: true; reason: string }
@@ -566,7 +568,7 @@ export async function listSentEmails(organizationId: string, opts: { mailbox?: s
 export interface DraftRow {
   id: string; owner_id: string; created_by: string | null; to_emails: string[]; cc_emails: string[]; subject: string; body: string
   thread_id: string | null; reply_to_email_id: string | null; forward_email_id: string | null; vendor_id: string | null; mailbox_id: string | null
-  note: string | null; gmail_draft_id: string | null; signature: string | null; routing_send_id: string | null; updated_at: string
+  note: string | null; gmail_draft_id: string | null; signature: string | null; routing_send_id: string | null; confirmation_id: string | null; updated_at: string
   vendor: { id: string; name: string } | null; owner: { full_name: string } | null
 }
 

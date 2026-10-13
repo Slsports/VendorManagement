@@ -20,6 +20,7 @@ export type FreightBill = Tables<'freight_bills'>
 export type FreightQuote = Tables<'freight_quotes'>
 export type RoutingLetter = Tables<'routing_letters'>
 export type RoutingLetterSend = Tables<'routing_letter_sends'>
+export type VendorConfirmation = Tables<'vendor_confirmations'>
 export type FreightBillLine = Tables<'freight_bill_lines'>
 export type DeliveryReceipt = Tables<'delivery_receipts'>
 export type Category = Tables<'categories'>

@@ -17,4 +17,4 @@ The **Drafts** tab in Mail holds emails saved before sending: ones you saved, an
 - Some prepared drafts also sit in orders@'s Gmail **Drafts**. Send from either place; sending from VMS removes the Gmail copy.
 - Files attached from your computer are not kept in a draft; attach them again before sending.
 - Your drafts are yours; the admin can see everyone's.
-- Routing letter emails prepared from **Freight › Routing letter** show a **Send all** button at the top of Drafts. They go out one at a time from orders@, each with the letter attached.
+- Emails prepared in bulk (routing letters from **Freight › Routing letter**, contact confirmations from **Vendors › Contact confirmations**) show a **Send all** button at the top of Drafts. They go out one at a time from orders@.

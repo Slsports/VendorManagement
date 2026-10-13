@@ -54,7 +54,8 @@ Deno.serve(async (req) => {
     }
     const drafts = await copyDrafts(db)
     const routing = await routingReminders(db)
-    return json({ reminded: reminded.length, done: finished.length, drafts, routing })
+    const confirmations = await confirmReminders(db)
+    return json({ reminded: reminded.length, done: finished.length, drafts, routing, confirmations })
   } catch (e) {
     return errorResponse(e)
   }
@@ -206,6 +207,33 @@ async function routingReminders(db: SupabaseClient): Promise<number> {
       // let it try again next run
       await db.from('routing_letter_sends').update({ reminded_at: null }).eq('id', r.send_id)
       console.error('routing reminder', r.send_id, e instanceof Error ? e.message : e)
+    }
+  }
+  return n
+}
+
+/** Contact confirmation reminders (Dana, Oct 13): one reminder a week after the email, for people who have not answered. */
+async function confirmReminders(db: SupabaseClient): Promise<number> {
+  const { data } = await db.rpc('vendor_confirm_reminder_queue', { p_limit: 20 })
+  let n = 0
+  for (const r of (data ?? []) as { id: string; organization_id: string; email: string; contact_name: string | null; vendor_name: string; token: string; sent_by: string | null }[]) {
+    const { data: claimed } = await db.from('vendor_confirmations').update({ reminded_at: new Date().toISOString() }).eq('id', r.id).is('reminded_at', null).select('id')
+    if (!claimed?.length) continue
+    const { data: acct } = await db.from('mail_accounts').select('mailbox').eq('organization_id', r.organization_id).maybeSingle()
+    if (!acct?.mailbox) continue
+    const { data: org } = await db.from('organizations').select('name, app_name, signature_template, confirm_email_subject').eq('id', r.organization_id).maybeSingle()
+    const { data: who } = r.sent_by ? await db.from('profiles').select('full_name, email_signature, signature_name, job_title, direct_phone').eq('id', r.sent_by).maybeSingle() : { data: null }
+    const sig = fillSignature(org?.signature_template ?? null, { name: who?.signature_name || who?.full_name || null, title: who?.job_title ?? null, direct: who?.direct_phone ?? null, own: who?.email_signature ?? null })
+    const first = r.contact_name?.trim().split(' ')[0] || 'there'
+    const body = `Hi ${first},\n\nJust a reminder: please take 2 minutes to confirm the contact information we have for ${r.vendor_name}:\n\nhttps://vms.shaverlakesports.com/confirm/${r.token}\n\nIf it's all correct, just click Looks good. Thank you!`
+    const brand = (org?.app_name || org?.name || '').trim()
+    const raw = buildMime({ from: formatAddress([who?.full_name, brand].filter(Boolean).join(' | '), acct.mailbox), to: [r.email], replyTo: acct.mailbox, subject: `Reminder: ${org?.confirm_email_subject ?? 'Please confirm your contact info'}`, text: textEmail(body, sig), html: htmlEmail(body, sig) })
+    try {
+      await new Gmail(await googleAccessToken(acct.mailbox)).send(raw)
+      n++
+    } catch (e) {
+      await db.from('vendor_confirmations').update({ reminded_at: null }).eq('id', r.id)
+      console.error('confirm reminder', r.id, e instanceof Error ? e.message : e)
     }
   }
   return n

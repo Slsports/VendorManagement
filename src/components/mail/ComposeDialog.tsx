@@ -29,6 +29,8 @@ export interface ComposeDraft {
   signature?: string | null
   /** A routing letter email prepared from Freight › Routing letter: the letter goes with it. */
   routing_send_id?: string | null
+  /** A contact confirmation email prepared from Vendors › Contact confirmations. */
+  confirmation_id?: string | null
 }
 
 const MAX_BYTES = 20 * 1024 * 1024
@@ -110,6 +112,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
         draft_id: draftId,
         signature,
         routing_send_id: draft.routing_send_id ?? null,
+        confirmation_id: draft.confirmation_id ?? null,
         attach_routing_letter: !draft.routing_send_id && attachLetter,
       }
       await send(input)

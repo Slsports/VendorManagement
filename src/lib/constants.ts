@@ -70,6 +70,8 @@ export const ROUTES = {
   freightQuotes: '/freight/quotes',
   routingLetter: '/freight/routing-letter',
   routingReceipt: '/r',
+  vendorConfirm: '/confirm',
+  contactConfirmations: '/vendors/confirmations',
   buyingShows: '/buying-shows',
   payments: '/payments',
   salesReports: '/sales-reports',

@@ -148,6 +148,8 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
                     {p.starred ? <Badge tone="warning" className="ml-1">Our rep</Badge> : null}
                     <Badge tone="neutral" className="ml-1">{p.kind === 'group' ? <Link to={`${ROUTES.repGroups}/${v.rep_groups!.id}`} className="hover:underline">{p.type}</Link> : p.type}</Badge>
                     {p.title ? <span className="ml-2 text-xs font-normal text-stone-500">{p.title}</span> : null}
+                    {p.confirmedAt ? <Badge tone="success" className="ml-1">Confirmed {new Date(p.confirmedAt).toLocaleDateString()}</Badge> : null}
+                    {p.badEmail ? <Badge tone="danger" className="ml-1">Bad email</Badge> : null}
                     {p.learned ? <span className="ml-2 text-xs font-normal text-stone-400" title={p.note ?? undefined}>Learned from email</span> : null}
                   </p>
                   <p className="flex flex-wrap gap-x-4 text-stone-600">

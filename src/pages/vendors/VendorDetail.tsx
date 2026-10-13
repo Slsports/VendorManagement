@@ -31,6 +31,7 @@ import { VendorScorecard } from '@/components/scores/VendorScorecard'
 import { VendorItemRulesSection } from '@/components/vendors/VendorItemRulesSection'
 import { PhoneLinks } from '@/components/shared/Phones'
 import { VendorRoutingLetter } from '@/components/vendors/VendorRoutingLetter'
+import { VendorConfirmBox } from '@/components/vendors/VendorConfirmBox'
 import { Alert, Badge, Button, Select, Spinner, Textarea } from '@/components/ui'
 
 export default function VendorDetailPage() {
@@ -240,6 +241,7 @@ export default function VendorDetailPage() {
           </div>
         </section>
 
+        <VendorConfirmBox vendorId={v.id} organizationId={v.organization_id} canEdit={canEdit} infoConfirmedAt={v.info_confirmed_at} />
         <VendorRoutingLetter vendorId={v.id} organizationId={v.organization_id} />
 
         <FoldSection title="Ordering windows" summary={v.vendor_order_windows.length === 0 ? 'None' : `${v.vendor_order_windows.length} window${v.vendor_order_windows.length === 1 ? '' : 's'}`}>

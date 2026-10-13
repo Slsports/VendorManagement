@@ -1993,3 +1993,8 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   Drafts, sends table with sent and confirmed dates, 7-day reminder), the public "I received it" page (vms…/r/<link>),
   the vendor page's Routing letter box, and "Attach our routing letter" on any email. The letter itself waits for
   Dana's edited PDF.
+- Built: Vendors › **Contact confirmations** (prepare one email per person at vendors we buy from, the email text, counts
+  by state, the table), the vendors' form at vms…/confirm/<link> (no login; Looks good / Submit changes), vendor page box
+  "Their info and what they sell" with **Ask them to confirm**, Confirmed / Bad email badges on contacts, the vendor list
+  filter, one reminder after a week, bounces mark the address bad. "What they sell" is its own list (vendor_sells),
+  separate from LS categories. New company names and unknown represented vendors go to the Review queue ("From vendor forms").

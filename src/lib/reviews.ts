@@ -12,6 +12,7 @@ export const REVIEW_KIND_LABELS: Record<string, { title: string; help: string }>
   booth_rep: { title: 'Booth-mates', help: 'At a Worldwide show this vendor shared a booth with lines of one rep group. Same booth is generally the same rep group.' },
   show_line: { title: 'Show list lines', help: 'A brand on a Worldwide show list that may be one of our vendors under another name. Yes puts the show and booth on the vendor\'s page.' },
   rep_line: { title: 'Rep group lines', help: 'A rep\'s emails name a line that is with another rep group, or a brand that is not one of our vendors yet. Lines with no rep group are added on their own.' },
+  vendor_form: { title: 'From vendor forms', help: 'A vendor wrote on our contact form that they also represent companies VMS does not have. Add them as vendors or lines, then mark it handled.' },
   category_change: { title: 'Category clean-up', help: 'Proposed Lightspeed category changes, by batch. Nothing changes in Lightspeed until a batch is approved.' },
 }
 

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { AlertTriangle, Ban, Fish, FolderUp, Plus, Search } from 'lucide-react'
+import { AlertTriangle, BadgeCheck, Ban, Fish, FolderUp, Plus, Search } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useViewAs } from '@/hooks/useViewAs'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
@@ -11,6 +11,7 @@ import { BILLING_ROUTE_LABELS, STANDING_BADGE } from '@/lib/vendors'
 import { cn } from '@/lib/utils'
 import type { BillingRoute } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { CONFIRM_STATE_LABELS, confirmStates, type ConfirmState } from '@/services/vendorConfirmations'
 import { SortHeader } from '@/components/shared/SortHeader'
 import { useTableSort } from '@/hooks/useTableSort'
 import { RouteBadges } from '@/components/vendors/RouteBadges'
@@ -34,10 +35,12 @@ export default function VendorListPage() {
   const who = whoParam === 'all' ? '' : whoParam ?? (!viewAs.isMe && viewAs.personId ? viewAs.personId : '')
   /** '' active (the default), 'inactive' or 'all' */
   const status = params.get('status') ?? ''
+  const confirm = (params.get('confirm') ?? '') as ConfirmState | ''
   const [draft, setDraft] = useState(search)
 
   const { data, error, isLoading } = useSupabaseQuery(() => listVendors({ includeInactive: true }), [])
   const orderersQ = useSupabaseQuery(async () => (organization ? listOrderers(organization.id) : []), [organization?.id])
+  const statesQ = useSupabaseQuery(async () => (organization ? confirmStates(organization.id) : new Map<string, ConfirmState>()), [organization?.id])
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
   const nameOf = (id: string | null) => (id ? (orderersQ.data ?? []).find((p) => p.id === id)?.full_name ?? null : null)
 
@@ -52,8 +55,9 @@ export default function VendorListPage() {
     if (fishing) list = list.filter((v) => v.is_fishing)
     if (who === 'none') list = list.filter((v) => !v.assigned_buyer_id)
     else if (who) list = list.filter((v) => v.assigned_buyer_id === (who === 'me' ? profile?.id : who))
+    if (confirm) list = list.filter((v) => (statesQ.data?.get(v.id) ?? 'not_asked') === confirm)
     return list
-  }, [data, status, search, route, review, dno, fishing, who, profile?.id])
+  }, [data, status, search, route, review, dno, fishing, who, profile?.id, confirm, statesQ.data])
 
   const { sorted, sort, toggle } = useTableSort(rows, {
     name: (v) => v.name,
@@ -85,6 +89,7 @@ export default function VendorListPage() {
         description={data ? `${activeVendors.length} active vendors${flagged ? `, ${flagged} flagged for review` : ''}${inactiveCount ? `, ${inactiveCount} inactive` : ''}.` : undefined}
         actions={canEdit ? (
           <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => navigate(ROUTES.contactConfirmations)} leftIcon={<BadgeCheck className="size-4" aria-hidden="true" />}>Contact confirmations</Button>
             <Button variant="secondary" onClick={() => navigate(ROUTES.documentImport)} leftIcon={<FolderUp className="size-4" aria-hidden="true" />}>Bulk import documents</Button>
             <Button onClick={() => navigate(`${ROUTES.vendors}/new`)} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add vendor</Button>
           </div>
@@ -120,6 +125,12 @@ export default function VendorListPage() {
               <option value="">Active</option>
               <option value="inactive">Inactive{inactiveCount ? ` (${inactiveCount})` : ''}</option>
               <option value="all">All</option>
+            </Select>
+          </div>
+          <div className="w-44">
+            <Select value={confirm} onChange={(e) => setParam('confirm', e.target.value)} aria-label="Contact confirmation">
+              <option value="">Any confirmation</option>
+              {(Object.keys(CONFIRM_STATE_LABELS) as ConfirmState[]).map((s) => <option key={s} value={s}>{CONFIRM_STATE_LABELS[s]}</option>)}
             </Select>
           </div>
           <div className="w-44">

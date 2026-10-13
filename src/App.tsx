@@ -37,6 +37,8 @@ const FreightBillList = lazy(() => import('@/pages/freight/FreightBillList'))
 const FreightBillDetail = lazy(() => import('@/pages/freight/FreightBillDetail'))
 const CarrierPage = lazy(() => import('@/pages/freight/CarrierPage'))
 const RoutingReceipt = lazy(() => import('@/pages/public/RoutingReceipt'))
+const VendorConfirmForm = lazy(() => import('@/pages/public/VendorConfirmForm'))
+const ContactConfirmationsPage = lazy(() => import('@/pages/vendors/ContactConfirmationsPage'))
 const RoutingLetterPage = lazy(() => import('@/pages/freight/RoutingLetterPage'))
 const FreightQuoteList = lazy(() => import('@/pages/freight/FreightQuoteList'))
 const FreightQuoteDetail = lazy(() => import('@/pages/freight/FreightQuoteDetail'))
@@ -94,6 +96,7 @@ export default function App() {
         <Routes>
           {/* vendors' pages from our emails: no login (Dana, Oct 13) */}
           <Route path={`${ROUTES.routingReceipt}/:token`} element={<Suspense fallback={null}><RoutingReceipt /></Suspense>} />
+          <Route path={`${ROUTES.vendorConfirm}/:token`} element={<Suspense fallback={null}><VendorConfirmForm /></Suspense>} />
           <Route element={<PublicOnly />}>
             <Route path={ROUTES.login} element={<LoginPage />} />
             <Route path={ROUTES.forgotPassword} element={<ForgotPasswordPage />} />
@@ -114,6 +117,7 @@ export default function App() {
               <Route element={<RequireRole roles={STAFF} />}>
                 <Route path={ROUTES.vendors} element={<VendorList />} />
                 <Route path={`${ROUTES.vendors}/new`} element={<VendorForm />} />
+                <Route path={ROUTES.contactConfirmations} element={<ContactConfirmationsPage />} />
                 <Route path={ROUTES.documentImport} element={<BulkImportPage />} />
                 <Route path={`${ROUTES.vendors}/:id`} element={<VendorDetail />} />
                 <Route path={`${ROUTES.vendors}/:id/edit`} element={<VendorForm />} />

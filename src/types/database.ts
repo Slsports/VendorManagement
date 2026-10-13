@@ -19,6 +19,8 @@ export type Database = {
           legal_name: string | null
           app_name: string | null
           signature_template: string | null
+          confirm_email_subject: string
+          confirm_email_body: string
           logo_url: string | null
           logo_dark_url: string | null
           accent_color: string
@@ -34,6 +36,8 @@ export type Database = {
           legal_name?: string | null
           app_name?: string | null
           signature_template?: string | null
+          confirm_email_subject?: string
+          confirm_email_body?: string
           logo_url?: string | null
           logo_dark_url?: string | null
           accent_color?: string
@@ -49,6 +53,8 @@ export type Database = {
           legal_name?: string | null
           app_name?: string | null
           signature_template?: string | null
+          confirm_email_subject?: string
+          confirm_email_body?: string
           logo_url?: string | null
           logo_dark_url?: string | null
           accent_color?: string
@@ -245,7 +251,7 @@ export type Database = {
           rep_name: string | null; rep_phone: string | null; pickup_address: string | null; pickup_times: string | null
           shipping_contact: string | null; shipping_contact_phone: string | null; email: string | null; rep_email: string | null; shipping_contact_email: string | null; return_notes: string | null; google_drive_folder: string | null
           rating: number | null; tier: string | null; ordering_frequency: Database['public']['Enums']['ordering_frequency'] | null
-          is_delivery_vendor: boolean; minimum_order: string | null; freight_program: string | null; free_shipping_policy: 'never' | 'sometimes' | 'always' | null; free_shipping_threshold: number | null; freight_routing: string | null; freight_allowance_on_time: boolean; vid_in_description: boolean; product_types: string | null; notes: string | null; needs_review: boolean; review_note: string | null; do_not_order: boolean; do_not_order_reason: string | null; standing: 'ok' | 'hold' | 'last_resort' | 'do_not_order'; standing_tags: string[]; standing_review_date: string | null; merged_into_id: string | null; wwd_zero_upcharge: boolean; report_owner: string | null; is_fishing: boolean; web_orders: boolean; assigned_rep_contact_id: string | null; assigned_rep_group_contact_id: string | null
+          is_delivery_vendor: boolean; minimum_order: string | null; freight_program: string | null; free_shipping_policy: 'never' | 'sometimes' | 'always' | null; free_shipping_threshold: number | null; freight_routing: string | null; freight_allowance_on_time: boolean; vid_in_description: boolean; product_types: string | null; notes: string | null; needs_review: boolean; review_note: string | null; do_not_order: boolean; do_not_order_reason: string | null; standing: 'ok' | 'hold' | 'last_resort' | 'do_not_order'; standing_tags: string[]; standing_review_date: string | null; merged_into_id: string | null; wwd_zero_upcharge: boolean; report_owner: string | null; is_fishing: boolean; web_orders: boolean; order_methods: string[]; freight_programs_vendor: string | null; info_confirmed_at: string | null; assigned_rep_contact_id: string | null; assigned_rep_group_contact_id: string | null
           is_active: boolean; created_by: string | null; created_at: string; updated_at: string
         }
         Insert: {
@@ -256,7 +262,7 @@ export type Database = {
           rep_name?: string | null; rep_phone?: string | null; pickup_address?: string | null; pickup_times?: string | null
           shipping_contact?: string | null; shipping_contact_phone?: string | null; email?: string | null; rep_email?: string | null; shipping_contact_email?: string | null; return_notes?: string | null; google_drive_folder?: string | null
           rating?: number | null; tier?: string | null; ordering_frequency?: Database['public']['Enums']['ordering_frequency'] | null
-          is_delivery_vendor?: boolean; minimum_order?: string | null; freight_program?: string | null; free_shipping_policy?: 'never' | 'sometimes' | 'always' | null; free_shipping_threshold?: number | null; freight_routing?: string | null; freight_allowance_on_time?: boolean; vid_in_description?: boolean; product_types?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null; do_not_order?: boolean; do_not_order_reason?: string | null; standing?: 'ok' | 'hold' | 'last_resort' | 'do_not_order'; standing_tags?: string[]; standing_review_date?: string | null; merged_into_id?: string | null; wwd_zero_upcharge?: boolean; report_owner?: string | null; is_fishing?: boolean; web_orders?: boolean; assigned_rep_contact_id?: string | null; assigned_rep_group_contact_id?: string | null
+          is_delivery_vendor?: boolean; minimum_order?: string | null; freight_program?: string | null; free_shipping_policy?: 'never' | 'sometimes' | 'always' | null; free_shipping_threshold?: number | null; freight_routing?: string | null; freight_allowance_on_time?: boolean; vid_in_description?: boolean; product_types?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null; do_not_order?: boolean; do_not_order_reason?: string | null; standing?: 'ok' | 'hold' | 'last_resort' | 'do_not_order'; standing_tags?: string[]; standing_review_date?: string | null; merged_into_id?: string | null; wwd_zero_upcharge?: boolean; report_owner?: string | null; is_fishing?: boolean; web_orders?: boolean; order_methods?: string[]; freight_programs_vendor?: string | null; info_confirmed_at?: string | null; assigned_rep_contact_id?: string | null; assigned_rep_group_contact_id?: string | null
           is_active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string
         }
         Update: {
@@ -267,7 +273,7 @@ export type Database = {
           rep_name?: string | null; rep_phone?: string | null; pickup_address?: string | null; pickup_times?: string | null
           shipping_contact?: string | null; shipping_contact_phone?: string | null; email?: string | null; rep_email?: string | null; shipping_contact_email?: string | null; return_notes?: string | null; google_drive_folder?: string | null
           rating?: number | null; tier?: string | null; ordering_frequency?: Database['public']['Enums']['ordering_frequency'] | null
-          is_delivery_vendor?: boolean; minimum_order?: string | null; freight_program?: string | null; free_shipping_policy?: 'never' | 'sometimes' | 'always' | null; free_shipping_threshold?: number | null; freight_routing?: string | null; freight_allowance_on_time?: boolean; vid_in_description?: boolean; product_types?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null; do_not_order?: boolean; do_not_order_reason?: string | null; standing?: 'ok' | 'hold' | 'last_resort' | 'do_not_order'; standing_tags?: string[]; standing_review_date?: string | null; merged_into_id?: string | null; wwd_zero_upcharge?: boolean; report_owner?: string | null; is_fishing?: boolean; web_orders?: boolean; assigned_rep_contact_id?: string | null; assigned_rep_group_contact_id?: string | null
+          is_delivery_vendor?: boolean; minimum_order?: string | null; freight_program?: string | null; free_shipping_policy?: 'never' | 'sometimes' | 'always' | null; free_shipping_threshold?: number | null; freight_routing?: string | null; freight_allowance_on_time?: boolean; vid_in_description?: boolean; product_types?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null; do_not_order?: boolean; do_not_order_reason?: string | null; standing?: 'ok' | 'hold' | 'last_resort' | 'do_not_order'; standing_tags?: string[]; standing_review_date?: string | null; merged_into_id?: string | null; wwd_zero_upcharge?: boolean; report_owner?: string | null; is_fishing?: boolean; web_orders?: boolean; order_methods?: string[]; freight_programs_vendor?: string | null; info_confirmed_at?: string | null; assigned_rep_contact_id?: string | null; assigned_rep_group_contact_id?: string | null
           is_active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string
         }
         Relationships: [
@@ -286,9 +292,9 @@ export type Database = {
         ]
       }
       vendor_emails: {
-        Row: { id: string; organization_id: string | null; vendor_id: string; email: string | null; contact_name: string | null; title: string | null; phone: string | null; phones: { number: string; type: 'work' | 'cell' | 'fax' | 'other'; label?: string | null; ext?: string | null }[]; contact_type: Database['public']['Enums']['contact_type']; source: Database['public']['Enums']['contact_source']; confidence: number | null; verified_at: string | null; is_primary: boolean; notes: string | null; created_at: string; updated_at: string; roles: Database['public']['Enums']['contact_type'][] }
-        Insert: { id?: string; organization_id?: string | null; vendor_id: string; email?: string | null; contact_name?: string | null; title?: string | null; phone?: string | null; phones?: { number: string; type: 'work' | 'cell' | 'fax' | 'other'; label?: string | null; ext?: string | null }[]; contact_type?: Database['public']['Enums']['contact_type']; source?: Database['public']['Enums']['contact_source']; confidence?: number | null; verified_at?: string | null; is_primary?: boolean; notes?: string | null; created_at?: string; updated_at?: string; roles?: Database['public']['Enums']['contact_type'][] }
-        Update: { id?: string; organization_id?: string | null; vendor_id?: string; email?: string | null; contact_name?: string | null; title?: string | null; phone?: string | null; phones?: { number: string; type: 'work' | 'cell' | 'fax' | 'other'; label?: string | null; ext?: string | null }[]; contact_type?: Database['public']['Enums']['contact_type']; source?: Database['public']['Enums']['contact_source']; confidence?: number | null; verified_at?: string | null; is_primary?: boolean; notes?: string | null; created_at?: string; updated_at?: string; roles?: Database['public']['Enums']['contact_type'][] }
+        Row: { id: string; organization_id: string | null; vendor_id: string; email: string | null; contact_name: string | null; title: string | null; phone: string | null; phones: { number: string; type: 'work' | 'cell' | 'fax' | 'other'; label?: string | null; ext?: string | null }[]; contact_type: Database['public']['Enums']['contact_type']; source: Database['public']['Enums']['contact_source']; confidence: number | null; verified_at: string | null; is_primary: boolean; notes: string | null; created_at: string; updated_at: string; roles: Database['public']['Enums']['contact_type'][]; confirmed_at: string | null; bad_email_at: string | null }
+        Insert: { id?: string; organization_id?: string | null; vendor_id: string; email?: string | null; contact_name?: string | null; title?: string | null; phone?: string | null; phones?: { number: string; type: 'work' | 'cell' | 'fax' | 'other'; label?: string | null; ext?: string | null }[]; contact_type?: Database['public']['Enums']['contact_type']; source?: Database['public']['Enums']['contact_source']; confidence?: number | null; verified_at?: string | null; is_primary?: boolean; notes?: string | null; created_at?: string; updated_at?: string; roles?: Database['public']['Enums']['contact_type'][]; confirmed_at?: string | null; bad_email_at?: string | null }
+        Update: { id?: string; organization_id?: string | null; vendor_id?: string; email?: string | null; contact_name?: string | null; title?: string | null; phone?: string | null; phones?: { number: string; type: 'work' | 'cell' | 'fax' | 'other'; label?: string | null; ext?: string | null }[]; contact_type?: Database['public']['Enums']['contact_type']; source?: Database['public']['Enums']['contact_source']; confidence?: number | null; verified_at?: string | null; is_primary?: boolean; notes?: string | null; created_at?: string; updated_at?: string; roles?: Database['public']['Enums']['contact_type'][]; confirmed_at?: string | null; bad_email_at?: string | null }
         Relationships: [
           { foreignKeyName: 'vendor_emails_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
         ]
@@ -426,6 +432,18 @@ export type Database = {
         Update: { id?: string; organization_id?: string; letter_id?: string; vendor_id?: string; contact_name?: string | null; email?: string; token?: string; draft_id?: string | null; sent_at?: string | null; sent_email_id?: string | null; sent_by?: string | null; received_at?: string | null; reminded_at?: string | null; created_at?: string }
         Relationships: []
       }
+      vendor_confirmations: {
+        Row: { id: string; organization_id: string; vendor_id: string; vendor_email_id: string | null; email: string; contact_name: string | null; token: string; draft_id: string | null; sent_at: string | null; sent_email_id: string | null; sent_by: string | null; opened_at: string | null; confirmed_at: string | null; changed: boolean | null; reminded_at: string | null; bounced_at: string | null; created_at: string }
+        Insert: { id?: string; organization_id: string; vendor_id: string; vendor_email_id?: string | null; email: string; contact_name?: string | null; token?: string; draft_id?: string | null; sent_at?: string | null; sent_email_id?: string | null; sent_by?: string | null; opened_at?: string | null; confirmed_at?: string | null; changed?: boolean | null; reminded_at?: string | null; bounced_at?: string | null; created_at?: string }
+        Update: { id?: string; organization_id?: string; vendor_id?: string; vendor_email_id?: string | null; email?: string; contact_name?: string | null; token?: string; draft_id?: string | null; sent_at?: string | null; sent_email_id?: string | null; sent_by?: string | null; opened_at?: string | null; confirmed_at?: string | null; changed?: boolean | null; reminded_at?: string | null; bounced_at?: string | null; created_at?: string }
+        Relationships: []
+      }
+      vendor_sells: {
+        Row: { id: string; organization_id: string; vendor_id: string; category: string; source: 'wwd' | 'vendor_form' | 'manual'; confirmed_at: string | null; created_at: string }
+        Insert: { id?: string; organization_id: string; vendor_id: string; category: string; source?: 'wwd' | 'vendor_form' | 'manual'; confirmed_at?: string | null; created_at?: string }
+        Update: { id?: string; organization_id?: string; vendor_id?: string; category?: string; source?: 'wwd' | 'vendor_form' | 'manual'; confirmed_at?: string | null; created_at?: string }
+        Relationships: []
+      }
       amazon_orders: {
         Row: { id: string; organization_id: string; order_number: string; ordered_at: string | null; po: string | null; initials: string | null; store_code: 'SLS' | 'SLH' | 'SLM' | 'GS' | null; person_name: string | null; total: number | null; items: string | null; status: 'ordered' | 'shipped' | 'delivered' | 'cancelled'; expected_at: string | null; delivered_at: string | null; email_id: string | null; is_private: boolean; created_at: string; updated_at: string }
         Insert: { id?: string; organization_id: string; order_number: string; ordered_at?: string | null; po?: string | null; initials?: string | null; store_code?: 'SLS' | 'SLH' | 'SLM' | 'GS' | null; person_name?: string | null; total?: number | null; items?: string | null; status?: 'ordered' | 'shipped' | 'delivered' | 'cancelled'; expected_at?: string | null; delivered_at?: string | null; email_id?: string | null; is_private?: boolean; created_at?: string; updated_at?: string }
@@ -439,9 +457,9 @@ export type Database = {
         Relationships: []
       }
       email_drafts: {
-        Row: { id: string; organization_id: string; owner_id: string; created_by: string | null; to_emails: string[]; cc_emails: string[]; subject: string; body: string; thread_id: string | null; reply_to_email_id: string | null; forward_email_id: string | null; vendor_id: string | null; mailbox_id: string | null; note: string | null; gmail_copy: boolean; gmail_draft_id: string | null; signature: string | null; routing_send_id: string | null; created_at: string; updated_at: string }
-        Insert: { id?: string; organization_id: string; owner_id: string; created_by?: string | null; to_emails?: string[]; cc_emails?: string[]; subject?: string; body?: string; thread_id?: string | null; reply_to_email_id?: string | null; forward_email_id?: string | null; vendor_id?: string | null; mailbox_id?: string | null; note?: string | null; gmail_copy?: boolean; gmail_draft_id?: string | null; signature?: string | null; routing_send_id?: string | null; created_at?: string; updated_at?: string }
-        Update: { id?: string; organization_id?: string; owner_id?: string; created_by?: string | null; to_emails?: string[]; cc_emails?: string[]; subject?: string; body?: string; thread_id?: string | null; reply_to_email_id?: string | null; forward_email_id?: string | null; vendor_id?: string | null; mailbox_id?: string | null; note?: string | null; gmail_copy?: boolean; gmail_draft_id?: string | null; signature?: string | null; routing_send_id?: string | null; created_at?: string; updated_at?: string }
+        Row: { id: string; organization_id: string; owner_id: string; created_by: string | null; to_emails: string[]; cc_emails: string[]; subject: string; body: string; thread_id: string | null; reply_to_email_id: string | null; forward_email_id: string | null; vendor_id: string | null; mailbox_id: string | null; note: string | null; gmail_copy: boolean; gmail_draft_id: string | null; signature: string | null; routing_send_id: string | null; confirmation_id: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; owner_id: string; created_by?: string | null; to_emails?: string[]; cc_emails?: string[]; subject?: string; body?: string; thread_id?: string | null; reply_to_email_id?: string | null; forward_email_id?: string | null; vendor_id?: string | null; mailbox_id?: string | null; note?: string | null; gmail_copy?: boolean; gmail_draft_id?: string | null; signature?: string | null; routing_send_id?: string | null; confirmation_id?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; owner_id?: string; created_by?: string | null; to_emails?: string[]; cc_emails?: string[]; subject?: string; body?: string; thread_id?: string | null; reply_to_email_id?: string | null; forward_email_id?: string | null; vendor_id?: string | null; mailbox_id?: string | null; note?: string | null; gmail_copy?: boolean; gmail_draft_id?: string | null; signature?: string | null; routing_send_id?: string | null; confirmation_id?: string | null; created_at?: string; updated_at?: string }
         Relationships: [
           { foreignKeyName: 'email_drafts_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
           { foreignKeyName: 'email_drafts_owner_id_fkey'; columns: ['owner_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
@@ -765,6 +783,8 @@ export type Database = {
       routing_letter_add: { Args: { p_org: string; p_path: string; p_file_name: string; p_effective: string | null; p_note: string | null; p_subject: string | null; p_body: string }; Returns: string }
       routing_letter_prepare: { Args: { p_letter: string; p_who: string }; Returns: number }
       routing_letter_missing: { Args: { p_org: string; p_who: string }; Returns: { vendor_id: string; vendor_name: string; open_orders: number }[] }
+      vendor_confirm_prepare: { Args: { p_org: string; p_vendor?: string | null }; Returns: number }
+      vendor_confirm_states: { Args: { p_org: string }; Returns: { vendor_id: string; state: string; last_sent: string | null; confirmed_at: string | null }[] }
       vendor_by_name: { Args: { p_org: string; p_name: string }; Returns: string | null }
       service_order_queue: { Args: { p_org: string; p_limit?: number }; Returns: { email_id: string }[] }
       resolve_rep_line: { Args: { p_item: string; p_action: string }; Returns: string | null }

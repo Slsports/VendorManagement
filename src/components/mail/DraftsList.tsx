@@ -25,30 +25,35 @@ export function DraftsList() {
     to: (r) => r.to_emails[0] ?? '', subject: (r) => r.subject, vendor: (r) => r.vendor?.name, updated: (r) => r.updated_at,
   }, { param: 'draft_sort', descFirst: ['updated'] })
 
-  const [sending, setSending] = useState(false)
-  const routing = rows.filter((d) => d.routing_send_id)
+  const [sending, setSending] = useState<string | null>(null)
+  // emails prepared in bulk (Oct 13): routing letters and contact confirmations, each sent all at once
+  const groups = [
+    { key: 'routing', label: 'routing letter', rows: rows.filter((d) => d.routing_send_id), note: 'with the letter attached' },
+    { key: 'confirm', label: 'contact confirmation', rows: rows.filter((d) => d.confirmation_id), note: 'each with its form link' },
+  ].filter((g) => g.rows.length)
 
-  /** Send every routing letter email in Drafts, one at a time, a few seconds apart (Dana looks a few over first). */
-  async function sendAllRouting() {
-    if (!window.confirm(`Send ${routing.length} routing letter email${routing.length === 1 ? '' : 's'} now? Each goes from orders@ with the letter attached.`)) return
-    setSending(true)
-    const t = toast.loading(`Sending 0 of ${routing.length}…`)
+  /** Send every email of a group, one at a time, a few seconds apart (Dana looks a few over first). */
+  async function sendAll(g: (typeof groups)[number]) {
+    const list = g.rows
+    if (!window.confirm(`Send ${list.length} ${g.label} email${list.length === 1 ? '' : 's'} now? Each goes from orders@, ${g.note}.`)) return
+    setSending(g.key)
+    const t = toast.loading(`Sending 0 of ${list.length}…`)
     let ok = 0
     const failed: string[] = []
-    for (const d of routing) {
+    for (const d of list) {
       try {
-        const res = await sendEmail({ to: d.to_emails, cc: d.cc_emails, subject: d.subject, body: d.body, vendor_id: d.vendor_id, draft_id: d.id, routing_send_id: d.routing_send_id, signature: d.signature ?? undefined })
+        const res = await sendEmail({ to: d.to_emails, cc: d.cc_emails, subject: d.subject, body: d.body, vendor_id: d.vendor_id, draft_id: d.id, routing_send_id: d.routing_send_id, confirmation_id: d.confirmation_id, signature: d.signature ?? undefined })
         if (res.needs_choice) failed.push(d.to_emails.join(', '))
         else ok++
       } catch (e) {
         failed.push(`${d.to_emails.join(', ')} (${errorMessage(e)})`)
       }
-      toast.loading(`Sending ${ok + failed.length} of ${routing.length}…`, { id: t })
+      toast.loading(`Sending ${ok + failed.length} of ${list.length}…`, { id: t })
       await new Promise((r) => setTimeout(r, 3000))
     }
     if (failed.length) toast.error(`${ok} sent; not sent: ${failed.slice(0, 3).join('; ')}${failed.length > 3 ? ` and ${failed.length - 3} more` : ''}`, { id: t, duration: 10000 })
     else toast.success(`${ok} sent`, { id: t })
-    setSending(false)
+    setSending(null)
     await q.refetch()
   }
 
@@ -61,12 +66,12 @@ export function DraftsList() {
   if (q.error) return <Alert variant="error">{q.error}</Alert>
   return (
     <>
-      {routing.length ? (
-        <div className="mb-3 flex flex-wrap items-center gap-3 rounded-2xl border border-brand/30 bg-white px-4 py-3">
-          <p className="text-sm text-stone-700"><span className="font-semibold">{routing.length} routing letter email{routing.length === 1 ? '' : 's'}</span> ready. Open a few to check them, then send them all.</p>
-          <Button size="sm" loading={sending} onClick={() => void sendAllRouting()} leftIcon={<Send className="size-4" aria-hidden="true" />}>Send all {routing.length}</Button>
+      {groups.map((g) => (
+        <div key={g.key} className="mb-3 flex flex-wrap items-center gap-3 rounded-2xl border border-brand/30 bg-white px-4 py-3">
+          <p className="text-sm text-stone-700"><span className="font-semibold">{g.rows.length} {g.label} email{g.rows.length === 1 ? '' : 's'}</span> ready. Open a few to check them, then send them all.</p>
+          <Button size="sm" loading={sending === g.key} disabled={!!sending} onClick={() => void sendAll(g)} leftIcon={<Send className="size-4" aria-hidden="true" />}>Send all {g.rows.length}</Button>
         </div>
-      ) : null}
+      ))}
       {rows.length === 0 ? (
         <div className="flex flex-col items-center rounded-2xl border border-dashed border-stone-300 py-12 text-center">
           <FileText className="size-8 text-stone-400" aria-hidden="true" />
@@ -107,7 +112,7 @@ export function DraftsList() {
       )}
       {open ? (
         <ComposeDialog
-          draft={{ draft_id: open.id, to: open.to_emails, cc: open.cc_emails, subject: open.subject, body: open.body, thread_id: open.thread_id, reply_to_email_id: open.reply_to_email_id, forward_email_id: open.forward_email_id, vendor_id: open.vendor_id, mailbox_id: open.mailbox_id, note: open.note ?? undefined, signature: open.signature, routing_send_id: open.routing_send_id }}
+          draft={{ draft_id: open.id, to: open.to_emails, cc: open.cc_emails, subject: open.subject, body: open.body, thread_id: open.thread_id, reply_to_email_id: open.reply_to_email_id, forward_email_id: open.forward_email_id, vendor_id: open.vendor_id, mailbox_id: open.mailbox_id, note: open.note ?? undefined, signature: open.signature, routing_send_id: open.routing_send_id, confirmation_id: open.confirmation_id }}
           onClose={() => { setOpen(null); void q.refetch() }}
           onSent={() => void q.refetch()} />
       ) : null}
