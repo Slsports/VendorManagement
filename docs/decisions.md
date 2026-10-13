@@ -1944,3 +1944,12 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   Open. The vendor contact the email names is saved as a Rep (Orders mail only) and set as "taken by".
 - **Add our rep** on the vendor page opens Reps & contacts right there with Rep ticked; the person saved becomes our rep
   (Dana: "its just an extra click that is unnecessary").
+
+## Oct 13 — Phones, contacts from email
+- **Phones**: a contact can have several numbers, each **Work**, **Cell**, **Fax** or **Other** with a typed label (Dana:
+  "Isn't Work and Office the same?" → no Office; "if you pick other you are able to type in what it is"). Old phone text
+  was split into typed numbers ("Cell: 208-… Office: 559-…").
+- **Contacts learned from email** (Dana: "Contacts go straight onto the vendor with the note it came from email"): Claude
+  reads signatures in Orders mail (12 months back, then ongoing) and adds everyone at a vendor or rep group to Reps &
+  contacts, marked "Learned from email". Existing contacts only get missing details; typed details and the starred rep
+  never change; each address is read once, so a deleted contact stays deleted. Never private mail.

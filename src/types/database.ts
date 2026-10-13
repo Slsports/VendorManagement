@@ -402,6 +402,12 @@ export type Database = {
         Update: { id?: string; organization_id?: string; summary?: string; items?: Json; store_code?: string | null; requested_by_name?: string | null; requested_by_email?: string | null; requested_at?: string; email_id?: string | null; thread_id?: string | null; task_id?: string | null; status?: 'requested' | 'ordered' | 'arrived' | 'closed'; is_old?: boolean; ordered_from?: string | null; order_number?: string | null; ordered_at?: string | null; order_total?: number | null; expected_at?: string | null; tracking?: string | null; arrived_at?: string | null; confirm_email_id?: string | null; confirm_private?: boolean; notify_pending?: boolean; notified_at?: string | null; notify_text?: string | null; notify_error?: string | null; notes?: string | null; created_by?: string | null; created_at?: string; updated_at?: string }
         Relationships: []
       }
+      contact_learning: {
+        Row: { id: string; organization_id: string; email: string; vendor_id: string | null; rep_group_id: string | null; result: 'added' | 'updated' | 'same' | 'skipped' | 'failed'; note: string | null; created_at: string }
+        Insert: { id?: string; organization_id: string; email: string; vendor_id?: string | null; rep_group_id?: string | null; result: 'added' | 'updated' | 'same' | 'skipped' | 'failed'; note?: string | null; created_at?: string }
+        Update: { id?: string; organization_id?: string; email?: string; vendor_id?: string | null; rep_group_id?: string | null; result?: 'added' | 'updated' | 'same' | 'skipped' | 'failed'; note?: string | null; created_at?: string }
+        Relationships: []
+      }
       amazon_orders: {
         Row: { id: string; organization_id: string; order_number: string; ordered_at: string | null; po: string | null; initials: string | null; store_code: 'SLS' | 'SLH' | 'SLM' | 'GS' | null; person_name: string | null; total: number | null; items: string | null; status: 'ordered' | 'shipped' | 'delivered' | 'cancelled'; expected_at: string | null; delivered_at: string | null; email_id: string | null; is_private: boolean; created_at: string; updated_at: string }
         Insert: { id?: string; organization_id: string; order_number: string; ordered_at?: string | null; po?: string | null; initials?: string | null; store_code?: 'SLS' | 'SLH' | 'SLM' | 'GS' | null; person_name?: string | null; total?: number | null; items?: string | null; status?: 'ordered' | 'shipped' | 'delivered' | 'cancelled'; expected_at?: string | null; delivered_at?: string | null; email_id?: string | null; is_private?: boolean; created_at?: string; updated_at?: string }
@@ -730,6 +736,7 @@ export type Database = {
       resolve_show_line: { Args: { p_item: string; p_yes: boolean }; Returns: undefined }
       list_sent_emails: { Args: { p_org: string; p_mailbox?: string | null; p_vendor?: string | null; p_q?: string | null; p_limit?: number }; Returns: { id: string; thread_id: string; to_emails: string[]; cc_emails: string[]; subject: string | null; snippet: string | null; sent_at: string; vendor_id: string | null; vendor_name: string | null; sent_by_name: string | null; has_attachments: boolean }[] }
       amazon_monthly: { Args: { p_org: string; p_months?: number }; Returns: { month: string; store_code: string; person_name: string; orders: number; total: number }[] }
+      contact_learn_queue: { Args: { p_org: string; p_limit?: number }; Returns: { email: string; vendor_id: string | null; rep_group_id: string | null; owner_name: string; emails: Json }[] }
       vendor_by_name: { Args: { p_org: string; p_name: string }; Returns: string | null }
       service_order_queue: { Args: { p_org: string; p_limit?: number }; Returns: { email_id: string }[] }
       resolve_rep_line: { Args: { p_item: string; p_action: string }; Returns: string | null }
