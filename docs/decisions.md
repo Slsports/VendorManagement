@@ -2047,3 +2047,5 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - **Send to Lightspeed** on the approved LS PO draft adds its items to that PO (found by System ID, Vendor ID or UPC); items
   not in LS yet are listed to add in LS by hand, then **Send again** adds only those. Creating new items in LS is not built.
 - Reconnected with Full access (needed for POs). Migration 0105.
+- Oct 13: the Hardware store (SLH) is on a separate Lightspeed account; connecting it comes later. Until then SLH orders
+  have no LS location in VMS.
