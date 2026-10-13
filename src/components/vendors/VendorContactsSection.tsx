@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { AlertTriangle, Mail, Pencil, Phone, Plus, Star, Trash2 } from 'lucide-react'
@@ -15,8 +15,11 @@ import { FoldSection } from '@/components/shared/FoldSection'
  * Reps & contacts: any number of people, one starred as our assigned rep (follow-ups go to them). Each person can be
  * several kinds at once, ticked as boxes (Dana, Oct 12: Barry at Royal Deluxe is the rep and the owner).
  */
-export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, defaultOpen = false }: { vendor: ContactsVendor; canEdit: boolean; onChange: () => Promise<unknown>; onEmail: (email: string) => void; defaultOpen?: boolean }) {
+export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, defaultOpen = false, addRep = 0 }: { vendor: ContactsVendor; canEdit: boolean; onChange: () => Promise<unknown>; onEmail: (email: string) => void; defaultOpen?: boolean; addRep?: number }) {
   const [adding, setAdding] = useState(false)
+  /** Opened from "Add our rep": the new contact becomes our assigned rep. */
+  const [asOurRep, setAsOurRep] = useState(false)
+  const box = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(defaultOpen)
   /** The contact being edited (its id), or null when adding a new one. */
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -24,6 +27,22 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
   const [form, setForm] = useState(blank)
   const [saving, setSaving] = useState(false)
   const people = peopleFor(v)
+
+  // "Add our rep" at the top of the vendor page: open this section on a new contact with Rep ticked, and scroll to it.
+  const [seenAddRep, setSeenAddRep] = useState(addRep)
+  if (addRep !== seenAddRep) {
+    setSeenAddRep(addRep)
+    if (canEdit) {
+      setForm({ contact_name: '', email: '', phone: '', title: '', roles: ['rep'] })
+      setEditingId(null)
+      setAsOurRep(true)
+      setAdding(true)
+      setOpen(true)
+    }
+  }
+  useEffect(() => {
+    if (addRep) requestAnimationFrame(() => box.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }, [addRep])
 
   async function submit(e: FormEvent) {
     e.preventDefault()
@@ -33,10 +52,14 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
     try {
       const fields = { email: form.email.trim().toLowerCase() || null, contact_name: form.contact_name.trim() || null, phone: form.phone.trim() || null, title: form.title.trim() || null, roles: form.roles, contact_type: form.roles[0]! }
       if (editingId) await updateVendorEmail(editingId, fields)
-      else await addVendorEmail({ vendor_id: v.id, ...fields, source: 'manual' })
-      toast.success(editingId ? 'Contact saved' : 'Contact added')
+      else {
+        const made = await addVendorEmail({ vendor_id: v.id, ...fields, source: 'manual' })
+        if (asOurRep) await updateVendor(v.id, { assigned_rep_contact_id: made.id, assigned_rep_group_contact_id: null })
+      }
+      toast.success(editingId ? 'Contact saved' : asOurRep ? 'Our rep added' : 'Contact added')
       setForm(blank)
       setAdding(false)
+      setAsOurRep(false)
       setEditingId(null)
       await onChange()
     } catch (err) {
@@ -76,9 +99,10 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
   }
 
   return (
-    <FoldSection title="Reps & contacts" className="lg:col-span-2" open={open} onOpenChange={setOpen}
+    <div ref={box} className="scroll-mt-4 lg:col-span-2">
+    <FoldSection title="Reps & contacts" open={open} onOpenChange={setOpen}
       summary={people.length ? `${people.length} ${people.length === 1 ? 'person' : 'people'}` : 'None'}
-      actions={canEdit && !adding ? <Button size="sm" variant="secondary" onClick={() => { setForm(blank); setEditingId(null); setAdding(true); setOpen(true) }} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add contact</Button> : null}>
+      actions={canEdit && !adding ? <Button size="sm" variant="secondary" onClick={() => { setForm(blank); setEditingId(null); setAsOurRep(false); setAdding(true); setOpen(true) }} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add contact</Button> : null}>
       {people.length > 0 ? <p className="mt-1 text-xs text-stone-500">The starred rep is our assigned rep: follow-ups go to them, whoever took the order.</p> : null}
       {adding ? (
         <form onSubmit={submit} className="mt-3 grid gap-3 rounded-xl bg-stone-50 p-4 sm:grid-cols-2">
@@ -95,10 +119,11 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
               ))}
             </div>
           </fieldset>
+          {asOurRep ? <p className="text-xs text-stone-500 sm:col-span-2">Saved as our assigned rep (starred), shown at the top of the vendor page.</p> : null}
           <FormField label="Job title (optional)" htmlFor="c-title" className="sm:col-span-2"><Input id="c-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Show rep, Regional Sales Manager" /></FormField>
           <div className="flex gap-2 sm:col-span-2">
             <Button type="submit" loading={saving}>Save contact</Button>
-            <Button type="button" variant="ghost" onClick={() => { setAdding(false); setEditingId(null) }}>Cancel</Button>
+            <Button type="button" variant="ghost" onClick={() => { setAdding(false); setEditingId(null); setAsOurRep(false) }}>Cancel</Button>
           </div>
         </form>
       ) : null}
@@ -146,5 +171,6 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
       )}
       {!people.some((p) => p.email) ? <p className="mt-2 inline-flex items-center gap-1 text-xs text-stone-400"><AlertTriangle className="size-3.5" aria-hidden="true" /> The discrepancy and status emails need a contact with an email.</p> : null}
     </FoldSection>
+    </div>
   )
 }

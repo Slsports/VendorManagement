@@ -42,6 +42,8 @@ export default function VendorDetailPage() {
   const orderersQ = useSupabaseQuery(async () => (organization ? listOrderers(organization.id) : []), [organization?.id])
   const v = vendorQ.data
   const [draft, setDraft] = useState<ComposeDraft | null>(null)
+  /** "Add our rep" opens the add-contact form in Reps & contacts right here (Dana, Oct 13). */
+  const [addRep, setAddRep] = useState(0)
 
   if (vendorQ.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading vendor…" className="text-brand" /></div>
   if (vendorQ.error || !v) return <Alert variant="error">{vendorQ.error ?? 'Vendor not found'}</Alert>
@@ -159,7 +161,7 @@ export default function VendorDetailPage() {
       />
 
       {/* Our rep, always at the top (Dana, Oct 12): name, email and phone. */}
-      <OurRepStrip vendor={v} canEdit={canEdit} onEmail={(email) => compose([email])} />
+      <OurRepStrip vendor={v} canEdit={canEdit} onEmail={(email) => compose([email])} onAddRep={() => setAddRep((n) => n + 1)} />
 
       {v.standing !== 'ok' ? (
         <Alert variant={v.standing === 'do_not_order' ? 'error' : v.standing === 'hold' ? 'info' : 'warning'} title={v.standing === 'do_not_order' ? 'Do not order from this vendor' : v.standing === 'hold' ? `On hold${v.standing_review_date ? `: look again on ${new Date(v.standing_review_date + 'T12:00:00').toLocaleDateString()}` : ''}` : 'Last resort: order only if the items are nowhere else'} className="mb-6">
@@ -256,7 +258,7 @@ export default function VendorDetailPage() {
         <VendorMailSection vendorId={v.id} organizationId={v.organization_id} onNewEmail={canEdit ? () => compose(suggestions[0] ? [suggestions[0].email] : []) : undefined} />
         <VendorRepGroupCard vendorId={v.id} group={v.rep_groups} />
 
-        <VendorContactsSection vendor={v} canEdit={canEdit} onChange={vendorQ.refetch} onEmail={(email) => compose([email])} />
+        <VendorContactsSection vendor={v} canEdit={canEdit} addRep={addRep} onChange={vendorQ.refetch} onEmail={(email) => compose([email])} />
         <VendorShowsSection vendorId={v.id} />
         <VendorScorecard organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorItemRulesSection organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
@@ -332,14 +334,14 @@ function ActiveSwitch({ active, onChange }: { active: boolean; onChange: (on: bo
   )
 }
 
-function OurRepStrip({ vendor: v, canEdit, onEmail }: { vendor: VendorDetail; canEdit: boolean; onEmail: (email: string) => void }) {
+function OurRepStrip({ vendor: v, canEdit, onEmail, onAddRep }: { vendor: VendorDetail; canEdit: boolean; onEmail: (email: string) => void; onAddRep: () => void }) {
   const reps = ourReps(v)
   return (
     <section className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/60 px-5 py-3 text-sm">
       {reps.length === 0 ? (
         <p className="text-stone-600">
           <span className="font-semibold text-stone-800">Our rep:</span> none yet.
-          {canEdit ? <> <Link to={`${ROUTES.vendors}/${v.id}/edit`} className="font-medium text-brand hover:underline">Add our rep</Link></> : null}
+          {canEdit ? <> <button type="button" onClick={onAddRep} className="font-medium text-brand hover:underline">Add our rep</button></> : null}
           {v.rep_groups ? <span className="text-stone-500"> · Rep group: <Link to={`${ROUTES.repGroups}/${v.rep_groups.id}`} className="hover:underline">{v.rep_groups.name}</Link></span> : null}
         </p>
       ) : reps.map((p) => (
