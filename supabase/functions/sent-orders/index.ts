@@ -7,10 +7,13 @@
 //              lines; otherwise a Placed order is added (Dana: long buying cycle, so every age; older than 120 days
 //              notes "Added from sent mail, check status.").
 //              Confirmations and invoices waiting for their order are matched again.
+// Order emails from ordering services (Dana, Oct 13): NuORDER, Faire, MarketTime, vendors' web stores telling us an order
+// went in. Claude reads the vendor, order and items, and the vendor contact it names (saved to Reps & contacts, Orders
+// mail only); the order on file gets the email, or it is added.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import * as XLSX from 'npm:xlsx@0.18.5'
 import { CORS, errorResponse, json, serviceClient } from '../_shared/caller.ts'
-import { aiEnabled, isReadableFile, readSentOrder, sortSentEmails, type PaperFile, type SentOrderReading } from '../_shared/ai.ts'
+import { aiEnabled, isReadableFile, readSentOrder, readServiceOrder, sortSentEmails, type PaperFile, type SentOrderReading, type ServiceOrderReading } from '../_shared/ai.ts'
 import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
 
 const TIME_BUDGET_MS = 100_000
@@ -20,6 +23,8 @@ const CHECK_STATUS_DAYS = 120
 
 interface Att { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; storage_path: string | null; vendor_link_id: string | null }
 interface Mail { id: string; organization_id: string; gmail_id: string; gmail_box: string | null; vendor_id: string | null; subject: string | null; body_text: string | null; to_emails: string[]; received_at: string; attachments: Att[] }
+interface InMail extends Mail { from_email: string | null; from_name: string | null; mailbox_id: string | null; thread_id: string | null }
+const SERVICE_PER_RUN = 3
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
@@ -30,15 +35,21 @@ Deno.serve(async (req) => {
     const db = serviceClient()
     const started = Date.now()
     // a run that died while reading: try those again
-    await db.from('emails').update({ order_scan: { result: 'pending' } }).eq('order_scan->>result', 'reading').lt('order_scan->>at', new Date(Date.now() - 10 * 60_000).toISOString())
+    await db.from('emails').update({ order_scan: { result: 'pending' } }).eq('direction', 'out').eq('order_scan->>result', 'reading').lt('order_scan->>at', new Date(Date.now() - 10 * 60_000).toISOString())
+    await db.from('emails').update({ order_scan: null }).eq('direction', 'in').eq('order_scan->>result', 'reading').lt('order_scan->>at', new Date(Date.now() - 10 * 60_000).toISOString())
     const sorted = await sortStep(db)
+    const services: unknown[] = []
+    for (const m of await serviceQueue(db)) {
+      if (Date.now() - started > TIME_BUDGET_MS * 0.5) break
+      services.push(await serviceStep(db, m))
+    }
     const read: unknown[] = []
     while (Date.now() - started < TIME_BUDGET_MS * 0.7) {
       const m = await nextPending(db)
       if (!m) break
       read.push(await readStep(db, m))
     }
-    return json({ sorted, read })
+    return json({ sorted, services, read })
   } catch (e) {
     return errorResponse(e)
   }
@@ -202,7 +213,7 @@ async function earlierOrder(db: SupabaseClient, m: Mail): Promise<string | null>
   return data?.[0]?.id ?? null
 }
 
-async function createOrder(db: SupabaseClient, m: Mail, r: SentOrderReading): Promise<string> {
+async function createOrder(db: SupabaseClient, m: Mail, r: SentOrderReading, from = 'sent mail', extra: Record<string, unknown> = {}): Promise<string> {
   const { data: people } = await db.from('profiles').select('id, full_name').eq('organization_id', m.organization_id).eq('is_active', true)
   const who = r.placed_by ? (people ?? []).find((p) => p.full_name.split(' ')[0]!.toLowerCase() === r.placed_by!.split(' ')[0]!.toLowerCase()) : undefined
   const { data: stores } = await db.from('stores').select('code').eq('organization_id', m.organization_id)
@@ -213,14 +224,15 @@ async function createOrder(db: SupabaseClient, m: Mail, r: SentOrderReading): Pr
     po_number: r.po_number, description: r.description, est_cost: r.total ?? (lineTotal > 0 ? Math.round(lineTotal * 100) / 100 : null),
     est_ship_date: /^\d{4}-\d{2}-\d{2}$/.test(r.ship_date ?? '') ? r.ship_date : null,
     placed_by: who?.full_name ?? r.placed_by, placed_by_id: who?.id ?? null, store_codes: store,
-    notes: [day(m.received_at) < plusDays(day(new Date().toISOString()), -CHECK_STATUS_DAYS) ? 'Added from sent mail, check status.' : 'Added from sent mail.', r.note].filter(Boolean).join(' '),
+    notes: [day(m.received_at) < plusDays(day(new Date().toISOString()), -CHECK_STATUS_DAYS) ? `Added from ${from}, check status.` : `Added from ${from}.`, r.note].filter(Boolean).join(' '),
+    ...extra,
   }).select('id').single()
   if (error) throw new Error(error.message)
   return data.id
 }
 
 /** Link the email, save the order file to the order ("Our orders"), and add the item lines when the order has none. */
-async function fileOn(db: SupabaseClient, m: Mail, orderId: string, r: SentOrderReading, used: { a: Att; bytes: Uint8Array }[], fresh: boolean) {
+async function fileOn(db: SupabaseClient, m: Mail, orderId: string, r: SentOrderReading, used: { a: Att; bytes: Uint8Array }[], fresh: boolean, fileNote = 'The order we emailed the vendor') {
   const { data: o } = await db.from('orders').select('po_number').eq('id', orderId).single()
   if (!o?.po_number && r.po_number) await db.from('orders').update({ po_number: r.po_number }).eq('id', orderId)
   for (const { a, bytes } of used) {
@@ -233,7 +245,7 @@ async function fileOn(db: SupabaseClient, m: Mail, orderId: string, r: SentOrder
     const { data: link, error } = await db.from('vendor_links').insert({
       organization_id: m.organization_id, vendor_id: m.vendor_id, order_id: orderId, kind: 'order', label: a.file_name.replace(/\.[a-z0-9]{2,5}$/i, ''),
       storage_path: path, file_name: a.file_name, file_size: bytes.length, mime_type: a.mime_type, received_at: day(m.received_at), doc_year: Number(m.received_at.slice(0, 4)),
-      source: 'email', email_id: m.id, notes: 'The order we emailed the vendor',
+      source: 'email', email_id: m.id, notes: fileNote,
     }).select('id').single()
     if (error) throw new Error(error.message)
     await db.from('email_attachments').update({ vendor_link_id: link.id, storage_path: path }).eq('id', a.id)
@@ -244,4 +256,127 @@ async function fileOn(db: SupabaseClient, m: Mail, orderId: string, r: SentOrder
       organization_id: m.organization_id, order_id: orderId, sort_order: i, vendor_item_id: l.vendor_item_id, description: l.description, quantity: l.quantity, unit_cost: l.unit_cost ?? 0,
     })))
   }
+}
+
+// ---- order emails from ordering services ---------------------------------------------------------------------------
+const IN_SELECT = `${SELECT}, from_email, from_name, mailbox_id, thread_id`
+
+async function serviceQueue(db: SupabaseClient): Promise<InMail[]> {
+  const { data: orgs } = await db.from('mail_accounts').select('organization_id')
+  const out: InMail[] = []
+  for (const o of orgs ?? []) {
+    const { data: ids } = await db.rpc('service_order_queue', { p_org: o.organization_id, p_limit: SERVICE_PER_RUN })
+    const list = ((ids ?? []) as { email_id: string }[]).map((x) => x.email_id)
+    if (!list.length) continue
+    // claim them: a run that dies leaves them 'reading' for 10 minutes, then they are tried again
+    const { data: claimed } = await db.from('emails').update({ order_scan: { result: 'reading', kind: 'service', at: new Date().toISOString() } }).in('id', list).is('order_scan', null).select('id')
+    if (!claimed?.length) continue
+    const { data } = await db.from('emails').select(IN_SELECT).in('id', claimed.map((c) => c.id)).order('received_at')
+    out.push(...((data ?? []) as unknown as InMail[]))
+  }
+  return out
+}
+
+async function serviceStep(db: SupabaseClient, m: InMail) {
+  const done = (scan: Record<string, unknown>) => finish(db, m, { kind: 'service', ...scan })
+  try {
+    const files: PaperFile[] = []
+    const used: { a: Att; bytes: Uint8Array }[] = []
+    for (const a of (m.attachments ?? []).filter((x) => !looksLikeJunk(x) && (x.size ?? 0) <= MAX_FILE && isReadableFile({ name: x.file_name, mime: x.mime_type }))) {
+      if (files.length >= 2) break
+      const bytes = await bytesOf(db, m, a)
+      if (!bytes) continue
+      files.push({ name: a.file_name, mime: a.mime_type ?? 'application/pdf', bytes })
+      used.push({ a, bytes })
+    }
+    const r = await readServiceOrder(db, m.organization_id, { from: [m.from_name, m.from_email].filter(Boolean).join(' '), subject: m.subject, received_on: day(m.received_at), text: m.body_text ?? '', files })
+    if (!r.is_order) return await done({ result: 'not_order' })
+    // the vendor: the one Claude names when VMS knows it, else the one the email is filed to
+    const named = r.vendor_name ? (await db.rpc('vendor_by_name', { p_org: m.organization_id, p_name: r.vendor_name })).data as string | null : null
+    const vendorId = named ?? m.vendor_id
+    if (!vendorId) return await done({ result: 'no_vendor', vendor_name: r.vendor_name })
+    if (!m.vendor_id || m.vendor_id !== vendorId) {
+      await db.from('email_vendor_tags').upsert({ email_id: m.id, vendor_id: vendorId, organization_id: m.organization_id, how: 'ai' }, { onConflict: 'email_id,vendor_id', ignoreDuplicates: true })
+    }
+    const mail: Mail = { ...m, vendor_id: vendorId }
+    const isPrivate = !!m.mailbox_id && !(await sharedThread(db, m.thread_id))
+    const contactId = isPrivate ? null : await saveContact(db, mail, r)
+    const takenBy = r.contact?.name?.trim() || null
+    const reading: SentOrderReading = { ...r, po_number: r.po_number ?? r.order_number }
+    const via = r.service ? `${r.service} order email` : 'the vendor\'s order email'
+    const fileNote = r.service ? `The ${r.service} order email` : 'The order email from the vendor'
+    let orderId = await matchServiceOrder(db, mail, r)
+    if (orderId) {
+      await fileOn(db, mail, orderId, reading, used, false, fileNote)
+      const { data: o } = await db.from('orders').select('est_cost, final_cost, taken_by, notes, order_date').eq('id', orderId).single()
+      const num = r.order_number && r.order_number !== r.po_number ? `${r.service ?? 'Vendor'} order #${r.order_number}.` : null
+      await db.from('orders').update({
+        ...(o?.est_cost == null && o?.final_cost == null && r.total != null ? { est_cost: r.total } : {}),
+        ...(!o?.taken_by && takenBy ? { taken_by: takenBy } : {}),
+        ...(!o?.order_date ? { order_date: day(m.received_at) } : {}),
+        ...(num && !(o?.notes ?? '').includes(r.order_number!) ? { notes: [o?.notes, num].filter(Boolean).join(' ') } : {}),
+      }).eq('id', orderId)
+    } else {
+      orderId = await createOrder(db, mail, reading, via, takenBy ? { taken_by: takenBy } : {})
+      await fileOn(db, mail, orderId, reading, used, true, fileNote)
+    }
+    await db.rpc('order_checks_refind', { p_org: m.organization_id, p_vendor: vendorId })
+    return await done({ result: 'linked', order_id: orderId, po: reading.po_number, contact_id: contactId })
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e)
+    await done({ result: 'failed', error: message.slice(0, 300) })
+    return { id: m.id, error: message }
+  }
+}
+
+async function sharedThread(db: SupabaseClient, threadId: string | null): Promise<boolean> {
+  if (!threadId) return false
+  const { data } = await db.from('email_threads').select('shared_at').eq('id', threadId).maybeSingle()
+  return !!data?.shared_at
+}
+
+const NO_REPLY = /(^|[._-])(no-?reply|do-?not-?reply|notifications?|info|support|hello|updates|orders?|sales|marketplace|confirmer)@/i
+const SERVICE_DOMAINS = /(nuorder|faire|markettime|elasticsuite|shopify|netsuite|joor|repspark|brandboom|pepperi|editmysite|square)\./i
+
+/** The vendor contact the email names, added to Reps & contacts (Rep) when VMS does not have that address yet. */
+async function saveContact(db: SupabaseClient, m: Mail, r: ServiceOrderReading): Promise<string | null> {
+  const c = r.contact
+  const email = c?.email?.trim().toLowerCase()
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || NO_REPLY.test(email) || SERVICE_DOMAINS.test(email) || /shaverlakesports\.com$/i.test(email)) return null
+  const { data: have } = await db.from('vendor_emails').select('id, contact_name, phone').eq('vendor_id', m.vendor_id!).ilike('email', email).maybeSingle()
+  if (have) {
+    const fill = { ...(!have.contact_name && c?.name ? { contact_name: c.name.trim() } : {}), ...(!have.phone && c?.phone ? { phone: c.phone.trim() } : {}) }
+    if (Object.keys(fill).length) await db.from('vendor_emails').update(fill).eq('id', have.id)
+    return have.id
+  }
+  const { data, error } = await db.from('vendor_emails').insert({
+    organization_id: m.organization_id, vendor_id: m.vendor_id, email, contact_name: c?.name?.trim() || null, phone: c?.phone?.trim() || null, title: c?.title?.trim() || null,
+    contact_type: 'rep', roles: ['rep'], source: 'email_enrichment', confidence: 0.8,
+    notes: `Named in the ${r.service ?? 'vendor'} order email of ${day(m.received_at)}`,
+  }).select('id').single()
+  if (error) throw new Error(`Saving the contact: ${error.message}`)
+  return data.id
+}
+
+/**
+ * The order on file: same PO or order number; else the vendor's order within 5 days with the same total (within 3%);
+ * else one there with no amount yet (an order typed on Dana's sheet). Never one with a different amount.
+ */
+async function matchServiceOrder(db: SupabaseClient, m: Mail, r: ServiceOrderReading): Promise<string | null> {
+  const { data } = await db.from('orders').select('id, po_number, order_date, est_cost, final_cost, notes').eq('vendor_id', m.vendor_id!).neq('status', 'cancelled')
+  const orders = data ?? []
+  for (const n of [r.po_number, r.order_number].map(norm).filter((x) => x.length >= 3)) {
+    const same = orders.filter((o) => norm(o.po_number) === n || (n.length >= 6 && norm(o.notes).includes(n)))
+    if (same.length === 1) return same[0]!.id
+  }
+  const sent = day(m.received_at)
+  const dist = (d: string) => Math.abs(new Date(`${d}T12:00:00Z`).getTime() - new Date(`${sent}T12:00:00Z`).getTime()) / 86_400_000
+  const near = orders.filter((o) => o.order_date && dist(o.order_date) <= 5).sort((a, b) => dist(a.order_date!) - dist(b.order_date!))
+  const amount = (o: { est_cost: unknown; final_cost: unknown }) => (o.est_cost ?? o.final_cost) == null ? null : Number(o.est_cost ?? o.final_cost)
+  if (r.total != null) {
+    const same = near.find((o) => amount(o) != null && Math.abs(amount(o)! - r.total!) <= Math.max(5, r.total! * 0.03))
+    if (same) return same.id
+  }
+  const blank = near.filter((o) => amount(o) == null && !o.po_number)
+  return blank[0]?.id ?? null
 }

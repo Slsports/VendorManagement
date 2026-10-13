@@ -1938,3 +1938,9 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - Sending from a personal inbox stays allowed ("orders@ only would be too restrictive"). When it goes to a vendor, rep group,
   ordering service or carrier, or Claude reads it as an order, return or problem, VMS asks once: **Send from orders@
   instead** (new conversation in orders@, filed to the vendor) or **Send from my inbox anyway**. Other mail never asks.
+- **Order emails from ordering services** (Dana, Oct 13, "go"): NuORDER, Faire, MarketTime, Elastic and vendors' web
+  stores telling us an order was submitted or received become orders (12 months back, then as they arrive): linked to the
+  order on file (PO/order number, or same vendor ±5 days and same total, or an order typed with no amount) or added as
+  Open. The vendor contact the email names is saved as a Rep (Orders mail only) and set as "taken by".
+- **Add our rep** on the vendor page opens Reps & contacts right there with Rep ticked; the person saved becomes our rep
+  (Dana: "its just an extra click that is unnecessary").
