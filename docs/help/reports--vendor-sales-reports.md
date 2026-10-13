@@ -19,4 +19,4 @@ Claude turns a raw LS Analytics sales export into a formatted sales report, foll
 - File names start with the initials of who ran it, for example DP_10-11-26_PARICON_SALES 365 DAYS.
 
 ## Used to place the order
-In the **Sales reports** folder, tick **Used to place the order** on the report you ordered from, or pick it as **Report used** on the order. When a confirmation comes in with no order, or the order has no item list, Claude checks it against that report's **Order** column (or **Need** when Order is blank). Ticking one unticks the vendor's other reports from the same season.
+In the **Sales reports** folder, tick **Used to place the order** on the report you ordered from, or pick it as **Report used** on the order. When a confirmation comes in with no order, or the order has no item list, Claude checks it against that report's **Order** column (or **Need** when Order is blank). Ticking one unticks the vendor's other reports from the same season. Filing or ticking a report sends that vendor's waiting confirmations (no order, no item list, or an unticked report) back to Claude to compare again.

@@ -2018,3 +2018,8 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - Freight quotes ship one of two ways: **Pallet (P1)** — Trevor gets a Priority One price only; **Parcel (WWEX/UPS)** — a
   UPS price through WWEX only. Claude picks from the vendor's quote (pallets or boxes, weight, box count); Trevor can
   switch. Task: "Get freight quote: <vendor>, PO <number> – Pallet, P1". Approve compares the vendor's price with that one.
+- Filing or ticking a sales report re-checks that vendor's open confirmations from the last 6 months that had no order,
+  no item list or an unticked report (Dana: "will it notice I have uploaded a sales report…?" — yes). Migration 0103.
+- Dom's "Failed to fetch": the WFS upload never reached VMS (4 tries, 06:29–06:33 UTC, none arrived), the usual sign the
+  browser could not read the file (open in Excel, or a OneDrive file not on the computer). Uploads now read the file
+  first and say so plainly.
