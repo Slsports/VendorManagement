@@ -68,6 +68,8 @@ export const ROUTES = {
   freight: '/freight',
   freightCarriers: '/freight/carriers',
   freightQuotes: '/freight/quotes',
+  routingLetter: '/freight/routing-letter',
+  routingReceipt: '/r',
   buyingShows: '/buying-shows',
   payments: '/payments',
   salesReports: '/sales-reports',

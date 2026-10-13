@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Calculator, ExternalLink, FileUp, Mail, Pencil, Plus, Truck } from 'lucide-react'
+import { Calculator, ExternalLink, FileText, FileUp, Mail, Pencil, Plus, Truck } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listCarriers, listFreightBills, type FreightFilter } from '@/services/freight'
@@ -42,6 +42,7 @@ export default function FreightBillListPage() {
     <div>
       <PageHeader title="Freight" description="Bills from our billing companies, and every freight company's emails. Each shipment goes to the vendor that shipped it; the freight lands on that order."
         actions={<span className="flex flex-wrap gap-2">
+          <Link to={ROUTES.routingLetter} className="inline-flex h-10 items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 text-sm font-medium text-stone-800 hover:bg-stone-50"><FileText className="size-4" aria-hidden="true" />Routing letter</Link>
           <Link to={ROUTES.freightQuotes} className="inline-flex h-10 items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 text-sm font-medium text-stone-800 hover:bg-stone-50"><Calculator className="size-4" aria-hidden="true" />Freight quotes{quotes.data ? <Badge tone="warning">{quotes.data}</Badge> : null}</Link>
           {canEdit ? <Button variant="secondary" onClick={() => setUploading(true)} leftIcon={<FileUp className="size-4" aria-hidden="true" />}>Upload bills</Button> : null}
         </span>} />

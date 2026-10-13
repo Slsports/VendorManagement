@@ -27,6 +27,8 @@ interface SendRequest {
   draft_id?: string | null           // sent from Mail › Drafts: the draft (and its Gmail copy) goes away
   signature?: string | null          // as shown (and maybe changed) in the compose window; left out = the person's usual one
   vendor_check?: 'ask' | 'skip' | 'orders' // from a personal inbox: ask first (default), send anyway, or send from orders@ instead
+  routing_send_id?: string | null    // a routing letter email (Dana, Oct 13): the letter is attached and the send is stamped
+  attach_routing_letter?: boolean    // attach the current routing letter to any email
 }
 
 const EMAIL = /^[^@\s,;<>]+@[^@\s,;<>]+\.[^@\s,;<>]+$/
@@ -98,6 +100,24 @@ Deno.serve(async (req) => {
         attachments.push({ name: l.file_name ?? 'file', mime: l.mime_type ?? blob.type ?? 'application/octet-stream', base64: bytesToBase64(new Uint8Array(await blob.arrayBuffer())) })
       }
     }
+    // The freight routing letter (Dana, Oct 13): the version this send is for, or the current one.
+    let routingSend: { id: string; letter_id: string } | null = null
+    if (r.routing_send_id || r.attach_routing_letter) {
+      let letter: { storage_path: string; file_name: string; organization_id: string } | null = null
+      if (r.routing_send_id) {
+        const { data: rs } = await db.from('routing_letter_sends').select('id, letter_id, organization_id, letter:routing_letters!routing_letter_sends_letter_id_fkey(storage_path, file_name, organization_id)').eq('id', r.routing_send_id).maybeSingle()
+        if (!rs || rs.organization_id !== me.organization_id) throw new HttpError(404, 'Routing letter send not found')
+        routingSend = { id: rs.id, letter_id: rs.letter_id }
+        letter = rs.letter as unknown as typeof letter
+      } else {
+        const { data } = await db.from('routing_letters').select('storage_path, file_name, organization_id').eq('organization_id', me.organization_id).order('version', { ascending: false }).limit(1).maybeSingle()
+        letter = data
+      }
+      if (!letter) throw new HttpError(400, 'No routing letter uploaded yet (Freight › Routing letter)')
+      const { data: blob, error } = await db.storage.from('vendor-files').download(letter.storage_path)
+      if (error || !blob) throw new Error(`Could not read the routing letter: ${error?.message ?? 'missing'}`)
+      attachments.push({ name: letter.file_name, mime: 'application/pdf', base64: bytesToBase64(new Uint8Array(await blob.arrayBuffer())) })
+    }
     if (r.forward_email_id) {
       const { data: e } = await db.from('emails').select('gmail_id, gmail_box, organization_id, attachments:email_attachments(file_name, mime_type, gmail_attachment_id)').eq('id', r.forward_email_id).single()
       if (e?.organization_id === me.organization_id) {
@@ -140,6 +160,7 @@ Deno.serve(async (req) => {
     if (full.attachments.length) await db.from('email_attachments').insert(full.attachments.map((a) => ({ ...a, organization_id: me.organization_id, email_id: email.id })))
     await db.from('email_threads').update({ vendor_id: vendorId ?? undefined, owner_id: me.id, owner_set_at: new Date().toISOString() }).eq('id', th.id)
     await db.rpc('mail_process', { p_org: me.organization_id, p_email_ids: [email.id], p_backfill: false })
+    if (routingSend) await db.rpc('routing_letter_mark_sent', { p_send: routingSend.id, p_email: email.id, p_by: me.id })
     if (r.draft_id) {
       const { data: d } = await db.from('email_drafts').select('id, owner_id, organization_id, gmail_draft_id').eq('id', r.draft_id).maybeSingle()
       if (d && d.organization_id === me.organization_id && (d.owner_id === me.id || me.role === 'admin')) {

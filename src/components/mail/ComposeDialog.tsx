@@ -27,6 +27,8 @@ export interface ComposeDraft {
   draft_id?: string | null
   /** The signature saved with a draft; otherwise the person's usual one. */
   signature?: string | null
+  /** A routing letter email prepared from Freight › Routing letter: the letter goes with it. */
+  routing_send_id?: string | null
 }
 
 const MAX_BYTES = 20 * 1024 * 1024
@@ -62,6 +64,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
     name: profile?.signature_name || profile?.full_name || null, title: profile?.job_title ?? null, direct: profile?.direct_phone ?? null, own: profile?.email_signature ?? null,
   }))
   const [choice, setChoice] = useState<{ reason: string; input: SendEmailInput } | null>(null)
+  const [attachLetter, setAttachLetter] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const book = useSupabaseQuery(async () => (organization ? listAddressBook(organization.id) : []), [organization?.id])
@@ -106,6 +109,8 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
         mailbox_id: draft.thread_id ? null : fromBox || null,
         draft_id: draftId,
         signature,
+        routing_send_id: draft.routing_send_id ?? null,
+        attach_routing_letter: !draft.routing_send_id && attachLetter,
       }
       await send(input)
     } catch (err) {
@@ -208,6 +213,8 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <Button type="button" size="sm" variant="secondary" onClick={() => fileInput.current?.click()} leftIcon={<Paperclip className="size-4" aria-hidden="true" />}>Attach from computer</Button>
+              {draft.routing_send_id ? <span className="text-xs font-medium text-stone-600">The routing letter is attached when it sends.</span>
+                : <label className="flex items-center gap-1.5 text-sm text-stone-700"><input type="checkbox" checked={attachLetter} onChange={(e) => setAttachLetter(e.target.checked)} className="size-4 accent-brand" />Attach our routing letter</label>}
               <input ref={fileInput} type="file" multiple className="hidden" onChange={(e) => { setFiles((f) => [...f, ...Array.from(e.target.files ?? [])]); e.target.value = '' }} />
             </div>
             {files.length ? (

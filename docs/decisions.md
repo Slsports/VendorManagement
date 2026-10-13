@@ -1988,3 +1988,8 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   freight quote"), the quote page (vendor's quote, shipment details, Priority One and WWEX prices, Approve the cheapest),
   and the order page's Freight quote card. Quotes are read from emails received from Oct 14 on. Trevor = whoever's title
   says receiving/logistics.
+- Built: Freight › **Routing letter** (upload PDF versions, the email text with {first_name}/{open_orders}/{receipt_link},
+  prepare drafts per person for open-order vendors / everyone with an earlier version / all vendors, Send all in
+  Drafts, sends table with sent and confirmed dates, 7-day reminder), the public "I received it" page (vms…/r/<link>),
+  the vendor page's Routing letter box, and "Attach our routing letter" on any email. The letter itself waits for
+  Dana's edited PDF.

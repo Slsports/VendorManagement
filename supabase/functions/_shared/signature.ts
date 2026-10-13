@@ -39,6 +39,9 @@ const linkify = (s: string) => s
   .replace(/\b([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})\b/gi, '<a href="mailto:$1" style="color:#0f6b3a">$1</a>')
   .replace(/(^|[\s|])((?:https?:\/\/)?(?:www\.)?shaverlakesports\.com)(?![^<]*>)/gi, (_m, pre: string, url: string) => `${pre}<a href="https://${url.replace(/^https?:\/\//, '')}" style="color:#0f6b3a">${url}</a>`)
 
+/** Full web addresses in the message become links (the routing letter's "I received it" link, Oct 13). */
+const links = (s: string) => s.replace(/(^|[\s(])(https:\/\/[^\s<>"]+[^\s<>".,;:)])/g, (_m, pre: string, url: string) => `${pre}<a href="${url}" style="color:#0f6b3a">${url}</a>`)
+
 /** HTML version: the body, then the logo and the signature, then any quoted mail in grey. */
 export function htmlEmail(body: string, signature: string | null, logoUrl = LOGO_URL): string {
   const p = placeSignature(body, signature)
@@ -46,5 +49,5 @@ export function htmlEmail(body: string, signature: string | null, logoUrl = LOGO
     ? `<div style="margin-top:18px"><img src="${logoUrl}" width="240" height="31" alt="Shaver Lake Sports" style="display:block;border:0;margin-bottom:8px"><div style="color:#333;font-size:13px;line-height:1.45">${linkify(lines(p.signature))}</div></div>`
     : ''
   const quoted = p.quoted ? `<div style="margin-top:18px;color:#666">${lines(p.quoted)}</div>` : ''
-  return `<!doctype html><html><body><div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;line-height:1.5">${lines(p.top)}${sig}${quoted}</div></body></html>`
+  return `<!doctype html><html><body><div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111;line-height:1.5">${links(lines(p.top))}${sig}${quoted}</div></body></html>`
 }

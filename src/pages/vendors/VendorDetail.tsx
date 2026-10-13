@@ -30,6 +30,7 @@ import { ComposeDialog, type ComposeDraft } from '@/components/mail/ComposeDialo
 import { VendorScorecard } from '@/components/scores/VendorScorecard'
 import { VendorItemRulesSection } from '@/components/vendors/VendorItemRulesSection'
 import { PhoneLinks } from '@/components/shared/Phones'
+import { VendorRoutingLetter } from '@/components/vendors/VendorRoutingLetter'
 import { Alert, Badge, Button, Select, Spinner, Textarea } from '@/components/ui'
 
 export default function VendorDetailPage() {
@@ -238,6 +239,8 @@ export default function VendorDetailPage() {
             {v.vendor_billing_routes.map((r) => <p key={r.route}>{BILLING_ROUTE_HELP[r.route]}{r.is_default ? ' (default)' : ''}</p>)}
           </div>
         </section>
+
+        <VendorRoutingLetter vendorId={v.id} organizationId={v.organization_id} />
 
         <FoldSection title="Ordering windows" summary={v.vendor_order_windows.length === 0 ? 'None' : `${v.vendor_order_windows.length} window${v.vendor_order_windows.length === 1 ? '' : 's'}`}>
           {v.vendor_order_windows.length === 0 ? (

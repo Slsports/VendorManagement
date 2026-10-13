@@ -34,6 +34,7 @@ export function FreightQuoteCard({ orderId, status, freeShipping, webOrders }: {
       ) : (
         <p className="mt-2 text-sm text-stone-600">No freight quote yet. The vendor should send one before it ships.</p>
       )}
+      <Link to={ROUTES.routingLetter} className="mt-3 inline-block text-xs font-medium text-brand hover:underline">Our routing letter</Link>
     </section>
   )
 }

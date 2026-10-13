@@ -21,6 +21,10 @@ describe('signatures', () => {
     expect(html.indexOf('email-logo.png')).toBeLessThan(html.indexOf('wrote:'))
     expect(html).toContain('mailto:orders@shaverlakesports.com')
   })
+  it('links full web addresses in the message', () => {
+    const html = htmlEmail('Please confirm: https://vms.shaverlakesports.com/r/abc-123.', null)
+    expect(html).toContain('<a href="https://vms.shaverlakesports.com/r/abc-123" style="color:#0f6b3a">https://vms.shaverlakesports.com/r/abc-123</a>.')
+  })
   it('matches the sending side', () => {
     const app = readFileSync(resolve(process.cwd(), 'src/lib/signature.ts'), 'utf8').split('\n').slice(2).join('\n')
     const fn = readFileSync(resolve(process.cwd(), 'supabase/functions/_shared/signature.ts'), 'utf8').split('\n').slice(2).join('\n')
