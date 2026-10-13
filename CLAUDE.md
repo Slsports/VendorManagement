@@ -1,7 +1,7 @@
 # RetailHQ VMS — read this first
 
 Vendor Management System for Shaver Lake Sports Inc. (stores SLS, SLH, SLM, GS). Owner and admin:
-Dana Powell (non-technical; son Nick is backup). Live at https://vms.shaverlakesports.com, auto-deployed
+Dana Powell (non-technical; she runs VMS herself, do not suggest Nick for any step). Live at https://vms.shaverlakesports.com, auto-deployed
 by Vercel from the branch `claude/ecstatic-carson-ziz2a9`.
 
 ## Where the truth lives

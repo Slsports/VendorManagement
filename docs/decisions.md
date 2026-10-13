@@ -1965,3 +1965,6 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   "just not mine" … "fine to auto share the old Gmail"): a conversation in Trevor's or Jarrett's mailbox or the Old Gmail
   is shared once a known vendor or rep group writes in it (also when a sender is filed as a vendor later). Dana's own
   mailbox never is. Taking a conversation back out of Orders sticks. Ran on the last 12 months (86 conversations).
+
+## Oct 13 — Nick
+- Dana: "Nick isn't helping me on this so you can stop referring to him." Every step is planned for Dana herself.
