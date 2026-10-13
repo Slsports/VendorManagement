@@ -80,6 +80,8 @@ export const ROUTES = {
   productSourcing: '/product-sourcing',
   files: '/files',
   settings: '/settings',
+  lightspeedSettings: '/settings/lightspeed',
+  lightspeedCallback: '/integrations/lightspeed/callback',
   upload: '/upload',
   search: '/search',
   repGroups: '/rep-groups',

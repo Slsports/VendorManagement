@@ -2023,3 +2023,10 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - Dom's "Failed to fetch": the WFS upload never reached VMS (4 tries, 06:29–06:33 UTC, none arrived), the usual sign the
   browser could not read the file (open in Excel, or a OneDrive file not on the computer). Uploads now read the file
   first and say so plainly.
+
+## Oct 13 — Connecting to Lightspeed (Dana: "Go!")
+- LS support (ticket #6452518) released Dana's email; the old API client can't be recovered. She registers a new one as
+  **SLS VMS 2** with redirect https://vms.shaverlakesports.com/integrations/lightspeed/callback.
+- **Settings → Lightspeed** (admin): paste Client ID and Secret (kept hidden, service role only, never shown again), choose
+  access (read only for now; full later for POs), **Connect to Lightspeed** → LS sign-in → back to VMS, which reads the
+  account and counts the items. **Check the connection**, **Disconnect**. Migration 0104, function `lightspeed`.
