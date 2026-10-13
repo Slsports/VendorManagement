@@ -2049,3 +2049,5 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - Reconnected with Full access (needed for POs). Migration 0105.
 - Oct 13: the Hardware store (SLH) is on a separate Lightspeed account; connecting it comes later. Until then SLH orders
   have no LS location in VMS.
+- Oct 13 (Dana): VMS does not create new items in Lightspeed until she and Trevor sign off on the naming conventions (the LS
+  category standard). Until then new items are added in LS by hand and **Send again** puts them on the PO.
