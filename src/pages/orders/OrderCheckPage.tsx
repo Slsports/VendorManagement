@@ -142,7 +142,9 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
           This confirmation shows no PO of ours.{' '}
           {c.po_draft_id
             ? <>The email asking them to add our PO is in <Link to={`${ROUTES.mail}?view=drafts`} className="font-medium underline">Mail › Drafts</Link>.</>
-            : <>There is a task to <Link to={ROUTES.tasks} className="font-medium underline">create the PO</Link>; once it is typed on the order, the email asking them to add it waits in Mail › Drafts.</>}
+            : c.order
+              ? <>Open <Link to={`${ROUTES.orders}/${c.order.id}`} className="font-medium underline">the order</Link> and click <strong>Create PO in LS</strong>: VMS makes our PO, and the email asking them to add it waits in Mail › Drafts.</>
+              : <>Pick the order above first, then open it and click <strong>Create PO in LS</strong>. The email asking them to add our PO then waits in Mail › Drafts.</>}
         </Alert>
       ) : null}
 

@@ -56,3 +56,30 @@ export async function lsGet<T>(token: string, path: string): Promise<T> {
     return body as T
   }
 }
+
+/** POST to the LS API (creates something). Waits and retries when LS says slow down. */
+export async function lsPost<T>(token: string, path: string, body: unknown): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(`${LS_API}${path}`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    if (res.status === 429 && attempt < 3) { await new Promise((r) => setTimeout(r, 2000 * (attempt + 1))); continue }
+    const out = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(`Lightspeed ${res.status}: ${(out as { message?: string }).message ?? 'request failed'}`)
+    return out as T
+  }
+}
+
+/** LS answers one record as an object and several as a list. */
+export const asList = <T>(x: T | T[] | undefined | null): T[] => (x == null ? [] : Array.isArray(x) ? x : [x])
+
+/** Every page of a list (LS pages with an "after" cursor in @attributes.next). */
+export async function lsGetAll<T>(token: string, path: string, key: string, max = 50): Promise<T[]> {
+  const out: T[] = []
+  let url: string | null = `${path}${path.includes('?') ? '&' : '?'}limit=100`
+  for (let page = 0; url && page < max; page++) {
+    const body: Record<string, unknown> = await lsGet<Record<string, unknown>>(token, url)
+    out.push(...asList(body[key] as T | T[] | undefined))
+    const next = (body['@attributes'] as { next?: string } | undefined)?.next
+    url = next ? next.replace(LS_API, '') : null
+  }
+  return out
+}

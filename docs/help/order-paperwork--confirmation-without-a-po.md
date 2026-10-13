@@ -8,7 +8,7 @@ When a vendor's confirmation doesn't show our PO number, VMS makes sure the PO g
 
 ## What happens
 1. If the order has no PO yet, whoever placed the order (Dana or Jarrett) gets a task: **Create PO: [vendor], [their order number]**, due the next business day.
-2. Make the PO and type it on the order. If the check says **No order found**, pick or add the order first.
+2. Open the order and click **Create PO in LS** (see "Create the PO in Lightspeed"): VMS makes our PO, like YAKIMA080626, and creates it in Lightspeed. If the check says **No order found**, pick or add the order first. Typing a PO on the order by hand works too.
 3. As soon as the PO is on the order, an email asking the vendor to add our PO to their order waits in **Mail › Drafts**, and the task is done.
 4. Open the draft, check it, and click **Send**.
 

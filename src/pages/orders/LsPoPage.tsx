@@ -5,6 +5,7 @@ import { Check, Download, Plus, Printer, RotateCcw, Send, Trash2, Undo2 } from '
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { getLsPo, LS_PO_STATUS, lsPoAction, lsPoCsv, type LsPoLine, type LsPoRow } from '@/services/lsPos'
+import { sendLsPoItems } from '@/services/lightspeed'
 import { ROUTES } from '@/lib/constants'
 import { money } from '@/lib/freight'
 import { saveBlob } from '@/lib/viewer'
@@ -58,6 +59,24 @@ function LsPoView({ po, reload }: { po: LsPoRow; reload: () => void }) {
     }
   }
   function save(e: FormEvent) { e.preventDefault(); void act('save', 'Changes saved') }
+  /** The items onto our PO in Lightspeed (making the PO there first if it isn't yet). */
+  async function sendToLs() {
+    setBusy(true)
+    setError(null)
+    const t = toast.loading('Sending to Lightspeed…')
+    try {
+      if (dirty) await lsPoAction(po.id, 'save', lines)
+      const r = await sendLsPoItems(po.id)
+      if (r.done) toast.success(`All items are on PO ${r.po_number} in Lightspeed`, { id: t })
+      else toast(`${r.added} added to ${r.po_number}. ${r.missing.length} not in Lightspeed yet: add them in LS, then Send again.`, { id: t, duration: 10000 })
+      reload()
+    } catch (e) {
+      setError(errorMessage(e))
+      toast.error(errorMessage(e), { id: t })
+    } finally {
+      setBusy(false)
+    }
+  }
   const set = (i: number, patch: Partial<LsPoLine>) => setLines((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)))
   function download() {
     saveBlob(new Blob([lsPoCsv({ ...po, lines })], { type: 'text/csv' }), `LS PO ${po.vendor?.name ?? ''} ${po.order?.po_number ?? ''}.csv`.replace(/\s+/g, ' ').trim())
@@ -109,7 +128,7 @@ function LsPoView({ po, reload }: { po: LsPoRow; reload: () => void }) {
                 <tr key={i}>
                   <td className="whitespace-nowrap px-3 py-2">
                     {editable ? <Input aria-label="Vendor ID" value={l.vid ?? ''} onChange={(e) => set(i, { vid: e.target.value || null })} className="h-9 w-28" /> : l.vid ?? '—'}
-                    <span className={cn('mt-1 block text-[11px] font-semibold', l.is_new ? 'text-amber-700' : 'text-emerald-700')}>{l.is_new ? 'New to LS' : `In LS${l.system_id ? ` · ${l.system_id}` : ''}`}</span>
+                    <span className={cn('mt-1 block text-[11px] font-semibold', l.ls_line_id ? 'text-emerald-700' : l.is_new ? 'text-amber-700' : 'text-emerald-700')}>{l.ls_line_id ? 'On the PO in LS' : l.is_new ? 'New to LS' : `In LS${l.system_id ? ` · ${l.system_id}` : ''}`}</span>
                   </td>
                   <td className="min-w-64 px-3 py-2">
                     {editable ? <Input aria-label="LS name" value={l.name} onChange={(e) => set(i, { name: e.target.value })} className="h-9" /> : l.name}
@@ -145,7 +164,7 @@ function LsPoView({ po, reload }: { po: LsPoRow; reload: () => void }) {
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {canApprove ? <Button disabled={busy} onClick={() => void act('approve', `Approved: on to ${first(po.reviewer?.full_name) || 'the reviewer'}`)} leftIcon={<Check className="size-4" aria-hidden="true" />}>Approve</Button> : null}
         {po.status === 'to_approve' && !canApprove ? <p className="text-sm text-stone-600">Waiting for {po.approver?.full_name ?? 'the person who placed the order'} to approve.</p> : null}
-        {po.status === 'to_review' && canReview ? <Button disabled={busy} onClick={() => void act('send', 'Ready to enter in LS')} leftIcon={<Send className="size-4" aria-hidden="true" />}>Send to LS</Button> : null}
+        {(po.status === 'to_review' || po.status === 'ready') && canReview ? <Button disabled={busy} onClick={() => void sendToLs()} leftIcon={<Send className="size-4" aria-hidden="true" />}>{po.status === 'ready' ? 'Send again' : 'Send to Lightspeed'}</Button> : null}
         {po.status === 'to_review' && !canReview ? <p className="text-sm text-stone-600">Waiting for {po.reviewer?.full_name ?? 'the LS PO reviewer'} to review.</p> : null}
         {(po.status === 'to_review' || po.status === 'ready') && canReview ? <Button variant="ghost" disabled={busy} onClick={() => void act('back', 'Sent back for approval')} leftIcon={<Undo2 className="size-4" aria-hidden="true" />}>Send back to {first(po.approver?.full_name) || 'the orderer'}</Button> : null}
         {po.status !== 'sent' && po.status !== 'drafting' ? <Button variant="ghost" disabled={busy} onClick={() => { if (window.confirm('Have Claude draft it again from the latest confirmation? Changes made here are replaced.')) void act('redraft', 'Claude is drafting it again') }} leftIcon={<RotateCcw className="size-4" aria-hidden="true" />}>Redraft</Button> : null}
@@ -154,8 +173,8 @@ function LsPoView({ po, reload }: { po: LsPoRow; reload: () => void }) {
 
       {po.status === 'ready' || (po.status === 'to_review' && canReview) ? (
         <section className="mt-4 rounded-2xl border border-brand/30 bg-white p-4">
-          <h2 className="text-sm font-semibold text-stone-900">Enter it in LS</h2>
-          <p className="mt-1 text-sm text-stone-600">Until VMS is connected to LS: download or print this PO, create it in LS, then type the LS PO number here.</p>
+          <h2 className="text-sm font-semibold text-stone-900">Or enter it in LS by hand</h2>
+          <p className="mt-1 text-sm text-stone-600"><strong>Send to Lightspeed</strong> puts the items on PO {po.order?.po_number ?? '(made when you send)'} in LS. Items not in LS yet are listed above: add them in LS, then <strong>Send again</strong>. To do it all by hand instead: download or print this PO, enter it in LS, then type the PO number here.</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Button size="sm" variant="secondary" onClick={download} leftIcon={<Download className="size-4" aria-hidden="true" />}>Download for LS</Button>
             <Button size="sm" variant="secondary" onClick={() => window.print()} leftIcon={<Printer className="size-4" aria-hidden="true" />}>Print</Button>

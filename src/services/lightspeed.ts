@@ -22,3 +22,37 @@ export const lightspeedSignInUrl = (access: 'read' | 'full') => call<{ url: stri
 export const finishLightspeedSignIn = (code: string, state: string) => call<LightspeedStatus>({ action: 'exchange', code, state })
 export const testLightspeed = () => call<LightspeedStatus>({ action: 'test' })
 export const disconnectLightspeed = () => call<LightspeedStatus>({ action: 'disconnect' })
+
+// ---- one PO number, created in Lightspeed (Dana, Oct 13: [VENDOR][MMDDYY] in LS's Reference #) ----
+
+/** LS's vendors into VMS, matched to ours by name where exactly one fits. */
+export const syncLsVendors = () => call<{ vendors: number; matched: number }>({ action: 'sync_vendors' })
+/** The empty PO in LS for the order's vendor and store; our PO goes on the order. */
+export const createLsPo = (orderId: string, shopId: string | null) => call<{ po_number: string; ls_order_id: string; shop_id: string }>({ action: 'create_po', order_id: orderId, shop_id: shopId })
+/** The approved draft's items onto the order's PO in LS; returns what could not be found in LS yet. */
+export const sendLsPoItems = (lsPoId: string) => call<{ po_number: string; added: number; missing: string[]; done: boolean }>({ action: 'send_items', ls_po_id: lsPoId })
+
+export async function poNumberPreview(orderId: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc('po_number_next', { p_order: orderId })
+  if (error) throw error
+  return data
+}
+
+export interface LsVendor { ls_vendor_id: string; name: string; archived: boolean }
+export async function listLsVendors(organizationId: string): Promise<LsVendor[]> {
+  const { data, error } = await supabase.from('ls_vendors').select('ls_vendor_id, name, archived').eq('organization_id', organizationId).order('name').limit(2000)
+  if (error) throw error
+  return data ?? []
+}
+
+export async function setVendorLs(vendorId: string, lsVendorId: string | null, poCode: string | null): Promise<void> {
+  const { error } = await supabase.rpc('vendor_set_ls', { p_vendor: vendorId, p_ls_vendor_id: lsVendorId ?? '', p_po_code: poCode ?? '' })
+  if (error) throw error
+}
+
+/** LS locations by VMS store (SLS = Shaver Lake Sports 3, SLM = Marina 1, GS = The Happy Camper 2). */
+export async function listLsShops(organizationId: string): Promise<{ code: string; name: string; ls_shop_id: string }[]> {
+  const { data, error } = await supabase.from('stores').select('code, name, ls_shop_id').eq('organization_id', organizationId).not('ls_shop_id', 'is', null).order('code')
+  if (error) throw error
+  return (data ?? []) as { code: string; name: string; ls_shop_id: string }[]
+}

@@ -16,6 +16,7 @@ import { FoldSection } from '@/components/shared/FoldSection'
 import { RouteBadges } from '@/components/vendors/RouteBadges'
 import { ReviewItemCard, VENDOR_DELETED } from '@/components/vendors/ReviewItemCard'
 import { VendorDocumentsSection } from '@/components/vendors/VendorDocumentsSection'
+import { VendorLightspeedBox } from '@/components/vendors/VendorLightspeedBox'
 import { RecordTasks } from '@/components/tasks/RecordTasks'
 import { VendorOrderingPanel } from '@/components/ordering/VendorOrderingPanel'
 import { VendorRepGroupCard } from '@/components/vendors/VendorRepGroupCard'
@@ -243,6 +244,7 @@ export default function VendorDetailPage() {
 
         <VendorConfirmBox vendorId={v.id} organizationId={v.organization_id} canEdit={canEdit} infoConfirmedAt={v.info_confirmed_at} />
         <VendorRoutingLetter vendorId={v.id} organizationId={v.organization_id} />
+        <VendorLightspeedBox vendor={v} canEdit={canEdit} onChange={() => void vendorQ.refetch()} />
 
         <FoldSection title="Ordering windows" summary={v.vendor_order_windows.length === 0 ? 'None' : `${v.vendor_order_windows.length} window${v.vendor_order_windows.length === 1 ? '' : 's'}`}>
           {v.vendor_order_windows.length === 0 ? (

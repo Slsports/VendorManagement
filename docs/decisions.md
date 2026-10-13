@@ -2033,3 +2033,17 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - Oct 13: connected. Dana registered the API client with billing.slsports@gmail.com (her dana@ email stayed blocked at LS);
   the store sign-in links account 222531 "Shaver Lake Sports", 16,794 active items. LS counts items with `count=1` and no
   `limit` (paging is by `after` cursor).
+
+## Oct 13 — One PO number, created in Lightspeed (Dana: "go")
+- Dana: "We always try to use only one PO … Simplicity is best." Our PO is **[VENDOR][MMDDYY]** of the order date (YAKIMA080626),
+  kept in the LS PO's **Reference #** (Trevor's habit); LS's own PO number (#10) is not used — VMS keeps it (orders.ls_order_id)
+  only to find the PO. Some older Reference #s hold the vendor's own numbers because vendors weren't asked to use ours; the
+  PO follow-up email fixes that going forward. Edenred (WWD invoices) shows our PO when the vendor submitted it.
+- Each vendor has a **PO code** (from its name: KELLIS, SHARKEYES; editable) and its Lightspeed vendor (matched by the LS name
+  already on 764 vendors, else by name without "- WWD", else picked on the vendor page). A second order the same day: -2.
+- **Create PO in LS** on the order (and from the Create PO task): empty PO for the vendor and store (SLS = LS location 3,
+  SLM = 1, GS = The Happy Camper 2; the Hardware store isn't in LS), Reference # = our PO; the PO goes on the order, which
+  drafts the "please add our PO" email and closes the task.
+- **Send to Lightspeed** on the approved LS PO draft adds its items to that PO (found by System ID, Vendor ID or UPC); items
+  not in LS yet are listed to add in LS by hand, then **Send again** adds only those. Creating new items in LS is not built.
+- Reconnected with Full access (needed for POs). Migration 0105.

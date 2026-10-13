@@ -19,6 +19,9 @@ export interface LsPoLine {
   category: string
   is_new: boolean
   note: string | null
+  /** set when it went onto the PO in Lightspeed (Send to Lightspeed) */
+  ls_item_id?: string | null
+  ls_line_id?: string | null
 }
 
 export interface LsPoRow extends Omit<LsPo, 'lines'> {
