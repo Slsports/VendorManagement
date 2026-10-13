@@ -1,7 +1,7 @@
 ---
 title: Share a private email to Orders
 section: Mail
-keywords: share, private, personal mailbox, my mail, make public, take back
+keywords: share, private, personal mailbox, my mail, make public, take back, automatic, vendor mail, old gmail
 who: Admin, managers and buyers
 ---
 Mail in your own mailbox is private. Share a conversation when the rest of the team needs to see it.
@@ -14,3 +14,5 @@ Mail in your own mailbox is private. Share a conversation when the rest of the t
 ## Good to know
 - Once shared, it shows in the Orders (shared) mail for everyone. It stays yours.
 - Until it is shared, only you and Dana see it.
+- Conversations where a known vendor or rep group writes to you are shared to Orders by themselves, in Trevor's and Jarrett's mailboxes and the Old Gmail (not Dana's own mailbox). Mail from anyone else stays private.
+- If one was shared by mistake, click **Take back out of Orders**. It stays private after that, even when the vendor writes again.

@@ -1961,3 +1961,7 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   can properly review the email Claude puts together"): the check page lists every email about the order; Claude reads
   the whole conversation before comparing, leaves out what was already settled, and says where each issue came from.
   The checks waiting for review were compared again.
+- **Vendor mail in personal mailboxes is shared to Orders automatically** (Dana: "if the email is from a known vendor" …
+  "just not mine" … "fine to auto share the old Gmail"): a conversation in Trevor's or Jarrett's mailbox or the Old Gmail
+  is shared once a known vendor or rep group writes in it (also when a sender is filed as a vendor later). Dana's own
+  mailbox never is. Taking a conversation back out of Orders sticks. Ran on the last 12 months (86 conversations).

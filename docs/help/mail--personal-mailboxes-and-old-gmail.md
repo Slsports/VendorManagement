@@ -13,6 +13,7 @@ Besides the shared orders@, Dana, Trevor and Jarrett each have their own mailbox
 
 ## Good to know
 - Your mailbox is private: only you and Dana see it, until you share a conversation.
+- Except vendor mail: when a known vendor or rep group writes to you, that conversation is shared to Orders by itself so the team and Claude can use it. Dana's own mailbox is left out; the Old Gmail is included.
 - Only the owner can send from a personal mailbox. Dana can read it but not reply from it.
 - Sending vendor business (an order, a return, a problem) from your own mailbox asks first whether to send it from orders@ instead.
 - Every conversation in your mailbox is yours; vendor rules do not hand it to someone else.
