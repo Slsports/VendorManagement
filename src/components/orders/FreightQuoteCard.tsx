@@ -7,7 +7,7 @@ import { money, shortDate } from '@/lib/freight'
 import { QUOTE_STATUS } from '@/lib/freightQuotes'
 import { Badge } from '@/components/ui'
 
-const CHOICE: Record<string, string> = { vendor: "the vendor's quote", priority_one: 'Priority One', wwex: 'WWEX', other: 'other' }
+const CHOICE: Record<string, string> = { vendor: "the vendor's quote", priority_one: 'Priority One', wwex: 'WWEX (UPS)', other: 'other' }
 
 /**
  * Freight quote on an order (Dana, Oct 13: "No order is to be shipped without a freight quote from the vendor"): waiting

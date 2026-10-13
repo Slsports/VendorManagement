@@ -6,8 +6,8 @@ import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { Gmail, GmailError, googleAccessToken } from '../_shared/gmail.ts'
 import { clueText, htmlBody, isBulk, isOldGmail, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
 import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type VendorIndex } from '../_shared/mailMatch.ts'
-import { extractLinks, itemPicture, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
-import { aiEnabled, readArtwork, readEmailVendors, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type UnsureEmail } from '../_shared/ai.ts'
+import { extractLinks, itemPicture, maybePaperwork, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
+import { aiEnabled, classifyPaperwork, readArtwork, readEmailVendors, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type UnsureEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
@@ -494,18 +494,30 @@ async function saveVendorFiles(db: SupabaseClient, gmail: Gmail, org: string, st
  */
 async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, started: number, box: string) {
   const { data: queue } = await db.from('emails')
-    .select('id, gmail_id, vendor_id, subject, received_at, attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
+    .select('id, gmail_id, vendor_id, subject, body_text, view, received_at, vendor:vendors!emails_vendor_id_fkey(name), attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
     .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).eq('direction', 'in').not('vendor_id', 'is', null).is('paper_scanned_at', null).eq('has_attachments', true).not('is_bulk', 'is', true)
     .gte('received_at', new Date(Date.now() - 30 * 86_400_000).toISOString())
     .order('received_at', { ascending: false }).limit(10)
+  let asked = 0
   for (const e of queue ?? []) {
     if (Date.now() - started > TIME_BUDGET_MS) break
     try {
       const atts = (e.attachments ?? []) as { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; vendor_link_id: string | null }[]
-      for (const a of atts) {
-        const kind = a.vendor_link_id || !a.gmail_attachment_id || (a.size ?? 0) > 15 * 1024 * 1024 ? null : paperworkKind(a, e.subject)
+      const open = atts.filter((a) => !a.vendor_link_id && a.gmail_attachment_id && (a.size ?? 0) <= 15 * 1024 * 1024 && maybePaperwork(a))
+      // the email's own words count only when it carries one or two such files (Dom's "S102112.pdf", Dana Oct 13)
+      const body = open.length <= 2 ? e.body_text : null
+      for (const a of open) {
+        let kind = paperworkKind(a, e.subject, body)
+        let bytes: Uint8Array | null = null
+        // a PDF that says nothing about itself, in mail that needs attention: Claude looks (a few a run)
+        if (!kind && /\.pdf$/i.test(a.file_name) && e.view === 'attention' && (a.size ?? 0) >= 10 * 1024 && asked < 4 && aiEnabled()) {
+          asked++
+          bytes = await attachmentBytes(gmail, e.gmail_id, a.gmail_attachment_id!)
+          const said = await classifyPaperwork(db, org, { name: a.file_name, mime: 'application/pdf', bytes }, { vendor: (e.vendor as unknown as { name: string } | null)?.name ?? null, subject: e.subject, text: e.body_text })
+          kind = said === 'other' ? null : said
+        }
         if (!kind) continue
-        const bytes = await attachmentBytes(gmail, e.gmail_id, a.gmail_attachment_id!)
+        bytes ??= await attachmentBytes(gmail, e.gmail_id, a.gmail_attachment_id!)
         const path = `${org}/${e.vendor_id}/${crypto.randomUUID()}-${a.file_name.replace(/[^A-Za-z0-9._-]+/g, '_')}`
         const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: a.mime_type ?? 'application/pdf', upsert: false })
         if (upErr) throw new Error(`Saving ${a.file_name}: ${upErr.message}`)

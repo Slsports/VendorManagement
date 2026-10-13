@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import type { MatchVendor } from '@/lib/bulkImport'
 import type { VendorLink } from '@/types'
+import { checkUploadSize, readForUpload, uploadError } from '@/lib/upload'
 
 const BUCKET = 'vendor-files'
 const safeName = (n: string) => n.replace(/[^A-Za-z0-9._-]+/g, '_')
@@ -34,8 +35,9 @@ export const docKey = (vendorId: string, fileName: string, size: number | null) 
 /** Upload a file to the organization's import folder (before Claude reads it, or when filing). */
 export async function stageImportFile(organizationId: string, file: File): Promise<string> {
   const path = `${organizationId}/import/${crypto.randomUUID()}-${safeName(file.name)}`
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type || undefined, upsert: false })
-  if (error) throw error
+  checkUploadSize(file)
+  const { error } = await supabase.storage.from(BUCKET).upload(path, await readForUpload(file), { contentType: file.type || undefined, upsert: false }).catch((e: unknown) => ({ error: e }))
+  if (error) throw uploadError(error, file)
   return path
 }
 

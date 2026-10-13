@@ -48,7 +48,7 @@ export async function countWaitingFreightQuotes(organizationId: string): Promise
   return count ?? 0
 }
 
-export async function freightQuoteAction(id: string, action: 'set_order' | 'ours' | 'approve' | 'decline' | 'reopen', opts: { order?: string | null; priorityOne?: number | null; wwex?: number | null; note?: string | null; choice?: string | null; cost?: number | null } = {}): Promise<void> {
+export async function freightQuoteAction(id: string, action: 'set_order' | 'ours' | 'approve' | 'decline' | 'reopen' | 'pallet' | 'parcel', opts: { order?: string | null; priorityOne?: number | null; wwex?: number | null; note?: string | null; choice?: string | null; cost?: number | null } = {}): Promise<void> {
   const { error } = await supabase.rpc('freight_quote_action', {
     p_quote: id, p_action: action, p_order: opts.order ?? null, p_priority_one: opts.priorityOne ?? null, p_wwex: opts.wwex ?? null,
     p_note: opts.note ?? null, p_choice: opts.choice ?? null, p_cost: opts.cost ?? null,

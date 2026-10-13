@@ -44,7 +44,7 @@ export async function getOrderCheck(id: string): Promise<OrderCheckRow> {
   return data as unknown as OrderCheckRow
 }
 
-export type CheckAction = 'set_order' | 'assign' | 'done' | 'sent' | 'recheck' | 'dismiss' | 'reopen'
+export type CheckAction = 'set_order' | 'assign' | 'done' | 'sent' | 'recheck' | 'dismiss' | 'reopen' | 'tick_report'
 
 export async function orderCheckAction(checkId: string, action: CheckAction, opts: { order?: string | null; profile?: string | null; thread?: string | null } = {}): Promise<void> {
   const { error } = await supabase.rpc('order_check_action', { p_check: checkId, p_action: action, p_order: opts.order ?? null, p_profile: opts.profile ?? null, p_thread: opts.thread ?? null })

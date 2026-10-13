@@ -16,6 +16,6 @@ Bring whole vendor folders (for example from Dropbox) into VMS at once. VMS sort
 ## Good to know
 - Sorting uses the folder names first ("Stansport/Invoices/2024"), then the file name, then the file's date.
 - Files already in VMS (same vendor, name and size) are skipped and listed under **Already in VMS**.
-- Files over 25 MB are left out.
+- Files over 50 MB are left out.
 - After filing, **Filed** links to each vendor so you can check.
 - **Clear the list** removes what has not been filed yet.

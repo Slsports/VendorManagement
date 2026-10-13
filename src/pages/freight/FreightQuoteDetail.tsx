@@ -8,14 +8,14 @@ import { freightQuoteAction, getFreightQuote, type FreightQuoteRow, type QuoteDe
 import { listOrders } from '@/services/orders'
 import { ROUTES } from '@/lib/constants'
 import { money, shortDate } from '@/lib/freight'
-import { cheapest, QUOTE_STATUS } from '@/lib/freightQuotes'
+import { cheapest, QUOTE_STATUS, SHIPS_BY } from '@/lib/freightQuotes'
 import { cn, errorMessage } from '@/lib/utils'
 import { BackLink } from '@/components/shared/BackLink'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { EmailConversation } from '@/components/orders/EmailConversation'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner } from '@/components/ui'
 
-/** One freight quote: the vendor's price and shipment details, our Priority One and WWEX prices, approve one. */
+/** One freight quote: the vendor's price and shipment details, our price (Pallet → Priority One, Parcel → WWEX/UPS), approve one. */
 export default function FreightQuoteDetailPage() {
   const { id = '' } = useParams()
   const q = useSupabaseQuery(() => getFreightQuote(id), [id])
@@ -34,7 +34,8 @@ function QuoteView({ quote: f, refetch }: { quote: FreightQuoteRow; refetch: () 
   const [note, setNote] = useState(f.our_note ?? '')
   const [busy, setBusy] = useState(false)
   const d = (f.details ?? {}) as QuoteDetails
-  const best = cheapest({ vendor_cost: f.vendor_cost, priority_one_cost: num(p1), wwex_cost: num(wwex) })
+  const by = f.ships_by
+  const best = cheapest({ vendor_cost: f.vendor_cost, priority_one_cost: num(p1), wwex_cost: num(wwex), ships_by: by })
 
   async function act(label: string, action: Parameters<typeof freightQuoteAction>[1], opts: Parameters<typeof freightQuoteAction>[2] = {}) {
     const bad = [p1, wwex].find((v) => v.trim() && Number.isNaN(num(v)))
@@ -53,10 +54,10 @@ function QuoteView({ quote: f, refetch }: { quote: FreightQuoteRow; refetch: () 
   }
 
   const choices: { key: 'vendor' | 'priority_one' | 'wwex'; label: string; cost: number | null }[] = [
-    { key: 'vendor', label: `${f.vendor?.name ?? 'Vendor'}'s quote`, cost: f.vendor_cost === null ? null : Number(f.vendor_cost) },
-    { key: 'priority_one', label: 'Priority One', cost: num(p1) },
-    { key: 'wwex', label: 'WWEX', cost: num(wwex) },
-  ]
+    { key: 'vendor' as const, label: `${f.vendor?.name ?? 'Vendor'}'s quote`, cost: f.vendor_cost === null ? null : Number(f.vendor_cost) },
+    { key: 'priority_one' as const, label: 'Priority One', cost: num(p1) },
+    { key: 'wwex' as const, label: 'WWEX (UPS)', cost: num(wwex) },
+  ].filter((c) => c.key === 'vendor' || !by || SHIPS_BY[by].ours === c.key)
   const approved = f.status === 'approved'
 
   return (
@@ -93,10 +94,19 @@ function QuoteView({ quote: f, refetch }: { quote: FreightQuoteRow; refetch: () 
       </section>
 
       <section className="mb-4 rounded-2xl border border-stone-200 bg-white p-4">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-stone-500">Our prices</h2>
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-stone-500">Our price</h2>
+          <div className="inline-flex rounded-xl bg-stone-100 p-1" role="group" aria-label="Ships by">
+            {(['pallet', 'parcel'] as const).map((k) => (
+              <button key={k} type="button" disabled={!canEdit || approved || busy} aria-pressed={by === k} onClick={() => by !== k && void act(`Ships by ${SHIPS_BY[k].label}`, k)}
+                className={cn('rounded-lg px-3 py-1.5 text-sm font-medium disabled:cursor-default', by === k ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900')}>{SHIPS_BY[k].label}</button>
+            ))}
+          </div>
+          {!by ? <span className="text-xs text-amber-800">Pallet or parcel? Pick one.</span> : null}
+        </div>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
-          <FormField label="Priority One" htmlFor="fq-p1"><Input id="fq-p1" inputMode="decimal" value={p1} onChange={(e) => setP1(e.target.value)} placeholder="$" disabled={!canEdit || approved} /></FormField>
-          <FormField label="WWEX" htmlFor="fq-wwex"><Input id="fq-wwex" inputMode="decimal" value={wwex} onChange={(e) => setWwex(e.target.value)} placeholder="$" disabled={!canEdit || approved} /></FormField>
+          {by !== 'parcel' ? <FormField label="Priority One" htmlFor="fq-p1"><Input id="fq-p1" inputMode="decimal" value={p1} onChange={(e) => setP1(e.target.value)} placeholder="$" disabled={!canEdit || approved} /></FormField> : null}
+          {by !== 'pallet' ? <FormField label="WWEX (UPS)" htmlFor="fq-wwex"><Input id="fq-wwex" inputMode="decimal" value={wwex} onChange={(e) => setWwex(e.target.value)} placeholder="$" disabled={!canEdit || approved} /></FormField> : null}
           <FormField label="Note" htmlFor="fq-note"><Input id="fq-note" value={note} onChange={(e) => setNote(e.target.value)} disabled={!canEdit} /></FormField>
         </div>
         {canEdit && !approved ? (

@@ -1,7 +1,7 @@
 ---
 title: Ask vendors to confirm their info
 section: Vendors
-keywords: confirm, contact info, vendor form, confirmed, waiting, no answer, bad email, update, Worldwide, represents, categories, what they sell
+keywords: confirm, contact info, routing letter, routing instructions, vendor form, confirmed, waiting, no answer, bad email, update, Worldwide, represents, categories, what they sell
 who: Admin, managers and buyers
 ---
 Each person at a vendor gets an email with a link to a short form showing what we have for them. They click **Looks good** or fix what's wrong, and they're marked **Confirmed**.
@@ -19,6 +19,7 @@ Each person at a vendor gets an email with a link to a short form showing what w
 - Who should get our purchase orders, freight quotes and tracking, and invoices.
 - How they take orders (email, phone, NuORDER, website), their minimum order and any freight programs.
 - Other vendors they represent, one per box, and the product categories they sell.
+- Once our routing letter is in VMS: **Did you receive our routing instructions?** Yes or No. Yes marks the letter received for them. No puts the routing letter email for them in **Mail › Drafts**, ready to send. The answer shows in the **Got routing letter?** column.
 
 ## Good to know
 - Changes go straight into VMS. A new company name, and vendors VMS doesn't know, go to the **Review queue** for you.

@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import type { RoutingLetter, RoutingLetterSend } from '@/types'
+import { checkUploadSize, readForUpload, uploadError } from '@/lib/upload'
 
 // The freight routing letter (Dana, Oct 13): versions, who it went to, and who confirmed receiving it.
 
@@ -26,8 +27,9 @@ export async function listRoutingLetters(organizationId: string): Promise<Routin
 
 export async function addRoutingLetter(organizationId: string, file: File, f: { effective: string | null; note: string; subject: string; body: string }): Promise<string> {
   const path = `${organizationId}/routing/${crypto.randomUUID()}-${file.name.replace(/[^A-Za-z0-9._-]+/g, '_')}`
-  const { error: upErr } = await supabase.storage.from('vendor-files').upload(path, file, { contentType: file.type || 'application/pdf', upsert: false })
-  if (upErr) throw upErr
+  checkUploadSize(file)
+  const { error: upErr } = await supabase.storage.from('vendor-files').upload(path, await readForUpload(file), { contentType: file.type || 'application/pdf', upsert: false }).catch((e: unknown) => ({ error: e }))
+  if (upErr) throw uploadError(upErr, file)
   const { data, error } = await supabase.rpc('routing_letter_add', { p_org: organizationId, p_path: path, p_file_name: file.name, p_effective: f.effective, p_note: f.note, p_subject: f.subject, p_body: f.body })
   if (error) throw error
   return data as string

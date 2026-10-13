@@ -42,7 +42,7 @@ export default function FreightQuoteListPage() {
   return (
     <div>
       <BackLink fallback={ROUTES.freight} fallbackLabel="Freight" />
-      <PageHeader title="Freight quotes" description="No order ships until its freight quote is approved. Add the Priority One and WWEX prices, then approve the cheapest." />
+      <PageHeader title="Freight quotes" description="No order ships until its freight quote is approved. Add our price (Pallet → Priority One, Parcel → WWEX/UPS), then approve the cheaper one." />
       <ul className="mb-4 flex flex-wrap gap-1 rounded-xl bg-stone-100 p-1 sm:inline-flex" aria-label="Which quotes">
         {TABS.map((t) => (
           <li key={t.value}>

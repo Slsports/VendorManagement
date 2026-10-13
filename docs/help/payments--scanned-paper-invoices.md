@@ -17,4 +17,4 @@ Old paper invoices that were scanned (back to 2010) can be loaded in bulk. Claud
 ## Good to know
 - Each document gets its vendor, folder (Invoices, Credits, Shipping for packing slips...), number, date and total. The date sets the year folder.
 - Each vendor's Documents has a search box to find a scan by number, amount or name.
-- Files over 25 MB are left out. Files already in VMS are skipped.
+- Files over 50 MB are left out. Files already in VMS are skipped.

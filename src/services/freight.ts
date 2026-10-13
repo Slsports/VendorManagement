@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { TEST_LOGIN_PATTERN } from '@/services/reviews'
 import type { Carrier, FreightBill, FreightBillLine, Order, TablesInsert, TablesUpdate } from '@/types'
+import { checkUploadSize, readForUpload, uploadError } from '@/lib/upload'
 
 export interface FreightBillRow extends FreightBill {
   carriers: Pick<Carrier, 'id' | 'name' | 'mode' | 'website' | 'ups_account'> | null
@@ -112,8 +113,9 @@ export async function setFreightBillStatus(id: string, status: FreightBill['stat
 /** Trevor drops the bill PDF on the bill (PartnerShip sends none): saved, then read by Claude. */
 export async function uploadFreightPdf(bill: Pick<FreightBill, 'id' | 'organization_id'>, file: File): Promise<void> {
   const path = `${bill.organization_id}/freight/${crypto.randomUUID()}-${file.name.replace(/[^A-Za-z0-9._-]+/g, '_')}`
-  const { error } = await supabase.storage.from('vendor-files').upload(path, file, { contentType: file.type || 'application/pdf', upsert: false })
-  if (error) throw error
+  checkUploadSize(file)
+  const { error } = await supabase.storage.from('vendor-files').upload(path, await readForUpload(file), { contentType: file.type || 'application/pdf', upsert: false }).catch((e: unknown) => ({ error: e }))
+  if (error) throw uploadError(error, file)
   const { error: e2 } = await supabase.from('freight_bills').update({ storage_path: path, file_name: file.name, status: 'reading', read_note: null }).eq('id', bill.id)
   if (e2) throw e2
   await readFreightBill(bill.id)
@@ -203,8 +205,9 @@ export interface UploadedBillResult { file: string; result: 'new' | 'filled' | '
  */
 export async function uploadFreightBill(organizationId: string, file: File): Promise<UploadedBillResult> {
   const path = `${organizationId}/freight/${crypto.randomUUID()}-${file.name.replace(/[^A-Za-z0-9._-]+/g, '_')}`
-  const { error: upErr } = await supabase.storage.from('vendor-files').upload(path, file, { contentType: file.type || 'application/pdf', upsert: false })
-  if (upErr) throw upErr
+  checkUploadSize(file)
+  const { error: upErr } = await supabase.storage.from('vendor-files').upload(path, await readForUpload(file), { contentType: file.type || 'application/pdf', upsert: false }).catch((e: unknown) => ({ error: e }))
+  if (upErr) throw uploadError(upErr, file)
   const { data: id, error } = await supabase.rpc('create_uploaded_freight_bill', { p_path: path, p_file: file.name, p_carrier: null })
   if (error) throw error
   const res = await supabase.functions.invoke('freight-read', { body: { bill_id: id } })

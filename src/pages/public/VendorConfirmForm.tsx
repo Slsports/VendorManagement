@@ -13,6 +13,7 @@ interface FormData {
   confirmed_at: string | null; me_id: string | null
   company: { name: string; address: string | null; city: string | null; state: string | null; postal_code: string | null; phone: string | null; website: string | null }
   people: Person[]; order_methods: string[]; minimum_order: string | null; freight_programs: string | null; categories: string[]
+  routing: { version: number; sent_at: string | null; received_at: string | null; answer: 'yes' | 'no' | null } | null
 }
 type Who = { id?: string; name?: string; email?: string } | null
 
@@ -76,6 +77,8 @@ function TheForm({ token, initial, onDone }: { token: string; initial: FormData;
   const [represents, setRepresents] = useState<string[]>([''])
   const [categories, setCategories] = useState<string[]>(initial.categories ?? [])
   const [newCategory, setNewCategory] = useState('')
+  // "Did you receive our routing instructions?" (Dana, Oct 13) — its own answer, not a change to their information
+  const [routing, setRouting] = useState<'yes' | 'no' | null>(initial.routing?.received_at ? 'yes' : initial.routing?.answer ?? null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
@@ -94,7 +97,7 @@ function TheForm({ token, initial, onDone }: { token: string; initial: FormData;
     setBusy(true)
     setErr(null)
     try {
-      const r = await call({ action: 'submit', token, looks_good: looksGood, payload: looksGood ? {} : payload }) as { vendor: string }
+      const r = await call({ action: 'submit', token, looks_good: looksGood, payload: { ...(looksGood ? {} : payload), routing_received: routing } }) as { vendor: string }
       onDone(looksGood ? `Your information for ${r.vendor} is confirmed.` : `Your changes for ${r.vendor} are saved and your information is confirmed.`)
     } catch {
       setErr('Something went wrong saving this. Please try again, or email orders@shaverlakesports.com.')
@@ -113,6 +116,23 @@ function TheForm({ token, initial, onDone }: { token: string; initial: FormData;
         <Button className="mt-4" loading={busy && !changed} disabled={busy || changed} onClick={() => void submit(true)}>Looks good</Button>
         {changed ? <p className="mt-2 text-xs text-stone-500">You've made changes: use <strong>Submit changes</strong> at the bottom.</p> : null}
       </div>
+
+      {initial.routing ? (
+        <section className={section}>
+          <fieldset>
+            <legend className="font-semibold text-stone-900">Did you receive our routing instructions?</legend>
+            <p className="mt-1 text-sm text-stone-600">How we need freight quoted and shipped{initial.routing.sent_at ? `, emailed ${new Date(initial.routing.sent_at).toLocaleDateString()}` : ''}.</p>
+            <div className="mt-2 flex gap-4">
+              {([['yes', 'Yes'], ['no', 'No']] as const).map(([v, label]) => (
+                <label key={v} className="flex items-center gap-1.5 text-sm text-stone-800">
+                  <input type="radio" name="routing" className="size-4 accent-brand" checked={routing === v} onChange={() => setRouting(v)} />{label}
+                </label>
+              ))}
+            </div>
+            {routing === 'no' ? <p className="mt-2 text-sm text-stone-600">We'll email them to you.</p> : null}
+          </fieldset>
+        </section>
+      ) : null}
 
       <section className={section}>
         <h2 className="font-semibold text-stone-900">Your details</h2>

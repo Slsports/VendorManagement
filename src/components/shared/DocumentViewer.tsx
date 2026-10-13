@@ -4,6 +4,7 @@ import { Download, ExternalLink, X } from 'lucide-react'
 import { docType, saveBlob } from '@/lib/viewer'
 import { cn, errorMessage } from '@/lib/utils'
 import { Button, Spinner } from '@/components/ui'
+import { PdfPages } from '@/components/shared/PdfPages'
 
 export interface ViewerDoc {
   name: string
@@ -78,7 +79,7 @@ export function DocumentViewer({ doc, onClose }: { doc: ViewerDoc; onClose: () =
   let body: ReactNode
   if (error) body = <p className="p-6 text-sm text-red-700">Could not open this file: {error}</p>
   else if (!shown) body = <div className="flex justify-center py-24"><Spinner label="Opening…" className="text-brand" /></div>
-  else if (shown.kind === 'pdf') body = <iframe title={doc.name} src={shown.url} className="h-full w-full bg-white" />
+  else if (shown.kind === 'pdf') body = blob ? <PdfPages blob={blob} url={shown.url} name={doc.name} /> : null
   else if (shown.kind === 'image') body = <div className="flex min-h-full items-center justify-center bg-stone-100 p-4"><img src={shown.url} alt={doc.name} className="max-h-full max-w-full object-contain" /></div>
   else if (shown.kind === 'word') {
     // Shown in a sandbox with no scripts: the document is data, never code.

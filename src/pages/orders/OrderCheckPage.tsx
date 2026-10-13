@@ -124,7 +124,27 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
           {canEdit ? <Button size="sm" variant="secondary" className="ml-3" loading={busy} onClick={() => void checkNow()} leftIcon={<RefreshCw className="size-4" aria-hidden="true" />}>Try again</Button> : null}
         </Alert>
       ) : null}
-      {c.status === 'needs_order' ? <PickOrder c={c} canEdit={canEdit} busy={busy} onPick={(orderId) => act('Order picked; Claude compares it next', 'set_order', { order: orderId }, () => void checkNow())} /> : null}
+      {c.status === 'needs_order' || (c.status === 'to_review' && !c.order_id) ? <PickOrder c={c} canEdit={canEdit} busy={busy} onPick={(orderId) => act('Order picked; Claude compares it next', 'set_order', { order: orderId }, () => void checkNow())} /> : null}
+      {c.report_id && c.report_ticked === false && !working ? (
+        <Alert variant="warning" className="mb-4">
+          <p>Claude compared this with the sales report closest before the confirmation, because no report is ticked <strong>Used to place the order</strong>. Is it the one you ordered from?</p>
+          {canEdit ? (
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Button size="sm" loading={busy} onClick={() => act('Ticked: used to place the order', 'tick_report')}>Yes, we ordered from this report</Button>
+              <Button size="sm" variant="secondary" loading={busy} onClick={() => act('Claude compares again', 'recheck', {}, () => void checkNow())} leftIcon={<RefreshCw className="size-4" aria-hidden="true" />}>I ticked another one: check again</Button>
+            </div>
+          ) : null}
+          <p className="mt-2 text-xs">To use a different report, tick it in {c.vendor ? <Link to={`${ROUTES.vendors}/${c.vendor.id}`} className="font-medium underline">{c.vendor.name} › Sales reports</Link> : 'the vendor\'s Sales reports folder'}, then click <strong>check again</strong>.</p>
+        </Alert>
+      ) : null}
+      {c.po_task_id || c.po_draft_id ? (
+        <Alert variant="info" className="mb-4">
+          This confirmation shows no PO of ours.{' '}
+          {c.po_draft_id
+            ? <>The email asking them to add our PO is in <Link to={`${ROUTES.mail}?view=drafts`} className="font-medium underline">Mail › Drafts</Link>.</>
+            : <>There is a task to <Link to={ROUTES.tasks} className="font-medium underline">create the PO</Link>; once it is typed on the order, the email asking them to add it waits in Mail › Drafts.</>}
+        </Alert>
+      ) : null}
 
       <section className="mb-4 grid gap-3 sm:grid-cols-2">
         <DocCard title={`This ${CHECK_KIND_LABEL[c.kind].toLowerCase()}`} docs={c.document ? [c.document] : []} onOpen={open} />
@@ -149,7 +169,7 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
             <thead className="bg-stone-50 text-left text-xs text-stone-500">
               <tr>
                 <SortHeader label="What" sortKey="what" sort={sort} onSort={toggle} className="px-3 py-2" />
-                <SortHeader label={c.kind === 'invoice' ? 'Confirmation' : 'We ordered'} sortKey="ours" sort={sort} onSort={toggle} className="px-3 py-2" />
+                <SortHeader label={c.kind === 'invoice' ? 'Confirmation' : c.against?.startsWith('Sales report') ? 'Sales report' : 'We ordered'} sortKey="ours" sort={sort} onSort={toggle} className="px-3 py-2" />
                 <SortHeader label={c.kind === 'invoice' ? 'Invoice' : 'Confirmation'} sortKey="theirs" sort={sort} onSort={toggle} className="px-3 py-2" />
                 <SortHeader label="OK" sortKey="ok" sort={sort} onSort={toggle} className="px-3 py-2" />
               </tr>
@@ -220,7 +240,9 @@ function PickOrder({ c, canEdit, busy, onPick }: { c: OrderCheckRow; canEdit: bo
   const [pick, setPick] = useState('')
   return (
     <Alert variant="warning" className="mb-4">
-      <p>Claude could not tell which order this {CHECK_KIND_LABEL[c.kind].toLowerCase()} is for{c.po_number ? ` (it says PO ${c.po_number})` : ''}. Pick it:</p>
+      <p>{c.status === 'needs_order'
+        ? <>No order found for this {CHECK_KIND_LABEL[c.kind].toLowerCase()}{c.po_number ? ` (it says PO ${c.po_number})` : ''}, and no sales report to compare it with. Pick the order:</>
+        : <>No order in VMS for this {CHECK_KIND_LABEL[c.kind].toLowerCase()}, so Claude compared it with the sales report. If there is an order, pick it:</>}</p>
       {canEdit ? (
         <div className="mt-2 flex flex-wrap gap-2">
           <Select value={pick} onChange={(e) => setPick(e.target.value)} className="h-9 max-w-md text-sm" aria-label="Order">

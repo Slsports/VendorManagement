@@ -16,7 +16,8 @@ Add files to a vendor's Documents by dropping them on a folder, or with the Uplo
    - Click **Save**.
 
 ## Good to know
-- Each file can be up to 25 MB.
+- Each file can be up to 50 MB.
+- If VMS says it couldn't read a file, close it in Excel (or save and close it) and try again. A file kept in OneDrive must be downloaded to the computer first: open its folder and wait for the cloud icon to turn into a check mark.
 - Upload starts on the folder you have open (Invoices if none is open).
 - A file saved to **Confirmations** or **Invoices** is checked by Claude against its order: Claude finds the order and compares, and the result goes to whoever placed the order.
 - The year list runs from next year back about six years. For older files, use **Bulk import documents**.

@@ -32,7 +32,7 @@ export default function ContactConfirmationsPage() {
   const rows = (q.data ?? []).filter((c) => show === 'all' ? true : show === 'waiting' ? c.sent_at && !c.confirmed_at && !c.bounced_at
     : show === 'confirmed' ? !!c.confirmed_at : show === 'bounced' ? !!c.bounced_at : !c.sent_at)
   const { sorted, sort, toggle } = useTableSort(rows, {
-    vendor: (c) => c.vendor?.name ?? '', name: (c) => c.contact_name ?? '', email: (c) => c.email, sent: (c) => c.sent_at, opened: (c) => c.opened_at, confirmed: (c) => c.confirmed_at,
+    vendor: (c) => c.vendor?.name ?? '', name: (c) => c.contact_name ?? '', email: (c) => c.email, sent: (c) => c.sent_at, opened: (c) => c.opened_at, confirmed: (c) => c.confirmed_at, routing: (c) => c.routing_answer,
   }, { param: 'cc_sort', descFirst: ['sent', 'opened', 'confirmed'] })
 
   const counts: Record<ConfirmState, number> = { confirmed: 0, waiting: 0, no_answer: 0, bad_email: 0, not_asked: 0 }
@@ -88,6 +88,7 @@ export default function ContactConfirmationsPage() {
                 <SortHeader label="Sent" sortKey="sent" sort={sort} onSort={toggle} className="px-3 py-2" />
                 <SortHeader label="Opened" sortKey="opened" sort={sort} onSort={toggle} className="px-3 py-2" />
                 <SortHeader label="Answer" sortKey="confirmed" sort={sort} onSort={toggle} className="px-3 py-2" />
+                <SortHeader label="Got routing letter?" sortKey="routing" sort={sort} onSort={toggle} className="px-3 py-2" />
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
@@ -99,6 +100,7 @@ export default function ContactConfirmationsPage() {
                   <td className="whitespace-nowrap px-3 py-2 text-stone-700">{c.sent_at ? shortDate(c.sent_at) : <Badge tone="neutral">In Drafts</Badge>}</td>
                   <td className="whitespace-nowrap px-3 py-2 text-stone-600">{c.opened_at ? shortDate(c.opened_at) : ''}</td>
                   <td className="whitespace-nowrap px-3 py-2">{c.confirmed_at ? <Badge tone="success">{c.changed ? 'Changed' : 'Looks good'} {shortDate(c.confirmed_at)}</Badge> : c.bounced_at ? <Badge tone="danger">Bad email</Badge> : c.sent_at ? <Badge tone="warning">Waiting{c.reminded_at ? ', reminded' : ''}</Badge> : null}</td>
+                  <td className="whitespace-nowrap px-3 py-2 text-stone-700">{c.routing_answer === 'yes' ? 'Yes' : c.routing_answer === 'no' ? 'No – letter in Drafts' : ''}</td>
                 </tr>
               ))}
             </tbody>

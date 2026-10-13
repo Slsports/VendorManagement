@@ -11,12 +11,13 @@ import { splitPdf } from '@/lib/pdfSplit'
 import { DOC_FOLDERS, folderLabel, kindFor, type DocFolder } from '@/lib/documents'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
+import { MAX_UPLOAD_MB } from '@/lib/upload'
 import { BackLink } from '@/components/shared/BackLink'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { VendorPicker } from '@/components/vendors/VendorPicker'
 import { Alert, Badge, Button, Select, Spinner } from '@/components/ui'
 
-const MAX_MB = 25
+const MAX_MB = MAX_UPLOAD_MB
 const CLAUDE_TYPES = /^(application\/pdf|image\/(png|jpeg|gif|webp))$/
 
 type How = 'path' | 'claude' | 'person'

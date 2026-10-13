@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import type { BillingRoute, Line, RepGroup, RepGroupContact, ShowAppearance, TablesInsert, TablesUpdate, Vendor, VendorLink } from '@/types'
+import { checkUploadSize, readForUpload, uploadError } from '@/lib/upload'
 
 // ---- lines (what reps carry, what shows list; not vendors) ----
 export interface LineRow extends Line {
@@ -160,9 +161,19 @@ export async function addVendorLink(input: TablesInsert<'vendor_links'>): Promis
 export async function uploadVendorFile(organizationId: string, vendorId: string, file: File): Promise<string> {
   const safe = file.name.replace(/[^A-Za-z0-9._-]+/g, '_')
   const path = `${organizationId}/${vendorId}/${crypto.randomUUID()}-${safe}`
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type || undefined, upsert: false })
-  if (error) throw error
+  checkUploadSize(file)
+  const { error } = await supabase.storage.from(BUCKET).upload(path, await readForUpload(file), { contentType: file.type || undefined, upsert: false }).catch((e: unknown) => ({ error: e }))
+  if (error) throw uploadError(error, file)
   return path
+}
+
+/**
+ * Tick a sales report "Used to place the order" (Dana, Oct 13): the confirmation check compares with it when there is no
+ * order. With an order it is also that order's "Report used". Ticking one unticks the vendor's others from that season.
+ */
+export async function tickSalesReport(linkId: string, on: boolean, orderId: string | null = null): Promise<void> {
+  const { error } = await supabase.rpc('sales_report_tick', { p_link: linkId, p_on: on, p_order: orderId })
+  if (error) throw error
 }
 
 /** A stored document's bytes, for the in-app viewer and zip downloads. */

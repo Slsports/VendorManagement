@@ -1,12 +1,17 @@
 // order-check: order paperwork (Dana, Oct 10). Runs every minute from pg_cron (header x-cron-secret) and when
 // a signed-in editor saves a confirmation or invoice ("Check now"). Each run takes the oldest waiting check:
-//   reading   → Claude reads the document (confirmation / invoice / other, PO, numbers, lines); SQL finds the order
-//   comparing → Claude compares it with what we ordered (confirmation) or with the final confirmation (invoice),
-//               writes the summary and, with issues, the draft email; it then waits on the person who placed the order.
+//   reading   → Claude reads the document (confirmation / invoice / other, PO, numbers, lines); the order is found by our
+//               PO, the vendor's own number, the conversation or the total (SQL), else Claude compares it with the
+//               vendor's open orders (never "only one open order" alone)
+//   comparing → Claude compares it with what we ordered (confirmation) or with the final confirmation (invoice); with no
+//               order, or an order with no item list, a confirmation is compared with the sales report we ordered from
+//               (Dana, Oct 13). It writes the summary and, with issues, the draft email; then it waits on a person.
 // Nothing is ever sent from here.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, caller, errorResponse, json, serviceClient } from '../_shared/caller.ts'
-import { aiEnabled, comparePaperwork, isReadableFile, nameNewItems, readPaperwork, type PaperFile, type PaperReading } from '../_shared/ai.ts'
+import { aiEnabled, comparePaperwork, compareWithSalesReport, isReadableFile, nameNewItems, pickPaperOrder, readPaperwork, type PaperFile, type PaperReading } from '../_shared/ai.ts'
+import { readSalesSheet, sheetForClaude } from '../_shared/salesSheet.ts'
+import * as XLSX from 'npm:xlsx@0.18.5'
 import { LS_STANDARD } from '../_shared/lsStandard.ts'
 import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
 
@@ -15,7 +20,7 @@ const MAX_FILE = 15 * 1024 * 1024
 
 interface Check {
   id: string; organization_id: string; vendor_id: string | null; order_id: string | null; kind: 'confirmation' | 'invoice'; document_id: string
-  email_id: string | null; status: string; reading: PaperReading | null
+  email_id: string | null; status: string; reading: PaperReading | null; report_id: string | null; report_ticked: boolean | null; created_at: string
 }
 
 Deno.serve(async (req) => {
@@ -50,7 +55,7 @@ Deno.serve(async (req) => {
 
 /** The oldest check waiting to be read or compared that no other run is working on; claimed for 5 minutes. */
 async function nextCheck(db: SupabaseClient, org: string | null, id: string | null): Promise<Check | null> {
-  let q = db.from('order_checks').select('id, organization_id, vendor_id, order_id, kind, document_id, email_id, status, reading')
+  let q = db.from('order_checks').select('id, organization_id, vendor_id, order_id, kind, document_id, email_id, status, reading, report_id, report_ticked, created_at')
     .in('status', ['reading', 'comparing']).or(`working_at.is.null,working_at.lt.${new Date(Date.now() - 5 * 60_000).toISOString()}`)
   if (org) q = q.eq('organization_id', org)
   if (id) q = q.eq('id', id)
@@ -69,7 +74,8 @@ async function work(db: SupabaseClient, c: Check) {
       const email = c.email_id ? (await db.from('emails').select('subject, body_text').eq('id', c.email_id).maybeSingle()).data : null
       const vendor = c.vendor_id ? (await db.from('vendors').select('name').eq('id', c.vendor_id).maybeSingle()).data?.name ?? null : null
       const reading = await readPaperwork(db, c.organization_id, doc, { vendor, subject: email?.subject ?? null, email_text: email?.body_text ?? null })
-      const { data: next, error } = await db.rpc('order_check_apply_read', { p_check: c.id, p_reading: reading })
+      const found = c.order_id ? { id: null, how: null } : await findOrder(db, c, reading)
+      const { data: next, error } = await db.rpc('order_check_apply_read', { p_check: c.id, p_reading: reading, p_order: found.id, p_how: found.how })
       if (error) throw new Error(error.message)
       return { id: c.id, read: next }
     }
@@ -80,6 +86,23 @@ async function work(db: SupabaseClient, c: Check) {
     await db.from('order_checks').update({ status: 'failed', working_at: null, read_note: msg }).eq('id', c.id)
     return { id: c.id, error: msg }
   }
+}
+
+/** The order a document is for: our PO, their number, the conversation or the total (SQL), else Claude's pick among open orders. */
+async function findOrder(db: SupabaseClient, c: Check, reading: PaperReading): Promise<{ id: string | null; how: string | null }> {
+  if (reading.doc_type !== 'confirmation' && reading.doc_type !== 'invoice') return { id: null, how: null }
+  const { data: m } = await db.rpc('order_check_match', { p_check: c.id, p_reading: reading })
+  const hit = (m ?? [])[0] as { order_id: string; how: string } | undefined
+  if (hit) return { id: hit.order_id, how: hit.how }
+  if (!c.vendor_id) return { id: null, how: null }
+  const open = reading.doc_type === 'invoice' ? ['open', 'awaiting_confirmation', 'confirmed', 'shipped', 'received'] : ['open', 'awaiting_confirmation', 'confirmed']
+  const since = new Date(Date.now() - 400 * 86_400_000).toISOString().slice(0, 10)
+  const { data: orders } = await db.from('orders').select('id, po_number, order_date, show_code, est_cost, est_ship_date, description, placed_by')
+    .eq('vendor_id', c.vendor_id).in('status', open).or(`order_date.is.null,order_date.gte.${since}`).order('order_date', { ascending: false }).limit(15)
+  const pick = await pickPaperOrder(db, c.organization_id, reading, (orders ?? []).map((o) => ({
+    id: o.id, po: o.po_number, placed: o.order_date, show: o.show_code, amount: o.est_cost === null ? null : Number(o.est_cost), ship: o.est_ship_date, description: o.description, placed_by: o.placed_by,
+  })))
+  return pick.id ? { id: pick.id, how: 'claude' } : { id: null, how: null }
 }
 
 async function loadLink(db: SupabaseClient, id: string): Promise<PaperFile | null> {
@@ -94,6 +117,7 @@ async function loadLink(db: SupabaseClient, id: string): Promise<PaperFile | nul
 
 /** What to compare against: for a confirmation, our order documents (else the PO we emailed); for an invoice, the newest confirmation. */
 async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
+  if (!c.order_id) return compareReport(db, c, doc, null)
   const { data: o } = await db.from('orders')
     .select('id, po_number, order_date, status, description, store_codes, est_cost, est_ship_date, freight_cost, freight_notes, free_shipping, free_shipping_basis, free_shipping_note, freight_allowance, freight_allowance_pay_by, ar_due, notes, vendor:vendors(name, email, free_shipping_policy, free_shipping_threshold, web_orders)')
     .eq('id', c.order_id!).single()
@@ -125,6 +149,10 @@ async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
     for (const s of sent) { against.push(s.file); againstIds.push(s.link_id) }
     if (sent.length) label = 'The order we emailed the vendor'
   }
+  // no order document and no item list: a confirmation is compared with the sales report we ordered from (Dana, Oct 13)
+  if (!label && !(lines ?? []).length && c.kind === 'confirmation' && c.vendor_id) {
+    if (await compareReport(db, c, doc, o as unknown as Record<string, unknown>)) return
+  }
   if (!label) label = (lines ?? []).length ? 'The order lines in VMS' : 'The order record only (total, dates, freight); no order document on file'
 
   // an order often ships (and bills) in several parts: the other invoices on this order count too
@@ -140,7 +168,7 @@ async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
   const conversation = await conversationFor(db, c, o.id)
   const r = await comparePaperwork(db, c.organization_id, {
     kind: c.kind, vendor: vendor?.name ?? null, order: { ...o, vendor: undefined }, order_lines: lines ?? [], doc, doc_reading: c.reading,
-    against, against_readings: readings, contact, others, conversation, web_order: !!vendor?.web_orders,
+    against, against_readings: readings, contact, others, conversation, web_order: !!vendor?.web_orders, po_handled: c.kind === 'confirmation' && !realPo(c.reading?.po_number),
   })
   const issues = r.issues.filter((x) => x.trim())
   const { error } = await db.rpc('order_check_apply_compare', { p_check: c.id, p_result: {
@@ -150,20 +178,68 @@ async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
   if (error) throw new Error(error.message)
 }
 
+const realPo = (po: string | null | undefined) => !!po && po.replace(/[^A-Za-z0-9]/g, '').length >= 3 && !/^\s*(n\/?a|none|tbd|pending|na|no po)\s*$/i.test(po)
+
+/**
+ * A confirmation compared with the sales report we ordered from: the order's "Report used", a ticked report, else the
+ * closest before the confirmation's date. False when there is no report (the caller carries on without one).
+ */
+async function compareReport(db: SupabaseClient, c: Check, doc: PaperFile, order: Record<string, unknown> | null): Promise<boolean> {
+  const date = c.reading?.doc_date ?? c.created_at.slice(0, 10)
+  let reportId = c.report_id
+  let ticked = !!c.report_ticked
+  if (!reportId || order) {
+    const { data } = await db.rpc('sales_report_for', { p_vendor: c.vendor_id, p_order: (order?.id as string | undefined) ?? null, p_date: date })
+    const r = (data ?? [])[0] as { link_id: string; ticked: boolean } | undefined
+    if (r) { reportId = r.link_id; ticked = r.ticked }
+  }
+  if (!reportId) {
+    if (order) return false
+    await db.from('order_checks').update({ status: 'needs_order', working_at: null }).eq('id', c.id)
+    return true
+  }
+  const { data: l } = await db.from('vendor_links').select('storage_path, file_name, label').eq('id', reportId).single()
+  const { data: file, error } = await db.storage.from('vendor-files').download(l!.storage_path!)
+  if (error || !file) throw new Error(`Opening the sales report: ${error?.message ?? 'not found'}`)
+  const book = XLSX.read(new Uint8Array(await file.arrayBuffer()), { type: 'array' })
+  const sheet = readSalesSheet(book.SheetNames.map((name) => ({ name, rows: XLSX.utils.sheet_to_json<unknown[]>(book.Sheets[name]!, { header: 1, raw: true, defval: null, blankrows: false }) })))
+  if (!sheet) throw new Error(`${l!.file_name ?? 'The sales report'}: no NEED or ORDER column found`)
+  const name = l!.file_name ?? l!.label ?? 'Sales report'
+  let contact: string | null = null
+  if (c.email_id) contact = (await db.from('emails').select('from_email').eq('id', c.email_id).maybeSingle()).data?.from_email ?? null
+  const { data: vendor } = await db.from('vendors').select('name, email').eq('id', c.vendor_id!).maybeSingle()
+  contact ??= vendor?.email ?? null
+  const conversation = await conversationFor(db, c, (order?.id as string | undefined) ?? null)
+  const r = await compareWithSalesReport(db, c.organization_id, {
+    vendor: vendor?.name ?? null, doc, doc_reading: c.reading, report_name: name, column: sheet.column, report: sheetForClaude(sheet),
+    order: order ? { ...order, vendor: undefined } : null, conversation, contact, po_handled: !realPo(c.reading?.po_number),
+  })
+  const issues = r.issues.filter((x) => x.trim())
+  const { error: e2 } = await db.rpc('order_check_apply_compare', { p_check: c.id, p_result: {
+    against: `Sales report: ${name} (${sheet.column === 'order' ? 'Order column' : 'Need column, Order was blank'})${ticked ? '' : ' – not ticked, please confirm'}`,
+    against_ids: [reportId], summary: r.summary, rows: r.rows, issues, report_id: reportId, report_ticked: ticked,
+    draft_to: issues.length && contact ? [contact] : [], draft_subject: issues.length ? r.draft_subject : null, draft_body: issues.length ? r.draft_body : null,
+  } })
+  if (e2) throw new Error(e2.message)
+  return true
+}
+
 /**
  * The email conversation about the order (Dana, Oct 13: "I have to be able to see the emails threads for this so I can
  * properly review the email Claude puts together"): the conversation the document came in, and any other conversation
  * filed to the order, oldest first, each email without the mail quoted under it. Orders mail and shared conversations
  * only; the same list shows on the check's page.
  */
-async function conversationFor(db: SupabaseClient, c: Check, orderId: string) {
+async function conversationFor(db: SupabaseClient, c: Check, orderId: string | null) {
   const threads = new Set<string>()
   if (c.email_id) {
     const { data } = await db.from('emails').select('thread_id').eq('id', c.email_id).maybeSingle()
     if (data?.thread_id) threads.add(data.thread_id)
   }
-  const { data: linked } = await db.from('emails').select('thread_id').eq('order_id', orderId).limit(20)
-  for (const e of linked ?? []) if (e.thread_id) threads.add(e.thread_id)
+  if (orderId) {
+    const { data: linked } = await db.from('emails').select('thread_id').eq('order_id', orderId).limit(20)
+    for (const e of linked ?? []) if (e.thread_id) threads.add(e.thread_id)
+  }
   if (!threads.size) return []
   const { data: shared } = await db.from('email_threads').select('id, mailbox_id, shared_at').in('id', [...threads])
   const ok = (shared ?? []).filter((t) => !t.mailbox_id || t.shared_at).map((t) => t.id)

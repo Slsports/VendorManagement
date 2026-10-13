@@ -2,7 +2,8 @@
 // only finds its own send; nothing else in VMS is reachable from here.
 //   receipt — "I received the routing instructions": marks it received, returns the letter to download
 //   form    — the contact confirmation form's data (marks it opened)
-//   submit  — the form sent back: "Looks good" or the changes; they land in VMS and the person is Confirmed
+//   submit  — the form sent back: "Looks good" or the changes; they land in VMS and the person is Confirmed; their
+//             routing-letter answer (yes: received; no: the letter is prepared for them)
 import { CORS, errorResponse, HttpError, json, serviceClient } from '../_shared/caller.ts'
 import { aiEnabled, readFreightProgram } from '../_shared/ai.ts'
 
@@ -35,6 +36,12 @@ Deno.serve(async (req) => {
       if (error) throw new Error(error.message)
       if (!data) throw new HttpError(404, 'This link is not valid.')
       const done = data as { vendor: string; vendor_id: string; freight_programs: string | null }
+      // "Did you receive our routing instructions?" Yes marks it received; No prepares the letter for them (Dana, Oct 13)
+      const routing = payload.routing_received
+      if (routing === 'yes' || routing === 'no') {
+        const { error: rErr } = await db.rpc('vendor_confirm_routing', { p_token: body.token, p_answer: routing })
+        if (rErr) console.error('routing answer', rErr.message)
+      }
       // their freight programs fill the vendor's free-shipping settings when VMS has none yet
       if (!body.looks_good && done.freight_programs?.trim() && aiEnabled()) {
         try {

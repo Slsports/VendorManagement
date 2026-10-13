@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { extractLinks, guessKind, itemPicture, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from './offerFiles.ts'
+import { extractLinks, guessKind, itemPicture, maybePaperwork, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from './offerFiles.ts'
 
 describe('what kind of file', () => {
   it('reads the file name first, then the subject', () => {
@@ -42,6 +42,11 @@ describe('order paperwork', () => {
     expect(paperworkKind(f('Sales_Order_Acknowledgement.pdf'), null)).toBe('confirmation')
     expect(paperworkKind(f('INV_88123.pdf'), null)).toBe('invoice')
     expect(paperworkKind(f('Invoice 88123.pdf'), 'Your order has shipped')).toBe('invoice')
+    // Dom's WFS forward: only the email says "sales order"
+    expect(paperworkKind(f('S102112.pdf'), 'FW: Shaver Lake - S102112', 'Does attached look correct? … I have attached S102112 for Shaver Lake. Please review the sales order')).toBe('confirmation')
+    expect(paperworkKind(f('S102112.pdf'), 'FW: Shaver Lake - S102112', 'Does attached look correct?')).toBeNull()
+    expect(maybePaperwork(f('S102112.pdf'))).toBe(true)
+    expect(maybePaperwork(f('Spring Catalog.pdf'))).toBe(false)
     expect(paperworkKind(f('55123.pdf'), 'Order Confirmation for PO SLS-4471')).toBe('confirmation')
     expect(paperworkKind(f('88123.pdf'), 'Invoice 88123 from Ty')).toBe('invoice')
   })

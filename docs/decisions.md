@@ -1998,3 +1998,23 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   "Their info and what they sell" with **Ask them to confirm**, Confirmed / Bad email badges on contacts, the vendor list
   filter, one reminder after a week, bounces mark the address bad. "What they sell" is its own list (vendor_sells),
   separate from LS categories. New company names and unknown represented vendors go to the Review queue ("From vendor forms").
+
+## Oct 13 (evening) — Confirmations without an order, Pallet/Parcel, previews (Dana: "Go")
+- Vendor form asks "Did you receive our routing instructions?" Yes / No. Yes marks the routing letter received for that
+  person; No prepares the letter for them in Mail › Drafts.
+- PDFs show inside VMS on any computer or phone (VMS draws the pages itself instead of the browser's PDF viewer).
+- A vendor PDF whose file name and subject say nothing (Dom's "S102112.pdf") is still caught: VMS reads the email text
+  ("sales order", "confirmation", "invoice"), and when that is unclear Claude reads the PDF to decide.
+- A confirmation is checked against an actual order first (our PO → their order number → the conversation). Only when no
+  order exists does it use the sales report **ticked "Used to place the order"** (Oct 5 decision, now built); when none
+  is ticked, the report closest before the show date (or the confirmation date), marked "Not ticked – please confirm".
+  It compares with the report's **Order** column, or **Need** when Order is blank, and summarizes what the confirmation
+  got right, what is missing and what is extra or a different quantity (Dom: BG-81 should be 18, 983 should be 12).
+  No order and no report → the Review queue as "No order found".
+- No PO on a confirmation: the person who placed the order (Dana or Jarrett) gets a task "Create PO: <vendor>, <their
+  order #>" unless the order already has one; once the PO is typed on the order, an email asking the vendor to put our
+  PO on their order waits in Mail › Drafts.
+- Uploads check the size first and say plainly when a file is too big; the limit is 50 MB.
+- Freight quotes ship one of two ways: **Pallet (P1)** — Trevor gets a Priority One price only; **Parcel (WWEX/UPS)** — a
+  UPS price through WWEX only. Claude picks from the vendor's quote (pallets or boxes, weight, box count); Trevor can
+  switch. Task: "Get freight quote: <vendor>, PO <number> – Pallet, P1". Approve compares the vendor's price with that one.

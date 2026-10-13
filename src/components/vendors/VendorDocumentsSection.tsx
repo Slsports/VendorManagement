@@ -1,8 +1,8 @@
 import { useState, type DragEvent } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Pencil, Download, ExternalLink, FileText, Folder, FolderInput, FolderOpen, Link2, Mail, Trash2, Upload } from 'lucide-react'
-import { addVendorLink, deleteVendorLink, downloadVendorFile, listVendorLinks, renameVendorLink, uploadVendorFile, zipVendorDocuments, type VendorLinkRow } from '@/services/lines'
+import { SquareCheck, Square, Pencil, Download, ExternalLink, FileText, Folder, FolderInput, FolderOpen, Link2, Mail, Trash2, Upload } from 'lucide-react'
+import { addVendorLink, deleteVendorLink, downloadVendorFile, listVendorLinks, renameVendorLink, tickSalesReport, uploadVendorFile, zipVendorDocuments, type VendorLinkRow } from '@/services/lines'
 import { kickOrderChecks } from '@/services/orderChecks'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { saveBlob } from '@/lib/viewer'
@@ -11,13 +11,14 @@ import { DOC_FOLDERS, byYear, folderLabel, folderOf, isPictureFile, kindFor, thi
 import { LINK_KIND_LABELS } from '@/lib/vendors'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
+import { MAX_UPLOAD_MB } from '@/lib/upload'
 import { Badge, Button, FormField, Input, Select } from '@/components/ui'
 import { Modal } from '@/components/shared/Modal'
 import { FoldSection } from '@/components/shared/FoldSection'
 import { MoveDocumentDialog } from '@/components/vendors/MoveDocumentDialog'
 import { FileThumb } from '@/components/shared/FileThumb'
 
-const MAX_MB = 25
+const MAX_MB = MAX_UPLOAD_MB
 
 /**
  * The vendor's documents, filed the way Dana files them: a folder per kind (Price lists, Catalogs,
@@ -114,6 +115,16 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
     }
   }
 
+  async function tick(l: VendorLinkRow) {
+    try {
+      await tickSalesReport(l.id, !l.report_used_at)
+      toast.success(l.report_used_at ? 'Unticked' : 'Ticked: confirmations are checked against this report')
+      await q.refetch()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
+
   const folder = openFolder ? DOC_FOLDERS.find((f) => f.id === openFolder)! : null
   // pictures show a preview (Dana, Oct 10); the Images and Approved proofs folders show them as large tiles
   const row = (l: VendorLinkRow, tile = false) => (
@@ -124,6 +135,7 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
         <button type="button" onClick={() => open(l)} className="max-w-full truncate text-left text-sm font-medium text-stone-900 hover:text-brand">{l.label}</button>
         <p className="truncate text-xs text-stone-500">
           {l.is_current ? <Badge tone="success" className="mr-1">Current</Badge> : null}
+          {l.kind === 'sales_report' && l.report_used_at ? <Badge tone="success" className="mr-1">Used to place the order</Badge> : null}
           {folder && folder.kinds.length > 1 ? <Badge tone="neutral" className="mr-1">{LINK_KIND_LABELS[l.kind]}</Badge> : null}
           {l.doc_number || l.doc_total != null ? <span className="mr-1 font-medium text-stone-700">{[l.doc_number ? `#${l.doc_number}` : null, l.doc_date ? new Date(`${l.doc_date}T12:00:00`).toLocaleDateString() : null, l.doc_total != null ? `$${Number(l.doc_total).toFixed(2)}` : null].filter(Boolean).join(' · ')} ·</span> : null}
           {l.season_label ? `${l.season_label} · ` : ''}{l.file_name ?? l.url?.replace(/^https?:\/\//, '')}{l.received_at ? ` · ${new Date(`${l.received_at}T12:00:00`).toLocaleDateString()}` : ''}
@@ -135,6 +147,11 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
           <button type="button" onClick={() => open(l)} aria-label={`Open ${l.label}`} className="rounded px-1.5 py-0.5 font-medium text-brand hover:bg-stone-100">Open</button>
           {l.storage_path ? <button type="button" onClick={() => void download(l)} aria-label={`Download ${l.label}`} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900"><Download className="size-3.5" aria-hidden="true" />Download</button> : null}
           {canEdit ? (<>
+            {l.kind === 'sales_report' && l.storage_path ? (
+              <button type="button" onClick={() => void tick(l)} aria-pressed={!!l.report_used_at} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900" title="The report we ordered from: confirmations are checked against it">
+                {l.report_used_at ? <SquareCheck className="size-3.5 text-brand" aria-hidden="true" /> : <Square className="size-3.5" aria-hidden="true" />}Used to place the order
+              </button>
+            ) : null}
             <button type="button" onClick={() => setRenaming(l)} aria-label={`Rename ${l.label}`} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900"><Pencil className="size-3.5" aria-hidden="true" />Rename</button>
             <button type="button" onClick={() => setMoving(l)} aria-label={`Move ${l.label}`} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900" title="Move to another folder or year"><FolderInput className="size-3.5" aria-hidden="true" />Move</button>
             <button type="button" onClick={() => void remove(l)} aria-label={`Remove ${l.label}`} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-red-50 hover:text-red-700"><Trash2 className="size-3.5" aria-hidden="true" />Remove</button>
