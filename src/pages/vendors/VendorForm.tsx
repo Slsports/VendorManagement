@@ -55,6 +55,7 @@ interface FormState {
   freight_allowance_on_time: boolean
   vid_in_description: boolean
   is_fishing: boolean
+  web_orders: boolean
   website: string
   phone: string
   email: string
@@ -83,7 +84,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   name: '', aliases: '', routes: [], defaultRoute: '', payMethod: '', rep_group_id: '', assigned_buyer_id: '', payment_terms_id: '', ordering_frequency: '',
-  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, freight_allowance_on_time: false, vid_in_description: false, is_fishing: false,
+  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, freight_allowance_on_time: false, vid_in_description: false, is_fishing: false, web_orders: false,
   website: '', phone: '', email: '', fax: '', account_number: '', catalog: '', address: '', city: '', state: '', postal_code: '',
   pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', shipping_contact_email: '', minimum_order: '', freight_program: '', free_shipping_policy: '', free_shipping_threshold: '', freight_routing: '', product_types: '',
   notes: '', return_notes: '', windows: [],
@@ -113,6 +114,7 @@ function formFromVendor(v: VendorDetail): FormState {
     freight_allowance_on_time: v.freight_allowance_on_time,
     vid_in_description: v.vid_in_description,
     is_fishing: v.is_fishing,
+    web_orders: v.web_orders,
     do_not_order_reason: v.do_not_order_reason ?? '',
     website: v.website ?? '', phone: v.phone ?? '', email: v.email ?? '', fax: v.fax ?? '', account_number: v.account_number ?? '', catalog: v.catalog ?? '',
     address: v.address ?? '', city: v.city ?? '', state: v.state ?? '', postal_code: v.postal_code ?? '',
@@ -199,6 +201,7 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
       freight_allowance_on_time: form.freight_allowance_on_time,
       vid_in_description: form.vid_in_description,
       is_fishing: form.is_fishing,
+      web_orders: form.web_orders,
       do_not_order_reason: form.standing !== 'ok' ? nz(form.do_not_order_reason) : null,
       website: nz(form.website), phone: nz(form.phone), email: nz(form.email), fax: nz(form.fax), account_number: nz(form.account_number), catalog: nz(form.catalog),
       address: nz(form.address), city: nz(form.city), state: nz(form.state), postal_code: nz(form.postal_code),
@@ -324,6 +327,7 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.freight_allowance_on_time} onChange={(e) => set('freight_allowance_on_time', e.target.checked)} /> Credits the freight back when we pay on time (orders show a pay-by reminder)</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.vid_in_description} onChange={(e) => set('vid_in_description', e.target.checked)} /> Add Vendor ID to item descriptions, in brackets at the end (MENS HOODIE NAVY [AB1234]); each order can change it</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_fishing} onChange={(e) => set('is_fishing', e.target.checked)} /> Fishing vendor (Jarrett runs these reports)</label>
+            <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.web_orders} onChange={(e) => set('web_orders', e.target.checked)} /> Web orders, no confirmation needed (their order email confirms it; items they can't ship just aren't billed)</label>
             {isEdit ? <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_active} onChange={(e) => set('is_active', e.target.checked)} /> Active</label> : null}
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.needs_review} onChange={(e) => set('needs_review', e.target.checked)} /> Flag for review</label>
             {form.needs_review ? <Input aria-label="Review note" value={form.review_note} onChange={(e) => set('review_note', e.target.value)} placeholder="What needs checking?" /> : null}

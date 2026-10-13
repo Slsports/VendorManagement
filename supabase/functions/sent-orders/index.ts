@@ -330,6 +330,8 @@ async function serviceStep(db: SupabaseClient, m: InMail) {
       orderIds.push(orderId)
     }
     if (!orderIds.length) return await done({ result: 'not_order' })
+    // web-order vendors (Kelli's, Dana Oct 13): the order email is the confirmation
+    for (const id of orderIds) await db.rpc('web_order_confirm', { p_order: id })
     const orderId = orderIds[0]!
     await db.rpc('order_checks_refind', { p_org: m.organization_id, p_vendor: vendorId })
     return await done({ result: 'linked', order_id: orderId, order_ids: orderIds, contact_id: contactId })

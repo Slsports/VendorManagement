@@ -14,7 +14,7 @@ export function checkStatusText(c: Pick<OrderCheck, 'status' | 'result' | 'issue
     case 'needs_order': return { text: 'Which order is this for?', tone: 'warning' }
     case 'failed': return { text: 'Could not be read', tone: 'danger' }
     case 'to_review': return c.result === 'issues' ? { text: `${n} issue${n === 1 ? '' : 's'} to review`, tone: 'danger' } : { text: 'Everything matches: look it over', tone: 'success' }
-    case 'done': return { text: c.outcome === 'sent' ? 'Done, email sent' : 'Done', tone: 'neutral' }
+    case 'done': return { text: c.outcome === 'sent' ? 'Done, email sent' : c.outcome === 'web_order' ? 'Web order, no review needed' : 'Done', tone: 'neutral' }
     case 'not_paperwork': return { text: 'Not a confirmation or invoice', tone: 'neutral' }
     case 'dismissed': return { text: 'Set aside', tone: 'neutral' }
   }

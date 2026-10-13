@@ -95,7 +95,7 @@ async function loadLink(db: SupabaseClient, id: string): Promise<PaperFile | nul
 /** What to compare against: for a confirmation, our order documents (else the PO we emailed); for an invoice, the newest confirmation. */
 async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
   const { data: o } = await db.from('orders')
-    .select('id, po_number, order_date, status, description, store_codes, est_cost, est_ship_date, freight_cost, freight_notes, free_shipping, free_shipping_basis, free_shipping_note, freight_allowance, freight_allowance_pay_by, ar_due, notes, vendor:vendors(name, email, free_shipping_policy, free_shipping_threshold)')
+    .select('id, po_number, order_date, status, description, store_codes, est_cost, est_ship_date, freight_cost, freight_notes, free_shipping, free_shipping_basis, free_shipping_note, freight_allowance, freight_allowance_pay_by, ar_due, notes, vendor:vendors(name, email, free_shipping_policy, free_shipping_threshold, web_orders)')
     .eq('id', c.order_id!).single()
   if (!o) throw new Error('The order is gone')
   const { data: lines } = await db.from('order_lines').select('vendor_item_id, description, quantity, unit_cost, extended').eq('order_id', o.id).order('sort_order')
@@ -134,12 +134,13 @@ async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
   // who to write to: whoever sent the document, else the vendor's email
   let contact: string | null = null
   if (c.email_id) contact = (await db.from('emails').select('from_email').eq('id', c.email_id).maybeSingle()).data?.from_email ?? null
-  const vendor = o.vendor as unknown as { name: string; email: string | null } | null
+  const vendor = o.vendor as unknown as { name: string; email: string | null; web_orders: boolean } | null
   contact ??= vendor?.email ?? null
 
+  const conversation = await conversationFor(db, c, o.id)
   const r = await comparePaperwork(db, c.organization_id, {
     kind: c.kind, vendor: vendor?.name ?? null, order: { ...o, vendor: undefined }, order_lines: lines ?? [], doc, doc_reading: c.reading,
-    against, against_readings: readings, contact, others,
+    against, against_readings: readings, contact, others, conversation, web_order: !!vendor?.web_orders,
   })
   const issues = r.issues.filter((x) => x.trim())
   const { error } = await db.rpc('order_check_apply_compare', { p_check: c.id, p_result: {
@@ -147,6 +148,39 @@ async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
     draft_to: issues.length && contact ? [contact] : [], draft_subject: issues.length ? r.draft_subject : null, draft_body: issues.length ? r.draft_body : null,
   } })
   if (error) throw new Error(error.message)
+}
+
+/**
+ * The email conversation about the order (Dana, Oct 13: "I have to be able to see the emails threads for this so I can
+ * properly review the email Claude puts together"): the conversation the document came in, and any other conversation
+ * filed to the order, oldest first, each email without the mail quoted under it. Orders mail and shared conversations
+ * only; the same list shows on the check's page.
+ */
+async function conversationFor(db: SupabaseClient, c: Check, orderId: string) {
+  const threads = new Set<string>()
+  if (c.email_id) {
+    const { data } = await db.from('emails').select('thread_id').eq('id', c.email_id).maybeSingle()
+    if (data?.thread_id) threads.add(data.thread_id)
+  }
+  const { data: linked } = await db.from('emails').select('thread_id').eq('order_id', orderId).limit(20)
+  for (const e of linked ?? []) if (e.thread_id) threads.add(e.thread_id)
+  if (!threads.size) return []
+  const { data: shared } = await db.from('email_threads').select('id, mailbox_id, shared_at').in('id', [...threads])
+  const ok = (shared ?? []).filter((t) => !t.mailbox_id || t.shared_at).map((t) => t.id)
+  if (!ok.length) return []
+  const { data: mails } = await db.from('emails').select('received_at, direction, from_name, from_email, subject, body_text, snippet, attachments:email_attachments(file_name)')
+    .in('thread_id', ok).is('copy_of', null).neq('direction', 'internal').order('received_at').limit(40)
+  return (mails ?? []).map((m) => ({
+    date: String(m.received_at).slice(0, 10), from: [m.from_name, m.from_email].filter(Boolean).join(' '), direction: m.direction === 'out' ? 'from the store' : 'to the store',
+    subject: m.subject, text: ownPart(m.body_text ?? m.snippet ?? '').slice(0, 1500),
+    attachments: ((m.attachments ?? []) as { file_name: string }[]).map((a) => a.file_name).filter((n) => !/^(image\d*|outlook|logo|signature)/i.test(n)),
+  }))
+}
+
+/** The email without the earlier mail quoted under it. */
+function ownPart(text: string): string {
+  const m = /\n(?:On .{4,200}wrote:|-{3,} ?Original Message|_{10,}|From: .+\n(?:Sent|Date): )/i.exec(text)
+  return (m ? text.slice(0, m.index) : text).trim()
 }
 
 /**

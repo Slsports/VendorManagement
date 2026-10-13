@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Check, FileText, RefreshCw, Send, X } from 'lucide-react'
+import { Check, FileText, Mail, Paperclip, RefreshCw, Send, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useTableSort } from '@/hooks/useTableSort'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
-import { checkIssues, checkRows, getOrderCheck, listCheckDocuments, orderCheckAction, runOrderChecks, type CheckAction, type CheckRow, type OrderCheckRow } from '@/services/orderChecks'
+import { checkIssues, checkRows, getOrderCheck, listCheckConversation, listCheckDocuments, orderCheckAction, runOrderChecks, type CheckAction, type CheckRow, type ConversationEmail, type OrderCheckRow } from '@/services/orderChecks'
 import { listOrders } from '@/services/orders'
 import { listPeople } from '@/services/reviews'
 import { downloadVendorFile } from '@/services/lines'
@@ -19,6 +19,8 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { SortHeader } from '@/components/shared/SortHeader'
 import { AssigneeSelect } from '@/components/review/AssigneeSelect'
 import { ComposeDialog } from '@/components/mail/ComposeDialog'
+import { FoldSection } from '@/components/shared/FoldSection'
+import { splitQuoted } from '@/lib/mail'
 import { Alert, Badge, Button, Select, Spinner } from '@/components/ui'
 
 const COLUMNS = {
@@ -130,6 +132,8 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
         <DocCard title={`Compared with: ${c.against ?? (working ? '…' : 'nothing yet')}`} docs={against.data ?? []} onOpen={open} />
       </section>
 
+      <Conversation emailId={c.email?.id ?? null} orderId={c.order?.id ?? null} />
+
       {c.summary ? (
         <section className={cn('mb-4 rounded-2xl border p-5', c.result === 'match' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50')}>
           <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-600">Summary</h2>
@@ -192,6 +196,52 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
       ) : null}
       {viewer}
     </div>
+  )
+}
+
+/**
+ * The emails behind this check (Dana, Oct 13: "I have to be able to see the emails threads for this so I can properly
+ * review the email Claude puts together"), oldest first, each without the mail quoted under it. Claude read the same.
+ */
+function Conversation({ emailId, orderId }: { emailId: string | null; orderId: string | null }) {
+  const q = useSupabaseQuery(() => listCheckConversation(emailId, orderId), [emailId, orderId])
+  const mails = q.data ?? []
+  if (!q.isLoading && !mails.length) return null
+  const threads = [...new Set(mails.map((m) => m.thread_id))]
+  return (
+    <FoldSection title="The email conversation" defaultOpen className="mb-4"
+      summary={q.isLoading ? 'Loading…' : `${mails.length} email${mails.length === 1 ? '' : 's'}`}
+      actions={threads.length ? <Link to={`${ROUTES.mail}/${threads[threads.length - 1]}`} className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline"><Mail className="size-4" aria-hidden="true" />Open in Mail</Link> : null}>
+      {q.error ? <Alert variant="error">{q.error}</Alert> : (
+        <ol className="space-y-3">
+          {mails.map((m, i) => <ConversationItem key={m.id} m={m} showSubject={i === 0 || stripRe(m.subject) !== stripRe(mails[i - 1]!.subject)} />)}
+        </ol>
+      )}
+      <p className="mt-3 text-xs text-stone-500">Claude reads this whole conversation before it writes the email, so the draft only asks about what is still open.</p>
+    </FoldSection>
+  )
+}
+
+const stripRe = (s: string | null) => (s ?? '').replace(/^\s*((re|fw|fwd):\s*)+/i, '').trim().toLowerCase()
+
+function ConversationItem({ m, showSubject }: { m: ConversationEmail; showSubject: boolean }) {
+  const [all, setAll] = useState(false)
+  const text = splitQuoted(m.body_text ?? m.snippet ?? '').fresh.trim()
+  const long = text.length > 600
+  const files = (m.attachments ?? []).map((a) => a.file_name).filter((n) => !/^(image\d*|outlook|logo|signature)/i.test(n))
+  const ours = m.direction === 'out'
+  return (
+    <li className={cn('rounded-xl border p-3 text-sm', ours ? 'border-brand/20 bg-brand/5' : 'border-stone-200 bg-white')}>
+      <p className="flex flex-wrap items-baseline gap-x-2 text-xs text-stone-500">
+        <span className="font-semibold text-stone-800">{m.from_name || m.from_email}</span>
+        <Badge tone={ours ? 'info' : 'neutral'}>{ours ? 'Us' : 'Vendor'}</Badge>
+        <span>{new Date(m.received_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span>
+      </p>
+      {showSubject && m.subject ? <p className="mt-1 text-xs font-medium text-stone-600">{m.subject}</p> : null}
+      <p className="mt-1.5 whitespace-pre-line text-stone-800">{long && !all ? `${text.slice(0, 600)}…` : text || '(no text)'}</p>
+      {long ? <button type="button" onClick={() => setAll(!all)} className="mt-1 text-xs font-medium text-brand hover:underline">{all ? 'Show less' : 'Show all'}</button> : null}
+      {files.length ? <p className="mt-1.5 flex flex-wrap items-center gap-x-3 text-xs text-stone-500"><Paperclip className="size-3.5" aria-hidden="true" />{files.join(' · ')}</p> : null}
+    </li>
   )
 }
 

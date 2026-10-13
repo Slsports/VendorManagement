@@ -1953,3 +1953,11 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   reads signatures in Orders mail (12 months back, then ongoing) and adds everyone at a vendor or rep group to Reps &
   contacts, marked "Learned from email". Existing contacts only get missing details; typed details and the starred rep
   never change; each address is read once, so a deleted contact stays deleted. Never private mail.
+- **Web-order vendors** (Dana: "Any Kellie's order confirmations should not follow the regular order process… We need a
+  check mark or something for that"): vendor tick box **Web orders, no confirmation needed** (Kelli's ticked). Their
+  confirmation email confirms the order (no check to review; the LS PO draft starts); their invoices are still checked,
+  but items they could not ship are only noted, not issues. Kelli's 4 older Open orders were left as they were.
+- **Confirmation checks show the email conversation** (Dana: "I have to be able to see the emails threads for this so I
+  can properly review the email Claude puts together"): the check page lists every email about the order; Claude reads
+  the whole conversation before comparing, leaves out what was already settled, and says where each issue came from.
+  The checks waiting for review were compared again.
