@@ -302,26 +302,37 @@ async function serviceStep(db: SupabaseClient, m: InMail) {
     const isPrivate = !!m.mailbox_id && !(await sharedThread(db, m.thread_id))
     const contactId = isPrivate ? null : await saveContact(db, mail, r)
     const takenBy = r.contact?.name?.trim() || null
-    const reading: SentOrderReading = { ...r, po_number: r.po_number ?? r.order_number }
     const via = r.service ? `${r.service} order email` : 'the vendor\'s order email'
     const fileNote = r.service ? `The ${r.service} order email` : 'The order email from the vendor'
-    let orderId = await matchServiceOrder(db, mail, r)
-    if (orderId) {
-      await fileOn(db, mail, orderId, reading, used, false, fileNote)
-      const { data: o } = await db.from('orders').select('est_cost, final_cost, taken_by, notes, order_date').eq('id', orderId).single()
-      const num = r.order_number && r.order_number !== r.po_number ? `${r.service ?? 'Vendor'} order #${r.order_number}.` : null
-      await db.from('orders').update({
-        ...(o?.est_cost == null && o?.final_cost == null && r.total != null ? { est_cost: r.total } : {}),
-        ...(!o?.taken_by && takenBy ? { taken_by: takenBy } : {}),
-        ...(!o?.order_date ? { order_date: day(m.received_at) } : {}),
-        ...(num && !(o?.notes ?? '').includes(r.order_number!) ? { notes: [o?.notes, num].filter(Boolean).join(' ') } : {}),
-      }).eq('id', orderId)
-    } else {
-      orderId = await createOrder(db, mail, reading, via, takenBy ? { taken_by: takenBy } : {})
-      await fileOn(db, mail, orderId, reading, used, true, fileNote)
+    // one email can hold several orders (NuORDER sent Gold Medal's $636 and $798 orders together)
+    const orderIds: string[] = []
+    for (const [i, one] of r.orders.entries()) {
+      const reading: SentOrderReading = {
+        is_order: true, adds_to_earlier: false, po_number: one.po_number ?? one.order_number, ship_date: one.ship_date, total: one.total,
+        description: one.description, placed_by: r.placed_by, store: r.store, items: one.items, note: r.note,
+      }
+      const keep = i === 0 ? used : []
+      let orderId = await matchServiceOrder(db, mail, one, orderIds)
+      if (orderId) {
+        await fileOn(db, mail, orderId, reading, keep, false, fileNote)
+        const { data: o } = await db.from('orders').select('est_cost, final_cost, taken_by, notes, order_date').eq('id', orderId).single()
+        const num = one.order_number && one.order_number !== one.po_number ? `${r.service ?? 'Vendor'} order #${one.order_number}.` : null
+        await db.from('orders').update({
+          ...(o?.est_cost == null && o?.final_cost == null && one.total != null ? { est_cost: one.total } : {}),
+          ...(!o?.taken_by && takenBy ? { taken_by: takenBy } : {}),
+          ...(!o?.order_date ? { order_date: day(m.received_at) } : {}),
+          ...(num && !(o?.notes ?? '').includes(one.order_number!) ? { notes: [o?.notes, num].filter(Boolean).join(' ') } : {}),
+        }).eq('id', orderId)
+      } else {
+        orderId = await createOrder(db, mail, reading, via, takenBy ? { taken_by: takenBy } : {})
+        await fileOn(db, mail, orderId, reading, keep, true, fileNote)
+      }
+      orderIds.push(orderId)
     }
+    if (!orderIds.length) return await done({ result: 'not_order' })
+    const orderId = orderIds[0]!
     await db.rpc('order_checks_refind', { p_org: m.organization_id, p_vendor: vendorId })
-    return await done({ result: 'linked', order_id: orderId, po: reading.po_number, contact_id: contactId })
+    return await done({ result: 'linked', order_id: orderId, order_ids: orderIds, contact_id: contactId })
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e)
     await done({ result: 'failed', error: message.slice(0, 300) })
@@ -359,20 +370,23 @@ async function saveContact(db: SupabaseClient, m: Mail, r: ServiceOrderReading):
 }
 
 /**
- * The order on file: same PO or order number; else the vendor's order within 5 days with the same total (within 3%);
- * else one there with no amount yet (an order typed on Dana's sheet). Never one with a different amount.
+ * The order on file: same PO or order number (the closest amount when the PO is split over several rows); else the
+ * vendor's order within 5 days with the same total (within 3%); else one there with no amount and no PO yet (an order
+ * typed on Dana's sheet). Never another PO's order.
  */
-async function matchServiceOrder(db: SupabaseClient, m: Mail, r: ServiceOrderReading): Promise<string | null> {
+async function matchServiceOrder(db: SupabaseClient, m: Mail, r: ServiceOrderReading['orders'][number], taken: string[]): Promise<string | null> {
   const { data } = await db.from('orders').select('id, po_number, order_date, est_cost, final_cost, notes').eq('vendor_id', m.vendor_id!).neq('status', 'cancelled')
-  const orders = data ?? []
+  const orders = (data ?? []).filter((o) => !taken.includes(o.id))
+  const amount = (o: { est_cost: unknown; final_cost: unknown }) => (o.est_cost ?? o.final_cost) == null ? null : Number(o.est_cost ?? o.final_cost)
+  const gap = (o: { est_cost: unknown; final_cost: unknown }) => (amount(o) == null || r.total == null ? 1e9 : Math.abs(amount(o)! - r.total))
+  // Dana's sheet often splits one PO into several rows: any order with the PO is ours, the closest amount first
   for (const n of [r.po_number, r.order_number].map(norm).filter((x) => x.length >= 3)) {
-    const same = orders.filter((o) => norm(o.po_number) === n || (n.length >= 6 && norm(o.notes).includes(n)))
-    if (same.length === 1) return same[0]!.id
+    const same = orders.filter((o) => norm(o.po_number) === n || (n.length >= 6 && norm(o.notes).includes(n))).sort((a, b) => gap(a) - gap(b))
+    if (same.length) return same[0]!.id
   }
   const sent = day(m.received_at)
   const dist = (d: string) => Math.abs(new Date(`${d}T12:00:00Z`).getTime() - new Date(`${sent}T12:00:00Z`).getTime()) / 86_400_000
   const near = orders.filter((o) => o.order_date && dist(o.order_date) <= 5).sort((a, b) => dist(a.order_date!) - dist(b.order_date!))
-  const amount = (o: { est_cost: unknown; final_cost: unknown }) => (o.est_cost ?? o.final_cost) == null ? null : Number(o.est_cost ?? o.final_cost)
   if (r.total != null) {
     const same = near.find((o) => amount(o) != null && Math.abs(amount(o)! - r.total!) <= Math.max(5, r.total! * 0.03))
     if (same) return same.id
