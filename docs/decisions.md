@@ -2030,3 +2030,6 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - **Settings → Lightspeed** (admin): paste Client ID and Secret (kept hidden, service role only, never shown again), choose
   access (read only for now; full later for POs), **Connect to Lightspeed** → LS sign-in → back to VMS, which reads the
   account and counts the items. **Check the connection**, **Disconnect**. Migration 0104, function `lightspeed`.
+- Oct 13: connected. Dana registered the API client with billing.slsports@gmail.com (her dana@ email stayed blocked at LS);
+  the store sign-in links account 222531 "Shaver Lake Sports", 16,794 active items. LS counts items with `count=1` and no
+  `limit` (paging is by `after` cursor).

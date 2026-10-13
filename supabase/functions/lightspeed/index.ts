@@ -80,7 +80,7 @@ async function check(db: SupabaseClient, org: string) {
     const acct = await lsGet<{ Account?: { accountID: string; name: string } | { accountID: string; name: string }[] }>(token, '/Account.json')
     const a = Array.isArray(acct.Account) ? acct.Account[0] : acct.Account
     if (!a?.accountID) throw new Error('Lightspeed did not return the account')
-    const items = await lsGet<{ '@attributes'?: { count?: string } }>(token, `/Account/${a.accountID}/Item.json?limit=1&archived=false`)
+    const items = await lsGet<{ '@attributes'?: { count?: string } }>(token, `/Account/${a.accountID}/Item.json?count=1&archived=false`)
     await db.from('lightspeed_connections').update({
       account_id: String(a.accountID), account_name: a.name, item_count: Number(items['@attributes']?.count ?? 0) || null, checked_at: new Date().toISOString(), last_error: null,
     }).eq('organization_id', org)
