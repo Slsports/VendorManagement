@@ -14,6 +14,7 @@ Besides the shared orders@, Dana, Trevor and Jarrett each have their own mailbox
 ## Good to know
 - Your mailbox is private: only you and Dana see it, until you share a conversation.
 - Only the owner can send from a personal mailbox. Dana can read it but not reply from it.
+- Sending vendor business (an order, a return, a problem) from your own mailbox asks first whether to send it from orders@ instead.
 - Every conversation in your mailbox is yours; vendor rules do not hand it to someone else.
 - Claude reads it like orders@: it files mail to vendors, saves documents and spots artwork and replies.
 - Private mail never makes cards in the Review queue, so nothing private shows there. The Team page counts Orders mail only.

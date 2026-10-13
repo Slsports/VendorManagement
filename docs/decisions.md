@@ -1927,3 +1927,14 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - First one: the Gold Medal packaging/freight email to Jessica Kane (jkane@goldmedal-intl.com, now a Gold Medal contact).
 - Gap found (fix waiting on Dana's go): order emails from NuORDER and similar services do not become orders, and the vendor
   contact they name is not saved (Gold Medal's $798 order of Feb 4 and $636 order; Mykos Sept 1).
+
+## Oct 13 — Signature with the logo; vendor mail from personal inboxes
+- One signature template for everyone, with the one-line Shaver Lake Sports logo above it (Dana: "use the Logo I just sent").
+  It says **Shaver Lake Sports**, never "Inc"; no Facebook links; only orders@, never a personal email address. Template:
+  name, title, Shaver Lake Sports, 41777 Tollhouse Road, mailing P.O. Box 60, store phone (+ direct phone when set),
+  orders@ and the website. Dana edits it in Settings › Mail; each person has a name, title and direct phone, or their own version.
+- The signature shows in every compose window and can be changed for that one email; drafts keep theirs. It goes above the
+  quoted mail in replies. Emails now go out with an HTML version (logo) and the plain text.
+- Sending from a personal inbox stays allowed ("orders@ only would be too restrictive"). When it goes to a vendor, rep group,
+  ordering service or carrier, or Claude reads it as an order, return or problem, VMS asks once: **Send from orders@
+  instead** (new conversation in orders@, filed to the vendor) or **Send from my inbox anyway**. Other mail never asks.

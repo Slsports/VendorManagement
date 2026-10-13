@@ -15,7 +15,7 @@ Start a fresh email to a vendor, a rep or anyone else from inside VMS.
 6. Click **Send**. Press Esc or **Cancel** to close without sending.
 
 ## Good to know
-- Your signature is added when it sends; you do not type it.
+- Your signature shows under the message with the logo; change it there for this email if you like.
 - The address book holds vendor contacts, rep group contacts and the Worldwide contacts.
 - You can also email from a vendor's page (the Email button beside each address), and that email is filed to the vendor at once.
 - Clicking an email address inside a message also starts a new email.

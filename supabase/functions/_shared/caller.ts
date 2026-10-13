@@ -8,7 +8,7 @@ export function serviceClient(): SupabaseClient {
   return createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } })
 }
 
-export interface Caller { id: string; organization_id: string; role: string; full_name: string | null; email: string; email_signature: string | null }
+export interface Caller { id: string; organization_id: string; role: string; full_name: string | null; email: string; email_signature: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null }
 
 export class HttpError extends Error {
   constructor(public status: number, message: string) { super(message) }
@@ -19,7 +19,7 @@ export async function caller(req: Request, db: SupabaseClient, editor = false): 
   const jwt = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '')
   const { data: u } = await db.auth.getUser(jwt)
   if (!u.user) throw new HttpError(401, 'Not signed in')
-  const { data: p } = await db.from('profiles').select('id, organization_id, role, full_name, email, email_signature, is_active').eq('id', u.user.id).single()
+  const { data: p } = await db.from('profiles').select('id, organization_id, role, full_name, email, email_signature, signature_name, job_title, direct_phone, is_active').eq('id', u.user.id).single()
   if (!p?.is_active) throw new HttpError(403, 'Not an active user')
   if (editor && !['admin', 'manager', 'buyer'].includes(p.role)) throw new HttpError(403, 'Only admins, managers and buyers send mail')
   return p as Caller

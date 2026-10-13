@@ -74,7 +74,7 @@ export function DraftsList() {
       )}
       {open ? (
         <ComposeDialog
-          draft={{ draft_id: open.id, to: open.to_emails, cc: open.cc_emails, subject: open.subject, body: open.body, thread_id: open.thread_id, reply_to_email_id: open.reply_to_email_id, forward_email_id: open.forward_email_id, vendor_id: open.vendor_id, mailbox_id: open.mailbox_id, note: open.note ?? undefined }}
+          draft={{ draft_id: open.id, to: open.to_emails, cc: open.cc_emails, subject: open.subject, body: open.body, thread_id: open.thread_id, reply_to_email_id: open.reply_to_email_id, forward_email_id: open.forward_email_id, vendor_id: open.vendor_id, mailbox_id: open.mailbox_id, note: open.note ?? undefined, signature: open.signature }}
           onClose={() => { setOpen(null); void q.refetch() }}
           onSent={() => void q.refetch()} />
       ) : null}

@@ -1,4 +1,5 @@
-// Build an RFC 5322 message for Gmail's send endpoint. Plain-text body (UTF-8), optional attachments,
+// Build an RFC 5322 message for Gmail's send endpoint. Plain-text body (UTF-8), an optional HTML version (the signature
+// logo, Oct 13), optional attachments,
 // reply headers so the message threads with the conversation. Pure: shared by gmail-send and the tests.
 
 export interface MimeAttachment { name: string; mime: string; base64: string }
@@ -9,6 +10,8 @@ export interface MimeInput {
   replyTo?: string
   subject: string
   text: string
+  /** HTML version of the same message: sent as multipart/alternative with the text. */
+  html?: string | null
   inReplyTo?: string | null
   references?: string | null
   attachments?: MimeAttachment[]
@@ -52,7 +55,12 @@ export function buildMime(m: MimeInput): string {
     ...Object.entries(m.headers ?? {}).map(([k, v]) => `${k}: ${v.replace(/[\r\n]/g, ' ')}`),
     'MIME-Version: 1.0',
   ]
-  const textPart = ['Content-Type: text/plain; charset="UTF-8"', 'Content-Transfer-Encoding: base64', '', wrap(utf8ToBase64(m.text))]
+  const plain = ['Content-Type: text/plain; charset="UTF-8"', 'Content-Transfer-Encoding: base64', '', wrap(utf8ToBase64(m.text))]
+  const alt = `alt-${boundary}`
+  const textPart = m.html
+    ? [`Content-Type: multipart/alternative; boundary="${alt}"`, '', `--${alt}`, ...plain,
+       `--${alt}`, 'Content-Type: text/html; charset="UTF-8"', 'Content-Transfer-Encoding: base64', '', wrap(utf8ToBase64(m.html)), `--${alt}--`]
+    : plain
   if (!m.attachments?.length) return [...head, ...textPart].join('\r\n')
   const parts = [
     `--${boundary}`, ...textPart,

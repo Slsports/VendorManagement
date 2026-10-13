@@ -20,6 +20,15 @@ describe('mime', () => {
     expect(raw).toContain('Content-Disposition: attachment; filename="PO 55.pdf"')
     expect(raw.trim().endsWith('--B--')).toBe(true)
   })
+  it('sends an HTML version alongside the text, inside the mixed message when there are files', () => {
+    const plain = buildMime({ from: 'orders@x.com', to: ['a@b.com'], subject: 'Hi', text: 'Hi', html: '<p>Hi</p>', boundary: 'B' })
+    expect(plain).toContain('Content-Type: multipart/alternative; boundary="alt-B"')
+    expect(plain).toContain('Content-Type: text/html; charset="UTF-8"')
+    expect(plain.trim().endsWith('--alt-B--')).toBe(true)
+    const mixed = buildMime({ from: 'orders@x.com', to: ['a@b.com'], subject: 'Hi', text: 'Hi', html: '<p>Hi</p>', attachments: [{ name: 'a.pdf', mime: 'application/pdf', base64: 'QQ==' }], boundary: 'B' })
+    expect(mixed.indexOf('multipart/mixed')).toBeLessThan(mixed.indexOf('multipart/alternative'))
+    expect(mixed.indexOf('--alt-B--')).toBeLessThan(mixed.indexOf('filename="a.pdf"'))
+  })
   it('encodes non-ASCII subjects, prefixes Re/Fwd once, appends the signature', () => {
     expect(encodeHeader('Café order')).toMatch(/^=\?UTF-8\?B\?/)
     expect(prefixSubject('Order 1', 'Re')).toBe('Re: Order 1')

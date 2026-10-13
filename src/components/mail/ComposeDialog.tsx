@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
-import { FileText, Paperclip, Send, X } from 'lucide-react'
+import { FileText, Inbox, Paperclip, Send, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listMailboxes, saveDraft, sendEmail, type SendEmailInput } from '@/services/mail'
 import { listAddressBook } from '@/services/contacts'
 import { listVendorLinks } from '@/services/lines'
 import { errorMessage } from '@/lib/utils'
+import { fillSignature, LOGO_URL } from '@/lib/signature'
 import { Button, FormField, Input, Textarea } from '@/components/ui'
 
 export interface ComposeDraft {
@@ -24,6 +25,8 @@ export interface ComposeDraft {
   note?: string
   /** Opened from Mail › Drafts (Dana, Oct 12): Save draft updates it, Send removes it. */
   draft_id?: string | null
+  /** The signature saved with a draft; otherwise the person's usual one. */
+  signature?: string | null
 }
 
 const MAX_BYTES = 20 * 1024 * 1024
@@ -40,8 +43,9 @@ function readBase64(file: File): Promise<string> {
 }
 
 /**
- * Write an email from orders@ as yourself: new, reply, reply all, forward or follow-up. Your signature
- * is added when it sends; the conversation is filed to the vendor and waits on them until they answer.
+ * Write an email from orders@ as yourself: new, reply, reply all, forward or follow-up. The signature shows under the
+ * message with the logo and can be changed for this email (Dana, Oct 13); the conversation is filed to the vendor and
+ * waits on them until they answer. Vendor business from your own inbox asks once whether to send it from orders@.
  */
 export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { draft: ComposeDraft; suggestions?: { email: string; label: string }[]; onClose: () => void; onSent?: (threadId: string) => void }) {
   const { profile, organization } = useAuth()
@@ -54,6 +58,10 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
   const [sending, setSending] = useState(false)
   const [saving, setSaving] = useState(false)
   const [draftId, setDraftId] = useState<string | null>(draft.draft_id ?? null)
+  const [signature, setSignature] = useState(() => draft.signature ?? fillSignature(organization?.signature_template ?? null, {
+    name: profile?.signature_name || profile?.full_name || null, title: profile?.job_title ?? null, direct: profile?.direct_phone ?? null, own: profile?.email_signature ?? null,
+  }))
+  const [choice, setChoice] = useState<{ reason: string; input: SendEmailInput } | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const book = useSupabaseQuery(async () => (organization ? listAddressBook(organization.id) : []), [organization?.id])
@@ -68,10 +76,10 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
     // Replies start with the cursor above the quoted mail.
     bodyRef.current?.focus()
     bodyRef.current?.setSelectionRange(0, 0)
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !sending) onClose() }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !sending && !choice) onClose() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose, sending])
+  }, [onClose, sending, choice])
 
   function addTo(email: string) {
     const list = splitAddresses(to)
@@ -97,9 +105,25 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
         vendor_link_ids: linkIds,
         mailbox_id: draft.thread_id ? null : fromBox || null,
         draft_id: draftId,
+        signature,
       }
+      await send(input)
+    } catch (err) {
+      toast.error(errorMessage(err))
+      setSending(false)
+    }
+  }
+
+  async function send(input: SendEmailInput) {
+    setSending(true)
+    try {
       const res = await sendEmail(input)
-      toast.success('Sent')
+      if (res.needs_choice) {
+        setChoice({ reason: res.reason, input })
+        return
+      }
+      setChoice(null)
+      toast.success(input.vendor_check === 'orders' ? 'Sent from orders@' : 'Sent')
       onSent?.(res.thread_id)
       onClose()
     } catch (err) {
@@ -117,7 +141,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
       const id = await saveDraft(organization.id, profile.id, {
         id: draftId, to: splitAddresses(to), cc: splitAddresses(cc), subject, body,
         thread_id: draft.thread_id ?? null, reply_to_email_id: draft.reply_to_email_id ?? null, forward_email_id: draft.forward_email_id ?? null,
-        vendor_id: draft.vendor_id ?? null, mailbox_id: draft.thread_id ? null : fromBox || null,
+        vendor_id: draft.vendor_id ?? null, mailbox_id: draft.thread_id ? null : fromBox || null, signature,
       })
       setDraftId(id)
       toast.success(files.length ? 'Saved in Drafts (attach the files again when you send)' : 'Saved in Drafts')
@@ -129,6 +153,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
     }
   }
 
+  const fromAddress = draft.thread_id ? 'this conversation\'s mailbox' : fromBox && myBox ? myBox.address : 'orders@'
   const unused = suggestions.filter((s) => !splitAddresses(to).map((a) => a.toLowerCase()).includes(s.email.toLowerCase()))
 
   return (
@@ -171,8 +196,14 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
           ) : null}
           <FormField label="Cc" htmlFor="compose-cc"><Input id="compose-cc" value={cc} onChange={(e) => setCc(e.target.value)} autoComplete="off" /></FormField>
           <FormField label="Subject" htmlFor="compose-subject"><Input id="compose-subject" value={subject} onChange={(e) => setSubject(e.target.value)} required /></FormField>
-          <FormField label="Message" htmlFor="compose-body" hint={profile?.email_signature ? 'Your signature is added when it sends.' : 'No signature on file yet; Dana adds them in Settings > Mail.'}>
+          <FormField label="Message" htmlFor="compose-body">
             <Textarea id="compose-body" ref={bodyRef} value={body} onChange={(e) => setBody(e.target.value)} rows={12} />
+          </FormField>
+          <FormField label="Signature" htmlFor="compose-signature" hint="Goes under your message, with the logo. Changes here are for this email only.">
+            <div className="rounded-lg border border-stone-200 bg-stone-50 p-2">
+              {signature.trim() ? <img src={LOGO_URL.replace(/^https:\/\/[^/]+/, '')} alt="Shaver Lake Sports" width={240} height={31} className="mb-1.5 h-auto max-w-[240px]" /> : null}
+              <Textarea id="compose-signature" value={signature} onChange={(e) => setSignature(e.target.value)} rows={Math.min(8, Math.max(3, signature.split('\n').length))} className="bg-white text-sm" />
+            </div>
           </FormField>
           <div>
             <div className="flex flex-wrap items-center gap-2">
@@ -207,7 +238,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
           </div>
         </div>
         <div className="flex items-center justify-between gap-2 border-t border-stone-200 px-4 py-3">
-          <p className="text-xs text-stone-500">Sends from orders@ as {profile?.full_name ?? 'you'}.</p>
+          <p className="text-xs text-stone-500">Sends from {fromAddress} as {profile?.full_name ?? 'you'}.</p>
           <div className="flex gap-2">
             <Button type="button" variant="ghost" onClick={onClose} disabled={sending || saving}>Cancel</Button>
             <Button type="button" variant="secondary" onClick={() => void keepDraft()} loading={saving} disabled={sending} leftIcon={<FileText className="size-4" aria-hidden="true" />}>Save draft</Button>
@@ -215,6 +246,24 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
           </div>
         </div>
       </form>
+      {choice ? (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-stone-900/40 sm:items-center sm:p-4" role="alertdialog" aria-modal="true" aria-label="Send from orders@?">
+          <div className="w-full max-w-md overflow-hidden rounded-t-2xl bg-white shadow-xl sm:rounded-2xl">
+            <div className="flex items-start gap-3 px-4 py-4">
+              <Inbox className="mt-0.5 size-5 shrink-0 text-amber-600" aria-hidden="true" />
+              <div>
+                <h2 className="text-base font-semibold text-stone-900">Send this from orders@?</h2>
+                <p className="mt-1 text-sm text-stone-600">{choice.reason}</p>
+              </div>
+            </div>
+            <div className="flex flex-col-reverse gap-2 border-t border-stone-200 px-4 py-3 sm:flex-row sm:justify-end">
+              <Button type="button" variant="ghost" onClick={() => setChoice(null)} disabled={sending}>Go back</Button>
+              <Button type="button" variant="secondary" onClick={() => void send({ ...choice.input, vendor_check: 'skip' })} disabled={sending}>Send from my inbox anyway</Button>
+              <Button type="button" loading={sending} onClick={() => void send({ ...choice.input, vendor_check: 'orders' })}>Send from orders@ instead</Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

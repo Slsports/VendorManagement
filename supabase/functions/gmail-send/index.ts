@@ -2,8 +2,13 @@
 // reply all, forward and follow-up all come through here. The message carries the sender's name and
 // signature, threads with the conversation, is saved to VMS at once (filed to the vendor), and makes the
 // sender the thread's owner; the thread then waits on the vendor until they answer.
+// The signature (the template with the logo, Oct 13) goes above any quoted mail. Vendor business going out of a personal
+// inbox stops once with a choice: send it from orders@ instead, or from my inbox anyway (Dana, Oct 13).
 import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
-import { buildMime, formatAddress, withSignature, type MimeAttachment } from '../_shared/mime.ts'
+import { buildMime, formatAddress, type MimeAttachment } from '../_shared/mime.ts'
+import { fillSignature, htmlEmail, textEmail } from '../_shared/signature.ts'
+import { aiEnabled, readVendorBusiness } from '../_shared/ai.ts'
+import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { parseMessage, type GmailMessage } from '../_shared/mailParse.ts'
 import { CORS, caller, errorResponse, HttpError, json, serviceClient } from '../_shared/caller.ts'
 
@@ -20,6 +25,8 @@ interface SendRequest {
   vendor_link_ids?: string[]         // files from the vendor's Links & files
   mailbox_id?: string | null         // a new email from my own mailbox instead of orders@
   draft_id?: string | null           // sent from Mail › Drafts: the draft (and its Gmail copy) goes away
+  signature?: string | null          // as shown (and maybe changed) in the compose window; left out = the person's usual one
+  vendor_check?: 'ask' | 'skip' | 'orders' // from a personal inbox: ask first (default), send anyway, or send from orders@ instead
 }
 
 const EMAIL = /^[^@\s,;<>]+@[^@\s,;<>]+\.[^@\s,;<>]+$/
@@ -39,7 +46,7 @@ Deno.serve(async (req) => {
 
     const { data: acct } = await db.from('mail_accounts').select('mailbox').eq('organization_id', me.organization_id).single()
     if (!acct) throw new HttpError(400, 'No mailbox connected')
-    const { data: org } = await db.from('organizations').select('name, app_name').eq('id', me.organization_id).single()
+    const { data: org } = await db.from('organizations').select('name, app_name, signature_template').eq('id', me.organization_id).single()
     // The conversation and the message being answered.
     let thread: { id: string; gmail_thread_id: string; vendor_id: string | null; mailbox_id: string | null } | null = null
     if (r.thread_id) {
@@ -57,6 +64,20 @@ Deno.serve(async (req) => {
       if (data.kind === 'personal' && data.owner_id !== me.id) throw new HttpError(403, 'Only the owner of this mailbox can send from it. Share the conversation to Orders to answer from orders@.')
       if (data.kind === 'legacy' && me.role !== 'admin' && data.owner_id !== me.id) throw new HttpError(403, 'Only Dana answers the old Gmail')
       box = data
+    }
+    // Vendor business from a personal inbox: ask once; "Send from orders@ instead" starts a new conversation in orders@.
+    let boxIdSaved = boxId
+    let gmailThread = thread?.gmail_thread_id
+    if (box?.kind === 'personal') {
+      const check = r.vendor_check ?? 'ask'
+      if (check === 'ask') {
+        const reason = await vendorBusiness(db, me.organization_id, acct.mailbox as string, to, cc, r.subject.trim(), r.body ?? '')
+        if (reason) return json({ needs_choice: true, reason })
+      } else if (check === 'orders') {
+        box = null
+        boxIdSaved = null
+        gmailThread = undefined
+      }
     }
     const mailbox = (box?.kind === 'personal' ? box.address : acct.mailbox) as string
     let inReplyTo: string | null = null
@@ -91,23 +112,26 @@ Deno.serve(async (req) => {
 
     const brand = (org?.app_name || org?.name || '').trim()
     const fromName = [me.full_name, brand].filter(Boolean).join(' | ')
-    const text = withSignature(r.body ?? '', me.email_signature)
-    const raw = buildMime({ from: formatAddress(fromName, mailbox), to, cc, replyTo: mailbox, subject: r.subject.trim(), text, inReplyTo, references, attachments })
+    const signature = r.signature !== undefined ? r.signature
+      : fillSignature(org?.signature_template ?? null, { name: me.signature_name || me.full_name, title: me.job_title, direct: me.direct_phone, own: me.email_signature })
+    const text = textEmail(r.body ?? '', signature)
+    const html = signature?.trim() ? htmlEmail(r.body ?? '', signature) : null
+    const raw = buildMime({ from: formatAddress(fromName, mailbox), to, cc, replyTo: mailbox, subject: r.subject.trim(), text, html, inReplyTo, references, attachments })
 
-    const sent = await gmail.send(raw, thread?.gmail_thread_id)
+    const sent = await gmail.send(raw, gmailThread)
 
     // Save it in VMS now, the same way the sync would.
     const full = parseMessage(await gmail.message(sent.id, 'full') as unknown as GmailMessage)
-    const { data: th } = await db.from('email_threads').upsert({ organization_id: me.organization_id, gmail_thread_id: sent.threadId, mailbox_id: boxId }, { onConflict: 'organization_id,gmail_thread_id', ignoreDuplicates: false }).select('id, vendor_id').single()
+    const { data: th } = await db.from('email_threads').upsert({ organization_id: me.organization_id, gmail_thread_id: sent.threadId, mailbox_id: boxIdSaved }, { onConflict: 'organization_id,gmail_thread_id', ignoreDuplicates: false }).select('id, vendor_id').single()
     if (!th) throw new Error('Could not save the conversation')
     const vendorId = r.vendor_id ?? thread?.vendor_id ?? th.vendor_id ?? null
     const domain = to[0]!.split('@')[1]!
     const free = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com', 'aol.com', 'comcast.net', 'att.net', 'sbcglobal.net', 'live.com', 'msn.com', 'me.com'].includes(domain)
     // private mail uses the senders VMS knows and adds none (no "who is this?" cards from it)
-    if (!boxId) await db.from('email_senders').upsert({ organization_id: me.organization_id, sender_key: free ? to[0] : domain, is_domain: !free }, { onConflict: 'organization_id,sender_key', ignoreDuplicates: true })
+    if (!boxIdSaved) await db.from('email_senders').upsert({ organization_id: me.organization_id, sender_key: free ? to[0] : domain, is_domain: !free }, { onConflict: 'organization_id,sender_key', ignoreDuplicates: true })
     const { data: sender } = await db.from('email_senders').select('id').eq('organization_id', me.organization_id).eq('sender_key', free ? to[0] : domain).maybeSingle()
     const { data: email, error: insErr } = await db.from('emails').insert({
-      organization_id: me.organization_id, mailbox_id: boxId, gmail_box: mailbox.toLowerCase(), gmail_id: sent.id, thread_id: th.id, message_id_header: full.message_id_header, in_reply_to: inReplyTo,
+      organization_id: me.organization_id, mailbox_id: boxIdSaved, gmail_box: mailbox.toLowerCase(), gmail_id: sent.id, thread_id: th.id, message_id_header: full.message_id_header, in_reply_to: inReplyTo,
       direction: 'out', from_email: mailbox, from_name: fromName, to_emails: to, cc_emails: cc, subject: r.subject.trim(),
       snippet: text.replace(/\s+/g, ' ').slice(0, 200), body_text: text.slice(0, 20_000), received_at: full.received_at,
       labels: ['SENT'], has_attachments: attachments.length > 0, sender_id: sender?.id ?? null, vendor_id: vendorId, match_how: vendorId ? 'manual' : null, sent_by: me.id,
@@ -119,7 +143,9 @@ Deno.serve(async (req) => {
     if (r.draft_id) {
       const { data: d } = await db.from('email_drafts').select('id, owner_id, organization_id, gmail_draft_id').eq('id', r.draft_id).maybeSingle()
       if (d && d.organization_id === me.organization_id && (d.owner_id === me.id || me.role === 'admin')) {
-        if (d.gmail_draft_id) await gmail.call(`drafts/${d.gmail_draft_id}`, { method: 'DELETE' }).catch(() => undefined)
+        // Claude's Gmail copies sit in orders@ Drafts
+        const drafts = mailbox === acct.mailbox ? gmail : new Gmail(await googleAccessToken(acct.mailbox as string))
+        if (d.gmail_draft_id) await drafts.call(`drafts/${d.gmail_draft_id}`, { method: 'DELETE' }).catch(() => undefined)
         await db.from('email_drafts').delete().eq('id', d.id)
       }
     }
@@ -128,6 +154,40 @@ Deno.serve(async (req) => {
     return errorResponse(e)
   }
 })
+
+const KIND_WORDS: Record<string, string> = { order: 'an order', return: 'a vendor return', issue: 'a problem with an order', vendor: 'vendor business' }
+
+/**
+ * Why this email should go from orders@, or null. Anyone it goes to that VMS knows as a vendor, rep, ordering service or
+ * carrier makes it vendor business; otherwise Claude reads it (order, return, issue). Mail only to our own people never asks.
+ */
+async function vendorBusiness(db: SupabaseClient, org: string, orders: string, to: string[], cc: string[], subject: string, body: string): Promise<string | null> {
+  const ours = orders.split('@')[1]!.toLowerCase()
+  const outside = [...to, ...cc].filter((a) => a.split('@')[1] !== ours)
+  if (!outside.length) return null
+  const domains = [...new Set(outside.map((a) => a.split('@')[1]!))]
+  const [{ data: senders }, { data: contacts }, { data: repContacts }] = await Promise.all([
+    db.from('email_senders').select('sender_key, is_domain, kind, vendor_id, rep_group_id').eq('organization_id', org)
+      .in('sender_key', [...outside, ...domains]).in('kind', ['vendor', 'rep_group', 'platform', 'carrier']),
+    db.from('vendor_emails').select('vendor_id').in('email', outside),
+    db.from('rep_group_contacts').select('rep_group_id').in('email', outside),
+  ])
+  const hits = (senders ?? []).filter((s) => (s.is_domain ? domains : outside).includes(s.sender_key))
+  const vendorIds = [...new Set([...hits.map((s) => s.vendor_id), ...(contacts ?? []).map((c) => c.vendor_id)].filter(Boolean))] as string[]
+  const repIds = [...new Set([...hits.map((s) => s.rep_group_id), ...(repContacts ?? []).map((c) => c.rep_group_id)].filter(Boolean))] as string[]
+  if (vendorIds.length) {
+    const { data: v } = await db.from('vendors').select('name').eq('organization_id', org).in('id', vendorIds).limit(1)
+    if (v?.[0]) return `This is going to ${v[0].name}. Vendor business should go from orders@ so everyone can follow it.`
+  }
+  if (repIds.length) {
+    const { data: g } = await db.from('rep_groups').select('name').eq('organization_id', org).in('id', repIds).limit(1)
+    if (g?.[0]) return `This is going to ${g[0].name}, a rep group. Vendor business should go from orders@ so everyone can follow it.`
+  }
+  if (hits.length) return 'This is going to a company we do business with. Vendor business should go from orders@ so everyone can follow it.'
+  if (!aiEnabled()) return null
+  const kind = await readVendorBusiness(db, org, { to: outside, subject, text: body.split(/\n(?=On .{4,200}wrote:\s*$)/m)[0]! }).catch(() => 'other' as const)
+  return kind === 'other' ? null : `This looks like ${KIND_WORDS[kind]}. It should go from orders@ so everyone can follow it.`
+}
 
 function bytesToBase64(bytes: Uint8Array): string {
   let bin = ''

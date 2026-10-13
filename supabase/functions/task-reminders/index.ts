@@ -8,7 +8,8 @@
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, errorResponse, json, serviceClient } from '../_shared/caller.ts'
 import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
-import { buildMime, formatAddress, withSignature } from '../_shared/mime.ts'
+import { buildMime, formatAddress } from '../_shared/mime.ts'
+import { fillSignature, htmlEmail, textEmail } from '../_shared/signature.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://vms.shaverlakesports.com'
 const TZ = 'America/Los_Angeles'
@@ -157,17 +158,18 @@ class Sender {
   }
 }
 
-/** Drafts that should also sit in Gmail Drafts: written as the draft's owner (name and signature), from orders@. */
+/** Drafts that should also sit in Gmail Drafts: written as the draft's owner (name and signature with the logo), from orders@. */
 async function copyDrafts(db: SupabaseClient): Promise<number> {
-  const { data } = await db.from('email_drafts').select('id, organization_id, owner_id, to_emails, cc_emails, subject, body').eq('gmail_copy', true).is('gmail_draft_id', null).limit(10)
+  const { data } = await db.from('email_drafts').select('id, organization_id, owner_id, to_emails, cc_emails, subject, body, signature').eq('gmail_copy', true).is('gmail_draft_id', null).limit(10)
   let n = 0
   for (const d of data ?? []) {
     const { data: acct } = await db.from('mail_accounts').select('mailbox').eq('organization_id', d.organization_id).maybeSingle()
-    const { data: owner } = await db.from('profiles').select('full_name, email_signature').eq('id', d.owner_id).maybeSingle()
-    const { data: org } = await db.from('organizations').select('name, app_name').eq('id', d.organization_id).maybeSingle()
+    const { data: owner } = await db.from('profiles').select('full_name, email_signature, signature_name, job_title, direct_phone').eq('id', d.owner_id).maybeSingle()
+    const { data: org } = await db.from('organizations').select('name, app_name, signature_template').eq('id', d.organization_id).maybeSingle()
     if (!acct?.mailbox) continue
     const brand = (org?.app_name || org?.name || '').trim()
-    const raw = buildMime({ from: formatAddress([owner?.full_name, brand].filter(Boolean).join(' | '), acct.mailbox), to: d.to_emails, cc: d.cc_emails, replyTo: acct.mailbox, subject: d.subject, text: withSignature(d.body, owner?.email_signature ?? null) })
+    const sig = d.signature ?? fillSignature(org?.signature_template ?? null, { name: owner?.signature_name || owner?.full_name || null, title: owner?.job_title ?? null, direct: owner?.direct_phone ?? null, own: owner?.email_signature ?? null })
+    const raw = buildMime({ from: formatAddress([owner?.full_name, brand].filter(Boolean).join(' | '), acct.mailbox), to: d.to_emails, cc: d.cc_emails, replyTo: acct.mailbox, subject: d.subject, text: textEmail(d.body, sig), html: sig.trim() ? htmlEmail(d.body, sig) : null })
     const gmail = new Gmail(await googleAccessToken(acct.mailbox))
     const made = await gmail.call<{ id: string }>('drafts', { method: 'POST', body: JSON.stringify({ message: { raw: btoa(raw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') } }) })
     await db.from('email_drafts').update({ gmail_draft_id: made.id }).eq('id', d.id)

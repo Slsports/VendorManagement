@@ -4,7 +4,7 @@ section: Mail
 keywords: answer, respond, reply all, forward, fwd, re, send
 who: Admin, managers and buyers
 ---
-Answer a vendor right from the conversation. The reply goes out from orders@ under your name, with your signature.
+Answer a vendor right from the conversation. The reply goes out from orders@ under your name, with your signature and the logo.
 
 ## How to
 1. Open the conversation and open the message you are answering.

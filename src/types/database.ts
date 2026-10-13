@@ -18,6 +18,7 @@ export type Database = {
           slug: string
           legal_name: string | null
           app_name: string | null
+          signature_template: string | null
           logo_url: string | null
           logo_dark_url: string | null
           accent_color: string
@@ -32,6 +33,7 @@ export type Database = {
           slug: string
           legal_name?: string | null
           app_name?: string | null
+          signature_template?: string | null
           logo_url?: string | null
           logo_dark_url?: string | null
           accent_color?: string
@@ -46,6 +48,7 @@ export type Database = {
           slug?: string
           legal_name?: string | null
           app_name?: string | null
+          signature_template?: string | null
           logo_url?: string | null
           logo_dark_url?: string | null
           accent_color?: string
@@ -130,7 +133,7 @@ export type Database = {
           is_active: boolean
           created_at: string
           updated_at: string
-       ; email_signature: string | null; places_orders: boolean; sees_freight: boolean; dashboard_layout: Json | null; remind_dashboard: boolean; remind_email: boolean; remind_text: boolean; mobile_phone: string | null; reviews_ls_pos: boolean }
+       ; email_signature: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null; places_orders: boolean; sees_freight: boolean; dashboard_layout: Json | null; remind_dashboard: boolean; remind_email: boolean; remind_text: boolean; mobile_phone: string | null; reviews_ls_pos: boolean }
         Insert: {
           id: string
           organization_id: string
@@ -142,7 +145,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; places_orders?: boolean; sees_freight?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
+       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
         Update: {
           id?: string
           organization_id?: string
@@ -154,7 +157,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; places_orders?: boolean; sees_freight?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
+       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
         Relationships: [
           {
             foreignKeyName: 'profiles_organization_id_fkey'
@@ -412,9 +415,9 @@ export type Database = {
         Relationships: []
       }
       email_drafts: {
-        Row: { id: string; organization_id: string; owner_id: string; created_by: string | null; to_emails: string[]; cc_emails: string[]; subject: string; body: string; thread_id: string | null; reply_to_email_id: string | null; forward_email_id: string | null; vendor_id: string | null; mailbox_id: string | null; note: string | null; gmail_copy: boolean; gmail_draft_id: string | null; created_at: string; updated_at: string }
-        Insert: { id?: string; organization_id: string; owner_id: string; created_by?: string | null; to_emails?: string[]; cc_emails?: string[]; subject?: string; body?: string; thread_id?: string | null; reply_to_email_id?: string | null; forward_email_id?: string | null; vendor_id?: string | null; mailbox_id?: string | null; note?: string | null; gmail_copy?: boolean; gmail_draft_id?: string | null; created_at?: string; updated_at?: string }
-        Update: { id?: string; organization_id?: string; owner_id?: string; created_by?: string | null; to_emails?: string[]; cc_emails?: string[]; subject?: string; body?: string; thread_id?: string | null; reply_to_email_id?: string | null; forward_email_id?: string | null; vendor_id?: string | null; mailbox_id?: string | null; note?: string | null; gmail_copy?: boolean; gmail_draft_id?: string | null; created_at?: string; updated_at?: string }
+        Row: { id: string; organization_id: string; owner_id: string; created_by: string | null; to_emails: string[]; cc_emails: string[]; subject: string; body: string; thread_id: string | null; reply_to_email_id: string | null; forward_email_id: string | null; vendor_id: string | null; mailbox_id: string | null; note: string | null; gmail_copy: boolean; gmail_draft_id: string | null; signature: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; owner_id: string; created_by?: string | null; to_emails?: string[]; cc_emails?: string[]; subject?: string; body?: string; thread_id?: string | null; reply_to_email_id?: string | null; forward_email_id?: string | null; vendor_id?: string | null; mailbox_id?: string | null; note?: string | null; gmail_copy?: boolean; gmail_draft_id?: string | null; signature?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; owner_id?: string; created_by?: string | null; to_emails?: string[]; cc_emails?: string[]; subject?: string; body?: string; thread_id?: string | null; reply_to_email_id?: string | null; forward_email_id?: string | null; vendor_id?: string | null; mailbox_id?: string | null; note?: string | null; gmail_copy?: boolean; gmail_draft_id?: string | null; signature?: string | null; created_at?: string; updated_at?: string }
         Relationships: [
           { foreignKeyName: 'email_drafts_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
           { foreignKeyName: 'email_drafts_owner_id_fkey'; columns: ['owner_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },

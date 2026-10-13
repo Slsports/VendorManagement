@@ -290,7 +290,13 @@ export interface SendEmailInput {
   mailbox_id?: string | null
   /** Sent from Mail › Drafts: the draft goes away once it is sent. */
   draft_id?: string | null
+  /** The signature as shown in the compose window (Dana, Oct 13). */
+  signature?: string | null
+  /** From my own inbox: ask first when it looks like vendor business, send anyway, or send from orders@ instead. */
+  vendor_check?: 'ask' | 'skip' | 'orders'
 }
+
+export type SendResult = { thread_id: string; email_id: string; needs_choice?: undefined } | { needs_choice: true; reason: string }
 
 export async function functionError(error: unknown): Promise<Error> {
   // supabase-js wraps a non-2xx answer; the function's own message is in the response body.
@@ -305,7 +311,8 @@ export async function functionError(error: unknown): Promise<Error> {
 }
 
 /** Send from orders@ as the signed-in person; returns the conversation it landed in. */
-export async function sendEmail(input: SendEmailInput): Promise<{ thread_id: string; email_id: string }> {
+/** Sends, or comes back with needs_choice when vendor business is about to leave from a personal inbox. */
+export async function sendEmail(input: SendEmailInput): Promise<SendResult> {
   const { data, error } = await supabase.functions.invoke('gmail-send', { body: input })
   if (error) throw await functionError(error)
   return data
@@ -340,15 +347,24 @@ export async function fileAttachmentToVendor(attachmentId: string, vendorId: str
   if (error) throw await functionError(error)
 }
 
-/** Everyone's signature, for Settings > Mail (admins edit them). */
-export async function listSignatures(organizationId: string): Promise<{ id: string; full_name: string; email: string; email_signature: string | null }[]> {
-  const { data, error } = await supabase.from('profiles').select('id, full_name, email, email_signature').eq('organization_id', organizationId).eq('is_active', true).not('email', 'ilike', TEST_LOGIN_PATTERN).order('full_name')
+export interface PersonSignature { id: string; full_name: string; email: string; email_signature: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null }
+
+/** Everyone's signature details, for Settings > Mail (admins edit them). */
+export async function listSignatures(organizationId: string): Promise<PersonSignature[]> {
+  const { data, error } = await supabase.from('profiles').select('id, full_name, email, email_signature, signature_name, job_title, direct_phone').eq('organization_id', organizationId).eq('is_active', true).not('email', 'ilike', TEST_LOGIN_PATTERN).order('full_name')
   if (error) throw error
   return data ?? []
 }
 
-export async function saveSignature(profileId: string, signature: string): Promise<void> {
-  const { error } = await supabase.from('profiles').update({ email_signature: signature.trim() || null }).eq('id', profileId)
+export async function saveSignature(profileId: string, s: { signature_name: string; job_title: string; direct_phone: string; email_signature: string }): Promise<void> {
+  const t = (x: string) => x.trim() || null
+  const { error } = await supabase.from('profiles').update({ signature_name: t(s.signature_name), job_title: t(s.job_title), direct_phone: t(s.direct_phone), email_signature: t(s.email_signature) }).eq('id', profileId)
+  if (error) throw error
+}
+
+/** The signature everyone uses (Settings > Mail, admin). */
+export async function saveSignatureTemplate(organizationId: string, template: string): Promise<void> {
+  const { error } = await supabase.from('organizations').update({ signature_template: template.trim() || null }).eq('id', organizationId)
   if (error) throw error
 }
 
@@ -546,7 +562,7 @@ export async function listSentEmails(organizationId: string, opts: { mailbox?: s
 export interface DraftRow {
   id: string; owner_id: string; created_by: string | null; to_emails: string[]; cc_emails: string[]; subject: string; body: string
   thread_id: string | null; reply_to_email_id: string | null; forward_email_id: string | null; vendor_id: string | null; mailbox_id: string | null
-  note: string | null; gmail_draft_id: string | null; updated_at: string
+  note: string | null; gmail_draft_id: string | null; signature: string | null; updated_at: string
   vendor: { id: string; name: string } | null; owner: { full_name: string } | null
 }
 
@@ -560,8 +576,8 @@ export async function listDrafts(organizationId: string, ownerId: string | null)
 }
 
 /** Save (or update) a draft from the compose window. Returns its id. */
-export async function saveDraft(organizationId: string, ownerId: string, d: { id?: string | null; to: string[]; cc: string[]; subject: string; body: string; thread_id?: string | null; reply_to_email_id?: string | null; forward_email_id?: string | null; vendor_id?: string | null; mailbox_id?: string | null }): Promise<string> {
-  const row = { organization_id: organizationId, owner_id: ownerId, to_emails: d.to, cc_emails: d.cc, subject: d.subject, body: d.body, thread_id: d.thread_id ?? null, reply_to_email_id: d.reply_to_email_id ?? null, forward_email_id: d.forward_email_id ?? null, vendor_id: d.vendor_id ?? null, mailbox_id: d.mailbox_id ?? null }
+export async function saveDraft(organizationId: string, ownerId: string, d: { id?: string | null; to: string[]; cc: string[]; subject: string; body: string; thread_id?: string | null; reply_to_email_id?: string | null; forward_email_id?: string | null; vendor_id?: string | null; mailbox_id?: string | null; signature?: string | null }): Promise<string> {
+  const row = { organization_id: organizationId, owner_id: ownerId, to_emails: d.to, cc_emails: d.cc, subject: d.subject, body: d.body, signature: d.signature ?? null, thread_id: d.thread_id ?? null, reply_to_email_id: d.reply_to_email_id ?? null, forward_email_id: d.forward_email_id ?? null, vendor_id: d.vendor_id ?? null, mailbox_id: d.mailbox_id ?? null }
   if (d.id) {
     const { error } = await supabase.from('email_drafts').update(row).eq('id', d.id)
     if (error) throw error
