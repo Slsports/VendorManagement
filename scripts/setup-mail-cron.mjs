@@ -14,9 +14,9 @@ const args = process.argv.slice(2)
 const every = args.includes('--every') ? args[args.indexOf('--every') + 1] : '* * * * *'
 
 await query(`create extension if not exists pg_cron; create extension if not exists pg_net with schema extensions;`)
-await query(`select cron.unschedule(jobid) from cron.job where jobname in ('gmail-sync', 'order-check', 'task-reminders', 'sent-orders', 'supplies', 'contacts-learn')`)
+await query(`select cron.unschedule(jobid) from cron.job where jobname in ('gmail-sync', 'order-check', 'task-reminders', 'sent-orders', 'supplies', 'contacts-learn', 'freight-quotes')`)
 if (args.includes('--off')) {
-  console.log('gmail-sync, order-check, task-reminders, sent-orders, supplies and contacts-learn schedules removed')
+  console.log('gmail-sync, order-check, task-reminders, sent-orders, supplies, contacts-learn and freight-quotes schedules removed')
   process.exit(0)
 }
 
@@ -47,6 +47,8 @@ const sentCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/sent-or
 const supplyCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/supplies')
 // contacts-learn (Dana, Oct 13): vendor contacts from email signatures.
 const contactsCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/contacts-learn')
+// freight-quotes (Dana, Oct 13): vendors' freight quotes become quotes on their orders and a task for Trevor.
+const quotesCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/freight-quotes')
 const taskCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/task-reminders').replace('timeout_milliseconds := 150000', 'timeout_milliseconds := 60000')
 if (!args.includes('--no-schedule')) {
   await query(`select cron.schedule('gmail-sync', ${lit(every)}, ${lit(call)})`)
@@ -55,7 +57,8 @@ if (!args.includes('--no-schedule')) {
   await query(`select cron.schedule('sent-orders', ${lit(every)}, ${lit(sentCall)})`)
   await query(`select cron.schedule('supplies', ${lit(every)}, ${lit(supplyCall)})`)
   await query(`select cron.schedule('contacts-learn', ${lit(every)}, ${lit(contactsCall)})`)
-  console.log(`gmail-sync, order-check, task-reminders, sent-orders, supplies and contacts-learn scheduled (${every})`)
+  await query(`select cron.schedule('freight-quotes', ${lit(every)}, ${lit(quotesCall)})`)
+  console.log(`gmail-sync, order-check, task-reminders, sent-orders, supplies, contacts-learn and freight-quotes scheduled (${every})`)
 }
 if (args.includes('--run-now')) {
   await query(call)

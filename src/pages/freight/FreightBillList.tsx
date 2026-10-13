@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ExternalLink, FileUp, Mail, Pencil, Plus, Truck } from 'lucide-react'
+import { Calculator, ExternalLink, FileUp, Mail, Pencil, Plus, Truck } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listCarriers, listFreightBills, type FreightFilter } from '@/services/freight'
+import { countWaitingFreightQuotes } from '@/services/freightQuotes'
 import { ROUTES } from '@/lib/constants'
 import { FREIGHT_STATUS, money, shortDate } from '@/lib/freight'
 import { cn } from '@/lib/utils'
@@ -35,11 +36,15 @@ export default function FreightBillListPage() {
   const carrierId = params.get('carrier')
   const carriers = useSupabaseQuery(async () => (organization ? listCarriers(organization.id, true) : []), [organization?.id])
   const q = useSupabaseQuery(async () => (organization ? listFreightBills(organization.id, filter, carrierId) : []), [organization?.id, filter, carrierId])
+  const quotes = useSupabaseQuery(async () => (organization ? countWaitingFreightQuotes(organization.id) : 0), [organization?.id])
 
   return (
     <div>
       <PageHeader title="Freight" description="Bills from our billing companies, and every freight company's emails. Each shipment goes to the vendor that shipped it; the freight lands on that order."
-        actions={canEdit ? <Button variant="secondary" onClick={() => setUploading(true)} leftIcon={<FileUp className="size-4" aria-hidden="true" />}>Upload bills</Button> : undefined} />
+        actions={<span className="flex flex-wrap gap-2">
+          <Link to={ROUTES.freightQuotes} className="inline-flex h-10 items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 text-sm font-medium text-stone-800 hover:bg-stone-50"><Calculator className="size-4" aria-hidden="true" />Freight quotes{quotes.data ? <Badge tone="warning">{quotes.data}</Badge> : null}</Link>
+          {canEdit ? <Button variant="secondary" onClick={() => setUploading(true)} leftIcon={<FileUp className="size-4" aria-hidden="true" />}>Upload bills</Button> : null}
+        </span>} />
       {uploading ? <BulkBillUpload onClose={() => setUploading(false)} onDone={() => q.refetch()} /> : null}
 
       <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-stone-500">Billing companies</h2>

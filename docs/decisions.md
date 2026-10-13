@@ -1984,3 +1984,7 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   they represent (one per box); product categories they sell. "Looks good" or "Submit changes" → Confirmed with the date.
 - All WWD vendors are imported; ones never bought from are kept apart as lines ("not bought from yet"), found by search,
   "Make it a vendor" moves one over; emails go only to vendors we buy from.
+- Built: Freight › **Freight quotes** (To approve / Which order? / Approved / All, and "Shipped without an approved
+  freight quote"), the quote page (vendor's quote, shipment details, Priority One and WWEX prices, Approve the cheapest),
+  and the order page's Freight quote card. Quotes are read from emails received from Oct 14 on. Trevor = whoever's title
+  says receiving/logistics.

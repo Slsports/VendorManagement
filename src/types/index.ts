@@ -17,6 +17,7 @@ export type RepGroupContact = Tables<'rep_group_contacts'>
 export type Carrier = Tables<'carriers'>
 export type OrderLine = Tables<'order_lines'>
 export type FreightBill = Tables<'freight_bills'>
+export type FreightQuote = Tables<'freight_quotes'>
 export type FreightBillLine = Tables<'freight_bill_lines'>
 export type DeliveryReceipt = Tables<'delivery_receipts'>
 export type Category = Tables<'categories'>
