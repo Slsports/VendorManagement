@@ -973,7 +973,7 @@ export async function pickFreightOrder(db: SupabaseClient, org: string, quote: F
   if (!orders.length) return null
   const res = await claude().messages.parse({
     model: MAIL_MODEL,
-    max_tokens: 400,
+    max_tokens: 1500,
     output_config: { effort: 'low', format: zodOutputFormat(FreightOrderAnswer) },
     system: `${STORE}
 
@@ -1020,7 +1020,7 @@ export async function pickPaperOrder(db: SupabaseClient, org: string, doc: Paper
   if (!orders.length) return { id: null, likely: null, why: 'No open orders' }
   const res = await claude().messages.parse({
     model: MAIL_MODEL,
-    max_tokens: 400,
+    max_tokens: 1500,
     output_config: { effort: 'low', format: zodOutputFormat(PaperOrderAnswer) },
     system: `${STORE}
 
