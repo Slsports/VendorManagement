@@ -50,6 +50,9 @@ describe('order paperwork', () => {
     expect(paperworkKind(f('Credit Memo CM2600409.pdf'), null)).toBe('credit')
     expect(paperworkKind(f('C2600409.pdf'), 'World Famous Sports, Inc.: Credit Memo #CM2600409')).toBe('credit')
     expect(paperworkKind(f('Invoice_I88431-4_1791912395312.pdf'), 'World Famous Sports, Inc.: Invoice #I88431-4')).toBe('invoice')
+    // the email's own words win over the mail quoted under it; return labels aren't bills
+    expect(paperworkKind(f('C2500557.pdf'), 'Re: World Famous Sports missing', 'HI Jane,\nPlease find the credit memo attached for the shortage.\n\nOn Mon, Oct 27, 2025 Jane wrote:\n> the invoice was short')).toBe('credit')
+    expect(paperworkKind(f('RA2500525.pdf'), 'Re: WORLD FAMOUS SPORTS SENT WRONG ONE', 'please find the return label attached.\n\nOn Mon Jane wrote:\n> invoice')).toBeNull()
     expect(maybePaperwork(f('Spring Catalog.pdf'))).toBe(false)
     expect(paperworkKind(f('55123.pdf'), 'Order Confirmation for PO SLS-4471')).toBe('confirmation')
     expect(paperworkKind(f('88123.pdf'), 'Invoice 88123 from Ty')).toBe('invoice')

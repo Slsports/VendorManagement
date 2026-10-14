@@ -2068,3 +2068,6 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   **Edit** opens the old box; its tags are links. Creating the PO in LS still takes one click.
 - Pay-by tasks: VMS never pays. The box shows the bill, **Pay in Edenred** (WWD) / **Pay in Bill.com**, and **I paid it**
   (marks the bill paid now, closes the task; the import adds the payment number). Edenred's address is saved once. Migration 0107.
+- Oct 14, back-check after the year of mail was re-filed: 194 papers filed (138 invoices, 37 confirmations, 19 credits) for
+  ~60 vendors; 65 new checks. Two WFS files were wrong because the quoted older mail said "invoice": the paperwork rule
+  now reads only the email's own words, and return labels / RAs are not bills. C2500557 → Credits, RA2500525 → Other.

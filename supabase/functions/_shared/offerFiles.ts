@@ -100,18 +100,28 @@ export function paperworkKind(a: { file_name: string; size: number | null }, sub
   if (/\.(png|jpe?g)$/i.test(a.file_name) && (a.size ?? 0) < 100 * 1024) return null
   const name = a.file_name.replace(/[_\-.]+/g, ' ')
   if (CREDIT.test(name)) return 'credit'
+  // a return authorization or return label is not a bill (WFS "RA2500525.pdf")
+  if (/^(ra|rma) ?#? ?\d/i.test(name) || /return (label|authori[sz]ation)/i.test(name)) return null
   if (!maybePaperwork(a)) return null
   if (CONFIRM.test(name)) return 'confirmation'
   if (INVOICE.test(name)) return 'invoice'
   if (CREDIT.test(subject ?? '')) return 'credit'
   if (CONFIRM.test(subject ?? '')) return 'confirmation'
   if (INVOICE.test(subject ?? '') && !/statement|past due|reminder/i.test(subject ?? '')) return 'invoice'
-  // then the email's own words (Dana, Oct 13: Dom's "S102112.pdf" said "sales order" only in the email)
-  const text = (body ?? '').slice(0, 2000)
-  if (/credit ?(memo|note)/i.test(text) && !INVOICE.test(text)) return 'credit'
+  // then the email's own words (Dana, Oct 13: Dom's "S102112.pdf" said "sales order" only in the email), without the
+  // earlier mail quoted under it (Oct 14: "credit memo attached" above a quoted "invoice" is a credit)
+  const text = ownWords(body ?? '').slice(0, 2000)
+  if (/return (label|authori[sz]ation)|\brma\b/i.test(text) && !CONFIRM.test(text) && !INVOICE.test(text)) return null
+  if (/credit ?(memo|note)/i.test(text)) return 'credit'
   if (CONFIRM.test(text) && !INVOICE.test(text)) return 'confirmation'
   if (INVOICE.test(text) && !CONFIRM.test(text) && !/statement|past due|reminder/i.test(text)) return 'invoice'
   return null
+}
+
+/** The email without the earlier mail quoted under it. */
+export function ownWords(text: string): string {
+  const m = /\n(?:On .{4,200}wrote:|-{3,} ?Original Message|_{10,}|From: .+\n(?:Sent|Date): )/i.exec(text)
+  return (m ? text.slice(0, m.index) : text).trim()
 }
 
 /** A file that could be a confirmation or invoice: a PDF or a real picture, not a signature logo, statement, catalog… */
