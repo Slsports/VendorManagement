@@ -12,6 +12,8 @@ import { fromLocalInput, localDay, REPEAT_CHOICES, REPEAT_UNITS, repeatChoice, r
 import { errorMessage } from '@/lib/utils'
 import type { RepeatUnit } from '@/types'
 import { Modal } from '@/components/shared/Modal'
+import { Link } from 'react-router-dom'
+import { TaskGo } from './TaskGo'
 import { VendorPicker } from '@/components/vendors/VendorPicker'
 import { FormField, Input, Select, Textarea } from '@/components/ui'
 
@@ -89,18 +91,20 @@ export function TaskDialog({ task, preset, onClose, onSaved }: { task?: TaskRow 
     }
   }
 
-  const chips: { label: string; clear: () => void }[] = [
-    ...(vendor ? [{ label: `Vendor: ${vendor.name}`, clear: () => setVendor(null) }] : []),
-    ...(carrier ? [{ label: `Freight: ${carrier.name}`, clear: () => setCarrier(null) }] : []),
-    ...(repGroup ? [{ label: `Rep group: ${repGroup.name}`, clear: () => setRepGroup(null) }] : []),
-    ...(order ? [{ label: `Order: ${order.name}`, clear: () => setOrder(null) }] : []),
-    ...(thread ? [{ label: `Email: ${thread.name}`, clear: () => setThread(null) }] : []),
+  // each tag opens what it is (Dana, Oct 14)
+  const chips: { label: string; clear: () => void; to?: string }[] = [
+    ...(vendor ? [{ label: `Vendor: ${vendor.name}`, clear: () => setVendor(null), to: `/vendors/${vendor.id}` }] : []),
+    ...(carrier ? [{ label: `Freight: ${carrier.name}`, clear: () => setCarrier(null), to: `/freight?carrier=${carrier.id}` }] : []),
+    ...(repGroup ? [{ label: `Rep group: ${repGroup.name}`, clear: () => setRepGroup(null), to: `/rep-groups/${repGroup.id}` }] : []),
+    ...(order ? [{ label: `Order: ${order.name}`, clear: () => setOrder(null), to: `/orders/${order.id}` }] : []),
+    ...(thread ? [{ label: `Email: ${thread.name}`, clear: () => setThread(null), to: `/mail/${thread.id}` }] : []),
     ...(other.trim() && adding !== 'other' ? [{ label: other.trim(), clear: () => setOther('') }] : []),
   ]
   const morningOfDue = due ? `${due}T08:00` : ''
 
   return (
     <Modal title={task ? 'Task' : 'New task'} submitLabel={task ? 'Save' : 'Add task'} busy={busy} onSubmit={save} onClose={onClose}>
+      {task && !task.done_at ? <TaskGo task={task} onGo={() => { onSaved?.(); onClose() }} /> : null}
       <FormField label="What needs doing" htmlFor="task-title">
         <Input id="task-title" value={title} onChange={(e) => setTitle(e.target.value)} autoFocus={!task} maxLength={300} />
       </FormField>
@@ -126,7 +130,7 @@ export function TaskDialog({ task, preset, onClose, onSaved }: { task?: TaskRow 
           <ul className="flex flex-wrap gap-1.5">
             {chips.map((c) => (
               <li key={c.label} className="inline-flex max-w-full items-center gap-1 rounded-full bg-stone-100 py-1 pl-2.5 pr-1 text-xs text-stone-700">
-                <span className="truncate">{c.label}</span>
+                {c.to ? <Link to={c.to} onClick={onClose} className="truncate font-medium text-brand hover:underline">{c.label}</Link> : <span className="truncate">{c.label}</span>}
                 <button type="button" onClick={c.clear} aria-label={`Remove ${c.label}`} className="rounded-full p-0.5 hover:bg-stone-200"><X className="size-3.5" aria-hidden="true" /></button>
               </li>
             ))}

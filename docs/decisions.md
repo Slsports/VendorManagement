@@ -2059,3 +2059,12 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   judged by file name and subject only (no email words, no Claude).
 - Rule for every session (CLAUDE.md): every filing change re-checks everything already filed, for all vendors; never two
   copies of a file (link to the one on file; `vendor_links_dedupe` hourly). Migration 0106.
+
+## Oct 14 — Tasks take you to the work (Dana: "go on all of it")
+- Dana: a task box with only dates "is all I see"; "If the system already knows what order its for I should land right
+  there"; "it should automatically open there". Clicking a task opens its work, on the step: Create PO → the order with
+  the Create PO in LS box highlighted (else the check, Claude's best-guess order picked in advance); reply promises → the
+  email with the reply open; freight quote, LS PO, supplies → their pages; hand-made tasks → what they're tagged to.
+  **Edit** opens the old box; its tags are links. Creating the PO in LS still takes one click.
+- Pay-by tasks: VMS never pays. The box shows the bill, **Pay in Edenred** (WWD) / **Pay in Bill.com**, and **I paid it**
+  (marks the bill paid now, closes the task; the import adds the payment number). Edenred's address is saved once. Migration 0107.

@@ -120,3 +120,33 @@ export function onTasksChanged(fn: () => void): () => void {
   window.addEventListener(EVENT, fn)
   return () => window.removeEventListener(EVENT, fn)
 }
+
+// ---- pay-by tasks (Dana, Oct 14): the bill, "I paid it", and the pay pages ----
+export interface PayBill { vendor: string | null; number: string | null; po: string | null; amount: number | null; discount: number | null; terms: string | null; due: string | null; order_id: string | null; paid: boolean; via: 'edenred' | 'billcom' }
+
+export async function getPayBill(bill: 'wwd' | 'order', id: string): Promise<PayBill | null> {
+  if (bill === 'wwd') {
+    const { data, error } = await supabase.from('wwd_invoices').select('wwd_vendor_name, vendor_invoice_number, po_number, amount, discount, terms, due_date, order_id, paid_date, sheet_paid_date, vendor:vendors!wwd_invoices_vendor_id_fkey(name)').eq('id', id).maybeSingle()
+    if (error) throw error
+    if (!data) return null
+    const v = data.vendor as unknown as { name: string } | null
+    return { vendor: v?.name ?? data.wwd_vendor_name, number: data.vendor_invoice_number, po: data.po_number, amount: data.amount, discount: data.discount, terms: data.terms, due: data.due_date, order_id: data.order_id, paid: !!(data.paid_date || data.sheet_paid_date), via: 'edenred' }
+  }
+  const { data, error } = await supabase.from('orders').select('po_number, est_cost, final_cost, ar_due, ar_due_date, billing_route, paid_date, status, vendor:vendors!orders_vendor_id_fkey(name)').eq('id', id).maybeSingle()
+  if (error) throw error
+  if (!data) return null
+  const v = data.vendor as unknown as { name: string } | null
+  return { vendor: v?.name ?? null, number: null, po: data.po_number, amount: data.final_cost ?? data.est_cost, discount: null, terms: data.ar_due, due: data.ar_due_date, order_id: id, paid: !!data.paid_date || data.status === 'paid', via: data.billing_route === 'worldwide' ? 'edenred' : 'billcom' }
+}
+
+/** "I paid it": the bill is marked paid now and the task is done (the payment import adds the number later). Admin. */
+export async function markTaskPaid(taskId: string): Promise<void> {
+  const { error } = await supabase.rpc('task_mark_paid', { p_task: taskId })
+  if (error) throw error
+  tasksChanged()
+}
+
+export async function savePayLinks(organizationId: string, edenred: string | null, billcom: string | null): Promise<void> {
+  const { error } = await supabase.rpc('org_set_pay_links', { p_org: organizationId, p_edenred: edenred, p_billcom: billcom })
+  if (error) throw error
+}

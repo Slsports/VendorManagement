@@ -10,6 +10,7 @@ import { errorMessage } from '@/lib/utils'
 import { Button, Dropdown } from '@/components/ui'
 import { DoneButton } from './TaskList'
 import { TaskDialog } from './TaskDialog'
+import { useGoToTask } from '@/hooks/useGoToTask'
 
 /**
  * Top of the dashboard (Dana, Oct 11): reminders whose time has come, for people who get reminders on the dashboard,
@@ -19,6 +20,7 @@ export function TaskNotices() {
   const { organization, profile } = useAuth()
   const q = useTasksQuery(async () => (organization && profile ? listNotices(organization.id, profile.id) : null), [organization?.id, profile?.id])
   const [open, setOpen] = useState<TaskRow | null>(null)
+  const go = useGoToTask()
   const reminders = profile?.remind_dashboard === false ? [] : q.data?.reminders ?? []
   const finished = q.data?.finished ?? []
   if (!reminders.length && !finished.length) return null
@@ -30,7 +32,7 @@ export function TaskNotices() {
         <div key={t.id} className="flex flex-wrap items-center gap-2 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm">
           <BellRing className="size-4 shrink-0 text-amber-600" aria-hidden="true" />
           <DoneButton task={t} />
-          <button type="button" onClick={() => setOpen(t)} className="min-w-0 flex-1 text-left">
+          <button type="button" onClick={() => go(t, setOpen)} className="min-w-0 flex-1 text-left hover:text-brand">
             <span className="font-medium text-stone-900">{t.title}</span>
             <span className="ml-2 text-xs text-stone-600">{t.due_date ? `due ${dueText(t.due_date, today).toLowerCase()}` : ''}{aboutText(t) ? ` · ${aboutText(t)}` : ''}</span>
           </button>

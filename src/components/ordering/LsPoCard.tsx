@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
@@ -15,8 +15,10 @@ import { createLsPo, listLsShops, poNumberPreview } from '@/services/lightspeed'
  * The LS PO on an order (Dana, Oct 12): once the vendor confirms, Claude drafts it, the person who placed the order
  * approves it, Trevor reviews it and enters it in LS. The number can also be typed here for a PO made by hand.
  */
-export function LsPoCard({ order, documents, canEdit, onChange, vendor }: { order: Pick<Order, 'id' | 'status' | 'ls_po_number' | 'po_number' | 'ls_order_id' | 'store_codes'>; documents: VendorLink[]; canEdit: boolean; onChange: () => void; vendor?: { id: string; name: string; lightspeed_vendor_id: string | null } | null }) {
+export function LsPoCard({ order, documents, canEdit, onChange, vendor, focus = false }: { order: Pick<Order, 'id' | 'status' | 'ls_po_number' | 'po_number' | 'ls_order_id' | 'store_codes'>; documents: VendorLink[]; canEdit: boolean; onChange: () => void; vendor?: { id: string; name: string; lightspeed_vendor_id: string | null } | null; focus?: boolean }) {
   const po = useSupabaseQuery(() => getLsPoForOrder(order.id), [order.id])
+  const box = useRef<HTMLElement>(null)
+  useEffect(() => { if (focus) box.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }) }, [focus])
   const [value, setValue] = useState(order.ls_po_number ?? '')
   const [busy, setBusy] = useState(false)
   const hasDoc = documents.some((d) => d.kind === 'ls_po')
@@ -31,7 +33,7 @@ export function LsPoCard({ order, documents, canEdit, onChange, vendor }: { orde
   }
   const waiting = draft && draft.status !== 'sent'
   return (
-    <section className={`rounded-2xl border p-5 ${waiting ? 'border-amber-300 bg-amber-50' : 'border-stone-200 bg-white'}`}>
+    <section ref={box} className={`rounded-2xl border p-5 ${waiting ? 'border-amber-300 bg-amber-50' : 'border-stone-200 bg-white'} ${focus ? 'ring-4 ring-brand/40' : ''}`}>
       <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">LS PO</h2>
       <CreateInLs order={order} vendor={vendor ?? null} canEdit={canEdit} onChange={onChange} />
       {draft ? (

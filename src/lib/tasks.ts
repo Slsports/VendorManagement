@@ -105,3 +105,24 @@ export function aboutText(t: AboutParts): string {
   const thread = t.thread ? `Email: ${t.thread.subject || '(no subject)'}` : null
   return [t.vendor?.name, t.carrier?.name, t.rep_group?.name, order, thread, t.tag_other].filter(Boolean).join(' · ')
 }
+
+// ---- Go to it (Dana, Oct 14: "take me there") ----------------------------------------------------------------------
+/** Where a task's work is: a page that lands on the step itself, or the pay panel (pay-by tasks pay outside VMS). */
+export type TaskTarget = { kind: 'page'; to: string; label: string } | { kind: 'pay'; label: string; bill: 'wwd' | 'order'; id: string }
+
+export function taskTarget(t: { auto_key: string | null; order_id: string | null; thread_id: string | null; vendor_id: string | null; carrier_id: string | null; rep_group_id: string | null }): TaskTarget | null {
+  const [kind, id] = (t.auto_key ?? '').split(':')
+  if (kind === 'create_po' && id) return t.order_id ? { kind: 'page', to: `/orders/${t.order_id}?do=create-po`, label: 'Create the PO' } : { kind: 'page', to: `/orders/paperwork/${id}`, label: 'Pick the order' }
+  if (kind === 'promise' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}?do=reply`, label: 'Reply' }
+  if (kind === 'freight_quote' && id) return { kind: 'page', to: `/freight/quotes/${id}`, label: 'Open the freight quote' }
+  if (kind === 'lspo' && id) return { kind: 'page', to: `/ls-pos/${id}`, label: 'Open the LS PO' }
+  if (kind === 'supply') return { kind: 'page', to: t.thread_id ? `/mail/${t.thread_id}` : '/supplies', label: t.thread_id ? 'Open the request' : 'Open Supplies' }
+  if ((kind === 'wwd' || kind === 'order') && id) return { kind: 'pay', label: 'Pay it', bill: kind, id }
+  // tasks people make: whatever they are tagged to
+  if (t.order_id) return { kind: 'page', to: `/orders/${t.order_id}`, label: 'Open the order' }
+  if (t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open the email' }
+  if (t.vendor_id) return { kind: 'page', to: `/vendors/${t.vendor_id}`, label: 'Open the vendor' }
+  if (t.rep_group_id) return { kind: 'page', to: `/rep-groups/${t.rep_group_id}`, label: 'Open the rep group' }
+  if (t.carrier_id) return { kind: 'page', to: `/freight?carrier=${t.carrier_id}`, label: 'Open the freight company' }
+  return null
+}

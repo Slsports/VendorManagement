@@ -10,6 +10,7 @@ import { cn, errorMessage } from '@/lib/utils'
 import { Modal } from '@/components/shared/Modal'
 import { FormField, Textarea } from '@/components/ui'
 import { TaskDialog } from './TaskDialog'
+import { useGoToTask } from '@/hooks/useGoToTask'
 
 const repeatOf = (t: TaskRow) => repeatLabel({ every: t.repeat_every, unit: t.repeat_unit, days: t.repeat_days, until: t.repeat_until })
 
@@ -60,10 +61,11 @@ export function DoneButton({ task }: { task: TaskRow }) {
   )
 }
 
-/** Tasks as a short list: check, what, when, who, about. Click a task to see or change it. */
+/** Tasks as a short list: check, what, when, who, about. Click a task to go to its work (Dana, Oct 14); Edit changes it. */
 export function TaskList({ tasks, showWho = true, empty = 'Nothing to do.' }: { tasks: TaskRow[]; showWho?: boolean; empty?: string }) {
   const { profile } = useAuth()
   const [open, setOpen] = useState<TaskRow | null>(null)
+  const go = useGoToTask()
   const today = todayLocal()
   if (!tasks.length) return <p className="text-sm text-stone-500">{empty}</p>
   return (
@@ -76,7 +78,7 @@ export function TaskList({ tasks, showWho = true, empty = 'Nothing to do.' }: { 
           return (
             <li key={t.id} className="flex items-start gap-2 py-2">
               <DoneButton task={t} />
-              <button type="button" onClick={() => setOpen(t)} className="min-w-0 flex-1 text-left hover:text-brand">
+              <button type="button" onClick={() => (t.done_at ? setOpen(t) : go(t, setOpen))} className="min-w-0 flex-1 text-left hover:text-brand">
                 <span className={cn('block font-medium', t.done_at ? 'text-stone-500 line-through' : 'text-stone-900')}>{t.title}</span>
                 <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-stone-500">
                   {t.done_at ? <span>done {dateText(t.done_at.slice(0, 10))}</span> : (
@@ -87,6 +89,7 @@ export function TaskList({ tasks, showWho = true, empty = 'Nothing to do.' }: { 
                   {repeatOf(t) ? <span className="inline-flex items-center gap-0.5" title={repeatOf(t)!}><Repeat className="size-3" aria-hidden="true" /><span className="sr-only">{repeatOf(t)}</span></span> : null}
                 </span>
               </button>
+              <button type="button" onClick={() => setOpen(t)} className="shrink-0 rounded px-1.5 py-0.5 text-xs text-stone-500 hover:bg-stone-100 hover:text-stone-900" aria-label={`Edit ${t.title}`}>Edit</button>
             </li>
           )
         })}

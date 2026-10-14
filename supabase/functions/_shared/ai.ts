@@ -1007,6 +1007,7 @@ export async function readFreightProgram(db: SupabaseClient, org: string, text: 
 // ---- confirmations without an order (Dana, Oct 13) ----------------------------------------------------------------
 const PaperOrderAnswer = z.object({
   order_id: z.string().nullable().describe('The id of the order this document is for, only when the details make it clear; else null'),
+  likely_order_id: z.string().nullable().describe('When not clear: the open order it most likely is for (same show or season, similar goods), or null when none fits at all'),
   why: z.string().describe('One short line'),
 })
 
@@ -1015,8 +1016,8 @@ const PaperOrderAnswer = z.object({
  * amount, dates and ship window with each order's description, show, amount and dates. One open order alone is not
  * enough (Dana). Null when it is not clear.
  */
-export async function pickPaperOrder(db: SupabaseClient, org: string, doc: PaperReading, orders: { id: string; po: string | null; placed: string | null; show: string | null; amount: number | null; ship: string | null; description: string | null; placed_by: string | null }[]): Promise<{ id: string | null; why: string }> {
-  if (!orders.length) return { id: null, why: 'No open orders' }
+export async function pickPaperOrder(db: SupabaseClient, org: string, doc: PaperReading, orders: { id: string; po: string | null; placed: string | null; show: string | null; amount: number | null; ship: string | null; description: string | null; placed_by: string | null }[]): Promise<{ id: string | null; likely: string | null; why: string }> {
+  if (!orders.length) return { id: null, likely: null, why: 'No open orders' }
   const res = await claude().messages.parse({
     model: MAIL_MODEL,
     max_tokens: 400,
@@ -1028,7 +1029,9 @@ A vendor sent an order document without our PO number. Decide which of the vendo
   })
   await logUsage(db, org, 'order_paper_match', MAIL_MODEL, res.usage, 1)
   const id = res.parsed_output?.order_id ?? null
-  return { id: id && orders.some((o) => o.id === id) ? id : null, why: res.parsed_output?.why ?? '' }
+  const likely = res.parsed_output?.likely_order_id ?? null
+  const known = (x: string | null) => (x && orders.some((o) => o.id === x) ? x : null)
+  return { id: known(id), likely: known(id) ?? known(likely), why: res.parsed_output?.why ?? '' }
 }
 
 /**

@@ -14,6 +14,7 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { SortHeader } from '@/components/shared/SortHeader'
 import { Alert, Button, Spinner } from '@/components/ui'
 import { TaskDialog } from '@/components/tasks/TaskDialog'
+import { useGoToTask } from '@/hooks/useGoToTask'
 import { AboutLinks, DoneButton } from '@/components/tasks/TaskList'
 
 const first = (name: string | null | undefined) => name?.split(' ')[0] ?? ''
@@ -32,6 +33,7 @@ export default function TasksPage() {
   const q = useTasksQuery(async () => (organization ? listTasks(organization.id, listView, personId) : []), [organization?.id, listView, personId])
   const [adding, setAdding] = useState(false)
   const [open, setOpen] = useState<TaskRow | null>(null)
+  const go = useGoToTask()
   const today = todayLocal()
 
   // ?task=<id> (the link in a reminder email) opens that task
@@ -115,7 +117,8 @@ export default function TasksPage() {
                     <tr key={t.id} className="align-top hover:bg-stone-50">
                       <td className="px-3 py-2"><DoneButton task={t} /></td>
                       <td className="min-w-48 px-3 py-2">
-                        <button type="button" onClick={() => setOpen(t)} className={cn('text-left font-medium hover:text-brand', t.done_at ? 'text-stone-500 line-through' : 'text-stone-900')}>{t.title}</button>
+                        <button type="button" onClick={() => (t.done_at ? setOpen(t) : go(t, setOpen))} className={cn('text-left font-medium hover:text-brand', t.done_at ? 'text-stone-500 line-through' : 'text-stone-900')}>{t.title}</button>
+                        <button type="button" onClick={() => setOpen(t)} className="ml-2 rounded px-1 text-xs text-stone-500 hover:bg-stone-100 hover:text-stone-900" aria-label={`Edit ${t.title}`}>Edit</button>
                         {rep ? <span className="mt-0.5 flex items-center gap-1 text-xs text-stone-500"><Repeat className="size-3" aria-hidden="true" />{rep}</span> : null}
                         {t.done_note ? <span className="mt-0.5 block text-xs text-stone-500">Note: {t.done_note}</span> : null}
                       </td>

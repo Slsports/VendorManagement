@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useHasInAppHistory } from '@/hooks/useHasInAppHistory'
 import toast from 'react-hot-toast'
@@ -55,6 +55,18 @@ export default function ThreadPage() {
   useEffect(() => {
     if (cameBack && profile) void clearSnooze(profile.id, 'thread', id).catch(() => {})
   }, [cameBack, profile, id])
+  // "Go to it" from a reply task (Dana, Oct 14): the reply to the latest email they sent is open, ready to write
+  const wantsReply = params.get('do') === 'reply'
+  const autoReply = useMemo(() => {
+    if (!wantsReply || !q.data || !mailbox.data || !mayAnswer || !canEdit) return null
+    const latest = [...q.data.emails].reverse().find((e) => e.direction === 'in') ?? q.data.emails[q.data.emails.length - 1]
+    return latest ? replyDraft(q.data.thread, latest, mailbox.data, false) : null
+  }, [wantsReply, q.data, mailbox.data, mayAnswer, canEdit])
+  const shownDraft = draft ?? autoReply
+  const closeDraft = () => {
+    setDraft(null)
+    if (params.has('do')) { const next = new URLSearchParams(params); next.delete('do'); setParams(next, { replace: true }) }
+  }
 
   if (q.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading the conversation…" className="text-brand" /></div>
   if (q.error || !q.data) return <Alert variant="error">{q.error ?? 'Conversation not found'}</Alert>
@@ -192,9 +204,9 @@ export default function ThreadPage() {
             onEmailAddress={canEdit ? (address) => setDraft({ to: [address], subject: '', body: '', vendor_id: t.vendor?.id ?? null }) : undefined} />
         ))}
       </ol>
-      {draft ? <ComposeDialog draft={draft} onClose={() => setDraft(null)} onSent={() => {
+      {shownDraft ? <ComposeDialog draft={shownDraft} onClose={closeDraft} onSent={() => {
         // Replied: back to the inbox you came from (Dana, Oct 9); a forward or a new message stays here.
-        if (!draft.reply_to_email_id) { void q.refetch(); return }
+        if (!shownDraft.reply_to_email_id) { void q.refetch(); return }
         if (hasHistory) navigate(-1)
         else navigate(ROUTES.mail)
       }} /> : null}

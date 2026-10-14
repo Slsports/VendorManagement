@@ -76,6 +76,8 @@ async function work(db: SupabaseClient, c: Check) {
       const reading = await readPaperwork(db, c.organization_id, doc, { vendor, subject: email?.subject ?? null, email_text: email?.body_text ?? null })
       const found = c.order_id ? { id: null, how: null } : await findOrder(db, c, reading)
       const { data: next, error } = await db.rpc('order_check_apply_read', { p_check: c.id, p_reading: reading, p_order: found.id, p_how: found.how })
+      // not sure enough to match: Claude's best guess is picked in advance on the check page (Dana, Oct 14)
+      if (!error && !found.id && found.likely) await db.from('order_checks').update({ suggested_order_id: found.likely }).eq('id', c.id)
       if (error) throw new Error(error.message)
       return { id: c.id, read: next }
     }
@@ -89,7 +91,7 @@ async function work(db: SupabaseClient, c: Check) {
 }
 
 /** The order a document is for: our PO, their number, the conversation or the total (SQL), else Claude's pick among open orders. */
-async function findOrder(db: SupabaseClient, c: Check, reading: PaperReading): Promise<{ id: string | null; how: string | null }> {
+async function findOrder(db: SupabaseClient, c: Check, reading: PaperReading): Promise<{ id: string | null; how: string | null; likely?: string | null }> {
   if (reading.doc_type !== 'confirmation' && reading.doc_type !== 'invoice') return { id: null, how: null }
   const { data: m } = await db.rpc('order_check_match', { p_check: c.id, p_reading: reading })
   const hit = (m ?? [])[0] as { order_id: string; how: string } | undefined
@@ -102,7 +104,7 @@ async function findOrder(db: SupabaseClient, c: Check, reading: PaperReading): P
   const pick = await pickPaperOrder(db, c.organization_id, reading, (orders ?? []).map((o) => ({
     id: o.id, po: o.po_number, placed: o.order_date, show: o.show_code, amount: o.est_cost === null ? null : Number(o.est_cost), ship: o.est_ship_date, description: o.description, placed_by: o.placed_by,
   })))
-  return pick.id ? { id: pick.id, how: 'claude' } : { id: null, how: null }
+  return pick.id ? { id: pick.id, how: 'claude' } : { id: null, how: null, likely: pick.likely }
 }
 
 async function loadLink(db: SupabaseClient, id: string): Promise<PaperFile | null> {

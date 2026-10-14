@@ -16,3 +16,4 @@ The Tasks page lists your tasks. The **My tasks** box on the dashboard shows how
 - Late tasks show in red ("2 days late"); today's in amber.
 - On the dashboard, click the **My tasks** box to open the list; click **+** to add one.
 - Dana can use **Showing** at the top of the screen to see anyone's tasks, or everyone's.
+- Click a task's name to go straight to its work; click **Edit** next to it to change it (see "Go straight to a task's work").

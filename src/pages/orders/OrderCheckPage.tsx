@@ -239,7 +239,8 @@ function DocCard({ title, docs, onOpen }: { title: string; docs: { id: string; l
 function PickOrder({ c, canEdit, busy, onPick }: { c: OrderCheckRow; canEdit: boolean; busy: boolean; onPick: (orderId: string) => void }) {
   const { organization } = useAuth()
   const orders = useSupabaseQuery(async () => (organization && c.vendor ? listOrders(organization.id, { vendorId: c.vendor.id, limit: 60 }) : []), [organization?.id, c.vendor?.id])
-  const [pick, setPick] = useState('')
+  // Claude's best guess is picked in advance (Dana, Oct 14): one click on Use this order
+  const [pick, setPick] = useState(c.suggested_order_id ?? '')
   return (
     <Alert variant="warning" className="mb-4">
       <p>{c.status === 'needs_order'
@@ -249,7 +250,7 @@ function PickOrder({ c, canEdit, busy, onPick }: { c: OrderCheckRow; canEdit: bo
         <div className="mt-2 flex flex-wrap gap-2">
           <Select value={pick} onChange={(e) => setPick(e.target.value)} className="h-9 max-w-md text-sm" aria-label="Order">
             <option value="">{orders.isLoading ? 'Loading orders…' : c.vendor ? 'Choose an order' : 'File the vendor first'}</option>
-            {(orders.data ?? []).map((o) => <option key={o.id} value={o.id}>{[o.order_date ? new Date(`${o.order_date}T12:00:00`).toLocaleDateString() : 'No date', o.po_number ? `PO ${o.po_number}` : null, o.est_cost !== null ? formatCurrency(o.est_cost) : null, o.description?.slice(0, 40)].filter(Boolean).join(' · ')}</option>)}
+            {(orders.data ?? []).map((o) => <option key={o.id} value={o.id}>{[o.order_date ? new Date(`${o.order_date}T12:00:00`).toLocaleDateString() : 'No date', o.po_number ? `PO ${o.po_number}` : null, o.est_cost !== null ? formatCurrency(o.est_cost) : null, o.description?.slice(0, 40), o.id === c.suggested_order_id ? "(Claude's best guess)" : null].filter(Boolean).join(' · ')}</option>)}
           </Select>
           <Button size="sm" disabled={!pick} loading={busy} onClick={() => onPick(pick)}>Use this order</Button>
         </div>

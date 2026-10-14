@@ -1,7 +1,7 @@
 ---
 title: Pay-by reminders (early-pay discounts and freight back)
 section: Tasks
-keywords: pay early, discount, early pay discount, terms, 2% 30, net 90, freight back, freight allowance, pay by, due date, payment reminder
+keywords: I paid it, Edenred, Bill.com, pay it, pay early, discount, early pay discount, terms, 2% 30, net 90, freight back, freight allowance, pay by, due date, payment reminder
 who: Admin only
 ---
 VMS turns every bill worth paying by a date into a task for Dana, reminded 5 days before the date.
@@ -14,8 +14,11 @@ VMS turns every bill worth paying by a date into a task for Dana, reminded 5 day
 ## How it works
 1. The task appears in **My tasks** with the pay-by date as its due date.
 2. Five days before, the reminder comes the way you chose (dashboard, email, text).
-3. When the bill shows as paid in VMS, the task checks itself off ("Paid").
-4. If a discount date passes unpaid, that task closes and the next one takes over: the next discount tier, then the net due date ("payment due").
+3. Click the task. Its box shows the bill: vendor, invoice, amount, terms and due date, with **Pay in Edenred** (WWD bills) or **Pay in Bill.com**, which opens the pay page in a new tab. VMS never pays anything itself.
+4. After you pay, click **I paid it**. The bill is marked paid and the task is done. The payment import adds the payment number later.
+5. The first time, paste your Edenred pay page address into the box and click **Save**; after that it's a button.
+6. A bill that shows as paid in VMS (from a payment import) checks its task off on its own ("Paid").
+7. If a discount date passes unpaid, that task closes and the next one takes over: the next discount tier, then the net due date ("payment due").
 
 ## Good to know
 - Checking a pay-by task off yourself means "handled": no more reminders for that bill.
