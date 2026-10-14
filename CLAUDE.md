@@ -56,6 +56,13 @@ private to the owner and the admin (RLS). Never copy their subjects, snippets or
 (review_items, notes, logs); Orders lists filter `mailbox_id is null or shared_at is not null`. Gmail calls use the
 email's `gmail_box`, never the org's single mailbox.
 
+## Filing changes re-check the old (Oct 14)
+Dana: "Everytime we change something I want all the old stuff checked to make sure it goes in the right place … And no
+duplicates." Any change to how VMS files or sorts things (folders, paperwork kinds, mail sorting, vendor matching) ships
+with a back-check that re-applies the new rule to everything already filed, for every vendor, and reports counts to Dana.
+Never save a second copy: link to the file on file (`linkExistingCopy` in gmail-sync, the same check in gmail-read and
+uploads); `vendor_links_dedupe()` merges any that slip in (hourly cron).
+
 ## Help articles (Oct 11)
 The in-app Help page (menu → Help, `/help`) is built from `docs/help/*.md`, one "how do I…" per file, named
 `<section>--<topic>.md`, with a header (title, section, keywords, who) — see any existing file and `src/lib/help.ts`

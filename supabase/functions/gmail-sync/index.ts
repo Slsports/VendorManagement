@@ -451,6 +451,7 @@ async function saveVendorFiles(db: SupabaseClient, gmail: Gmail, org: string, st
       const note = `From an email: ${e.subject ?? '(no subject)'}`
       const base = { organization_id: org, vendor_id: e.vendor_id, received_at: e.received_at.slice(0, 10), source: 'email', email_id: e.id, notes: note }
       for (const { a, kind } of wanted) {
+        if (await linkExistingCopy(db, e.vendor_id, a)) continue
         const part = await gmail.call<{ data: string }>(`messages/${e.gmail_id}/attachments/${a.gmail_attachment_id}`)
         const b64 = part.data.replace(/-/g, '+').replace(/_/g, '/')
         const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4))
@@ -488,35 +489,54 @@ async function saveVendorFiles(db: SupabaseClient, gmail: Gmail, org: string, st
 }
 
 /**
+ * "No duplicates" (Dana, Oct 14): when the vendor already has this file (same name and size), the attachment is linked to
+ * the copy on file and nothing is saved. True when it was linked.
+ */
+async function linkExistingCopy(db: SupabaseClient, vendorId: string, a: { id: string; file_name: string; size: number | null }): Promise<boolean> {
+  if (!a.size) return false
+  const { data } = await db.from('vendor_links').select('id, storage_path').eq('vendor_id', vendorId).ilike('file_name', a.file_name.replace(/[%_\\]/g, (c) => `\\${c}`))
+    .eq('file_size', a.size).not('storage_path', 'is', null).limit(1)
+  const hit = data?.[0]
+  if (!hit) return false
+  await db.from('email_attachments').update({ vendor_link_id: hit.id, storage_path: hit.storage_path }).eq('id', a.id)
+  return true
+}
+
+/**
  * Order paperwork (Dana, Oct 10): a vendor's confirmation or invoice attached to their email goes into that
  * vendor's Confirmations or Invoices folder for the year; saving it starts the order check (order-check reads
- * it, finds the order, compares, and puts it in front of whoever placed the order). Last 30 days, a few a run.
+ * it, finds the order, compares, and puts it in front of whoever placed the order). Credit memos go to Credits (Dana,
+ * Oct 14). Mail from billing systems (WFS's NetSuite) counts too, by file name and subject only. A file the vendor already
+ * has on file is linked, never saved twice. Last 12 months, a few a run (only the last 6 months get an order check).
  */
 async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, started: number, box: string) {
   const { data: queue } = await db.from('emails')
-    .select('id, gmail_id, vendor_id, subject, body_text, view, received_at, vendor:vendors!emails_vendor_id_fkey(name), attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
-    .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).eq('direction', 'in').not('vendor_id', 'is', null).is('paper_scanned_at', null).eq('has_attachments', true).not('is_bulk', 'is', true)
-    .gte('received_at', new Date(Date.now() - 30 * 86_400_000).toISOString())
+    .select('id, gmail_id, vendor_id, subject, body_text, view, is_bulk, received_at, vendor:vendors!emails_vendor_id_fkey(name), attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
+    .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).eq('direction', 'in').not('vendor_id', 'is', null).is('paper_scanned_at', null).eq('has_attachments', true)
+    .gte('received_at', new Date(Date.now() - 365 * 86_400_000).toISOString())
     .order('received_at', { ascending: false }).limit(10)
   let asked = 0
   for (const e of queue ?? []) {
     if (Date.now() - started > TIME_BUDGET_MS) break
     try {
       const atts = (e.attachments ?? []) as { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; vendor_link_id: string | null }[]
-      const open = atts.filter((a) => !a.vendor_link_id && a.gmail_attachment_id && (a.size ?? 0) <= 15 * 1024 * 1024 && maybePaperwork(a))
-      // the email's own words count only when it carries one or two such files (Dom's "S102112.pdf", Dana Oct 13)
-      const body = open.length <= 2 ? e.body_text : null
+      const open = atts.filter((a) => !a.vendor_link_id && a.gmail_attachment_id && (a.size ?? 0) <= 15 * 1024 * 1024 && (maybePaperwork(a) || paperworkKind(a, null) === 'credit'))
+      // the email's own words count only when it carries one or two such files (Dom's "S102112.pdf", Dana Oct 13), and
+      // never for billing-system mail (its words are the same boilerplate on every email)
+      const body = open.length <= 2 && !e.is_bulk ? e.body_text : null
       for (const a of open) {
         let kind = paperworkKind(a, e.subject, body)
         let bytes: Uint8Array | null = null
         // a PDF that says nothing about itself, in mail that needs attention: Claude looks (a few a run)
-        if (!kind && /\.pdf$/i.test(a.file_name) && e.view === 'attention' && (a.size ?? 0) >= 10 * 1024 && asked < 4 && aiEnabled()) {
+        if (!kind && !e.is_bulk && /\.pdf$/i.test(a.file_name) && e.view === 'attention' && (a.size ?? 0) >= 10 * 1024 && asked < 4 && aiEnabled()) {
           asked++
           bytes = await attachmentBytes(gmail, e.gmail_id, a.gmail_attachment_id!)
           const said = await classifyPaperwork(db, org, { name: a.file_name, mime: 'application/pdf', bytes }, { vendor: (e.vendor as unknown as { name: string } | null)?.name ?? null, subject: e.subject, text: e.body_text })
           kind = said === 'other' ? null : said
         }
         if (!kind) continue
+        // already on file for this vendor (the same file from another email): link it, never a second copy
+        if (await linkExistingCopy(db, e.vendor_id, a)) continue
         bytes ??= await attachmentBytes(gmail, e.gmail_id, a.gmail_attachment_id!)
         const path = `${org}/${e.vendor_id}/${crypto.randomUUID()}-${a.file_name.replace(/[^A-Za-z0-9._-]+/g, '_')}`
         const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: a.mime_type ?? 'application/pdf', upsert: false })

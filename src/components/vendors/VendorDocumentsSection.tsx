@@ -44,7 +44,11 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
   async function upload(files: File[], folder: DocFolder, year: number, season: string, notes: string) {
     const big = files.find((f) => f.size > MAX_MB * 1024 * 1024)
     if (big) throw new Error(`${big.name} is over ${MAX_MB} MB`)
-    for (const file of files) {
+    // already on file (same name and size): not saved again (Dana, Oct 14: "no duplicates")
+    const have = (f: File) => links.find((l) => l.storage_path && l.file_name?.toLowerCase() === f.name.toLowerCase() && l.file_size === f.size)
+    const already = files.filter(have)
+    if (already.length) toast(`${already.map((f) => `${f.name} is already in ${folderLabel(folderOf(have(f)!.kind))}`).join('; ')}`, { duration: 8000 })
+    for (const file of files.filter((f) => !have(f))) {
       const path = await uploadVendorFile(organizationId, vendorId, file)
       await addVendorLink({
         organization_id: organizationId, vendor_id: vendorId, kind: kindFor(folder), label: file.name.replace(/\.[a-z0-9]{2,5}$/i, ''),

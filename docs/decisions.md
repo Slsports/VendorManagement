@@ -2051,3 +2051,11 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   have no LS location in VMS.
 - Oct 13 (Dana): VMS does not create new items in Lightspeed until she and Trevor sign off on the naming conventions (the LS
   category standard). Until then new items are added in LS by hand and **Send again** puts them on the PO.
+
+## Oct 14 — Credits, billing-system invoices, no duplicates, and back-checks (Dana: "go")
+- WFS credit memo CM2600409 ($71.70) sat in Invoices: Claude can now answer "credit"; credits go to **Credits** with no
+  invoice check. File names/subjects/email words saying credit memo file it there directly.
+- WFS invoice I88431-4 came from NetSuite (system mail, marked bulk) and the paperwork step skipped bulk mail: now included,
+  judged by file name and subject only (no email words, no Claude).
+- Rule for every session (CLAUDE.md): every filing change re-checks everything already filed, for all vendors; never two
+  copies of a file (link to the one on file; `vendor_links_dedupe` hourly). Migration 0106.

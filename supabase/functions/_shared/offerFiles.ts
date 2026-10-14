@@ -87,19 +87,28 @@ const CONFIRM = /order ?confirm|confirmation|acknowledg|\back\b|sales ?order|\bs
 const INVOICE = /invoice|\binv\b|\binv ?#? ?\d|\binv\d/i
 const PAPER_FILE = /\.(pdf|png|jpe?g)$/i
 
+const CREDIT = /credit ?(memo|note)|\bcm ?#? ?\d|\bcredit\b/i
+const PAPER_SKIP = /^(image|img|logo|outlook|signature|banner)[-_ ]?\d*\./i
+
 /**
- * A vendor's order confirmation or invoice by its file name (then the email subject), PDFs and pictures
- * only; signature pictures never. Claude reads it afterwards and refiles it if the name was wrong.
+ * A vendor's order confirmation, invoice or credit memo by its file name, then the email subject, then (when allowed) the
+ * email's words; PDFs and pictures only, signature pictures never. Claude reads it afterwards and refiles it if wrong.
+ * Credits (Dana, Oct 14: "an invoice filed that is an obvious credit") go to Credits and get no invoice check.
  */
-export function paperworkKind(a: { file_name: string; size: number | null }, subject: string | null, body?: string | null): 'confirmation' | 'invoice' | null {
-  if (!maybePaperwork(a)) return null
+export function paperworkKind(a: { file_name: string; size: number | null }, subject: string | null, body?: string | null): 'confirmation' | 'invoice' | 'credit' | null {
+  if (!PAPER_FILE.test(a.file_name) || PAPER_SKIP.test(a.file_name)) return null
+  if (/\.(png|jpe?g)$/i.test(a.file_name) && (a.size ?? 0) < 100 * 1024) return null
   const name = a.file_name.replace(/[_\-.]+/g, ' ')
+  if (CREDIT.test(name)) return 'credit'
+  if (!maybePaperwork(a)) return null
   if (CONFIRM.test(name)) return 'confirmation'
   if (INVOICE.test(name)) return 'invoice'
+  if (CREDIT.test(subject ?? '')) return 'credit'
   if (CONFIRM.test(subject ?? '')) return 'confirmation'
   if (INVOICE.test(subject ?? '') && !/statement|past due|reminder/i.test(subject ?? '')) return 'invoice'
   // then the email's own words (Dana, Oct 13: Dom's "S102112.pdf" said "sales order" only in the email)
   const text = (body ?? '').slice(0, 2000)
+  if (/credit ?(memo|note)/i.test(text) && !INVOICE.test(text)) return 'credit'
   if (CONFIRM.test(text) && !INVOICE.test(text)) return 'confirmation'
   if (INVOICE.test(text) && !CONFIRM.test(text) && !/statement|past due|reminder/i.test(text)) return 'invoice'
   return null
@@ -107,7 +116,7 @@ export function paperworkKind(a: { file_name: string; size: number | null }, sub
 
 /** A file that could be a confirmation or invoice: a PDF or a real picture, not a signature logo, statement, catalog… */
 export function maybePaperwork(a: { file_name: string; size: number | null }): boolean {
-  if (!PAPER_FILE.test(a.file_name) || /^(image|img|logo|outlook|signature|banner)[-_ ]?\d*\./i.test(a.file_name)) return false
+  if (!PAPER_FILE.test(a.file_name) || PAPER_SKIP.test(a.file_name)) return false
   if (/\.(png|jpe?g)$/i.test(a.file_name) && (a.size ?? 0) < 100 * 1024) return false
   return !/credit|statement|price ?list|catalog|packing|\bbol\b|quote|specials?\b|w-?9|\bcoi\b|certificate|flyer|brochure|line ?sheet|order ?form|lookbook/i.test(a.file_name)
 }

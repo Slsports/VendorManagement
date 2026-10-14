@@ -108,6 +108,15 @@ Deno.serve(async (req) => {
       const { data: v } = await db.from('vendors').select('id, organization_id').eq('id', body.vendor_id ?? '').single()
       if (!v || v.organization_id !== me.organization_id) throw new HttpError(404, 'Vendor not found')
       const kind = KINDS.includes(body.kind ?? '') ? body.kind! : 'other'
+      // already on file for this vendor (Dana, Oct 14: "no duplicates"): move that copy to the folder picked and link it
+      const { data: same } = await db.from('vendor_links').select('id, storage_path').eq('vendor_id', v.id).eq('file_size', bytes.length)
+        .ilike('file_name', a.file_name.replace(/[%_\\]/g, (c) => `\\${c}`)).not('storage_path', 'is', null).limit(1)
+      if (same?.[0]) {
+        const doc_year = Number.isInteger(body.doc_year) && body.doc_year! >= 1990 && body.doc_year! <= 2100 ? body.doc_year : undefined
+        await db.from('vendor_links').update({ kind, ...(doc_year ? { doc_year } : {}) }).eq('id', same[0].id)
+        await db.from('email_attachments').update({ storage_path: same[0].storage_path, vendor_link_id: same[0].id }).eq('id', a.id)
+        return json({ vendor_link_id: same[0].id, already: true })
+      }
       const safe = a.file_name.replace(/[^A-Za-z0-9._-]+/g, '_')
       const path = `${me.organization_id}/${v.id}/${crypto.randomUUID()}-${safe}`
       const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: a.mime_type ?? 'application/octet-stream', upsert: false })

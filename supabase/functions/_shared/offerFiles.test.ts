@@ -46,6 +46,10 @@ describe('order paperwork', () => {
     expect(paperworkKind(f('S102112.pdf'), 'FW: Shaver Lake - S102112', 'Does attached look correct? … I have attached S102112 for Shaver Lake. Please review the sales order')).toBe('confirmation')
     expect(paperworkKind(f('S102112.pdf'), 'FW: Shaver Lake - S102112', 'Does attached look correct?')).toBeNull()
     expect(maybePaperwork(f('S102112.pdf'))).toBe(true)
+    // credits go to Credits (Dana, Oct 14); WFS's NetSuite invoice by its name
+    expect(paperworkKind(f('Credit Memo CM2600409.pdf'), null)).toBe('credit')
+    expect(paperworkKind(f('C2600409.pdf'), 'World Famous Sports, Inc.: Credit Memo #CM2600409')).toBe('credit')
+    expect(paperworkKind(f('Invoice_I88431-4_1791912395312.pdf'), 'World Famous Sports, Inc.: Invoice #I88431-4')).toBe('invoice')
     expect(maybePaperwork(f('Spring Catalog.pdf'))).toBe(false)
     expect(paperworkKind(f('55123.pdf'), 'Order Confirmation for PO SLS-4471')).toBe('confirmation')
     expect(paperworkKind(f('88123.pdf'), 'Invoice 88123 from Ty')).toBe('invoice')
