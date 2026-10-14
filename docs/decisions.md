@@ -2071,3 +2071,5 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - Oct 14, back-check after the year of mail was re-filed: 194 papers filed (138 invoices, 37 confirmations, 19 credits) for
   ~60 vendors; 65 new checks. Two WFS files were wrong because the quoted older mail said "invoice": the paperwork rule
   now reads only the email's own words, and return labels / RAs are not bills. C2500557 → Credits, RA2500525 → Other.
+- Oct 14: VMS's Claude Console account (Shaver Lake Sports Inc) got low-credit emails after the year-long re-filing
+  ($14.45 spent this month, $3.83 of it that day). Dana added $100 of credit and will raise the $25 monthly limit.
