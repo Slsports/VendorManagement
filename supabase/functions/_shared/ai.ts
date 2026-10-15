@@ -682,7 +682,7 @@ function parseOrExplain<T>(res: Anthropic.Message, schema: z.ZodType<T>): T {
     return schema.parse(JSON.parse(text))
   } catch (e) {
     const tail = text.slice(-240).replace(/\s+/g, ' ')
-    throw new Error(`Claude's answer could not be used (${e instanceof Error ? e.message.slice(0, 120) : 'bad answer'}). Stopped: ${res.stop_reason}; ${res.usage.output_tokens} tokens, ${text.length} characters. Ends with: ${tail}`)
+    throw new Error(`Claude's answer could not be used (${e instanceof Error ? e.message.slice(0, 120) : 'bad answer'}). Stopped: ${res.stop_reason}; ${res.usage.output_tokens} tokens, ${text.length} characters; parts: ${res.content.map((b) => `${b.type} ${JSON.stringify(b).length}`).join(', ')}. Ends with: ${tail}`)
   }
 }
 
