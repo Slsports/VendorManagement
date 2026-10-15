@@ -693,7 +693,7 @@ async function repLogoLines(db: SupabaseClient, senderId: string, companies: str
  * before saving pictures" everything but proofs comes out. Counts come back for Dana.
  */
 async function picturesBackcheck(db: SupabaseClient, org: string, started: number) {
-  const tally = { emails: 0, looked: 0, logos_removed: 0, ask_vendor_removed: 0, to_proofs: 0, kept: 0, left: 0 }
+  const tally = { emails: 0, looked: 0, logos_removed: 0, ask_vendor_removed: 0, to_proofs: 0, kept: 0, left: 0, errors: [] as string[] }
   const { data: links } = await db.from('vendor_links').select('id, vendor_id, email_id, storage_path, file_name, mime_type, file_size')
     .eq('organization_id', org).eq('kind', 'image').eq('source', 'email').not('email_id', 'is', null).not('storage_path', 'is', null)
   const byEmail = new Map<string, NonNullable<typeof links>>()
@@ -706,6 +706,7 @@ async function picturesBackcheck(db: SupabaseClient, org: string, started: numbe
     const open = group.filter((l) => !done.has(l.id))
     if (!open.length) continue
     if (Date.now() - started > 90_000 || tally.emails >= 8) { tally.left++; continue }
+    try {
     const { data: e } = await db.from('emails').select('subject, body_text, sender_id, vendor:vendors!emails_vendor_id_fkey(name, ask_before_pictures)').eq('id', emailId).single()
     const vendor = e?.vendor as unknown as { name: string; ask_before_pictures: boolean } | null
     const pics = await sortPictures(db, null, org, null, open.map((l) => ({ id: l.id, file_name: l.file_name ?? 'picture', mime_type: l.mime_type, size: l.file_size, gmail_attachment_id: null, vendor_link_id: l.id, storage_path: l.storage_path })), { vendor: vendor?.name ?? null, subject: e?.subject ?? null, text: e?.body_text ?? null }, false)
@@ -729,6 +730,12 @@ async function picturesBackcheck(db: SupabaseClient, org: string, started: numbe
       await repLogoLines(db, e.sender_id, companies, lineIndex)
     }
     tally.emails++
+    } catch (err) {
+      // one email that fails is reported and marked looked at, so the next batch goes on (its pictures stay as they are)
+      tally.errors.push(`${emailId}: ${err instanceof Error ? err.message.slice(0, 200) : String(err)}`)
+      for (const l of open) await db.from('email_attachments').update({ picture_kind: 'other' }).eq('vendor_link_id', l.id).is('picture_kind', null)
+      tally.emails++
+    }
   }
   return tally
 }
