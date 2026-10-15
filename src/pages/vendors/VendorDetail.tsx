@@ -349,13 +349,13 @@ function OurRepStrip({ vendor: v, canEdit, onEmail, onAddRep }: { vendor: Vendor
     <section className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/60 px-5 py-3 text-sm">
       {reps.length === 0 ? (
         <p className="text-stone-600">
-          <span className="font-semibold text-stone-800">Our rep:</span> none yet.
-          {canEdit ? <> <button type="button" onClick={onAddRep} className="font-medium text-brand hover:underline">Add our rep</button></> : null}
+          <span className="font-semibold text-stone-800">Main rep:</span> none yet.
+          {canEdit ? <> <button type="button" onClick={onAddRep} className="font-medium text-brand hover:underline">Add main rep</button></> : null}
           {v.rep_groups ? <span className="text-stone-500"> · Rep group: <Link to={`${ROUTES.repGroups}/${v.rep_groups.id}`} className="hover:underline">{v.rep_groups.name}</Link></span> : null}
         </p>
       ) : reps.map((p) => (
         <p key={p.key} className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span><span className="font-semibold text-stone-800">{p.starred ? 'Our rep' : 'Rep'}:</span> <span className="font-medium text-stone-900">{p.name || p.email || p.phone}</span>
+          <span><span className="font-semibold text-stone-800">Main rep:</span> <span className="font-medium text-stone-900">{p.name || p.email || p.phone}</span>
             {p.kind === 'group' && v.rep_groups ? <span className="text-stone-500"> · <Link to={`${ROUTES.repGroups}/${v.rep_groups.id}`} className="hover:underline">{v.rep_groups.name}</Link></span> : null}</span>
           {p.email ? <button type="button" onClick={() => onEmail(p.email!)} className="inline-flex items-center gap-1 text-brand hover:underline" title="Write an email from VMS"><Mail className="size-3.5" aria-hidden="true" />{p.email}</button> : null}
           <PhoneLinks phones={p.phones} className="text-brand hover:underline" />

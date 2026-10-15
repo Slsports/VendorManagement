@@ -2076,3 +2076,22 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - Oct 15, never guess: Dana: "I don't want any guessing ever … Guessing costs me time I don't have. We need to be solving
   real problems, not 'guessed' problems." Claude had blamed a failed invoice reading on the paper's length without
   checking; it was a short invoice. Every explanation is now confirmed from the data, logs or code first (CLAUDE.md rule).
+- Oct 15, Planet Cotton (Dana): "I want to know why claude did not create that order from the email that I sent." It did:
+  the Oct 12 typed order became the order with its 20 lines, and the confirmation was compared with it (2XL at $8 not $6,
+  a $21.60 tag charge, no ship date). The page showed the two design pictures from that email as "Our orders" instead.
+  Now only files that show what is ordered (order form, PO, spreadsheet, photo or screenshot of the order) are Our orders;
+  pictures of the products or design go to Images; the check page links **Our order in VMS**. Back-check over every sent
+  order with files in Our orders (Claude reads each again for that one answer).
+- Oct 15, main rep (Dana): "We need to be able to tag our main person we place orders through, then the rest of the contacts
+  are just there for reference." With a rep group, the group's rep is the main rep unless another is picked (**Make main
+  rep**); the company's own people learned from email are customer service, never rep (Heather Studds and Western Woods'
+  Cassi fixed). Any contact card, rep group people included, opens for editing with a click.
+- Oct 15, proofs (Dana): one **Proofs** folder; each proof is **Not approved yet** or **Approved** (gold star, date,
+  who), **Mark approved** / **Not approved**. Proof-named files from email (…PROOF.pdf, Art Approval, mock-up) file there
+  by themselves; back-check moved 3 (Planet Cotton's SL Mountain proof, two Art Approval V3 images).
+- Oct 15, reading papers: Planet Cotton's 16-page invoice failed because the newer Claude model thinks before answering and
+  the thinking used half the answer's room. Copying a paper now runs with thinking off, 32,000 tokens of room, and long
+  papers are read in parts; every printed row is its own line. The "confirmation, invoice or other?" step had the same
+  problem (3 PDFs came back "other"): thinking off and more room; the 73 emails with unfiled PDFs were sorted again. A
+  failed reading now records what Claude sent back. Also found: freight quote emails were refused by the API since the
+  quote reader was built (27 optional fields, limit 16), so no quote was ever read; fixed.

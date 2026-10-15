@@ -9,8 +9,8 @@ When a vendor's confirmation comes in, Claude compares it with what we ordered a
 ## What Claude compares it with
 Claude uses the first of these it can find:
 1. **Our order** or the **LS PO** on file for the order.
-2. The PO we emailed the vendor from orders@.
-3. The order lines in VMS.
+2. The PO we emailed the vendor from orders@ (a PDF, spreadsheet, or a photo or screenshot of the order).
+3. The order lines in VMS. An order you typed into an email has its sizes, colors and amounts saved as the order lines, so this is what it is compared with.
 4. When there is no order, or the order has no item list or order document: the **sales report** we ordered from. Claude compares each item on the confirmation with the report's **Order** column, or **Need** when nothing was typed in Order, and says what the confirmation got right, what's missing and what's extra or a different quantity.
 5. Otherwise the order record itself (total, dates, freight).
 
@@ -25,7 +25,8 @@ Claude uses the first of these it can find:
 - **The email conversation** on the page, so you can see what Claude read.
 
 ## Good to know
-- The top of the check page shows **Compared with:** and what Claude used, so you know what it looked at.
+- The top of the check page shows **Compared with:** and what Claude used, so you know what it looked at. Click **Our order in VMS** there to see what we ordered, line by line.
+- Pictures sent with a typed order (the products or the design) are not the order: they go to the vendor's **Images** folder, not **Our orders**.
 - An order shipped in parts can have several confirmations; Claude takes the others into account.
 - A confirmation with no PO of ours gets a **Create PO** task (see "A confirmation with no PO").
 - When you finish looking at a confirmation, an Open or Awaiting confirmation order becomes **Confirmed**.

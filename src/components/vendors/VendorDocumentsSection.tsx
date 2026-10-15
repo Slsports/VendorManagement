@@ -1,8 +1,8 @@
 import { useState, type DragEvent } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { SquareCheck, Square, Pencil, Download, ExternalLink, FileText, Folder, FolderInput, FolderOpen, Link2, Mail, Trash2, Upload } from 'lucide-react'
-import { addVendorLink, deleteVendorLink, downloadVendorFile, listVendorLinks, renameVendorLink, tickSalesReport, uploadVendorFile, zipVendorDocuments, type VendorLinkRow } from '@/services/lines'
+import { SquareCheck, Square, Pencil, Download, ExternalLink, FileText, Folder, FolderInput, FolderOpen, Link2, Mail, Star, Trash2, Upload } from 'lucide-react'
+import { addVendorLink, deleteVendorLink, downloadVendorFile, listVendorLinks, renameVendorLink, setProofApproved, tickSalesReport, uploadVendorFile, zipVendorDocuments, type VendorLinkRow } from '@/services/lines'
 import { kickOrderChecks } from '@/services/orderChecks'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { saveBlob } from '@/lib/viewer'
@@ -119,6 +119,16 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
     }
   }
 
+  async function approve(l: VendorLinkRow) {
+    try {
+      await setProofApproved(l.id, l.kind !== 'approved_proof')
+      toast.success(l.kind === 'approved_proof' ? 'Marked not approved' : 'Marked approved')
+      await q.refetch()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
+
   async function tick(l: VendorLinkRow) {
     try {
       await tickSalesReport(l.id, !l.report_used_at)
@@ -130,7 +140,7 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
   }
 
   const folder = openFolder ? DOC_FOLDERS.find((f) => f.id === openFolder)! : null
-  // pictures show a preview (Dana, Oct 10); the Images and Approved proofs folders show them as large tiles
+  // pictures show a preview (Dana, Oct 10); the Images and Proofs folders show them as large tiles
   const row = (l: VendorLinkRow, tile = false) => (
     <li key={l.id} className={tile ? 'flex min-w-0 flex-col gap-2 rounded-xl border border-stone-200 p-2' : 'flex items-center gap-3 py-2'}>
       {l.storage_path && isPictureFile(l) ? <FileThumb path={l.storage_path} name={l.label} onOpen={() => open(l)} className={tile ? 'h-40 w-full' : 'h-16 w-20'} />
@@ -140,7 +150,9 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
         <p className="truncate text-xs text-stone-500">
           {l.is_current ? <Badge tone="success" className="mr-1">Current</Badge> : null}
           {l.kind === 'sales_report' && l.report_used_at ? <Badge tone="success" className="mr-1">Used to place the order</Badge> : null}
-          {folder && folder.kinds.length > 1 ? <Badge tone="neutral" className="mr-1">{LINK_KIND_LABELS[l.kind]}</Badge> : null}
+          {l.kind === 'approved_proof' ? <Badge tone="warning" className="mr-1"><Star className="mr-0.5 inline size-3 fill-amber-400 text-amber-500" aria-hidden="true" />Approved{l.approved_at ? ` ${new Date(l.approved_at).toLocaleDateString()}` : ''}</Badge> : null}
+          {l.kind === 'proof' ? <Badge tone="neutral" className="mr-1">Not approved yet</Badge> : null}
+          {folder && folder.kinds.length > 1 && folder.id !== 'proofs' ? <Badge tone="neutral" className="mr-1">{LINK_KIND_LABELS[l.kind]}</Badge> : null}
           {l.doc_number || l.doc_total != null ? <span className="mr-1 font-medium text-stone-700">{[l.doc_number ? `#${l.doc_number}` : null, l.doc_date ? new Date(`${l.doc_date}T12:00:00`).toLocaleDateString() : null, l.doc_total != null ? `$${Number(l.doc_total).toFixed(2)}` : null].filter(Boolean).join(' · ')} ·</span> : null}
           {l.season_label ? `${l.season_label} · ` : ''}{l.file_name ?? l.url?.replace(/^https?:\/\//, '')}{l.received_at ? ` · ${new Date(`${l.received_at}T12:00:00`).toLocaleDateString()}` : ''}
           {l.email ? <> · <Link to={`${ROUTES.mail}/${l.email.thread_id}`} className="inline-flex items-center gap-0.5 text-brand hover:underline"><Mail className="inline size-3" aria-hidden="true" />from an email</Link></> : null}
@@ -151,6 +163,11 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
           <button type="button" onClick={() => open(l)} aria-label={`Open ${l.label}`} className="rounded px-1.5 py-0.5 font-medium text-brand hover:bg-stone-100">Open</button>
           {l.storage_path ? <button type="button" onClick={() => void download(l)} aria-label={`Download ${l.label}`} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900"><Download className="size-3.5" aria-hidden="true" />Download</button> : null}
           {canEdit ? (<>
+            {l.kind === 'proof' || l.kind === 'approved_proof' ? (
+              <button type="button" onClick={() => void approve(l)} aria-pressed={l.kind === 'approved_proof'} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900">
+                <Star className={cn('size-3.5', l.kind === 'approved_proof' && 'fill-amber-400 text-amber-500')} aria-hidden="true" />{l.kind === 'approved_proof' ? 'Not approved' : 'Mark approved'}
+              </button>
+            ) : null}
             {l.kind === 'sales_report' && l.storage_path ? (
               <button type="button" onClick={() => void tick(l)} aria-pressed={!!l.report_used_at} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900" title="The report we ordered from: confirmations are checked against it">
                 {l.report_used_at ? <SquareCheck className="size-3.5 text-brand" aria-hidden="true" /> : <Square className="size-3.5" aria-hidden="true" />}Used to place the order

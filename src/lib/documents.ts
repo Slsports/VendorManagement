@@ -18,8 +18,8 @@ export const DOC_FOLDERS: { id: DocFolder; label: string; kinds: VendorLinkKind[
   { id: 'images', label: 'Images', kinds: ['image'] },
   // pictures of damaged items, to attach to a return email (Dana, Oct 10)
   { id: 'damaged', label: 'Damaged Items', kinds: ['damage_photo'] },
-  // the final artwork proof, saved by hand once approved (Dana, Oct 10)
-  { id: 'proofs', label: 'Approved proofs', kinds: ['approved_proof'] },
+  // artwork proofs, one folder: each marked approved (starred) or not yet (Dana, Oct 10 and 15)
+  { id: 'proofs', label: 'Proofs', kinds: ['proof', 'approved_proof'] },
   // formatted LS sales reports (Dana, Oct 11)
   { id: 'sales_reports', label: 'Sales reports', kinds: ['sales_report'] },
   { id: 'other', label: 'Other', kinds: ['other', 'website'] },

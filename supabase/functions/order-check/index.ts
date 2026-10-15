@@ -155,7 +155,7 @@ async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
   if (!label && !(lines ?? []).length && c.kind === 'confirmation' && c.vendor_id) {
     if (await compareReport(db, c, doc, o as unknown as Record<string, unknown>)) return
   }
-  if (!label) label = (lines ?? []).length ? 'The order lines in VMS' : 'The order record only (total, dates, freight); no order document on file'
+  if (!label) label = (lines ?? []).length ? 'Our order lines in VMS' : 'The order record only (total, dates, freight); no order document on file'
 
   // an order often ships (and bills) in several parts: the other invoices on this order count too
   const { data: siblings } = await db.from('order_checks').select('doc_number, doc_date, doc_total, reading').eq('order_id', o.id).eq('kind', c.kind).neq('id', c.id).not('reading', 'is', null).limit(8)
@@ -278,6 +278,12 @@ async function sentOrderFiles(db: SupabaseClient, org: string, orderId: string, 
   for (const m of mails ?? []) {
     for (const a of (m.attachments ?? []) as { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; storage_path: string | null; vendor_link_id: string | null }[]) {
       if (out.length >= 2 || !isReadableFile({ name: a.file_name, mime: a.mime_type }) || /^(image\d+|outlook|logo|signature)/i.test(a.file_name) || (a.size ?? 0) > MAX_FILE) continue
+      // a picture sent with a typed order is not the order (Dana, Oct 15: Planet Cotton's design pictures); sent-orders
+      // files the pictures that are the order as "Our orders", and only those count
+      if (a.vendor_link_id) {
+        const { data: filed } = await db.from('vendor_links').select('kind').eq('id', a.vendor_link_id).maybeSingle()
+        if (filed?.kind !== 'order' && filed?.kind !== 'ls_po') continue
+      } else if (/^image\//i.test(a.mime_type ?? '')) continue
       let bytes: Uint8Array
       if (a.storage_path) {
         const { data } = await db.storage.from('vendor-files').download(a.storage_path)

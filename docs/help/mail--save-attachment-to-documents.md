@@ -16,4 +16,4 @@ Save a file from an email into the vendor's Documents, in the right folder and y
 - A file already saved shows a green tag such as **Saved to Confirmations › 2026** instead of the button.
 - Saving to **Confirmations** or **Invoices** starts Claude's check against the order.
 - Many files save themselves (see "What Claude files from email on its own").
-- Use **Approved proofs** for the final artwork proof.
+- Use **Proofs** for artwork proofs, then click **Mark approved** on the one you approved.

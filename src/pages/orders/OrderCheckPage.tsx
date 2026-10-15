@@ -120,8 +120,9 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
       ) : null}
       {c.status === 'failed' ? (
         <Alert variant="error" className="mb-4">
-          {c.read_note ?? 'Claude could not read this document.'}
+          Couldn&apos;t read this paper. Open it below to check it by eye, or try again.
           {canEdit ? <Button size="sm" variant="secondary" className="ml-3" loading={busy} onClick={() => void checkNow()} leftIcon={<RefreshCw className="size-4" aria-hidden="true" />}>Try again</Button> : null}
+          {c.read_note ? <details className="mt-2 text-xs"><summary className="cursor-pointer">What Claude sent back</summary><p className="mt-1 break-words">{c.read_note}</p></details> : null}
         </Alert>
       ) : null}
       {c.status === 'needs_order' || (c.status === 'to_review' && !c.order_id) ? <PickOrder c={c} canEdit={canEdit} busy={busy} onPick={(orderId) => act('Order picked; Claude compares it next', 'set_order', { order: orderId }, () => void checkNow())} /> : null}
@@ -150,7 +151,8 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
 
       <section className="mb-4 grid gap-3 sm:grid-cols-2">
         <DocCard title={`This ${CHECK_KIND_LABEL[c.kind].toLowerCase()}`} docs={c.document ? [c.document] : []} onOpen={open} />
-        <DocCard title={`Compared with: ${c.against ?? (working ? '…' : 'nothing yet')}`} docs={against.data ?? []} onOpen={open} />
+        <DocCard title={`Compared with: ${c.against ?? (working ? '…' : 'nothing yet')}`} docs={against.data ?? []} onOpen={open}
+          order={c.order && !c.against?.startsWith('Sales report') && c.kind === 'confirmation' ? c.order : null} />
       </section>
 
       <EmailConversation emailId={c.email?.id ?? null} orderId={c.order?.id ?? null} canEdit={canEdit} onShared={() => void act('Shared to Orders; Claude compares again', 'recheck', {}, () => void checkNow())} />
@@ -220,17 +222,26 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
   )
 }
 
-function DocCard({ title, docs, onOpen }: { title: string; docs: { id: string; label: string; file_name: string | null; storage_path: string | null; mime_type: string | null; url: string | null }[]; onOpen: (d: (typeof docs)[number]) => void }) {
+/**
+ * A box of documents. On the "Compared with" side it also links to our order in VMS: an order typed in an email has no
+ * file, its lines are the order (Dana, Oct 15: "I can't click on anything to see the comparison").
+ */
+function DocCard({ title, docs, onOpen, order }: { title: string; docs: { id: string; label: string; file_name: string | null; storage_path: string | null; mime_type: string | null; url: string | null }[]; onOpen: (d: (typeof docs)[number]) => void; order?: { id: string } | null }) {
   return (
     <div className="rounded-2xl border border-stone-200 bg-white p-4">
       <h2 className="text-xs font-semibold uppercase tracking-wide text-stone-500">{title}</h2>
+      {order ? (
+        <Link to={`${ROUTES.orders}/${order.id}`} className="mt-2 flex items-center gap-2 text-sm font-medium text-stone-900 hover:text-brand">
+          <FileText className="size-4 shrink-0 text-stone-400" aria-hidden="true" />Our order in VMS (what we ordered, line by line)
+        </Link>
+      ) : null}
       {docs.length ? (
         <ul className="mt-2 space-y-1">
           {docs.map((d) => (
             <li key={d.id}><button type="button" onClick={() => onOpen(d)} className="flex items-center gap-2 text-left text-sm font-medium text-stone-900 hover:text-brand"><FileText className="size-4 shrink-0 text-stone-400" aria-hidden="true" />{d.file_name ?? d.label}</button></li>
           ))}
         </ul>
-      ) : <p className="mt-2 text-sm text-stone-500">No document; compared with the order record.</p>}
+      ) : order ? null : <p className="mt-2 text-sm text-stone-500">No document; compared with the order record.</p>}
     </div>
   )
 }

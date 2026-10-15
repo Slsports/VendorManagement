@@ -79,6 +79,7 @@ export const LINK_KIND_LABELS: Record<import('@/types').VendorLinkKind, string> 
   delivery_receipt: 'Delivery receipt',
   image: 'Image',
   approved_proof: 'Approved proof',
+  proof: 'Proof, not approved yet',
   damage_photo: 'Damaged item',
   sales_report: 'Sales report',
 }

@@ -87,7 +87,11 @@ async function save(db: SupabaseClient, org: string, q: Queued, r: ContactReadin
   if (q.vendor_id) {
     const { data: have } = await db.from('vendor_emails').select('id, contact_name, title, phones').eq('vendor_id', q.vendor_id).ilike('email', q.email).maybeSingle()
     if (have) return mark(db, org, q, await fill(db, 'vendor_emails', have, { nameCol: 'contact_name', name, title, phones }))
-    const roles = r.roles.length ? r.roles : ['other']
+    let roles: string[] = r.roles.length ? r.roles : ['other']
+    // a vendor we buy through a rep group: its rep is the group's person; the company's own people are customer service,
+    // shipping or billing, never "our rep" (Dana, Oct 15: Heather at Planet Cotton showed as the rep, not Maryellen)
+    const { data: v } = await db.from('vendors').select('rep_group_id').eq('id', q.vendor_id).maybeSingle()
+    if (v?.rep_group_id && roles.includes('rep')) roles = [...new Set(roles.map((x) => (x === 'rep' ? 'customer_service' : x)))]
     const { error } = await db.from('vendor_emails').insert({
       organization_id: org, vendor_id: q.vendor_id, email: q.email, contact_name: name, title, phones, roles, contact_type: roles[0],
       source: 'email_enrichment', confidence: 0.7, notes: note,

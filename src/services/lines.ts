@@ -84,6 +84,11 @@ export async function addRepGroupContact(input: TablesInsert<'rep_group_contacts
   if (error) throw error
 }
 
+export async function updateRepGroupContact(id: string, changes: TablesUpdate<'rep_group_contacts'>): Promise<void> {
+  const { error } = await supabase.from('rep_group_contacts').update(changes).eq('id', id)
+  if (error) throw error
+}
+
 export async function deleteRepGroupContact(id: string): Promise<void> {
   const { error } = await supabase.from('rep_group_contacts').delete().eq('id', id)
   if (error) throw error
@@ -173,6 +178,12 @@ export async function uploadVendorFile(organizationId: string, vendorId: string,
  */
 export async function tickSalesReport(linkId: string, on: boolean, orderId: string | null = null): Promise<void> {
   const { error } = await supabase.rpc('sales_report_tick', { p_link: linkId, p_on: on, p_order: orderId })
+  if (error) throw error
+}
+
+/** "Mark approved" / "Not approved" on a proof (Dana, Oct 15). */
+export async function setProofApproved(linkId: string, on: boolean): Promise<void> {
+  const { error } = await supabase.rpc('vendor_link_proof_approve', { p_link: linkId, p_on: on })
   if (error) throw error
 }
 

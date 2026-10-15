@@ -37,6 +37,9 @@ Deno.serve(async (req) => {
     // a run that died while reading: try those again
     await db.from('emails').update({ order_scan: { result: 'pending' } }).eq('direction', 'out').eq('order_scan->>result', 'reading').lt('order_scan->>at', new Date(Date.now() - 10 * 60_000).toISOString())
     await db.from('emails').update({ order_scan: null }).eq('direction', 'in').eq('order_scan->>result', 'reading').lt('order_scan->>at', new Date(Date.now() - 10 * 60_000).toISOString())
+    // back-check (Dana, Oct 15; the Oct 14 rule): files already in "Our orders" that only show products go to Images
+    const body = await req.json().catch(() => ({})) as { refile_order_files?: boolean }
+    if (body.refile_order_files) return json(await refileOrderFiles(db, started))
     const sorted = await sortStep(db)
     const services: unknown[] = []
     for (const m of await serviceQueue(db)) {
@@ -179,6 +182,56 @@ async function readStep(db: SupabaseClient, m: Mail) {
   }
 }
 
+/**
+ * Back-check for the "which files show the order" rule: every sent order email with files in "Our orders" is read again
+ * for that one answer; a file that only shows what the products or design look like moves to Images (a picture) or out
+ * of Our orders (anything else). Item lines and orders are not touched. Counts come back for Dana.
+ */
+async function refileOrderFiles(db: SupabaseClient, started: number) {
+  const { data: links } = await db.from('vendor_links').select('email_id').eq('kind', 'order').not('email_id', 'is', null)
+  const ids = [...new Set((links ?? []).map((l) => l.email_id as string))]
+  const { data: mails } = ids.length
+    ? await db.from('emails').select(SELECT).in('id', ids).eq('direction', 'out').is('order_scan->files_checked', null)
+    : { data: [] }
+  const tally = { emails: 0, kept: 0, to_images: 0, to_other: 0, left: 0, service_logos: 0 }
+  // an ordering service's own email (NuORDER, EJD): its PDF is the order, a picture on it is its logo
+  const { data: inbound } = ids.length ? await db.from('emails').select('id').in('id', ids).eq('direction', 'in') : { data: [] }
+  if (inbound?.length) {
+    const { data: moved } = await db.from('vendor_links').update({ kind: 'image', notes: 'A picture from the order email' }).eq('kind', 'order').like('mime_type', 'image/%').in('email_id', inbound.map((x) => x.id)).select('id')
+    tally.service_logos = moved?.length ?? 0
+  }
+  for (const m of (mails ?? []) as unknown as Mail[]) {
+    if (Date.now() - started > TIME_BUDGET_MS * 0.8) { tally.left++; continue }
+    const { data: vendor } = await db.from('vendors').select('name').eq('id', m.vendor_id!).maybeSingle()
+    const { data: filed } = await db.from('vendor_links').select('id, kind').in('id', m.attachments.map((a) => a.vendor_link_id).filter((x): x is string => !!x))
+    const kindOf = new Map((filed ?? []).map((l) => [l.id, l.kind as string]))
+    const files: PaperFile[] = []
+    const sheets: { name: string; text: string }[] = []
+    for (const a of m.attachments.filter((x) => (x.size ?? 0) <= MAX_FILE && (kindOf.get(x.vendor_link_id ?? '') === 'order' || !looksLikeJunk(x)))) {
+      if (files.length + sheets.length >= 4) break
+      const readable = isReadableFile({ name: a.file_name, mime: a.mime_type })
+      if (!readable && !isSheet(a)) continue
+      const bytes = await bytesOf(db, m, a)
+      if (!bytes) continue
+      if (readable) files.push({ name: a.file_name, mime: a.mime_type ?? 'application/pdf', bytes })
+      else sheets.push({ name: a.file_name, text: sheetText(bytes) })
+    }
+    const r = await readSentOrder(db, m.organization_id, { vendor: vendor?.name ?? 'Unknown vendor', subject: m.subject, sent_on: day(m.received_at), text: m.body_text ?? '', files, sheets })
+    for (const a of m.attachments) {
+      if (!a.vendor_link_id || kindOf.get(a.vendor_link_id) !== 'order') continue
+      const kind = orderFileKind(a, r.order_files)
+      if (kind === 'order') { tally.kept++; continue }
+      await db.from('vendor_links').update(kind === 'image' ? { kind: 'image', notes: 'A picture sent with our order' } : { kind: 'other', notes: 'Sent with our order; not the order itself' }).eq('id', a.vendor_link_id)
+      if (kind === 'image') tally.to_images++
+      else tally.to_other++
+    }
+    const { data: e } = await db.from('emails').select('order_scan').eq('id', m.id).single()
+    await db.from('emails').update({ order_scan: { ...((e?.order_scan as Record<string, unknown> | null) ?? {}), files_checked: true } }).eq('id', m.id)
+    tally.emails++
+  }
+  return tally
+}
+
 async function finish(db: SupabaseClient, m: Mail, scan: Record<string, unknown>) {
   await db.from('emails').update({ order_scan: scan, order_scanned_at: new Date().toISOString(), ...(scan.order_id ? { order_id: scan.order_id } : {}) }).eq('id', m.id)
   return { id: m.id, ...scan }
@@ -231,21 +284,35 @@ async function createOrder(db: SupabaseClient, m: Mail, r: SentOrderReading, fro
   return data.id
 }
 
-/** Link the email, save the order file to the order ("Our orders"), and add the item lines when the order has none. */
+const isPicture = (a: { file_name: string; mime_type: string | null }) => /^image\//i.test(a.mime_type ?? '') || /\.(png|jpe?g|gif|webp|heic)$/i.test(a.file_name)
+
+/** Where a file sent with an order goes: "Our orders" when it shows what is ordered, Images for a picture, else not saved. */
+export function orderFileKind(a: { file_name: string; mime_type: string | null }, orderFiles: string[]): 'order' | 'image' | 'other' {
+  if (orderFiles.some((n) => n.trim().toLowerCase() === a.file_name.trim().toLowerCase())) return 'order'
+  return isPicture(a) ? 'image' : 'other'
+}
+
+/**
+ * Link the email, save the order file to the order ("Our orders"), and add the item lines when the order has none. Only
+ * the files that show what is ordered are "Our orders"; pictures of the products or the design sent along with an order
+ * typed in the email go to Images (Dana, Oct 15: Planet Cotton's design pictures were taken for her typed order).
+ */
 async function fileOn(db: SupabaseClient, m: Mail, orderId: string, r: SentOrderReading, used: { a: Att; bytes: Uint8Array }[], fresh: boolean, fileNote = 'The order we emailed the vendor') {
   const { data: o } = await db.from('orders').select('po_number').eq('id', orderId).single()
   if (!o?.po_number && r.po_number) await db.from('orders').update({ po_number: r.po_number }).eq('id', orderId)
   for (const { a, bytes } of used) {
     if (a.vendor_link_id) { await db.from('vendor_links').update({ order_id: orderId }).eq('id', a.vendor_link_id).is('order_id', null); continue }
+    const kind = orderFileKind(a, r.order_files)
+    if (kind === 'other') continue
     const path = a.storage_path ?? `${m.organization_id}/${m.vendor_id}/${crypto.randomUUID()}-${a.file_name.replace(/[^A-Za-z0-9._-]+/g, '_')}`
     if (!a.storage_path) {
       const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: a.mime_type ?? 'application/octet-stream', upsert: false })
       if (upErr) throw new Error(`Saving ${a.file_name}: ${upErr.message}`)
     }
     const { data: link, error } = await db.from('vendor_links').insert({
-      organization_id: m.organization_id, vendor_id: m.vendor_id, order_id: orderId, kind: 'order', label: a.file_name.replace(/\.[a-z0-9]{2,5}$/i, ''),
+      organization_id: m.organization_id, vendor_id: m.vendor_id, order_id: orderId, kind, label: a.file_name.replace(/\.[a-z0-9]{2,5}$/i, ''),
       storage_path: path, file_name: a.file_name, file_size: bytes.length, mime_type: a.mime_type, received_at: day(m.received_at), doc_year: Number(m.received_at.slice(0, 4)),
-      source: 'email', email_id: m.id, notes: fileNote,
+      source: 'email', email_id: m.id, notes: kind === 'order' ? fileNote : 'A picture sent with our order',
     }).select('id').single()
     if (error) throw new Error(error.message)
     await db.from('email_attachments').update({ vendor_link_id: link.id, storage_path: path }).eq('id', a.id)
@@ -310,6 +377,8 @@ async function serviceStep(db: SupabaseClient, m: InMail) {
       const reading: SentOrderReading = {
         is_order: true, adds_to_earlier: false, po_number: one.po_number ?? one.order_number, ship_date: one.ship_date, total: one.total,
         description: one.description, placed_by: r.placed_by, store: r.store, items: one.items, note: r.note,
+        // an ordering service's own email: its PDF is the order; pictures are its logo
+        order_files: used.filter(({ a }) => !isPicture(a)).map(({ a }) => a.file_name),
       }
       const keep = i === 0 ? used : []
       let orderId = await matchServiceOrder(db, mail, one, orderIds)

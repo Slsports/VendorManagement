@@ -20,11 +20,16 @@ export function peopleFor(v: ContactsVendor): PersonRow[] {
   return [...own, ...group].sort((a, b) => Number(b.starred) - Number(a.starred))
 }
 
-/** Our rep for the top of the vendor page (Dana, Oct 12): the starred one, else the vendor's reps, else its rep group's people. */
+/**
+ * Our main rep for the top of the vendor page: the one marked Main rep, else (when we buy through a rep group) the rep
+ * group's people, else the vendor's own reps. Dana, Oct 15: "Anytime there's a rep group … that's who needs to be at the
+ * top", even when the company's own people write to us; they are there for customer service, shipping or billing.
+ */
 export function ourReps(v: ContactsVendor): PersonRow[] {
   const people = peopleFor(v)
   const starred = people.filter((p) => p.starred)
   if (starred.length) return starred
-  const own = people.filter((p) => p.kind === 'vendor' && p.roles.includes('rep'))
-  return (own.length ? own : people.filter((p) => p.kind === 'group')).slice(0, 2)
+  const group = people.filter((p) => p.kind === 'group')
+  if (group.length) return group.slice(0, 2)
+  return people.filter((p) => p.kind === 'vendor' && p.roles.includes('rep')).slice(0, 2)
 }

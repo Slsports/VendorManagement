@@ -16,6 +16,7 @@ VMS adds the people we email with to each vendor's **Reps & contacts** by itself
 - It looks back 12 months, then keeps up as new people write.
 - Only Orders mail and shared conversations are read, never anyone's private mailbox.
 - No-reply and system addresses, freight companies and Worldwide are left out.
-- What you typed is never changed, and the starred rep stays the same.
+- What you typed is never changed, and the main rep stays the same.
+- When the vendor has a rep group, the company's own people are added as **Customer service** (or shipping, billing), never as **Rep**: our rep is the rep group's person.
 - To remove a wrong contact, click the trash can on its row. It will not come back.
 - People at a rep group are added to the rep group's reps.

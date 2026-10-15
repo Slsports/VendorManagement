@@ -13,9 +13,9 @@ Every vendor page has a **Documents** box with one folder per kind of paper, and
 4. Click the folder again to close it.
 
 ## Good to know
-- The folders are: **Price lists**, **Catalogs**, **Our orders**, **LS POs**, **Confirmations**, **Invoices**, **Credits**, **Order forms**, **Show specials**, **Shipping**, **Images**, **Damaged Items**, **Approved proofs**, **Sales reports** and **Other**.
+- The folders are: **Price lists**, **Catalogs**, **Our orders**, **LS POs**, **Confirmations**, **Invoices**, **Credits**, **Order forms**, **Show specials**, **Shipping**, **Images**, **Damaged Items**, **Proofs**, **Sales reports** and **Other**.
 - **Our orders**, **LS POs**, **Confirmations** and **Invoices** are the four papers of an order; the order page shows a tick for each one on file.
 - **Shipping** holds packing slips, delivery receipts and freight bills. **Invoices** also holds payment papers. **Other** also holds website links.
 - **Credits** is for credit memos, credit notices and return authorizations.
-- **Damaged Items** holds photos of damaged goods to attach to a return email. **Approved proofs** holds final artwork, saved by hand once approved.
+- **Damaged Items** holds photos of damaged goods to attach to a return email. **Proofs** holds artwork proofs, each marked **Not approved yet** or **Approved** with a gold star.
 - A folder icon is amber when it has files, gray when empty.
