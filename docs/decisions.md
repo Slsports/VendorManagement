@@ -2073,3 +2073,6 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   now reads only the email's own words, and return labels / RAs are not bills. C2500557 → Credits, RA2500525 → Other.
 - Oct 14: VMS's Claude Console account (Shaver Lake Sports Inc) got low-credit emails after the year-long re-filing
   ($14.45 spent this month, $3.83 of it that day). Dana added $100 of credit and will raise the $25 monthly limit.
+- Oct 15, never guess: Dana: "I don't want any guessing ever … Guessing costs me time I don't have. We need to be solving
+  real problems, not 'guessed' problems." Claude had blamed a failed invoice reading on the paper's length without
+  checking; it was a short invoice. Every explanation is now confirmed from the data, logs or code first (CLAUDE.md rule).

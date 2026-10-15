@@ -26,6 +26,10 @@ by Vercel from the branch `claude/ecstatic-carson-ziz2a9`.
 - **Wait for Dana's go-ahead.** When a task is being discussed, give a short overview and stop. Do not
   start building, editing files, changing data or pushing until Dana says to go ahead ("go", "do it",
   "yes, build it"). Questions and overviews are not a go-ahead.
+- **Never guess (Dana, Oct 15).** "I don't want any guessing ever … Guessing costs me time I don't have." Before
+  explaining why something happened, look at the real data, logs and code and confirm it. Never offer a likely cause as
+  the answer. If it can't be confirmed yet, say "I haven't confirmed this", say what you'll check, and check it before
+  proposing a fix.
 
 ## Screen rules (Dana, Oct 7)
 - **Back goes to where you came from.** Every detail page (vendor, rep group, order, line, review item)
