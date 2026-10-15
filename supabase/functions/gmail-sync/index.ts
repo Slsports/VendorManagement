@@ -7,7 +7,7 @@ import { Gmail, GmailError, googleAccessToken } from '../_shared/gmail.ts'
 import { clueText, htmlBody, isBulk, isOldGmail, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
 import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type VendorIndex } from '../_shared/mailMatch.ts'
 import { extractLinks, itemPicture, maybePaperwork, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
-import { aiEnabled, classifyPaperwork, readArtwork, readEmailVendors, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type UnsureEmail } from '../_shared/ai.ts'
+import { aiEnabled, classifyPaperwork, classifyPictures, type PictureKind, readArtwork, readEmailVendors, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type UnsureEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
@@ -44,6 +44,16 @@ Deno.serve(async (req) => {
     const { data: p } = await db.from('profiles').select('organization_id, role, is_active').eq('id', u.user.id).single()
     if (!p?.is_active || !['admin', 'manager', 'buyer'].includes(p.role)) return json({ error: 'Not allowed' }, 403)
     onlyOrg = p.organization_id
+  }
+
+  // the picture back-check (Dana, Oct 15), run by hand from the scheduler's secret
+  const body = await req.clone().json().catch(() => ({})) as { pictures_backcheck?: boolean }
+  if (trusted && body.pictures_backcheck) {
+    const { data: orgs } = await db.from('mail_accounts').select('organization_id')
+    const started = Date.now()
+    const out: unknown[] = []
+    for (const o of orgs ?? []) out.push(await picturesBackcheck(db, o.organization_id, started))
+    return json(out)
   }
 
   let q = db.from('mail_accounts').select('*')
@@ -559,51 +569,174 @@ async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, star
 }
 
 /**
- * Item pictures (Dana, Oct 10): "If a vendor sends images of items they would go in that folder." Real pictures
- * (not signature logos or icons) in a vendor's email are saved to their Images folder for the year; the same
- * picture sent again is not saved twice. Artwork proofs stay in the email (Approved proofs is saved by hand),
- * so an email waits until Claude's artwork check has read it, and artwork conversations are skipped. Files the
- * other steps save (price lists, confirmations, invoices) are theirs. 12 months back, a batch a run.
+ * Item pictures (Dana, Oct 10): "If a vendor sends images of items they would go in that folder." Claude looks at the
+ * pictures first (Dana, Oct 15): logos and signature graphics are never saved ("total waste"), and a rep group's logos
+ * of the companies it reps add those names to its lines; proofs go to Proofs; product photos, advertising and the rest
+ * go to Images, except for vendors marked "Ask before saving pictures" (Nationwide), whose pictures wait for Save
+ * pictures in the email (proofs still save). The same picture sent again is not saved twice. Files the other steps
+ * save (price lists, confirmations, invoices) are theirs. 12 months back, a batch a run.
  */
 async function saveItemPictures(db: SupabaseClient, gmail: Gmail, org: string, started: number, box: string) {
   const twoHours = new Date(Date.now() - 2 * 3600_000).toISOString()
   const { data: queue } = await db.from('emails')
-    .select('id, gmail_id, vendor_id, subject, received_at, art_needed, thread:email_threads!emails_thread_id_fkey(art_status), attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
+    .select('id, gmail_id, vendor_id, sender_id, subject, body_text, received_at, vendor:vendors!emails_vendor_id_fkey(name, ask_before_pictures), attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
     .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).eq('direction', 'in').not('vendor_id', 'is', null).eq('has_attachments', true).is('images_scanned_at', null)
     .not('is_bulk', 'is', true).not('files_scanned_at', 'is', null).or(`art_read_at.not.is.null,received_at.lt.${twoHours}`)
     .gte('received_at', new Date(Date.now() - 365 * 86_400_000).toISOString())
-    .order('received_at', { ascending: false }).limit(15)
+    .order('received_at', { ascending: false }).limit(10)
+  let lineIndex: Awaited<ReturnType<typeof freightIndex>> | null = null
   for (const e of queue ?? []) {
     if (Date.now() - started > TIME_BUDGET_MS) break
+    // claim it first, so two runs never save the same pictures twice
+    const { data: mine } = await db.from('emails').update({ images_scanned_at: new Date().toISOString() }).eq('id', e.id).is('images_scanned_at', null).select('id')
+    if (!mine?.length) continue
     try {
-      const art = !!(e.thread as unknown as { art_status: string | null } | null)?.art_status || e.art_needed === 'yes' || e.art_needed === 'unsure'
-      const atts = (e.attachments ?? []) as { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; vendor_link_id: string | null }[]
+      const vendor = e.vendor as unknown as { name: string; ask_before_pictures: boolean } | null
+      const atts = (e.attachments ?? []) as PicAtt[]
       // pictures of damage or a wrong item ("damaged", "broken", "wrong garment", "order issues", a return) go to Damaged Items (Dana, Oct 10)
       const damaged = /damage|broken|defect|crushed|cracked|\breturn|\bRMA\b|\bRA ?#|wrong (item|garment|colou?r|size|product|style)|order issues?|issues? with (the |our )?order|mis-?ship|mis-?print|short ?ship/i.test(`${e.subject ?? ''} ${atts.map((x) => x.file_name).join(' ')}`)
-      for (const a of art ? [] : atts) {
+      const todo: PicAtt[] = []
+      for (const a of atts) {
         if (a.vendor_link_id || !a.gmail_attachment_id || !itemPicture(a) || paperworkKind(a, null)) continue
         // the same picture again (replies carry it along): point at the one already saved
-        const { data: same } = await db.from('vendor_links').select('id, storage_path').eq('vendor_id', e.vendor_id).in('kind', ['image', 'damage_photo']).eq('file_name', a.file_name).eq('file_size', a.size ?? -1).limit(1)
+        const { data: same } = await db.from('vendor_links').select('id, storage_path').eq('vendor_id', e.vendor_id).in('kind', ['image', 'damage_photo', 'proof', 'approved_proof']).eq('file_name', a.file_name).eq('file_size', a.size ?? -1).limit(1)
         if (same?.[0]) {
           await db.from('email_attachments').update({ vendor_link_id: same[0].id, storage_path: same[0].storage_path }).eq('id', a.id)
           continue
         }
-        const bytes = await attachmentBytes(gmail, e.gmail_id, a.gmail_attachment_id)
-        const path = `${org}/${e.vendor_id}/${crypto.randomUUID()}-${a.file_name.replace(/[^A-Za-z0-9._-]+/g, '_')}`
-        const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: a.mime_type ?? 'image/jpeg', upsert: false })
-        if (upErr) throw new Error(`Saving ${a.file_name}: ${upErr.message}`)
+        todo.push(a)
+      }
+      if (!todo.length) continue
+      const pics = await sortPictures(db, gmail, org, e.gmail_id, todo, { vendor: vendor?.name ?? null, subject: e.subject, text: e.body_text })
+      const companies: string[] = []
+      for (const p of pics) {
+        await db.from('email_attachments').update({ picture_kind: p.kind, picture_company: p.company }).eq('id', p.a.id)
+        if (p.kind === 'logo') { if (p.company) companies.push(p.company); continue }
+        if (p.kind !== 'proof' && vendor?.ask_before_pictures) continue
+        const kind = p.kind === 'proof' ? 'proof' : damaged ? 'damage_photo' : 'image'
+        const path = `${org}/${e.vendor_id}/${crypto.randomUUID()}-${p.a.file_name.replace(/[^A-Za-z0-9._-]+/g, '_')}`
+        const { error: upErr } = await db.storage.from('vendor-files').upload(path, p.bytes, { contentType: p.a.mime_type ?? 'image/jpeg', upsert: false })
+        if (upErr) throw new Error(`Saving ${p.a.file_name}: ${upErr.message}`)
         const { data: link, error } = await db.from('vendor_links').insert({
-          organization_id: org, vendor_id: e.vendor_id, kind: damaged ? 'damage_photo' : 'image', label: pictureLabel(a.file_name, e.subject), storage_path: path, file_name: a.file_name,
-          file_size: a.size ?? bytes.length, mime_type: a.mime_type, received_at: e.received_at.slice(0, 10), doc_year: Number(e.received_at.slice(0, 4)),
+          organization_id: org, vendor_id: e.vendor_id, kind, label: pictureLabel(p.a.file_name, e.subject), storage_path: path, file_name: p.a.file_name,
+          file_size: p.a.size ?? p.bytes.length, mime_type: p.a.mime_type, received_at: e.received_at.slice(0, 10), doc_year: Number(e.received_at.slice(0, 4)),
           source: 'email', email_id: e.id, notes: `From an email: ${e.subject ?? '(no subject)'}`.slice(0, 300),
         }).select('id').single()
         if (error) throw new Error(error.message)
-        await db.from('email_attachments').update({ vendor_link_id: link.id, storage_path: path }).eq('id', a.id)
+        await db.from('email_attachments').update({ vendor_link_id: link.id, storage_path: path }).eq('id', p.a.id)
+      }
+      if (companies.length && e.sender_id) {
+        lineIndex ??= await freightIndex(db, org)
+        await repLogoLines(db, e.sender_id, companies, lineIndex)
       }
     } catch (err) {
       console.error(`pictures from ${e.id}:`, err instanceof Error ? err.message : err)
     }
-    await db.from('emails').update({ images_scanned_at: new Date().toISOString() }).eq('id', e.id)
+  }
+}
+
+interface PicAtt { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; vendor_link_id: string | null; storage_path?: string | null }
+
+/**
+ * The pictures' bytes and what Claude sees in each. Claude reads PNG, JPEG, GIF and WEBP up to about 3.5 MB here; a
+ * bigger photo or another format (HEIC) is taken as a product photo, since logos are small.
+ */
+async function sortPictures(db: SupabaseClient, gmail: Gmail | null, org: string, gmailId: string | null, atts: PicAtt[], ctx: { vendor: string | null; subject: string | null; text: string | null }, keepBytes = true) {
+  const BIG = 3.5 * 1024 * 1024
+  const out: { a: PicAtt; bytes: Uint8Array; kind: PictureKind; company: string | null }[] = []
+  for (const a of atts.slice(0, 20)) {
+    const mime = (a.mime_type ?? '').toLowerCase()
+    const readable = /^image\/(png|jpeg|jpg|gif|webp)$/.test(mime) && (a.size ?? 0) <= BIG
+    // a big photo Claude is not shown is only fetched when it is going to be saved
+    if (!readable && !keepBytes) { out.push({ a, bytes: new Uint8Array(0), kind: 'product', company: null }); continue }
+    let bytes: Uint8Array | null = null
+    if (a.storage_path) {
+      const { data } = await db.storage.from('vendor-files').download(a.storage_path)
+      if (data) bytes = new Uint8Array(await data.arrayBuffer())
+    }
+    if (!bytes && gmail && gmailId && a.gmail_attachment_id) bytes = await attachmentBytes(gmail, gmailId, a.gmail_attachment_id)
+    if (!bytes) continue
+    out.push({ a, bytes, kind: 'product', company: null })
+  }
+  // Claude looks at a few at a time (memory: Oct 15 a batch of big pictures ran the function out of room)
+  const ask = out.map((p, i) => i).filter((i) => out[i]!.bytes.length && out[i]!.bytes.length <= BIG && /^image\/(png|jpeg|jpg|gif|webp)$/.test((out[i]!.a.mime_type ?? '').toLowerCase()))
+  for (let n = 0; n < ask.length && aiEnabled(); n += 5) {
+    const chunk = ask.slice(n, n + 5)
+    const said = await classifyPictures(db, org, chunk.map((i) => ({ name: out[i]!.a.file_name, mime: (out[i]!.a.mime_type ?? 'image/png').toLowerCase().replace('image/jpg', 'image/jpeg'), bytes: out[i]!.bytes })), ctx)
+    chunk.forEach((i, k) => { out[i]!.kind = said[k]!.kind; out[i]!.company = said[k]!.company })
+  }
+  if (!keepBytes) for (const p of out) p.bytes = new Uint8Array(0)
+  return out
+}
+
+/** A rep group's logos of the companies it reps (Dana, Oct 15): those names join its lines, the same way as the names in its mail. */
+async function repLogoLines(db: SupabaseClient, senderId: string, companies: string[], index: Awaited<ReturnType<typeof freightIndex>>) {
+  const { data: s } = await db.from('email_senders').select('kind, rep_group_id, rep_group:rep_groups(name)').eq('id', senderId).maybeSingle()
+  if (s?.kind !== 'rep_group' || !s.rep_group_id) return
+  const groupName = ((s.rep_group as unknown as { name: string } | null)?.name ?? '').toLowerCase()
+  const ids = new Set<string>()
+  const unknown: string[] = []
+  for (const n of [...new Set(companies)]) {
+    const hit = shipperVendors(index, n)
+    if (hit.length === 1) ids.add(hit[0]!)
+    else if (!hit.length && n.trim().toLowerCase() !== groupName) unknown.push(n)
+  }
+  await db.rpc('rep_group_apply_lines', { p_sender: senderId, p_vendor_ids: [...ids], p_unknown: unknown })
+}
+
+/**
+ * Back-check for the picture rule (Dana, Oct 15; the Oct 14 rule): every picture already in an Images folder is looked
+ * at again. Logos come out of the folder (the email keeps them), proofs move to Proofs, and for vendors marked "Ask
+ * before saving pictures" everything but proofs comes out. Counts come back for Dana.
+ */
+async function picturesBackcheck(db: SupabaseClient, org: string, started: number) {
+  const tally = { emails: 0, looked: 0, logos_removed: 0, ask_vendor_removed: 0, to_proofs: 0, kept: 0, left: 0 }
+  const { data: links } = await db.from('vendor_links').select('id, vendor_id, email_id, storage_path, file_name, mime_type, file_size')
+    .eq('organization_id', org).eq('kind', 'image').eq('source', 'email').not('email_id', 'is', null).not('storage_path', 'is', null)
+  const byEmail = new Map<string, NonNullable<typeof links>>()
+  for (const l of links ?? []) byEmail.set(l.email_id!, [...(byEmail.get(l.email_id!) ?? []), l])
+  const { data: checked } = await db.from('email_attachments').select('vendor_link_id').in('vendor_link_id', (links ?? []).map((l) => l.id)).not('picture_kind', 'is', null)
+  const done = new Set((checked ?? []).map((x) => x.vendor_link_id))
+  let lineIndex: Awaited<ReturnType<typeof freightIndex>> | null = null
+  for (const [emailId, group] of byEmail) {
+    const open = group.filter((l) => !done.has(l.id))
+    if (!open.length) continue
+    if (Date.now() - started > 90_000 || tally.emails >= 8) { tally.left++; continue }
+    const { data: e } = await db.from('emails').select('subject, body_text, sender_id, vendor:vendors!emails_vendor_id_fkey(name, ask_before_pictures)').eq('id', emailId).single()
+    const vendor = e?.vendor as unknown as { name: string; ask_before_pictures: boolean } | null
+    const pics = await sortPictures(db, null, org, null, open.map((l) => ({ id: l.id, file_name: l.file_name ?? 'picture', mime_type: l.mime_type, size: l.file_size, gmail_attachment_id: null, vendor_link_id: l.id, storage_path: l.storage_path })), { vendor: vendor?.name ?? null, subject: e?.subject ?? null, text: e?.body_text ?? null }, false)
+    const companies: string[] = []
+    for (const p of pics) {
+      tally.looked++
+      // every copy of this picture in mail (replies carry it along) shares the link
+      await db.from('email_attachments').update({ picture_kind: p.kind, picture_company: p.company }).eq('vendor_link_id', p.a.id)
+      if (p.kind === 'proof') { await db.from('vendor_links').update({ kind: 'proof' }).eq('id', p.a.id); tally.to_proofs++; continue }
+      if (p.kind === 'logo' || vendor?.ask_before_pictures) {
+        if (p.kind === 'logo' && p.company) companies.push(p.company)
+        await removePictureLink(db, p.a.id, p.a.storage_path ?? null)
+        if (p.kind === 'logo') tally.logos_removed++
+        else tally.ask_vendor_removed++
+        continue
+      }
+      tally.kept++
+    }
+    if (companies.length && e?.sender_id) {
+      lineIndex ??= await freightIndex(db, org)
+      await repLogoLines(db, e.sender_id, companies, lineIndex)
+    }
+    tally.emails++
+  }
+  return tally
+}
+
+/** Take a picture out of the vendor's folder: the emails keep it (they open it from Gmail again). */
+async function removePictureLink(db: SupabaseClient, linkId: string, path: string | null) {
+  await db.from('email_attachments').update({ vendor_link_id: null, storage_path: null }).eq('vendor_link_id', linkId)
+  await db.from('vendor_links').delete().eq('id', linkId)
+  if (path) {
+    const { count } = await db.from('email_attachments').select('id', { count: 'exact', head: true }).eq('storage_path', path)
+    const { count: links } = await db.from('vendor_links').select('id', { count: 'exact', head: true }).eq('storage_path', path)
+    if (!count && !links) await db.storage.from('vendor-files').remove([path])
   }
 }
 

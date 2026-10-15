@@ -56,6 +56,8 @@ interface FormState {
   vid_in_description: boolean
   is_fishing: boolean
   web_orders: boolean
+  ask_before_pictures: boolean
+  usual_charges: { what: string; price: string; per: string }[]
   website: string
   phone: string
   email: string
@@ -84,7 +86,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   name: '', aliases: '', routes: [], defaultRoute: '', payMethod: '', rep_group_id: '', assigned_buyer_id: '', payment_terms_id: '', ordering_frequency: '',
-  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, freight_allowance_on_time: false, vid_in_description: false, is_fishing: false, web_orders: false,
+  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, freight_allowance_on_time: false, vid_in_description: false, is_fishing: false, web_orders: false, ask_before_pictures: false, usual_charges: [],
   website: '', phone: '', email: '', fax: '', account_number: '', catalog: '', address: '', city: '', state: '', postal_code: '',
   pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', shipping_contact_email: '', minimum_order: '', freight_program: '', free_shipping_policy: '', free_shipping_threshold: '', freight_routing: '', product_types: '',
   notes: '', return_notes: '', windows: [],
@@ -115,6 +117,8 @@ function formFromVendor(v: VendorDetail): FormState {
     vid_in_description: v.vid_in_description,
     is_fishing: v.is_fishing,
     web_orders: v.web_orders,
+    ask_before_pictures: v.ask_before_pictures,
+    usual_charges: (v.usual_charges ?? []).map((c) => ({ what: c.what, price: c.price != null ? String(c.price) : '', per: c.per ?? 'each' })),
     do_not_order_reason: v.do_not_order_reason ?? '',
     website: v.website ?? '', phone: v.phone ?? '', email: v.email ?? '', fax: v.fax ?? '', account_number: v.account_number ?? '', catalog: v.catalog ?? '',
     address: v.address ?? '', city: v.city ?? '', state: v.state ?? '', postal_code: v.postal_code ?? '',
@@ -202,6 +206,8 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
       vid_in_description: form.vid_in_description,
       is_fishing: form.is_fishing,
       web_orders: form.web_orders,
+      ask_before_pictures: form.ask_before_pictures,
+      usual_charges: form.usual_charges.filter((c) => c.what.trim()).map((c) => ({ what: c.what.trim(), price: c.price.trim() ? Number(c.price.replace(/[^0-9.]/g, '')) : null, per: c.per.trim() || 'each' })),
       do_not_order_reason: form.standing !== 'ok' ? nz(form.do_not_order_reason) : null,
       website: nz(form.website), phone: nz(form.phone), email: nz(form.email), fax: nz(form.fax), account_number: nz(form.account_number), catalog: nz(form.catalog),
       address: nz(form.address), city: nz(form.city), state: nz(form.state), postal_code: nz(form.postal_code),
@@ -328,6 +334,8 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.vid_in_description} onChange={(e) => set('vid_in_description', e.target.checked)} /> Add Vendor ID to item descriptions, in brackets at the end (MENS HOODIE NAVY [AB1234]); each order can change it</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_fishing} onChange={(e) => set('is_fishing', e.target.checked)} /> Fishing vendor (Jarrett runs these reports)</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.web_orders} onChange={(e) => set('web_orders', e.target.checked)} /> Web orders, no confirmation needed (their order email confirms it; items they can't ship just aren't billed)</label>
+            <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.ask_before_pictures} onChange={(e) => set('ask_before_pictures', e.target.checked)} /> Ask before saving pictures (their advertising waits for Save pictures in the email; proofs, invoices and confirmations still save)</label>
+            <UsualChargesEditor value={form.usual_charges} onChange={(v) => set('usual_charges', v)} />
             {isEdit ? <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_active} onChange={(e) => set('is_active', e.target.checked)} /> Active</label> : null}
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.needs_review} onChange={(e) => set('needs_review', e.target.checked)} /> Flag for review</label>
             {form.needs_review ? <Input aria-label="Review note" value={form.review_note} onChange={(e) => set('review_note', e.target.value)} placeholder="What needs checking?" /> : null}
@@ -447,5 +455,25 @@ function Section({ title, description, children }: { title: string; description?
       {description ? <p className="mt-1 text-sm text-stone-500">{description}</p> : null}
       <div className="mt-4 grid gap-4 sm:grid-cols-2">{children}</div>
     </section>
+  )
+}
+
+/** Charges this vendor always adds (Dana, Oct 15: Planet Cotton's tags): at this price they are not flagged on their papers. */
+function UsualChargesEditor({ value, onChange }: { value: { what: string; price: string; per: string }[]; onChange: (v: { what: string; price: string; per: string }[]) => void }) {
+  const change = (i: number, patch: Partial<{ what: string; price: string; per: string }>) => onChange(value.map((c, n) => (n === i ? { ...c, ...patch } : c)))
+  return (
+    <fieldset className="rounded-xl border border-stone-200 p-3">
+      <legend className="px-1 text-sm font-medium text-stone-700">Usual charges</legend>
+      <p className="mb-2 text-xs text-stone-500">Charges they always add, like tags. At this price they are not flagged on their confirmations and invoices.</p>
+      {value.map((c, i) => (
+        <div key={i} className="mb-2 flex flex-wrap items-center gap-2">
+          <Input aria-label="What the charge is" value={c.what} onChange={(e) => change(i, { what: e.target.value })} placeholder="Tags" className="w-40" />
+          <Input aria-label="Price" value={c.price} onChange={(e) => change(i, { price: e.target.value })} placeholder="0.15" inputMode="decimal" className="w-24" />
+          <Input aria-label="Per" value={c.per} onChange={(e) => change(i, { per: e.target.value })} placeholder="each" className="w-28" />
+          <Button type="button" size="sm" variant="ghost" onClick={() => onChange(value.filter((_, n) => n !== i))}>Remove</Button>
+        </div>
+      ))}
+      <Button type="button" size="sm" variant="secondary" onClick={() => onChange([...value, { what: '', price: '', per: 'each' }])}>Add a usual charge</Button>
+    </fieldset>
   )
 }

@@ -33,3 +33,9 @@ export const ORDER_PAPERS = [
   { kind: 'confirmation', label: 'Confirmation' },
   { kind: 'invoice', label: 'Invoice' },
 ] as const
+
+/** The price in a row's text: "144 at $0.15 = $21.60" → 0.15. */
+export function priceIn(text: string | null): number | null {
+  const m = /\$\s?(\d+(?:\.\d+)?)/.exec(text ?? '')
+  return m ? Number(m[1]) : null
+}

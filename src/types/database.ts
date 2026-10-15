@@ -4,6 +4,9 @@
  * Hand-written for migration 0001. Once the Supabase CLI is linked, regenerate with:
  *   npx supabase gen types typescript --project-id "$SUPABASE_PROJECT_REF" > src/types/database.ts
  */
+/** A charge a vendor always adds (Dana, Oct 15: Planet Cotton's tags). */
+export interface UsualCharge { what: string; price: number | null; per: string | null }
+export type PictureKind = 'product' | 'proof' | 'advertising' | 'logo' | 'other'
 export type OrderCheckStatus = 'reading' | 'needs_order' | 'comparing' | 'to_review' | 'done' | 'not_paperwork' | 'dismissed' | 'failed'
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
@@ -260,6 +263,7 @@ export type Database = {
           rating: number | null; tier: string | null; ordering_frequency: Database['public']['Enums']['ordering_frequency'] | null
           is_delivery_vendor: boolean; minimum_order: string | null; freight_program: string | null; free_shipping_policy: 'never' | 'sometimes' | 'always' | null; free_shipping_threshold: number | null; freight_routing: string | null; freight_allowance_on_time: boolean; vid_in_description: boolean; product_types: string | null; notes: string | null; needs_review: boolean; review_note: string | null; do_not_order: boolean; do_not_order_reason: string | null; standing: 'ok' | 'hold' | 'last_resort' | 'do_not_order'; standing_tags: string[]; standing_review_date: string | null; merged_into_id: string | null; wwd_zero_upcharge: boolean; report_owner: string | null; is_fishing: boolean; web_orders: boolean; order_methods: string[]; freight_programs_vendor: string | null; info_confirmed_at: string | null; assigned_rep_contact_id: string | null; assigned_rep_group_contact_id: string | null
           is_active: boolean; created_by: string | null; created_at: string; updated_at: string
+          ask_before_pictures: boolean; usual_charges: UsualCharge[]
         }
         Insert: {
           id?: string; organization_id: string; name: string; lightspeed_name?: string | null; lightspeed_vendor_id?: string | null; po_code?: string | null; aliases?: string[]
@@ -271,6 +275,7 @@ export type Database = {
           rating?: number | null; tier?: string | null; ordering_frequency?: Database['public']['Enums']['ordering_frequency'] | null
           is_delivery_vendor?: boolean; minimum_order?: string | null; freight_program?: string | null; free_shipping_policy?: 'never' | 'sometimes' | 'always' | null; free_shipping_threshold?: number | null; freight_routing?: string | null; freight_allowance_on_time?: boolean; vid_in_description?: boolean; product_types?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null; do_not_order?: boolean; do_not_order_reason?: string | null; standing?: 'ok' | 'hold' | 'last_resort' | 'do_not_order'; standing_tags?: string[]; standing_review_date?: string | null; merged_into_id?: string | null; wwd_zero_upcharge?: boolean; report_owner?: string | null; is_fishing?: boolean; web_orders?: boolean; order_methods?: string[]; freight_programs_vendor?: string | null; info_confirmed_at?: string | null; assigned_rep_contact_id?: string | null; assigned_rep_group_contact_id?: string | null
           is_active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string
+          ask_before_pictures?: boolean; usual_charges?: UsualCharge[]
         }
         Update: {
           id?: string; organization_id?: string; name?: string; lightspeed_name?: string | null; lightspeed_vendor_id?: string | null; po_code?: string | null; aliases?: string[]
@@ -282,6 +287,7 @@ export type Database = {
           rating?: number | null; tier?: string | null; ordering_frequency?: Database['public']['Enums']['ordering_frequency'] | null
           is_delivery_vendor?: boolean; minimum_order?: string | null; freight_program?: string | null; free_shipping_policy?: 'never' | 'sometimes' | 'always' | null; free_shipping_threshold?: number | null; freight_routing?: string | null; freight_allowance_on_time?: boolean; vid_in_description?: boolean; product_types?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null; do_not_order?: boolean; do_not_order_reason?: string | null; standing?: 'ok' | 'hold' | 'last_resort' | 'do_not_order'; standing_tags?: string[]; standing_review_date?: string | null; merged_into_id?: string | null; wwd_zero_upcharge?: boolean; report_owner?: string | null; is_fishing?: boolean; web_orders?: boolean; order_methods?: string[]; freight_programs_vendor?: string | null; info_confirmed_at?: string | null; assigned_rep_contact_id?: string | null; assigned_rep_group_contact_id?: string | null
           is_active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string
+          ask_before_pictures?: boolean; usual_charges?: UsualCharge[]
         }
         Relationships: [
           { foreignKeyName: 'vendors_organization_id_fkey'; columns: ['organization_id']; isOneToOne: false; referencedRelation: 'organizations'; referencedColumns: ['id'] },
@@ -506,9 +512,9 @@ export type Database = {
         ]
       }
       email_attachments: {
-        Row: { id: string; organization_id: string; email_id: string; gmail_attachment_id: string | null; part_id: string | null; file_name: string; mime_type: string | null; size: number | null; storage_path: string | null; vendor_link_id: string | null; created_at: string }
-        Insert: { id?: string; organization_id: string; email_id: string; gmail_attachment_id?: string | null; part_id?: string | null; file_name: string; mime_type?: string | null; size?: number | null; storage_path?: string | null; vendor_link_id?: string | null; created_at?: string }
-        Update: { id?: string; organization_id?: string; email_id?: string; gmail_attachment_id?: string | null; part_id?: string | null; file_name?: string; mime_type?: string | null; size?: number | null; storage_path?: string | null; vendor_link_id?: string | null; created_at?: string }
+        Row: { id: string; organization_id: string; email_id: string; gmail_attachment_id: string | null; part_id: string | null; file_name: string; mime_type: string | null; size: number | null; storage_path: string | null; vendor_link_id: string | null; created_at: string; picture_kind: PictureKind | null; picture_company: string | null }
+        Insert: { id?: string; organization_id: string; email_id: string; gmail_attachment_id?: string | null; part_id?: string | null; file_name: string; mime_type?: string | null; size?: number | null; storage_path?: string | null; vendor_link_id?: string | null; created_at?: string; picture_kind?: PictureKind | null; picture_company?: string | null }
+        Update: { id?: string; organization_id?: string; email_id?: string; gmail_attachment_id?: string | null; part_id?: string | null; file_name?: string; mime_type?: string | null; size?: number | null; storage_path?: string | null; vendor_link_id?: string | null; created_at?: string; picture_kind?: PictureKind | null; picture_company?: string | null }
         Relationships: [
           { foreignKeyName: 'email_attachments_email_id_fkey'; columns: ['email_id']; isOneToOne: false; referencedRelation: 'emails'; referencedColumns: ['id'] },
           { foreignKeyName: 'email_attachments_vendor_link_id_fkey'; columns: ['vendor_link_id']; isOneToOne: false; referencedRelation: 'vendor_links'; referencedColumns: ['id'] },
@@ -796,6 +802,7 @@ export type Database = {
       vendor_set_ls: { Args: { p_vendor: string; p_ls_vendor_id: string; p_po_code: string }; Returns: undefined }
       task_mark_paid: { Args: { p_task: string }; Returns: undefined }
       org_set_pay_links: { Args: { p_org: string; p_edenred: string | null; p_billcom: string | null }; Returns: undefined }
+      vendor_usual_charge_add: { Args: { p_vendor: string; p_what: string; p_price: number; p_per?: string | null }; Returns: Json }
       sales_report_tick: { Args: { p_link: string; p_on: boolean; p_order?: string | null }; Returns: undefined }
       vendor_link_proof_approve: { Args: { p_link: string; p_on: boolean }; Returns: undefined }
       is_proof_name: { Args: { p_name: string | null }; Returns: boolean }

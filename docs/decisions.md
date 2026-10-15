@@ -2095,3 +2095,13 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   problem (3 PDFs came back "other"): thinking off and more room; the 73 emails with unfiled PDFs were sorted again. A
   failed reading now records what Claude sent back. Also found: freight quote emails were refused by the API since the
   quote reader was built (27 optional fields, limit 16), so no quote was ever read; fixed.
+- Oct 15, pictures (Dana): "I don't want logos downloaded, total waste … I don't want to have to sift through a bunch of
+  useless logos just to find pictures of products." Claude (cheapest model, thinking off) looks at every picture before
+  it is saved: product photos and advertising go to Images, proofs to Proofs, logos never; a rep group's logos of the
+  companies it reps add those names to its lines. "Nationwide sends way too many emails of the same stuff": vendors marked
+  **Ask before saving pictures** (Nationwide first) get only their proofs saved by themselves ("proofs or things to approve
+  those need to get auto saved"); invoices and confirmations as before; their other pictures wait for **Save pictures to
+  Images** in the email. Back-check over every picture already in an Images folder.
+- Oct 15, usual charges (Dana): "There's always a tag charge with Planet Cotton and some of our other independent
+  vendors." Vendors have **Usual charges** (Planet Cotton: Tags $0.15 each); at that price a charge is not an issue. A red
+  row on a check has **This is a usual charge for this vendor** to teach it once.

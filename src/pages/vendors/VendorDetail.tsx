@@ -153,6 +153,7 @@ export default function VendorDetailPage() {
             {v.wwd_zero_upcharge ? <Badge tone="success">WWD 0% upcharge</Badge> : null}
             {v.is_fishing ? <Badge tone="info">Fishing</Badge> : null}
             {v.web_orders ? <Badge tone="info">Web orders, no confirmation</Badge> : null}
+            {v.ask_before_pictures ? <Badge tone="neutral">Pictures saved by hand</Badge> : null}
             {v.is_delivery_vendor ? <Badge tone="neutral">Delivery vendor</Badge> : null}
             {!v.is_active ? <Badge tone="danger">Inactive</Badge> : null}
           </span>

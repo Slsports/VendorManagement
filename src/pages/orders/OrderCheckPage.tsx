@@ -6,11 +6,11 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useTableSort } from '@/hooks/useTableSort'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
-import { checkIssues, checkRows, getOrderCheck, listCheckDocuments, orderCheckAction, runOrderChecks, type CheckAction, type CheckRow, type OrderCheckRow } from '@/services/orderChecks'
+import { addUsualCharge, checkIssues, checkRows, getOrderCheck, listCheckDocuments, orderCheckAction, runOrderChecks, type CheckAction, type CheckRow, type OrderCheckRow } from '@/services/orderChecks'
 import { listOrders } from '@/services/orders'
 import { listPeople } from '@/services/reviews'
 import { downloadVendorFile } from '@/services/lines'
-import { CHECK_KIND_LABEL, CHECK_TITLE, checkStatusText } from '@/lib/orderChecks'
+import { CHECK_KIND_LABEL, CHECK_TITLE, checkStatusText, priceIn } from '@/lib/orderChecks'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
 import { money as formatCurrency } from '@/lib/freight'
@@ -20,7 +20,8 @@ import { SortHeader } from '@/components/shared/SortHeader'
 import { AssigneeSelect } from '@/components/review/AssigneeSelect'
 import { ComposeDialog } from '@/components/mail/ComposeDialog'
 import { EmailConversation } from '@/components/orders/EmailConversation'
-import { Alert, Badge, Button, Select, Spinner } from '@/components/ui'
+import { Alert, Badge, Button, FormField, Input, Select, Spinner } from '@/components/ui'
+import { Modal } from '@/components/shared/Modal'
 
 const COLUMNS = {
   what: (r: CheckRow) => r.what,
@@ -49,6 +50,8 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
   const { view, viewer } = useDocumentViewer()
   const [busy, setBusy] = useState(false)
   const [composing, setComposing] = useState(false)
+  /** "This is a usual charge for this vendor" (Dana, Oct 15), open on a row. */
+  const [usual, setUsual] = useState<{ what: string; price: string; per: string } | null>(null)
   const people = useSupabaseQuery(async () => (organization ? listPeople(organization.id) : []), [organization?.id])
   const against = useSupabaseQuery(() => listCheckDocuments(c.against_ids), [c.against_ids.join(',')])
   const rows = checkRows(c)
@@ -181,7 +184,8 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
             <tbody className="divide-y divide-stone-100">
               {sorted.map((r, i) => (
                 <tr key={i} className={r.ok ? '' : 'bg-red-50/60'}>
-                  <td className="px-3 py-2 font-medium text-stone-900">{r.what}{r.note ? <span className="block text-xs font-normal text-stone-500">{r.note}</span> : null}</td>
+                  <td className="px-3 py-2 font-medium text-stone-900">{r.what}{r.note ? <span className="block text-xs font-normal text-stone-500">{r.note}</span> : null}
+                    {!r.ok && canEdit && c.vendor && c.status === 'to_review' ? <button type="button" onClick={() => setUsual({ what: r.what, price: priceIn(r.theirs)?.toString() ?? '', per: 'each' })} className="mt-1 block text-xs font-normal text-brand hover:underline">This is a usual charge for this vendor</button> : null}</td>
                   <td className="px-3 py-2 text-stone-700">{r.ours ?? '—'}</td>
                   <td className="px-3 py-2 text-stone-700">{r.theirs ?? '—'}</td>
                   <td className="px-3 py-2">{r.ok ? <Check className="size-4 text-green-600" aria-label="Matches" /> : <X className="size-4 text-red-600" aria-label="Different" />}</td>
@@ -210,6 +214,26 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
         </div>
       ) : null}
 
+      {usual && c.vendor ? (
+        <Modal title={`A usual charge for ${c.vendor.name}`} submitLabel="Save and check again" busy={busy} onClose={() => setUsual(null)}
+          onSubmit={async () => {
+            if (!usual.what.trim()) { toast.error('Say what the charge is'); return }
+            try {
+              await addUsualCharge(c.vendor!.id, usual.what.trim(), usual.price.trim() ? Number(usual.price.replace(/[^0-9.]/g, '')) : null, usual.per)
+              setUsual(null)
+              await act('Saved; Claude checks it again', 'recheck', {}, () => void checkNow())
+            } catch (err) {
+              toast.error(errorMessage(err))
+            }
+          }}>
+          <p className="mb-3 text-sm text-stone-600">At this price it won't be flagged on {c.vendor.name}'s confirmations and invoices again. Change it on the vendor's <strong>Edit</strong> page.</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <FormField label="Charge" htmlFor="uc-what" className="sm:col-span-3"><Input id="uc-what" value={usual.what} onChange={(e) => setUsual({ ...usual, what: e.target.value })} placeholder="Tags" autoFocus /></FormField>
+            <FormField label="Price" htmlFor="uc-price"><Input id="uc-price" value={usual.price} onChange={(e) => setUsual({ ...usual, price: e.target.value })} placeholder="0.15" inputMode="decimal" /></FormField>
+            <FormField label="Per" htmlFor="uc-per"><Input id="uc-per" value={usual.per} onChange={(e) => setUsual({ ...usual, per: e.target.value })} placeholder="each" /></FormField>
+          </div>
+        </Modal>
+      ) : null}
       {composing ? (
         <ComposeDialog
           draft={{ to: c.draft_to, subject: c.draft_subject ?? `${CHECK_KIND_LABEL[c.kind]} ${c.doc_number ?? ''}${c.po_number ? ` / PO ${c.po_number}` : ''}`.trim(), body: c.draft_body ?? '', thread_id: c.email?.thread_id ?? null, reply_to_email_id: c.email?.id ?? null, vendor_id: c.vendor?.id ?? null, note: 'Edit anything before sending. Your signature is added when it sends.' }}

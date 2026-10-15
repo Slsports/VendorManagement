@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import { Check, CheckCircle2, ClipboardList, ListTodo, Palette, ExternalLink, Trash2, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { assignEmailThread, fetchEmailHtml, getMailbox, getThread, fetchAttachment, listMailboxes, shareThreadToOrders, setArtStatus, setEmailThreadStatus, setEmailVendor, setThreadView, setWorkingOrder, trashThreads, type ThreadDetail } from '@/services/mail'
+import { assignEmailThread, fetchEmailHtml, fileAttachmentToVendor, getMailbox, getThread, fetchAttachment, listMailboxes, shareThreadToOrders, setArtStatus, setEmailThreadStatus, setEmailVendor, setThreadView, setWorkingOrder, trashThreads, type ThreadDetail } from '@/services/mail'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { MakeFreightBillDialog } from '@/components/freight/MakeFreightBillDialog'
 import { SaveToDocumentsDialog } from '@/components/vendors/SaveToDocumentsDialog'
@@ -259,6 +259,24 @@ function Message({ email: e, startOpen, vendor, carrierId, onCompose, onEmailAdd
   }
   const files = e.attachments.filter((a) => !isInlineImage(a))
   const pictures = e.attachments.filter((a) => isInlineImage(a))
+  // pictures VMS left for you (Dana, Oct 15: vendors marked "Ask before saving pictures", like Nationwide): one click saves them
+  const waiting = e.attachments.filter((a) => !a.vendor_link_id && !saved[a.id] && a.gmail_attachment_id && a.picture_kind && a.picture_kind !== 'logo')
+  const [savingPictures, setSavingPictures] = useState(false)
+  async function savePictures() {
+    if (!vendor) return
+    setSavingPictures(true)
+    try {
+      for (const a of waiting) {
+        await fileAttachmentToVendor(a.id, vendor.id, a.picture_kind === 'proof' ? 'proof' : 'image')
+        setSaved((x) => ({ ...x, [a.id]: a.picture_kind === 'proof' ? 'Proofs' : 'Images' }))
+      }
+      toast.success(`Saved to ${vendor.name}'s Images`)
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setSavingPictures(false)
+    }
+  }
   const body = splitQuoted(e.body_text || e.snippet || '')
   // Pictures in the message (price photos, signature logos): open it formatted, each picture in its place.
   const triedFormatted = useRef(false)
@@ -299,6 +317,12 @@ function Message({ email: e, startOpen, vendor, carrierId, onCompose, onEmailAdd
       {open ? (
         <div className="border-t border-stone-100 px-4 py-3">
           <p className="mb-2 text-xs text-stone-500">To <AddressLinks list={e.to_emails} />{e.cc_emails.length ? <> · Cc <AddressLinks list={e.cc_emails} /></> : null}</p>
+          {canEdit && vendor && waiting.length ? (
+            <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              {waiting.length} picture{waiting.length === 1 ? '' : 's'} not saved ({vendor.name}'s pictures wait for you).
+              <Button size="sm" variant="secondary" loading={savingPictures} onClick={() => void savePictures()}>Save pictures to Images</Button>
+            </div>
+          ) : null}
           {files.length || pictures.length ? (
             <div className="mb-3 flex flex-wrap items-center gap-2">
               {files.map(chip)}

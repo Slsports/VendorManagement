@@ -110,3 +110,9 @@ export async function listCheckConversation(emailId: string | null, orderId: str
     privateThreads: priv.map((x) => ({ id: x.id, owner: owners.get(x.mailbox_id!) || null })),
   }
 }
+
+/** "This is a usual charge for this vendor" (Dana, Oct 15): saved on the vendor, so it is not flagged again at that price. */
+export async function addUsualCharge(vendorId: string, what: string, price: number | null, per: string): Promise<void> {
+  const { error } = await supabase.rpc('vendor_usual_charge_add', { p_vendor: vendorId, p_what: what, p_price: price as number, p_per: per })
+  if (error) throw error
+}

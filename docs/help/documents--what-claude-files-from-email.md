@@ -14,8 +14,10 @@ When mail to orders@ is filed to a vendor, Claude saves the useful attachments i
 ## Good to know
 - **Price lists, catalogs, show specials and order forms**: saved when the file name says so, and from Promotions mail the documents in it too. Catalog and price-list links in promotion emails are saved as links.
 - **Confirmations and invoices** attached to a vendor's email (last 30 days) go to **Confirmations** or **Invoices**, and Claude checks them against the order.
-- **Pictures of items** (not logos or signature pictures) go to **Images**. If the subject talks about damage, defects, a wrong item or a return, they go to **Damaged Items**. The same picture sent again is saved once.
-- Artwork proofs named like a proof ("…PROOF.pdf", "Art Approval", "mock-up") go to **Proofs**, marked **Not approved yet**. Click **Mark approved** once you approve one.
+- **Pictures**: Claude looks at each one first. Product photos and advertising go to **Images**. If the subject talks about damage, defects, a wrong item or a return, they go to **Damaged Items**. The same picture sent again is saved once.
+- **Logos** (company logos, signature graphics, social icons) are never saved. When a rep group's email has logos of the companies it reps, those names are added to the rep group's lines instead.
+- **Proofs**: artwork proofs and things to approve go to **Proofs**, marked **Not approved yet**, even with a plain name like "image001.png". Click **Mark approved** once you approve one.
+- Vendors marked **Ask before saving pictures** (like Nationwide) only get their proofs saved on their own. Their other pictures wait in the email for **Save pictures to Images**. Their invoices and confirmations are still saved.
 - Freight bills, once matched, are filed under **Shipping**.
 - Signature logos, tiny pictures and very large files stay in the email.
 - Mail filed to a vendor later (for example after you answer a sender question) is caught up the same way.
