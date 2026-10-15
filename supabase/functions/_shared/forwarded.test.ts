@@ -26,3 +26,12 @@ describe('forwarded vendor mail (Oct 15)', () => {
     expect(forwardedSender('Fwd: note', 'see below', ours)).toEqual({ email: null, name: null })
   })
 })
+
+describe('the forwarded message text', () => {
+  it('is the vendor’s words under the header block, not the forwarding note', async () => {
+    const { forwardedBody } = await import('./forwarded')
+    const body = 'Please file\n\n---------- Forwarded message ---------\nFrom: Bruce <b@x.com>\nDate: Tue\nSubject: Order\nTo: <shaverlakesports@gmail.com>\n\n\nHi Jarrett,\nCopy of your order attached.'
+    expect(forwardedBody(body)).toBe('Hi Jarrett,\nCopy of your order attached.')
+    expect(forwardedBody('just text')).toBe('just text')
+  })
+})

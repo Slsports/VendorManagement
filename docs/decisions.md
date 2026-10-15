@@ -2121,3 +2121,9 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   shaverlakesportssheets, shaverlakemarina) is the vendor's email: the forwarded From: line decides the sender (the person
   in brackets over a billing relay like NetSuite), and the file steps run on it. Our own addresses are never a "Who is
   this?" sender (the old Gmail card closed). Back-check over 12 months: 424 forwards re-read.
+- Oct 15, spreadsheet confirmations (Dana, "go"): Panther Martin's rep Bruce sent his copy of our order as Excel ("I had to
+  change two models from 18 units to 24 to fit the standard case pack"), forwarded from the old Gmail, and it was not
+  filed. A vendor's or rep's spreadsheet copy of our order is now their confirmation: filed in **Confirmations** and read
+  and compared by Claude like a PDF. Spreadsheets named like price lists, order forms or writers, UPC or cost lists, ATS,
+  guides or sales reports are never taken. In a forward, the vendor's words count, not the forwarding note. Back-check over
+  12 months: 78 emails with 100 such spreadsheets are being sorted again.

@@ -11,6 +11,7 @@ import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, caller, errorResponse, json, serviceClient } from '../_shared/caller.ts'
 import { aiEnabled, comparePaperwork, compareWithSalesReport, isReadableFile, nameNewItems, pickPaperOrder, readPaperwork, type PaperFile, type PaperReading } from '../_shared/ai.ts'
 import { readSalesSheet, sheetForClaude } from '../_shared/salesSheet.ts'
+import { sheetFileText } from '../_shared/sheetFile.ts'
 import * as XLSX from 'npm:xlsx@0.18.5'
 import { LS_STANDARD } from '../_shared/lsStandard.ts'
 import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
@@ -114,7 +115,10 @@ async function loadLink(db: SupabaseClient, id: string): Promise<PaperFile | nul
   if (error || !data) throw new Error(`Opening ${l.file_name ?? l.label}: ${error?.message ?? 'not found'}`)
   if (data.size > MAX_FILE) throw new Error(`${l.file_name ?? l.label} is over 15 MB`)
   const name = l.file_name ?? l.label ?? 'document'
-  return { name, mime: l.mime_type ?? data.type ?? (/\.pdf$/i.test(name) ? 'application/pdf' : ''), bytes: new Uint8Array(await data.arrayBuffer()), label: `${l.kind === 'ls_po' ? 'LS PO' : l.kind === 'order' ? 'Our order' : l.kind}${l.doc_number ? ` ${l.doc_number}` : ''}: ${name}` }
+  const bytes = new Uint8Array(await data.arrayBuffer())
+  // a spreadsheet (a rep's Excel copy of our order, Oct 15) is read as its text
+  const text = /\.(xlsx|xlsm|xls|csv)$/i.test(name) ? (await sheetFileText(bytes)) ?? undefined : undefined
+  return { name, mime: l.mime_type ?? data.type ?? (/\.pdf$/i.test(name) ? 'application/pdf' : ''), bytes, text, label: `${l.kind === 'ls_po' ? 'LS PO' : l.kind === 'order' ? 'Our order' : l.kind}${l.doc_number ? ` ${l.doc_number}` : ''}: ${name}` }
 }
 
 /** What to compare against: for a confirmation, our order documents (else the PO we emailed); for an invoice, the newest confirmation. */
@@ -142,7 +146,7 @@ async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
     const { data: ours } = await db.from('vendor_links').select('id').eq('order_id', o.id).in('kind', ['order', 'ls_po']).not('storage_path', 'is', null).order('created_at', { ascending: false }).limit(2)
     for (const l of ours ?? []) {
       const f = await loadLink(db, l.id)
-      if (f && isReadableFile(f)) { against.push(f); againstIds.push(l.id) }
+      if (f && (f.text || isReadableFile(f))) { against.push(f); againstIds.push(l.id) }
     }
     if (against.length) label = c.kind === 'invoice' ? 'What we ordered (no confirmation on file)' : 'Our order / LS PO'
   }

@@ -61,7 +61,7 @@ describe('order paperwork', () => {
     expect(paperworkKind(f('Price List 2026.pdf'), 'Invoice attached')).toBeNull()
     expect(paperworkKind(f('Statement.pdf'), 'Invoice')).toBeNull()
     expect(paperworkKind(f('image001.png', 5000), 'Order confirmation')).toBeNull()
-    expect(paperworkKind(f('Order Confirmation.xlsx'), null)).toBeNull()
+    expect(paperworkKind(f('Price List.xlsx'), 'Order confirmation')).toBeNull()
     expect(paperworkKind(f('88123.pdf'), 'Past due invoice reminder')).toBeNull()
     expect(paperworkKind(f('photo.pdf'), 'Hello')).toBeNull()
   })
@@ -78,5 +78,22 @@ describe('item pictures', () => {
   it('names generic pictures by the email subject', () => {
     expect(pictureLabel('image003.jpg', 'RE: New hats for spring')).toBe('New hats for spring – image003.jpg')
     expect(pictureLabel('Blue Kayak.jpg', 'Kayaks')).toBe('Blue Kayak')
+  })
+})
+
+describe('spreadsheets as paperwork (Oct 15)', () => {
+  it('takes an order copy or confirmation spreadsheet, never a price list or report', async () => {
+    const { maybeSheetPaperwork } = await import('./offerFiles.ts')
+    expect(maybeSheetPaperwork({ file_name: 'WW PO# PantherMrtn9126 for Shaver Lake Sports #816.xlsx' })).toBe(true)
+    expect(maybeSheetPaperwork({ file_name: '2026 Price List.xlsx' })).toBe(false)
+    expect(maybeSheetPaperwork({ file_name: 'WFS SALES 365 DAYS.xlsx' })).toBe(false)
+    expect(maybeSheetPaperwork({ file_name: 'Fall Order Form.xls' })).toBe(false)
+    expect(maybeSheetPaperwork({ file_name: 'Alexander New Summer 2026 Sunglasses Order Wrtiter.xlsx' })).toBe(false)
+    expect(maybeSheetPaperwork({ file_name: '2026 UPC List_12192025.xlsx' })).toBe(false)
+    expect(maybeSheetPaperwork({ file_name: 'WFS ATS 1.14.26.xlsx' })).toBe(false)
+    expect(maybeSheetPaperwork({ file_name: '_REALTREE TOY COSTS.xlsx' })).toBe(false)
+    expect(maybeSheetPaperwork({ file_name: 'Shaver Lake REVISED PO 082725.xlsx' })).toBe(true)
+    expect(paperworkKind({ file_name: 'Order Confirmation 5521.xlsx', size: 9000 }, null)).toBe('confirmation')
+    expect(paperworkKind({ file_name: 'Invoice 7781.csv', size: 900 }, null)).toBe('invoice')
   })
 })

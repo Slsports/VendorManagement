@@ -87,22 +87,37 @@ const CONFIRM = /order ?confirm|confirmation|acknowledg|\back\b|sales ?order|\bs
 const INVOICE = /invoice|\binv\b|\binv ?#? ?\d|\binv\d/i
 const PAPER_FILE = /\.(pdf|png|jpe?g)$/i
 
+const SHEET_FILE = /\.(xlsx|xlsm|xls|csv)$/i
+/** Spreadsheets that are lists, not paperwork: price lists, catalogs, order forms and writers, specials, stock (ATS), UPC and
+ * cost lists, guides, sales reports. */
+const SHEET_NOT_PAPER = /price|catalog|order ?form|special|line ?sheet|inventory|availability|stock|sales|report|program|booking|pre-?season|show|upc|costs?\b|guide|wri?ti?t?er|entry form|\bats\b|flat file|new items|items only|importer|\beof\b|template/i
+const NOT_PAPER = /credit|statement|price ?list|catalog|packing|\bbol\b|quote|specials?\b|w-?9|\bcoi\b|certificate|flyer|brochure|line ?sheet|order ?form|lookbook/i
+
+/**
+ * A vendor's spreadsheet that may be paperwork (Dana, Oct 15: Panther Martin's rep sent his copy of our order, with his
+ * changes, as Excel): not a price list, catalog, order form or report by its name.
+ */
+export function maybeSheetPaperwork(a: { file_name: string }): boolean {
+  return SHEET_FILE.test(a.file_name) && !SHEET_NOT_PAPER.test(a.file_name) && !NOT_PAPER.test(a.file_name)
+}
+
 const CREDIT = /credit ?(memo|note)|\bcm ?#? ?\d|\bcredit\b/i
 const PAPER_SKIP = /^(image|img|logo|outlook|signature|banner)[-_ ]?\d*\./i
 
 /**
  * A vendor's order confirmation, invoice or credit memo by its file name, then the email subject, then (when allowed) the
- * email's words; PDFs and pictures only, signature pictures never. Claude reads it afterwards and refiles it if wrong.
+ * email's words; PDFs, pictures and order-copy spreadsheets (Oct 15), signature pictures never. Claude reads it afterwards and refiles it if wrong.
  * Credits (Dana, Oct 14: "an invoice filed that is an obvious credit") go to Credits and get no invoice check.
  */
 export function paperworkKind(a: { file_name: string; size: number | null }, subject: string | null, body?: string | null): 'confirmation' | 'invoice' | 'credit' | null {
-  if (!PAPER_FILE.test(a.file_name) || PAPER_SKIP.test(a.file_name)) return null
+  const sheet = maybeSheetPaperwork(a)
+  if ((!PAPER_FILE.test(a.file_name) && !sheet) || PAPER_SKIP.test(a.file_name)) return null
   if (/\.(png|jpe?g)$/i.test(a.file_name) && (a.size ?? 0) < 100 * 1024) return null
   const name = a.file_name.replace(/[_\-.]+/g, ' ')
   if (CREDIT.test(name)) return 'credit'
   // a return authorization or return label is not a bill (WFS "RA2500525.pdf")
   if (/^(ra|rma) ?#? ?\d/i.test(name) || /return (label|authori[sz]ation)/i.test(name)) return null
-  if (!maybePaperwork(a)) return null
+  if (!maybePaperwork(a) && !sheet) return null
   if (CONFIRM.test(name)) return 'confirmation'
   if (INVOICE.test(name)) return 'invoice'
   if (CREDIT.test(subject ?? '')) return 'credit'
@@ -128,7 +143,7 @@ export function ownWords(text: string): string {
 export function maybePaperwork(a: { file_name: string; size: number | null }): boolean {
   if (!PAPER_FILE.test(a.file_name) || PAPER_SKIP.test(a.file_name)) return false
   if (/\.(png|jpe?g)$/i.test(a.file_name) && (a.size ?? 0) < 100 * 1024) return false
-  return !/credit|statement|price ?list|catalog|packing|\bbol\b|quote|specials?\b|w-?9|\bcoi\b|certificate|flyer|brochure|line ?sheet|order ?form|lookbook/i.test(a.file_name)
+  return !NOT_PAPER.test(a.file_name)
 }
 
 // ---- item pictures (Dana, Oct 10: "If a vendor sends images of items they would go in that folder") ----

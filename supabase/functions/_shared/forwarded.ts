@@ -37,3 +37,17 @@ export function forwardedSender(subject: string | null, body: string | null, isO
   }
   return { email: null, name: null }
 }
+
+/**
+ * The forwarded message's own text: what follows its header block (From/Date/Subject/To lines), so the vendor's words
+ * count, not the note of whoever forwarded it. The whole text when there is no forwarded part.
+ */
+export function forwardedBody(body: string | null): string {
+  const text = (body ?? '').replace(/\r/g, '')
+  const mark = text.search(FWD_MARK)
+  if (mark < 0) return text
+  const rest = text.slice(mark)
+  const from = Math.max(0, rest.search(/\bFrom:/i))
+  const gap = /\n\s*\n/.exec(rest.slice(from))
+  return gap ? rest.slice(from + gap.index + gap[0].length).trim() : rest
+}

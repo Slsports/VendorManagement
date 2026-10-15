@@ -6,8 +6,9 @@ import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { Gmail, GmailError, googleAccessToken } from '../_shared/gmail.ts'
 import { clueText, htmlBody, isBulk, isOldGmail, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
 import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type VendorIndex } from '../_shared/mailMatch.ts'
-import { forwardedSender } from '../_shared/forwarded.ts'
-import { extractLinks, itemPicture, maybePaperwork, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
+import { forwardedBody, forwardedSender } from '../_shared/forwarded.ts'
+import { extractLinks, itemPicture, maybePaperwork, maybeSheetPaperwork, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
+import { sheetFileText } from '../_shared/sheetFile.ts'
 import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type PictureKind, readArtwork, readEmailVendors, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type UnsureEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
@@ -593,7 +594,7 @@ async function linkExistingCopy(db: SupabaseClient, vendorId: string, a: { id: s
  */
 async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, started: number, box: string) {
   const { data: queue } = await db.from('emails')
-    .select('id, gmail_id, vendor_id, subject, body_text, view, is_bulk, received_at, vendor:vendors!emails_vendor_id_fkey(name), attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
+    .select('id, gmail_id, vendor_id, subject, body_text, view, is_bulk, received_at, forwarded_from, vendor:vendors!emails_vendor_id_fkey(name), attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
     .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).or('direction.eq.in,forwarded_from.not.is.null').not('vendor_id', 'is', null).is('paper_scanned_at', null).eq('has_attachments', true)
     .gte('received_at', new Date(Date.now() - 365 * 86_400_000).toISOString())
     .order('received_at', { ascending: false }).limit(10)
@@ -603,20 +604,30 @@ async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, star
     // claim it first: two runs at once both filed the same Smith invoices (Oct 15), so the second run skips it
     const { data: mine } = await db.from('emails').update({ paper_scanned_at: new Date().toISOString() }).eq('id', e.id).is('paper_scanned_at', null).select('id')
     if (!mine?.length) continue
+    let deferred = false
     try {
       const atts = (e.attachments ?? []) as { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; vendor_link_id: string | null }[]
-      const open = atts.filter((a) => !a.vendor_link_id && a.gmail_attachment_id && (a.size ?? 0) <= 15 * 1024 * 1024 && (maybePaperwork(a) || paperworkKind(a, null) === 'credit'))
+      // a vendor's or rep's spreadsheet copy of our order counts too (Dana, Oct 15: Panther Martin's rep changed two models
+      // from 18 to 24 in his Excel copy); price lists, order forms and reports never
+      const open = atts.filter((a) => !a.vendor_link_id && a.gmail_attachment_id && (a.size ?? 0) <= 15 * 1024 * 1024 && (maybePaperwork(a) || maybeSheetPaperwork(a) || paperworkKind(a, null) === 'credit'))
       // the email's own words count only when it carries one or two such files (Dom's "S102112.pdf", Dana Oct 13), and
-      // never for billing-system mail (its words are the same boilerplate on every email)
-      const body = open.length <= 2 && !e.is_bulk ? e.body_text : null
+      // never for billing-system mail (its words are the same boilerplate on every email); in a forward, the vendor's
+      // words, not the note of whoever forwarded it
+      const words = e.forwarded_from ? forwardedBody(e.body_text) : e.body_text
+      const body = open.length <= 2 && !e.is_bulk ? words : null
       for (const a of open) {
         let kind = paperworkKind(a, e.subject, body)
         let bytes: Uint8Array | null = null
-        // a PDF that says nothing about itself, in mail that needs attention: Claude looks (a few a run)
-        if (!kind && !e.is_bulk && /\.pdf$/i.test(a.file_name) && e.view === 'attention' && (a.size ?? 0) >= 10 * 1024 && asked < 4 && aiEnabled()) {
+        // a PDF or spreadsheet that says nothing about itself, in mail that needs attention: Claude looks (a few a run)
+        const sheet = maybeSheetPaperwork(a)
+        if (!kind && !e.is_bulk && (/\.pdf$/i.test(a.file_name) || sheet) && e.view === 'attention' && (a.size ?? 0) >= (sheet ? 1024 : 10 * 1024) && aiEnabled()) {
+          // Claude has looked at enough this run: the email waits for the next run instead of being passed over
+          if (asked >= 4) { deferred = true; break }
           asked++
           bytes = await attachmentBytes(gmail, e.gmail_id, a.gmail_attachment_id!)
-          const said = await classifyPaperwork(db, org, { name: a.file_name, mime: 'application/pdf', bytes }, { vendor: (e.vendor as unknown as { name: string } | null)?.name ?? null, subject: e.subject, text: e.body_text })
+          const text = sheet ? await sheetFileText(bytes) : undefined
+          if (sheet && !text) continue
+          const said = await classifyPaperwork(db, org, { name: a.file_name, mime: sheet ? (a.mime_type ?? '') : 'application/pdf', bytes, text: text ?? undefined }, { vendor: (e.vendor as unknown as { name: string } | null)?.name ?? null, subject: e.subject, text: words })
           kind = said === 'other' ? null : said
         }
         if (!kind) continue
@@ -636,6 +647,10 @@ async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, star
       }
     } catch (err) {
       console.error(`paperwork from ${e.id}:`, err instanceof Error ? err.message : err)
+    }
+    if (deferred) {
+      await db.from('emails').update({ paper_scanned_at: null }).eq('id', e.id)
+      break
     }
   }
 }

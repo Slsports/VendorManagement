@@ -1,7 +1,7 @@
 ---
 title: How confirmations and invoices get filed
 section: Order paperwork
-keywords: automatic filing, credit memo, credits, duplicate, billing system, NetSuite, email attachment, confirmation, invoice, saved to, folder, year, orders@, matched to order
+keywords: automatic filing, spreadsheet, Excel, xlsx, rep's copy of the order, order copy, credit memo, credits, duplicate, billing system, NetSuite, email attachment, confirmation, invoice, saved to, folder, year, orders@, matched to order
 who: Everyone
 ---
 Vendor confirmations and invoices that arrive by email are saved and matched to their order without anyone lifting a finger.
@@ -13,6 +13,7 @@ Vendor confirmations and invoices that arrive by email are saved and matched to 
 4. Claude compares it and puts the result in front of the person who placed the order.
 
 ## Good to know
+- **A rep's copy of your order counts as their confirmation.** When a vendor or rep sends their copy of your order as a spreadsheet (Excel or CSV), often with their changes (like Panther Martin's rep moving two models from 18 to 24 to fit the case pack), it goes to **Confirmations** and Claude compares it with your order just like a PDF. Price lists, order forms, UPC and cost lists, stock (ATS) lists and sales reports are never filed this way.
 - **Credit memos** go to the vendor's **Credits** folder, not Invoices, and get no invoice check.
 - Invoices sent by a vendor's billing system (like World Famous Sports' NetSuite emails) are filed by their file name and subject.
 - **No duplicates:** the same file sent again in a later email is not saved twice. The email links to the copy already on file. Any copy that slips in is merged within the hour.
