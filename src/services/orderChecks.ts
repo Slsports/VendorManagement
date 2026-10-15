@@ -116,3 +116,15 @@ export async function addUsualCharge(vendorId: string, what: string, price: numb
   const { error } = await supabase.rpc('vendor_usual_charge_add', { p_vendor: vendorId, p_what: what, p_price: price as number, p_per: per })
   if (error) throw error
 }
+
+/** "This is our order" (Dana, Oct 15): the confirmation's lines become the order (a new one when there is none). */
+export async function makeOrderFromCheck(checkId: string): Promise<string> {
+  const { data, error } = await supabase.rpc('order_check_use_as_order', { p_check: checkId })
+  if (error) throw error
+  return data as string
+}
+
+/** Items on a show vendor's confirmation that were not on our order or sales report. */
+export function checkNewItems(c: { new_items: unknown }): { what: string; qty: number | null; price: number | null }[] {
+  return Array.isArray(c.new_items) ? (c.new_items as { what: string; qty: number | null; price: number | null }[]).filter((x) => x && typeof x.what === 'string') : []
+}

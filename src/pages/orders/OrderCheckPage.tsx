@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Check, FileText, RefreshCw, Send, X } from 'lucide-react'
+import { Check, ClipboardCheck, FileText, RefreshCw, Send, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useTableSort } from '@/hooks/useTableSort'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
-import { addUsualCharge, checkIssues, checkRows, getOrderCheck, listCheckDocuments, orderCheckAction, runOrderChecks, type CheckAction, type CheckRow, type OrderCheckRow } from '@/services/orderChecks'
+import { addUsualCharge, checkIssues, checkNewItems, checkRows, makeOrderFromCheck, getOrderCheck, listCheckDocuments, orderCheckAction, runOrderChecks, type CheckAction, type CheckRow, type OrderCheckRow } from '@/services/orderChecks'
 import { listOrders } from '@/services/orders'
 import { listPeople } from '@/services/reviews'
 import { downloadVendorFile } from '@/services/lines'
@@ -56,6 +56,8 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
   const against = useSupabaseQuery(() => listCheckDocuments(c.against_ids), [c.against_ids.join(',')])
   const rows = checkRows(c)
   const issues = checkIssues(c)
+  const newItems = checkNewItems(c)
+  const readLines = ((c.reading as { lines?: unknown[] } | null)?.lines ?? []).length
   const { sorted, sort, toggle } = useTableSort(rows, COLUMNS)
   const st = checkStatusText(c)
   const working = c.status === 'reading' || c.status === 'comparing'
@@ -67,6 +69,21 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
       toast.success(label)
       if (after) after()
       else await refetch()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  /** "This is our order" (Dana, Oct 15): the confirmation's lines become the order; its invoices are checked against it. */
+  async function saveAsOrder() {
+    if (!window.confirm(c.order ? "Replace the order's lines with this confirmation's lines?" : 'Make the order from this confirmation?')) return
+    setBusy(true)
+    try {
+      const orderId = await makeOrderFromCheck(c.id)
+      toast.success('Saved as our order')
+      navigate(`${ROUTES.orders}/${orderId}`)
     } catch (err) {
       toast.error(errorMessage(err))
     } finally {
@@ -196,6 +213,16 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
         </section>
       ) : null}
 
+      {newItems.length ? (
+        <section className="mb-4 rounded-2xl border border-sky-200 bg-sky-50 p-5">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-sky-800">New items to double check</h2>
+          <p className="mt-1 text-xs text-sky-900">On the confirmation but not on our order or sales report: picked at the show. Not counted as issues.</p>
+          <ul className="mt-2 space-y-1 text-sm text-stone-800">
+            {newItems.map((x, i) => <li key={i}>{x.what}{x.qty != null ? ` · ${x.qty}` : ''}{x.price != null ? ` at ${formatCurrency(x.price)}` : ''}</li>)}
+          </ul>
+        </section>
+      ) : null}
+
       {c.draft_body && c.status === 'to_review' ? (
         <section className="mb-4 rounded-2xl border border-stone-200 bg-white p-5">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Email Claude drafted to the vendor</h2>
@@ -208,6 +235,9 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
         <div className="flex flex-wrap gap-2">
           {c.status === 'to_review' && issues.length ? <Button loading={busy} onClick={() => setComposing(true)} leftIcon={<Send className="size-4" aria-hidden="true" />}>Review &amp; send email</Button> : null}
           {c.status === 'to_review' ? <Button variant={issues.length ? 'secondary' : 'primary'} loading={busy} onClick={() => void act(issues.length ? 'Marked done, no email' : 'Looked at', 'done', {}, leave)} leftIcon={<Check className="size-4" aria-hidden="true" />}>{issues.length ? 'Done, no email needed' : 'Looks good, done'}</Button> : null}
+          {c.kind === 'confirmation' && (c.status === 'to_review' || c.status === 'needs_order') && readLines > 0 ? (
+            <Button variant="secondary" loading={busy} onClick={() => void saveAsOrder()} leftIcon={<ClipboardCheck className="size-4" aria-hidden="true" />}>This is our order</Button>
+          ) : null}
           {c.status === 'to_review' || c.status === 'failed' ? <Button variant="ghost" loading={busy} onClick={() => void act('Comparing again', 'recheck', {}, () => void checkNow())} leftIcon={<RefreshCw className="size-4" aria-hidden="true" />}>Check again</Button> : null}
           {c.status !== 'done' && c.status !== 'dismissed' ? <Button variant="ghost" loading={busy} onClick={() => void act('Set aside', 'dismiss', {}, leave)}>Not a {CHECK_KIND_LABEL[c.kind].toLowerCase()}: set aside</Button> : null}
           {c.status === 'done' || c.status === 'dismissed' ? <Button variant="secondary" loading={busy} onClick={() => void act('Back on the list', 'reopen')}>Reopen</Button> : null}

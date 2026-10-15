@@ -113,7 +113,7 @@ function FlagList({ rows }: { rows: OrderingRow[] }) {
                 {[f.assignee ? `for ${f.assignee.full_name.split(' ')[0]}` : null, f.flagger ? `flagged by ${f.flagger.full_name.split(' ')[0]}` : null, new Date(f.created_at).toLocaleDateString(), f.note].filter(Boolean).join(' · ')}
               </span>
             </span>
-            {f.stage === 'check' && !f.report_id ? <SalesReportUpload vendor={f.vendor} onSaved={() => setSuggest(f.vendor)} /> : null}
+            {f.stage === 'check' && !f.report_id ? <SalesReportUpload vendor={f.vendor} onSaved={(used) => { if (!used) setSuggest(f.vendor) }} /> : null}
             {f.report_id ? <Button size="sm" variant="secondary" onClick={() => setSuggest(f.vendor)}>Suggested order</Button> : null}
             {f.stage === 'check' ? <Button size="sm" variant="ghost" onClick={() => act(moveOrderingItem(f.id, 'to_order'), `${f.vendor!.name}: moved to To order`)}>Order it</Button> : null}
             {f.stage === 'to_order' && !f.report_id ? <Button size="sm" variant="secondary" onClick={() => setPlacing(f)}>Order placed</Button> : null}

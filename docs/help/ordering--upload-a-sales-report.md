@@ -11,8 +11,10 @@ Upload a vendor's sales report: the raw LS Analytics export (VMS formats it), or
 2. Open the vendor's page and click **Upload sales report** in the **Ordering** box (or on the vendor's row on the Ordering card).
 3. Pick the file.
 4. If the file holds more than one LS vendor, pick which one is this vendor.
-5. Check the **Sales period (days)** (365 unless the file name says otherwise) and click **Make the report**.
-6. The suggested order opens.
+5. Answer **Did you place an order from this report?**
+   - **Yes, we ordered from it**: it is tagged **Used to place the order**, and the vendor's confirmations are checked against it.
+   - **Not yet**: it is just filed, and the suggested order opens so you can order from it.
+6. Check the **Sales period (days)** (365 unless the file name says otherwise) and click **Make the report**.
 
 ## An already formatted report
 1. Click **Upload sales report** and pick the report (the one with tabs like Size Summary, By Category, Active, Flags).

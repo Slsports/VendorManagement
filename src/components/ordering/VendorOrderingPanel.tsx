@@ -48,7 +48,7 @@ export function VendorOrderingPanel({ vendor, assignedBuyerId, canEdit, classNam
         {canEdit ? (
           <div className="mt-2 flex flex-wrap gap-2">
             <FlagButtons vendor={vendor} assignedBuyerId={assignedBuyerId} />
-            <SalesReportUpload vendor={vendor} onSaved={() => { void report.refetch(); setOpen(true) }} />
+            <SalesReportUpload vendor={vendor} onSaved={(used) => { void report.refetch(); if (!used) setOpen(true) }} />
             {report.data ? <Button size="sm" onClick={() => setOpen(true)}>Suggested order</Button> : null}
           </div>
         ) : null}

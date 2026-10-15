@@ -121,7 +121,7 @@ async function loadLink(db: SupabaseClient, id: string): Promise<PaperFile | nul
 async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
   if (!c.order_id) return compareReport(db, c, doc, null)
   const { data: o } = await db.from('orders')
-    .select('id, po_number, order_date, status, description, store_codes, est_cost, est_ship_date, freight_cost, freight_notes, free_shipping, free_shipping_basis, free_shipping_note, freight_allowance, freight_allowance_pay_by, ar_due, notes, vendor:vendors(name, email, free_shipping_policy, free_shipping_threshold, web_orders, usual_charges)')
+    .select('id, po_number, order_date, status, description, store_codes, est_cost, est_ship_date, freight_cost, freight_notes, free_shipping, free_shipping_basis, free_shipping_note, freight_allowance, freight_allowance_pay_by, ar_due, notes, vendor:vendors(name, email, free_shipping_policy, free_shipping_threshold, web_orders, usual_charges, order_set_at_show)')
     .eq('id', c.order_id!).single()
   if (!o) throw new Error('The order is gone')
   const { data: lines } = await db.from('order_lines').select('vendor_item_id, description, quantity, unit_cost, extended').eq('order_id', o.id).order('sort_order')
@@ -164,14 +164,14 @@ async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
   // who to write to: whoever sent the document, else the vendor's email
   let contact: string | null = null
   if (c.email_id) contact = (await db.from('emails').select('from_email').eq('id', c.email_id).maybeSingle()).data?.from_email ?? null
-  const vendor = o.vendor as unknown as { name: string; email: string | null; web_orders: boolean; usual_charges: { what: string; price: number | null; per: string | null }[] } | null
+  const vendor = o.vendor as unknown as { name: string; email: string | null; web_orders: boolean; usual_charges: { what: string; price: number | null; per: string | null }[]; order_set_at_show: boolean } | null
   contact ??= vendor?.email ?? null
 
   const conversation = await conversationFor(db, c, o.id)
   const r = await comparePaperwork(db, c.organization_id, {
     kind: c.kind, vendor: vendor?.name ?? null, order: { ...o, vendor: undefined }, order_lines: lines ?? [], doc, doc_reading: c.reading,
     against, against_readings: readings, contact, others, conversation, web_order: !!vendor?.web_orders, po_handled: c.kind === 'confirmation' && !realPo(c.reading?.po_number),
-    usual_charges: vendor?.usual_charges ?? [],
+    usual_charges: vendor?.usual_charges ?? [], show_order: !!vendor?.order_set_at_show,
   })
   const issues = r.issues.filter((x) => x.trim())
   const { error } = await db.rpc('order_check_apply_compare', { p_check: c.id, p_result: {
@@ -179,6 +179,7 @@ async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
     draft_to: issues.length && contact ? [contact] : [], draft_subject: issues.length ? r.draft_subject : null, draft_body: issues.length ? r.draft_body : null,
   } })
   if (error) throw new Error(error.message)
+  await db.from('order_checks').update({ new_items: r.new_items ?? [] }).eq('id', c.id)
 }
 
 const realPo = (po: string | null | undefined) => !!po && po.replace(/[^A-Za-z0-9]/g, '').length >= 3 && !/^\s*(n\/?a|none|tbd|pending|na|no po)\s*$/i.test(po)
@@ -210,12 +211,12 @@ async function compareReport(db: SupabaseClient, c: Check, doc: PaperFile, order
   const name = l!.file_name ?? l!.label ?? 'Sales report'
   let contact: string | null = null
   if (c.email_id) contact = (await db.from('emails').select('from_email').eq('id', c.email_id).maybeSingle()).data?.from_email ?? null
-  const { data: vendor } = await db.from('vendors').select('name, email, usual_charges').eq('id', c.vendor_id!).maybeSingle()
+  const { data: vendor } = await db.from('vendors').select('name, email, usual_charges, order_set_at_show').eq('id', c.vendor_id!).maybeSingle()
   contact ??= vendor?.email ?? null
   const conversation = await conversationFor(db, c, (order?.id as string | undefined) ?? null)
   const r = await compareWithSalesReport(db, c.organization_id, {
     vendor: vendor?.name ?? null, doc, doc_reading: c.reading, report_name: name, column: sheet.column, report: sheetForClaude(sheet),
-    order: order ? { ...order, vendor: undefined } : null, conversation, contact, po_handled: !realPo(c.reading?.po_number), usual_charges: vendor?.usual_charges ?? [],
+    order: order ? { ...order, vendor: undefined } : null, conversation, contact, po_handled: !realPo(c.reading?.po_number), usual_charges: vendor?.usual_charges ?? [], show_order: !!vendor?.order_set_at_show,
   })
   const issues = r.issues.filter((x) => x.trim())
   const { error: e2 } = await db.rpc('order_check_apply_compare', { p_check: c.id, p_result: {
@@ -224,6 +225,7 @@ async function compareReport(db: SupabaseClient, c: Check, doc: PaperFile, order
     draft_to: issues.length && contact ? [contact] : [], draft_subject: issues.length ? r.draft_subject : null, draft_body: issues.length ? r.draft_body : null,
   } })
   if (e2) throw new Error(e2.message)
+  await db.from('order_checks').update({ new_items: r.new_items ?? [] }).eq('id', c.id)
   return true
 }
 

@@ -3,6 +3,7 @@ import toast from 'react-hot-toast'
 import { FileSpreadsheet } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { readSalesExport, saveSalesReport, type ReadReport } from '@/services/ordering'
+import { tickSalesReport } from '@/services/lines'
 import { errorMessage } from '@/lib/utils'
 import { Modal } from '@/components/shared/Modal'
 import { Button, FormField, Input, Select } from '@/components/ui'
@@ -14,7 +15,8 @@ import { Button, FormField, Input, Select } from '@/components/ui'
  */
 export function SalesReportUpload({ vendor, onSaved, label = 'Upload sales report', variant = 'secondary' }: {
   vendor: { id: string; name: string; aliases?: string[] }
-  onSaved: () => void
+  /** used: we already placed an order from this report (no suggested order needed) */
+  onSaved: (used: boolean) => void
   label?: string
   variant?: 'primary' | 'secondary'
 }) {
@@ -24,6 +26,8 @@ export function SalesReportUpload({ vendor, onSaved, label = 'Upload sales repor
   const [fileName, setFileName] = useState('')
   const [lsVendor, setLsVendor] = useState('')
   const [days, setDays] = useState('365')
+  /** "Did you place an order from this report?" (Dana, Oct 15) */
+  const [used, setUsed] = useState<'' | 'yes' | 'no'>('')
   const [busy, setBusy] = useState(false)
 
   async function pick(file: File | undefined) {
@@ -32,6 +36,7 @@ export function SalesReportUpload({ vendor, onSaved, label = 'Upload sales repor
     try {
       const r = await readSalesExport(file, vendor.name, vendor.aliases ?? [])
       setRead(r)
+      setUsed('')
       setFileName(file.name)
       setLsVendor(r.guess ?? '')
       const m = file.name.match(/(\d{2,4})\s*DAYS/i)
@@ -47,13 +52,15 @@ export function SalesReportUpload({ vendor, onSaved, label = 'Upload sales repor
   async function save() {
     if (!organization || !profile || !read) return
     if (!lsVendor) { toast.error('Pick which LS vendor in the file is ' + vendor.name); return }
+    if (!used) { toast.error('Say whether you placed an order from this report'); return }
     const n = Math.round(Number(days))
     setBusy(true)
     try {
-      await saveSalesReport({ organizationId: organization.id, vendor, items: read.items.filter((x) => x.lsVendor === lsVendor), lsVendor, days: n > 0 ? n : 365, profile, formatted: read.formatted })
-      toast.success('Sales report filed in Sales reports')
+      const report = await saveSalesReport({ organizationId: organization.id, vendor, items: read.items.filter((x) => x.lsVendor === lsVendor), lsVendor, days: n > 0 ? n : 365, profile, formatted: read.formatted })
+      if (used === 'yes' && report.document_id) await tickSalesReport(report.document_id, true)
+      toast.success(used === 'yes' ? 'Filed and tagged: confirmations are checked against this report' : 'Sales report filed in Sales reports')
       setRead(null)
-      onSaved()
+      onSaved(used === 'yes')
     } catch (e) {
       toast.error(errorMessage(e))
     } finally {
@@ -77,6 +84,14 @@ export function SalesReportUpload({ vendor, onSaved, label = 'Upload sales repor
               </Select>
             </FormField>
           ) : null}
+          <fieldset>
+            <legend className="text-sm font-medium text-stone-700">Did you place an order from this report?</legend>
+            <div className="mt-1.5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-stone-800">
+              <label className="flex items-center gap-1.5"><input type="radio" name="sr-used" checked={used === 'yes'} onChange={() => setUsed('yes')} className="size-4 accent-brand" /> Yes, we ordered from it</label>
+              <label className="flex items-center gap-1.5"><input type="radio" name="sr-used" checked={used === 'no'} onChange={() => setUsed('no')} className="size-4 accent-brand" /> Not yet</label>
+            </div>
+            <p className="mt-1 text-xs text-stone-500">{used === 'yes' ? "It's tagged Used to place the order: the vendor's confirmations are checked against it." : used === 'no' ? 'It is filed, and the suggested order opens so you can order from it.' : ''}</p>
+          </fieldset>
           {read.formatted ? null : (
             <FormField label="Sales period (days)" htmlFor="sr-days" hint="Goes in the file name, e.g. SALES 365 DAYS.">
               <Input id="sr-days" type="number" min={1} max={3650} value={days} onChange={(e) => setDays(e.target.value)} className="w-28" />

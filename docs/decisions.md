@@ -2109,3 +2109,9 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   export … System ID"): **Upload sales report** only took the raw LS Analytics export, and this one was already formatted
   (Size Summary first, item tabs with a title row, her Order column on By Category). Now a formatted report is filed as it
   is, its items read back for the suggested order, and the confirmation check uses the tab with the most Order quantities.
+- Oct 15, orders settled at the show (Dana, WFS): "once we meet with them at the show a lot of things change on our order
+  column … I still want quantity flagged, just not new items. I will always look at the confirmation just to double check
+  the new items." Vendors marked **Order is finalized at the show** (WFS first): new items on a confirmation are listed as
+  **New items to double check**, not issues or email; quantity, price and missing items still are. **This is our order** on
+  a confirmation saves its lines as the order. **Upload sales report** asks "Did you place an order from this report?":
+  Yes tags it Used to place the order (no suggested order pops up); Not yet files it and opens the suggested order.
