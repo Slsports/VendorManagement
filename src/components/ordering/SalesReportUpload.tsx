@@ -9,7 +9,8 @@ import { Button, FormField, Input, Select } from '@/components/ui'
 
 /**
  * "Upload sales report" (Dana, Oct 11): the raw LS Analytics export for this vendor. VMS formats it as a Vendor Sales
- * Report (spec v49), files it in Sales reports and opens the suggested order.
+ * Report (spec v49), files it in Sales reports and opens the suggested order. A report that is already formatted is
+ * filed as it is (Dana, Oct 15: the WFS report with her Order column was turned away).
  */
 export function SalesReportUpload({ vendor, onSaved, label = 'Upload sales report', variant = 'secondary' }: {
   vendor: { id: string; name: string; aliases?: string[] }
@@ -49,7 +50,7 @@ export function SalesReportUpload({ vendor, onSaved, label = 'Upload sales repor
     const n = Math.round(Number(days))
     setBusy(true)
     try {
-      await saveSalesReport({ organizationId: organization.id, vendor, items: read.items.filter((x) => x.lsVendor === lsVendor), lsVendor, days: n > 0 ? n : 365, profile })
+      await saveSalesReport({ organizationId: organization.id, vendor, items: read.items.filter((x) => x.lsVendor === lsVendor), lsVendor, days: n > 0 ? n : 365, profile, formatted: read.formatted })
       toast.success('Sales report filed in Sales reports')
       setRead(null)
       onSaved()
@@ -66,7 +67,7 @@ export function SalesReportUpload({ vendor, onSaved, label = 'Upload sales repor
       <Button size="sm" variant={variant} loading={busy && !read} onClick={() => input.current?.click()} leftIcon={<FileSpreadsheet className="size-4" aria-hidden="true" />}>{label}</Button>
       <input ref={input} type="file" accept=".xlsx,.xls,.csv" className="hidden" aria-label="LS sales report file" onChange={(e) => void pick(e.target.files?.[0])} />
       {read ? (
-        <Modal title={`Sales report · ${vendor.name}`} submitLabel="Make the report" busy={busy} onSubmit={save} onClose={() => setRead(null)}>
+        <Modal title={`Sales report · ${vendor.name}`} submitLabel={read.formatted ? 'File the report' : 'Make the report'} busy={busy} onSubmit={save} onClose={() => setRead(null)}>
           <p className="text-stone-600">{fileName}: {read.items.length} item{read.items.length === 1 ? '' : 's'}{read.lsVendors.length > 1 ? ` from ${read.lsVendors.length} LS vendors` : ''}.</p>
           {read.lsVendors.length > 1 || !read.guess ? (
             <FormField label={`Which LS vendor is ${vendor.name}?`} htmlFor="sr-ls">
@@ -76,10 +77,14 @@ export function SalesReportUpload({ vendor, onSaved, label = 'Upload sales repor
               </Select>
             </FormField>
           ) : null}
-          <FormField label="Sales period (days)" htmlFor="sr-days" hint="Goes in the file name, e.g. SALES 365 DAYS.">
-            <Input id="sr-days" type="number" min={1} max={3650} value={days} onChange={(e) => setDays(e.target.value)} className="w-28" />
-          </FormField>
-          {lsVendor ? <p className="text-xs text-stone-500">{count} items for {lsVendor}. VMS formats them to the sales report spec, files the report in Sales reports and works out a suggested order.</p> : null}
+          {read.formatted ? null : (
+            <FormField label="Sales period (days)" htmlFor="sr-days" hint="Goes in the file name, e.g. SALES 365 DAYS.">
+              <Input id="sr-days" type="number" min={1} max={3650} value={days} onChange={(e) => setDays(e.target.value)} className="w-28" />
+            </FormField>
+          )}
+          {read.formatted
+            ? <p className="text-xs text-stone-500">This report is already formatted{read.formatted.runDate ? ` (run ${new Date(`${read.formatted.runDate}T12:00:00`).toLocaleDateString()})` : ''}. VMS files it as it is in Sales reports, with your Order column and notes, and works out a suggested order.</p>
+            : lsVendor ? <p className="text-xs text-stone-500">{count} items for {lsVendor}. VMS formats them to the sales report spec, files the report in Sales reports and works out a suggested order.</p> : null}
         </Modal>
       ) : null}
     </>

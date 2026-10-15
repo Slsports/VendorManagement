@@ -25,27 +25,32 @@ function headerOf(row: unknown[]): Record<keyof SheetItem, number> | null {
 }
 
 /**
- * The items of the first sheet with an item header, without TOTAL and group rows. Uses the Order column when anything
- * is typed in it, else Need.
+ * The items of the sheet with an item header that has the most quantities typed in Order (Dana fills Order on one tab,
+ * e.g. By Category in the WFS report, Oct 15), else the first such sheet; without TOTAL and group rows. Uses the Order
+ * column when anything is typed in it, else Need.
  */
 export function readSalesSheet(sheets: { name: string; rows: unknown[][] }[]): SalesSheet | null {
-  for (const s of sheets) {
-    const at = s.rows.slice(0, 15).findIndex((r) => headerOf(r) !== null)
-    if (at < 0) continue
-    const c = headerOf(s.rows[at]!)!
-    const cell = (r: unknown[], i: number) => (i >= 0 ? r[i] : null)
-    const items: SheetItem[] = []
-    for (const r of s.rows.slice(at + 1)) {
-      const vid = String(cell(r, c.vid) ?? '').trim()
-      const desc = String(cell(r, c.desc) ?? '').trim()
-      if (!vid && !desc) continue
-      if (/^(GRAND )?TOTAL\b/i.test(String(r[0] ?? '')) || /^(GRAND )?TOTAL\b/i.test(desc)) continue
-      items.push({ vid, desc, upc: String(cell(r, c.upc) ?? '').trim(), sold: num(cell(r, c.sold)), stock: num(cell(r, c.stock)), need: num(cell(r, c.need)), order: num(cell(r, c.order)) })
-    }
-    if (!items.length) continue
-    return { items, column: items.some((x) => x.order !== null && x.order !== 0) ? 'order' : 'need', sheet: s.name }
+  const all = sheets.map(readOneSheet).filter((x): x is SalesSheet => !!x)
+  if (!all.length) return null
+  const ordered = (x: SalesSheet) => x.items.filter((i) => i.order !== null && i.order !== 0).length
+  return all.reduce((best, x) => (ordered(x) > ordered(best) ? x : best), all[0]!)
+}
+
+function readOneSheet(s: { name: string; rows: unknown[][] }): SalesSheet | null {
+  const at = s.rows.slice(0, 15).findIndex((r) => headerOf(r) !== null)
+  if (at < 0) return null
+  const c = headerOf(s.rows[at]!)!
+  const cell = (r: unknown[], i: number) => (i >= 0 ? r[i] : null)
+  const items: SheetItem[] = []
+  for (const r of s.rows.slice(at + 1)) {
+    const vid = String(cell(r, c.vid) ?? '').trim()
+    const desc = String(cell(r, c.desc) ?? '').trim()
+    if (!vid && !desc) continue
+    if (/^(GRAND )?TOTAL\b/i.test(String(r[0] ?? '')) || /^(GRAND )?TOTAL\b/i.test(desc)) continue
+    items.push({ vid, desc, upc: String(cell(r, c.upc) ?? '').trim(), sold: num(cell(r, c.sold)), stock: num(cell(r, c.stock)), need: num(cell(r, c.need)), order: num(cell(r, c.order)) })
   }
-  return null
+  if (!items.length) return null
+  return { items, column: items.some((x) => x.order !== null && x.order !== 0) ? 'order' : 'need', sheet: s.name }
 }
 
 /** The rows worth showing Claude: ordered (or needed) items first, then the rest, at most `max`. */

@@ -224,3 +224,43 @@ export function reportFileName(initials: string, run: Date, vendorName: string, 
 
 export const initialsOf = (name: string | null | undefined) => (name ?? '').split(/\s+/).filter(Boolean).map((w) => w[0]!.toUpperCase()).join('').slice(0, 3) || 'VMS'
 export const runText = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(2)}`
+
+/**
+ * A sales report that is already formatted (Dana, Oct 15: WFS "8-29-26 … SALES v3", with Size Summary, Active, No Data,
+ * Flags and Archived tabs and her Order column): the item tabs are read back into items, each System ID once. Null when
+ * the workbook is not one (no tab with System ID, Sold and In Stock in its header).
+ */
+export function readFormattedReport(sheets: { name: string; rows: unknown[][] }[]): { items: SalesItem[]; runDate: string | null } | null {
+  const seen = new Set<string>()
+  const items: SalesItem[] = []
+  let runDate: string | null = null
+  let found = false
+  for (const s of sheets) {
+    const at = s.rows.slice(0, 5).findIndex((r) => { const h = r.map((c) => norm(text(c))); return h.includes('system id') && h.includes('sold') && h.includes('in stock') })
+    if (at < 0) continue
+    found = true
+    const title = text(s.rows[0]?.[0])
+    const run = /run\s+(\d{1,2})\/(\d{1,2})\/(\d{2,4})/i.exec(title)
+    if (run && !runDate) runDate = `${run[3]!.length === 2 ? `20${run[3]}` : run[3]}-${run[1]!.padStart(2, '0')}-${run[2]!.padStart(2, '0')}`
+    const h = s.rows[at]!.map((c) => norm(text(c)))
+    const ix = (name: string) => h.indexOf(name)
+    const c = { sid: ix('system id'), upc: ix('upc'), vid: ix('vendor id'), desc: ix('description'), cost: ix('cost'), cat: ix('category'), last: ix('last sold date'), sold: ix('sold'), qoh: ix('in stock') }
+    const archived = /archived/i.test(s.name) || /archived/i.test(title)
+    for (const r of s.rows.slice(at + 1)) {
+      const sid = text(r[c.sid])
+      if (!sid || seen.has(sid)) continue
+      seen.add(sid)
+      const lastText = c.last >= 0 ? text(r[c.last]) : ''
+      const m = /^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/.exec(lastText)
+      const qohRaw = r[c.qoh]
+      const nonInv = typeof qohRaw === 'string' && /^'?-$/.test(qohRaw.trim())
+      items.push({
+        sid, upc: c.upc >= 0 ? text(r[c.upc]) : '', lsVendor: '', vid: c.vid >= 0 ? text(r[c.vid]) : '', desc: c.desc >= 0 ? text(r[c.desc]) : '',
+        cost: c.cost >= 0 ? num(r[c.cost]) : null, cat: c.cat >= 0 ? text(r[c.cat]) : '', archived,
+        sold: Math.round(num(r[c.sold]) ?? 0), nonInv, qoh: nonInv ? 0 : Math.round(num(qohRaw) ?? 0),
+        last: m ? `${m[3]!.length === 2 ? `20${m[3]}` : m[3]}-${m[1]!.padStart(2, '0')}-${m[2]!.padStart(2, '0')}` : null, notes: [],
+      })
+    }
+  }
+  return found ? { items, runDate } : null
+}

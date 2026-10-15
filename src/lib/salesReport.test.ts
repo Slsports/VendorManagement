@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { activeRows, initialsOf, lineOf, lsVendorsIn, matchLsVendor, needOf, planReport, readExport, reportFileName, runText, type SalesItem } from './salesReport'
+import { activeRows, initialsOf, lineOf, lsVendorsIn, matchLsVendor, needOf, planReport, readExport, readFormattedReport, reportFileName, runText, type SalesItem } from './salesReport'
 import { suggestOrder, suggestionTotal } from './suggestedOrder'
 import { buildReportXlsx } from './salesReportXlsx'
 
@@ -83,5 +83,22 @@ describe('the suggested order', () => {
     expect(lines.map((l) => [l.sid, l.need, l.onOrder, l.suggested])).toEqual([['1', 25, 20, 5], ['2', 8, 3, 5]])
     expect(lines.find((l) => l.sid === '1')!.from[0]).toMatchObject({ orderLabel: 'PO 1', stage: 'confirmed' })
     expect(suggestionTotal(lines)).toEqual({ units: 10, cost: 20, items: 2 })
+  })
+})
+
+describe('an already formatted report (WFS v3, Oct 15)', () => {
+  const head = ['System ID', 'UPC', 'Vendor ID', 'Description', 'Cost', 'Category', 'Last Sold Date', 'Sold', 'In Stock', 'Need', 'Order', 'Notes']
+  it('reads its item tabs back, each System ID once, archived from the Archived tabs', () => {
+    const r = readFormattedReport([
+      { name: 'Size Summary', rows: [['WFS — Report Run 8/21/26'], ['Gender', 'Subcategory', 'Size', '# SKUs', 'Sold', 'In Stock', 'Need', 'Notes']] },
+      { name: 'By Category', rows: [['WFS — Report Run 8/21/26'], head, ['2100', '7163', 'BG-81', 'BAG', 7, 'CAMP', '08/03/26', 5, 11, -6, 'NO', null]] },
+      { name: 'Active', rows: [['WFS — Report Run 8/21/26'], head, ['2100', '7163', 'BG-81', 'BAG', 7, 'CAMP', '08/03/26', 5, 11, -6, null, null]] },
+      { name: 'Archived - No Sales (Ignored)', rows: [['WFS — Report Run 8/21/26 — ARCHIVED'], head, ['2999', null, null, 'SKILLET', 10.5, '(No Category)', 'Never Sold', 0, 0, 0, null, null]] },
+    ])
+    expect(r?.runDate).toBe('2026-08-21')
+    expect(r?.items.map((x) => [x.sid, x.archived, x.last, x.sold, x.qoh])).toEqual([['2100', false, '2026-08-03', 5, 11], ['2999', true, null, 0, 0]])
+  })
+  it('is not a raw LS export', () => {
+    expect(readFormattedReport([{ name: 'Sheet1', rows: [['Item System ID', 'Description', 'Quantity Sold', 'Quantity on Hand']] }])).toBeNull()
   })
 })

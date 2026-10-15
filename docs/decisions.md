@@ -2105,3 +2105,7 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - Oct 15, usual charges (Dana): "There's always a tag charge with Planet Cotton and some of our other independent
   vendors." Vendors have **Usual charges** (Planet Cotton: Tags $0.15 each); at that price a charge is not an issue. A red
   row on a check has **This is a usual charge for this vendor** to teach it once.
+- Oct 15, sales report upload (Dana): the WFS "8-29-26 … SALES v3" report would not upload ("doesn't look like an LS sales
+  export … System ID"): **Upload sales report** only took the raw LS Analytics export, and this one was already formatted
+  (Size Summary first, item tabs with a title row, her Order column on By Category). Now a formatted report is filed as it
+  is, its items read back for the suggested order, and the confirmation check uses the tab with the most Order quantities.

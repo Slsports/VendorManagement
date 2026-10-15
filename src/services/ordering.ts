@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { addVendorLink, uploadVendorFile } from '@/services/lines'
-import { initialsOf, lsVendorsIn, matchLsVendor, planReport, readExport, reportFileName, runText, type SalesItem } from '@/lib/salesReport'
+import { ExportError, initialsOf, lsVendorsIn, matchLsVendor, planReport, readExport, readFormattedReport, reportFileName, runText, type SalesItem } from '@/lib/salesReport'
 import { suggestOrder, type IncomingLine, type IncomingStage, type SuggestedLine } from '@/lib/suggestedOrder'
 import type { Order, OrderingItem, SalesReport } from '@/types'
 import type { Json } from '@/types/database'
@@ -89,12 +89,22 @@ export const isOverdue = (o: Pick<Order, 'status' | 'est_ship_date'>) => o.statu
 export const needsLsPo = (o: Pick<OrderingOrderRow, 'status' | 'ls_po_number' | 'ls_po_docs'>) => o.status === 'confirmed' && !o.ls_po_number && !(o.ls_po_docs ?? []).length
 
 // ---- sales reports and the suggested order ----------------------------------------------------------------
-export interface ReadReport { items: SalesItem[]; lsVendors: { name: string; count: number }[]; guess: string | null }
+export interface ReadReport {
+  items: SalesItem[]; lsVendors: { name: string; count: number }[]; guess: string | null
+  /** an already formatted report (Dana, Oct 15): filed as it is, with its Order and Notes columns */
+  formatted?: { file: File; runDate: string | null }
+}
 
-/** Read an LS Analytics export (xlsx or csv) and find this vendor in it. */
+/** Read an LS Analytics export (xlsx or csv) and find this vendor in it; or an already formatted sales report. */
 export async function readSalesExport(file: File, vendorName: string, aliases: string[]): Promise<ReadReport> {
   const XLSX = await import('xlsx')
   const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' })
+  const done = readFormattedReport(wb.SheetNames.map((name) => ({ name, rows: XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[name]!, { header: 1, defval: null, raw: true, blankrows: false }) })))
+  if (done) {
+    if (!done.items.length) throw new ExportError('This sales report has no items.')
+    const items = done.items.map((x) => ({ ...x, lsVendor: vendorName }))
+    return { items, lsVendors: [{ name: vendorName, count: items.length }], guess: vendorName, formatted: { file, runDate: done.runDate } }
+  }
   const sheet = wb.Sheets[wb.SheetNames[0]!]!
   const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: null, raw: true })
   const items = readExport(rows, new Date())
@@ -103,18 +113,25 @@ export async function readSalesExport(file: File, vendorName: string, aliases: s
 }
 
 /** Format the report (spec v49), file it in the vendor's Sales reports folder, and keep its items for the suggested order. */
-export async function saveSalesReport(input: { organizationId: string; vendor: { id: string; name: string }; items: SalesItem[]; lsVendor: string; days: number; profile: { id: string; full_name: string | null } }): Promise<SalesReport> {
-  const run = new Date()
+export async function saveSalesReport(input: { organizationId: string; vendor: { id: string; name: string }; items: SalesItem[]; lsVendor: string; days: number; profile: { id: string; full_name: string | null }; formatted?: ReadReport['formatted'] }): Promise<SalesReport> {
+  const run = input.formatted?.runDate ? new Date(`${input.formatted.runDate}T12:00:00`) : new Date()
   const plan = planReport(input.items, input.vendor.name.toUpperCase(), runText(run))
-  const { buildReportXlsx } = await import('@/lib/salesReportXlsx')
-  const bytes = await buildReportXlsx(plan)
-  const fileName = reportFileName(initialsOf(input.profile.full_name), run, input.vendor.name, input.days)
-  const file = new File([bytes], fileName, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  let file: File
+  if (input.formatted) {
+    // already formatted: filed exactly as it is, so its Order column and notes are what the confirmation is checked against
+    file = input.formatted.file
+  } else {
+    const { buildReportXlsx } = await import('@/lib/salesReportXlsx')
+    const bytes = await buildReportXlsx(plan)
+    const fileName = reportFileName(initialsOf(input.profile.full_name), run, input.vendor.name, input.days)
+    file = new File([bytes], fileName, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  }
+  const fileName = file.name
   const path = await uploadVendorFile(input.organizationId, input.vendor.id, file)
   const link = await addVendorLink({
-    organization_id: input.organizationId, vendor_id: input.vendor.id, kind: 'sales_report', label: fileName.replace(/\.xlsx$/, ''), storage_path: path,
-    file_name: fileName, file_size: file.size, mime_type: file.type, received_at: run.toISOString().slice(0, 10), doc_year: run.getFullYear(), source: 'manual',
-    notes: `LS Analytics export (${input.lsVendor}), formatted as a Vendor Sales Report (spec v49)`, created_by: input.profile.id,
+    organization_id: input.organizationId, vendor_id: input.vendor.id, kind: 'sales_report', label: fileName.replace(/\.xlsx$/i, ''), storage_path: path,
+    file_name: fileName, file_size: file.size, mime_type: file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', received_at: run.toISOString().slice(0, 10), doc_year: run.getFullYear(), source: 'manual',
+    notes: input.formatted ? 'A formatted sales report, uploaded as it is' : `LS Analytics export (${input.lsVendor}), formatted as a Vendor Sales Report (spec v49)`, created_by: input.profile.id,
   } as never)
   const summary = { active: plan.active.length, nodata: plan.nodata.length, archived: plan.archived.length, ignored: plan.ignored.length, flags: plan.flagged.length, duplicates: plan.duplicates, by_line: plan.byLine }
   const { data, error } = await supabase.from('sales_reports').insert({

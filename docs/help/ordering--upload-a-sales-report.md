@@ -4,7 +4,7 @@ section: Ordering
 keywords: sales report, LS Analytics, export, upload, need, stock, spec, xlsx, formatted report
 who: Admin, managers and buyers
 ---
-Upload the raw LS Analytics sales export for a vendor. VMS formats it as a Vendor Sales Report, files it in the vendor's **Sales reports** folder and works out a suggested order.
+Upload a vendor's sales report: the raw LS Analytics export (VMS formats it), or a report that is already formatted, like one you filled in with Order quantities (VMS files it as it is). Either way it goes in the vendor's **Sales reports** folder and VMS works out a suggested order.
 
 ## How to
 1. Export the vendor's sales from LS Analytics (the usual columns: System ID, UPC, Default Vendor, Vendor ID, Description, Cost, Category, Archived, Quantity Sold, Quantity on Hand, Days Since Sold).
@@ -13,6 +13,11 @@ Upload the raw LS Analytics sales export for a vendor. VMS formats it as a Vendo
 4. If the file holds more than one LS vendor, pick which one is this vendor.
 5. Check the **Sales period (days)** (365 unless the file name says otherwise) and click **Make the report**.
 6. The suggested order opens.
+
+## An already formatted report
+1. Click **Upload sales report** and pick the report (the one with tabs like Size Summary, By Category, Active, Flags).
+2. VMS sees it is already formatted and says so. Click **File the report**.
+3. It is filed exactly as it is, with your **Order** column and notes. Confirmations are compared with it: VMS uses the tab where you typed Order quantities.
 
 ## Good to know
 - The report has the usual tabs (By Category, By Description, Active, No Data, Flags, Archived, Ignored, and Size Summary for product-line vendors), with Need in green, Order in yellow and TOTAL rows.

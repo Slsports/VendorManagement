@@ -28,3 +28,17 @@ describe('sales report spreadsheets', () => {
     expect(readSalesSheet([{ name: 'x', rows: [['VENDOR ID', 'DESCRIPTION'], ['A', 'B']] }])).toBeNull()
   })
 })
+
+describe('a report with Order filled on one tab (WFS, Oct 15)', () => {
+  it('uses the tab with the Order quantities, not the first one', () => {
+    const head = ['System ID', 'UPC', 'Vendor ID', 'Description', 'Cost', 'Category', 'Last Sold Date', 'Sold', 'In Stock', 'Need', 'Order', 'Notes']
+    const s = readSalesSheet([
+      { name: 'Size Summary', rows: [['WFS — Report Run 8/21/26'], ['Gender', 'Subcategory', 'Size', '# SKUs', 'Sold', 'In Stock', 'Need', 'Notes'], ['N/A', 'Pads', 'TOTAL', 1, 8, 10, 0, null]] },
+      { name: 'Active', rows: [['WFS — Report Run 8/21/26'], head, ['2100', '', 'BG-81', 'BAG', 7, 'CAMP', '08/01/26', 20, 2, 18, null, null]] },
+      { name: 'By Category', rows: [['WFS — Report Run 8/21/26'], head, ['2100', '', 'BG-81', 'BAG', 7, 'CAMP', '08/01/26', 20, 2, 18, 18, null], ['2101', '', '983', 'MAT', 4, 'CAMP', '08/01/26', 3, 9, -6, 'NO', null]] },
+    ])
+    expect(s?.sheet).toBe('By Category')
+    expect(s?.column).toBe('order')
+    expect(s?.items.map((x) => x.order)).toEqual([18, null])
+  })
+})
