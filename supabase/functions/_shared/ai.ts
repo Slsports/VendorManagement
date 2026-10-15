@@ -760,9 +760,10 @@ export async function comparePaperwork(db: SupabaseClient, org: string, input: {
   const what = input.kind === 'confirmation'
     ? 'the vendor\'s ORDER CONFIRMATION (the new document) against WHAT WE ORDERED (our order / PO documents, the order record and its lines)'
     : 'the vendor\'s INVOICE (the new document) against the FINAL CONFIRMATION for the order (or what we ordered when there is no confirmation)'
-  const res = await claude().messages.parse({
+  // streamed with room to spare: thinking shares the answer's room, and a long order ran out of it (Hendrix, Oct 15)
+  const res = await claude().messages.stream({
     model: SCAN_MODEL,
-    max_tokens: 8000,
+    max_tokens: 32000,
     output_config: { format: zodOutputFormat(CompareAnswer) },
     system: `${STORE.replace(' This is its orders@ mailbox, where vendors, sales reps, distributors and service companies write.', '')}
 
@@ -774,10 +775,9 @@ List each real problem as an issue, and end each with where it came from in brac
       ...(againstBlocks.length ? [{ type: 'text', text: `COMPARE AGAINST: ${input.against.map((a) => a.label ?? a.name).join('; ')}` } as const, ...againstBlocks] : []),
       { type: 'text', text: JSON.stringify({ vendor: input.vendor, order_record: input.order, order_lines: input.order_lines, new_document_as_read: input.doc_reading, earlier_documents_as_read: input.against_readings, other_documents_on_this_order: input.others ?? [], vendor_contact: input.contact, email_conversation: input.conversation ?? [] }) },
     ] }],
-  }, { timeout: 300_000 })
+  }, { timeout: 300_000 }).finalMessage()
   await logUsage(db, org, 'order_paper_compare', SCAN_MODEL, res.usage, 1)
-  if (!res.parsed_output) throw new Error('Claude could not compare the documents')
-  return res.parsed_output
+  return parseOrExplain(res, CompareAnswer)
 }
 
 // ---- LS PO drafts (Dana, Oct 12): names and categories for items not yet in LS --------------------------------
@@ -1125,9 +1125,10 @@ export async function compareWithSalesReport(db: SupabaseClient, org: string, in
 }): Promise<CompareReading> {
   const docBlock = fileBlock(input.doc)
   const col = input.column === 'order' ? 'ORDER (what we decided to order)' : 'NEED (sold minus in stock; nothing was typed in the Order column)'
-  const res = await claude().messages.parse({
+  // streamed with room to spare: thinking shares the answer's room, and a long order ran out of it (Hendrix, Oct 15)
+  const res = await claude().messages.stream({
     model: SCAN_MODEL,
-    max_tokens: 8000,
+    max_tokens: 32000,
     output_config: { format: zodOutputFormat(CompareAnswer) },
     system: `${STORE.replace(' This is its orders@ mailbox, where vendors, sales reps, distributors and service companies write.', '')}
 
@@ -1139,10 +1140,9 @@ List each real problem as an issue ending with where it came from in brackets, e
       { type: 'text', text: `THE SALES REPORT WE ORDERED FROM: ${input.report_name}\n${input.report}` },
       { type: 'text', text: JSON.stringify({ vendor: input.vendor, new_document_as_read: input.doc_reading, order_record: input.order, vendor_contact: input.contact, email_conversation: input.conversation }) },
     ] }],
-  }, { timeout: 300_000 })
+  }, { timeout: 300_000 }).finalMessage()
   await logUsage(db, org, 'order_paper_report', SCAN_MODEL, res.usage, 1)
-  if (!res.parsed_output) throw new Error('Claude could not compare the confirmation with the sales report')
-  return res.parsed_output
+  return parseOrExplain(res, CompareAnswer)
 }
 
 const PaperKindAnswer = z.object({ doc_type: z.enum(['confirmation', 'invoice', 'credit', 'other']).describe('confirmation: the vendor confirms or acknowledges an order (sales order, order acknowledgement, pro forma); invoice: a bill for goods shipped; credit: a credit memo or credit note; other: anything else') })
