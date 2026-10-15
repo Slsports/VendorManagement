@@ -695,7 +695,8 @@ async function picturesBackcheck(db: SupabaseClient, org: string, started: numbe
     .eq('organization_id', org).eq('kind', 'image').eq('source', 'email').not('email_id', 'is', null).not('storage_path', 'is', null)
   const byEmail = new Map<string, NonNullable<typeof links>>()
   for (const l of links ?? []) byEmail.set(l.email_id!, [...(byEmail.get(l.email_id!) ?? []), l])
-  const { data: checked } = await db.from('email_attachments').select('vendor_link_id').in('vendor_link_id', (links ?? []).map((l) => l.id)).not('picture_kind', 'is', null)
+  // the pictures already looked at (not an id list: 600 ids made the request too long, and every batch started over)
+  const { data: checked } = await db.from('email_attachments').select('vendor_link_id').eq('organization_id', org).not('vendor_link_id', 'is', null).not('picture_kind', 'is', null).limit(20000)
   const done = new Set((checked ?? []).map((x) => x.vendor_link_id))
   let lineIndex: Awaited<ReturnType<typeof freightIndex>> | null = null
   for (const [emailId, group] of byEmail) {
