@@ -643,29 +643,32 @@ interface PicAtt { id: string; file_name: string; mime_type: string | null; size
  */
 async function sortPictures(db: SupabaseClient, gmail: Gmail | null, org: string, gmailId: string | null, atts: PicAtt[], ctx: { vendor: string | null; subject: string | null; text: string | null }, keepBytes = true) {
   const BIG = 3.5 * 1024 * 1024
+  const isReadable = (a: PicAtt) => /^image\/(png|jpeg|jpg|gif|webp)$/.test((a.mime_type ?? '').toLowerCase()) && (a.size ?? 0) <= BIG
   const out: { a: PicAtt; bytes: Uint8Array; kind: PictureKind; company: string | null }[] = []
-  for (const a of atts.slice(0, 20)) {
-    const mime = (a.mime_type ?? '').toLowerCase()
-    const readable = /^image\/(png|jpeg|jpg|gif|webp)$/.test(mime) && (a.size ?? 0) <= BIG
-    // a big photo Claude is not shown is only fetched when it is going to be saved
-    if (!readable && !keepBytes) { out.push({ a, bytes: new Uint8Array(0), kind: 'product', company: null }); continue }
-    let bytes: Uint8Array | null = null
-    if (a.storage_path) {
-      const { data } = await db.storage.from('vendor-files').download(a.storage_path)
-      if (data) bytes = new Uint8Array(await data.arrayBuffer())
+  // four at a time, fetched only when needed and let go after (Oct 15: emails full of big pictures ran the function
+  // out of memory); twelve an email per run, the rest the next run
+  const list = atts.slice(0, 12)
+  for (let n = 0; n < list.length; n += 4) {
+    const chunk: { a: PicAtt; bytes: Uint8Array; kind: PictureKind; company: string | null }[] = []
+    for (const a of list.slice(n, n + 4)) {
+      if (!isReadable(a) && !keepBytes) { chunk.push({ a, bytes: new Uint8Array(0), kind: 'product', company: null }); continue }
+      let bytes: Uint8Array | null = null
+      if (a.storage_path) {
+        const { data } = await db.storage.from('vendor-files').download(a.storage_path)
+        if (data) bytes = new Uint8Array(await data.arrayBuffer())
+      }
+      if (!bytes && gmail && gmailId && a.gmail_attachment_id) bytes = await attachmentBytes(gmail, gmailId, a.gmail_attachment_id)
+      if (!bytes) continue
+      chunk.push({ a, bytes, kind: 'product', company: null })
     }
-    if (!bytes && gmail && gmailId && a.gmail_attachment_id) bytes = await attachmentBytes(gmail, gmailId, a.gmail_attachment_id)
-    if (!bytes) continue
-    out.push({ a, bytes, kind: 'product', company: null })
+    const ask = chunk.filter((p) => p.bytes.length && p.bytes.length <= BIG && isReadable(p.a))
+    if (ask.length && aiEnabled()) {
+      const said = await classifyPictures(db, org, ask.map((p) => ({ name: p.a.file_name, mime: (p.a.mime_type ?? 'image/png').toLowerCase().replace('image/jpg', 'image/jpeg'), bytes: p.bytes })), ctx)
+      ask.forEach((p, k) => { p.kind = said[k]!.kind; p.company = said[k]!.company })
+    }
+    if (!keepBytes) for (const p of chunk) p.bytes = new Uint8Array(0)
+    out.push(...chunk)
   }
-  // Claude looks at a few at a time (memory: Oct 15 a batch of big pictures ran the function out of room)
-  const ask = out.map((p, i) => i).filter((i) => out[i]!.bytes.length && out[i]!.bytes.length <= BIG && /^image\/(png|jpeg|jpg|gif|webp)$/.test((out[i]!.a.mime_type ?? '').toLowerCase()))
-  for (let n = 0; n < ask.length && aiEnabled(); n += 5) {
-    const chunk = ask.slice(n, n + 5)
-    const said = await classifyPictures(db, org, chunk.map((i) => ({ name: out[i]!.a.file_name, mime: (out[i]!.a.mime_type ?? 'image/png').toLowerCase().replace('image/jpg', 'image/jpeg'), bytes: out[i]!.bytes })), ctx)
-    chunk.forEach((i, k) => { out[i]!.kind = said[k]!.kind; out[i]!.company = said[k]!.company })
-  }
-  if (!keepBytes) for (const p of out) p.bytes = new Uint8Array(0)
   return out
 }
 
