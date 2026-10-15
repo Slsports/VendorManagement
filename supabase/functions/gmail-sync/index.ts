@@ -642,7 +642,9 @@ interface PicAtt { id: string; file_name: string; mime_type: string | null; size
  * bigger photo or another format (HEIC) is taken as a product photo, since logos are small.
  */
 async function sortPictures(db: SupabaseClient, gmail: Gmail | null, org: string, gmailId: string | null, atts: PicAtt[], ctx: { vendor: string | null; subject: string | null; text: string | null }, keepBytes = true) {
-  const BIG = 3.5 * 1024 * 1024
+  // logos are small; bigger pictures are taken as photos without asking (turning big ones into text for Claude ran past
+  // the function's compute limit, Oct 15)
+  const BIG = 1.5 * 1024 * 1024
   const isReadable = (a: PicAtt) => /^image\/(png|jpeg|jpg|gif|webp)$/.test((a.mime_type ?? '').toLowerCase()) && (a.size ?? 0) <= BIG
   const out: { a: PicAtt; bytes: Uint8Array; kind: PictureKind; company: string | null }[] = []
   // four at a time, fetched only when needed and let go after (Oct 15: emails full of big pictures ran the function
@@ -706,7 +708,7 @@ async function picturesBackcheck(db: SupabaseClient, org: string, started: numbe
   for (const [emailId, group] of byEmail) {
     const open = group.filter((l) => !done.has(l.id))
     if (!open.length) continue
-    if (Date.now() - started > 90_000 || tally.emails >= 8) { tally.left++; continue }
+    if (Date.now() - started > 90_000 || tally.emails >= 6) { tally.left++; continue }
     try {
     const { data: e } = await db.from('emails').select('subject, body_text, sender_id, vendor:vendors!emails_vendor_id_fkey(name, ask_before_pictures)').eq('id', emailId).single()
     const vendor = e?.vendor as unknown as { name: string; ask_before_pictures: boolean } | null
