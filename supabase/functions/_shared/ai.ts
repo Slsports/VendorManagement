@@ -620,8 +620,18 @@ function b64(bytes: Uint8Array): string {
 /** A PDF or picture as a message block Claude can read; null for anything else. */
 function fileBlock(f: PaperFile): Anthropic.ContentBlockParam | null {
   if (/pdf/i.test(f.mime) || /\.pdf$/i.test(f.name)) return { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64(f.bytes) }, title: f.label ?? f.name }
-  const img = /^image\/(png|jpeg|gif|webp)$/i.exec(f.mime)?.[0]?.toLowerCase()
-  if (img) return { type: 'image', source: { type: 'base64', media_type: img as 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp', data: b64(f.bytes) } }
+  // the type the file really is, not what the email called it (a ".jpg" that was a PNG was refused, Oct 15)
+  const img = /^image\//i.test(f.mime) || /\.(png|jpe?g|gif|webp)$/i.test(f.name) ? imageType(f.bytes) : null
+  if (img) return { type: 'image', source: { type: 'base64', media_type: img, data: b64(f.bytes) } }
+  return null
+}
+
+/** PNG, JPEG, GIF or WEBP by the file's first bytes; null for anything else. */
+export function imageType(b: Uint8Array): 'image/png' | 'image/jpeg' | 'image/gif' | 'image/webp' | null {
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return 'image/png'
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'image/jpeg'
+  if (b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46) return 'image/gif'
+  if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return 'image/webp'
   return null
 }
 

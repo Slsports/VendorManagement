@@ -7,7 +7,7 @@ import { Gmail, GmailError, googleAccessToken } from '../_shared/gmail.ts'
 import { clueText, htmlBody, isBulk, isOldGmail, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
 import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type VendorIndex } from '../_shared/mailMatch.ts'
 import { extractLinks, itemPicture, maybePaperwork, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
-import { aiEnabled, classifyPaperwork, classifyPictures, type PictureKind, readArtwork, readEmailVendors, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type UnsureEmail } from '../_shared/ai.ts'
+import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type PictureKind, readArtwork, readEmailVendors, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type UnsureEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
@@ -661,9 +661,10 @@ async function sortPictures(db: SupabaseClient, gmail: Gmail | null, org: string
       if (!bytes) continue
       chunk.push({ a, bytes, kind: 'product', company: null })
     }
-    const ask = chunk.filter((p) => p.bytes.length && p.bytes.length <= BIG && isReadable(p.a))
+    // the real type from the file itself: a ".jpg" that is really a PNG was refused by Claude (Oct 15)
+    const ask = chunk.filter((p) => p.bytes.length && p.bytes.length <= BIG && imageType(p.bytes))
     if (ask.length && aiEnabled()) {
-      const said = await classifyPictures(db, org, ask.map((p) => ({ name: p.a.file_name, mime: (p.a.mime_type ?? 'image/png').toLowerCase().replace('image/jpg', 'image/jpeg'), bytes: p.bytes })), ctx)
+      const said = await classifyPictures(db, org, ask.map((p) => ({ name: p.a.file_name, mime: imageType(p.bytes)!, bytes: p.bytes })), ctx)
       ask.forEach((p, k) => { p.kind = said[k]!.kind; p.company = said[k]!.company })
     }
     if (!keepBytes) for (const p of chunk) p.bytes = new Uint8Array(0)
