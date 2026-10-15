@@ -2115,3 +2115,9 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   **New items to double check**, not issues or email; quantity, price and missing items still are. **This is our order** on
   a confirmation saves its lines as the order. **Upload sales report** asks "Did you place an order from this report?":
   Yes tags it Used to place the order (no suggested order pops up); Not yet files it and opens the suggested order.
+- Oct 15, forwarded vendor mail (Dana): "How do we get Claude to handle a forwarded invoice or confirmation from a vendor
+  who sent it to the old Gmail or even to my billing email or Jarrett's email?" A forward from one of our addresses (our
+  domain plus organizations.own_addresses: old Gmail, billing@, Jarrett's and Trevor's business Gmail, danapowell2024,
+  shaverlakesportssheets, shaverlakemarina) is the vendor's email: the forwarded From: line decides the sender (the person
+  in brackets over a billing relay like NetSuite), and the file steps run on it. Our own addresses are never a "Who is
+  this?" sender (the old Gmail card closed). Back-check over 12 months: 424 forwards re-read.

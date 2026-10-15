@@ -20,4 +20,5 @@ When mail comes to orders@ from a sender VMS does not know, Claude reads it firs
 4. A message says how many emails were filed.
 
 ## Good to know
+- Vendor mail forwarded to orders@ from one of our own addresses is filed by the vendor it was forwarded from, not as mail from us (see "Vendor mail forwarded from another address").
 - Not sure? Click **See the N emails** first (see "Look at a sender's emails").

@@ -6,6 +6,7 @@ import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { Gmail, GmailError, googleAccessToken } from '../_shared/gmail.ts'
 import { clueText, htmlBody, isBulk, isOldGmail, parseMessage, type Address, type GmailMessage, type GmailPart, type ParsedMessage } from '../_shared/mailParse.ts'
 import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type VendorIndex } from '../_shared/mailMatch.ts'
+import { forwardedSender } from '../_shared/forwarded.ts'
 import { extractLinks, itemPicture, maybePaperwork, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
 import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type PictureKind, readArtwork, readEmailVendors, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type UnsureEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
@@ -47,7 +48,13 @@ Deno.serve(async (req) => {
   }
 
   // the picture back-check (Dana, Oct 15), run by hand from the scheduler's secret
-  const body = await req.clone().json().catch(() => ({})) as { pictures_backcheck?: boolean }
+  const body = await req.clone().json().catch(() => ({})) as { pictures_backcheck?: boolean; forwards_backcheck?: boolean }
+  if (trusted && body.forwards_backcheck) {
+    const { data: accts } = await db.from('mail_accounts').select('*')
+    const out: unknown[] = []
+    for (const a of (accts ?? []) as Account[]) out.push(await forwardsBackcheck(db, { ...a, box_id: null, owner_id: null, legacy: null }))
+    return json(out)
+  }
   if (trusted && body.pictures_backcheck) {
     const { data: orgs } = await db.from('mail_accounts').select('organization_id')
     const started = Date.now()
@@ -169,10 +176,11 @@ async function loadContext(db: SupabaseClient, acct: Account, labelNames: Map<st
     vendors.push(...(data ?? []))
     if (!data || data.length < 1000) break
   }
-  const { data: org } = await db.from('organizations').select('name').eq('id', acct.organization_id).single()
-  // Staff write from personal addresses too (billing.slsports@gmail.com): those are us, never a sender.
+  const { data: org } = await db.from('organizations').select('name, own_addresses').eq('id', acct.organization_id).single()
+  // Staff write from personal addresses too (billing.slsports@gmail.com), and our other addresses (the old Gmail, staff's
+  // own Gmail; Settings, Oct 15): those are us, never a sender.
   const { data: people } = await db.from('profiles').select('email').eq('organization_id', acct.organization_id)
-  const staff = new Set((people ?? []).map((p) => (p.email as string).toLowerCase()))
+  const staff = new Set([...(people ?? []).map((p) => (p.email as string).toLowerCase()), ...((org?.own_addresses ?? []) as string[]).map((e) => e.toLowerCase())])
   // Our own names appear in every email (signatures, addresses); they are never a vendor clue.
   const ours = ['Shaver Lake', org?.name ?? ''].filter(Boolean)
   // PO numbers on file decide which vendor an email is about.
@@ -223,12 +231,19 @@ async function storeMessages(db: SupabaseClient, gmail: Gmail, ctx: Context, ids
 
   // Senders: the other party's domain, or the whole address for free mail. Which mailbox: a personal one, the
   // old Gmail (forwarded into orders@), or orders@ (null).
+  const ourEmail = (e: string) => e === ctx.mailbox || ctx.staff.has(e) || ctx.internal.has(domainOf(e))
   const rows = msgs.map((p) => {
-    const { direction, party } = classify(ctx, p)
+    let { direction, party } = classify(ctx, p)
+    // a vendor's email forwarded by one of us (Dana, Oct 15): it is the vendor's email, from the forwarded From: line
+    const fwd = p.from && ourEmail(p.from.email) ? forwardedSender(p.subject, p.body_text, ourEmail) : null
+    if (fwd && direction !== 'out') {
+      direction = 'in'
+      party = fwd.email ? { email: fwd.email, name: fwd.name } : null
+    }
     const domain = party ? domainOf(party.email) : ''
     const free = FREEMAIL.has(domain)
     const boxId = ctx.boxId ?? (ctx.legacy && isOldGmail(p, ctx.legacy.address) ? ctx.legacy.id : null)
-    return { p, direction, party, senderKey: party ? (free ? party.email : domain) : null, isDomain: !free, boxId }
+    return { p, direction, party, senderKey: party ? (free ? party.email : domain) : null, isDomain: !free, boxId, fwd }
   })
   // Private mail (personal, old Gmail) never adds new senders: they would ask everyone "who is this?". It still
   // uses the senders VMS knows.
@@ -257,7 +272,7 @@ async function storeMessages(db: SupabaseClient, gmail: Gmail, ctx: Context, ids
     for (const t of data ?? []) threadIds.set(t.gmail_thread_id, t.id)
   }
 
-  const emailRows = rows.map(({ p, direction, senderKey, boxId }) => ({
+  const emailRows = rows.map(({ p, direction, senderKey, boxId, fwd }) => ({
     organization_id: ctx.org,
     mailbox_id: boxId,
     gmail_box: ctx.mailbox,
@@ -279,6 +294,8 @@ async function storeMessages(db: SupabaseClient, gmail: Gmail, ctx: Context, ids
     sender_id: senderKey ? senderIds.get(senderKey) ?? null : null,
     is_bulk: p.is_bulk,
     mentioned_vendor_ids: mentionedVendors(ctx.index, clueText(p)),
+    forwarded_from: fwd?.email ?? null,
+    forwarded_name: fwd?.name ?? null,
   }))
   const { data: inserted, error } = await db.from('emails').upsert(emailRows, { onConflict: 'organization_id,gmail_id', ignoreDuplicates: true }).select('id, gmail_id')
   if (error) throw new Error(`Saving mail: ${error.message}`)
@@ -290,6 +307,61 @@ async function storeMessages(db: SupabaseClient, gmail: Gmail, ctx: Context, ids
   const newIds = [...idOf.values()]
   if (newIds.length) await check(db.rpc('mail_process', { p_org: ctx.org, p_email_ids: newIds, p_backfill: backfill }))
   return newIds.length
+}
+
+/**
+ * Back-check for forwarded vendor mail (Dana, Oct 15; the Oct 14 rule): every forward from one of our addresses in the last
+ * 12 months is read again for its forwarded From: line, filed to that vendor and sent through the file steps (paperwork,
+ * pictures, price lists) like the vendor's own email. Counts per vendor come back for Dana.
+ */
+async function forwardsBackcheck(db: SupabaseClient, acct: Account) {
+  const ctx = await loadContext(db, acct, new Map())
+  const ourEmail = (e: string) => e === ctx.mailbox || ctx.staff.has(e) || ctx.internal.has(domainOf(e))
+  const since = new Date(Date.now() - 365 * 86_400_000).toISOString()
+  const { data: mails } = await db.from('emails').select('id, subject, body_text, direction, from_email, mailbox_id, sender_id')
+    .eq('organization_id', ctx.org).is('copy_of', null).is('forwarded_from', null).gte('received_at', since)
+    .or('subject.ilike.fwd:%,subject.ilike.fw:%,subject.ilike.re: fwd:%,subject.ilike.re: fw:%,body_text.ilike.%forwarded message%,body_text.ilike.%original message%')
+    .limit(2000)
+  const tally = { looked: 0, forwards: 0, no_sender: 0, filed: 0 }
+  const ids: string[] = []
+  for (const e of mails ?? []) {
+    tally.looked++
+    if (!e.from_email || !ourEmail(e.from_email.toLowerCase())) continue
+    const fwd = forwardedSender(e.subject, e.body_text, ourEmail)
+    if (!fwd) continue
+    tally.forwards++
+    const patch: Record<string, unknown> = { forwarded_from: fwd.email ?? '', forwarded_name: fwd.name, files_scanned_at: null, paper_scanned_at: null, images_scanned_at: null }
+    if (e.direction !== 'out') {
+      patch.direction = 'in'
+      if (fwd.email) {
+        const domain = domainOf(fwd.email)
+        const free = FREEMAIL.has(domain)
+        const key = free ? fwd.email : domain
+        // private mail never adds new senders (they would ask everyone "who is this?"); it uses the ones VMS knows
+        if (!e.mailbox_id) {
+          await db.from('email_senders').upsert({ organization_id: ctx.org, sender_key: key, is_domain: !free, display_name: fwd.name, domain_vendor_ids: free ? [] : domainVendors(ctx.index, key) }, { onConflict: 'organization_id,sender_key', ignoreDuplicates: true })
+        }
+        const { data: sender } = await db.from('email_senders').select('id').eq('organization_id', ctx.org).eq('sender_key', key).maybeSingle()
+        patch.sender_id = sender?.id ?? null
+      } else {
+        patch.sender_id = null
+        tally.no_sender++
+      }
+    }
+    await db.from('emails').update(patch).eq('id', e.id)
+    ids.push(e.id)
+  }
+  for (let i = 0; i < ids.length; i += 100) await db.rpc('mail_process', { p_org: ctx.org, p_email_ids: ids.slice(i, i + 100), p_backfill: true })
+  const byVendor: Record<string, number> = {}
+  for (let i = 0; i < ids.length; i += 100) {
+    const { data } = await db.from('emails').select('vendor:vendors!emails_vendor_id_fkey(name)').in('id', ids.slice(i, i + 100))
+    for (const r of data ?? []) {
+      const name = (r.vendor as unknown as { name: string } | null)?.name ?? '(no vendor yet: Who is this?)'
+      byVendor[name] = (byVendor[name] ?? 0) + 1
+      if ((r.vendor as unknown as { name: string } | null)?.name) tally.filed++
+    }
+  }
+  return { ...tally, by_vendor: byVendor }
 }
 
 /** An attachment's bytes from Gmail (base64url). */
@@ -449,7 +521,7 @@ async function freightBills(db: SupabaseClient, gmail: Gmail, org: string, start
 async function saveVendorFiles(db: SupabaseClient, gmail: Gmail, org: string, started: number, box: string) {
   const { data: queue } = await db.from('emails')
     .select('id, gmail_id, vendor_id, view, subject, received_at, has_attachments, attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
-    .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).eq('direction', 'in').not('vendor_id', 'is', null).is('files_scanned_at', null)
+    .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).or('direction.eq.in,forwarded_from.not.is.null').not('vendor_id', 'is', null).is('files_scanned_at', null)
     .order('received_at', { ascending: false }).limit(25)
   for (const e of queue ?? []) {
     if (Date.now() - started > TIME_BUDGET_MS) break
@@ -522,7 +594,7 @@ async function linkExistingCopy(db: SupabaseClient, vendorId: string, a: { id: s
 async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, started: number, box: string) {
   const { data: queue } = await db.from('emails')
     .select('id, gmail_id, vendor_id, subject, body_text, view, is_bulk, received_at, vendor:vendors!emails_vendor_id_fkey(name), attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
-    .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).eq('direction', 'in').not('vendor_id', 'is', null).is('paper_scanned_at', null).eq('has_attachments', true)
+    .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).or('direction.eq.in,forwarded_from.not.is.null').not('vendor_id', 'is', null).is('paper_scanned_at', null).eq('has_attachments', true)
     .gte('received_at', new Date(Date.now() - 365 * 86_400_000).toISOString())
     .order('received_at', { ascending: false }).limit(10)
   let asked = 0
@@ -580,7 +652,7 @@ async function saveItemPictures(db: SupabaseClient, gmail: Gmail, org: string, s
   const twoHours = new Date(Date.now() - 2 * 3600_000).toISOString()
   const { data: queue } = await db.from('emails')
     .select('id, gmail_id, vendor_id, sender_id, subject, body_text, received_at, vendor:vendors!emails_vendor_id_fkey(name, ask_before_pictures), attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
-    .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).eq('direction', 'in').not('vendor_id', 'is', null).eq('has_attachments', true).is('images_scanned_at', null)
+    .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).or('direction.eq.in,forwarded_from.not.is.null').not('vendor_id', 'is', null).eq('has_attachments', true).is('images_scanned_at', null)
     .not('is_bulk', 'is', true).not('files_scanned_at', 'is', null).or(`art_read_at.not.is.null,received_at.lt.${twoHours}`)
     .gte('received_at', new Date(Date.now() - 365 * 86_400_000).toISOString())
     .order('received_at', { ascending: false }).limit(10)

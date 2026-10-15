@@ -310,6 +310,7 @@ function Message({ email: e, startOpen, vendor, carrierId, onCompose, onEmailAdd
           ) : <span className="font-medium text-stone-900">{e.from_name || e.from_email}</span>}
           {e.from_name ? <span className="ml-1 text-xs text-stone-500">{e.from_email}</span> : null}
           {e.direction === 'out' ? <span className="ml-2 text-xs font-medium text-brand">sent</span> : null}
+          {e.forwarded_from ? <span className="ml-2 text-xs text-stone-500">forwarded from {e.forwarded_name ? `${e.forwarded_name} ` : ''}&lt;{e.forwarded_from}&gt;</span> : null}
           {!open ? <span className="block truncate text-sm text-stone-500">{e.snippet}</span> : null}
         </span>
         <span className="pointer-events-none shrink-0 text-xs text-stone-500" title={new Date(e.received_at).toLocaleString()}>{new Date(e.received_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })} · {waited(e.received_at)} ago</span>
