@@ -518,6 +518,9 @@ async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, star
   let asked = 0
   for (const e of queue ?? []) {
     if (Date.now() - started > TIME_BUDGET_MS) break
+    // claim it first: two runs at once both filed the same Smith invoices (Oct 15), so the second run skips it
+    const { data: mine } = await db.from('emails').update({ paper_scanned_at: new Date().toISOString() }).eq('id', e.id).is('paper_scanned_at', null).select('id')
+    if (!mine?.length) continue
     try {
       const atts = (e.attachments ?? []) as { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; vendor_link_id: string | null }[]
       const open = atts.filter((a) => !a.vendor_link_id && a.gmail_attachment_id && (a.size ?? 0) <= 15 * 1024 * 1024 && (maybePaperwork(a) || paperworkKind(a, null) === 'credit'))
@@ -552,7 +555,6 @@ async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, star
     } catch (err) {
       console.error(`paperwork from ${e.id}:`, err instanceof Error ? err.message : err)
     }
-    await db.from('emails').update({ paper_scanned_at: new Date().toISOString() }).eq('id', e.id)
   }
 }
 
