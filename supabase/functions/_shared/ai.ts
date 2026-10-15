@@ -656,7 +656,7 @@ export type PaperReading = z.infer<typeof PaperAnswer>
 export async function readPaperwork(db: SupabaseClient, org: string, file: PaperFile, ctx: { vendor: string | null; subject: string | null; email_text: string | null }): Promise<PaperReading> {
   const block = fileBlock(file)
   if (!block) throw new Error(`${file.name}: only PDFs and pictures can be read`)
-  const res = await claude().messages.parse({
+  const res = await claude().messages.create({
     model: SCAN_MODEL,
     max_tokens: 8000,
     output_config: { format: zodOutputFormat(PaperAnswer) },
@@ -669,8 +669,21 @@ A vendor sent the store this document. Say what it is (the vendor's order confir
     ] }],
   }, { timeout: 240_000 })
   await logUsage(db, org, 'order_paper_read', SCAN_MODEL, res.usage, 1)
-  if (!res.parsed_output) throw new Error('Claude could not read the document')
-  return res.parsed_output
+  return parseOrExplain(res, PaperAnswer)
+}
+
+/**
+ * Claude's answer checked against the schema, or an error that says what actually came back (Dana, Oct 15: "I don't
+ * want any guessing ever"): why it stopped, how long it was, and its last words, so a failed reading can be explained.
+ */
+function parseOrExplain<T>(res: Anthropic.Message, schema: z.ZodType<T>): T {
+  const text = res.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
+  try {
+    return schema.parse(JSON.parse(text))
+  } catch (e) {
+    const tail = text.slice(-240).replace(/\s+/g, ' ')
+    throw new Error(`Claude's answer could not be used (${e instanceof Error ? e.message.slice(0, 120) : 'bad answer'}). Stopped: ${res.stop_reason}; ${res.usage.output_tokens} tokens, ${text.length} characters. Ends with: ${tail}`)
+  }
 }
 
 const CompareAnswer = z.object({
