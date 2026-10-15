@@ -136,6 +136,8 @@ export async function saveSalesReport(input: { organizationId: string; vendor: {
   const summary = { active: plan.active.length, nodata: plan.nodata.length, archived: plan.archived.length, ignored: plan.ignored.length, flags: plan.flagged.length, duplicates: plan.duplicates, by_line: plan.byLine }
   const { data, error } = await supabase.from('sales_reports').insert({
     organization_id: input.organizationId, vendor_id: input.vendor.id, document_id: link.id, ls_vendor: input.lsVendor, days: input.days,
+    // the day the report was run, not the day it was uploaded (Dana, Oct 15: the WFS report of 8/21 showed as 10/15)
+    run_date: run.toISOString().slice(0, 10),
     items: input.items.map(({ notes: _notes, ...x }) => x) as unknown as Json, summary: summary as unknown as Json, created_by: input.profile.id,
   }).select('*').single()
   if (error) throw error
