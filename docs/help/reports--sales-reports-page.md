@@ -12,8 +12,8 @@ The **Sales Reports** page builds vendor and category reports straight from Ligh
 3. Pick the vendor(s) and, if you want, a category to narrow to (WFS winter only). For a category report, pick the category; it includes everything under it.
 4. Choose the stores: **all stores together** (one Sold and one In Stock column), **kept apart** (a Sold and In Stock column per store, then the combined Need), or **one store**.
 5. Pick the period. **Last 12 months** is the default; or a date range.
-6. Click **Run the report**. The workbook downloads and is filed: a vendor report under that vendor's **Sales reports** (and it feeds the **Suggested order**), a category report under Reports here.
-7. **Save settings** keeps the choices under a name, so next time it is one click.
+6. Click **Run the report**. The report opens on the page, tab by tab, and is filed: a vendor report under that vendor's **Sales reports** (and it feeds the **Suggested order**), a category report under Reports here and, if you picked vendors, under each of those vendors too. Nothing downloads unless you click **Download**.
+7. **Save settings** keeps the choices under a name, so next time it is one click. Every run stays in the **Reports run** list with **Open** and **Download**.
 
 ## Good to know
 - The report follows spec v49 exactly: Size Summary, By Category, By Vendor (category reports) or By Description (vendor reports), Flags, Active, No Data, Archived, and Archived – No Sales (Ignored). File names carry the initials of whoever ran it.

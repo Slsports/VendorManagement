@@ -88,7 +88,7 @@ function itemRow(ws: Worksheet, lay: Layout, r: number, x: SalesItem, shade: boo
   if (shade && x.notes.length) for (let i = 1; i <= lay.cols.length; i++) if (i !== lay.at('need') && i !== lay.at('order')) ws.getCell(r, i).fill = FLAG_FILL
 }
 
-function totalRow(ws: Worksheet, lay: Layout, r: number, a: number, b: number, label = 'TOTAL') {
+function totalRow(ws: Worksheet, lay: Layout, r: number, a: number, b: number, label = 'TOTAL', rows: SalesItem[] = []) {
   for (let i = 1; i <= lay.cols.length; i++) {
     const c = ws.getCell(r, i)
     c.font = { name: FONT, size: 11, bold: true }
@@ -97,9 +97,13 @@ function totalRow(ws: Worksheet, lay: Layout, r: number, a: number, b: number, l
     c.alignment = { horizontal: i === 1 ? 'left' : 'center', vertical: 'middle' }
   }
   ws.getCell(r, 1).value = label
-  for (const n of [...lay.soldCols, ...lay.qohCols, lay.at('order')]) ws.getCell(r, n).value = b >= a ? { formula: `SUM(${L(n)}${a}:${L(n)}${b})` } : 0
+  for (const n of [...lay.soldCols, ...lay.qohCols, lay.at('order')]) {
+    const col = lay.cols[n - 1]!
+    const result = col.key === 'order' ? 0 : rows.reduce((t, x) => t + Number(cellValue(x, col) || 0), 0)
+    ws.getCell(r, n).value = b >= a ? { formula: `SUM(${L(n)}${a}:${L(n)}${b})`, result } : 0
+  }
   const need = lay.at('need')
-  ws.getCell(r, need).value = b >= a ? { formula: `SUMIF(${L(need)}${a}:${L(need)}${b},">0")` } : 0
+  ws.getCell(r, need).value = b >= a ? { formula: `SUMIF(${L(need)}${a}:${L(need)}${b},">0")`, result: rows.reduce((t, x) => t + (x.nonInv ? 0 : Math.max(0, needOf(x))), 0) } : 0
 }
 
 function table(ws: Worksheet, lay: Layout, title: string, rows: SalesItem[], opts: { total: boolean; groups?: ReportGroup[] | null; shade?: boolean }) {
@@ -117,13 +121,13 @@ function table(ws: Worksheet, lay: Layout, title: string, rows: SalesItem[], opt
       const t = r++
       const a = r
       for (const x of g.items) itemRow(ws, lay, r++, x, shade)
-      totalRow(ws, lay, t, a, r - 1, `TOTAL — ${g.name}`)
+      totalRow(ws, lay, t, a, r - 1, `TOTAL — ${g.name}`, g.items)
     }
   } else {
     const t = opts.total ? r++ : 0
     const a = r
     for (const x of rows) itemRow(ws, lay, r++, x, shade)
-    if (t) totalRow(ws, lay, t, a, r - 1)
+    if (t) totalRow(ws, lay, t, a, r - 1, 'TOTAL', rows)
   }
   ws.views = [{ state: 'frozen', ySplit: opts.total && !opts.groups ? 3 : 2, zoomScale: 100 }]
   // widths from the content; Notes wrapped and capped
@@ -164,9 +168,10 @@ function typeSummary(ws: Worksheet, plan: ReportPlan) {
       r++
     }
     const b = r - 1
+    const list = plan.summary.filter((x) => x.category === cat)
     ws.getCell(t, 1).value = 'TOTAL'
-    ;['B', 'C', 'D'].forEach((col, i) => { ws.getCell(t, i + 2).value = { formula: `SUM(${col}${a}:${col}${b})` } })
-    ws.getCell(t, 5).value = { formula: `SUMIF(E${a}:E${b},">0")` }
+    ;[['B', 'skus'], ['C', 'sold'], ['D', 'inStock']].forEach(([col, k], i) => { ws.getCell(t, i + 2).value = { formula: `SUM(${col}${a}:${col}${b})`, result: list.reduce((x, y) => x + (y[k as 'skus' | 'sold' | 'inStock']), 0) } })
+    ws.getCell(t, 5).value = { formula: `SUMIF(E${a}:E${b},">0")`, result: list.reduce((x, y) => x + Math.max(0, y.need), 0) }
     for (let i = 1; i <= cols.length; i++) {
       const c = ws.getCell(t, i)
       c.font = { name: FONT, size: 11, bold: true }
@@ -211,9 +216,9 @@ function sizeSummary(ws: Worksheet, plan: ReportPlan) {
     }
     const b = r - 1
     ;[gender || '—', sub, 'TOTAL'].forEach((v, i) => { ws.getCell(t, i + 1).value = v })
-    ;['D', 'E', 'F'].forEach((col, i) => { ws.getCell(t, i + 4).value = { formula: `SUM(${col}${a}:${col}${b})` } })
-    ws.getCell(t, 7).value = { formula: `SUMIF(G${a}:G${b},">0")` }
-    ws.getCell(t, 8).value = { formula: `SUM(H${a}:H${b})` }
+    ;[['D', 'skus'], ['E', 'sold'], ['F', 'inStock']].forEach(([col, k], i) => { ws.getCell(t, i + 4).value = { formula: `SUM(${col}${a}:${col}${b})`, result: list.reduce((x, y) => x + y[k as 'skus' | 'sold' | 'inStock'], 0) } })
+    ws.getCell(t, 7).value = { formula: `SUMIF(G${a}:G${b},">0")`, result: list.reduce((x, y) => x + Math.max(0, y.need), 0) }
+    ws.getCell(t, 8).value = { formula: `SUM(H${a}:H${b})`, result: 0 }
     for (let i = 1; i <= cols.length; i++) {
       const c = ws.getCell(t, i)
       c.font = { name: FONT, size: 11, bold: true }

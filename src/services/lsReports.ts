@@ -141,6 +141,15 @@ export async function runLsReport(input: { organizationId: string; params: Repor
     storage_path = `${organizationId}/reports/${crypto.randomUUID()}-${fileName.replace(/[^A-Za-z0-9._-]+/g, '_')}`
     const { error } = await supabase.storage.from('vendor-files').upload(storage_path, file, { contentType: file.type, upsert: false })
     if (error) throw error
+    // a category report with vendors picked is also on each of those vendors' pages (Dana, Oct 16); one file, a link per vendor
+    const under = p.vendor_ids.map((id) => input.vendors.find((v) => v.ls_vendor_id === id)?.vendor_id).filter((x): x is string => !!x)
+    for (const vendorId of under) {
+      const { error: lerr } = await supabase.from('vendor_links').insert({
+        organization_id: organizationId, vendor_id: vendorId, kind: 'sales_report', label: fileName.replace(/\.xlsx$/i, ''), storage_path, file_name: fileName, file_size: file.size, mime_type: file.type,
+        received_at: run.toISOString().slice(0, 10), doc_year: run.getFullYear(), source: 'manual', notes: `Category report (${name}) from Lightspeed, ${p.from} to ${p.to}`, created_by: profile.id,
+      } as never)
+      if (lerr) throw lerr
+    }
   }
   const { data, error } = await supabase.from('report_runs').insert({
     organization_id: organizationId, kind: p.kind, title: name, params: p as unknown as Json, file_name: fileName, storage_path, document_id, sales_report_id, summary: summary as unknown as Json, created_by: profile.id,

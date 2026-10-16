@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Download, FileSpreadsheet, Play, Save, Trash2 } from 'lucide-react'
+import { Download, Eye, FileSpreadsheet, Play, Save, Trash2 } from 'lucide-react'
+import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useTableSort } from '@/hooks/useTableSort'
@@ -45,21 +46,25 @@ export default function SalesReportsHub() {
   const [formSeen, setFormSeen] = useState(formKey)
   if (formSeen !== formKey) { setFormSeen(formKey); setP(preset?.params ?? initial) }
 
+  const { view, viewer } = useDocumentViewer()
   const [running, setRunning] = useState(false)
   const [last, setLast] = useState<{ run: ReportRun; file: File } | null>(null)
+  const [failed, setFailed] = useState<string | null>(null)
   async function run() {
     if (!org || !profile) return
     if (p.kind === 'vendor' && !p.vendor_ids.length) { toast.error('Pick a vendor'); return }
     if (p.kind === 'category' && !p.categories.length && !p.vendor_ids.length) { toast.error('Pick a category'); return }
     if (!p.store_codes.length) { toast.error('Pick a store'); return }
     setRunning(true)
+    setFailed(null)
     try {
       const r = await runLsReport({ organizationId: org, params: p, stores: stores.data ?? [], vendors: vendors.data ?? [], profile: { id: profile.id, full_name: profile.full_name } })
       setLast({ run: r.run, file: r.file })
-      download(r.file)
       toast.success(`Report ready: ${r.file.name}`)
+      view({ name: r.file.name, mime: r.file.type, load: () => Promise.resolve(r.file) })
       setTick((t) => t + 1)
     } catch (e) {
+      setFailed(errorMessage(e))
       toast.error(errorMessage(e))
     } finally {
       setRunning(false)
@@ -139,10 +144,11 @@ export default function SalesReportsHub() {
             </span>
           ) : null}
         </div>
+        {failed ? <Alert variant="error" className="mt-4">The report did not run: {failed}</Alert> : null}
         {last ? (
           <Alert variant="success" className="mt-4">
-            <span className="font-medium">{last.file.name}</span> is filed{last.run.document_id ? ' under the vendor' : ' under Reports'} and downloaded.
-            {' '}<button type="button" onClick={() => download(last.file)} className="underline">Download again</button>
+            <span className="font-medium">{last.file.name}</span> is filed{last.run.document_id ? ' under the vendor' : ' under Reports'}.
+            {' '}<button type="button" onClick={() => view({ name: last.file.name, mime: last.file.type, load: () => Promise.resolve(last.file) })} className="underline">Open</button> · <button type="button" onClick={() => download(last.file)} className="underline">Download</button>
             {last.run.sales_report_id ? <> · <Link to={ROUTES.workingOrders} className="underline">Suggested order</Link></> : null}
           </Alert>
         ) : null}
@@ -164,8 +170,9 @@ export default function SalesReportsHub() {
 
       <section className="rounded-2xl border border-stone-200 bg-white">
         <h2 className="px-4 py-3 text-sm font-semibold text-stone-900">Reports run</h2>
-        {runs.isLoading ? <Spinner label="Loading…" className="m-4 text-brand" /> : <RunsTable runs={runs.data ?? []} />}
+        {runs.isLoading ? <Spinner label="Loading…" className="m-4 text-brand" /> : <RunsTable runs={runs.data ?? []} onOpen={(r) => view({ name: r.file_name, mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', load: () => downloadRunFile(r) })} />}
       </section>
+      {viewer}
     </div>
   )
 }
@@ -247,7 +254,7 @@ function CategoryPick({ categories, value, onChange, label }: { categories: { ca
   )
 }
 
-function RunsTable({ runs }: { runs: ReportRun[] }) {
+function RunsTable({ runs, onOpen }: { runs: ReportRun[]; onOpen: (r: ReportRun) => void }) {
   const { sorted, sort, toggle } = useTableSort(runs, {
     when: (r) => r.created_at,
     title: (r) => r.title,
@@ -282,7 +289,7 @@ function RunsTable({ runs }: { runs: ReportRun[] }) {
               </td>
               <td className={cn('hidden px-3 py-2 md:table-cell')}>{r.kind === 'vendor' ? 'Vendor' : r.kind === 'category' ? 'Category' : 'Inventory'}</td>
               <td className="hidden px-3 py-2 text-stone-600 lg:table-cell"><span className="inline-flex items-center gap-1"><FileSpreadsheet className="size-4 text-stone-400" aria-hidden="true" />{r.file_name}</span></td>
-              <td className="whitespace-nowrap px-3 py-2 text-right"><button type="button" onClick={() => open(r)} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-brand hover:bg-stone-100"><Download className="size-3.5" aria-hidden="true" />Download</button></td>
+              <td className="whitespace-nowrap px-3 py-2 text-right"><span className="inline-flex gap-1"><button type="button" onClick={() => onOpen(r)} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-brand hover:bg-stone-100"><Eye className="size-3.5" aria-hidden="true" />Open</button><button type="button" onClick={() => open(r)} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-stone-600 hover:bg-stone-100"><Download className="size-3.5" aria-hidden="true" />Download</button></span></td>
             </tr>
           )
         })}
