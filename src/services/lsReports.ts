@@ -100,6 +100,7 @@ export async function fetchReportItems(organizationId: string, p: ReportParams, 
     return {
       sid: r.system_sku || r.item_id, upc: r.upc, lsVendor: r.vendor_name, vid: r.vendor_item_id || r.manufacturer_sku || r.custom_sku, desc: r.description,
       cost: r.default_cost == null ? null : Number(r.default_cost), cat: r.category_path, archived: r.archived, sold, nonInv, qoh: nonInv ? 0 : qoh, last: r.last_sold, notes: [],
+      lsVendorId: r.default_vendor_id,
       byStore: p.store_mode === 'separate' ? byStore : undefined,
     }
   })
@@ -141,8 +142,10 @@ export async function runLsReport(input: { organizationId: string; params: Repor
     storage_path = `${organizationId}/reports/${crypto.randomUUID()}-${fileName.replace(/[^A-Za-z0-9._-]+/g, '_')}`
     const { error } = await supabase.storage.from('vendor-files').upload(storage_path, file, { contentType: file.type, upsert: false })
     if (error) throw error
-    // a category report with vendors picked is also on each of those vendors' pages (Dana, Oct 16); one file, a link per vendor
-    const under = p.vendor_ids.map((id) => input.vendors.find((v) => v.ls_vendor_id === id)?.vendor_id).filter((x): x is string => !!x)
+    // a category report is also on the page of every vendor on its Active tab, and any vendor picked (Dana, Oct 16: "it just
+    // does it automatically"); one file, a link per vendor
+    const lsIds = new Set([...p.vendor_ids, ...plan.active.map((x) => x.lsVendorId ?? '').filter(Boolean)])
+    const under = [...new Set([...lsIds].map((id) => input.vendors.find((v) => v.ls_vendor_id === id)?.vendor_id).filter((x): x is string => !!x))]
     for (const vendorId of under) {
       const { error: lerr } = await supabase.from('vendor_links').insert({
         organization_id: organizationId, vendor_id: vendorId, kind: 'sales_report', label: fileName.replace(/\.xlsx$/i, ''), storage_path, file_name: fileName, file_size: file.size, mime_type: file.type,

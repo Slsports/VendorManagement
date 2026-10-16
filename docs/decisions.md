@@ -2329,5 +2329,6 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   to the description. Overlap and Recommendations tabs on category reports are still to come.
 - Oct 16 (Dana): no limit on how many vendors a sales report can hold ("more than 2 vendors just in case").
 - Oct 16 (Dana): a report never downloads on its own; it opens in the page (tab by tab) and is filed, with **Download**
-  when she wants a copy. Category reports with vendors picked are filed under each of those vendors as well as Reports.
+  when she wants a copy. Category reports are filed under every vendor on their Active tab (and any picked) as well as Reports: "it just does it
+  automatically".
   The report query runs as the definer with one membership check (0142) so it stays inside the 8-second limit.

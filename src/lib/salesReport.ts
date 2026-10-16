@@ -20,6 +20,8 @@ export interface SalesItem {
   /** YYYY-MM-DD, or null = never sold */
   last: string | null
   notes: string[]
+  /** Lightspeed's vendor id, when the items came from the copy of Lightspeed (to file a category report under its vendors). */
+  lsVendorId?: string
   /** Sold and in stock per store code when the report keeps the stores apart (SLS, SLM, GS). */
   byStore?: Record<string, { sold: number; qoh: number }>
 }
