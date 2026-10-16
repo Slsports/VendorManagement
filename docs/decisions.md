@@ -2260,3 +2260,8 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   danapowell2024 address is not used for approvals). When a conversation's artwork is approved, the proofs filed from it
   get the Approved star and the order it is filed to shows "Artwork approved" with the date. Back-check: one approved
   conversation, no proof or order attached to it.
+- Oct 16, Worldwide portal (Nichole Pence, WWD: "that information is not available and would need to come directly from
+  the vendors"): VMS reads the vendor directory from the portal itself. A **Send to VMS** bookmark (Settings ›
+  Worldwide; Dana's private key, nothing to install) sends the page she is on; if the portal blocks it, the page
+  downloads and is uploaded there. Step 1: the Vendors list and one vendor's page, so the reader is written from the real
+  pages; step 2: one click goes through every vendor in the portal. Direct and Faire vendors are not in the portal.

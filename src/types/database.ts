@@ -625,6 +625,12 @@ export type Database = {
           { foreignKeyName: 'freight_bills_email_id_fkey'; columns: ['email_id']; isOneToOne: false; referencedRelation: 'emails'; referencedColumns: ['id'] },
         ]
       }
+      portal_captures: {
+        Row: { id: string; organization_id: string; profile_id: string | null; source: string; url: string | null; title: string | null; html: string; size: number | null; how: 'bookmark' | 'upload'; created_at: string }
+        Insert: { id?: string; organization_id: string; profile_id?: string | null; source?: string; url?: string | null; title?: string | null; html: string; how?: 'bookmark' | 'upload'; created_at?: string }
+        Update: { id?: string; organization_id?: string; profile_id?: string | null; source?: string; url?: string | null; title?: string | null; html?: string; how?: 'bookmark' | 'upload'; created_at?: string }
+        Relationships: []
+      }
       order_checks: {
         Row: { id: string; organization_id: string; vendor_id: string | null; order_id: string | null; kind: 'confirmation' | 'invoice'; document_id: string; email_id: string | null; status: OrderCheckStatus; working_at: string | null; reading: Json | null; po_number: string | null; doc_number: string | null; doc_date: string | null; doc_total: number | null; against: string | null; against_ids: string[]; result: 'match' | 'issues' | null; summary: string | null; rows: Json; issues: Json; draft_to: string[]; draft_subject: string | null; draft_body: string | null; read_note: string | null; assigned_to: string | null; assigned_at: string | null; reviewed_by: string | null; reviewed_at: string | null; outcome: 'sent' | 'no_email' | 'web_order' | 'used_as_order' | null; sent_thread_id: string | null; created_at: string; updated_at: string; match_how: 'po' | 'vendor_number' | 'conversation' | 'total' | 'claude' | 'picked' | null; report_id: string | null; report_ticked: boolean | null; po_task_id: string | null; po_draft_id: string | null; suggested_order_id: string | null; new_items: Json; row_edits: Json }
         Insert: { id?: string; organization_id: string; vendor_id?: string | null; order_id?: string | null; kind: 'confirmation' | 'invoice'; document_id: string; email_id?: string | null; status?: OrderCheckStatus; working_at?: string | null; reading?: Json | null; po_number?: string | null; doc_number?: string | null; doc_date?: string | null; doc_total?: number | null; against?: string | null; against_ids?: string[]; result?: 'match' | 'issues' | null; summary?: string | null; rows?: Json; issues?: Json; draft_to?: string[]; draft_subject?: string | null; draft_body?: string | null; read_note?: string | null; assigned_to?: string | null; assigned_at?: string | null; reviewed_by?: string | null; reviewed_at?: string | null; outcome?: 'sent' | 'no_email' | 'web_order' | 'used_as_order' | null; sent_thread_id?: string | null; created_at?: string; updated_at?: string; match_how?: 'po' | 'vendor_number' | 'conversation' | 'total' | 'claude' | 'picked' | null; report_id?: string | null; report_ticked?: boolean | null; po_task_id?: string | null; po_draft_id?: string | null; suggested_order_id?: string | null; new_items?: Json; row_edits?: Json }
@@ -872,6 +878,8 @@ export type Database = {
       task_mark_paid: { Args: { p_task: string }; Returns: undefined }
       org_set_pay_links: { Args: { p_org: string; p_edenred: string | null; p_billcom: string | null }; Returns: undefined }
       order_check_use_as_order: { Args: { p_check: string }; Returns: string }
+      portal_capture_key: { Args: Record<string, never>; Returns: string }
+      portal_capture_upload: { Args: { p_url: string; p_title: string; p_html: string }; Returns: string }
       order_check_edit_row: { Args: { p_check: string; p_what: string; p_edit: Json }; Returns: Json }
       order_check_save_final: { Args: { p_check: string; p_lines: Json }; Returns: string }
       vendor_usual_charge_add: { Args: { p_vendor: string; p_what: string; p_price: number; p_per?: string | null }; Returns: Json }

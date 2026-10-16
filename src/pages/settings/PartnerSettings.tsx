@@ -7,6 +7,7 @@ import { addPartnerContact, deletePartnerContact, getPartner, updatePartner, upd
 import { errorMessage } from '@/lib/utils'
 import type { PartnerContact } from '@/types'
 import { Alert, Button, FormField, Input, Spinner } from '@/components/ui'
+import { PortalCaptureCard } from '@/components/settings/PortalCaptureCard'
 
 /** Worldwide Distributors: our member number, their main line, and their roster. Ticked people are the key contacts, listed first on the WWD contacts page. */
 export default function PartnerSettings() {
@@ -92,6 +93,7 @@ export default function PartnerSettings() {
 
   return (
     <div className="space-y-6">
+      <PortalCaptureCard />
       <section className="grid gap-3 rounded-2xl border border-stone-200 bg-white p-5 sm:grid-cols-2 lg:grid-cols-4">
         <FormField label="Our member number" htmlFor="pw-member"><Input id="pw-member" key={p.member_number ?? ''} defaultValue={p.member_number ?? ''} onBlur={(e) => void saveField('member_number', e.target.value)} /></FormField>
         <FormField label="Main phone" htmlFor="pw-phone"><Input id="pw-phone" key={p.main_phone ?? ''} defaultValue={p.main_phone ?? ''} onBlur={(e) => void saveField('main_phone', e.target.value)} /></FormField>
