@@ -65,13 +65,17 @@ Deno.serve(async (req) => {
       const { data } = await db.from('mailboxes').select('id, kind, address, owner_id, gmail_box, organization_id').eq('id', boxId).single()
       if (!data || data.organization_id !== me.organization_id) throw new HttpError(404, 'Mailbox not found')
       if (data.kind === 'personal' && data.owner_id !== me.id) throw new HttpError(403, 'Only the owner of this mailbox can send from it. Share the conversation to Orders to answer from orders@.')
+      if (data.kind === 'accounting') {
+        const { data: p } = await db.from('profiles').select('sees_accounting').eq('id', me.id).maybeSingle()
+        if (!p?.sees_accounting) throw new HttpError(403, 'Only people with the Accounting tick send from this mailbox')
+      }
       if (data.kind === 'legacy' && me.role !== 'admin' && data.owner_id !== me.id) throw new HttpError(403, 'Only Dana answers the old Gmail')
       box = data
     }
     // Vendor business from a personal inbox: ask once; "Send from orders@ instead" starts a new conversation in orders@.
     let boxIdSaved = boxId
     let gmailThread = thread?.gmail_thread_id
-    if (box?.kind === 'personal') {
+    if (box?.kind === 'personal' || box?.kind === 'accounting') {
       const check = r.vendor_check ?? 'ask'
       if (check === 'ask') {
         const reason = await vendorBusiness(db, me.organization_id, acct.mailbox as string, to, cc, r.subject.trim(), r.body ?? '')
@@ -82,7 +86,7 @@ Deno.serve(async (req) => {
         gmailThread = undefined
       }
     }
-    const mailbox = (box?.kind === 'personal' ? box.address : acct.mailbox) as string
+    const mailbox = (box && box.kind !== 'legacy' ? box.address : acct.mailbox) as string
     let inReplyTo: string | null = null
     let references: string | null = null
     if (r.reply_to_email_id) {

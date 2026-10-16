@@ -62,7 +62,7 @@ export default function MailPage() {
   const mailbox = params.get('box') ?? ORDERS
   const ownBox = mailbox !== ORDERS
   const boxLabel = (b: { owner_id: string; label: string; kind: string }) => (b.kind === 'personal' && b.owner_id === profile?.id ? 'My mail' : b.label)
-  const myBoxes = [...(boxes.data ?? [])].sort((a, b) => Number(b.owner_id === profile?.id && b.kind === 'personal') - Number(a.owner_id === profile?.id && a.kind === 'personal'))
+  const myBoxes = [...(boxes.data ?? [])].filter((b) => b.kind !== 'accounting' || b.id === mailbox).sort((a, b) => Number(b.owner_id === profile?.id && b.kind === 'personal') - Number(a.owner_id === profile?.id && a.kind === 'personal'))
   // Snooze (Dana, Oct 9): my snoozed conversations leave my lists until their time; the Snoozed tab shows
   // mine, or everyone's when looking at everyone, with who and until when.
   const q = useSupabaseQuery(async () => {

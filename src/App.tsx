@@ -7,6 +7,7 @@ import { ROUTES } from '@/lib/constants'
 import { homeRouteForRole } from '@/lib/navigation'
 import { RequireAuth, PublicOnly } from '@/components/auth/RequireAuth'
 import { RequireRole } from '@/components/auth/RequireRole'
+import { RequireAccounting } from '@/components/auth/RequireAccounting'
 import { AppShell } from '@/components/layout/AppShell'
 import LoginPage from '@/pages/auth/Login'
 import ForgotPasswordPage from '@/pages/auth/ForgotPassword'
@@ -21,6 +22,7 @@ const BulkImportPage = lazy(() => import('@/pages/vendors/BulkImportPage'))
 const WorkingOrdersPage = lazy(() => import('@/pages/mail/WorkingOrdersPage'))
 const TeamPage = lazy(() => import('@/pages/TeamPage'))
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'))
+const AccountingHome = lazy(() => import('@/pages/accounting/AccountingHome'))
 const ReviewQueue = lazy(() => import('@/pages/review/ReviewQueue'))
 const RepGroupList = lazy(() => import('@/pages/rep-groups/RepGroupList'))
 const WorldwideContacts = lazy(() => import('@/pages/contacts/WorldwideContacts'))
@@ -162,6 +164,10 @@ export default function App() {
 
               <Route element={<RequireRole roles={['admin', 'manager']} />}>
                 <Route path={ROUTES.payments} element={<PaymentList />} />
+              </Route>
+
+              <Route element={<RequireAccounting />}>
+                <Route path={ROUTES.accounting} element={<AccountingHome />} />
               </Route>
 
               <Route element={<RequireRole roles={['admin']} />}>

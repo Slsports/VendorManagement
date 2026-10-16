@@ -59,7 +59,8 @@ small fixes, a Sonnet session for questions). All code goes to `claude/ecstatic-
 Personal mailboxes and the old Gmail live in `mailboxes`; their threads/emails have `mailbox_id` set and are
 private to the owner and the admin (RLS). Never copy their subjects, snippets or senders into org-wide tables
 (review_items, notes, logs); Orders lists filter `mailbox_id is null or shared_at is not null`. Gmail calls use the
-email's `gmail_box`, never the org's single mailbox.
+email's `gmail_box`, never the org's single mailbox. The accounting mailbox (billing@, `kind = 'accounting'`) is seen only
+with `profiles.sees_accounting` (`sees_accounting()` in RLS; admin alone is not enough) and can never be shared to Orders.
 
 ## Filing changes re-check the old (Oct 14)
 Dana: "Everytime we change something I want all the old stuff checked to make sure it goes in the right place … And no
@@ -113,7 +114,8 @@ queue with assignment rules, vendor scorecards (six dimensions, four automatic),
 rules per vendor (seeded for Ty), Lightspeed category standard document, and Mail: orders@ synced every
 minute (12 months back), sender proposals in the review queue, Mail page, send/reply/forward from orders@
 with signatures, follow-up nudges (see `docs/gmail-connection.md` "As built"), and Tasks (due date, reminders by dashboard/email/text, assign, tag, repeat; `task-reminders` function), Sign in with
-Google plus the staff list at Settings → Users (`admin-users` function; sign-ups are off, only listed emails get in).
+Google plus the staff list at Settings → Users (`admin-users` function; sign-ups are off, only listed emails get in), and the
+Accounting area, step 1 (billing@ mailbox, Accounting tick; `docs/accounting-plan.md` for the rest).
 
 ## Not built yet, in order
 Gmail label write-back and contact enrichment,

@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     const legacy = (boxes ?? []).find((b) => b.organization_id === a.organization_id && b.kind === 'legacy')
     results.push(await syncAccount(db, { ...a, box_id: null, owner_id: null, legacy: legacy ? { id: legacy.id, address: legacy.address } : null }))
   }
-  for (const b of (boxes ?? []).filter((x) => x.kind === 'personal')) {
+  for (const b of (boxes ?? []).filter((x) => x.kind === 'personal' || x.kind === 'accounting')) {
     const shared = (accounts ?? []).find((a) => a.organization_id === b.organization_id) as Account | undefined
     results.push(await syncAccount(db, { ...b, mailbox: b.address, internal_domains: shared?.internal_domains ?? [], box_id: b.id, owner_id: b.owner_id, legacy: null } as Account))
   }

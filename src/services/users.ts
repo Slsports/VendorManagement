@@ -57,6 +57,12 @@ export async function setUserActive(id: string, is_active: boolean) {
   if (error) throw error
 }
 
+/** The Accounting tick (Dana, Oct 16): sees the Accounting area. Admin alone is not enough; only admins set it. */
+export async function setUserAccounting(id: string, sees_accounting: boolean) {
+  const { error } = await supabase.from('profiles').update({ sees_accounting }).eq('id', id)
+  if (error) throw error
+}
+
 export async function setStoreGrants(userId: string, storeIds: string[]) {
   const { error: delError } = await supabase.from('user_store_access').delete().eq('user_id', userId)
   if (delError) throw delError

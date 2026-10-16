@@ -2150,3 +2150,6 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   once the mail is flowing.
 - Accounting also gets a **contacts list**: the people Dana deals with in that mail (company, person, role, category,
   how to reach them), one light card each, seeded from the mail as proposals she confirms.
+- Oct 16, built (step 1): the Accounting menu entry and page, the **Accounting** tick on Settings → Users (admin alone is
+  not enough; only Dana has it), and billing@shaverlakesports.com in the mail sync as an accounting mailbox: private to
+  people with the tick, never shared to Orders, no vendor auto-share; answered from billing@. Migration 0113.

@@ -19,7 +19,7 @@ export interface SidebarNavProps {
 
 export function SidebarNav({ expanded, onNavigate, collapseToggle }: SidebarNavProps) {
   const { branding, profile, role } = useAuth()
-  const groups = navForRole(role)
+  const groups = navForRole(role, profile)
   const mailCount = useMailCount()
 
   return (

@@ -22,6 +22,7 @@ export function withAuth(role: UserRole, ui: ReactNode, initialEntries: string[]
       reviews_ls_pos: false,
       places_orders: false,
       sees_freight: false,
+      sees_accounting: false,
       full_name: 'Test Person',
       role,
       avatar_url: null,

@@ -12,6 +12,7 @@ import {
   listUsers,
   sendSetPasswordEmail,
   setStoreGrants,
+  setUserAccounting,
   setUserActive,
   setUserRole,
 } from '@/services/users'
@@ -140,6 +141,7 @@ export default function UserSettings() {
               <SortHeader label="Stores" sortKey="stores" sort={sort} onSort={toggle} className="px-4 py-2.5" />
               <SortHeader label="Last sign-in" sortKey="signin" sort={sort} onSort={toggle} className="px-4 py-2.5" />
               <SortHeader label="Status" sortKey="status" sort={sort} onSort={toggle} className="px-4 py-2.5" />
+              <th className="px-4 py-2.5" title="Sees the Accounting area: billing@ mail, bills, accounting tasks. Admin alone is not enough.">Accounting</th>
               <th className="px-4 py-2.5"><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
@@ -196,6 +198,16 @@ export default function UserSettings() {
                   </td>
                   <td className="px-4 py-3">
                     <Badge tone={u.is_active ? 'success' : 'neutral'}>{u.is_active ? 'Active' : 'Inactive'}</Badge>
+                  </td>
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      className="size-4 accent-brand"
+                      checked={u.sees_accounting}
+                      disabled={isMe}
+                      aria-label={`${u.full_name} sees Accounting`}
+                      onChange={(e) => void run(e.target.checked ? `${u.full_name} now sees Accounting` : `${u.full_name} no longer sees Accounting`, () => setUserAccounting(u.id, e.target.checked))}
+                    />
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap justify-end gap-2">

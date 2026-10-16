@@ -152,7 +152,7 @@ export type Database = {
           is_active: boolean
           created_at: string
           updated_at: string
-       ; email_signature: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null; places_orders: boolean; sees_freight: boolean; dashboard_layout: Json | null; remind_dashboard: boolean; remind_email: boolean; remind_text: boolean; mobile_phone: string | null; reviews_ls_pos: boolean }
+       ; email_signature: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null; places_orders: boolean; sees_freight: boolean; sees_accounting: boolean; dashboard_layout: Json | null; remind_dashboard: boolean; remind_email: boolean; remind_text: boolean; mobile_phone: string | null; reviews_ls_pos: boolean }
         Insert: {
           id: string
           organization_id: string
@@ -164,7 +164,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
+       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
         Update: {
           id?: string
           organization_id?: string
@@ -176,7 +176,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
+       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
         Relationships: [
           {
             foreignKeyName: 'profiles_organization_id_fkey'
@@ -488,9 +488,9 @@ export type Database = {
         Relationships: []
       }
       mailboxes: {
-        Row: { id: string; organization_id: string; kind: 'personal' | 'legacy'; address: string; label: string; owner_id: string; gmail_box: string; is_active: boolean; history_id: string | null; backfill_after: string | null; backfill_page_token: string | null; backfill_done: boolean; last_sync_at: string | null; sync_started_at: string | null; last_error: string | null; last_error_at: string | null; messages_synced: number; auto_share_vendor_mail: boolean; created_at: string; updated_at: string }
-        Insert: { id?: string; organization_id: string; kind: 'personal' | 'legacy'; address: string; label: string; owner_id: string; gmail_box: string; is_active?: boolean; history_id?: string | null; backfill_after?: string | null; backfill_page_token?: string | null; backfill_done?: boolean; last_sync_at?: string | null; sync_started_at?: string | null; last_error?: string | null; last_error_at?: string | null; messages_synced?: number; auto_share_vendor_mail?: boolean; created_at?: string; updated_at?: string }
-        Update: { id?: string; organization_id?: string; kind?: 'personal' | 'legacy'; address?: string; label?: string; owner_id?: string; gmail_box?: string; is_active?: boolean; history_id?: string | null; backfill_after?: string | null; backfill_page_token?: string | null; backfill_done?: boolean; last_sync_at?: string | null; sync_started_at?: string | null; last_error?: string | null; last_error_at?: string | null; messages_synced?: number; auto_share_vendor_mail?: boolean; created_at?: string; updated_at?: string }
+        Row: { id: string; organization_id: string; kind: 'personal' | 'legacy' | 'accounting'; address: string; label: string; owner_id: string; gmail_box: string; is_active: boolean; history_id: string | null; backfill_after: string | null; backfill_page_token: string | null; backfill_done: boolean; last_sync_at: string | null; sync_started_at: string | null; last_error: string | null; last_error_at: string | null; messages_synced: number; auto_share_vendor_mail: boolean; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; kind: 'personal' | 'legacy' | 'accounting'; address: string; label: string; owner_id: string; gmail_box: string; is_active?: boolean; history_id?: string | null; backfill_after?: string | null; backfill_page_token?: string | null; backfill_done?: boolean; last_sync_at?: string | null; sync_started_at?: string | null; last_error?: string | null; last_error_at?: string | null; messages_synced?: number; auto_share_vendor_mail?: boolean; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; kind?: 'personal' | 'legacy' | 'accounting'; address?: string; label?: string; owner_id?: string; gmail_box?: string; is_active?: boolean; history_id?: string | null; backfill_after?: string | null; backfill_page_token?: string | null; backfill_done?: boolean; last_sync_at?: string | null; sync_started_at?: string | null; last_error?: string | null; last_error_at?: string | null; messages_synced?: number; auto_share_vendor_mail?: boolean; created_at?: string; updated_at?: string }
         Relationships: []
       }
       email_threads: {

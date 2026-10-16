@@ -39,7 +39,7 @@ export default function ThreadPage() {
   // Someone's own mailbox or the old Gmail (Dana, Oct 11): its address for Gmail and replies, and who may answer from it.
   const boxes = useSupabaseQuery(async () => (organization ? listMailboxes(organization.id) : []), [organization?.id])
   const box = q.data?.thread.mailbox_id ? (boxes.data ?? []).find((b) => b.id === q.data!.thread.mailbox_id) ?? null : null
-  const mailbox = { data: box ? (box.kind === 'personal' ? box.address : orders.data) : orders.data }
+  const mailbox = { data: box ? (box.kind !== 'legacy' ? box.address : orders.data) : orders.data }
   const mayAnswer = !box || box.kind !== 'personal' || box.owner_id === profile?.id
   const [draft, setDraft] = useState<ComposeDraft | null>(null)
   const [params, setParams] = useSearchParams()

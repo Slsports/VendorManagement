@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Banknote, Building2, CalendarDays, ChartColumn, CircleHelp, ClipboardCheck, ClipboardList, Contact, FileText, FolderOpen, LayoutDashboard, Lightbulb, ListTodo, Mail, Package, Receipt, Settings, ShoppingCart, Tags, Truck, Undo2, Upload, Users, UsersRound } from 'lucide-react'
+import { Banknote, Building2, Calculator, CalendarDays, ChartColumn, CircleHelp, ClipboardCheck, ClipboardList, Contact, FileText, FolderOpen, LayoutDashboard, Lightbulb, ListTodo, Mail, Package, Receipt, Settings, ShoppingCart, Tags, Truck, Undo2, Upload, Users, UsersRound } from 'lucide-react'
 import { ORDER_STATUSES, ORDER_STATUS_LABELS, ROUTES, type UserRole } from './constants'
 
 export interface NavChild {
@@ -18,7 +18,11 @@ export interface NavItem {
   children?: readonly NavChild[]
   /** Show a live count beside the label. */
   badge?: 'mail'
+  /** Only people with this tick on their profile see the item (Accounting, Dana Oct 16). */
+  flag?: 'sees_accounting'
 }
+
+export type NavFlags = { sees_accounting?: boolean } | null | undefined
 
 export interface NavGroup {
   label: string
@@ -73,6 +77,12 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     ],
   },
   {
+    label: 'Accounting',
+    items: [
+      { label: 'Accounting', to: ROUTES.accounting, icon: Calculator, flag: 'sees_accounting' },
+    ],
+  },
+  {
     label: 'System',
     items: [
       { label: 'File Manager', to: ROUTES.files, icon: FolderOpen },
@@ -90,12 +100,12 @@ export const UPLOADER_NAV: readonly NavGroup[] = [
   },
 ]
 
-export function navForRole(role: UserRole | null | undefined): NavGroup[] {
+export function navForRole(role: UserRole | null | undefined, flags?: NavFlags): NavGroup[] {
   if (!role) return []
   if (role === 'uploader') return [...UPLOADER_NAV]
   return NAV_GROUPS.map((group) => ({
     label: group.label,
-    items: group.items.filter((item) => !item.roles || item.roles.includes(role)),
+    items: group.items.filter((item) => (!item.roles || item.roles.includes(role)) && (!item.flag || !!flags?.[item.flag])),
   })).filter((group) => group.items.length > 0)
 }
 
