@@ -2285,3 +2285,7 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   after Dana's review list); it does not change the vendor's Active switch. Reads weekly (`ls-items` cron, every 5
   minutes it carries on a reading); **Read LS items now** in Settings › Lightspeed. Taylor Brands: Dana considers it
   inactive (old archived knives).
+- Oct 16, first LS item reading: 47,716 items (16,813 active, 30,903 archived; LS's own active count on Oct 13 was
+  16,794). Vendors: 510 Active in LS, 207 Inactive in LS, 34 No items in LS, 24 not tied to an LS vendor. 7,995 items
+  have no vendor in LS (238 of them active). 10 LS vendors with items are not tied to any VMS vendor (238 items, e.g.
+  CROSSMAN, ESCO TRADING - DANDYLINES WWD, REEF SPORT SUNCARE - SANDBOXX). Taylor Brands: 8 archived items, Inactive.
