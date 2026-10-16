@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Award } from 'lucide-react'
+import { Award, ChartColumn } from 'lucide-react'
 import { ROUTES } from '@/lib/constants'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { ComingSoon } from '@/components/shared/ComingSoon'
@@ -9,6 +9,12 @@ export default function Page() {
     <div>
       <PageHeader title="Reports" />
       <ul className="mb-6 grid gap-3 sm:grid-cols-2">
+        <li>
+          <Link to={ROUTES.salesReports} className="flex items-start gap-3 rounded-2xl border border-stone-200 bg-white p-4 hover:border-brand">
+            <ChartColumn className="mt-0.5 size-5 text-brand" aria-hidden="true" />
+            <span><span className="block font-medium text-stone-900">Sales reports</span><span className="block text-sm text-stone-600">Vendor and category reports straight from Lightspeed, by the sales report spec: stores together or apart, any period, filed and saved.</span></span>
+          </Link>
+        </li>
         <li>
           <Link to={ROUTES.vendorScores} className="flex items-start gap-3 rounded-2xl border border-stone-200 bg-white p-4 hover:border-brand">
             <Award className="mt-0.5 size-5 text-brand" aria-hidden="true" />
