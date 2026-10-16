@@ -4,7 +4,7 @@ section: Order paperwork
 keywords: draft email, send email, vendor email, mismatch, wrong price, wrong quantity, reply to vendor
 who: Admin, managers and buyers
 ---
-When a confirmation or invoice does not match, Claude drafts an email to the vendor. You read it, change anything you like, and send it.
+When an invoice does not match (or a confirmation has nothing to compare line by line), Claude drafts an email to the vendor. You read it, change anything you like, and send it. For a confirmation with items, you fix the rows and send the final order instead: see "Fix a confirmation and send the final order".
 
 ## How to
 1. Open the check. The draft is in the box **Email Claude drafted to the vendor**, with who it goes to and the subject.

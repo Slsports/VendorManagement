@@ -2236,3 +2236,10 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   Emery Jensen confirmed as a Bills contact (emeryjensen.com) set to "handled in bill.com". Gmail's own filters could
   not be read: the Workspace connection is not allowed mailbox settings (scope gmail.settings.basic). The hand-forwards
   to shaverlakesports1@bill.com (293 since 2023) name the other companies that go there.
+- Oct 16, final confirmed order (Dana: "I should be able to change quantities ... delete it ... check mark that it's
+  ok. And then it should create the final confirmed order back to the vendor in the email with a summary of what was
+  fixed ... with the item number and the name"): each item row on a confirmation check has a **Final** quantity, a tick
+  (take the confirmation's number) and remove. **Review & send final order** writes the email: what changed (item number
+  and name), then Dana's line "Please reply to confirm this order. If any quantities don't fit your case packs, let me
+  know so I can adjust and then we can finalize the order.", then the whole final order. Once sent, the final order
+  becomes the order's lines.

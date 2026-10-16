@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Check, ClipboardCheck, FileText, RefreshCw, Send, X } from 'lucide-react'
+import { Check, ClipboardCheck, FileText, RefreshCw, Send, Trash2, Undo2, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useTableSort } from '@/hooks/useTableSort'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
-import { addUsualCharge, checkIssues, checkNewItems, checkRows, makeOrderFromCheck, getOrderCheck, listCheckDocuments, orderCheckAction, runOrderChecks, type CheckAction, type CheckRow, type OrderCheckRow } from '@/services/orderChecks'
+import { addUsualCharge, checkIssues, checkNewItems, checkRows, editCheckRow, makeOrderFromCheck, saveFinalOrder, getOrderCheck, listCheckDocuments, orderCheckAction, runOrderChecks, type CheckAction, type CheckRow, type OrderCheckRow } from '@/services/orderChecks'
 import { listOrders } from '@/services/orders'
 import { listPeople } from '@/services/reviews'
 import { downloadVendorFile } from '@/services/lines'
 import { CHECK_KIND_LABEL, CHECK_TITLE, checkStatusText, priceIn } from '@/lib/orderChecks'
+import { buildFinalOrder, finalOrderEmail, isFieldRow, rowHandled, rowQtys, type ReadLine, type RowEdit } from '@/lib/finalOrder'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
 import { money as formatCurrency } from '@/lib/freight'
@@ -61,6 +62,25 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
   const { sorted, sort, toggle } = useTableSort(rows, COLUMNS)
   const st = checkStatusText(c)
   const working = c.status === 'reading' || c.status === 'comparing'
+  // the final confirmed order (Dana, Oct 16): change a quantity, remove an item, or tick it OK, then send it back
+  const [edits, setEdits] = useState<Record<string, RowEdit>>(() => (c.row_edits ?? {}) as Record<string, RowEdit>)
+  const readingLines = ((c.reading as { lines?: ReadLine[] } | null)?.lines ?? [])
+  const finalMode = c.kind === 'confirmation' && rows.some((r) => !isFieldRow(r))
+  const editable = finalMode && canEdit && c.status === 'to_review'
+  const final = finalMode ? buildFinalOrder(rows, edits, readingLines, newItems) : null
+  const firstName = /^Hi ([^,\n]+),/.exec(c.draft_body ?? '')?.[1]?.trim() ?? null
+  const finalEmail = final ? finalOrderEmail({ firstName: firstName && firstName.toLowerCase() !== 'there' ? firstName : null, docNumber: c.doc_number, po: c.order?.po_number ?? c.po_number, items: final.items, changes: final.changes }) : null
+
+  async function edit(what: string, e: RowEdit | null) {
+    const before = edits
+    setEdits((x) => { const n = { ...x }; if (e && Object.keys(e).length) n[what] = e; else delete n[what]; return n })
+    try {
+      setEdits(await editCheckRow(c.id, what, e))
+    } catch (err) {
+      setEdits(before)
+      toast.error(errorMessage(err))
+    }
+  }
 
   async function act(label: string, action: CheckAction, opts: Parameters<typeof orderCheckAction>[2] = {}, after?: () => void) {
     setBusy(true)
@@ -197,18 +217,44 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
                 <SortHeader label={c.kind === 'invoice' ? 'Confirmation' : c.against?.startsWith('Sales report') ? 'Sales report' : 'We ordered'} sortKey="ours" sort={sort} onSort={toggle} className="px-3 py-2" />
                 <SortHeader label={c.kind === 'invoice' ? 'Invoice' : 'Confirmation'} sortKey="theirs" sort={sort} onSort={toggle} className="px-3 py-2" />
                 <SortHeader label="OK" sortKey="ok" sort={sort} onSort={toggle} className="px-3 py-2" />
+                {finalMode ? <th className="px-3 py-2">Final</th> : null}
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
-              {sorted.map((r, i) => (
-                <tr key={i} className={r.ok ? '' : 'bg-red-50/60'}>
+              {sorted.map((r, i) => {
+                const item = finalMode && !isFieldRow(r)
+                const e = edits[r.what]
+                const q = item ? rowQtys(r, e) : null
+                const handled = item && !r.ok && rowHandled(r, e)
+                return (
+                <tr key={i} className={cn(e?.removed ? 'bg-stone-50 text-stone-400 line-through' : handled ? 'bg-green-50/70' : r.ok ? '' : 'bg-red-50/60')}>
                   <td className="px-3 py-2 font-medium text-stone-900">{r.what}{r.note ? <span className="block text-xs font-normal text-stone-500">{r.note}</span> : null}
                     {!r.ok && canEdit && c.vendor && c.status === 'to_review' ? <button type="button" onClick={() => setUsual({ what: r.what, price: priceIn(r.theirs)?.toString() ?? '', per: 'each' })} className="mt-1 block text-xs font-normal text-brand hover:underline">This is a usual charge for this vendor</button> : null}</td>
                   <td className="px-3 py-2 text-stone-700">{r.ours ?? '—'}</td>
                   <td className="px-3 py-2 text-stone-700">{r.theirs ?? '—'}</td>
-                  <td className="px-3 py-2">{r.ok ? <Check className="size-4 text-green-600" aria-label="Matches" /> : <X className="size-4 text-red-600" aria-label="Different" />}</td>
+                  <td className="px-3 py-2">{r.ok || (e?.ok && !e.removed) ? <Check className="size-4 text-green-600" aria-label="Matches" /> : <X className="size-4 text-red-600" aria-label="Different" />}</td>
+                  {finalMode ? (
+                    <td className="px-3 py-2 no-underline">
+                      {item && q ? (editable ? (
+                        <div className="flex items-center gap-1" style={{ textDecoration: 'none' }}>
+                          {e?.removed ? (
+                            <Button size="sm" variant="ghost" onClick={() => void edit(r.what, null)} leftIcon={<Undo2 className="size-3.5" aria-hidden="true" />}>Put back</Button>
+                          ) : (
+                            <>
+                              <Input type="number" min={0} inputMode="numeric" aria-label={`Final quantity for ${r.what}`} className="h-8 w-20 text-sm"
+                                defaultValue={q.final} key={`${r.what}:${q.final}`}
+                                onBlur={(ev) => { const v = ev.target.value === '' ? null : Number(ev.target.value); if (v !== q.final) void edit(r.what, v === null ? null : { qty: v }) }} />
+                              {!r.ok ? <button type="button" onClick={() => void edit(r.what, e?.ok ? null : { ok: true })} title="OK as the confirmation has it" aria-label={`OK: ${r.what}`} className={cn('rounded-md p-1.5 hover:bg-green-100', e?.ok ? 'bg-green-100 text-green-700' : 'text-stone-400')}><Check className="size-4" aria-hidden="true" /></button> : null}
+                              <button type="button" onClick={() => void edit(r.what, { removed: true })} title="Remove from the order" aria-label={`Remove ${r.what}`} className="rounded-md p-1.5 text-stone-400 hover:bg-red-50 hover:text-red-600"><Trash2 className="size-4" aria-hidden="true" /></button>
+                            </>
+                          )}
+                        </div>
+                      ) : <span className="text-stone-700">{e?.removed ? 'Removed' : q.final}</span>) : null}
+                    </td>
+                  ) : null}
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </section>
@@ -224,7 +270,13 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
         </section>
       ) : null}
 
-      {c.draft_body && c.status === 'to_review' ? (
+      {finalEmail && c.status === 'to_review' ? (
+        <section className="mb-4 rounded-2xl border border-stone-200 bg-white p-5">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Final order email to the vendor</h2>
+          <p className="mt-1 text-xs text-stone-500">Built from the table: change a <strong>Final</strong> quantity, tick <strong>OK</strong> or remove an item and it updates. You can still edit it before sending.</p>
+          <p className="mt-2 whitespace-pre-line rounded-xl bg-stone-50 p-3 text-sm text-stone-800">{finalEmail}</p>
+        </section>
+      ) : c.draft_body && c.status === 'to_review' ? (
         <section className="mb-4 rounded-2xl border border-stone-200 bg-white p-5">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Email Claude drafted to the vendor</h2>
           <p className="mt-2 text-xs text-stone-500">To {c.draft_to.join(', ') || '(no address on file: add one)'} · {c.draft_subject}</p>
@@ -234,7 +286,7 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
 
       {canEdit ? (
         <div className="flex flex-wrap gap-2">
-          {c.status === 'to_review' && issues.length ? <Button loading={busy} onClick={() => setComposing(true)} leftIcon={<Send className="size-4" aria-hidden="true" />}>Review &amp; send email</Button> : null}
+          {c.status === 'to_review' && (finalMode || issues.length) ? <Button loading={busy} onClick={() => setComposing(true)} leftIcon={<Send className="size-4" aria-hidden="true" />}>{finalMode ? 'Review & send final order' : 'Review & send email'}</Button> : null}
           {c.status === 'to_review' ? <Button variant={issues.length ? 'secondary' : 'primary'} loading={busy} onClick={() => void act(issues.length ? 'Marked done, no email' : 'Looked at', 'done', {}, leave)} leftIcon={<Check className="size-4" aria-hidden="true" />}>{issues.length ? 'Done, no email needed' : 'Looks good, done'}</Button> : null}
           {c.kind === 'confirmation' && (c.status === 'to_review' || c.status === 'needs_order') && readLines > 0 ? (
             <Button variant="secondary" loading={busy} onClick={() => void saveAsOrder()} leftIcon={<ClipboardCheck className="size-4" aria-hidden="true" />}>This is our order</Button>
@@ -267,9 +319,18 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
       ) : null}
       {composing ? (
         <ComposeDialog
-          draft={{ to: c.draft_to, subject: c.draft_subject ?? `${CHECK_KIND_LABEL[c.kind]} ${c.doc_number ?? ''}${c.po_number ? ` / PO ${c.po_number}` : ''}`.trim(), body: c.draft_body ?? '', thread_id: c.email?.thread_id ?? null, reply_to_email_id: c.email?.id ?? null, vendor_id: c.vendor?.id ?? null, note: 'Edit anything before sending. Your signature is added when it sends.' }}
+          draft={{ to: c.draft_to, subject: finalEmail ? `Our final order${c.doc_number ? ` for your confirmation ${c.doc_number}` : ''}${(c.order?.po_number ?? c.po_number) ? ` / PO ${c.order?.po_number ?? c.po_number}` : ''}` : c.draft_subject ?? `${CHECK_KIND_LABEL[c.kind]} ${c.doc_number ?? ''}${c.po_number ? ` / PO ${c.po_number}` : ''}`.trim(), body: finalEmail ?? c.draft_body ?? '', thread_id: c.email?.thread_id ?? null, reply_to_email_id: c.email?.id ?? null, vendor_id: c.vendor?.id ?? null, note: 'Edit anything before sending. Your signature is added when it sends.' }}
           onClose={() => setComposing(false)}
-          onSent={(threadId) => { setComposing(false); void act('Sent, and marked done', 'sent', { thread: threadId }, leave) }}
+          onSent={(threadId) => {
+            setComposing(false)
+            // the final order as sent becomes the order's lines, so the invoice is checked against it
+            void (async () => {
+              if (final?.items.length) {
+                try { await saveFinalOrder(c.id, final.items) } catch (err) { toast.error(`Sent, but the order lines were not saved: ${errorMessage(err)}`) }
+              }
+              await act(final ? 'Final order sent; the order now has these lines' : 'Sent, and marked done', 'sent', { thread: threadId }, leave)
+            })()
+          }}
         />
       ) : null}
       {viewer}
