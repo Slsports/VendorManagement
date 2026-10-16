@@ -15,7 +15,7 @@ import { BackLink } from '@/components/shared/BackLink'
 import { ThreadTable } from '@/components/mail/ThreadTable'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
 
-const EMPTY: ContactInput = { company: '', person: '', role: '', category: 'other', phones: [], notes: '', status: 'confirmed', addresses: [] }
+const EMPTY: ContactInput = { company: '', person: '', role: '', category: 'other', phones: [], notes: '', status: 'confirmed', addresses: [], filing: 'file', filing_note: '' }
 
 /** One contact's card (Dana, Oct 16): who they are, how to reach them, and the mail with them. Short form, plain Save. */
 export default function AccountingContactPage() {
@@ -107,7 +107,7 @@ function ContactForm({ organizationId, contactId, contact, addresses, confirming
   onSaved: (id: string) => Promise<void>; onCancel: () => void
 }) {
   const [form, setForm] = useState<ContactInput>(() => contact
-    ? { company: contact.company, person: contact.person, role: contact.role, category: contact.category, phones: contact.phones, notes: contact.notes, status: contact.status === 'proposed' && confirming ? 'confirmed' : contact.status, addresses: addresses.map((a) => a.address) }
+    ? { company: contact.company, person: contact.person, role: contact.role, category: contact.category, phones: contact.phones, notes: contact.notes, status: contact.status === 'proposed' && confirming ? 'confirmed' : contact.status, addresses: addresses.map((a) => a.address), filing: contact.filing, filing_note: contact.filing_note }
     : EMPTY)
   const [addrText, setAddrText] = useState(() => addresses.map((a) => a.address).join('\n'))
   const [phoneText, setPhoneText] = useState(() => (contact?.phones ?? []).join('\n'))
@@ -147,6 +147,13 @@ function ContactForm({ organizationId, contactId, contact, addresses, confirming
         <FormField label="Email addresses" htmlFor="c-addresses" hint="One per line. A bare company domain (mbsaccountancy.com) means everyone there.">
           <Textarea id="c-addresses" rows={4} value={addrText} onChange={(e) => setAddrText(e.target.value)} />
         </FormField>
+        <FormField label="Their papers" htmlFor="c-filing" hint="Where the files they email end up.">
+          <Select id="c-filing" value={form.filing} onChange={(e) => setForm({ ...form, filing: e.target.value as 'file' | 'skip' })}>
+            <option value="file">File them in the Accounting folders</option>
+            <option value="skip">Leave them in the email (handled elsewhere)</option>
+          </Select>
+        </FormField>
+        {form.filing === 'skip' ? <FormField label="Where they are handled" htmlFor="c-filing-note" hint="Shown on each file: for example “handled in bill.com”."><Input id="c-filing-note" value={form.filing_note} onChange={(e) => setForm({ ...form, filing_note: e.target.value })} placeholder="handled in bill.com" /></FormField> : null}
         <FormField label="Phone numbers" htmlFor="c-phones" hint="One per line."><Textarea id="c-phones" rows={4} value={phoneText} onChange={(e) => setPhoneText(e.target.value)} /></FormField>
         <FormField label="Notes" htmlFor="c-notes" className="sm:col-span-2"><Textarea id="c-notes" rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></FormField>
         <FormField label="Status" htmlFor="c-status">

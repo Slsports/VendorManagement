@@ -9,7 +9,7 @@
 //   { document_id, hint? }            → a file dropped on the Documents page: read it, name it, file it
 //   { backcheck: true }               → trusted only: look again at every email whose files were skipped (a rule changed)
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
-import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
+import { Gmail, GMAIL_SCOPES, googleAccessToken } from '../_shared/gmail.ts'
 import { sheetFileText } from '../_shared/sheetFile.ts'
 import { ACCOUNTING_CATEGORIES, ACCOUNTING_KINDS, aiEnabled, imageType, readAccountingPapers, type AccountingFileCtx, type AccountingPaperReading, type PaperFile } from '../_shared/ai.ts'
 
@@ -41,8 +41,35 @@ Deno.serve(async (req) => {
       me = { id: p.id, organization_id: p.organization_id }
     }
     if (!aiEnabled()) return json({ error: 'Claude is not set up for this organization' }, 503)
-    const body = await req.json().catch(() => ({})) as { email_id?: string; attachment_id?: string; force?: boolean; document_id?: string; hint?: string; backcheck?: boolean }
+    const body = await req.json().catch(() => ({})) as { email_id?: string; attachment_id?: string; force?: boolean; document_id?: string; hint?: string; backcheck?: boolean; gmail_filters?: boolean; apply_contact_filing?: string }
     const started = Date.now()
+
+    // A contact's "their papers" rule applied to the old (from a cloud session, where the Storage API needs this function).
+    if (body.apply_contact_filing && trusted) {
+      const { data: paths, error } = await db.rpc('accounting_apply_contact_filing', { p_contact: body.apply_contact_filing })
+      if (error) return json({ error: error.message }, 500)
+      const list = (paths ?? []) as string[]
+      if (list.length) { const { error: rerr } = await db.storage.from(BUCKET).remove(list); if (rerr) return json({ error: rerr.message, removed: 0, paths: list.length }, 500) }
+      return json({ removed: list.length })
+    }
+
+    // Trusted only (Dana, Oct 16): the mailbox's own Gmail filters, to see what already forwards to bill.com.
+    if (body.gmail_filters && trusted) {
+      const { data: boxes } = await db.from('mailboxes').select('address').eq('kind', 'accounting').eq('is_active', true)
+      const out: unknown[] = []
+      for (const b of boxes ?? []) {
+        try {
+          const gmail = new Gmail(await googleAccessToken(b.address, [...GMAIL_SCOPES, 'https://www.googleapis.com/auth/gmail.settings.basic']))
+          const labels = await gmail.call<{ labels: { id: string; name: string }[] }>('labels')
+          const names = new Map((labels.labels ?? []).map((l) => [l.id, l.name]))
+          const f = await gmail.call<{ filter?: { id: string; criteria: Record<string, unknown>; action: Record<string, unknown> }[] }>('settings/filters')
+          out.push({ mailbox: b.address, filters: (f.filter ?? []).map((x) => ({ criteria: x.criteria, action: { ...x.action, addLabelIds: ((x.action.addLabelIds as string[] | undefined) ?? []).map((id) => names.get(id) ?? id), removeLabelIds: ((x.action.removeLabelIds as string[] | undefined) ?? []).map((id) => names.get(id) ?? id) } })) })
+        } catch (e) {
+          out.push({ mailbox: b.address, error: e instanceof Error ? e.message : String(e) })
+        }
+      }
+      return json(out)
+    }
 
     if (body.document_id) {
       const { data: d } = await db.from('accounting_documents').select('*').eq('id', body.document_id).single()
@@ -191,10 +218,10 @@ function cleanReading(r: AccountingPaperReading, ctx: Pick<AccountingFileCtx, 'p
 }
 
 /** The contact the conversation is filed to, for Claude's context and the document's link. */
-async function threadContact(db: SupabaseClient, threadId: string): Promise<{ id: string; company: string; category: string } | null> {
+async function threadContact(db: SupabaseClient, threadId: string): Promise<{ id: string; company: string; category: string; filing: 'file' | 'skip'; filing_note: string } | null> {
   const { data: t } = await db.from('email_threads').select('accounting_contact_id').eq('id', threadId).maybeSingle()
   if (!t?.accounting_contact_id) return null
-  const { data: c } = await db.from('accounting_contacts').select('id, company, category').eq('id', t.accounting_contact_id).maybeSingle()
+  const { data: c } = await db.from('accounting_contacts').select('id, company, category, filing, filing_note').eq('id', t.accounting_contact_id).maybeSingle()
   return c ?? null
 }
 
@@ -209,9 +236,12 @@ async function fileMail(db: SupabaseClient, mail: Mail, opts: { only?: string; f
   const atts = mail.attachments.filter((a) => (opts.only ? a.id === opts.only : !a.accounting_document_id))
   const toRead: { a: Att; bytes: Uint8Array; sha: string; file: PaperFile }[] = []
   let gmail: Gmail | null = null
+  // the conversation's contact: its category for Claude, and "leave their papers in the email" (Dana, Oct 16: Emery Jensen goes to bill.com)
+  const contact = atts.length ? await threadContact(db, mail.thread_id) : null
+  const handledElsewhere = contact?.filing === 'skip' && !opts.force ? (contact.filing_note.trim() || 'handled elsewhere') : null
   for (const a of atts) {
     try {
-      const why = preSkip(a, mail, opts.force)
+      const why = handledElsewhere ?? preSkip(a, mail, opts.force)
       if (why) {
         await db.from('email_attachments').update({ accounting_skip: why }).eq('id', a.id)
         results.push({ attachment_id: a.id, skip: why }); skipped++
@@ -236,14 +266,21 @@ async function fileMail(db: SupabaseClient, mail: Mail, opts: { only?: string; f
     }
   }
   if (toRead.length) {
-    const contact = await threadContact(db, mail.thread_id)
     const known = await knownContext(db, org)
     const ctx: AccountingFileCtx = { from: mail.from_email, from_name: mail.from_name, direction: mail.direction, subject: mail.subject, received_on: mail.received_at.slice(0, 10), email_text: mail.body_text, contact: contact ? { company: contact.company, category: contact.category } : null, ...known }
     try {
       // a few files per call; a long email is read in rounds
       for (let i = 0; i < toRead.length; i += 6) {
         const batch = toRead.slice(i, i + 6)
-        const readings = await readAccountingPapers(db, org, ctx, batch.map((b) => b.file))
+        let readings: AccountingPaperReading[]
+        try {
+          readings = await readAccountingPapers(db, org, ctx, batch.map((b) => b.file))
+        } catch (err) {
+          // a PDF Claude cannot open (damaged, odd encoding): read the email and the names instead, and say so
+          if (!/PDF specified was not valid|could not process/i.test(err instanceof Error ? err.message : String(err))) throw err
+          readings = (await readAccountingPapers(db, org, ctx, batch.map((b) => ({ ...b.file, bytes: new Uint8Array(), text: undefined }))))
+            .map((r) => ({ ...r, sure: false, note: `${r.note ? `${r.note} ` : ''}The file itself could not be opened by Claude; filed by its name and the email.`.trim() }))
+        }
         for (let j = 0; j < batch.length; j++) {
           const b = batch[j]
           const raw = readings.find((r) => r.file === j + 1)
