@@ -2332,3 +2332,21 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   when she wants a copy. Category reports are filed under every vendor on their Active tab (and any picked) as well as Reports: "it just does it
   automatically".
   The report query runs as the definer with one membership check (0142) so it stays inside the 8-second limit.
+
+## Oct 16 — On order and add-ons on the reports (Dana; plan, not yet built)
+- Every vendor and category report looks up what is already coming in (the suggested order's look-up: confirmed
+  orders' lines, shipped or invoiced but not in LS, placed orders) and adds two columns after NEED: **ON ORDER** and
+  **NEED AFTER ORDERS**, with the order and its ship date in Notes ("12 on PO SLS101426, ships Nov 3"; "no ship date
+  yet"). The Size Summary gets the same two columns. Open orders with no item list are named on the Flags tab.
+- Add-ons are per order, not per vendor (a pre-order placed months ahead cannot take add-ons; a fill-in order can). Each
+  open order gets an **Add-ons** choice: Yes until it ships / No / Ask the rep (blank until set). The report and the
+  suggested order say "add to PO …" only for Yes; otherwise "Open order PO …, ships Nov 3, add-ons not confirmed". Ask
+  the rep drafts the one-line question from the order page and the answer sets the choice. A shipping notice or invoice
+  flips Yes to No on its own.
+- **Add to PO …** on the suggested order puts the Order quantities on that order as add-on lines (marked "added on
+  <date>") and drafts one email from orders@: the add-on items in a clean table (Vendor ID, description, quantity), the
+  original confirmation attached as it is, and a request for one fresh confirmation covering the whole order. With no
+  confirmation on file yet, the email says so ("We have not received a confirmation for PO … sent on …; please add the
+  following to that order and send one confirmation for the whole thing"), attaches our original order, and the
+  order's follow-up date moves with it. The confirmation check then compares against the order plus the add-ons. If the
+  rep says no, one click turns the add-on into a new order.
