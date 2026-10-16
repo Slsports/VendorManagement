@@ -14,7 +14,7 @@ export type ReportPreset = Tables<'report_presets'>
 export type StoreMode = 'together' | 'one' | 'separate'
 
 export interface ReportParams {
-  kind: 'vendor' | 'category'
+  kind: 'vendor' | 'category' | 'inventory'
   /** LS vendor ids (one or more for a vendor report; any number, usually none, for a category report). */
   vendor_ids: string[]
   /** LS category paths; an item counts when its category is one of these or under one. */
@@ -101,6 +101,7 @@ export async function fetchReportItems(organizationId: string, p: ReportParams, 
       sid: r.system_sku || r.item_id, upc: r.upc, lsVendor: r.vendor_name, vid: r.vendor_item_id || r.manufacturer_sku || r.custom_sku, desc: r.description,
       cost: r.default_cost == null ? null : Number(r.default_cost), cat: r.category_path, archived: r.archived, sold, nonInv, qoh: nonInv ? 0 : qoh, last: r.last_sold, notes: [],
       lsVendorId: r.default_vendor_id,
+      lsItemId: r.item_id,
       byStore: p.store_mode === 'separate' ? byStore : undefined,
     }
   })
@@ -123,7 +124,7 @@ export async function runLsReport(input: { organizationId: string; params: Repor
   if (!items.length) throw new Error('No items match. Check the vendor, category and stores.')
   const name = reportName(p, input.vendors)
   const run = new Date()
-  const opts: ReportOptions = { kind: p.kind, stores: p.store_mode === 'separate' ? p.store_codes : null }
+  const opts: ReportOptions = { kind: p.kind === 'category' ? 'category' : 'vendor', stores: p.store_mode === 'separate' ? p.store_codes : null }
   const plan = planReport(items, name.toUpperCase(), runText(run), opts)
   const { buildReportXlsx } = await import('@/lib/salesReportXlsx')
   const bytes = await buildReportXlsx(plan)
@@ -155,7 +156,7 @@ export async function runLsReport(input: { organizationId: string; params: Repor
     }
   }
   const { data, error } = await supabase.from('report_runs').insert({
-    organization_id: organizationId, kind: p.kind, title: name, params: p as unknown as Json, file_name: fileName, storage_path, document_id, sales_report_id, summary: summary as unknown as Json, created_by: profile.id,
+    organization_id: organizationId, kind: p.kind === 'category' ? 'category' : 'vendor', title: name, params: p as unknown as Json, file_name: fileName, storage_path, document_id, sales_report_id, summary: summary as unknown as Json, created_by: profile.id,
   }).select('*').single()
   if (error) throw error
   return { run: data, file, plan }

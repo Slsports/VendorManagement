@@ -2350,3 +2350,10 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   following to that order and send one confirmation for the whole thing"), attaches our original order, and the
   order's follow-up date moves with it. The confirmation check then compares against the order plus the add-ons. If the
   rep says no, one click turns the add-on into a new order.
+- Oct 16, built (step 2): **Inventory checklists** (migration 0143, function `ls-inventory-count`). Run from Sales
+  Reports as "Inventory checklist" for a vendor or category and one store: the v15 sheet with a Vendor ID column
+  next to Description, filed under the vendor (folder Inventory counts) and in the runs list; a checklist page to type
+  Floor / Back stock / Bins / Total (saves as you go, badge for the difference from LS); **Send to LS** creates the
+  Inventory Count in Lightspeed (name editable, defaults to the checklist's) with the totals entered; items with no
+  total are left out; the checklist is read-only after. Ticks **Enter counts** and **Send counts to LS** under
+  Settings → Users (admins have both). Next: on-order columns and add-ons on the reports.

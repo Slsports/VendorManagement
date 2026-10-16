@@ -14,3 +14,4 @@ Accounting is private to Dana. One more person can be let in without making them
 - Their role stays what it is (manager, buyer, viewer). The tick only adds the Accounting area.
 - Being admin is not enough on its own; the tick is what opens Accounting.
 - You cannot untick your own box here.
+- Two more ticks on the same page, **Enter counts** and **Send counts to LS**, are for inventory checklists: who may type physical counts in, and who may send them to Lightspeed. Admins can do both.

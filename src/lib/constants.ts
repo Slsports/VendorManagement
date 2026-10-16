@@ -75,6 +75,7 @@ export const ROUTES = {
   buyingShows: '/buying-shows',
   payments: '/payments',
   salesReports: '/sales-reports',
+  inventoryCounts: '/inventory-counts',
   reports: '/reports',
   vendorScores: '/reports/vendor-scores',
   productSourcing: '/product-sourcing',

@@ -152,7 +152,9 @@ export type Database = {
           is_active: boolean
           created_at: string
           updated_at: string
-       ; email_signature: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null; places_orders: boolean; sees_freight: boolean; sees_accounting: boolean; dashboard_layout: Json | null; remind_dashboard: boolean; remind_email: boolean; remind_text: boolean; mobile_phone: string | null; reviews_ls_pos: boolean }
+       ; email_signature: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null; places_orders: boolean; sees_freight: boolean; sees_accounting: boolean
+          enters_counts: boolean
+          sends_counts: boolean; dashboard_layout: Json | null; remind_dashboard: boolean; remind_email: boolean; remind_text: boolean; mobile_phone: string | null; reviews_ls_pos: boolean }
         Insert: {
           id: string
           organization_id: string
@@ -164,7 +166,9 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
+       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean
+          enters_counts?: boolean
+          sends_counts?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
         Update: {
           id?: string
           organization_id?: string
@@ -176,7 +180,9 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
+       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean
+          enters_counts?: boolean
+          sends_counts?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
         Relationships: [
           {
             foreignKeyName: 'profiles_organization_id_fkey'
@@ -501,6 +507,18 @@ export type Database = {
         Insert: { id?: string; organization_id: string; contract_id: string; label?: string; due_on: string; amount?: number | null; paid_on?: string | null; paid_from?: string; notes?: string; created_at?: string; updated_at?: string }
         Update: { id?: string; organization_id?: string; contract_id?: string; label?: string; due_on?: string; amount?: number | null; paid_on?: string | null; paid_from?: string; notes?: string; created_at?: string; updated_at?: string }
         Relationships: [{ foreignKeyName: 'accounting_contract_payments_contract_id_fkey'; columns: ['contract_id']; isOneToOne: false; referencedRelation: 'accounting_contracts'; referencedColumns: ['id'] }]
+      }
+      inventory_counts: {
+        Row: { id: string; organization_id: string; title: string; store_code: string; shop_id: string; vendor_id: string | null; params: Json; file_name: string; storage_path: string | null; document_id: string | null; run_id: string | null; status: 'open' | 'sent'; ls_count_id: string | null; ls_count_name: string; sent_at: string | null; sent_by: string | null; sent_items: number; created_by: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; title: string; store_code: string; shop_id: string; vendor_id?: string | null; params?: Json; file_name?: string; storage_path?: string | null; document_id?: string | null; run_id?: string | null; status?: 'open' | 'sent'; ls_count_id?: string | null; ls_count_name?: string; sent_at?: string | null; sent_by?: string | null; sent_items?: number; created_by?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; title?: string; store_code?: string; shop_id?: string; vendor_id?: string | null; params?: Json; file_name?: string; storage_path?: string | null; document_id?: string | null; run_id?: string | null; status?: 'open' | 'sent'; ls_count_id?: string | null; ls_count_name?: string; sent_at?: string | null; sent_by?: string | null; sent_items?: number; created_by?: string | null; created_at?: string; updated_at?: string }
+        Relationships: [{ foreignKeyName: 'inventory_counts_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] }]
+      }
+      inventory_count_lines: {
+        Row: { id: string; organization_id: string; count_id: string; item_id: string; system_sku: string; upc: string; vendor_name: string; vendor_item_id: string; description: string; category_path: string; in_stock: number; floor: number | null; back_stock: number | null; bins: number | null; total: number | null; entered_by: string | null; entered_at: string | null; sort_order: number }
+        Insert: { id?: string; organization_id: string; count_id: string; item_id: string; system_sku?: string; upc?: string; vendor_name?: string; vendor_item_id?: string; description?: string; category_path?: string; in_stock?: number; floor?: number | null; back_stock?: number | null; bins?: number | null; total?: number | null; entered_by?: string | null; entered_at?: string | null; sort_order?: number }
+        Update: { id?: string; organization_id?: string; count_id?: string; item_id?: string; system_sku?: string; upc?: string; vendor_name?: string; vendor_item_id?: string; description?: string; category_path?: string; in_stock?: number; floor?: number | null; back_stock?: number | null; bins?: number | null; total?: number | null; entered_by?: string | null; entered_at?: string | null; sort_order?: number }
+        Relationships: [{ foreignKeyName: 'inventory_count_lines_count_id_fkey'; columns: ['count_id']; isOneToOne: false; referencedRelation: 'inventory_counts'; referencedColumns: ['id'] }]
       }
       ls_items: {
         Row: { organization_id: string; item_id: string; system_sku: string; upc: string; custom_sku: string; manufacturer_sku: string; vendor_item_id: string; description: string; default_cost: number | null; category_id: string; category_path: string; default_vendor_id: string; archived: boolean; item_type: string; matrix_id: string; qoh: Json; ls_updated_at: string | null; synced_at: string }
@@ -1010,6 +1028,7 @@ export type Database = {
       accounting_sync_all_tasks: { Args: { p_org?: string | null }; Returns: number }
       ls_report_rows: { Args: { p_org: string; p_from: string; p_to: string; p_shops: string[]; p_vendor_ids?: string[] | null; p_category_prefixes?: string[] | null }; Returns: { item_id: string; system_sku: string; upc: string; vendor_item_id: string; custom_sku: string; manufacturer_sku: string; description: string; default_cost: number | null; category_path: string; default_vendor_id: string; vendor_name: string; archived: boolean; item_type: string; qoh: Json; sold: Json; sold_total: number; last_sold: string | null }[] }
       ls_categories: { Args: { p_org: string }; Returns: { category_path: string; items: number }[] }
+      inventory_count_lines_for: { Args: { p_count: string }; Returns: Database['public']['Tables']['inventory_count_lines']['Row'][] }
       accounting_apply_contact_filing: { Args: { p_contact: string }; Returns: string[] }
       accounting_document_folders: { Args: { p_org: string }; Returns: { category: Database['public']['Enums']['accounting_category']; party: string; doc_year: number; n: number; review_n: number }[] }
       accounting_document_name: { Args: { p_date: string; p_whose: string; p_party: string; p_number: string; p_what: string; p_amount: number | null; p_status: string; p_ext: string }; Returns: string }
@@ -1063,7 +1082,7 @@ export type Database = {
       review_status: 'pending' | 'accepted' | 'rejected'
       order_status: 'open' | 'awaiting_confirmation' | 'confirmed' | 'shipped' | 'received' | 'entered' | 'ready_to_pay' | 'paid' | 'cancelled'
       order_season: 'summer' | 'winter'
-      link_kind: 'catalog' | 'price_list' | 'order_form' | 'specials' | 'website' | 'other' | 'invoice' | 'credit' | 'confirmation' | 'order' | 'ls_po' | 'packing_slip' | 'payment' | 'freight_bill' | 'delivery_receipt' | 'image' | 'approved_proof' | 'damage_photo' | 'sales_report' | 'proof'
+      link_kind: 'catalog' | 'price_list' | 'order_form' | 'specials' | 'website' | 'other' | 'invoice' | 'credit' | 'confirmation' | 'order' | 'ls_po' | 'packing_slip' | 'payment' | 'freight_bill' | 'delivery_receipt' | 'image' | 'approved_proof' | 'damage_photo' | 'sales_report' | 'proof' | 'inventory_count'
     }
     CompositeTypes: {
       [_ in never]: never

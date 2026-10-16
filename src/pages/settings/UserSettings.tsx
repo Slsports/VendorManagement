@@ -13,6 +13,7 @@ import {
   sendSetPasswordEmail,
   setStoreGrants,
   setUserAccounting,
+  setUserCounts,
   setUserActive,
   setUserRole,
 } from '@/services/users'
@@ -142,6 +143,8 @@ export default function UserSettings() {
               <SortHeader label="Last sign-in" sortKey="signin" sort={sort} onSort={toggle} className="px-4 py-2.5" />
               <SortHeader label="Status" sortKey="status" sort={sort} onSort={toggle} className="px-4 py-2.5" />
               <th className="px-4 py-2.5" title="Sees the Accounting area: billing@ mail, bills, accounting tasks. Admin alone is not enough.">Accounting</th>
+              <th className="px-4 py-2.5" title="May type physical inventory counts into a checklist.">Enter counts</th>
+              <th className="px-4 py-2.5" title="May send a checklist's counts to Lightspeed as an Inventory Count.">Send counts to LS</th>
               <th className="px-4 py-2.5"><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
@@ -208,6 +211,14 @@ export default function UserSettings() {
                       aria-label={`${u.full_name} sees Accounting`}
                       onChange={(e) => void run(e.target.checked ? `${u.full_name} now sees Accounting` : `${u.full_name} no longer sees Accounting`, () => setUserAccounting(u.id, e.target.checked))}
                     />
+                  </td>
+                  <td className="px-4 py-3">
+                    <input type="checkbox" className="size-4 accent-brand" checked={u.enters_counts || u.role === 'admin'} disabled={u.role === 'admin'} aria-label={`${u.full_name} enters inventory counts`}
+                      onChange={(e) => void run(e.target.checked ? `${u.full_name} can enter counts` : `${u.full_name} can no longer enter counts`, () => setUserCounts(u.id, { enters_counts: e.target.checked }))} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <input type="checkbox" className="size-4 accent-brand" checked={u.sends_counts || u.role === 'admin'} disabled={u.role === 'admin'} aria-label={`${u.full_name} sends counts to LS`}
+                      onChange={(e) => void run(e.target.checked ? `${u.full_name} can send counts to LS` : `${u.full_name} can no longer send counts to LS`, () => setUserCounts(u.id, { sends_counts: e.target.checked }))} />
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap justify-end gap-2">

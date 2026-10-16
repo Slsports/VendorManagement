@@ -1,7 +1,7 @@
 import type { VendorLinkKind } from '@/types'
 
 // The vendor's Documents folders (Dana, Oct 8): each holds certain kinds of file, with a year folder inside.
-export type DocFolder = 'price_lists' | 'catalogs' | 'orders' | 'ls_pos' | 'confirmations' | 'invoices' | 'credits' | 'order_forms' | 'specials' | 'shipping' | 'images' | 'damaged' | 'proofs' | 'sales_reports' | 'other'
+export type DocFolder = 'price_lists' | 'catalogs' | 'orders' | 'ls_pos' | 'confirmations' | 'invoices' | 'credits' | 'order_forms' | 'specials' | 'shipping' | 'images' | 'damaged' | 'proofs' | 'sales_reports' | 'inventory_counts' | 'other'
 
 export const DOC_FOLDERS: { id: DocFolder; label: string; kinds: VendorLinkKind[] }[] = [
   { id: 'price_lists', label: 'Price lists', kinds: ['price_list'] },
@@ -22,6 +22,7 @@ export const DOC_FOLDERS: { id: DocFolder; label: string; kinds: VendorLinkKind[
   { id: 'proofs', label: 'Proofs', kinds: ['proof', 'approved_proof'] },
   // formatted LS sales reports (Dana, Oct 11)
   { id: 'sales_reports', label: 'Sales reports', kinds: ['sales_report'] },
+  { id: 'inventory_counts', label: 'Inventory counts', kinds: ['inventory_count'] },
   { id: 'other', label: 'Other', kinds: ['other', 'website'] },
 ]
 

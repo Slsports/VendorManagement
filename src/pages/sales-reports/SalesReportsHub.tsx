@@ -8,6 +8,7 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useTableSort } from '@/hooks/useTableSort'
 import { DEFAULT_PARAMS, daysAgoIso, deleteReportPreset, downloadRunFile, listLsCategories, listLsStores, listLsVendorChoices, listReportPresets, listReportRuns, lsSyncStatus, reportName, runLsReport, saveReportPreset, todayIso, type LsVendorChoice, type ReportParams, type ReportRun, type StoreMode } from '@/services/lsReports'
 import { ROUTES } from '@/lib/constants'
+import { runInventoryChecklist } from '@/services/inventoryCounts'
 import { rungsOf } from '@/lib/sizes'
 import { cn, errorMessage } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -53,11 +54,20 @@ export default function SalesReportsHub() {
   async function run() {
     if (!org || !profile) return
     if (p.kind === 'vendor' && !p.vendor_ids.length) { toast.error('Pick a vendor'); return }
-    if (p.kind === 'category' && !p.categories.length && !p.vendor_ids.length) { toast.error('Pick a category'); return }
+    if (p.kind !== 'vendor' && !p.categories.length && !p.vendor_ids.length) { toast.error(p.kind === 'inventory' ? 'Pick a vendor or a category to count' : 'Pick a category'); return }
     if (!p.store_codes.length) { toast.error('Pick a store'); return }
+    if (p.kind === 'inventory' && p.store_codes.length !== 1) { toast.error('A count sheet is for one store: choose One store'); return }
     setRunning(true)
     setFailed(null)
     try {
+      if (p.kind === 'inventory') {
+        const r = await runInventoryChecklist({ organizationId: org, params: p, stores: stores.data ?? [], vendors: vendors.data ?? [], profile: { id: profile.id, full_name: profile.full_name } })
+        toast.success(`Checklist ready: ${r.file.name}`)
+        view({ name: r.file.name, mime: r.file.type, load: () => Promise.resolve(r.file) })
+        setLast(null)
+        setTick((t) => t + 1)
+        return
+      }
       const r = await runLsReport({ organizationId: org, params: p, stores: stores.data ?? [], vendors: vendors.data ?? [], profile: { id: profile.id, full_name: profile.full_name } })
       setLast({ run: r.run, file: r.file })
       toast.success(`Report ready: ${r.file.name}`)
@@ -101,10 +111,11 @@ export default function SalesReportsHub() {
               <Select id="r-kind" value={p.kind} onChange={(e) => set('kind', e.target.value as ReportParams['kind'])}>
                 <option value="vendor">Vendor report (one vendor, or several side by side)</option>
                 <option value="category">Category report (every vendor in the category)</option>
+                <option value="inventory">Inventory checklist (the count sheet for one store)</option>
               </Select>
             </FormField>
-            <VendorPick vendors={vendors.data ?? []} value={p.vendor_ids} onChange={(v) => set('vendor_ids', v)} label={p.kind === 'vendor' ? 'Vendor (one or several)' : 'Only these vendors (optional)'} />
-            <CategoryPick categories={categories.data ?? []} value={p.categories} onChange={(v) => set('categories', v)} label={p.kind === 'vendor' ? 'Only these categories (optional)' : 'Category'} />
+            <VendorPick vendors={vendors.data ?? []} value={p.vendor_ids} onChange={(v) => set('vendor_ids', v)} label={p.kind === 'vendor' ? 'Vendor (one or several)' : p.kind === 'inventory' ? 'Vendor to count (optional when a category is picked)' : 'Only these vendors (optional)'} />
+            <CategoryPick categories={categories.data ?? []} value={p.categories} onChange={(v) => set('categories', v)} label={p.kind === 'vendor' ? 'Only these categories (optional)' : p.kind === 'inventory' ? 'Category to count (optional when a vendor is picked)' : 'Category'} />
           </div>
           <div className="space-y-4">
             <FormField label="Stores" htmlFor="r-stores">
@@ -119,7 +130,7 @@ export default function SalesReportsHub() {
                 </Select>
               ) : <p className="mt-1 text-xs text-stone-500">{storeCodes.join(', ') || '…'}. SLH is a separate Lightspeed account and is not included.</p>}
             </FormField>
-            <FormField label="Period" htmlFor="r-days">
+            {p.kind !== 'inventory' ? <FormField label="Period" htmlFor="r-days">
               <Select id="r-days" value={p.days ? String(p.days) : 'range'} onChange={(e) => { const v = e.target.value; if (v === 'range') set('days', null); else setP((x) => ({ ...x, days: Number(v), from: daysAgoIso(Number(v)), to: todayIso() })) }}>
                 <option value="365">Last 12 months (365 days)</option>
                 <option value="180">Last 6 months</option>
@@ -131,7 +142,7 @@ export default function SalesReportsHub() {
                 <Input type="date" value={p.from} onChange={(e) => setP((x) => ({ ...x, from: e.target.value, days: null }))} aria-label="From" />
                 <Input type="date" value={p.to} onChange={(e) => setP((x) => ({ ...x, to: e.target.value, days: null }))} aria-label="To" />
               </div>
-            </FormField>
+            </FormField> : <p className="text-sm text-stone-600">A count sheet lists every item of the vendor or category with its stock at the chosen store today; choose <strong>One store</strong> above.</p>}
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-stone-100 pt-4">
@@ -289,7 +300,7 @@ function RunsTable({ runs, onOpen }: { runs: ReportRun[]; onOpen: (r: ReportRun)
               </td>
               <td className={cn('hidden px-3 py-2 md:table-cell')}>{r.kind === 'vendor' ? 'Vendor' : r.kind === 'category' ? 'Category' : 'Inventory'}</td>
               <td className="hidden px-3 py-2 text-stone-600 lg:table-cell"><span className="inline-flex items-center gap-1"><FileSpreadsheet className="size-4 text-stone-400" aria-hidden="true" />{r.file_name}</span></td>
-              <td className="whitespace-nowrap px-3 py-2 text-right"><span className="inline-flex gap-1"><button type="button" onClick={() => onOpen(r)} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-brand hover:bg-stone-100"><Eye className="size-3.5" aria-hidden="true" />Open</button><button type="button" onClick={() => open(r)} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-stone-600 hover:bg-stone-100"><Download className="size-3.5" aria-hidden="true" />Download</button></span></td>
+              <td className="whitespace-nowrap px-3 py-2 text-right"><span className="inline-flex gap-1">{r.kind === 'inventory' && (r.summary as { count_id?: string } | null)?.count_id ? <Link to={`${ROUTES.inventoryCounts}/${(r.summary as { count_id?: string }).count_id}`} className="inline-flex items-center gap-1 rounded-md bg-brand px-2 py-1 text-xs font-medium text-white hover:opacity-90">Enter counts</Link> : null}<button type="button" onClick={() => onOpen(r)} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-brand hover:bg-stone-100"><Eye className="size-3.5" aria-hidden="true" />Open</button><button type="button" onClick={() => open(r)} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-stone-600 hover:bg-stone-100"><Download className="size-3.5" aria-hidden="true" />Download</button></span></td>
             </tr>
           )
         })}

@@ -58,6 +58,12 @@ export async function setUserActive(id: string, is_active: boolean) {
 }
 
 /** The Accounting tick (Dana, Oct 16): sees the Accounting area. Admin alone is not enough; only admins set it. */
+/** The inventory count ticks (Dana, Oct 16): who may type counts, who may send them to Lightspeed. */
+export async function setUserCounts(id: string, ticks: { enters_counts?: boolean; sends_counts?: boolean }) {
+  const { error } = await supabase.from('profiles').update(ticks).eq('id', id)
+  if (error) throw error
+}
+
 export async function setUserAccounting(id: string, sees_accounting: boolean) {
   const { error } = await supabase.from('profiles').update({ sees_accounting }).eq('id', id)
   if (error) throw error
