@@ -76,7 +76,7 @@ export default function OrderDetailPage() {
       <PageHeader
         eyebrow="Order"
         title={o.vendor ? o.vendor.name : 'Order'}
-        description={<span className="inline-flex flex-wrap items-center gap-2"><OrderStatusBadge status={o.status} />{o.order_date ? <span>{d(o.order_date)}</span> : null}{o.source !== 'manual' ? <Badge tone="neutral">from {o.source.replaceAll('_', ' ')}</Badge> : null}</span>}
+        description={<span className="inline-flex flex-wrap items-center gap-2"><OrderStatusBadge status={o.status} />{o.order_date ? <span>{d(o.order_date)}</span> : null}{o.source !== 'manual' ? <Badge tone="neutral">from {o.source.replaceAll('_', ' ')}</Badge> : null}{o.art_approved_at ? <Badge tone="success">Artwork approved {new Date(o.art_approved_at).toLocaleDateString()}</Badge> : null}</span>}
         actions={canEdit ? (
           <div className="flex flex-wrap items-center gap-2">
             {changingVendor ? (

@@ -15,7 +15,8 @@ When a vendor sends a proof or design for us to approve, the conversation shows 
 6. To add one VMS missed, click **Artwork to approve** in the conversation's buttons.
 
 ## Good to know
-- Your own reply saying it is approved closes it, and a reply asking for changes marks **Changes sent**, on their own.
+- Your own reply saying it is approved closes it, and a reply asking for changes marks **Changes sent**, on their own. This works whether you reply in VMS or straight from orders@ in Gmail.
+- When it is approved, the proof from that conversation gets its **Approved** star in the vendor's **Proofs** folder, and the order the conversation is filed to shows **Artwork approved** with the date.
 - A new proof from the vendor puts it back to waiting on approval.
 - Artwork approvals go to Dana, even when someone else orders from that vendor.
-- Proofs are not saved to the vendor's Images folder on their own; you save the approved one by hand.
+- Proofs with a proof-like name are saved to the vendor's **Proofs** folder on their own; save any other proof with **Save to documents** › **Proofs**.
