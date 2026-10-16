@@ -23,6 +23,8 @@ import { AddOrderDialog } from '@/components/orders/AddOrderDialog'
 import { Alert, Button, Spinner } from '@/components/ui'
 import { ThreadVendorTags } from '@/components/mail/ThreadVendorTags'
 import { AccountingContactLine } from '@/components/accounting/AccountingContactLine'
+import { fileAttachmentNow, listDocumentsFor } from '@/services/accountingDocuments'
+import { folderLabel as accountingFolderLabel, folderSearch } from '@/lib/accountingDocuments'
 import { RecordTasks } from '@/components/tasks/RecordTasks'
 import { TaskDialog } from '@/components/tasks/TaskDialog'
 import { VendorPicker as SharedVendorPicker, type NewVendorPrefill } from '@/components/vendors/VendorPicker'
@@ -201,7 +203,7 @@ export default function ThreadPage() {
       <ol className="space-y-3">
         {/* Newest first and open; older ones closed to one line (Dana, Oct 8). */}
         {[...emails].reverse().map((e, i) => (
-          <Message key={e.id} email={e} startOpen={i === 0} vendor={t.vendor} carrierId={t.carrier_id ?? null}
+          <Message key={e.id} email={e} startOpen={i === 0} vendor={t.vendor} carrierId={t.carrier_id ?? null} accounting={box?.kind === 'accounting'}
             onCompose={canEdit && mayAnswer && mailbox.data ? (kind) => setDraft(kind === 'forward' ? forwardDraft(t, e, e.attachments.length) : replyDraft(t, e, mailbox.data!, kind === 'all')) : undefined}
             onEmailAddress={canEdit ? (address) => setDraft({ to: [address], subject: '', body: '', vendor_id: t.vendor?.id ?? null }) : undefined} />
         ))}
@@ -217,8 +219,26 @@ export default function ThreadPage() {
   )
 }
 
-function Message({ email: e, startOpen, vendor, carrierId, onCompose, onEmailAddress }: { email: ThreadDetail['emails'][number]; startOpen: boolean; vendor: { id: string; name: string } | null; carrierId: string | null; onCompose?: (kind: 'reply' | 'all' | 'forward') => void; onEmailAddress?: (address: string) => void }) {
+function Message({ email: e, startOpen, vendor, carrierId, accounting = false, onCompose, onEmailAddress }: { email: ThreadDetail['emails'][number]; startOpen: boolean; vendor: { id: string; name: string } | null; carrierId: string | null; accounting?: boolean; onCompose?: (kind: 'reply' | 'all' | 'forward') => void; onEmailAddress?: (address: string) => void }) {
   const [open, setOpen] = useState(startOpen)
+  // Accounting mail (Dana, Oct 16): where each file was filed, or why it was left here, and "File in Accounting".
+  const [filingId, setFilingId] = useState<string | null>(null)
+  const [filedNow, setFiledNow] = useState<Record<string, string>>({})
+  const docIds = e.attachments.map((a) => filedNow[a.id] ?? a.accounting_document_id).filter((x): x is string => !!x)
+  const accountingDocs = useSupabaseQuery(() => (accounting && docIds.length ? listDocumentsFor({ ids: docIds }) : Promise.resolve([])), [accounting, docIds.join(',')])
+  async function fileInAccounting(a: Attachment) {
+    setFilingId(a.id)
+    try {
+      const r = await fileAttachmentNow(a.id)
+      const hit = r.results.find((x) => x.attachment_id === a.id)
+      if (hit?.document_id) { setFiledNow((x) => ({ ...x, [a.id]: hit.document_id! })); toast.success('Filed in Accounting') }
+      else toast.error(hit?.error ?? hit?.skip ?? 'Could not file it')
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setFilingId(null)
+    }
+  }
   const [html, setHtml] = useState<string | null>(null)
   const [loadingHtml, setLoadingHtml] = useState(false)
   const [saving, setSaving] = useState<{ id: string; file_name: string } | null>(null)
@@ -255,6 +275,17 @@ function Message({ email: e, startOpen, vendor, carrierId, onCompose, onEmailAdd
           {canEdit && a.gmail_attachment_id && /pdf/i.test(`${a.mime_type ?? ''} ${a.file_name}`) ? (
             <button type="button" onClick={() => setBillFrom(a)} className="border-l border-stone-200 px-2 py-1 text-stone-500 hover:text-brand" title="Make a freight bill from this PDF">Freight bill</button>
           ) : null}
+          {accounting ? (() => {
+            const docId = filedNow[a.id] ?? a.accounting_document_id
+            const doc = docId ? (accountingDocs.data ?? []).find((d) => d.id === docId) : null
+            if (docId) return <Link to={`${ROUTES.accountingDocuments}${doc ? folderSearch(doc) : ''}`} className="border-l border-stone-200 px-2 py-1 text-emerald-700 hover:text-brand hover:underline" title={doc ? doc.file_name : 'Filed in Accounting'}>Filed: {doc ? accountingFolderLabel(doc) : 'Accounting'}</Link>
+            return (
+              <span className="inline-flex items-center border-l border-stone-200">
+                {a.accounting_skip ? <span className="px-2 py-1 text-stone-400" title="The filing step left this file in the email">Left here: {a.accounting_skip}</span> : null}
+                {a.gmail_attachment_id ? <button type="button" onClick={() => fileInAccounting(a)} disabled={filingId === a.id} className="inline-flex items-center gap-1 px-2 py-1 text-stone-500 hover:text-brand disabled:opacity-60" title="Read it, name it and file it in the Accounting folders"><FolderInput className="size-3.5" aria-hidden="true" />{filingId === a.id ? 'Filing…' : 'File in Accounting'}</button> : null}
+              </span>
+            )
+          })() : null}
         </span>
       </span>
     )

@@ -20,6 +20,7 @@ import { BackLink } from '@/components/shared/BackLink'
 import { Modal } from '@/components/shared/Modal'
 import { StickySaveBar } from '@/components/shared/StickySaveBar'
 import { TaskList } from '@/components/tasks/TaskList'
+import { FiledDocuments } from '@/components/accounting/FiledDocuments'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
 
 /** One contract: the facts, the payment schedule with Paid, the follow-up, the renewal procedure, its open tasks. */
@@ -96,6 +97,7 @@ export default function ContractPage() {
           {tasks.isLoading ? <Spinner label="Loading…" className="text-brand" /> : <TaskList tasks={tasks.data ?? []} showWho={false} empty="None. Payment tasks appear 30 days before each due date." />}
         </section>
       </div>
+      {id !== 'new' ? <FiledDocuments contractId={id} /> : null}
       <section className="mt-6 rounded-2xl border border-stone-200 bg-white">
         <div className="flex items-center justify-between px-4 py-3">
           <h2 className="text-sm font-semibold text-stone-900">Payments</h2>

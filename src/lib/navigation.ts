@@ -84,6 +84,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         { label: 'Tasks', to: ROUTES.accountingTasks },
         { label: 'Calendar', to: ROUTES.accountingCalendar },
         { label: 'Mail', to: ROUTES.accountingMail },
+        { label: 'Documents', to: ROUTES.accountingDocuments },
         { label: 'Contacts', to: ROUTES.accountingContacts },
         { label: 'Insurance', to: ROUTES.accountingInsurance },
         { label: 'Contracts', to: ROUTES.accountingContracts },

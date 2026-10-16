@@ -103,6 +103,7 @@ export const ROUTES = {
   accountingProcedures: '/accounting/procedures',
   accountingInsurance: '/accounting/insurance',
   accountingContracts: '/accounting/contracts',
+  accountingDocuments: '/accounting/documents',
   lsPos: '/ls-pos',
   help: '/help',
   mergeReport: '/review/merges',

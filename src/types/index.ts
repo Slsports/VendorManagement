@@ -17,6 +17,9 @@ export type AccountingPolicySend = Tables<'accounting_policy_sends'>
 export type CoverageType = Enums<'coverage_type'>
 export type AccountingContract = Tables<'accounting_contracts'>
 export type AccountingContractPayment = Tables<'accounting_contract_payments'>
+export type AccountingDocument = Tables<'accounting_documents'>
+export type AccountingDocumentKind = Database['public']['Enums']['accounting_document_kind']
+export type AccountingWhose = Database['public']['Enums']['accounting_whose']
 
 export type Vendor = Tables<'vendors'>
 export type VendorBillingRoute = Tables<'vendor_billing_routes'>

@@ -118,8 +118,8 @@ minute (12 months back), sender proposals in the review queue, Mail page, send/r
 with signatures, follow-up nudges (see `docs/gmail-connection.md` "As built"), and Tasks (due date, reminders by dashboard/email/text, assign, tag, repeat; `task-reminders` function), Sign in with
 Google plus the staff list at Settings → Users (`admin-users` function; sign-ups are off, only listed emails get in), and the
 Accounting area (billing@ mailbox, Accounting tick, mail, contacts, tasks with procedures, week/month/year calendar, the
-insurance tracker with renewal tasks and who-needs-proof sends, the contracts tracker with payment and renewal tasks;
-`docs/accounting-plan.md`; documents and bills still to build).
+insurance tracker with renewal tasks and who-needs-proof sends, the contracts tracker with payment and renewal tasks, Documents filed by Claude into Category / Party / Year
+with the naming convention plus a drop box (`accounting-file` function, bucket `accounting-files`); `docs/accounting-plan.md`; bills still to build).
 
 ## Not built yet, in order
 Gmail label write-back and contact enrichment,
