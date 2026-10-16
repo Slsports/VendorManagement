@@ -90,6 +90,29 @@ export async function addVendorEmail(input: TablesInsert<'vendor_emails'>): Prom
   return data
 }
 
+/**
+ * A rep typed on a vendor that buys through a rep group moves onto the rep group (Dana, Oct 16: "I need a way to only
+ * have to enter it once"): one person, shown on every vendor the group reps. Returns the rep group person's id.
+ */
+export async function moveContactToRepGroup(contactId: string): Promise<string> {
+  const { data, error } = await supabase.rpc('vendor_contact_to_rep_group', { p_contact: contactId })
+  if (error) throw error
+  return data
+}
+
+/** Reps typed on a rep group's vendors, to pick from on the rep group page instead of typing them again. */
+export async function listRepsOnGroupVendors(repGroupId: string): Promise<{ id: string; name: string | null; email: string | null; vendor: string }[]> {
+  const { data: vendors, error: vErr } = await supabase.from('vendors').select('id, name').eq('rep_group_id', repGroupId)
+  if (vErr) throw vErr
+  if (!vendors?.length) return []
+  const names = new Map(vendors.map((v) => [v.id, v.name]))
+  const { data, error } = await supabase.from('vendor_emails').select('id, vendor_id, contact_name, email, roles, contact_type').in('vendor_id', vendors.map((v) => v.id))
+  if (error) throw error
+  return (data ?? [])
+    .filter((c) => (c.roles?.length ? c.roles : [c.contact_type]).includes('rep') && !/old rep|do not call/i.test(c.contact_name ?? ''))
+    .map((c) => ({ id: c.id, name: c.contact_name, email: c.email, vendor: names.get(c.vendor_id) ?? '' }))
+}
+
 export async function updateVendorEmail(id: string, changes: TablesUpdate<'vendor_emails'>): Promise<VendorEmail> {
   const { data, error } = await supabase.from('vendor_emails').update(changes).eq('id', id).select('*').single()
   if (error) throw error

@@ -79,7 +79,12 @@ async function mark(db: SupabaseClient, org: string, q: Queued, result: string, 
 async function save(db: SupabaseClient, org: string, q: Queued, r: ContactReading | undefined): Promise<string> {
   if (!r) return mark(db, org, q, 'failed', 'Claude did not read it')
   if (r.automated) return mark(db, org, q, 'skipped', 'automatic address')
-  if (!r.belongs) return mark(db, org, q, 'skipped', `not ${q.owner_name}`)
+  // an address at a company already on file for them is theirs, whatever Claude thought (Oct 16: Travis at JRA Sales,
+  // tanderson@jrasales.com, was read as "not JRA Sales")
+  if (!r.belongs) {
+    const { data: known } = await db.rpc('contact_domain_known', { p_email: q.email, p_vendor: q.vendor_id, p_group: q.rep_group_id })
+    if (!known) return mark(db, org, q, 'skipped', `not ${q.owner_name}`)
+  }
   const phones = cleanPhones(r.phones)
   const name = r.name?.trim() || null
   const title = r.title?.trim() || null
@@ -98,6 +103,13 @@ async function save(db: SupabaseClient, org: string, q: Queued, r: ContactReadin
     })
     if (error) return mark(db, org, q, 'failed', error.message.slice(0, 200))
     return mark(db, org, q, 'added')
+  }
+  // typed on one of the group's vendors already: that card moves onto the group (one person, on every vendor it reps)
+  const { data: groupVendors } = await db.from('vendors').select('id').eq('rep_group_id', q.rep_group_id!)
+  const { data: typed } = groupVendors?.length ? await db.from('vendor_emails').select('id').in('vendor_id', groupVendors.map((x) => x.id)).ilike('email', q.email).limit(1) : { data: null }
+  if (typed?.[0]) {
+    const { error: moveErr } = await db.rpc('vendor_contact_to_rep_group', { p_contact: typed[0].id })
+    if (moveErr) return mark(db, org, q, 'failed', moveErr.message.slice(0, 200))
   }
   const { data: have } = await db.from('rep_group_contacts').select('id, name, title, phones').eq('rep_group_id', q.rep_group_id!).ilike('email', q.email).maybeSingle()
   if (have) return mark(db, org, q, await fill(db, 'rep_group_contacts', have, { nameCol: 'name', name, title, phones }))

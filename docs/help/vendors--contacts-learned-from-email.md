@@ -19,4 +19,5 @@ VMS adds the people we email with to each vendor's **Reps & contacts** by itself
 - What you typed is never changed, and the main rep stays the same.
 - When the vendor has a rep group, the company's own people are added as **Customer service** (or shipping, billing), never as **Rep**: our rep is the rep group's person.
 - To remove a wrong contact, click the trash can on its row. It will not come back.
-- People at a rep group are added to the rep group's reps.
+- People at a rep group are added to the rep group's reps. If someone already typed them on one of its vendors, that card moves to the rep group, so they are never listed twice.
+- Someone whose email address is at a company already on file for that vendor or rep group (for example @jrasales.com for JRA Sales) is always counted as theirs.

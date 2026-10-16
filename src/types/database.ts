@@ -533,9 +533,9 @@ export type Database = {
         ]
       }
       ai_usage: {
-        Row: { id: string; organization_id: string; purpose: string; model: string; input_tokens: number; output_tokens: number; cost_usd: number; items: number; created_at: string }
-        Insert: { id?: string; organization_id: string; purpose: string; model: string; input_tokens?: number; output_tokens?: number; cost_usd?: number; items?: number; created_at?: string }
-        Update: { id?: string; organization_id?: string; purpose?: string; model?: string; input_tokens?: number; output_tokens?: number; cost_usd?: number; items?: number; created_at?: string }
+        Row: { id: string; organization_id: string; purpose: string; model: string; input_tokens: number; output_tokens: number; cost_usd: number; items: number; created_at: string; request_id: string | null }
+        Insert: { id?: string; organization_id: string; purpose: string; model: string; input_tokens?: number; output_tokens?: number; cost_usd?: number; items?: number; created_at?: string; request_id?: string | null }
+        Update: { id?: string; organization_id?: string; purpose?: string; model?: string; input_tokens?: number; output_tokens?: number; cost_usd?: number; items?: number; created_at?: string; request_id?: string | null }
         Relationships: []
       }
       rep_group_contacts: {
@@ -794,6 +794,8 @@ export type Database = {
       resolve_show_line: { Args: { p_item: string; p_yes: boolean }; Returns: undefined }
       list_sent_emails: { Args: { p_org: string; p_mailbox?: string | null; p_vendor?: string | null; p_q?: string | null; p_limit?: number }; Returns: { id: string; thread_id: string; to_emails: string[]; cc_emails: string[]; subject: string | null; snippet: string | null; sent_at: string; vendor_id: string | null; vendor_name: string | null; sent_by_name: string | null; has_attachments: boolean }[] }
       amazon_monthly: { Args: { p_org: string; p_months?: number }; Returns: { month: string; store_code: string; person_name: string; orders: number; total: number }[] }
+      vendor_contact_to_rep_group: { Args: { p_contact: string }; Returns: string }
+      contact_domain_known: { Args: { p_email: string; p_vendor: string | null; p_group: string | null }; Returns: boolean }
       contact_learn_queue: { Args: { p_org: string; p_limit?: number }; Returns: { email: string; vendor_id: string | null; rep_group_id: string | null; owner_name: string; emails: Json }[] }
       freight_quote_queue: { Args: { p_org: string; p_limit?: number }; Returns: { email_id: string; thread_id: string | null; vendor_id: string | null; sender_kind: string | null; from_name: string | null; from_email: string | null; subject: string | null; body_text: string; received_at: string; attachments: string[] }[] }
       freight_quote_apply: { Args: { p_email: string; p_is_quote: boolean; p_reading: Json; p_vendor: string | null; p_order: string | null; p_how: string | null }; Returns: string | null }

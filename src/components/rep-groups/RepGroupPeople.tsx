@@ -1,20 +1,39 @@
 import { useState, type FormEvent } from 'react'
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import toast from 'react-hot-toast'
-import { Mail, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Mail, Pencil, Plus, Trash2, UserPlus } from 'lucide-react'
 import { addRepGroupContact, deleteRepGroupContact, updateRepGroupContact } from '@/services/lines'
+import { listRepsOnGroupVendors, moveContactToRepGroup } from '@/services/vendors'
 import { cn, errorMessage } from '@/lib/utils'
 import { cleanPhones, phonesOf, type ContactPhone } from '@/lib/phones'
 import { PhoneLinks, PhonesEditor } from '@/components/shared/Phones'
 import type { RepGroupContact } from '@/types'
 import { Button, FormField, Input } from '@/components/ui'
 
-/** The reps at a rep group. Mail from any of their addresses files to the rep group. Click a rep to change them (Dana, Oct 15). */
+/**
+ * The reps at a rep group. Mail from any of their addresses files to the rep group. Click a rep to change them (Dana, Oct 15).
+ * Adding one offers the reps already typed on its vendors, so nobody is typed twice (Dana, Oct 16).
+ */
 export function RepGroupPeople({ repGroupId, people, canEdit, onChange }: { repGroupId: string; people: RepGroupContact[]; canEdit: boolean; onChange: () => Promise<void> }) {
   const [adding, setAdding] = useState(false)
   /** The rep being changed, or null when adding one. */
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState({ name: '', title: '', email: '', phones: [] as ContactPhone[] })
   const [saving, setSaving] = useState(false)
+  const typedQ = useSupabaseQuery(() => (canEdit && adding && !editingId ? listRepsOnGroupVendors(repGroupId) : Promise.resolve([])), [repGroupId, canEdit, adding, editingId])
+  const typed = (typedQ.data ?? []).filter((t) => !people.some((p) => p.email && t.email && p.email.toLowerCase() === t.email.toLowerCase()))
+
+  async function pick(id: string, name: string) {
+    try {
+      await moveContactToRepGroup(id)
+      toast.success(`${name} added: shows on every vendor this group reps`)
+      setAdding(false)
+      await typedQ.refetch()
+      await onChange()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
 
   async function submit(e: FormEvent) {
     e.preventDefault()
@@ -59,6 +78,21 @@ export function RepGroupPeople({ repGroupId, people, canEdit, onChange }: { repG
         {canEdit && !adding ? <Button size="sm" variant="secondary" onClick={() => { setForm({ name: '', title: '', email: '', phones: [] }); setEditingId(null); setAdding(true) }} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add rep</Button> : null}
       </div>
       <p className="mt-1 text-xs text-stone-500">Mail from any of these addresses files to this rep group. They are the main rep on the vendors they rep, unless someone else is picked there.{canEdit ? ' Click a rep to change them.' : ''}</p>
+      {adding && !editingId && typed.length ? (
+        <div className="mt-3 rounded-xl bg-stone-50 p-4">
+          <p className="text-sm font-medium text-stone-700">Already on its vendors</p>
+          <p className="text-xs text-stone-500">Pick one instead of typing them again. They move here and show on every vendor this group reps.</p>
+          <ul className="mt-2 divide-y divide-stone-200">
+            {typed.map((t) => (
+              <li key={t.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                <span className="min-w-0"><span className="font-medium text-stone-900">{t.name || t.email}</span>{t.email && t.name ? <span className="ml-2 text-stone-500">{t.email}</span> : null}<span className="ml-2 text-xs text-stone-400">on {t.vendor}</span></span>
+                <Button size="sm" variant="secondary" onClick={() => void pick(t.id, t.name || t.email || 'Rep')} leftIcon={<UserPlus className="size-3.5" aria-hidden="true" />}>Add to this group</Button>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-stone-500">Someone new? Type them below.</p>
+        </div>
+      ) : null}
       {adding ? (
         <form onSubmit={submit} className="mt-3 grid gap-3 rounded-xl bg-stone-50 p-4 sm:grid-cols-2">
           <FormField label="Name" htmlFor="rp-name"><Input id="rp-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus /></FormField>

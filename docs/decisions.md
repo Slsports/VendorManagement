@@ -2132,3 +2132,11 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   run out of memory every 11 minutes on Jarrett's Sep 14 "Re: Pure Fishing Order Help" (an 8.6 MB show-order
   spreadsheet), retrying forever; it never reached Claude, so it cost no API money. Spreadsheets are now opened lightly
   (values only, first 10,000 rows of a sheet), and an email that stops the run twice is set aside as too big.
+- Oct 16, a rep is entered once (Dana: "I need a way to only have to enter it once"): she typed Travis Anderson, JRA
+  Sales' new rep for Pure Fishing (replacing Aaron Garcia), on the vendor, and the JRA Sales rep group stayed empty. A rep
+  typed on a vendor that buys through a rep group now has **Works for** (the group) ticked: they are saved once on the
+  rep group and show on all its vendors. The rep group's **Add rep** lists reps already typed on its vendors (**Add to
+  this group**). Claude had skipped Travis as "not JRA Sales" on Oct 13 although his address is @jrasales.com: an address
+  at a company already on file for the vendor or rep group now always counts as theirs; the 14 people skipped that way
+  are read again. The Claude cost log now records every billed answer by its id (also answers that could not be used);
+  VMS showed $9.52 for a day Anthropic billed about $15, the gap not yet explained.

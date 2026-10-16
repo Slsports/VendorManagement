@@ -1,15 +1,14 @@
 // Freight bills read by Claude (Deno only): the carrier's invoice PDF becomes one line per shipment
 // (shipper, date, tracking, amount) plus the per-invoice fee. Each shipper is matched to a vendor; a person
 // confirms in VMS. The PDF is data to read, never instructions.
-import Anthropic from 'npm:@anthropic-ai/sdk'
 import { zodOutputFormat } from 'npm:@anthropic-ai/sdk/helpers/zod'
 import { z } from 'npm:zod'
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
+import { claudeClient, logUsage } from './claudeClient.ts'
 import { buildVendorIndex, shipperVendors, type VendorIndex } from './mailMatch.ts'
 
 /** Money is read off the page: the capable model, about two cents a bill. Override with AI_MODEL_FREIGHT. */
 export const FREIGHT_MODEL = Deno.env.get('AI_MODEL_FREIGHT') ?? 'claude-sonnet-5-5'
-const PRICES: Record<string, [number, number]> = { 'claude-haiku-5-5': [0.10, 0.50], 'claude-sonnet-5-5': [2, 10], 'claude-opus-5-5': [4, 20] }
 
 const Reading = z.object({
   billing_company: z.string().nullable().describe('The company that sent this bill, as printed (PartnerShip, Worldwide Express, UPS, Priority1, Worldwide Distributors…)'),
@@ -32,8 +31,7 @@ const Reading = z.object({
 })
 export type FreightReading = z.infer<typeof Reading>
 
-let client: Anthropic | null = null
-const claude = () => (client ??= new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY'), maxRetries: 3, timeout: 120_000 }))
+const claude = () => claudeClient(120_000)
 
 export async function readFreightPdf(db: SupabaseClient, org: string, pdf: Uint8Array, carrierName: string | null): Promise<FreightReading> {
   let bin = ''
@@ -51,13 +49,7 @@ export async function readFreightPdf(db: SupabaseClient, org: string, pdf: Uint8
       ],
     }],
   })
-  const [pin, pout] = PRICES[FREIGHT_MODEL] ?? [0, 0]
-  const u = res.usage
-  await db.from('ai_usage').insert({
-    organization_id: org, purpose: 'freight_bill', model: FREIGHT_MODEL, items: 1,
-    input_tokens: u.input_tokens + (u.cache_creation_input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0), output_tokens: u.output_tokens,
-    cost_usd: Number((((u.input_tokens + (u.cache_creation_input_tokens ?? 0) * 1.25 + (u.cache_read_input_tokens ?? 0) * 0.1) * pin + u.output_tokens * pout) / 1_000_000).toFixed(5)),
-  })
+  await logUsage(db, org, 'freight_bill', FREIGHT_MODEL, res, 1)
   if (!res.parsed_output) throw new Error('Claude could not read the bill')
   return res.parsed_output
 }
@@ -149,13 +141,7 @@ export async function readReceiptPdf(db: SupabaseClient, org: string, pdf: Uint8
       ],
     }],
   })
-  const [pin, pout] = PRICES[FREIGHT_MODEL] ?? [0, 0]
-  const u = res.usage
-  await db.from('ai_usage').insert({
-    organization_id: org, purpose: 'delivery_receipt', model: FREIGHT_MODEL, items: 1,
-    input_tokens: u.input_tokens + (u.cache_creation_input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0), output_tokens: u.output_tokens,
-    cost_usd: Number((((u.input_tokens + (u.cache_creation_input_tokens ?? 0) * 1.25 + (u.cache_read_input_tokens ?? 0) * 0.1) * pin + u.output_tokens * pout) / 1_000_000).toFixed(5)),
-  })
+  await logUsage(db, org, 'delivery_receipt', FREIGHT_MODEL, res, 1)
   if (!res.parsed_output) throw new Error('Claude could not read the receipt')
   return res.parsed_output
 }
@@ -196,13 +182,7 @@ export async function readPaymentPdf(db: SupabaseClient, org: string, pdf: Uint8
       { type: 'text', text: 'Read this payment receipt.' },
     ] }],
   })
-  const [pin, pout] = PRICES[FREIGHT_MODEL] ?? [0, 0]
-  const u = res.usage
-  await db.from('ai_usage').insert({
-    organization_id: org, purpose: 'freight_payment', model: FREIGHT_MODEL, items: 1,
-    input_tokens: u.input_tokens + (u.cache_creation_input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0), output_tokens: u.output_tokens,
-    cost_usd: Number((((u.input_tokens + (u.cache_creation_input_tokens ?? 0) * 1.25 + (u.cache_read_input_tokens ?? 0) * 0.1) * pin + u.output_tokens * pout) / 1_000_000).toFixed(5)),
-  })
+  await logUsage(db, org, 'freight_payment', FREIGHT_MODEL, res, 1)
   if (!res.parsed_output) throw new Error('Claude could not read the receipt')
   return res.parsed_output
 }

@@ -1,7 +1,7 @@
 ---
 title: Add reps and contacts to a vendor
 section: Vendors
-keywords: contact, rep, sales rep, our rep, star, assigned rep, phone, cell, work phone, fax, several phones, email, accounting, customer service, owner, checkbox, edit contact
+keywords: contact, rep, sales rep, works for rep group, enter once, our rep, star, assigned rep, phone, cell, work phone, fax, several phones, email, accounting, customer service, owner, checkbox, edit contact
 who: Admin, managers and buyers
 ---
 The **Reps & contacts** box holds everyone you deal with at a vendor. It is on the vendor's page and at the top of its **Edit** page. One of them is our **Main rep**: the person we place orders through.
@@ -10,9 +10,10 @@ The **Reps & contacts** box holds everyone you deal with at a vendor. It is on t
 1. Open the vendor's page and click **Reps & contacts** to open it (or click **Edit**: it is at the top there).
 2. Click **Add contact**.
 3. Fill in a **Name** and **Email**. Under **Phone numbers**, pick the kind of number (**Work**, **Cell**, **Fax** or **Other**) and type it; with **Other**, type what it is (for example Warehouse). Click **Add phone** for each extra number. Tick every box that fits (**Rep**, **Orders**, **AR / Accounting**, **Customer service**, **Warehouse / Shipping**, **Owner**, **Other**; someone can be both **Rep** and **Owner**) and an optional **Job title**.
-4. Click **Save contact**.
-5. To make someone our main rep, click **Make main rep** on their row. They get a gold star and the **Main rep** tag.
-6. To change anyone, click their card (or their name, or the pencil). Change the name, email, phone or the boxes and click **Save contact**. This works for the rep group's reps too.
+4. If the vendor buys through a rep group and you ticked **Rep**, the box **Works for** (the rep group's name) is ticked for you. Leave it ticked: the rep is saved once on the rep group and shows on every vendor that group reps. Untick it only for a rep who works for the vendor itself.
+5. Click **Save contact**.
+6. To make someone our main rep, click **Make main rep** on their row. They get a gold star and the **Main rep** tag.
+7. To change anyone, click their card (or their name, or the pencil). Change the name, email, phone or the boxes and click **Save contact**. This works for the rep group's reps too. A rep typed on the vendor before can be moved to the rep group here: tick **Works for** (the rep group's name) and click **Save contact**.
 
 ## Good to know
 - The main rep shows at the very top of the vendor's page with their email and phone. Follow-ups go to them, whoever took the order.

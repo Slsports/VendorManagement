@@ -215,7 +215,7 @@ function PersonSignatureRow({ person: p, template, onSaved }: { person: PersonSi
   )
 }
 
-const PURPOSE_LABELS: Record<string, string> = { mail_sort: 'Sorting unclear emails', sender_guess: 'Reading unknown senders' }
+const PURPOSE_LABELS: Record<string, string> = { mail_sort: 'Sorting unclear emails', sender_guess: 'Reading unknown senders', not_logged: 'Other Claude calls (answers that could not be used)' }
 
 /** What Claude has cost this month, next to the $25 monthly limit set in the Claude Console. */
 function ClaudeUsage({ organizationId }: { organizationId: string }) {

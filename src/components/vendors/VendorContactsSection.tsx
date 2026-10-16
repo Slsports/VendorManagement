@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { AlertTriangle, Mail, Pencil, Plus, Star, Trash2 } from 'lucide-react'
-import { addVendorEmail, deleteVendorEmail, updateVendor, updateVendorEmail } from '@/services/vendors'
+import { addVendorEmail, deleteVendorEmail, moveContactToRepGroup, updateVendor, updateVendorEmail } from '@/services/vendors'
 import { updateRepGroupContact } from '@/services/lines'
 import { ROUTES } from '@/lib/constants'
 import { CONTACT_TYPE_LABELS } from '@/lib/vendors'
@@ -33,6 +33,13 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
   const blank = { contact_name: '', email: '', phones: [] as ContactPhone[], title: '', roles: ['rep'] as ContactType[] }
   const [form, setForm] = useState(blank)
   const [saving, setSaving] = useState(false)
+  /**
+   * A rep typed here works for the vendor's rep group: save them on the group once, shown on every vendor it reps
+   * (Dana, Oct 16: "I need a way to only have to enter it once"). Ticked for a new rep; an existing card can be moved.
+   */
+  const [toGroup, setToGroup] = useState(false)
+  const group = v.rep_groups
+  const showToGroup = !!group && !editingGroup && form.roles.includes('rep')
   const people = peopleFor(v)
   const main = new Set(ourReps(v).map((p) => p.key))
 
@@ -43,6 +50,7 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
     if (canEdit) {
       setForm({ contact_name: '', email: '', phones: [], title: '', roles: ['rep'] })
       setEditingId(null)
+      setToGroup(!!v.rep_groups)
       setAsOurRep(true)
       setAdding(true)
       setOpen(true)
@@ -59,13 +67,17 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
     setSaving(true)
     try {
       const fields = { email: form.email.trim().toLowerCase() || null, contact_name: form.contact_name.trim() || null, phones: cleanPhones(form.phones), title: form.title.trim() || null, roles: form.roles, contact_type: form.roles[0]! }
+      const moving = showToGroup && toGroup
       if (editingId && editingGroup) await updateRepGroupContact(editingId, { name: fields.contact_name, email: fields.email, phones: fields.phones, title: fields.title })
-      else if (editingId) await updateVendorEmail(editingId, fields)
-      else {
+      else if (editingId) {
+        await updateVendorEmail(editingId, fields)
+        if (moving) await moveContactToRepGroup(editingId)
+      } else {
         const made = await addVendorEmail({ vendor_id: v.id, ...fields, source: 'manual' })
         if (asOurRep) await updateVendor(v.id, { assigned_rep_contact_id: made.id, assigned_rep_group_contact_id: null })
+        if (moving) await moveContactToRepGroup(made.id)
       }
-      toast.success(editingId ? 'Contact saved' : asOurRep ? 'Our rep added' : 'Contact added')
+      toast.success(moving ? `Saved on ${group!.name}: shows on every vendor they rep` : editingId ? 'Contact saved' : asOurRep ? 'Our rep added' : 'Contact added')
       setForm(blank)
       setAdding(false)
       setAsOurRep(false)
@@ -93,6 +105,7 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
     setForm({ contact_name: p.name ?? '', email: p.email ?? '', phones: p.phones, title: p.title ?? '', roles: p.roles })
     setEditingId(p.id)
     setEditingGroup(p.kind === 'group')
+    setToGroup(false)
     setAsOurRep(false)
     setAdding(true)
     requestAnimationFrame(() => box.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
@@ -113,7 +126,7 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
     <div ref={box} className="scroll-mt-4 lg:col-span-2">
     <FoldSection title="Reps & contacts" open={open} onOpenChange={setOpen}
       summary={people.length ? `${people.length} ${people.length === 1 ? 'person' : 'people'}` : 'None'}
-      actions={canEdit && !adding ? <Button size="sm" variant="secondary" onClick={() => { setForm(blank); setEditingId(null); setEditingGroup(false); setAsOurRep(false); setAdding(true); setOpen(true) }} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add contact</Button> : null}>
+      actions={canEdit && !adding ? <Button size="sm" variant="secondary" onClick={() => { setForm(blank); setEditingId(null); setEditingGroup(false); setToGroup(!!v.rep_groups); setAsOurRep(false); setAdding(true); setOpen(true) }} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add contact</Button> : null}>
       {people.length > 0 ? <p className="mt-1 text-xs text-stone-500">The <strong>Main rep</strong> is who we place orders through, shown at the top of the page. Everyone else is for customer service, shipping or billing questions.{canEdit ? ' Click anyone to change them.' : ''}</p> : null}
       {adding ? (
         <form onSubmit={submit} className="mt-3 grid gap-3 rounded-xl bg-stone-50 p-4 sm:grid-cols-2">
@@ -132,6 +145,12 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
             </div>
           </fieldset>
           )}
+          {showToGroup ? (
+            <label className="flex items-start gap-2 rounded-lg bg-white p-2.5 text-sm text-stone-700 ring-1 ring-stone-200 sm:col-span-2">
+              <input type="checkbox" checked={toGroup} onChange={(e) => setToGroup(e.target.checked)} className="mt-0.5 size-4 accent-brand" />
+              <span><strong>Works for {group!.name}</strong><span className="block text-xs text-stone-500">Saved once on the rep group and shown on every vendor {group!.name} reps, so you never type them twice.</span></span>
+            </label>
+          ) : null}
           {asOurRep ? <p className="text-xs text-stone-500 sm:col-span-2">Saved as our main rep, shown at the top of the vendor page.</p> : null}
           <FormField label="Job title (optional)" htmlFor="c-title" className="sm:col-span-2"><Input id="c-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Show rep, Regional Sales Manager" /></FormField>
           <div className="flex gap-2 sm:col-span-2">
