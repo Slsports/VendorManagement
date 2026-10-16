@@ -16,6 +16,7 @@ The **Sales Reports** page builds vendor and category reports straight from Ligh
 7. **Save settings** keeps the choices under a name, so next time it is one click. Every run stays in the **Reports run** list with **Open** and **Download**.
 
 ## Good to know
+- Two columns after NEED: **ON ORDER** (already coming in on open orders, with the order and ship date in Notes) and **NEED AFTER ORDERS**. See "Add to an order that has not shipped".
 - The report follows spec v49 exactly: Size Summary, By Category, By Vendor (category reports) or By Description (vendor reports), Flags, Active, No Data, Archived, and Archived – No Sales (Ignored). File names carry the initials of whoever ran it.
 - The Size Summary groups by gender, subcategory and size. Spelling variants of one size in LS (SZ 8, SIZE 8) are one row, with a note saying what was merged.
 - Stock is as of the last item pass (every six hours); sales are minutes behind. The line at the top of the page says how fresh the copy is.

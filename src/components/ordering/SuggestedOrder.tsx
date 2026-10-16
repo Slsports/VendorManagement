@@ -1,3 +1,4 @@
+import type React from 'react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -12,6 +13,9 @@ import { saveBlob } from '@/lib/viewer'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
 import { AddOrderDialog, type OrderPrefill } from '@/components/orders/AddOrderDialog'
+import { ComposeDialog, type ComposeDraft } from '@/components/mail/ComposeDialog'
+import { addLinesToOrder, openOrdersForVendor, orderPapers, vendorOrderAddresses } from '@/services/addOns'
+import { addOnEmail, orderWord } from '@/lib/addOns'
 import { Button, Spinner } from '@/components/ui'
 import { SalesReportUpload } from './SalesReportUpload'
 
@@ -30,6 +34,8 @@ export function SuggestedOrderDialog({ vendor, onClose }: { vendor: { id: string
   const [qty, setQty] = useState<Record<string, string>>({})
   const [ordering, setOrdering] = useState<OrderPrefill | null>(null)
   const [busy, setBusy] = useState(false)
+  const openOrders = useSupabaseQuery(() => openOrdersForVendor(vendor.id), [vendor.id])
+  const [addOnDraft, setAddOnDraft] = useState<ComposeDraft | null>(null)
   const lines = useMemo(() => q.data?.lines ?? [], [q.data])
   const amount = (sid: string, suggested: number) => { const v = qty[sid]; return v === undefined ? suggested : Math.max(0, Math.round(Number(v) || 0)) }
   const picked = lines.map((l) => ({ l, n: amount(l.sid, l.suggested) })).filter((x) => x.n > 0)
@@ -45,6 +51,24 @@ export function SuggestedOrderDialog({ vendor, onClose }: { vendor: { id: string
     const { data } = await supabase.from('vendor_links').select('storage_path, file_name').eq('id', report.document_id).maybeSingle()
     if (!data?.storage_path) return toast.error('The report file is missing')
     try { saveBlob(await downloadVendorFile(data.storage_path), data.file_name ?? 'sales report.xlsx') } catch (e) { toast.error(errorMessage(e)) }
+  }
+  /** Add to PO … (Dana, Oct 16): the picked lines go on the open order, then the email with them in one table. */
+  async function addToOrder(o: { id: string; po_number: string | null; order_date: string | null; est_ship_date: string | null; status: string; addons: 'yes' | 'no' | 'ask' | null; description: string | null }) {
+    setBusy(true)
+    try {
+      const lines = picked.map(({ l, n }) => ({ vendor_item_id: l.vid || null, description: l.desc, quantity: n, unit_cost: l.cost }))
+      const added = await addLinesToOrder(o.id, lines)
+      const papers = await orderPapers(o.id)
+      const to = await vendorOrderAddresses(vendor.id)
+      const m = addOnEmail({ vendorName: vendor.name, order: o, lines, hasConfirmation: !!papers.confirmation, originalLines: papers.originalLines })
+      const attach = papers.confirmation ?? papers.orderSheet
+      toast.success(`${added} item${added === 1 ? '' : 's'} added to ${orderWord(o)}`)
+      setAddOnDraft({ to, subject: m.subject, body: m.body, vendor_id: vendor.id, vendor_link_ids: attach ? [attach.id] : [], note: attach ? `Attaching ${attach.file_name ?? 'the paper on file'}` : 'No confirmation or order sheet on file to attach; the original lines are in the email.' })
+    } catch (e) {
+      toast.error(errorMessage(e))
+    } finally {
+      setBusy(false)
+    }
   }
   function placeOrder() {
     setOrdering({
@@ -126,11 +150,14 @@ export function SuggestedOrderDialog({ vendor, onClose }: { vendor: { id: string
               <SalesReportUpload vendor={vendor} label="Upload a newer report" onSaved={() => void q.refetch()} />
               {flag.data ? <Button size="sm" variant="ghost" disabled={busy} onClick={() => void act(() => finishOrderingItem(flag.data!.id, 'not_needed'), `${vendor.name}: not needed`)}>Don't need it</Button> : null}
               {flag.data?.stage === 'check' ? <Button size="sm" variant="secondary" disabled={busy} onClick={() => void act(() => moveOrderingItem(flag.data!.id, 'to_order'), `${vendor.name}: moved to To order`)}>Order it</Button> : null}
+              {(openOrders.data ?? []).filter((o) => o.addons === 'yes').map((o) => <Button key={o.id} size="sm" variant="secondary" disabled={busy || !picked.length} onClick={() => void addToOrder(o)} title={o.est_ship_date ? `Ships ${new Date(`${o.est_ship_date}T12:00:00`).toLocaleDateString()}` : 'No ship date yet'}>Add to {orderWord(o)}</Button>)}
               <Button size="sm" disabled={busy || !picked.length} onClick={placeOrder}>Order placed</Button>
             </div>
+            {(openOrders.data ?? []).some((o) => o.addons !== 'yes') ? <p className="w-full text-xs text-stone-500">Open orders not taking add-ons, or not asked yet: {(openOrders.data ?? []).filter((o) => o.addons !== 'yes').map((o) => <Link key={o.id} to={`${ROUTES.orders}/${o.id}`} className="underline hover:text-brand">{orderWord(o)}{o.est_ship_date ? ` (ships ${new Date(`${o.est_ship_date}T12:00:00`).toLocaleDateString()})` : ''} · add-ons {o.addons === 'no' ? 'no' : o.addons === 'ask' ? 'asked' : 'not confirmed'}</Link>).reduce<React.ReactNode[]>((acc, el, i) => (i ? [...acc, ', ', el] : [el]), [])}</p> : null}
           </div>
         ) : null}
       </div>
+      {addOnDraft ? <ComposeDialog draft={addOnDraft} onClose={() => setAddOnDraft(null)} onSent={() => { setAddOnDraft(null); if (flag.data) void finishOrderingItem(flag.data.id, 'ordered'); onClose() }} /> : null}
       {ordering && organization ? (
         <AddOrderDialog vendor={vendor} prefill={ordering} onClose={() => setOrdering(null)} onSaved={async (order) => {
           if (flag.data) await finishOrderingItem(flag.data.id, 'ordered', order.id)

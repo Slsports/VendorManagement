@@ -11,7 +11,7 @@ const NEED_FILL = solid('FFDDEDD3'), ORDER_FILL = solid('FFFFFF00'), FLAG_FILL =
 const thin = { style: 'thin' as const, color: { argb: 'FF000000' } }
 const BOX = { top: thin, left: thin, bottom: thin, right: thin }
 
-type ColKey = 'sid' | 'upc' | 'vendor' | 'vid' | 'desc' | 'cost' | 'cat' | 'last' | 'sold' | 'qoh' | 'need' | 'order' | 'notes'
+type ColKey = 'sid' | 'upc' | 'vendor' | 'vid' | 'desc' | 'cost' | 'cat' | 'last' | 'sold' | 'qoh' | 'need' | 'onorder' | 'after' | 'order' | 'notes'
 interface Col { key: ColKey; head: string; store?: string }
 interface Layout { cols: Col[]; at: (key: ColKey, store?: string) => number; soldCols: number[]; qohCols: number[] }
 
@@ -26,7 +26,9 @@ function layout(plan: ReportPlan): Layout {
   } else {
     cols.push({ key: 'sold', head: 'SOLD' }, { key: 'qoh', head: 'IN STOCK' })
   }
-  cols.push({ key: 'need', head: 'NEED' }, { key: 'order', head: 'ORDER' }, { key: 'notes', head: 'NOTES' })
+  cols.push({ key: 'need', head: 'NEED' })
+  if (plan.onOrder) cols.push({ key: 'onorder', head: 'ON ORDER' }, { key: 'after', head: 'NEED AFTER ORDERS' })
+  cols.push({ key: 'order', head: 'ORDER' }, { key: 'notes', head: 'NOTES' })
   const at = (key: ColKey, store?: string) => cols.findIndex((c) => c.key === key && (store === undefined || c.store === store)) + 1
   const soldCols = cols.map((c, i) => (c.key === 'sold' ? i + 1 : 0)).filter(Boolean)
   const qohCols = cols.map((c, i) => (c.key === 'qoh' ? i + 1 : 0)).filter(Boolean)
@@ -63,6 +65,7 @@ function cellValue(x: SalesItem, c: Col): unknown {
     case 'last': return x.last ? new Date(`${x.last}T12:00:00`) : 'Never Sold'
     case 'sold': return c.store ? (x.byStore?.[c.store]?.sold ?? 0) : x.sold
     case 'qoh': return x.nonInv ? '-' : c.store ? (x.byStore?.[c.store]?.qoh ?? 0) : x.qoh
+    case 'onorder': return x.onOrder ?? 0
     default: return null
   }
 }
@@ -84,8 +87,13 @@ function itemRow(ws: Worksheet, lay: Layout, r: number, x: SalesItem, shade: boo
   const qohSum = lay.qohCols.map((n) => `${L(n)}${r}`).join('+')
   need.value = x.nonInv ? null : { formula: `${lay.soldCols.length > 1 ? `(${soldSum})` : soldSum}-MAX(0,${qohSum})`, result: needOf(x) }
   need.fill = NEED_FILL
+  if (lay.at('after') > 0) {
+    const after = ws.getCell(r, lay.at('after'))
+    after.value = x.nonInv ? null : { formula: `${L(lay.at('need'))}${r}-${L(lay.at('onorder'))}${r}`, result: needOf(x) - (x.onOrder ?? 0) }
+    after.fill = NEED_FILL
+  }
   ws.getCell(r, lay.at('order')).fill = ORDER_FILL
-  if (shade && x.notes.length) for (let i = 1; i <= lay.cols.length; i++) if (i !== lay.at('need') && i !== lay.at('order')) ws.getCell(r, i).fill = FLAG_FILL
+  if (shade && x.notes.length) for (let i = 1; i <= lay.cols.length; i++) if (i !== lay.at('need') && i !== lay.at('after') && i !== lay.at('order')) ws.getCell(r, i).fill = FLAG_FILL
 }
 
 function totalRow(ws: Worksheet, lay: Layout, r: number, a: number, b: number, label = 'TOTAL', rows: SalesItem[] = []) {
@@ -97,13 +105,15 @@ function totalRow(ws: Worksheet, lay: Layout, r: number, a: number, b: number, l
     c.alignment = { horizontal: i === 1 ? 'left' : 'center', vertical: 'middle' }
   }
   ws.getCell(r, 1).value = label
-  for (const n of [...lay.soldCols, ...lay.qohCols, lay.at('order')]) {
+  for (const n of [...lay.soldCols, ...lay.qohCols, lay.at('order'), ...(lay.at('onorder') > 0 ? [lay.at('onorder')] : [])]) {
     const col = lay.cols[n - 1]!
     const result = col.key === 'order' ? 0 : rows.reduce((t, x) => t + Number(cellValue(x, col) || 0), 0)
     ws.getCell(r, n).value = b >= a ? { formula: `SUM(${L(n)}${a}:${L(n)}${b})`, result } : 0
   }
   const need = lay.at('need')
   ws.getCell(r, need).value = b >= a ? { formula: `SUMIF(${L(need)}${a}:${L(need)}${b},">0")`, result: rows.reduce((t, x) => t + (x.nonInv ? 0 : Math.max(0, needOf(x))), 0) } : 0
+  const after = lay.at('after')
+  if (after > 0) ws.getCell(r, after).value = b >= a ? { formula: `SUMIF(${L(after)}${a}:${L(after)}${b},">0")`, result: rows.reduce((t, x) => t + (x.nonInv ? 0 : Math.max(0, needOf(x) - (x.onOrder ?? 0))), 0) } : 0
 }
 
 function table(ws: Worksheet, lay: Layout, title: string, rows: SalesItem[], opts: { total: boolean; groups?: ReportGroup[] | null; shade?: boolean }) {
@@ -191,7 +201,8 @@ function typeSummary(ws: Worksheet, plan: ReportPlan) {
 
 /** The Size Summary (spec v49): Gender, Subcategory, Size, # SKUs, Sold, In Stock, Need, ORDER, Notes; a TOTAL row per gender and subcategory. */
 function sizeSummary(ws: Worksheet, plan: ReportPlan) {
-  const cols = ['Gender', 'Subcategory', 'Size', '# SKUs', 'Sold', 'In Stock', 'Need', 'ORDER', 'Notes']
+  const cols = plan.onOrder ? ['Gender', 'Subcategory', 'Size', '# SKUs', 'Sold', 'In Stock', 'Need', 'On Order', 'Need After Orders', 'ORDER', 'Notes'] : ['Gender', 'Subcategory', 'Size', '# SKUs', 'Sold', 'In Stock', 'Need', 'ORDER', 'Notes']
+  const oo = plan.onOrder ? 2 : 0
   header(ws, plan.title, cols)
   let r = 3
   const rows = plan.sizes ?? []
@@ -202,23 +213,29 @@ function sizeSummary(ws: Worksheet, plan: ReportPlan) {
     const t = r++
     const a = r
     for (const s of list) {
-      const vals = [gender || '—', sub, s.size, s.skus, s.sold, s.inStock, s.need, null, s.variants.length > 1 ? `Sizes written as ${s.variants.join(', ')}` : '']
+      const note = s.variants.length > 1 ? `Sizes written as ${s.variants.join(', ')}` : ''
+      const vals = plan.onOrder ? [gender || '—', sub, s.size, s.skus, s.sold, s.inStock, s.need, s.onOrder, Math.max(0, s.need - s.onOrder), null, note] : [gender || '—', sub, s.size, s.skus, s.sold, s.inStock, s.need, null, note]
       vals.forEach((v, i) => {
         const c = ws.getCell(r, i + 1)
         c.value = v as never
         c.font = { name: FONT, size: 11 }
         c.border = BOX
-        c.alignment = { horizontal: i < 3 || i === 8 ? 'left' : 'center', vertical: 'middle', wrapText: i === 8 }
+        c.alignment = { horizontal: i < 3 || i === cols.length - 1 ? 'left' : 'center', vertical: 'middle', wrapText: i === cols.length - 1 }
       })
       ws.getCell(r, 7).fill = NEED_FILL
-      ws.getCell(r, 8).fill = ORDER_FILL
+      if (plan.onOrder) ws.getCell(r, 9).fill = NEED_FILL
+      ws.getCell(r, 8 + oo).fill = ORDER_FILL
       r++
     }
     const b = r - 1
     ;[gender || '—', sub, 'TOTAL'].forEach((v, i) => { ws.getCell(t, i + 1).value = v })
     ;[['D', 'skus'], ['E', 'sold'], ['F', 'inStock']].forEach(([col, k], i) => { ws.getCell(t, i + 4).value = { formula: `SUM(${col}${a}:${col}${b})`, result: list.reduce((x, y) => x + y[k as 'skus' | 'sold' | 'inStock'], 0) } })
     ws.getCell(t, 7).value = { formula: `SUMIF(G${a}:G${b},">0")`, result: list.reduce((x, y) => x + Math.max(0, y.need), 0) }
-    ws.getCell(t, 8).value = { formula: `SUM(H${a}:H${b})`, result: 0 }
+    if (plan.onOrder) {
+      ws.getCell(t, 8).value = { formula: `SUM(H${a}:H${b})`, result: list.reduce((x, y) => x + y.onOrder, 0) }
+      ws.getCell(t, 9).value = { formula: `SUMIF(I${a}:I${b},">0")`, result: list.reduce((x, y) => x + Math.max(0, y.need - y.onOrder), 0) }
+    }
+    ws.getCell(t, 8 + oo).value = { formula: `SUM(${L(8 + oo)}${a}:${L(8 + oo)}${b})`, result: 0 }
     for (let i = 1; i <= cols.length; i++) {
       const c = ws.getCell(t, i)
       c.font = { name: FONT, size: 11, bold: true }
@@ -231,7 +248,7 @@ function sizeSummary(ws: Worksheet, plan: ReportPlan) {
   note.value = 'Need per size = sum of each item’s positive Need (Sold − In Stock); overstock in one size never offsets another. Spelling variants of a size (SZ 8, SIZE 8) are one row.'
   note.font = { name: FONT, size: 9, italic: true }
   ws.views = [{ state: 'frozen', ySplit: 2 }]
-  ;[10, Math.max(14, ...rows.map((s) => s.subcategory.length)) + 2, 9, 8, 8, 10, 8, 8, 36].forEach((w, i) => { ws.getColumn(i + 1).width = w })
+  ;(plan.onOrder ? [10, Math.max(14, ...rows.map((s) => s.subcategory.length)) + 2, 9, 8, 8, 10, 8, 9, 11, 8, 36] : [10, Math.max(14, ...rows.map((s) => s.subcategory.length)) + 2, 9, 8, 8, 10, 8, 8, 36]).forEach((w, i) => { ws.getColumn(i + 1).width = w })
 }
 
 /** The formatted report as an .xlsx file. */
@@ -257,5 +274,11 @@ export async function buildReportXlsx(plan: ReportPlan): Promise<ArrayBuffer> {
   table(wb.addWorksheet('Archived – No Sales (Ignored)'), lay, plan.title, plan.ignored, { total: false, shade: false })
   // Flags is printed black and white: no colored cells below the headers
   flagsLate.eachRow((row, n) => { if (n >= 3) row.eachCell((c) => { c.fill = { type: 'pattern', pattern: 'none' } }) })
+  if (plan.openOrders.length) {
+    const r = flagsLate.rowCount + 2
+    const c = flagsLate.getCell(r, 1)
+    c.value = `Open orders with no item list in VMS (check by hand): ${plan.openOrders.join('; ')}`
+    c.font = { name: FONT, size: 11, bold: true }
+  }
   return (await wb.xlsx.writeBuffer()) as ArrayBuffer
 }

@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabase'
 import { initialsOf, needOf, planReport, reportFileName, runText, type ReportOptions, type ReportPlan, type SalesItem } from '@/lib/salesReport'
-import { saveSalesReport } from '@/services/ordering'
+import { incomingFor, saveSalesReport } from '@/services/ordering'
+import { ADDONS_LABELS, matchIncoming, onOrderNote } from '@/lib/addOns'
+import { openOrdersForVendor } from '@/services/addOns'
 import { checkUploadSize } from '@/lib/upload'
 import type { Json, Tables } from '@/types/database'
 
@@ -124,7 +126,26 @@ export async function runLsReport(input: { organizationId: string; params: Repor
   if (!items.length) throw new Error('No items match. Check the vendor, category and stores.')
   const name = reportName(p, input.vendors)
   const run = new Date()
-  const opts: ReportOptions = { kind: p.kind === 'category' ? 'category' : 'vendor', stores: p.store_mode === 'separate' ? p.store_codes : null }
+  // what is already coming in from each VMS vendor on the report (Dana, Oct 16), and the add-on hint per order
+  const vendorIds = [...new Set(items.map((x) => input.vendors.find((v) => v.ls_vendor_id === x.lsVendorId)?.vendor_id).filter((x): x is string => !!x))]
+  const openOrders: string[] = []
+  const addonsByOrder = new Map<string, 'yes' | 'no' | 'ask' | null>()
+  const incoming = (await Promise.all(vendorIds.map(async (vendorId) => {
+    const [inc, open] = await Promise.all([incomingFor(vendorId), openOrdersForVendor(vendorId)])
+    for (const u of inc.unlisted) openOrders.push(u.label)
+    for (const o of open) addonsByOrder.set(o.id, o.addons)
+    return inc.lines
+  }))).flat()
+  const matched = matchIncoming(items, incoming)
+  for (const x of items) {
+    const m = matched.get(x.sid)
+    x.onOrder = m?.qty ?? 0
+    if (m) {
+      const hint = m.from.map((f) => { const a = addonsByOrder.get(f.orderId); return f.stage === 'shipped' ? null : a === 'yes' ? `add to ${f.orderLabel.split(' · ')[0]}` : `${f.orderLabel.split(' · ')[0]}: add-ons ${a ? ADDONS_LABELS[a].toLowerCase() : 'not confirmed'}` }).filter(Boolean)
+      x.notes.push(`On order: ${onOrderNote(m)}.${hint.length ? ` ${hint.join('; ')}.` : ''}`)
+    }
+  }
+  const opts: ReportOptions = { kind: p.kind === 'category' ? 'category' : 'vendor', stores: p.store_mode === 'separate' ? p.store_codes : null, onOrder: true, openOrders }
   const plan = planReport(items, name.toUpperCase(), runText(run), opts)
   const { buildReportXlsx } = await import('@/lib/salesReportXlsx')
   const bytes = await buildReportXlsx(plan)

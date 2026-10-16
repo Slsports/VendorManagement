@@ -20,6 +20,8 @@ export interface SalesItem {
   /** YYYY-MM-DD, or null = never sold */
   last: string | null
   notes: string[]
+  /** Already coming in on open orders (Dana, Oct 16), when the report looked; the order words go in Notes. */
+  onOrder?: number
   /** Lightspeed's vendor id, when the items came from the copy of Lightspeed (to file a category report under its vendors). */
   lsVendorId?: string
   /** Lightspeed's item id, when the items came from the copy of Lightspeed. */
@@ -117,12 +119,16 @@ export function lineOf(desc: string, vendorName: string): string {
 const title = (s: string) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
 
 export interface ReportGroup { name: string; items: SalesItem[] }
-export interface SizeRow { gender: string; subcategory: string; size: string; skus: number; sold: number; inStock: number; need: number; variants: string[] }
+export interface SizeRow { gender: string; subcategory: string; size: string; skus: number; sold: number; inStock: number; need: number; onOrder: number; variants: string[] }
 export interface ReportOptions {
   /** A vendor report (By Description tab, no Vendor column) or a category report (Vendor column, By Vendor tab). */
   kind?: 'vendor' | 'category'
   /** Store codes when the stores are kept apart (a Sold and an In Stock column per store); null for one set of columns. */
   stores?: string[] | null
+  /** ON ORDER and NEED AFTER ORDERS columns (the items carry onOrder). */
+  onOrder?: boolean
+  /** Open orders with no item list, named on the Flags tab. */
+  openOrders?: string[]
 }
 export interface ReportPlan {
   vendor: string
@@ -133,6 +139,8 @@ export interface ReportPlan {
   vendorGroups: ReportGroup[] | null
   /** Sized categories: the Size Summary rows (gender, subcategory, size), null when nothing is sized. */
   sizes: SizeRow[] | null
+  onOrder: boolean
+  openOrders: string[]
   active: SalesItem[]
   nodata: SalesItem[]
   archived: SalesItem[]
@@ -172,7 +180,8 @@ export function activeRows(plan: Pick<ReportPlan, 'active' | 'activeGroups'>): M
 /** Sort the items into the report's tabs and add the flag notes (spec: partitions first, no exceptions). */
 export function planReport(all: SalesItem[], vendorName: string, runText: string, opts: ReportOptions = {}): ReportPlan {
   const kind = opts.kind ?? 'vendor'
-  const items = all.map((x) => ({ ...x, notes: [] as string[] }))
+  // notes set before the plan (what is on order) stay; the plan adds its own
+  const items = all.map((x) => ({ ...x, notes: [...(x.notes ?? [])] as string[] }))
   const ignored = items.filter((x) => x.archived && x.sold === 0 && x.qoh <= 0).sort(byCatDesc)
   const rest = items.filter((x) => !ignored.includes(x))
   const nodata = rest.filter((x) => !x.archived && x.sold === 0 && x.qoh <= 0 && !x.nonInv).sort(byCatDesc)
@@ -231,8 +240,8 @@ export function planReport(all: SalesItem[], vendorName: string, runText: string
     for (const { x, size } of sized) {
       const gender = genderOf(x.desc, x.cat), sub = subcategoryOf(x.cat)
       const k = `${gender}\u0000${sub}\u0000${size!.size}`
-      const row = m.get(k) ?? { gender, subcategory: sub, size: size!.size, skus: 0, sold: 0, inStock: 0, need: 0, variants: [] }
-      row.skus++; row.sold += x.sold; row.inStock += Math.max(0, x.qoh); row.need += Math.max(0, needOf(x))
+      const row = m.get(k) ?? { gender, subcategory: sub, size: size!.size, skus: 0, sold: 0, inStock: 0, need: 0, onOrder: 0, variants: [] }
+      row.skus++; row.sold += x.sold; row.inStock += Math.max(0, x.qoh); row.need += Math.max(0, needOf(x)); row.onOrder += x.onOrder ?? 0
       if (!row.variants.includes(size!.raw)) row.variants.push(size!.raw)
       m.set(k, row)
     }
@@ -244,6 +253,8 @@ export function planReport(all: SalesItem[], vendorName: string, runText: string
     title: `${vendorName} — Report Run ${runText}`,
     kind,
     stores: opts.stores ?? null,
+    onOrder: !!opts.onOrder,
+    openOrders: opts.openOrders ?? [],
     vendorGroups: kind === 'category' ? groupBy([...active].sort((a, b) => a.lsVendor.localeCompare(b.lsVendor) || a.desc.localeCompare(b.desc)), (x) => x.lsVendor || '(No Vendor)') : null,
     sizes,
     active: activeSorted,

@@ -10,6 +10,7 @@ import { errorMessage } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { BackLink } from '@/components/shared/BackLink'
 import { OrderStatusBadge } from '@/components/orders/OrderStatusBadge'
+import { AddOnsChoice } from '@/components/orders/AddOnsChoice'
 import { OrderDocumentsSection } from '@/components/orders/OrderDocumentsSection'
 import { OrderPaperworkSection } from '@/components/orders/OrderPaperworkSection'
 import { ReportUsedCard } from '@/components/orders/ReportUsedCard'
@@ -96,6 +97,7 @@ export default function OrderDetailPage() {
         ) : undefined}
       />
       {o.description ? <p className="mb-6 rounded-2xl border border-stone-200 bg-white p-5 text-stone-900">{o.description}</p> : null}
+      {o.vendor ? <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-stone-200 bg-white px-5 py-3 text-sm"><span className="font-medium text-stone-700">Add-ons until it ships</span><AddOnsChoice order={{ id: o.id, po_number: o.po_number, order_date: o.order_date, est_ship_date: o.est_ship_date, status: o.status, addons: o.addons, description: o.description }} vendor={o.vendor} canEdit={canEdit} onChanged={() => void q.refetch()} /></div> : null}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           {groups.map(([title, facts]) => {

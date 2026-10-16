@@ -2357,3 +2357,11 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   Inventory Count in Lightspeed (name editable, defaults to the checklist's) with the totals entered; items with no
   total are left out; the checklist is read-only after. Ticks **Enter counts** and **Send counts to LS** under
   Settings → Users (admins have both). Next: on-order columns and add-ons on the reports.
+- Oct 16, built (step 3): **on order and add-ons** (migration 0144). Every sales report carries ON ORDER and NEED AFTER
+  ORDERS after NEED (the Size Summary too) with the order and ship date in Notes and the add-on hint; open orders with
+  no item list are named at the foot of Flags. Each open order has **Add-ons until it ships** (Yes / No / Ask the rep,
+  not set until someone says); Ask the rep drafts the one-line email; shipping turns Yes to No. **Add to PO …** in the
+  suggested order (orders marked Yes only) puts the picked lines on the order as add-on lines (marked with the day; a
+  confirmed order goes back to awaiting confirmation) and opens the email: the add-on items in one table, the
+  confirmation on file attached (else our order sheet, else the original lines in the body), and a request for one
+  confirmation for the whole order; with no confirmation yet, the email says so.
