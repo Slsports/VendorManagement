@@ -12,7 +12,7 @@ insert into public.emails (organization_id, gmail_id, thread_id, direction, from
          ('00000000-0000-0000-0000-000000000001', 'q-new-1', :'tnew', 'in', 'new@example.com', 'New statement', now() - interval '2 days', :'mb', false);
 -- mail arriving resets the thread's status; put both back to waiting on us
 update public.email_threads set status = 'waiting_on_us' where id in (:'told', :'tnew');
-select subject from public.mail_reply_queue('00000000-0000-0000-0000-000000000001', 50) where subject in ('Old statement', 'New statement') order by 1;
+select subject from public.mail_reply_queue('00000000-0000-0000-0000-000000000001', 5000) where subject in ('Old statement', 'New statement') order by 1;
 select subject from public.mail_unsure_emails('00000000-0000-0000-0000-000000000001', 500) where subject in ('Old statement', 'New statement') order by 1;
 delete from public.email_threads where id in (:'told', :'tnew');
 delete from public.mailboxes where id = :'mb';
