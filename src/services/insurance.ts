@@ -120,6 +120,14 @@ export async function recordSend(recipientId: string, input: { policyId: string 
   if (error) throw error
 }
 
+/** The conversations behind emails (to land on the email itself: Dana, Oct 16, "I wanna land right on her email"). */
+export async function threadsOfEmails(emailIds: string[]): Promise<Map<string, string>> {
+  if (!emailIds.length) return new Map()
+  const { data, error } = await supabase.from('emails').select('id, thread_id').in('id', emailIds)
+  if (error) throw error
+  return new Map((data ?? []).map((e) => [e.id, e.thread_id]))
+}
+
 /** The newest email in a conversation we just sent (to log which email carried the proof). */
 export async function latestSentEmailId(threadId: string): Promise<string | null> {
   const { data, error } = await supabase.from('emails').select('id').eq('thread_id', threadId).eq('direction', 'out').order('received_at', { ascending: false }).limit(1).maybeSingle()

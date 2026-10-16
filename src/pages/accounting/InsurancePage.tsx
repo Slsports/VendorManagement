@@ -5,7 +5,7 @@ import { Check, Plus, Search, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useTableSort } from '@/hooks/useTableSort'
-import { listPolicies, listRecipients, proposeRecipients, saveRecipient, syncPolicyTasks, type PolicyRow } from '@/services/insurance'
+import { listPolicies, listRecipients, proposeRecipients, saveRecipient, syncPolicyTasks, threadsOfEmails, type PolicyRow } from '@/services/insurance'
 import { listProcedures } from '@/services/procedures'
 import { coverageLabel, daysUntil, latestTerm, money, termFor } from '@/lib/insurance'
 import { ROUTES } from '@/lib/constants'
@@ -27,6 +27,7 @@ export default function InsurancePage() {
   const [showInactive, setShowInactive] = useState(false)
   const policies = useSupabaseQuery(async () => (organization ? listPolicies(organization.id, showInactive) : []), [organization?.id, showInactive])
   const recipients = useSupabaseQuery(async () => (organization ? listRecipients(organization.id) : []), [organization?.id])
+  const askedThreads = useSupabaseQuery(async () => threadsOfEmails((recipients.data ?? []).map((r) => r.asked_email_id).filter((x): x is string => !!x)), [recipients.data])
   const [busy, setBusy] = useState(false)
   const procedures = useSupabaseQuery(async () => (organization ? listProcedures(organization.id) : []), [organization?.id])
   const renewalProc = (procedures.data ?? []).find((p) => p.slug === 'property-insurance-renewal')
@@ -106,7 +107,7 @@ export default function InsurancePage() {
       ) : (
         recipients.isLoading ? <div className="flex justify-center py-16"><Spinner label="Loading…" className="text-brand" /></div>
           : recipients.error ? <Alert variant="error">{recipients.error}</Alert>
-          : <RecipientTable rows={recipients.data ?? []} policies={policies.data ?? []} onQuick={quick} />
+          : <RecipientTable rows={recipients.data ?? []} policies={policies.data ?? []} onQuick={quick} threads={askedThreads.data ?? new Map()} />
       )}
     </div>
   )
@@ -169,7 +170,7 @@ function PolicyTable({ rows }: { rows: PolicyRow[] }) {
   )
 }
 
-function RecipientTable({ rows, policies, onQuick }: { rows: AccountingPolicyRecipient[]; policies: PolicyRow[]; onQuick: (r: AccountingPolicyRecipient, s: AccountingPolicyRecipient['status']) => Promise<void> }) {
+function RecipientTable({ rows, policies, onQuick, threads }: { rows: AccountingPolicyRecipient[]; policies: PolicyRow[]; onQuick: (r: AccountingPolicyRecipient, s: AccountingPolicyRecipient['status']) => Promise<void>; threads: Map<string, string> }) {
   const label = (id: string) => policies.find((p) => p.id === id)?.label ?? 'a policy'
   const { sorted, sort, toggle } = useTableSort(rows, {
     status: (r) => (r.status === 'proposed' ? 0 : r.status === 'confirmed' ? 1 : 2),
@@ -206,7 +207,7 @@ function RecipientTable({ rows, policies, onQuick }: { rows: AccountingPolicyRec
               <td className="hidden px-3 py-2 text-stone-600 md:table-cell">{r.email}</td>
               <td className="hidden px-3 py-2 text-stone-600 lg:table-cell">{r.policy_ids.length ? r.policy_ids.map(label).join(', ') : <span className="text-stone-400">not set</span>}</td>
               <td className="whitespace-nowrap px-3 py-2 text-stone-700">{r.last_sent_on ? `${new Date(`${r.last_sent_on}T00:00:00`).toLocaleDateString()}${r.last_sent_term ? ` (${r.last_sent_term})` : ''}${r.last_sent_by === 'agent' ? ' by Hub' : ''}` : <span className="text-stone-400">never</span>}</td>
-              <td className="whitespace-nowrap px-3 py-2">{r.asked_at ? <Badge tone="danger">They asked {new Date(r.asked_at).toLocaleDateString()}</Badge> : ''}</td>
+              <td className="whitespace-nowrap px-3 py-2">{r.asked_at ? (r.asked_email_id && threads.get(r.asked_email_id) ? <Link to={`${ROUTES.mail}/${threads.get(r.asked_email_id)}`} title="Open their email"><Badge tone="danger">They asked {new Date(r.asked_at).toLocaleDateString()} ↗</Badge></Link> : <Badge tone="danger">They asked {new Date(r.asked_at).toLocaleDateString()}</Badge>) : ''}</td>
               <td className="whitespace-nowrap px-3 py-2 text-right">
                 {r.status === 'proposed' ? (
                   <span className="inline-flex gap-1">

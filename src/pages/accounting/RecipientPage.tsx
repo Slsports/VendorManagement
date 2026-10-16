@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { Send, UserCheck } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { getRecipient, latestSentEmailId, listPolicies, recordSend, saveRecipient, type PolicyRow } from '@/services/insurance'
+import { getRecipient, latestSentEmailId, listPolicies, recordSend, saveRecipient, threadsOfEmails, type PolicyRow } from '@/services/insurance'
 import { listMailboxes } from '@/services/mail'
 import { latestTerm } from '@/lib/insurance'
 import { ROUTES } from '@/lib/constants'
@@ -32,6 +32,7 @@ export default function RecipientPage() {
   const [sending, setSending] = useState<PolicyRow | null>(null)
   const [agentSent, setAgentSent] = useState<PolicyRow | null>(null)
   const wantedSend = params.get('send')
+  const askedThread = useSupabaseQuery(async () => (q.data?.recipient.asked_email_id ? (await threadsOfEmails([q.data.recipient.asked_email_id])).get(q.data.recipient.asked_email_id) ?? null : null), [q.data?.recipient.asked_email_id])
 
   if (!isNew && q.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading…" className="text-brand" /></div>
   if (q.error) return <Alert variant="error">{q.error}</Alert>
@@ -71,7 +72,7 @@ export default function RecipientPage() {
           <Badge tone={r!.status === 'confirmed' ? 'success' : r!.status === 'proposed' ? 'warning' : 'neutral'}>{r!.status === 'proposed' ? 'To confirm' : r!.status === 'confirmed' ? 'Confirmed' : 'Ignored'}</Badge>
           <Button variant="secondary" onClick={() => setEditing(true)}>Edit</Button>
         </div>} />
-      {r!.asked_at ? <Alert variant="warning" className="mb-4">They asked for proof on {new Date(r!.asked_at).toLocaleDateString()}{r!.asked_email_id ? <> · <Link to={`${ROUTES.mail}?box=${box?.id ?? ''}&q=`} className="underline">see the mail</Link></> : null}. Sending clears this.</Alert> : null}
+      {r!.asked_at ? <Alert variant="warning" className="mb-4">They asked for proof on {new Date(r!.asked_at).toLocaleDateString()}{askedThread.data ? <> · <Link to={`${ROUTES.mail}/${askedThread.data}`} className="underline">open their email</Link></> : null}. Sending clears this.</Alert> : null}
       {r!.status === 'proposed' ? <Alert variant="info" className="mb-4">VMS found this person asking for proof in the mail. Edit to say which policies they need and confirm.</Alert> : null}
       <section className="rounded-2xl border border-stone-200 bg-white">
         <div className="px-4 py-3"><h2 className="text-sm font-semibold text-stone-900">Policies they need</h2>

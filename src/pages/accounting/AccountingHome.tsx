@@ -7,7 +7,7 @@ import { useTasksQuery } from '@/hooks/useTasksQuery'
 import { listMailboxes, listThreads } from '@/services/mail'
 import { countAccountingContacts } from '@/services/accounting'
 import { listAccountingTasks } from '@/services/tasks'
-import { listPolicies, listRecipients } from '@/services/insurance'
+import { listPolicies, listRecipients, threadsOfEmails } from '@/services/insurance'
 import { listContracts, nextPayment } from '@/services/contracts'
 import { daysUntil } from '@/lib/insurance'
 import { todayLocal } from '@/lib/tasks'
@@ -32,6 +32,7 @@ export default function AccountingHome() {
   const policies = useSupabaseQuery(async () => (org ? listPolicies(org) : []), [org])
   const recipients = useSupabaseQuery(async () => (org ? listRecipients(org) : []), [org])
   const contracts = useSupabaseQuery(async () => (org ? listContracts(org) : []), [org])
+  const askedThreads = useSupabaseQuery(async () => threadsOfEmails((recipients.data ?? []).map((r) => r.asked_email_id).filter((x): x is string => !!x)), [recipients.data])
 
   const today = todayLocal()
   const [week] = useState(() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().slice(0, 10) })
@@ -70,7 +71,14 @@ export default function AccountingHome() {
               <div>
                 <h3 className="mb-1 text-sm font-semibold text-stone-900">Asked for proof of insurance</h3>
                 <ul className="space-y-1 text-sm">
-                  {asked.map((r) => <li key={r.id}><Link to={`${ROUTES.accountingInsurance}/who/${r.id}`} className="text-stone-800 hover:text-brand">{r.company || r.person || r.email}</Link> <span className="text-stone-500">on {new Date(r.asked_at!).toLocaleDateString()}</span></li>)}
+                  {asked.map((r) => { const th = r.asked_email_id ? askedThreads.data?.get(r.asked_email_id) : null; return (
+                    <li key={r.id} className="flex flex-wrap gap-x-2">
+                      <Link to={`${ROUTES.accountingInsurance}/who/${r.id}`} className="font-medium text-stone-800 hover:text-brand">{r.company || r.person || r.email}</Link>
+                      <span className="text-stone-500">on {new Date(r.asked_at!).toLocaleDateString()}</span>
+                      {th ? <Link to={`${ROUTES.mail}/${th}`} className="text-brand hover:underline">open their email</Link> : null}
+                      <Link to={`${ROUTES.accountingInsurance}/who/${r.id}`} className="text-brand hover:underline">send it</Link>
+                    </li>
+                  ) })}
                 </ul>
               </div>
             ) : null}

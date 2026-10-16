@@ -2192,3 +2192,6 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   policies the licenses require (workers comp, general liability, auto; dates from the 2024 certificates) added to
   Insurance with SCE Licensing confirmed as needing all three at each renewal. Procedure: SCE license renewal.
   Seasons on the contracts: Marina Apr 15–Oct 15; Happy Camper a week or two before Memorial Day to Oct 1–15.
+- Oct 16, no extra clicking (Dana): "If I have a task that needs to be done I wanna be able to click on it and have it take me
+  directly to what I need to do." A proof request showed "see the mail" and opened the whole billing@ inbox; it now opens
+  her email. Every "They asked" (overview, Insurance list, the person's page) opens the email itself. Rule in CLAUDE.md.
