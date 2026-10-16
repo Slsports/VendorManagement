@@ -2265,3 +2265,23 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   Worldwide; Dana's private key, nothing to install) sends the page she is on; if the portal blocks it, the page
   downloads and is uploaded there. Step 1: the Vendors list and one vendor's page, so the reader is written from the real
   pages; step 2: one click goes through every vendor in the portal. Direct and Faire vendors are not in the portal.
+- Oct 16, Worldwide portal into VMS and Lightspeed items per vendor (Dana, "go!!"). All 1,825 portal vendors read by
+  the **Read all vendors** bookmark; **Bring into VMS** (Settings › Worldwide) lands them. 248 tied to our vendors (148
+  same name or other name, 100 through show-list lines already tied); their empty fields filled (address 237, phone 217,
+  minimum order 205, payment terms 198, free shipping 212, freight terms 225, returns 226), 468 people added as
+  unconfirmed contacts (2 more on the vendor's own rep group), 340 programs kept in `vendor_programs` (never dropped;
+  a vendor can list one Standard program per brand). Where Dana typed something different hers stays: 27 **Worldwide
+  portal differences** cards (phone 7, free shipping 7, freight terms 3, others). 16 look-alike names (Taylor's & Co →
+  TAYLOR BRANDS, Northland Fishing Tackle → NORTHLAND, Tara Toy Corp → TARA TOYS…) are cards; Do-It Corporation and
+  Do-All Outdoors no longer match DO-GREE (the portal's spaced dashes are read as one name). 1,281 new lines "not bought
+  from yet" (1,577 portal vendors are lines in all); a line tied later (card or Make it a vendor) gets its portal details.
+  The portal has no zero-upcharge field, so `wwd_zero_upcharge` is unchanged. Portal people include reps for other
+  territories; their territory and rep company are in the note. Billing terms VMS has no name for (25, e.g. "2% 30 Net
+  60") stay on the program only. No rep groups created.
+- Lightspeed items (Dana): VMS reads every LS item, active and archived, with its vendor, and counts them per vendor:
+  **Active in LS** (has active items), **Inactive in LS** (only archived items), **No items in LS**. Shown on the vendor
+  page (tag and "212 active, 40 archived items") and as a filter and sortable **LS items** column on the Vendors list.
+  It is a priority label for the bulk "update your info" emails (Active first, then Inactive, then never purchased from,
+  after Dana's review list); it does not change the vendor's Active switch. Reads weekly (`ls-items` cron, every 5
+  minutes it carries on a reading); **Read LS items now** in Settings › Lightspeed. Taylor Brands: Dana considers it
+  inactive (old archived knives).

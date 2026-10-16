@@ -9,8 +9,11 @@
 //   { action: 'sync_vendors' }                   → LS's vendors into VMS, matched to ours by name
 //   { action: 'create_po', order_id, shop_id? }  → the empty PO in LS for the order's vendor and store; our PO on the order
 //   { action: 'send_items', ls_po_id }           → the approved LS PO draft's items onto that PO in LS
+//   { action: 'scan_items' }                     → read every LS item again now (counts per vendor; Dana, Oct 16)
+//   { action: 'scan_status' }                    → the running or last reading
+// pg_cron (header x-cron-secret), every 2 minutes: carries on a reading, or starts one when the last is a week old.
 import { CORS, HttpError, caller, errorResponse, json, serviceClient } from '../_shared/caller.ts'
-import { LS_AUTHORIZE, LS_REDIRECT, LS_SCOPE_FULL, LS_SCOPE_READ, asList, lsAccessToken, lsGet, lsGetAll, lsPost, lsTokenRequest, saveTokens } from '../_shared/lightspeed.ts'
+import { LS_API, LS_AUTHORIZE, LS_REDIRECT, LS_SCOPE_FULL, LS_SCOPE_READ, asList, lsAccessToken, lsGet, lsGetAll, lsPost, lsTokenRequest, saveTokens } from '../_shared/lightspeed.ts'
 import type { Caller } from '../_shared/caller.ts'
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 
@@ -18,13 +21,25 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
   try {
     const db = serviceClient()
+    const cronSecret = Deno.env.get('MAIL_CRON_SECRET')
+    if (cronSecret && req.headers.get('x-cron-secret') === cronSecret) {
+      const { data: conns } = await db.from('lightspeed_connections').select('organization_id').not('refresh_token', 'is', null)
+      const out = []
+      for (const c of conns ?? []) out.push(await scanItems(db, c.organization_id, false).catch((e) => ({ error: e instanceof Error ? e.message : String(e) })))
+      return json(out)
+    }
     const me = await caller(req, db)
     const org = me.organization_id
     const body = await req.json().catch(() => ({})) as { action?: string; client_id?: string; client_secret?: string; access?: string; code?: string; state?: string; order_id?: string; shop_id?: string; ls_po_id?: string }
 
     // the buyers' steps
-    if (body.action === 'sync_vendors' || body.action === 'create_po' || body.action === 'send_items') {
+    if (body.action === 'scan_status') {
+      const { data } = await db.from('ls_item_scans').select('started_at, finished_at, pages, items, archived, no_vendor, last_error').eq('organization_id', org).maybeSingle()
+      return json(data ?? {})
+    }
+    if (body.action === 'sync_vendors' || body.action === 'create_po' || body.action === 'send_items' || body.action === 'scan_items') {
       if (!['admin', 'manager', 'buyer'].includes(me.role)) throw new HttpError(403, 'Only admins, managers and buyers do this')
+      if (body.action === 'scan_items') return json(await scanItems(db, org, true))
       if (body.action === 'sync_vendors') return json(await syncVendors(db, org))
       if (body.action === 'create_po') return json(await createPo(db, me, String(body.order_id ?? ''), body.shop_id ?? null))
       return json(await sendItems(db, me, String(body.ls_po_id ?? '')))
@@ -113,6 +128,70 @@ async function syncVendors(db: SupabaseClient, org: string) {
   }
   const { data: matched } = await db.rpc('ls_vendors_match', { p_org: org })
   return { vendors: rows.length, matched: matched ?? 0 }
+}
+
+// LS allows about one request a second; a run reads for about 45 seconds (a longer call holds up the other scheduled
+// calls in pg_net) and keeps its place for the next one.
+const SCAN_BUDGET_MS = 45_000
+const SCAN_PAUSE_MS = 600
+const SCAN_EVERY_DAYS = 7
+
+interface Scan { started_at: string | null; finished_at: string | null; cursor: string | null; pages: number; items: number; archived: number; no_vendor: number; counts: Record<string, [number, number]>; last_error: string | null }
+
+/**
+ * Read every LS item (active and archived) with its vendor, a page at a time, and count them per LS vendor. Fresh: start
+ * over now (unless a reading is under way). Otherwise carry on a reading, or start one when the last is a week old.
+ * When the last page is in, the counts go onto LS vendors and our vendors (ls_items_apply).
+ */
+async function scanItems(db: SupabaseClient, org: string, fresh: boolean) {
+  const now = new Date()
+  await db.from('ls_item_scans').upsert({ organization_id: org }, { onConflict: 'organization_id', ignoreDuplicates: true })
+  // one run at a time
+  const { data: claimed } = await db.from('ls_item_scans').update({ lock_until: new Date(now.getTime() + 150_000).toISOString() })
+    .eq('organization_id', org).or(`lock_until.is.null,lock_until.lt.${now.toISOString()}`).select('*').maybeSingle()
+  if (!claimed) return { busy: true }
+  let s = claimed as Scan
+  const running = !!s.started_at && !s.finished_at
+  const stale = !s.finished_at || now.getTime() - new Date(s.finished_at).getTime() > SCAN_EVERY_DAYS * 86_400_000
+  if (!running && (fresh || stale)) {
+    s = { started_at: now.toISOString(), finished_at: null, cursor: null, pages: 0, items: 0, archived: 0, no_vendor: 0, counts: {}, last_error: null }
+  } else if (!running) {
+    await db.from('ls_item_scans').update({ lock_until: null }).eq('organization_id', org)
+    return { started_at: s.started_at, finished_at: s.finished_at, pages: s.pages, items: s.items, archived: s.archived, no_vendor: s.no_vendor }
+  }
+  const save = (extra: Record<string, unknown> = {}) => db.from('ls_item_scans').update({ ...s, ...extra, updated_at: new Date().toISOString() }).eq('organization_id', org)
+  try {
+    const { token } = await lsAccessToken(db, org)
+    let url: string | null = s.cursor ?? `/Account/${await accountId(db, org)}/Item.json?archived=true&limit=100`
+    while (url && Date.now() - now.getTime() < SCAN_BUDGET_MS) {
+      const body: Record<string, unknown> = await lsGet<Record<string, unknown>>(token, url)
+      for (const it of asList(body.Item as { defaultVendorID?: string; archived?: string } | { defaultVendorID?: string; archived?: string }[] | undefined)) {
+        const vid = String(it.defaultVendorID ?? '0')
+        const gone = String(it.archived) === 'true'
+        s.items++
+        if (gone) s.archived++
+        if (vid === '0' || vid === '') { s.no_vendor++; continue }
+        const c = s.counts[vid] ?? [0, 0]
+        c[gone ? 1 : 0]++
+        s.counts[vid] = c
+      }
+      s.pages++
+      const next = (body['@attributes'] as { next?: string } | undefined)?.next
+      url = next ? next.replace(LS_API, '') : null
+      s.cursor = url
+      if (s.pages % 10 === 0) await save()
+      if (url) await new Promise((r) => setTimeout(r, SCAN_PAUSE_MS))
+    }
+    if (!url) s.finished_at = new Date().toISOString()
+    await save({ lock_until: null })
+    const applied = s.finished_at ? (await db.rpc('ls_items_apply', { p_org: org })).data : null
+    return { started_at: s.started_at, finished_at: s.finished_at, pages: s.pages, items: s.items, archived: s.archived, no_vendor: s.no_vendor, vendors: applied }
+  } catch (e) {
+    // a slow-down from LS is not an error: the next run carries on from the same page
+    const msg = e instanceof Error ? e.message : String(e)
+    await save({ lock_until: null, last_error: /Lightspeed 429/.test(msg) ? null : msg.slice(0, 500) })
+    return { started_at: s.started_at, finished_at: null, pages: s.pages, items: s.items, error: msg }
+  }
 }
 
 async function accountId(db: SupabaseClient, org: string): Promise<string> {

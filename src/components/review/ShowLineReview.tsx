@@ -8,7 +8,7 @@ import { errorMessage } from '@/lib/utils'
 import type { ReviewItem } from '@/types'
 import { Button } from '@/components/ui'
 
-interface Details { line_name?: string; vendor_id?: string; vendor_name?: string; shows?: string }
+interface Details { line_name?: string; vendor_id?: string; vendor_name?: string; shows?: string; from?: string }
 
 /** A Worldwide show list line Claude thinks may be one of our vendors (Dana, Oct 12): Yes ties the show to the vendor. */
 export function ShowLineReview({ item, canEdit, onDone }: { item: ReviewItem; canEdit: boolean; onDone: () => void | Promise<void> }) {
@@ -19,7 +19,7 @@ export function ShowLineReview({ item, canEdit, onDone }: { item: ReviewItem; ca
     try {
       const { error } = await supabase.rpc('resolve_show_line', { p_item: item.id, p_yes: yes })
       if (error) throw error
-      toast.success(yes ? `The shows are on ${d.vendor_name}'s page` : 'Not the same')
+      toast.success(yes ? (d.from === 'wwd_portal' ? `The portal details are on ${d.vendor_name}'s page` : `The shows are on ${d.vendor_name}'s page`) : 'Not the same')
       await onDone()
     } catch (err) {
       toast.error(errorMessage(err))
@@ -30,7 +30,7 @@ export function ShowLineReview({ item, canEdit, onDone }: { item: ReviewItem; ca
   return (
     <div className="mt-2 space-y-2">
       <p className="text-stone-700">
-        Show list: <span className="font-medium">{d.line_name}</span>{d.shows ? <span className="text-stone-500"> ({d.shows})</span> : null}. Our vendor:{' '}
+        {d.from === 'wwd_portal' ? 'Worldwide portal' : 'Show list'}: <span className="font-medium">{d.line_name}</span>{d.shows ? <span className="text-stone-500"> ({d.shows})</span> : null}. Our vendor:{' '}
         {d.vendor_id ? <Link to={`${ROUTES.vendors}/${d.vendor_id}`} className="font-medium text-brand hover:underline">{d.vendor_name}</Link> : d.vendor_name}
       </p>
       {canEdit ? (

@@ -1,10 +1,10 @@
 ---
-title: Show list lines: is this our vendor?
+title: Show list and portal lines: is this our vendor?
 section: Review queue
-keywords: show list, Worldwide show, booth, exhibitor, same vendor, show line, Royal Deluxe, match, booth-mates, same booth, rep group, Pre-Show, Toy & Home
+keywords: show list, Worldwide portal, portal line, Worldwide show, booth, exhibitor, same vendor, show line, Royal Deluxe, match, booth-mates, same booth, rep group, Pre-Show, Toy & Home
 who: Admin, managers and buyers
 ---
-The Worldwide show lists name brands the way Worldwide writes them, which is not always the name in VMS ("Royal Deluxe" is our ROYAL DELUXE ACCESSORIES). VMS ties them together by name and other names, and Claude checks the rest. When Claude is not sure, you get a **Show list lines** card.
+The Worldwide show lists name brands the way Worldwide writes them, which is not always the name in VMS ("Royal Deluxe" is our ROYAL DELUXE ACCESSORIES). VMS ties them together by name and other names, and Claude checks the rest. When Claude is not sure, you get a **Show list and portal lines** card. The Worldwide portal import asks the same way when a portal name only looks like one of ours.
 
 ## How to
 1. Open **Review queue** and click **Vendor changes**.
@@ -12,7 +12,7 @@ The Worldwide show lists name brands the way Worldwide writes them, which is not
 3. Click **Yes, same vendor** or **No**.
 
 ## Good to know
-- Yes puts those shows and booths in the vendor's **Worldwide shows** box.
+- Yes puts those shows and booths in the vendor's **Worldwide shows** box. For a portal card, Yes puts the portal's details on the vendor (empty fields, people, programs).
 - The booth holder (often a rep or distributor showing many brands) stays as listed; it does not change the vendor.
 
 ## Booth-mates

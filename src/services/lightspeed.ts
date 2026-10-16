@@ -25,6 +25,11 @@ export const disconnectLightspeed = () => call<LightspeedStatus>({ action: 'disc
 
 // ---- one PO number, created in Lightspeed (Dana, Oct 13: [VENDOR][MMDDYY] in LS's Reference #) ----
 
+/** Reading every LS item to count them per vendor (Dana, Oct 16): runs a few minutes, then weekly on its own. */
+export interface LsItemScan { started_at?: string | null; finished_at?: string | null; pages?: number; items?: number; archived?: number; no_vendor?: number; last_error?: string | null; busy?: boolean; error?: string }
+export const scanLsItems = () => call<LsItemScan>({ action: 'scan_items' })
+export const lsItemScanStatus = () => call<LsItemScan>({ action: 'scan_status' })
+
 /** LS's vendors into VMS, matched to ours by name where exactly one fits. */
 export const syncLsVendors = () => call<{ vendors: number; matched: number }>({ action: 'sync_vendors' })
 /** The empty PO in LS for the order's vendor and store; our PO goes on the order. */

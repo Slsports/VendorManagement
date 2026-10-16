@@ -51,6 +51,8 @@ const contactsCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/con
 const quotesCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/freight-quotes')
 // accounting-file (Dana, Oct 16): papers from billing@ filed into Accounting folders, a few emails a minute.
 const accountingCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/accounting-file')
+// lightspeed (Dana, Oct 16), every 2 minutes: carries on reading every LS item (counts per vendor), or starts again when a week old.
+const lsCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/lightspeed')
 const taskCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/task-reminders').replace('timeout_milliseconds := 150000', 'timeout_milliseconds := 60000')
 if (!args.includes('--no-schedule')) {
   await query(`select cron.schedule('gmail-sync', ${lit(every)}, ${lit(call)})`)
@@ -62,6 +64,7 @@ if (!args.includes('--no-schedule')) {
   await query(`select cron.schedule('freight-quotes', ${lit(every)}, ${lit(quotesCall)})`)
   // every 5 minutes, not every minute: on Oct 16 the Nano database fell over (disk reads of 100+ s) while it ran each minute
   await query(`select cron.schedule('accounting-file', '*/5 * * * *', ${lit(accountingCall)})`)
+  await query(`select cron.schedule('ls-items', '*/2 * * * *', ${lit(lsCall)})`)
   console.log(`gmail-sync, order-check, task-reminders, sent-orders, supplies, contacts-learn and freight-quotes scheduled (${every})`)
 }
 if (args.includes('--run-now')) {

@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Bookmark, ListChecks, Trash2, Upload } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Bookmark, DownloadCloud, ListChecks, Trash2, Upload } from 'lucide-react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { supabase } from '@/lib/supabase'
 import { captureBookmarklet, readAllBookmarklet } from '@/lib/portalCapture'
 import { errorMessage } from '@/lib/utils'
-import { Alert } from '@/components/ui'
+import { ROUTES } from '@/lib/constants'
+import { importPortal, portalStatus } from '@/services/wwdPortal'
+import { Alert, Button } from '@/components/ui'
 
 /**
  * Worldwide portal → VMS (Dana, Oct 16): WWD's IT won't export the vendor directory, so a "Send to VMS" bookmark sends
@@ -16,8 +19,10 @@ export function PortalCaptureCard() {
   const [key, setKey] = useState<string | null>(null)
   const link = useRef<HTMLAnchorElement>(null)
   const allLink = useRef<HTMLAnchorElement>(null)
+  const status = useSupabaseQuery(() => portalStatus(), [])
+  const [importing, setImporting] = useState(false)
   const pages = useSupabaseQuery(async () => {
-    const { data, error } = await supabase.from('portal_captures').select('id, url, title, size, how, source, created_at').order('created_at', { ascending: false }).limit(50)
+    const { data, error } = await supabase.from('portal_captures').select('id, url, title, size, how, source, created_at').order('created_at', { ascending: false }).limit(200)
     if (error) throw error
     return data ?? []
   }, [])
@@ -49,6 +54,19 @@ export function PortalCaptureCard() {
     }
   }
 
+  async function bringIn() {
+    setImporting(true)
+    try {
+      const r = await importPortal()
+      toast.success(`${r.portal} portal vendors: ${r.tied} are ours, ${r.lines} are lines (${r.lines_new} new). ${r.landed.people} people added.`, { duration: 8000 })
+      await status.refetch()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setImporting(false)
+    }
+  }
+
   async function remove(id: string) {
     const { error } = await supabase.from('portal_captures').delete().eq('id', id)
     if (error) toast.error(errorMessage(error))
@@ -72,6 +90,22 @@ export function PortalCaptureCard() {
           </a>
         ) : null}
       </div>
+      {status.data?.last_read_at ? (
+        <div className="mt-4 rounded-xl bg-stone-50 p-3 text-sm text-stone-700">
+          <p>
+            Read {new Date(status.data.last_read_at).toLocaleString()}.{' '}
+            {status.data.imported_read_at ? <>In VMS: <strong>{status.data.portal}</strong> portal vendors, <strong>{status.data.tied}</strong> tied to our vendors, <strong>{status.data.lines}</strong> as lines.</> : 'Not in VMS yet.'}
+          </p>
+          {status.data.cards || status.data.conflicts ? (
+            <p className="mt-1">
+              <Link to={ROUTES.review} className="text-brand hover:underline">Review queue</Link>: {status.data.cards} name{status.data.cards === 1 ? '' : 's'} to confirm, {status.data.conflicts} difference{status.data.conflicts === 1 ? '' : 's'} to decide.
+            </p>
+          ) : null}
+          {!status.data.imported_read_at || status.data.last_read_at > status.data.imported_read_at ? (
+            <Button size="sm" className="mt-2" loading={importing} onClick={() => void bringIn()} leftIcon={<DownloadCloud className="size-4" aria-hidden="true" />}>Bring into VMS</Button>
+          ) : null}
+        </div>
+      ) : null}
       <p className="mt-3 text-xs text-stone-500"><strong>Send to VMS</strong> sends just the page you are on.</p>
       <div className="mt-1 flex flex-wrap items-center gap-3">
         {key ? (
@@ -89,9 +123,12 @@ export function PortalCaptureCard() {
       {pages.error ? <Alert variant="error" className="mt-3">{pages.error}</Alert> : null}
       {(pages.data ?? []).length ? (
         <ul className="mt-3 divide-y divide-stone-100 text-sm">
-          {(pages.data ?? []).map((p) => (
+          {(pages.data ?? []).some((p) => p.source === 'wwd_vendors') ? (
+            <li className="py-2"><span className="font-medium text-stone-900">Vendor details</span><span className="ml-2 text-xs text-stone-500">{(pages.data ?? []).filter((p) => p.source === 'wwd_vendors').length} batches, last {new Date((pages.data ?? []).find((p) => p.source === 'wwd_vendors')!.created_at).toLocaleString()}</span></li>
+          ) : null}
+          {(pages.data ?? []).filter((p) => p.source !== 'wwd_vendors').map((p) => (
             <li key={p.id} className="flex items-center justify-between gap-3 py-2">
-              <span className="min-w-0"><span className="font-medium text-stone-900">{p.source === 'wwd_vendors' ? 'Vendor details (a batch)' : p.source === 'wwd_vendor_list' ? 'The vendor list' : p.title || p.url || 'Page'}</span><span className="ml-2 text-xs text-stone-500">{new Date(p.created_at).toLocaleString()} · {Math.round((p.size ?? 0) / 1024)} KB · {p.how === 'upload' ? 'uploaded' : 'sent'}</span></span>
+              <span className="min-w-0"><span className="font-medium text-stone-900">{p.source === 'wwd_vendor_list' ? 'The vendor list' : p.title || p.url || 'Page'}</span><span className="ml-2 text-xs text-stone-500">{new Date(p.created_at).toLocaleString()} · {Math.round((p.size ?? 0) / 1024)} KB · {p.how === 'upload' ? 'uploaded' : 'sent'}</span></span>
               <button type="button" onClick={() => void remove(p.id)} aria-label="Remove this page" className="rounded-md p-1.5 text-stone-400 hover:bg-stone-100 hover:text-red-600"><Trash2 className="size-4" aria-hidden="true" /></button>
             </li>
           ))}

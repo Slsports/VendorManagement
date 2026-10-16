@@ -7,7 +7,7 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listVendors } from '@/services/vendors'
 import { listOrderers } from '@/services/reviews'
 import { ROUTES } from '@/lib/constants'
-import { BILLING_ROUTE_LABELS, STANDING_BADGE } from '@/lib/vendors'
+import { BILLING_ROUTE_LABELS, LS_STATUS_LABELS, LS_STATUS_TONE, STANDING_BADGE, lsItemsText, lsSortValue, type LsStatus } from '@/lib/vendors'
 import { cn } from '@/lib/utils'
 import type { BillingRoute } from '@/types'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -36,6 +36,8 @@ export default function VendorListPage() {
   /** '' active (the default), 'inactive' or 'all' */
   const status = params.get('status') ?? ''
   const confirm = (params.get('confirm') ?? '') as ConfirmState | ''
+  /** Lightspeed items (Dana, Oct 16): '' any, active, inactive, none, or 'unlinked' (not tied to an LS vendor) */
+  const ls = (params.get('ls') ?? '') as LsStatus | 'unlinked' | ''
   const [draft, setDraft] = useState(search)
 
   const { data, error, isLoading } = useSupabaseQuery(() => listVendors({ includeInactive: true }), [])
@@ -56,8 +58,10 @@ export default function VendorListPage() {
     if (who === 'none') list = list.filter((v) => !v.assigned_buyer_id)
     else if (who) list = list.filter((v) => v.assigned_buyer_id === (who === 'me' ? profile?.id : who))
     if (confirm) list = list.filter((v) => (statesQ.data?.get(v.id) ?? 'not_asked') === confirm)
+    if (ls === 'unlinked') list = list.filter((v) => !v.ls_status)
+    else if (ls) list = list.filter((v) => v.ls_status === ls)
     return list
-  }, [data, status, search, route, review, dno, fishing, who, profile?.id, confirm, statesQ.data])
+  }, [data, status, search, route, review, dno, fishing, who, profile?.id, confirm, statesQ.data, ls])
 
   const { sorted, sort, toggle } = useTableSort(rows, {
     name: (v) => v.name,
@@ -65,8 +69,9 @@ export default function VendorListPage() {
     rep: (v) => v.rep_groups?.name,
     assigned: (v) => nameOf(v.assigned_buyer_id),
     phone: (v) => v.phone ?? v.email,
+    ls: (v) => lsSortValue(v),
     flags: (v) => [STANDING_BADGE[v.standing]?.label, v.is_fishing ? 'Fishing' : '', v.needs_review ? 'Review' : ''].filter(Boolean).join(' ') || null,
-  })
+  }, { descFirst: ['ls'] })
 
   function setParam(key: string, value: string) {
     const next = new URLSearchParams(params)
@@ -81,6 +86,7 @@ export default function VendorListPage() {
   const flagged = activeVendors.filter((v) => v.needs_review).length
   const doNotOrder = activeVendors.filter((v) => v.do_not_order).length
   const fishingCount = activeVendors.filter((v) => v.is_fishing).length
+  const lsCount = (s: LsStatus | 'unlinked') => activeVendors.filter((v) => (s === 'unlinked' ? !v.ls_status : v.ls_status === s)).length
 
   return (
     <div>
@@ -133,6 +139,13 @@ export default function VendorListPage() {
               {(Object.keys(CONFIRM_STATE_LABELS) as ConfirmState[]).map((s) => <option key={s} value={s}>{CONFIRM_STATE_LABELS[s]}</option>)}
             </Select>
           </div>
+          <div className="w-48">
+            <Select value={ls} onChange={(e) => setParam('ls', e.target.value)} aria-label="Items in Lightspeed">
+              <option value="">Any LS items</option>
+              {(Object.keys(LS_STATUS_LABELS) as LsStatus[]).map((s) => <option key={s} value={s}>{LS_STATUS_LABELS[s]} ({lsCount(s)})</option>)}
+              <option value="unlinked">Not tied to LS ({lsCount('unlinked')})</option>
+            </Select>
+          </div>
           <div className="w-44">
             <Select value={who} onChange={(e) => setParam('who', e.target.value || 'all')} aria-label="Assigned to">
               <option value="">Everyone's vendors</option>
@@ -180,6 +193,7 @@ export default function VendorListPage() {
                   <SortHeader label="Rep group" sortKey="rep" sort={sort} onSort={toggle} className="hidden px-4 py-2.5 md:table-cell" />
                   <SortHeader label="Assigned to" sortKey="assigned" sort={sort} onSort={toggle} className="hidden px-4 py-2.5 md:table-cell" />
                   <SortHeader label="Phone / email" sortKey="phone" sort={sort} onSort={toggle} className="hidden px-4 py-2.5 lg:table-cell" />
+                  <SortHeader label="LS items" sortKey="ls" sort={sort} onSort={toggle} className="hidden px-4 py-2.5 sm:table-cell" />
                   <SortHeader label="Flags" sortKey="flags" sort={sort} onSort={toggle} align="right" className="px-4 py-2.5 text-right" />
                 </tr>
               </thead>
@@ -197,6 +211,14 @@ export default function VendorListPage() {
                     <td className="hidden px-4 py-2.5 text-stone-600 lg:table-cell">
                       {v.phone ?? (v.email ? null : '—')}
                       {v.email ? <a href={`mailto:${v.email}`} className="block truncate text-xs text-brand hover:underline">{v.email}</a> : null}
+                    </td>
+                    <td className="hidden px-4 py-2.5 sm:table-cell">
+                      {v.ls_status ? (
+                        <>
+                          <Badge tone={LS_STATUS_TONE[v.ls_status]}>{LS_STATUS_LABELS[v.ls_status].replace(' in LS', '')}</Badge>
+                          {v.ls_status !== 'none' ? <p className="text-xs text-stone-500">{lsItemsText(v)}</p> : null}
+                        </>
+                      ) : <span className="text-stone-400">—</span>}
                     </td>
                     <td className="px-4 py-2.5 text-right">
                       {STANDING_BADGE[v.standing] ? <Badge tone={STANDING_BADGE[v.standing]!.tone} className="mr-1">{STANDING_BADGE[v.standing]!.label}</Badge> : null}

@@ -152,3 +152,29 @@ export const STANDING_BADGE: Record<import('@/types').VendorStanding, { label: s
   last_resort: { label: 'Last resort', tone: 'warning' },
   do_not_order: { label: 'Do not order', tone: 'danger' },
 }
+
+/** Lightspeed items label (Dana, Oct 16): active items, only archived items, none; null when not tied to an LS vendor. */
+export type LsStatus = 'active' | 'inactive' | 'none'
+export const LS_STATUS_LABELS: Record<LsStatus, string> = { active: 'Active in LS', inactive: 'Inactive in LS', none: 'No items in LS' }
+export const LS_STATUS_TONE: Record<LsStatus, 'success' | 'neutral' | 'warning'> = { active: 'success', inactive: 'neutral', none: 'warning' }
+
+/** "212 active, 40 archived items" */
+export function lsItemsText(v: { ls_active_items: number | null; ls_archived_items: number | null }): string {
+  const a = v.ls_active_items ?? 0, r = v.ls_archived_items ?? 0
+  if (!a && !r) return 'no items'
+  return `${a.toLocaleString('en-US')} active, ${r.toLocaleString('en-US')} archived item${r === 1 ? '' : 's'}`
+}
+
+/** For sorting: active first (most active items first), then inactive, then none, then not tied to LS. */
+export function lsSortValue(v: { ls_status: LsStatus | null; ls_active_items: number | null; ls_archived_items: number | null }): number | null {
+  if (!v.ls_status) return null
+  return v.ls_status === 'active' ? 2_000_000 + (v.ls_active_items ?? 0) : v.ls_status === 'inactive' ? 1_000_000 + (v.ls_archived_items ?? 0) : 0
+}
+
+/** Active (in its dates or no end), expiring within 30 days, or expired (kept for orders placed under it). */
+export function programState(p: { expires_on: string | null }, today = new Date()): 'active' | 'soon' | 'expired' {
+  if (!p.expires_on) return 'active'
+  const end = new Date(`${p.expires_on}T23:59:59`).getTime()
+  if (end < today.getTime()) return 'expired'
+  return end - today.getTime() < 30 * 86_400_000 ? 'soon' : 'active'
+}

@@ -8,7 +8,7 @@ import { addNote, getVendor, listNotes, listReviewQueue, setVendorAssignee, upda
 import { listOrderers } from '@/services/reviews'
 import { clearPickerCache } from '@/services/mail'
 import { ROUTES } from '@/lib/constants'
-import { BILLING_ROUTE_HELP, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, monthsLabel, freeShippingRule, standingWhy, STANDING_BADGE } from '@/lib/vendors'
+import { BILLING_ROUTE_HELP, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, monthsLabel, freeShippingRule, standingWhy, STANDING_BADGE, LS_STATUS_LABELS, LS_STATUS_TONE, lsItemsText } from '@/lib/vendors'
 import { errorMessage } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { BackLink } from '@/components/shared/BackLink'
@@ -17,6 +17,7 @@ import { RouteBadges } from '@/components/vendors/RouteBadges'
 import { ReviewItemCard, VENDOR_DELETED } from '@/components/vendors/ReviewItemCard'
 import { VendorDocumentsSection } from '@/components/vendors/VendorDocumentsSection'
 import { VendorLightspeedBox } from '@/components/vendors/VendorLightspeedBox'
+import { VendorPortalSection } from '@/components/vendors/VendorPortalSection'
 import { RecordTasks } from '@/components/tasks/RecordTasks'
 import { VendorOrderingPanel } from '@/components/ordering/VendorOrderingPanel'
 import { VendorRepGroupCard } from '@/components/vendors/VendorRepGroupCard'
@@ -94,6 +95,7 @@ export default function VendorDetailPage() {
   const wwdLink: ReactNode = v.vendor_billing_routes.some((r) => r.route === 'worldwide') ? <Link to={ROUTES.wwdContacts} className="text-brand hover:underline">Worldwide people and phone numbers</Link> : null
   const facts: [string, ReactNode][] = [
     ['Lightspeed name', v.lightspeed_name],
+    ['Items in Lightspeed', v.ls_status ? `${lsItemsText(v)} (checked ${new Date(v.ls_items_checked_at!).toLocaleDateString()})` : null],
     ['Assigned to', assignedTo],
     ['WWD contacts', wwdLink],
     ['Aliases', v.aliases.length ? v.aliases.join(', ') : null],
@@ -150,6 +152,7 @@ export default function VendorDetailPage() {
           <span className="inline-flex flex-wrap items-center gap-2">
             <RouteBadges routes={v.vendor_billing_routes} />
             {STANDING_BADGE[v.standing] ? <Badge tone={STANDING_BADGE[v.standing]!.tone}>{STANDING_BADGE[v.standing]!.label}</Badge> : null}
+            {v.ls_status ? <Badge tone={LS_STATUS_TONE[v.ls_status]}>{LS_STATUS_LABELS[v.ls_status]}</Badge> : null}
             {v.wwd_zero_upcharge ? <Badge tone="success">WWD 0% upcharge</Badge> : null}
             {v.is_fishing ? <Badge tone="info">Fishing</Badge> : null}
             {v.web_orders ? <Badge tone="info">Web orders, no confirmation</Badge> : null}
@@ -270,6 +273,7 @@ export default function VendorDetailPage() {
 
         <VendorContactsSection vendor={v} canEdit={canEdit} addRep={addRep} onChange={vendorQ.refetch} onEmail={(email) => compose([email])} />
         <VendorShowsSection vendorId={v.id} />
+        <VendorPortalSection vendorId={v.id} />
         <VendorScorecard organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorItemRulesSection organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorOrdersSection vendorId={v.id} vendorName={v.name} canAdd={canEdit} />

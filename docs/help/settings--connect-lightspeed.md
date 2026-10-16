@@ -18,3 +18,4 @@ VMS reads items, Vendor IDs, stock and sales from Lightspeed once it is connecte
 - **Check the connection** reads the account again. **Disconnect** forgets the sign-in but keeps the key.
 - Creating POs in Lightspeed later needs **Full** access: choose it and click **Connect again**.
 - Never paste the secret into an email or a chat.
+- **Items per vendor** shows the last reading of every Lightspeed item. **Read LS items now** reads them again (a few minutes); it also runs every week by itself. The Vendors list uses it for **LS items**.

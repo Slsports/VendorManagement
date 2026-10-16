@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { CheckCircle2, ExternalLink, RefreshCw } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { CheckCircle2, ExternalLink, PackageSearch, RefreshCw } from 'lucide-react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { disconnectLightspeed, lightspeedSignInUrl, lightspeedStatus, saveLightspeedClient, testLightspeed, type LightspeedStatus } from '@/services/lightspeed'
+import { disconnectLightspeed, lightspeedSignInUrl, lightspeedStatus, lsItemScanStatus, saveLightspeedClient, scanLsItems, testLightspeed, type LightspeedStatus } from '@/services/lightspeed'
+import { ROUTES } from '@/lib/constants'
 import { errorMessage } from '@/lib/utils'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner } from '@/components/ui'
 
@@ -70,6 +72,8 @@ function Lightspeed({ s, refetch }: { s: LightspeedStatus; refetch: () => Promis
         {s.last_error ? <Alert variant="error" className="mt-3">{s.last_error}</Alert> : null}
       </section>
 
+      {s.connected ? <ItemsByVendor /> : null}
+
       <section className={section}>
         <h3 className="font-semibold text-stone-900">1. The API key from Lightspeed</h3>
         {s.secret_saved && !editing ? (
@@ -111,5 +115,43 @@ function Lightspeed({ s, refetch }: { s: LightspeedStatus; refetch: () => Promis
         {!s.secret_saved ? <p className="mt-2 text-xs text-stone-500">Save the API key first.</p> : null}
       </section>
     </div>
+  )
+}
+
+/**
+ * Items per vendor (Dana, Oct 16): VMS reads every LS item, active and archived, and counts them per vendor. Each vendor
+ * is then Active in LS (has active items), Inactive in LS (only archived items) or has no items. It reads about a
+ * hundred items a second, so the whole list takes a few minutes; it reads again on its own every week.
+ */
+function ItemsByVendor() {
+  const q = useSupabaseQuery(() => lsItemScanStatus(), [])
+  const [busy, setBusy] = useState(false)
+  const s = q.data
+  const running = !!s?.started_at && !s.finished_at
+  async function start() {
+    setBusy(true)
+    try {
+      const r = await scanLsItems()
+      toast.success(r.busy ? 'Already reading' : r.finished_at ? 'Done' : `Reading: ${(r.items ?? 0).toLocaleString()} items so far. It carries on by itself.`)
+      await q.refetch()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <section className="rounded-2xl border border-stone-200 bg-white p-5">
+      <h3 className="font-semibold text-stone-900">Items per vendor</h3>
+      <p className="mt-1 text-sm text-stone-600">VMS counts each vendor's active and archived items in Lightspeed. On the <Link to={ROUTES.vendors} className="text-brand hover:underline">Vendors</Link> list, filter or sort by <strong>LS items</strong>: Active, Inactive (only archived items) or No items. It reads again every week by itself.</p>
+      {s?.started_at ? (
+        <p className="mt-2 text-sm text-stone-800">
+          {running ? `Reading now: ${(s.items ?? 0).toLocaleString()} items so far (started ${when(s.started_at)}). Check back in a few minutes.`
+            : `Last read ${when(s.finished_at!)}: ${(s.items ?? 0).toLocaleString()} items, ${(s.archived ?? 0).toLocaleString()} of them archived${s.no_vendor ? `, ${s.no_vendor.toLocaleString()} with no vendor in LS` : ''}.`}
+        </p>
+      ) : <p className="mt-2 text-sm text-stone-500">Not read yet.</p>}
+      {s?.last_error ? <Alert variant="error" className="mt-2">{s.last_error}</Alert> : null}
+      <Button size="sm" variant="secondary" className="mt-3" loading={busy} disabled={running} onClick={() => void start()} leftIcon={<PackageSearch className="size-4" aria-hidden="true" />}>{running ? 'Reading…' : 'Read LS items now'}</Button>
+    </section>
   )
 }

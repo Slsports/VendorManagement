@@ -267,6 +267,7 @@ export type Database = {
           is_delivery_vendor: boolean; minimum_order: string | null; freight_program: string | null; free_shipping_policy: 'never' | 'sometimes' | 'always' | null; free_shipping_threshold: number | null; freight_routing: string | null; freight_allowance_on_time: boolean; vid_in_description: boolean; product_types: string | null; notes: string | null; needs_review: boolean; review_note: string | null; do_not_order: boolean; do_not_order_reason: string | null; standing: 'ok' | 'hold' | 'last_resort' | 'do_not_order'; standing_tags: string[]; standing_review_date: string | null; merged_into_id: string | null; wwd_zero_upcharge: boolean; report_owner: string | null; is_fishing: boolean; web_orders: boolean; order_methods: string[]; freight_programs_vendor: string | null; info_confirmed_at: string | null; assigned_rep_contact_id: string | null; assigned_rep_group_contact_id: string | null
           is_active: boolean; created_by: string | null; created_at: string; updated_at: string
           ask_before_pictures: boolean; usual_charges: UsualCharge[]; order_set_at_show: boolean
+          ls_active_items: number | null; ls_archived_items: number | null; ls_items_checked_at: string | null; ls_status: 'active' | 'inactive' | 'none' | null
         }
         Insert: {
           id?: string; organization_id: string; name: string; lightspeed_name?: string | null; lightspeed_vendor_id?: string | null; po_code?: string | null; aliases?: string[]
@@ -279,6 +280,7 @@ export type Database = {
           is_delivery_vendor?: boolean; minimum_order?: string | null; freight_program?: string | null; free_shipping_policy?: 'never' | 'sometimes' | 'always' | null; free_shipping_threshold?: number | null; freight_routing?: string | null; freight_allowance_on_time?: boolean; vid_in_description?: boolean; product_types?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null; do_not_order?: boolean; do_not_order_reason?: string | null; standing?: 'ok' | 'hold' | 'last_resort' | 'do_not_order'; standing_tags?: string[]; standing_review_date?: string | null; merged_into_id?: string | null; wwd_zero_upcharge?: boolean; report_owner?: string | null; is_fishing?: boolean; web_orders?: boolean; order_methods?: string[]; freight_programs_vendor?: string | null; info_confirmed_at?: string | null; assigned_rep_contact_id?: string | null; assigned_rep_group_contact_id?: string | null
           is_active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string
           ask_before_pictures?: boolean; usual_charges?: UsualCharge[]; order_set_at_show?: boolean
+          ls_active_items?: number | null; ls_archived_items?: number | null; ls_items_checked_at?: string | null
         }
         Update: {
           id?: string; organization_id?: string; name?: string; lightspeed_name?: string | null; lightspeed_vendor_id?: string | null; po_code?: string | null; aliases?: string[]
@@ -291,6 +293,7 @@ export type Database = {
           is_delivery_vendor?: boolean; minimum_order?: string | null; freight_program?: string | null; free_shipping_policy?: 'never' | 'sometimes' | 'always' | null; free_shipping_threshold?: number | null; freight_routing?: string | null; freight_allowance_on_time?: boolean; vid_in_description?: boolean; product_types?: string | null; notes?: string | null; needs_review?: boolean; review_note?: string | null; do_not_order?: boolean; do_not_order_reason?: string | null; standing?: 'ok' | 'hold' | 'last_resort' | 'do_not_order'; standing_tags?: string[]; standing_review_date?: string | null; merged_into_id?: string | null; wwd_zero_upcharge?: boolean; report_owner?: string | null; is_fishing?: boolean; web_orders?: boolean; order_methods?: string[]; freight_programs_vendor?: string | null; info_confirmed_at?: string | null; assigned_rep_contact_id?: string | null; assigned_rep_group_contact_id?: string | null
           is_active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string
           ask_before_pictures?: boolean; usual_charges?: UsualCharge[]; order_set_at_show?: boolean
+          ls_active_items?: number | null; ls_archived_items?: number | null; ls_items_checked_at?: string | null
         }
         Relationships: [
           { foreignKeyName: 'vendors_organization_id_fkey'; columns: ['organization_id']; isOneToOne: false; referencedRelation: 'organizations'; referencedColumns: ['id'] },
@@ -807,10 +810,33 @@ export type Database = {
         ]
       }
       ls_vendors: {
-        Row: { organization_id: string; ls_vendor_id: string; name: string; archived: boolean; synced_at: string }
-        Insert: { organization_id: string; ls_vendor_id: string; name: string; archived?: boolean; synced_at?: string }
-        Update: { organization_id?: string; ls_vendor_id?: string; name?: string; archived?: boolean; synced_at?: string }
+        Row: { organization_id: string; ls_vendor_id: string; name: string; archived: boolean; synced_at: string; active_items: number | null; archived_items: number | null }
+        Insert: { organization_id: string; ls_vendor_id: string; name: string; archived?: boolean; synced_at?: string; active_items?: number | null; archived_items?: number | null }
+        Update: { organization_id?: string; ls_vendor_id?: string; name?: string; archived?: boolean; synced_at?: string; active_items?: number | null; archived_items?: number | null }
         Relationships: []
+      }
+      ls_item_scans: {
+        Row: { organization_id: string; started_at: string | null; finished_at: string | null; cursor: string | null; pages: number; items: number; archived: number; no_vendor: number; counts: Json; last_error: string | null; lock_until: string | null; updated_at: string }
+        Insert: { organization_id: string; started_at?: string | null; finished_at?: string | null; cursor?: string | null; pages?: number; items?: number; archived?: number; no_vendor?: number; counts?: Json; last_error?: string | null; lock_until?: string | null; updated_at?: string }
+        Update: { organization_id?: string; started_at?: string | null; finished_at?: string | null; cursor?: string | null; pages?: number; items?: number; archived?: number; no_vendor?: number; counts?: Json; last_error?: string | null; lock_until?: string | null; updated_at?: string }
+        Relationships: []
+      }
+      wwd_portal_vendors: {
+        Row: { id: string; organization_id: string; number: string; name: string; data: Json; read_at: string; vendor_id: string | null; line_id: string | null; match_how: 'exact' | 'line' | 'confirmed' | 'manual' | null; applied_at: string | null; applied: Json | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; number: string; name: string; data: Json; read_at: string; vendor_id?: string | null; line_id?: string | null; match_how?: 'exact' | 'line' | 'confirmed' | 'manual' | null; applied_at?: string | null; applied?: Json | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; number?: string; name?: string; data?: Json; read_at?: string; vendor_id?: string | null; line_id?: string | null; match_how?: 'exact' | 'line' | 'confirmed' | 'manual' | null; applied_at?: string | null; applied?: Json | null; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'wwd_portal_vendors_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+          { foreignKeyName: 'wwd_portal_vendors_line_id_fkey'; columns: ['line_id']; isOneToOne: false; referencedRelation: 'vendor_directory'; referencedColumns: ['id'] },
+        ]
+      }
+      vendor_programs: {
+        Row: { id: string; organization_id: string; vendor_id: string; source: 'wwd_portal' | 'manual'; portal_number: string; key: string; name: string; kind: 'standard' | 'show'; season: string | null; year: number | null; expires_on: string | null; ship_begin: string | null; ship_end: string | null; discount: string | null; billing_terms: string | null; freight_terms: string | null; freight_tiers: Json; minimum_order: string | null; shipping_points: string | null; documents: Json; notes: string | null; read_at: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; vendor_id: string; source?: 'wwd_portal' | 'manual'; portal_number?: string; key: string; name: string; kind?: 'standard' | 'show'; season?: string | null; year?: number | null; expires_on?: string | null; ship_begin?: string | null; ship_end?: string | null; discount?: string | null; billing_terms?: string | null; freight_terms?: string | null; freight_tiers?: Json; minimum_order?: string | null; shipping_points?: string | null; documents?: Json; notes?: string | null; read_at?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; vendor_id?: string; source?: 'wwd_portal' | 'manual'; portal_number?: string; key?: string; name?: string; kind?: 'standard' | 'show'; season?: string | null; year?: number | null; expires_on?: string | null; ship_begin?: string | null; ship_end?: string | null; discount?: string | null; billing_terms?: string | null; freight_terms?: string | null; freight_tiers?: Json; minimum_order?: string | null; shipping_points?: string | null; documents?: Json; notes?: string | null; read_at?: string | null; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'vendor_programs_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+        ]
       }
       vendor_links: {
         Row: { id: string; organization_id: string; vendor_id: string | null; line_id: string | null; kind: Database['public']['Enums']['link_kind']; order_id: string | null; label: string; url: string | null; storage_path: string | null; file_name: string | null; file_size: number | null; mime_type: string | null; season_label: string | null; received_at: string | null; source: 'manual' | 'rep_list' | 'email' | 'vendor_form' | 'import'; notes: string | null; created_by: string | null; created_at: string; email_id: string | null; is_current: boolean; doc_year: number | null; doc_number: string | null; doc_date: string | null; doc_total: number | null; report_used_at: string | null; report_used_by: string | null; approved_at: string | null; approved_by: string | null }
@@ -862,6 +888,7 @@ export type Database = {
     Functions: {
       resolve_booth_rep: { Args: { p_item: string; p_yes: boolean }; Returns: undefined }
       resolve_show_line: { Args: { p_item: string; p_yes: boolean }; Returns: undefined }
+      resolve_portal_conflict: { Args: { p_item: string; p_use_portal: boolean }; Returns: undefined }
       list_sent_emails: { Args: { p_org: string; p_mailbox?: string | null; p_vendor?: string | null; p_q?: string | null; p_limit?: number }; Returns: { id: string; thread_id: string; to_emails: string[]; cc_emails: string[]; subject: string | null; snippet: string | null; sent_at: string; vendor_id: string | null; vendor_name: string | null; sent_by_name: string | null; has_attachments: boolean }[] }
       amazon_monthly: { Args: { p_org: string; p_months?: number }; Returns: { month: string; store_code: string; person_name: string; orders: number; total: number }[] }
       vendor_contact_to_rep_group: { Args: { p_contact: string }; Returns: string }
@@ -992,7 +1019,7 @@ export type Database = {
       coverage_type: 'fire_only' | 'dic' | 'liability' | 'workers_comp' | 'auto' | 'umbrella' | 'health' | 'other'
       billing_route: 'worldwide' | 'faire' | 'direct' | 'prepaid_direct'
       contact_type: 'rep' | 'ap' | 'customer_service' | 'shipping' | 'orders' | 'owner' | 'other'
-      contact_source: 'import' | 'manual' | 'email_enrichment' | 'vendor_form'
+      contact_source: 'import' | 'manual' | 'email_enrichment' | 'vendor_form' | 'wwd_portal'
       ordering_frequency: 'weekly' | 'monthly' | 'seasonal' | 'annual' | 'as_needed'
       order_window_kind: 'feb_show' | 'aug_show' | 'pre_season' | 'reorder' | 'delivery' | 'custom'
       review_status: 'pending' | 'accepted' | 'rejected'

@@ -78,3 +78,18 @@ showing programs, product lines and returns policy with the scrape date.
 - Report: matched / unmatched / fields filled / contacts added / conflicts for review / zero-upcharge changes.
 - Bulk email (through the Gmail connection, from orders@, Dana's signature): "please confirm your contact
   and ordering details" with a link to the VMS vendor form; replies land in the review queue.
+
+## As built (Oct 16)
+- No scraper script: the **Read all vendors** bookmark (Settings › Worldwide) reads every vendor in the portal through
+  the portal's own `selectVendor` call and sends batches to `portal-capture` (`portal_captures`, source `wwd_vendors`).
+- **Bring into VMS** runs the `wwd-portal` function: `_shared/wwdPortal.ts` reads each vendor into plain fields,
+  `_shared/vendorMatch.ts` (same rules as `scripts/lib/match.mjs`, a test keeps them in step) matches by name; a show-list
+  line already tied wins. Sure matches land through `wwd_portal_apply` (fill empty, `portal_conflict` card when
+  different, people as `vendor_emails` source `wwd_portal`, unconfirmed; a rep at the vendor's own rep group goes on the
+  group). Look-alike (generic/prefix) matches become lines with a `show_line` card (details.from = wwd_portal); the rest
+  become `vendor_directory` lines (source `wwd_portal`). A line tied later lands its details (trigger
+  `vendor_directory_portal_to_vendor`); a merge moves them (`vendors_merged_portal`).
+- `wwd_portal_vendors` replaces the planned `vendor_portal_data` (one row per portal vendor number, tied to a vendor or
+  a line). `vendor_programs` as planned, keyed by portal number and program key (with the brand group). `orders.program_id`
+  is not built yet.
+- The portal has no zero-upcharge field.
