@@ -205,7 +205,7 @@ function VendorPick({ vendors, value, onChange, label }: { vendors: LsVendorChoi
             </ul>
           ) : null}
         </div>
-      ) : null}
+      )}
     </FormField>
   )
 }
