@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BookOpen, CalendarDays, Contact, FileSignature, ListTodo, Mail, ShieldCheck } from 'lucide-react'
+import { BookOpen, CalendarDays, Contact, FileSignature, FolderOpen, ListTodo, Mail, ShieldCheck } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useTasksQuery } from '@/hooks/useTasksQuery'
@@ -9,6 +9,7 @@ import { countAccountingContacts } from '@/services/accounting'
 import { listAccountingTasks } from '@/services/tasks'
 import { listPolicies, listRecipients, threadsOfEmails } from '@/services/insurance'
 import { listContracts, nextPayment } from '@/services/contracts'
+import { countDocuments, countUnfiledEmails } from '@/services/accountingDocuments'
 import { daysUntil } from '@/lib/insurance'
 import { todayLocal } from '@/lib/tasks'
 import { ROUTES } from '@/lib/constants'
@@ -32,6 +33,8 @@ export default function AccountingHome() {
   const policies = useSupabaseQuery(async () => (org ? listPolicies(org) : []), [org])
   const recipients = useSupabaseQuery(async () => (org ? listRecipients(org) : []), [org])
   const contracts = useSupabaseQuery(async () => (org ? listContracts(org) : []), [org])
+  const docs = useSupabaseQuery(async () => (org ? countDocuments(org) : null), [org])
+  const unfiled = useSupabaseQuery(async () => (box ? countUnfiledEmails(box.id) : 0), [box?.id])
   const askedThreads = useSupabaseQuery(async () => threadsOfEmails((recipients.data ?? []).map((r) => r.asked_email_id).filter((x): x is string => !!x)), [recipients.data])
 
   const today = todayLocal()
@@ -46,7 +49,7 @@ export default function AccountingHome() {
 
   return (
     <div>
-      <PageHeader title="Accounting" description="What needs you, then the parts: tasks, calendar, mail, contacts, insurance, procedures. Private to people with the Accounting tick." />
+      <PageHeader title="Accounting" description="What needs you, then the parts: tasks, calendar, mail, documents, contacts, insurance, contracts, procedures. Private to people with the Accounting tick." />
       {boxes.error ? <Alert variant="error">{boxes.error}</Alert> : null}
       {!boxes.isLoading && !box ? <Alert variant="warning">The billing@ mailbox is not connected to VMS yet.</Alert> : null}
 
@@ -91,6 +94,7 @@ export default function AccountingHome() {
         <Door to={ROUTES.accountingCalendar} icon={CalendarDays} title="Calendar" line="Week, month, year" sub="Everything by the day it is due." />
         <Door to={ROUTES.accountingMail} icon={Mail} title="Mail" line={box ? `${box.messages_synced.toLocaleString()} emails` : 'not connected'} sub={box ? (box.backfill_done ? 'billing@, new mail every minute.' : 'billing@, still bringing in the last 12 months.') : ''}
           badge={box?.last_error ? <Badge tone="danger">Problem</Badge> : undefined} />
+        <Door to={ROUTES.accountingDocuments} icon={FolderOpen} title="Documents" line={docs.data ? `${docs.data.filed.toLocaleString()} filed` : '…'} sub={docs.data?.review ? `${docs.data.review} need a look.${unfiled.data ? ` ${unfiled.data.toLocaleString()} emails still to file.` : ''}` : unfiled.data ? `${unfiled.data.toLocaleString()} emails still to file, newest first.` : 'Every paper from billing@, by category, party and year. Drop box for files from your computer.'} />
         <Door to={ROUTES.accountingContacts} icon={Contact} title="Contacts" line={contacts.data ? `${contacts.data.confirmed} confirmed` : '…'} sub={contacts.data?.proposed ? `${contacts.data.proposed} found in the mail, waiting for you to confirm.` : 'Who you deal with, by category.'} />
         <Door to={ROUTES.accountingInsurance} icon={ShieldCheck} title="Insurance" line={`${(policies.data ?? []).length} policies`} sub={renewing.length ? `${renewing.length} renewing within 45 days.${toConfirm ? ` ${toConfirm} proof requester${toConfirm === 1 ? '' : 's'} to confirm.` : ''}` : toConfirm ? `${toConfirm} proof requester${toConfirm === 1 ? '' : 's'} to confirm.` : 'Policies, renewals, who needs proof.'} />
         <Door to={ROUTES.accountingContracts} icon={FileSignature} title="Contracts" line={`${(contracts.data ?? []).length} on file`} sub={(() => { const next = (contracts.data ?? []).map((c) => ({ c, p: nextPayment(c) })).filter((x) => x.p).sort((a, b) => a.p!.due_on.localeCompare(b.p!.due_on))[0]; return next ? `Next payment: ${next.c.label} on ${new Date(`${next.p!.due_on}T00:00:00`).toLocaleDateString()}.` : 'Licenses, leases, the loan: payments and renewals.' })()} />

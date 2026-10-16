@@ -27,6 +27,7 @@ shows what she is missing. Only she sees it; later she may let one more person i
 - Reply/forward from billing@ with Dana's signature (existing send machinery, `gmail_box` = billing@).
 
 ## 4. Automatic filing
+**Built Oct 16** (migrations 0120–0121, the `accounting-file` function every minute, Accounting → Documents): folders Category / Party / Year the paper is about, names by the convention, the drop box, Needs a look, File in Accounting on each billing@ file, documents on the policy and contract pages. Dedupe by the file's bytes.
 - Every attachment is read and filed into a folder tree under Accounting: Insurance / <carrier> / <year>,
   Taxes / <year> / <quarter or form>, Banking / <bank> / <year>, Donations / <year>, Contracts / <party>,
   Accounting firm / <year>, Bills / <payee> / <year>. Files are renamed (date, payee, what it is) and keep a link to the

@@ -14,7 +14,7 @@ const args = process.argv.slice(2)
 const every = args.includes('--every') ? args[args.indexOf('--every') + 1] : '* * * * *'
 
 await query(`create extension if not exists pg_cron; create extension if not exists pg_net with schema extensions;`)
-await query(`select cron.unschedule(jobid) from cron.job where jobname in ('gmail-sync', 'order-check', 'task-reminders', 'sent-orders', 'supplies', 'contacts-learn', 'freight-quotes')`)
+await query(`select cron.unschedule(jobid) from cron.job where jobname in ('gmail-sync', 'order-check', 'task-reminders', 'sent-orders', 'supplies', 'contacts-learn', 'freight-quotes', 'accounting-file')`)
 if (args.includes('--off')) {
   console.log('gmail-sync, order-check, task-reminders, sent-orders, supplies, contacts-learn and freight-quotes schedules removed')
   process.exit(0)
@@ -49,6 +49,8 @@ const supplyCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/suppl
 const contactsCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/contacts-learn')
 // freight-quotes (Dana, Oct 13): vendors' freight quotes become quotes on their orders and a task for Trevor.
 const quotesCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/freight-quotes')
+// accounting-file (Dana, Oct 16): papers from billing@ filed into Accounting folders, a few emails a minute.
+const accountingCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/accounting-file')
 const taskCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/task-reminders').replace('timeout_milliseconds := 150000', 'timeout_milliseconds := 60000')
 if (!args.includes('--no-schedule')) {
   await query(`select cron.schedule('gmail-sync', ${lit(every)}, ${lit(call)})`)
@@ -58,6 +60,7 @@ if (!args.includes('--no-schedule')) {
   await query(`select cron.schedule('supplies', ${lit(every)}, ${lit(supplyCall)})`)
   await query(`select cron.schedule('contacts-learn', ${lit(every)}, ${lit(contactsCall)})`)
   await query(`select cron.schedule('freight-quotes', ${lit(every)}, ${lit(quotesCall)})`)
+  await query(`select cron.schedule('accounting-file', ${lit(every)}, ${lit(accountingCall)})`)
   console.log(`gmail-sync, order-check, task-reminders, sent-orders, supplies, contacts-learn and freight-quotes scheduled (${every})`)
 }
 if (args.includes('--run-now')) {

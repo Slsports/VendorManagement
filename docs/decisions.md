@@ -2213,3 +2213,17 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   2027, Dana, with the hold note). No Create PO task or "add our PO" email for papers more than 30 days old or for vendors
   on hold / do not order (the check goes to Dana). The Ty Create PO task from the Oct 15 spreadsheet re-check (Charlene's
   July 31 re-order sheet) was closed.
+- Oct 16, built: **Accounting → Documents** (plan §4; migrations 0120–0121, Edge Function `accounting-file`, cron every
+  minute). Every attachment in billing@ is looked at once, newest first, back through the whole mailbox (Dec 2023 on):
+  pictures under 400 KB, bulk mail, calendar/zip files and files over 15 MB stay in the email with the reason; the rest
+  go to Claude (Haiku, the PDF itself in front of it, with the sender, subject, body, the thread's contact, the known
+  parties, policies and contracts) which gives folder (Category / Party / Year the paper is about), the name pieces
+  (date, whose, party, number, what, amount, state), the policy or contract it belongs to, and whether it is sure.
+  Unsure papers are still filed and listed under Needs a look. Names are built by one SQL rule
+  (`accounting_document_name`) so an edit on the page renames the same way; a typed name is kept. Same bytes
+  (sha256) are one document; the second email links to it. Files live in their own bucket (accounting-files, the
+  Accounting tick only). Drop box on the Documents page for files from Dana's computer; "File in Accounting" on any
+  billing@ file; documents listed on each policy and contract page. First two emails: the executed GS license filed as
+  "2026-10-14 GS SCE Licensing 9.4764 License 2028-2032 $5724.60 executed.pdf" on the contract; the Hub Fair Plan
+  summary email gave a quote, a DIC quote, a summary sheet (the 23 MB policy stayed in the email). About half a cent an
+  email. Step 5 (bills) is next.

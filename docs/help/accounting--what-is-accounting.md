@@ -10,8 +10,9 @@ Accounting is Dana's bookkeeping in one place: the billing@shaverlakesports.com 
 1. Click **Accounting** in the menu. It only shows for people with the Accounting tick.
 2. The **Mail** box shows what needs an answer and what is waiting on someone. **Open the mail** shows all of billing@.
 3. The **Contacts** box shows who VMS found in the mail. **Open contacts** to confirm them and give each a category.
+4. The **Documents** box shows how many papers are filed and how many need a look. Every paper from billing@ is filed on its own, and the drop box takes files from your computer.
 
 ## Good to know
 - Everything in Accounting is private. Managers and buyers never see it, and being admin is not enough on its own.
 - Accounting mail can never be shared to Orders. A vendor's invoice or confirmation forwarded from billing@ still files to the vendor as usual.
-- Automatic filing, a bills list, tasks and a calendar are being added in that order.
+- A bills list (bills that are not vendor invoices) is next to be added.
