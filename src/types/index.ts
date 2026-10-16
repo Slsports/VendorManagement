@@ -9,6 +9,12 @@ export type UserStoreAccess = Tables<'user_store_access'>
 export type UserRole = Enums<'user_role'>
 export type AccountingContact = Tables<'accounting_contacts'>
 export type AccountingCategory = Enums<'accounting_category'>
+export type AccountingProcedure = Tables<'accounting_procedures'>
+export type AccountingPolicy = Tables<'accounting_policies'>
+export type AccountingPolicyTerm = Tables<'accounting_policy_terms'>
+export type AccountingPolicyRecipient = Tables<'accounting_policy_recipients'>
+export type AccountingPolicySend = Tables<'accounting_policy_sends'>
+export type CoverageType = Enums<'coverage_type'>
 
 export type Vendor = Tables<'vendors'>
 export type VendorBillingRoute = Tables<'vendor_billing_routes'>

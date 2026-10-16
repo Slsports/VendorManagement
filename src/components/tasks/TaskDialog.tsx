@@ -7,6 +7,7 @@ import { listPeople } from '@/services/reviews'
 import { listCarriers } from '@/services/freight'
 import { listRepGroups } from '@/services/vendors'
 import { listOrders } from '@/services/orders'
+import { listProcedures } from '@/services/procedures'
 import { createTask, updateTask, type TaskRow } from '@/services/tasks'
 import { fromLocalInput, localDay, REPEAT_CHOICES, REPEAT_UNITS, repeatChoice, repeatFor, toLocalInput, todayLocal, WEEKDAYS, type RepeatChoice } from '@/lib/tasks'
 import { errorMessage } from '@/lib/utils'
@@ -33,8 +34,10 @@ const orderName = (o: { po_number: string | null; description: string | null; ve
   [o.vendor?.name, o.po_number ? `PO ${o.po_number}` : null, o.description].filter(Boolean).join(' · ') || 'Order'
 
 /** Add or change a task (Dana, Oct 11): what, due, remind me, who, what it is about, repeat. */
-export function TaskDialog({ task, preset, onClose, onSaved }: { task?: TaskRow | null; preset?: TaskPreset; onClose: () => void; onSaved?: () => void }) {
+export function TaskDialog({ task, preset, area, onClose, onSaved }: { task?: TaskRow | null; preset?: TaskPreset; /** Accounting (Dana, Oct 16): the task lives in the Accounting area and can carry its procedure. */ area?: 'general' | 'accounting'; onClose: () => void; onSaved?: () => void }) {
   const { organization, profile } = useAuth()
+  const taskArea = task?.area ?? area ?? 'general'
+  const [procedure, setProcedure] = useState(task?.procedure_id ?? '')
   const [title, setTitle] = useState(task?.title ?? '')
   const [notes, setNotes] = useState(task?.notes ?? '')
   const [due, setDue] = useState(task?.due_date ?? '')
@@ -60,6 +63,7 @@ export function TaskDialog({ task, preset, onClose, onSaved }: { task?: TaskRow 
   const carriers = useSupabaseQuery(async () => (org && adding === 'carrier' ? listCarriers(org) : []), [org, adding])
   const groups = useSupabaseQuery(async () => (org && adding === 'rep_group' ? listRepGroups(org) : []), [org, adding])
   const orders = useSupabaseQuery(async () => (org && adding === 'order' ? listOrders(org, vendor ? { vendorId: vendor.id, limit: 200 } : { view: 'open', limit: 300 }) : []), [org, adding, vendor?.id])
+  const procedures = useSupabaseQuery(async () => (org && taskArea === 'accounting' ? listProcedures(org) : []), [org, taskArea])
 
   async function save() {
     if (!org || !profile) return
@@ -76,6 +80,7 @@ export function TaskDialog({ task, preset, onClose, onSaved }: { task?: TaskRow 
       vendor_id: vendor?.id ?? null, carrier_id: carrier?.id ?? null, rep_group_id: repGroup?.id ?? null, order_id: order?.id ?? null,
       thread_id: thread?.id ?? null, tag_other: other.trim() || null,
       repeat_every: repeat.every, repeat_unit: repeat.unit, repeat_days: repeat.days, repeat_until: repeat.until,
+      area: taskArea, procedure_id: taskArea === 'accounting' ? procedure || null : null,
     }
     setBusy(true)
     try {
@@ -117,6 +122,14 @@ export function TaskDialog({ task, preset, onClose, onSaved }: { task?: TaskRow 
           <Input id="task-remind" type="datetime-local" value={remind} onChange={(e) => setRemind(e.target.value)} />
         </FormField>
       </div>
+      {taskArea === 'accounting' ? (
+        <FormField label="Procedure" htmlFor="task-procedure" hint="The steps to follow; opens from the task.">
+          <Select id="task-procedure" value={procedure} onChange={(e) => setProcedure(e.target.value)}>
+            <option value="">None</option>
+            {(procedures.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+          </Select>
+        </FormField>
+      ) : null}
       <FormField label="Assigned to" htmlFor="task-who">
         <Select id="task-who" value={assignee} onChange={(e) => setAssignee(e.target.value)}>
           {(people.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.id === profile?.id ? `${p.full_name} (me)` : p.full_name}</option>)}

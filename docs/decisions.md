@@ -2174,3 +2174,11 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   then each category expanded. Keep the per-area notes in docs so it can be written when asked.
 - Build order: accounting tasks + calendar + procedures + insurance tracker (step 5 moved up), then documents, then bills.
   Awaiting Dana's go.
+- Oct 16, built (step 5 moved up, plus the insurance module; migration 0116): **Accounting → Tasks** (area = accounting, RLS on
+  the tick, each task carries its procedure), **Calendar** (week / month / year), **Procedures** (the handbook, Markdown,
+  first two: property insurance renewal, send proof of insurance), **Insurance** (10 policies from the 9/24/26 guide with
+  their years, Renewed and Policy received buttons, renewal tasks 30 days ahead, daily job), **Who needs proof** (lender
+  and contract partners; proposed from requests found in the mail (21 found, Dana confirms), send tasks when a policy
+  comes in, Send now from billing@ with the policy attached, Hub sent it, every send logged, "They asked" flag on new
+  requests). Accounting home = what am I missing. Hub International: Sam Gibbs and Shelly Recek confirmed as insurance
+  contacts. Nearest renewal is Jan 29, 2027 (Sports Store contents), so no renewal task exists yet.

@@ -58,5 +58,6 @@ shows what she is missing. Only she sees it; later she may let one more person i
 2. Accounting mail views, contacts list with proposals from the mail, sender categories. **Built Oct 16 (0114, 0115).**
 3. Filing into the folder tree + drop box.
 4. Bills list.
-5. Tasks, auto-made tasks, home page, calendar.
+5. Tasks, auto-made tasks, home page, calendar. **Built Oct 16 (0116)**, with the insurance tracker (policies, terms,
+   renewal tasks, who needs proof, send log) and procedures as the first worked example. Filing (3) and bills (4) are next.
 Help articles with each step (Accounting section).

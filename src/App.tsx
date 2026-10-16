@@ -26,6 +26,13 @@ const AccountingHome = lazy(() => import('@/pages/accounting/AccountingHome'))
 const AccountingMailPage = lazy(() => import('@/pages/accounting/AccountingMailPage'))
 const AccountingContactsPage = lazy(() => import('@/pages/accounting/AccountingContactsPage'))
 const AccountingContactPage = lazy(() => import('@/pages/accounting/AccountingContactPage'))
+const AccountingTasksPage = lazy(() => import('@/pages/accounting/AccountingTasksPage'))
+const AccountingCalendarPage = lazy(() => import('@/pages/accounting/AccountingCalendarPage'))
+const ProceduresPage = lazy(() => import('@/pages/accounting/ProceduresPage'))
+const ProcedurePage = lazy(() => import('@/pages/accounting/ProcedurePage'))
+const InsurancePage = lazy(() => import('@/pages/accounting/InsurancePage'))
+const PolicyPage = lazy(() => import('@/pages/accounting/PolicyPage'))
+const RecipientPage = lazy(() => import('@/pages/accounting/RecipientPage'))
 const ReviewQueue = lazy(() => import('@/pages/review/ReviewQueue'))
 const RepGroupList = lazy(() => import('@/pages/rep-groups/RepGroupList'))
 const WorldwideContacts = lazy(() => import('@/pages/contacts/WorldwideContacts'))
@@ -174,6 +181,13 @@ export default function App() {
                 <Route path={ROUTES.accountingMail} element={<AccountingMailPage />} />
                 <Route path={ROUTES.accountingContacts} element={<AccountingContactsPage />} />
                 <Route path={`${ROUTES.accountingContacts}/:id`} element={<AccountingContactPage />} />
+                <Route path={ROUTES.accountingTasks} element={<AccountingTasksPage />} />
+                <Route path={ROUTES.accountingCalendar} element={<AccountingCalendarPage />} />
+                <Route path={ROUTES.accountingProcedures} element={<ProceduresPage />} />
+                <Route path={`${ROUTES.accountingProcedures}/:id`} element={<ProcedurePage />} />
+                <Route path={ROUTES.accountingInsurance} element={<InsurancePage />} />
+                <Route path={`${ROUTES.accountingInsurance}/who/:id`} element={<RecipientPage />} />
+                <Route path={`${ROUTES.accountingInsurance}/:id`} element={<PolicyPage />} />
               </Route>
 
               <Route element={<RequireRole roles={['admin']} />}>

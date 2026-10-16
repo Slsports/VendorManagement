@@ -110,8 +110,14 @@ export function aboutText(t: AboutParts): string {
 /** Where a task's work is: a page that lands on the step itself, or the pay panel (pay-by tasks pay outside VMS). */
 export type TaskTarget = { kind: 'page'; to: string; label: string } | { kind: 'pay'; label: string; bill: 'wwd' | 'order'; id: string }
 
-export function taskTarget(t: { auto_key: string | null; order_id: string | null; thread_id: string | null; vendor_id: string | null; carrier_id: string | null; rep_group_id: string | null }): TaskTarget | null {
+export function taskTarget(t: { auto_key: string | null; order_id: string | null; thread_id: string | null; vendor_id: string | null; carrier_id: string | null; rep_group_id: string | null; policy_id?: string | null; recipient_id?: string | null; procedure_id?: string | null }): TaskTarget | null {
   const [kind, id] = (t.auto_key ?? '').split(':')
+  // Accounting (Dana, Oct 16): renewals open the policy, proof sends open the recipient with the email ready
+  if (kind === 'policy_renewal' && id) return { kind: 'page', to: `/accounting/insurance/${id}`, label: 'Open the policy' }
+  if (kind === 'policy_send' && t.recipient_id) return { kind: 'page', to: `/accounting/insurance/who/${t.recipient_id}?send=${t.policy_id ?? ''}`, label: 'Send it' }
+  if (t.policy_id) return { kind: 'page', to: `/accounting/insurance/${t.policy_id}`, label: 'Open the policy' }
+  if (t.recipient_id) return { kind: 'page', to: `/accounting/insurance/who/${t.recipient_id}`, label: 'Open the recipient' }
+  if (t.procedure_id) return { kind: 'page', to: `/accounting/procedures/${t.procedure_id}`, label: 'Open the procedure' }
   if (kind === 'create_po' && id) return t.order_id ? { kind: 'page', to: `/orders/${t.order_id}?do=create-po`, label: 'Create the PO' } : { kind: 'page', to: `/orders/paperwork/${id}`, label: 'Pick the order' }
   if (kind === 'promise' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}?do=reply`, label: 'Reply' }
   if (kind === 'freight_quote' && id) return { kind: 'page', to: `/freight/quotes/${id}`, label: 'Open the freight quote' }

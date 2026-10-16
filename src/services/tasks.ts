@@ -4,6 +4,9 @@ import type { TablesInsert, TablesUpdate } from '@/types/database'
 
 /** A task with what it is about and who gave, has and finished it. */
 export interface TaskRow extends Task {
+  procedure?: { id: string; title: string } | null
+  policy?: { id: string; label: string } | null
+  recipient?: { id: string; company: string; person: string } | null
   vendor: { id: string; name: string } | null
   carrier: { id: string; name: string } | null
   rep_group: { id: string; name: string } | null
@@ -17,14 +20,16 @@ export interface TaskRow extends Task {
 const TASK_SELECT = `*,
   vendor:vendors!tasks_vendor_id_fkey(id, name), carrier:carriers!tasks_carrier_id_fkey(id, name), rep_group:rep_groups!tasks_rep_group_id_fkey(id, name),
   order:orders!tasks_order_id_fkey(id, po_number, description), thread:email_threads!tasks_thread_id_fkey(id, subject),
-  assignee:profiles!tasks_assigned_to_fkey(id, full_name), giver:profiles!tasks_created_by_fkey(id, full_name), finisher:profiles!tasks_done_by_fkey(id, full_name)`
+  assignee:profiles!tasks_assigned_to_fkey(id, full_name), giver:profiles!tasks_created_by_fkey(id, full_name), finisher:profiles!tasks_done_by_fkey(id, full_name),
+  procedure:accounting_procedures!tasks_procedure_id_fkey(id, title), policy:accounting_policies!tasks_policy_id_fkey(id, label), recipient:accounting_policy_recipients!tasks_recipient_id_fkey(id, company, person)`
 
 /** mine = assigned to the person · given = they gave to others · done = finished, theirs or given · all = everyone's open. */
 export type TaskView = 'mine' | 'given' | 'done' | 'all'
 
 /** Tasks for one person (null = everyone, the admin's view). RLS limits the rest. */
 export async function listTasks(organizationId: string, view: TaskView, personId: string | null): Promise<TaskRow[]> {
-  let q = supabase.from('tasks').select(TASK_SELECT).eq('organization_id', organizationId)
+  // Accounting tasks (Dana, Oct 16) live in the Accounting area, not here.
+  let q = supabase.from('tasks').select(TASK_SELECT).eq('organization_id', organizationId).eq('area', 'general')
   if (view === 'done') {
     q = q.not('done_at', 'is', null)
     if (personId) q = q.or(`assigned_to.eq.${personId},created_by.eq.${personId}`)
@@ -91,6 +96,17 @@ export async function completeTask(id: string, note?: string | null): Promise<st
   if (error) throw error
   tasksChanged()
   return data
+}
+
+/** Accounting tasks (Dana, Oct 16): open ones, finished ones, or those due in a date range (the calendar). */
+export async function listAccountingTasks(organizationId: string, opts: { view: 'open' | 'done' | 'range'; from?: string; to?: string }): Promise<TaskRow[]> {
+  let q = supabase.from('tasks').select(TASK_SELECT).eq('organization_id', organizationId).eq('area', 'accounting')
+  if (opts.view === 'open') q = q.is('done_at', null).order('due_date', { ascending: true, nullsFirst: false }).order('created_at').limit(1000)
+  else if (opts.view === 'done') q = q.not('done_at', 'is', null).order('done_at', { ascending: false }).limit(300)
+  else q = q.gte('due_date', opts.from ?? '1900-01-01').lte('due_date', opts.to ?? '2999-12-31').order('due_date').limit(2000)
+  const { data, error } = await q
+  if (error) throw error
+  return (data ?? []) as unknown as TaskRow[]
 }
 
 export const reopenTask = (id: string) => updateTask(id, { done_at: null })

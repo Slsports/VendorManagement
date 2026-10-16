@@ -25,6 +25,8 @@ export interface ComposeDraft {
   note?: string
   /** Opened from Mail › Drafts (Dana, Oct 12): Save draft updates it, Send removes it. */
   draft_id?: string | null
+  /** Files already on file to attach (Dana, Oct 16: the policy for a proof-of-insurance send). */
+  vendor_link_ids?: string[]
   /** The signature saved with a draft; otherwise the person's usual one. */
   signature?: string | null
   /** A routing letter email prepared from Freight › Routing letter: the letter goes with it. */
@@ -58,7 +60,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
   const [subject, setSubject] = useState(draft.subject)
   const [body, setBody] = useState(draft.body)
   const [files, setFiles] = useState<File[]>([])
-  const [linkIds, setLinkIds] = useState<string[]>([])
+  const [linkIds, setLinkIds] = useState<string[]>(draft.vendor_link_ids ?? [])
   const [sending, setSending] = useState(false)
   const [saving, setSaving] = useState(false)
   const [draftId, setDraftId] = useState<string | null>(draft.draft_id ?? null)
