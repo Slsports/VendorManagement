@@ -2204,3 +2204,5 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   "2026-10-14 SLS SCE 9.4764 Happy Camper store license 2028-2032 – executed.pdf".
 - Documents uploaded in chat cannot be filed from a cloud session; Dana emails them to billing@ and the filing step
   (plan §4, next) files them with the rest of the old mail.
+- Oct 16 (Dana): the Sports Store building is "SLS building" in names and labels:
+  "2026-09-25 P&S Cal Fair COM 0301476591 SLS building – premium $4,472.00 paid.pdf". Policy labels renamed.
