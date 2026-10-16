@@ -20,6 +20,7 @@ A vendor's standing warns everyone before they order. It is a warning on every s
 
 ## Good to know
 - The vendor page shows a colored banner at the top with the reasons; the Vendors list and Scorecard show the standing too. Do-not-order names show in red.
+- **On hold** with a **look again** date: VMS puts a task on that date for whoever the vendor is assigned to, with your hold note (for example "TY INC: look again (on hold)" on Jan 18). Change the date and the task moves; set the vendor back to **Fine to order** and the task closes.
 - Ordering is still possible if you change your mind.
 - Setting it back to **Fine to order** clears the reasons.
 - Use **Do not order** on the Vendors page to list them all.

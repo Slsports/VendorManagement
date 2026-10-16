@@ -2208,3 +2208,8 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   (plan §4, next) files them with the rest of the old mail.
 - Oct 16 (Dana): the Sports Store building is "SLS building" in names and labels:
   "2026-09-25 P&S Cal Fair COM 0301476591 SLS building – premium $4,472.00 paid.pdf". Policy labels renamed.
+- Oct 16, Ty on hold (Dana: "the task should have appeared in January since we opted to skip this buying show for
+  them"): a vendor on hold with a look-again date now gets a task that day for the person it is assigned to (Ty: Jan 18,
+  2027, Dana, with the hold note). No Create PO task or "add our PO" email for papers more than 30 days old or for vendors
+  on hold / do not order (the check goes to Dana). The Ty Create PO task from the Oct 15 spreadsheet re-check (Charlene's
+  July 31 re-order sheet) was closed.

@@ -17,3 +17,5 @@ When a vendor's confirmation doesn't show our PO number, VMS makes sure the PO g
 - The check page says which step it's at: the task, or the email in Drafts.
 - Claude's comparison doesn't list the missing PO as an issue, so the vendor doesn't get asked twice.
 - Web-order vendors (like Kelli's) are skipped.
+- Papers more than 30 days old (for example ones found when old mail is checked again) get no task and no email.
+- Vendors **On hold** or **Do not order** get no task and no email: the check goes to Dana to look at.
