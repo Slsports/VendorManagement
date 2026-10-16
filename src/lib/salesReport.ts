@@ -2,6 +2,8 @@
 // into the report's tabs (Active, No Data, Archived, Ignored, Flags), add the flag notes, and work out each item's Need.
 // salesReportXlsx.ts writes the formatted workbook from this plan; suggestedOrder.ts uses the items.
 
+import { genderOf, sizeOf, sizeRank, subcategoryOf } from './sizes'
+
 export interface SalesItem {
   sid: string
   upc: string
@@ -18,6 +20,8 @@ export interface SalesItem {
   /** YYYY-MM-DD, or null = never sold */
   last: string | null
   notes: string[]
+  /** Sold and in stock per store code when the report keeps the stores apart (SLS, SLM, GS). */
+  byStore?: Record<string, { sold: number; qoh: number }>
 }
 
 const COLORS = ['GREEN', 'RED', 'PINK', 'BLUE', 'YELLOW', 'PURPLE', 'BLACK', 'SILVER', 'WHITE', 'ORANGE', 'GRAY', 'GREY', 'BROWN', 'TAN', 'NAVY']
@@ -109,9 +113,22 @@ export function lineOf(desc: string, vendorName: string): string {
 const title = (s: string) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
 
 export interface ReportGroup { name: string; items: SalesItem[] }
+export interface SizeRow { gender: string; subcategory: string; size: string; skus: number; sold: number; inStock: number; need: number; variants: string[] }
+export interface ReportOptions {
+  /** A vendor report (By Description tab, no Vendor column) or a category report (Vendor column, By Vendor tab). */
+  kind?: 'vendor' | 'category'
+  /** Store codes when the stores are kept apart (a Sold and an In Stock column per store); null for one set of columns. */
+  stores?: string[] | null
+}
 export interface ReportPlan {
   vendor: string
   title: string
+  kind: 'vendor' | 'category'
+  stores: string[] | null
+  /** Category reports: items by vendor, each vendor's items by need. */
+  vendorGroups: ReportGroup[] | null
+  /** Sized categories: the Size Summary rows (gender, subcategory, size), null when nothing is sized. */
+  sizes: SizeRow[] | null
   active: SalesItem[]
   nodata: SalesItem[]
   archived: SalesItem[]
@@ -149,7 +166,8 @@ export function activeRows(plan: Pick<ReportPlan, 'active' | 'activeGroups'>): M
 }
 
 /** Sort the items into the report's tabs and add the flag notes (spec: partitions first, no exceptions). */
-export function planReport(all: SalesItem[], vendorName: string, runText: string): ReportPlan {
+export function planReport(all: SalesItem[], vendorName: string, runText: string, opts: ReportOptions = {}): ReportPlan {
+  const kind = opts.kind ?? 'vendor'
   const items = all.map((x) => ({ ...x, notes: [] as string[] }))
   const ignored = items.filter((x) => x.archived && x.sold === 0 && x.qoh <= 0).sort(byCatDesc)
   const rest = items.filter((x) => !ignored.includes(x))
@@ -201,9 +219,29 @@ export function planReport(all: SalesItem[], vendorName: string, runText: string
       })).sort((a, b) => a.category.localeCompare(b.category) || b.need - a.need)
     : []
 
+  // the Size Summary (spec v49): sized items by gender, subcategory and size; spelling variants of a size are one row
+  const sized = active.map((x) => ({ x, size: sizeOf(x.desc, x.cat) })).filter((r) => r.size)
+  let sizes: SizeRow[] | null = null
+  if (sized.length && sized.length >= Math.max(3, active.length * 0.3)) {
+    const m = new Map<string, SizeRow>()
+    for (const { x, size } of sized) {
+      const gender = genderOf(x.desc, x.cat), sub = subcategoryOf(x.cat)
+      const k = `${gender}\u0000${sub}\u0000${size!.size}`
+      const row = m.get(k) ?? { gender, subcategory: sub, size: size!.size, skus: 0, sold: 0, inStock: 0, need: 0, variants: [] }
+      row.skus++; row.sold += x.sold; row.inStock += Math.max(0, x.qoh); row.need += Math.max(0, needOf(x))
+      if (!row.variants.includes(size!.raw)) row.variants.push(size!.raw)
+      m.set(k, row)
+    }
+    sizes = [...m.values()].sort((a, b) => a.gender.localeCompare(b.gender) || a.subcategory.localeCompare(b.subcategory) || sizeRank(a.size) - sizeRank(b.size) || a.size.localeCompare(b.size))
+  }
+
   return {
     vendor: vendorName,
     title: `${vendorName} — Report Run ${runText}`,
+    kind,
+    stores: opts.stores ?? null,
+    vendorGroups: kind === 'category' ? groupBy([...active].sort((a, b) => a.lsVendor.localeCompare(b.lsVendor) || a.desc.localeCompare(b.desc)), (x) => x.lsVendor || '(No Vendor)') : null,
+    sizes,
     active: activeSorted,
     nodata, archived, ignored,
     flagged: [...active, ...nodata, ...archived].filter((x) => x.notes.length).sort(byCatDesc),
@@ -217,11 +255,14 @@ export function planReport(all: SalesItem[], vendorName: string, runText: string
 }
 
 /** "DP_10-11-26_PARICON_SALES 365 DAYS.xlsx" (spec naming). */
-export function reportFileName(initials: string, run: Date, vendorName: string, days: number): string {
+/** "DP_10-11-26_PARICON_SALES 365 DAYS.xlsx", or "…_SALES 1-1-26 TO 3-31-26.xlsx" for a date range (spec naming). */
+export function reportFileName(initials: string, run: Date, vendorName: string, days: number | { from: string; to: string }): string {
   const d = `${String(run.getMonth() + 1).padStart(2, '0')}-${String(run.getDate()).padStart(2, '0')}-${String(run.getFullYear()).slice(2)}`
-  return `${initials}_${d}_${vendorName.toUpperCase().replace(/[\\/:*?"<>|]+/g, ' ').trim()}_SALES ${days} DAYS.xlsx`
+  const span = typeof days === 'number' ? `${days} DAYS` : `${mdy(days.from)} TO ${mdy(days.to)}`
+  return `${initials}_${d}_${vendorName.toUpperCase().replace(/[\\/:*?"<>|]+/g, ' ').trim()}_SALES ${span}.xlsx`
 }
 
+const mdy = (iso: string) => { const [y, m, d] = iso.split('-'); return `${Number(m)}-${Number(d)}-${y!.slice(2)}` }
 export const initialsOf = (name: string | null | undefined) => (name ?? '').split(/\s+/).filter(Boolean).map((w) => w[0]!.toUpperCase()).join('').slice(0, 3) || 'VMS'
 export const runText = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(2)}`
 

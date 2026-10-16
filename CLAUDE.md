@@ -121,7 +121,10 @@ Accounting area (billing@ mailbox, Accounting tick, mail, contacts, tasks with p
 insurance tracker with renewal tasks and who-needs-proof sends, the contracts tracker with payment and renewal tasks, Documents filed by Claude into Category / Party / Year
 with the naming convention plus a drop box (`accounting-file` function, bucket `accounting-files`); `docs/accounting-plan.md`; bills still to build).
 
+Sales Reports from Lightspeed (`ls-sync` copies LS items, sales and sale lines every minute into `ls_items`/`ls_sales`/`ls_sale_lines`;
+vendor and category reports by spec v49 with store choices, filed under the vendor or Reports; `docs/decisions.md` Oct 16).
+
 ## Not built yet, in order
-Gmail label write-back and contact enrichment,
-Needs list, Lightspeed API connection, category and item clean-up tool, replenishment check, pattern
+Inventory checklists with count entry and Send to LS (Inventory Counts), Gmail label write-back and contact enrichment,
+Needs list, category and item clean-up tool, replenishment check, pattern
 engine, show-prep view. Target: running well by December 2026 for the WWD show Jan 25-28, 2027.

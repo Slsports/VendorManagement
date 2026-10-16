@@ -115,6 +115,7 @@ function FlagList({ rows }: { rows: OrderingRow[] }) {
             </span>
             {f.stage === 'check' && !f.report_id ? <SalesReportUpload vendor={f.vendor} onSaved={(used) => { if (!used) setSuggest(f.vendor) }} /> : null}
             {f.report_id ? <Button size="sm" variant="secondary" onClick={() => setSuggest(f.vendor)}>Suggested order</Button> : null}
+            <Link to={`${ROUTES.salesReports}?vendor=${f.vendor.id}`} className="inline-flex h-8 items-center rounded-lg border border-stone-200 px-2.5 text-xs font-medium text-stone-700 hover:bg-stone-50" title="Run a sales report from Lightspeed for this vendor">Reports</Link>
             {f.stage === 'check' ? <Button size="sm" variant="ghost" onClick={() => act(moveOrderingItem(f.id, 'to_order'), `${f.vendor!.name}: moved to To order`)}>Order it</Button> : null}
             {f.stage === 'to_order' && !f.report_id ? <Button size="sm" variant="secondary" onClick={() => setPlacing(f)}>Order placed</Button> : null}
             <Button size="sm" variant="ghost" onClick={() => act(finishOrderingItem(f.id, f.stage === 'check' ? 'not_needed' : 'removed'), f.stage === 'check' ? `${f.vendor!.name}: not needed` : 'Taken off the list')}>{f.stage === 'check' ? "Don't need it" : 'Remove'}</Button>

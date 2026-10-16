@@ -1,11 +1,23 @@
 ---
-title: The Sales Reports page
+title: Run a sales report from Lightspeed
 section: Reports
-keywords: sales reports, Lightspeed reports, LS, coming soon, season comparison
-who: Everyone
+keywords: sales reports, Lightspeed, LS, vendor report, category report, size summary, stores, date range, spec v49, Analytics
+who: Admin, managers and buyers run them; everyone can download them
 ---
-The **Sales Reports** page in the menu is a placeholder for now.
+The **Sales Reports** page builds vendor and category reports straight from Lightspeed, formatted by the sales report spec, with no export to upload. VMS keeps its own copy of LS's items, stock and sales, brought up to date every minute.
+
+## How to
+1. Click **Sales Reports** in the menu, or **Reports** on a vendor's line in the ordering card (the vendor is then already picked).
+2. Choose the report: **Vendor report** for one vendor, or two side by side (Paricon plus Slippery Racer); **Category report** for every vendor in a category, to catch the same item bought from two vendors.
+3. Pick the vendor(s) and, if you want, a category to narrow to (WFS winter only). For a category report, pick the category; it includes everything under it.
+4. Choose the stores: **all stores together** (one Sold and one In Stock column), **kept apart** (a Sold and In Stock column per store, then the combined Need), or **one store**.
+5. Pick the period. **Last 12 months** is the default; or a date range.
+6. Click **Run the report**. The workbook downloads and is filed: a vendor report under that vendor's **Sales reports** (and it feeds the **Suggested order**), a category report under Reports here.
+7. **Save settings** keeps the choices under a name, so next time it is one click.
 
 ## Good to know
-- Coming later: vendor and category reports from LS data, a quick run with standard settings, custom date ranges and season-over-season comparisons.
-- Until then, formatted sales reports are filed on each vendor's page (see "Vendor sales reports").
+- The report follows spec v49 exactly: Size Summary, By Category, By Vendor (category reports) or By Description (vendor reports), Flags, Active, No Data, Archived, and Archived – No Sales (Ignored). File names carry the initials of whoever ran it.
+- The Size Summary groups by gender, subcategory and size. Spelling variants of one size in LS (SZ 8, SIZE 8) are one row, with a note saying what was merged.
+- Stock is as of the last item pass (every six hours); sales are minutes behind. The line at the top of the page says how fresh the copy is.
+- SLH is a separate Lightspeed account and is not in these reports.
+- LS Analytics stays on until the new reports are proven; run both for a while and compare.

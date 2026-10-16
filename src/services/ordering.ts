@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { addVendorLink, uploadVendorFile } from '@/services/lines'
-import { ExportError, initialsOf, lsVendorsIn, matchLsVendor, planReport, readExport, readFormattedReport, reportFileName, runText, type SalesItem } from '@/lib/salesReport'
+import { ExportError, initialsOf, lsVendorsIn, matchLsVendor, planReport, readExport, readFormattedReport, reportFileName, runText, type ReportPlan, type SalesItem } from '@/lib/salesReport'
 import { suggestOrder, type IncomingLine, type IncomingStage, type SuggestedLine } from '@/lib/suggestedOrder'
 import type { Order, OrderingItem, SalesReport } from '@/types'
 import type { Json } from '@/types/database'
@@ -113,11 +113,14 @@ export async function readSalesExport(file: File, vendorName: string, aliases: s
 }
 
 /** Format the report (spec v49), file it in the vendor's Sales reports folder, and keep its items for the suggested order. */
-export async function saveSalesReport(input: { organizationId: string; vendor: { id: string; name: string }; items: SalesItem[]; lsVendor: string; days: number; profile: { id: string; full_name: string | null }; formatted?: ReadReport['formatted'] }): Promise<SalesReport> {
+export async function saveSalesReport(input: { organizationId: string; vendor: { id: string; name: string }; items: SalesItem[]; lsVendor: string; days: number; profile: { id: string; full_name: string | null }; formatted?: ReadReport['formatted']; prebuilt?: { plan: ReportPlan; file: File; note: string } }): Promise<SalesReport> {
   const run = input.formatted?.runDate ? new Date(`${input.formatted.runDate}T12:00:00`) : new Date()
-  const plan = planReport(input.items, input.vendor.name.toUpperCase(), runText(run))
+  const plan = input.prebuilt?.plan ?? planReport(input.items, input.vendor.name.toUpperCase(), runText(run))
   let file: File
-  if (input.formatted) {
+  if (input.prebuilt) {
+    // built from Lightspeed by the Sales Reports page (Dana, Oct 16)
+    file = input.prebuilt.file
+  } else if (input.formatted) {
     // already formatted: filed exactly as it is, so its Order column and notes are what the confirmation is checked against
     file = input.formatted.file
   } else {
@@ -131,7 +134,7 @@ export async function saveSalesReport(input: { organizationId: string; vendor: {
   const link = await addVendorLink({
     organization_id: input.organizationId, vendor_id: input.vendor.id, kind: 'sales_report', label: fileName.replace(/\.xlsx$/i, ''), storage_path: path,
     file_name: fileName, file_size: file.size, mime_type: file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', received_at: run.toISOString().slice(0, 10), doc_year: run.getFullYear(), source: 'manual',
-    notes: input.formatted ? 'A formatted sales report, uploaded as it is' : `LS Analytics export (${input.lsVendor}), formatted as a Vendor Sales Report (spec v49)`, created_by: input.profile.id,
+    notes: input.prebuilt ? input.prebuilt.note : input.formatted ? 'A formatted sales report, uploaded as it is' : `LS Analytics export (${input.lsVendor}), formatted as a Vendor Sales Report (spec v49)`, created_by: input.profile.id,
   } as never)
   const summary = { active: plan.active.length, nodata: plan.nodata.length, archived: plan.archived.length, ignored: plan.ignored.length, flags: plan.flagged.length, duplicates: plan.duplicates, by_line: plan.byLine }
   const { data, error } = await supabase.from('sales_reports').insert({

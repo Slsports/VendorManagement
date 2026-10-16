@@ -7,7 +7,7 @@ who: Everyone
 The **Ordering** card on the dashboard follows a vendor from "do we need anything?" to a confirmed order. It shows seven counts; click one to see its list.
 
 ## The counts
-- **Check stock**: vendors flagged **Check if we need it**. Upload the LS sales report to see what to order.
+- **Check stock**: vendors flagged **Check if we need it**. Click **Reports** on the vendor's line to run its sales report straight from Lightspeed (or upload an LS export) to see what to order.
 - **To order**: vendors flagged **Remind me to order**, or ones where the stock check said we need something.
 - **Working on**: emails flagged **Working on order** while an order goes back and forth with the rep. It also says how many need an answer; **Open the full list** opens the Orders I'm working on page.
 - **Placed**: orders sent to the rep with no confirmation yet.

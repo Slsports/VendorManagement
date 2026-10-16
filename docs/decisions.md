@@ -2318,3 +2318,12 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - Order of build: 1) Sales Reports page with vendor and category reports from LS, store choices, Reports button;
   2) inventory checklist, count entry, Send to LS, the two ticks. Dana's first use: kids shirts (long and short
   sleeve) by size across stores, sizes 5, 6, 6x, 7, 8, 10, 12 and XS–XL where a vendor uses letters after 6x.
+- Oct 16, built (step 1 of the reports): **Sales Reports** page from Lightspeed (migration 0141, function `ls-sync` every
+  minute: items with stock per shop and Vendor ID, sales, sale lines; a 24-month backfill, then what changed). Vendor
+  and category reports by spec v49 with the Size Summary by gender, subcategory and size (spelling variants merged with
+  a note), By Vendor tab and Vendor column on category reports, stores together / one / kept apart, the period (12
+  months default or a date range), initials of the runner in the file name, saved settings, the list of runs, and
+  **Reports** on the ordering card. Vendor runs file under the vendor and feed the suggested order; category runs
+  under Reports. Lightspeed's "Vendor ID" is the item's vendor number for its default vendor (ItemVendorNums).
+- Oct 16 (Dana), inventory checklists: a **Vendor ID** column next to Description; the vendor id is no longer appended
+  to the description. Overlap and Recommendations tabs on category reports are still to come.

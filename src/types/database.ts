@@ -502,6 +502,42 @@ export type Database = {
         Update: { id?: string; organization_id?: string; contract_id?: string; label?: string; due_on?: string; amount?: number | null; paid_on?: string | null; paid_from?: string; notes?: string; created_at?: string; updated_at?: string }
         Relationships: [{ foreignKeyName: 'accounting_contract_payments_contract_id_fkey'; columns: ['contract_id']; isOneToOne: false; referencedRelation: 'accounting_contracts'; referencedColumns: ['id'] }]
       }
+      ls_items: {
+        Row: { organization_id: string; item_id: string; system_sku: string; upc: string; custom_sku: string; manufacturer_sku: string; vendor_item_id: string; description: string; default_cost: number | null; category_id: string; category_path: string; default_vendor_id: string; archived: boolean; item_type: string; matrix_id: string; qoh: Json; ls_updated_at: string | null; synced_at: string }
+        Insert: { organization_id: string; item_id: string; system_sku?: string; upc?: string; custom_sku?: string; manufacturer_sku?: string; vendor_item_id?: string; description?: string; default_cost?: number | null; category_id?: string; category_path?: string; default_vendor_id?: string; archived?: boolean; item_type?: string; matrix_id?: string; qoh?: Json; ls_updated_at?: string | null; synced_at?: string }
+        Update: { organization_id?: string; item_id?: string; system_sku?: string; upc?: string; custom_sku?: string; manufacturer_sku?: string; vendor_item_id?: string; description?: string; default_cost?: number | null; category_id?: string; category_path?: string; default_vendor_id?: string; archived?: boolean; item_type?: string; matrix_id?: string; qoh?: Json; ls_updated_at?: string | null; synced_at?: string }
+        Relationships: []
+      }
+      ls_sales: {
+        Row: { organization_id: string; sale_id: string; shop_id: string; completed: boolean; voided: boolean; sold_at: string | null; ls_updated_at: string | null }
+        Insert: { organization_id: string; sale_id: string; shop_id?: string; completed?: boolean; voided?: boolean; sold_at?: string | null; ls_updated_at?: string | null }
+        Update: { organization_id?: string; sale_id?: string; shop_id?: string; completed?: boolean; voided?: boolean; sold_at?: string | null; ls_updated_at?: string | null }
+        Relationships: []
+      }
+      ls_sale_lines: {
+        Row: { organization_id: string; sale_line_id: string; sale_id: string; item_id: string; shop_id: string; qty: number; sold_at: string; ls_updated_at: string | null }
+        Insert: { organization_id: string; sale_line_id: string; sale_id: string; item_id: string; shop_id?: string; qty?: number; sold_at: string; ls_updated_at?: string | null }
+        Update: { organization_id?: string; sale_line_id?: string; sale_id?: string; item_id?: string; shop_id?: string; qty?: number; sold_at?: string; ls_updated_at?: string | null }
+        Relationships: []
+      }
+      ls_sync: {
+        Row: { organization_id: string; items_cursor: string | null; items_pass_started: string | null; items_pass_finished: string | null; items_seen: number; sales_cursor: string | null; sales_since: string | null; sales_backfill_done: boolean; lines_cursor: string | null; lines_since: string | null; lines_backfill_done: boolean; lines_seen: number; backfill_from: string; last_error: string | null; lock_until: string | null; updated_at: string }
+        Insert: { organization_id: string; items_cursor?: string | null; items_pass_started?: string | null; items_pass_finished?: string | null; items_seen?: number; sales_cursor?: string | null; sales_since?: string | null; sales_backfill_done?: boolean; lines_cursor?: string | null; lines_since?: string | null; lines_backfill_done?: boolean; lines_seen?: number; backfill_from?: string; last_error?: string | null; lock_until?: string | null; updated_at?: string }
+        Update: { organization_id?: string; items_cursor?: string | null; items_pass_started?: string | null; items_pass_finished?: string | null; items_seen?: number; sales_cursor?: string | null; sales_since?: string | null; sales_backfill_done?: boolean; lines_cursor?: string | null; lines_since?: string | null; lines_backfill_done?: boolean; lines_seen?: number; backfill_from?: string; last_error?: string | null; lock_until?: string | null; updated_at?: string }
+        Relationships: []
+      }
+      report_runs: {
+        Row: { id: string; organization_id: string; kind: 'vendor' | 'category' | 'inventory'; title: string; params: Json; file_name: string; storage_path: string | null; document_id: string | null; sales_report_id: string | null; summary: Json; created_by: string | null; created_at: string }
+        Insert: { id?: string; organization_id: string; kind: 'vendor' | 'category' | 'inventory'; title: string; params?: Json; file_name?: string; storage_path?: string | null; document_id?: string | null; sales_report_id?: string | null; summary?: Json; created_by?: string | null; created_at?: string }
+        Update: { id?: string; organization_id?: string; kind?: 'vendor' | 'category' | 'inventory'; title?: string; params?: Json; file_name?: string; storage_path?: string | null; document_id?: string | null; sales_report_id?: string | null; summary?: Json; created_by?: string | null; created_at?: string }
+        Relationships: []
+      }
+      report_presets: {
+        Row: { id: string; organization_id: string; name: string; kind: 'vendor' | 'category' | 'inventory'; params: Json; created_by: string | null; created_at: string }
+        Insert: { id?: string; organization_id: string; name: string; kind: 'vendor' | 'category' | 'inventory'; params?: Json; created_by?: string | null; created_at?: string }
+        Update: { id?: string; organization_id?: string; name?: string; kind?: 'vendor' | 'category' | 'inventory'; params?: Json; created_by?: string | null; created_at?: string }
+        Relationships: []
+      }
       accounting_documents: {
         Row: { id: string; organization_id: string; category: Database['public']['Enums']['accounting_category']; party: string; doc_year: number; file_name: string; kind: Database['public']['Enums']['accounting_document_kind']; whose: Database['public']['Enums']['accounting_whose']; doc_date: string | null; number: string; what: string; amount: number | null; status_word: string; contact_id: string | null; policy_id: string | null; contract_id: string | null; storage_path: string; mime_type: string | null; size: number; sha256: string; source: 'email' | 'upload'; email_id: string | null; attachment_id: string | null; original_name: string; uploaded_by: string | null; status: 'new' | 'filed' | 'review'; sure: boolean; claude_note: string; created_at: string; updated_at: string }
         Insert: { id?: string; organization_id: string; category?: Database['public']['Enums']['accounting_category']; party?: string; doc_year: number; file_name: string; kind?: Database['public']['Enums']['accounting_document_kind']; whose?: Database['public']['Enums']['accounting_whose']; doc_date?: string | null; number?: string; what?: string; amount?: number | null; status_word?: string; contact_id?: string | null; policy_id?: string | null; contract_id?: string | null; storage_path: string; mime_type?: string | null; size?: number; sha256: string; source?: 'email' | 'upload'; email_id?: string | null; attachment_id?: string | null; original_name?: string; uploaded_by?: string | null; status?: 'new' | 'filed' | 'review'; sure?: boolean; claude_note?: string; created_at?: string; updated_at?: string }
@@ -972,6 +1008,8 @@ export type Database = {
       task_next_due: { Args: { p_due: string; p_every: number; p_unit: string; p_days?: number[] }; Returns: string | null }
       accounting_sync_contract_tasks: { Args: { p_org?: string | null }; Returns: number }
       accounting_sync_all_tasks: { Args: { p_org?: string | null }; Returns: number }
+      ls_report_rows: { Args: { p_org: string; p_from: string; p_to: string; p_shops: string[]; p_vendor_ids?: string[] | null; p_category_prefixes?: string[] | null }; Returns: { item_id: string; system_sku: string; upc: string; vendor_item_id: string; custom_sku: string; manufacturer_sku: string; description: string; default_cost: number | null; category_path: string; default_vendor_id: string; vendor_name: string; archived: boolean; item_type: string; qoh: Json; sold: Json; sold_total: number; last_sold: string | null }[] }
+      ls_categories: { Args: { p_org: string }; Returns: { category_path: string; items: number }[] }
       accounting_apply_contact_filing: { Args: { p_contact: string }; Returns: string[] }
       accounting_document_folders: { Args: { p_org: string }; Returns: { category: Database['public']['Enums']['accounting_category']; party: string; doc_year: number; n: number; review_n: number }[] }
       accounting_document_name: { Args: { p_date: string; p_whose: string; p_party: string; p_number: string; p_what: string; p_amount: number | null; p_status: string; p_ext: string }; Returns: string }
