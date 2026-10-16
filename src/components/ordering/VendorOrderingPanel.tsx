@@ -1,3 +1,5 @@
+import { ROUTES } from '@/lib/constants'
+import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { X } from 'lucide-react'
@@ -50,6 +52,7 @@ export function VendorOrderingPanel({ vendor, assignedBuyerId, canEdit, classNam
             <FlagButtons vendor={vendor} assignedBuyerId={assignedBuyerId} />
             <SalesReportUpload vendor={vendor} onSaved={(used) => { void report.refetch(); if (!used) setOpen(true) }} />
             {report.data ? <Button size="sm" onClick={() => setOpen(true)}>Suggested order</Button> : null}
+            <Link to={`${ROUTES.salesReports}?vendor=${vendor.id}`} className="inline-flex h-8 items-center rounded-lg border border-stone-200 px-2.5 text-xs font-medium text-stone-700 hover:bg-stone-50" title="Run a sales report from Lightspeed for this vendor">Reports</Link>
           </div>
         ) : null}
       </FoldSection>
