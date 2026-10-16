@@ -2289,3 +2289,32 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   16,794). Vendors: 510 Active in LS, 207 Inactive in LS, 34 No items in LS, 24 not tied to an LS vendor. 7,995 items
   have no vendor in LS (238 of them active). 10 LS vendors with items are not tied to any VMS vendor (238 items, e.g.
   CROSSMAN, ESCO TRADING - DANDYLINES WWD, REEF SPORT SUNCARE - SANDBOXX). Taylor Brands: 8 archived items, Inactive.
+
+## Oct 16 — Reports from Lightspeed, replacing LS Analytics (Dana)
+- LS Analytics costs $75 a store a month; VMS replaces it by reading sales and stock straight from the Lightspeed
+  API. Analytics stays on until the new reports are proven ("until we are sure everything is working correctly").
+- **Sales Reports page** (the placeholder in the menu becomes real) with the options: date range (last 12 months by
+  default), one or two vendors (Paricon plus Slippery Racer), one or more categories (narrow a vendor to a category, or
+  a full category across every vendor to catch the same item ordered from two vendors and to decide when to move an
+  item from one vendor to another), and stores. A **Reports** button on the vendor's ordering card opens the page with
+  that vendor picked. Saved runs (one click next time).
+- Every run follows **Sales Report Formatting Spec v49** (`docs/sales-report-spec.md`; sample
+  `8-29-26_FOOTWEAR-HIKING_SALES_v2.xlsx`: Size Summary, By Category, By Vendor, Overlap, Flags, Active, No Data,
+  Archived, Archived – No Sales (Ignored), Recommendations). File names carry the initials of whoever runs the report.
+  The Size Summary merges spelling variants of one size ("SZ 8", "SIZE 8") into one row and notes the variants.
+- Stores: the connected LS account has SLS, SLM and GS. SLH is a separate LS account, not connected, left out for now.
+  Three ways to run: all stores together (one Sold and one In Stock column summed), one store, or all stores separated
+  (a Sold column per store, then an In Stock column per store, then the combined Need).
+- Vendor runs and inventory checklists are filed under the vendor; category runs under Reports.
+- **Inventory checklists** follow **Inventory Report Formatting Spec v15** (`docs/inventory-report-spec.md`): System ID,
+  UPC, Vendor, Description, Category, In Stock, then blank Floor (peach), Back Stock (blue), Bins (green), Total
+  (yellow), sorted category then description, every item included, named "M-D-YY NAME INVENTORY". Employees count on
+  paper, then enter the totals in VMS on that checklist; **Send to LS** creates a new Inventory Count in Lightspeed's
+  Inventory Counts module (API: InventoryCount with a name and shop, InventoryCountItem per item) so missing items
+  and shrinkage show in LS before Dana reconciles there. VMS never reconciles. The count's name defaults to the
+  checklist's name and store and can be changed before sending (Dana: keep the defaults for continuity, allow the
+  outlier). Two new ticks under Settings → Users: **Enter inventory counts** and **Send counts to LS**. Sending needs
+  the full-access LS sign-in (the current connection does not record its access; reconnect if needed).
+- Order of build: 1) Sales Reports page with vendor and category reports from LS, store choices, Reports button;
+  2) inventory checklist, count entry, Send to LS, the two ticks. Dana's first use: kids shirts (long and short
+  sleeve) by size across stores, sizes 5, 6, 6x, 7, 8, 10, 12 and XS–XL where a vendor uses letters after 6x.
