@@ -2195,3 +2195,12 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - Oct 16, no extra clicking (Dana): "If I have a task that needs to be done I wanna be able to click on it and have it take me
   directly to what I need to do." A proof request showed "see the mail" and opened the whole billing@ inbox; it now opens
   her email. Every "They asked" (overview, Insurance list, the person's page) opens the email itself. Rule in CLAUDE.md.
+
+## Oct 16 — Accounting document folders and file names (Dana)
+- Folders by the year the document is about: Contracts / SCE Licensing / 2027, Insurance / Cal Fair Plan / 2026.
+- File name: date, who paid or whose (SLS = Shaver Lake Sports, P&S = Powell & Son Properties), the other party and
+  number, what it is, the amount when there is one, the kind of paper. Examples:
+  "2026-09-25 P&S Cal Fair COM 0301476591 Sports Store building – premium $4,472.00 paid.pdf",
+  "2026-10-14 SLS SCE 9.4764 Happy Camper store license 2028-2032 – executed.pdf".
+- Documents uploaded in chat cannot be filed from a cloud session; Dana emails them to billing@ and the filing step
+  (plan §4, next) files them with the rest of the old mail.
