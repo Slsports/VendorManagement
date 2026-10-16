@@ -2200,7 +2200,7 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - Folders by the year the document is about: Contracts / SCE Licensing / 2027, Insurance / Cal Fair Plan / 2026.
 - File name: date, who paid or whose (SLS = Shaver Lake Sports, P&S = Powell & Son Properties), the other party and
   number, what it is, the amount when there is one, the kind of paper. Examples:
-  always abbreviated, no dash, whole dollars, Title Case for the property (Dana, Oct 16):
+  always abbreviated, no dash, the amount as paid (whole dollars when there are no cents, $6045.31 when there are), Title Case for the property (Dana, Oct 16):
   "2026-09-25 P&S Cal Fair COM 0301476591 SLS Building $4472 paid.pdf",
   "2026-10-14 SLS SCE 9.4764 Happy Camper License 2028-2032 executed.pdf".
 - Documents uploaded in chat cannot be filed from a cloud session; Dana emails them to billing@ and the filing step
