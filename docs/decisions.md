@@ -2213,3 +2213,5 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   2027, Dana, with the hold note). No Create PO task or "add our PO" email for papers more than 30 days old or for vendors
   on hold / do not order (the check goes to Dana). The Ty Create PO task from the Oct 15 spreadsheet re-check (Charlene's
   July 31 re-order sheet) was closed.
+- Oct 16, check page (Dana): the list of issues under the summary repeated the table below it without the product names.
+  The summary is now one paragraph and the table follows; the list shows only when there is no table.
