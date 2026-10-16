@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildFinalOrder, finalOrderEmail, isFieldRow, itemOf, qtyIn, rowQtys } from './finalOrder'
+import { buildFinalOrder, finalOrderEmail, isFieldRow, itemOf, priceFlag, qtyIn, rowQtys } from './finalOrder'
 
 const lines = [
   { vendor_item_id: 'BG81', description: 'Air Pad', quantity: 8, unit_cost: 9.5 },
@@ -43,5 +43,22 @@ describe('the final confirmed order (Oct 16)', () => {
     expect(email).toContain("Please reply to confirm this order. If any quantities don't fit your case packs, let me know so I can adjust and then we can finalize the order.")
     expect(email).toContain('- GZ37 Stars & Stripes Gazebo: 24 at $50.00')
     expect(email).not.toContain('Freight')
+  })
+})
+
+describe('prices (Oct 16)', () => {
+  it('flags their price more than 20% over our last cost, and asks only when ticked', () => {
+    const r = { what: 'BG81 Air Pad', ours: '18', theirs: '18', ok: true, note: null, our_cost: 12, their_price: 15.95 }
+    expect(priceFlag(r)).toEqual({ theirs: 15.95, ours: 12 })
+    expect(priceFlag({ ...r, their_price: 14 })).toBeNull()
+    expect(priceFlag({ ...r, our_cost: null })).toBeNull()
+    expect(buildFinalOrder([r], {}, lines).changes).toEqual([])
+    const asked = buildFinalOrder([r], { 'BG81 Air Pad': { askPrice: true } }, lines)
+    expect(asked.changes[0]).toEqual({ item: 'BG81', name: 'Air Pad', text: 'your price $15.95 is quite a bit higher than we paid last time. Can you check it?' })
+    expect(asked.items[0]?.cost).toBe(15.95)
+  })
+  it('never puts our cost on the final order', () => {
+    const r = { what: 'ZZ9 Lantern', ours: '6 at $10.00', theirs: '6', ok: true, note: null, our_cost: 10, their_price: null }
+    expect(buildFinalOrder([r], {}, []).items[0]?.cost).toBeNull()
   })
 })

@@ -14,7 +14,7 @@ describe('sales report spreadsheets', () => {
     ] }])
     expect(s?.column).toBe('order')
     expect(s?.items.map((x) => [x.vid, x.order])).toEqual([['BG-81', 18], ['983', 12], ['555', null]])
-    expect(sheetForClaude(s!).split('\n')[1]).toBe('BG-81\tDUFFEL BAG 81\t20\t2\t18\t18')
+    expect(sheetForClaude(s!).split('\n')[1]).toBe('BG-81\tDUFFEL BAG 81\t20\t2\t18\t18\t9.5')
   })
   it('falls back to Need when Order is empty, and skips sheets without the item header', () => {
     const s = readSalesSheet([
@@ -40,5 +40,17 @@ describe('a report with Order filled on one tab (WFS, Oct 15)', () => {
     expect(s?.sheet).toBe('By Category')
     expect(s?.column).toBe('order')
     expect(s?.items.map((x) => x.order)).toEqual([18, null])
+  })
+})
+
+describe('the cost from another tab (WFS By Description, Oct 16)', () => {
+  it('fills each ordered item\'s last cost from the tab that has a Cost column', () => {
+    const s = readSalesSheet([
+      { name: 'By Category', rows: [['VENDOR ID', 'DESCRIPTION', 'SOLD', 'IN STOCK', 'NEED', 'ORDER'], ['BG-81', 'AIR PAD', 20, 2, 18, 18], ['983', 'MATTRESS', 14, 2, 12, 12]] },
+      { name: 'By Description', rows: [['VENDOR ID', 'DESCRIPTION', 'COST', 'SOLD'], ['BG81', 'AIR PAD', 13.25, 20], ['', 'MATTRESS', 24.5, 14]] },
+    ])
+    expect(s?.sheet).toBe('By Category')
+    expect(s?.items.map((x) => [x.vid, x.cost])).toEqual([['BG-81', 13.25], ['983', 24.5]])
+    expect(sheetForClaude(s!).split('\n')[0]).toContain('LAST COST')
   })
 })

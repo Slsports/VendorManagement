@@ -11,7 +11,7 @@ import { listOrders } from '@/services/orders'
 import { listPeople } from '@/services/reviews'
 import { downloadVendorFile } from '@/services/lines'
 import { CHECK_KIND_LABEL, CHECK_TITLE, checkStatusText, priceIn } from '@/lib/orderChecks'
-import { buildFinalOrder, finalOrderEmail, isFieldRow, rowHandled, rowQtys, type ReadLine, type RowEdit } from '@/lib/finalOrder'
+import { buildFinalOrder, finalOrderEmail, isFieldRow, priceFlag, rowHandled, rowQtys, type ReadLine, type RowEdit } from '@/lib/finalOrder'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
 import { money as formatCurrency } from '@/lib/freight'
@@ -29,6 +29,8 @@ const COLUMNS = {
   ours: (r: CheckRow) => r.ours,
   theirs: (r: CheckRow) => r.theirs,
   ok: (r: CheckRow) => r.ok,
+  our_cost: (r: CheckRow) => r.our_cost ?? null,
+  their_price: (r: CheckRow) => r.their_price ?? null,
 }
 
 /**
@@ -67,6 +69,7 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
   const readingLines = ((c.reading as { lines?: ReadLine[] } | null)?.lines ?? [])
   const finalMode = c.kind === 'confirmation' && rows.some((r) => !isFieldRow(r))
   const editable = finalMode && canEdit && c.status === 'to_review'
+  const hasPrices = rows.some((r) => r.our_cost != null || r.their_price != null)
   const final = finalMode ? buildFinalOrder(rows, edits, readingLines, newItems) : null
   const firstName = /^Hi ([^,\n]+),/.exec(c.draft_body ?? '')?.[1]?.trim() ?? null
   const finalEmail = final ? finalOrderEmail({ firstName: firstName && firstName.toLowerCase() !== 'there' ? firstName : null, docNumber: c.doc_number, po: c.order?.po_number ?? c.po_number, items: final.items, changes: final.changes }) : null
@@ -216,6 +219,8 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
                 <SortHeader label="What" sortKey="what" sort={sort} onSort={toggle} className="px-3 py-2" />
                 <SortHeader label={c.kind === 'invoice' ? 'Confirmation' : c.against?.startsWith('Sales report') ? 'Sales report' : 'We ordered'} sortKey="ours" sort={sort} onSort={toggle} className="px-3 py-2" />
                 <SortHeader label={c.kind === 'invoice' ? 'Invoice' : 'Confirmation'} sortKey="theirs" sort={sort} onSort={toggle} className="px-3 py-2" />
+                {hasPrices ? <SortHeader label={c.against?.startsWith('Sales report') ? 'Last cost (ours)' : 'Our cost'} sortKey="our_cost" sort={sort} onSort={toggle} className="px-3 py-2" /> : null}
+                {hasPrices ? <SortHeader label="Their price" sortKey="their_price" sort={sort} onSort={toggle} className="px-3 py-2" /> : null}
                 <SortHeader label="OK" sortKey="ok" sort={sort} onSort={toggle} className="px-3 py-2" />
                 {finalMode ? <th className="px-3 py-2">Final</th> : null}
               </tr>
@@ -226,12 +231,21 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
                 const e = edits[r.what]
                 const q = item ? rowQtys(r, e) : null
                 const handled = item && !r.ok && rowHandled(r, e)
+                const flag = item ? priceFlag(r, readingLines) : null
                 return (
                 <tr key={i} className={cn(e?.removed ? 'bg-stone-50 text-stone-400 line-through' : handled ? 'bg-green-50/70' : r.ok ? '' : 'bg-red-50/60')}>
                   <td className="px-3 py-2 font-medium text-stone-900">{r.what}{r.note ? <span className="block text-xs font-normal text-stone-500">{r.note}</span> : null}
+                    {flag ? (
+                      <span className="mt-1 block text-xs font-normal text-amber-700">
+                        Their price is {Math.round((flag.theirs / flag.ours - 1) * 100)}% above what we paid last time.
+                        {editable && !e?.removed ? <label className="ml-2 inline-flex items-center gap-1 text-stone-700"><input type="checkbox" checked={!!e?.askPrice} onChange={(ev) => void edit(r.what, { ...(e ?? {}), askPrice: ev.target.checked || undefined })} className="size-3.5 accent-brand" /> Ask about price</label> : e?.askPrice ? ' Asked in the email.' : null}
+                      </span>
+                    ) : null}
                     {!r.ok && canEdit && c.vendor && c.status === 'to_review' ? <button type="button" onClick={() => setUsual({ what: r.what, price: priceIn(r.theirs)?.toString() ?? '', per: 'each' })} className="mt-1 block text-xs font-normal text-brand hover:underline">This is a usual charge for this vendor</button> : null}</td>
                   <td className="px-3 py-2 text-stone-700">{r.ours ?? '—'}</td>
                   <td className="px-3 py-2 text-stone-700">{r.theirs ?? '—'}</td>
+                  {hasPrices ? <td className="px-3 py-2 text-stone-500">{r.our_cost != null ? formatCurrency(r.our_cost) : ''}</td> : null}
+                  {hasPrices ? <td className={cn('px-3 py-2', flag ? 'font-medium text-amber-700' : 'text-stone-700')}>{r.their_price != null ? formatCurrency(r.their_price) : ''}</td> : null}
                   <td className="px-3 py-2">{r.ok || (e?.ok && !e.removed) ? <Check className="size-4 text-green-600" aria-label="Matches" /> : <X className="size-4 text-red-600" aria-label="Different" />}</td>
                   {finalMode ? (
                     <td className="px-3 py-2 no-underline">

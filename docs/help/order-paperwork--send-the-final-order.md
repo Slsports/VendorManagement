@@ -1,7 +1,7 @@
 ---
 title: Fix a confirmation and send the final order
 section: Order paperwork
-keywords: final order, confirmed order, change quantity, remove item, delete item, OK, tick, case pack, what changed, confirmation, send back, final qty
+keywords: final order, price, last cost, their price, ask about price, higher price, confirmed order, change quantity, remove item, delete item, OK, tick, case pack, what changed, confirmation, send back, final qty
 who: Admin, managers and buyers
 ---
 When a vendor's confirmation is not quite right, fix it right in the table and send them the final order. The email lists what changed, each item with its number and name, then the whole final order.
@@ -19,6 +19,9 @@ When a vendor's confirmation is not quite right, fix it right in the table and s
 ## Good to know
 - The **Final** box starts at the confirmation's number. For an item they left off, it starts at what we ordered, and the email asks them to add it.
 - The email says: "Please reply to confirm this order. If any quantities don't fit your case packs, let me know so I can adjust and then we can finalize the order."
+- **Last cost (ours)** is what we paid last time from your sales report, with our shipping included, so it is only for you to compare. **Their price** is from the confirmation. A different price is never an issue on its own.
+- When their price is more than 20% above what we paid last time, the row gets a yellow note. Tick **Ask about price** and the email asks: "your price $… is quite a bit higher than we paid last time. Can you check it?" Our cost is never in the email.
+- The final order in the email shows the vendor's price.
 - Rows like Total, Freight and Terms have no **Final** box; they are part of the summary.
 - When it is sent, the final order becomes the order's lines in VMS, so the invoice is checked against what you agreed.
 - Nothing is sent until you press **Send**.

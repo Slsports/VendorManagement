@@ -2236,3 +2236,9 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   and name), then Dana's line "Please reply to confirm this order. If any quantities don't fit your case packs, let me
   know so I can adjust and then we can finalize the order.", then the whole final order. Once sent, the final order
   becomes the order's lines.
+- Oct 16, prices on confirmation checks (Dana: the cost is in the sales report, on By Description; "there's no guarantees
+  about what we're going to pay this time … our shipping costs are included"): the report's cost is read from any tab and
+  shown as **Last cost (ours)** next to **Their price** from the confirmation; a price difference is never an issue. Their
+  price more than 20% above our last cost gets a yellow note and an **Ask about price** box; ticked, the email says "your
+  price $… is quite a bit higher than we paid last time. Can you check it?". Our cost never goes in the email; the final
+  order shows the vendor's price. Dom's WFS check re-run: 48 of 53 rows have our cost, one flagged (XHB-020).

@@ -2,7 +2,7 @@
 // the rows Claude compares a confirmation with when there is no order (Dana, Oct 13). Hand-made reports with the same
 // headers work too. Pure, so it can be tested.
 
-export interface SheetItem { vid: string; desc: string; upc: string; sold: number | null; stock: number | null; need: number | null; order: number | null }
+export interface SheetItem { vid: string; desc: string; upc: string; sold: number | null; stock: number | null; need: number | null; order: number | null; cost: number | null }
 export interface SalesSheet { items: SheetItem[]; column: 'order' | 'need'; sheet: string }
 
 const norm = (v: unknown) => String(v ?? '').trim().toUpperCase().replace(/\s+/g, ' ')
@@ -19,8 +19,10 @@ function headerOf(row: unknown[]): Record<keyof SheetItem, number> | null {
   const cols = {
     vid: find(/^(VENDOR ID|VENDOR ITEM|VID|ITEM ?#|STYLE|SKU)$/), desc: find(/^(DESCRIPTION|ITEM|ITEM NAME|NAME)$/), upc: find(/^UPC$/),
     sold: find(/^SOLD$/), stock: find(/^(IN STOCK|QOH|ON HAND)$/), need: find(/^NEED$/), order: find(/^(ORDER|ORDER QTY|QTY TO ORDER)$/),
+    cost: find(/^(COST|UNIT COST|AVG COST|AVERAGE COST|LAST COST|DEFAULT COST)$/),
   }
-  if ((cols.need < 0 && cols.order < 0) || (cols.vid < 0 && cols.desc < 0)) return null
+  // an item tab needs NEED or ORDER; a tab with only COST is read for its costs (the By Description tab)
+  if ((cols.need < 0 && cols.order < 0 && cols.cost < 0) || (cols.vid < 0 && cols.desc < 0)) return null
   return cols
 }
 
@@ -30,13 +32,22 @@ function headerOf(row: unknown[]): Record<keyof SheetItem, number> | null {
  * column when anything is typed in it, else Need.
  */
 export function readSalesSheet(sheets: { name: string; rows: unknown[][] }[]): SalesSheet | null {
-  const all = sheets.map(readOneSheet).filter((x): x is SalesSheet => !!x)
-  if (!all.length) return null
+  const all = sheets.map(readOneSheet).filter((x): x is SalesSheet & { hasQty: boolean } => !!x)
+  const withQty = all.filter((x) => x.hasQty)
+  if (!withQty.length) return null
   const ordered = (x: SalesSheet) => x.items.filter((i) => i.order !== null && i.order !== 0).length
-  return all.reduce((best, x) => (ordered(x) > ordered(best) ? x : best), all[0]!)
+  const { hasQty: _, ...best } = withQty.reduce((b, x) => (ordered(x) > ordered(b) ? x : b), withQty[0]!)
+  // the cost is often on another tab (Dana, Oct 16: WFS has it on By Description, the column after Description)
+  const costs = new Map<string, number>()
+  const keys = (i: { vid: string; upc: string; desc: string }) => [i.vid && `v:${key(i.vid)}`, i.upc && `u:${key(i.upc)}`, i.desc && `d:${key(i.desc)}`].filter(Boolean) as string[]
+  for (const sh of all) for (const i of sh.items) if (i.cost !== null) for (const k of keys(i)) if (!costs.has(k)) costs.set(k, i.cost)
+  const items = best.items.map((i) => (i.cost !== null ? i : { ...i, cost: keys(i).map((k) => costs.get(k)).find((c) => c !== undefined) ?? null }))
+  return { ...best, items }
 }
 
-function readOneSheet(s: { name: string; rows: unknown[][] }): SalesSheet | null {
+const key = (v: string) => v.toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^0+/, '')
+
+function readOneSheet(s: { name: string; rows: unknown[][] }): (SalesSheet & { hasQty: boolean }) | null {
   const at = s.rows.slice(0, 15).findIndex((r) => headerOf(r) !== null)
   if (at < 0) return null
   const c = headerOf(s.rows[at]!)!
@@ -47,15 +58,16 @@ function readOneSheet(s: { name: string; rows: unknown[][] }): SalesSheet | null
     const desc = String(cell(r, c.desc) ?? '').trim()
     if (!vid && !desc) continue
     if (/^(GRAND )?TOTAL\b/i.test(String(r[0] ?? '')) || /^(GRAND )?TOTAL\b/i.test(desc)) continue
-    items.push({ vid, desc, upc: String(cell(r, c.upc) ?? '').trim(), sold: num(cell(r, c.sold)), stock: num(cell(r, c.stock)), need: num(cell(r, c.need)), order: num(cell(r, c.order)) })
+    items.push({ vid, desc, upc: String(cell(r, c.upc) ?? '').trim(), sold: num(cell(r, c.sold)), stock: num(cell(r, c.stock)), need: num(cell(r, c.need)), order: num(cell(r, c.order)), cost: num(cell(r, c.cost)) })
   }
   if (!items.length) return null
-  return { items, column: items.some((x) => x.order !== null && x.order !== 0) ? 'order' : 'need', sheet: s.name }
+  if (c.need < 0 && c.order < 0 && !items.some((x) => x.cost !== null)) return null
+  return { items, column: items.some((x) => x.order !== null && x.order !== 0) ? 'order' : 'need', sheet: s.name, hasQty: c.need >= 0 || c.order >= 0 }
 }
 
 /** The rows worth showing Claude: ordered (or needed) items first, then the rest, at most `max`. */
 export function sheetForClaude(s: SalesSheet, max = 500): string {
   const qty = (x: SheetItem) => (s.column === 'order' ? x.order : x.need) ?? 0
   const rows = [...s.items].sort((a, b) => Number(qty(b) > 0) - Number(qty(a) > 0)).slice(0, max)
-  return ['VENDOR ID\tDESCRIPTION\tSOLD\tIN STOCK\tNEED\tORDER', ...rows.map((x) => [x.vid, x.desc, x.sold ?? '', x.stock ?? '', x.need ?? '', x.order ?? ''].join('\t'))].join('\n')
+  return ['VENDOR ID\tDESCRIPTION\tSOLD\tIN STOCK\tNEED\tORDER\tLAST COST', ...rows.map((x) => [x.vid, x.desc, x.sold ?? '', x.stock ?? '', x.need ?? '', x.order ?? '', x.cost ?? ''].join('\t'))].join('\n')
 }
