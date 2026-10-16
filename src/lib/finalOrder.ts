@@ -34,7 +34,10 @@ function lineFor(what: string, lines: ReadLine[]): ReadLine | null {
 /** Item number and name for a row: from the confirmation's line, else split from the row's text. */
 export function itemOf(r: { what: string }, lines: ReadLine[]): { item: string; name: string } {
   const l = lineFor(r.what, lines)
-  const what = r.what.replace(/\s*\(matched to [^)]*\)\s*$/i, '').trim()
+  // "(matched to …)" / "(confirmation: …)" notes are not part of the name; "(no ID)" means there is no item number
+  const what = r.what.replace(/\s*\((matched to|confirmation:|report id)[^)]*\)\s*$/i, '').trim()
+  const noId = /^\(no (vendor )?id\)\s*/i.exec(what)
+  if (noId) return { item: '', name: what.slice(noId[0].length).trim() }
   if (l?.vendor_item_id) {
     const rest = what.slice(what.toUpperCase().indexOf(l.vendor_item_id.toUpperCase()) + l.vendor_item_id.length).trim()
     return { item: l.vendor_item_id, name: (l.description || rest).trim() }

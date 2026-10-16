@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildFinalOrder, finalOrderEmail, isFieldRow, qtyIn, rowQtys } from './finalOrder'
+import { buildFinalOrder, finalOrderEmail, isFieldRow, itemOf, qtyIn, rowQtys } from './finalOrder'
 
 const lines = [
   { vendor_item_id: 'BG81', description: 'Air Pad', quantity: 8, unit_cost: 9.5 },
@@ -26,6 +26,8 @@ describe('the final confirmed order (Oct 16)', () => {
     expect(isFieldRow({ what: 'BG81 Air Pad' })).toBe(false)
     expect(rowQtys(rows[3]!, undefined).final).toBe(12)
     expect(rowQtys(rows[0]!, { ok: true }).final).toBe(8)
+    expect(itemOf({ what: '(no ID) Umbrella for chair GREEN' }, lines)).toEqual({ item: '', name: 'Umbrella for chair GREEN' })
+    expect(itemOf({ what: 'X-LITE ultra lite bag (confirmation: X-LITE GREY/BLACK)' }, lines)).toEqual({ item: 'X-LITE', name: 'ultra lite bag' })
   })
   it('lists each change with the item number and name, and the whole final order', () => {
     const { items, changes } = buildFinalOrder(rows, { 'BG81 Air Pad': { qty: 18 }, '983 Self Inflating Mattress': { ok: true }, 'QAC-ROCKER Rocker Chair': { removed: true } }, lines)
