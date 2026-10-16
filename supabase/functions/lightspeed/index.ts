@@ -130,9 +130,9 @@ async function syncVendors(db: SupabaseClient, org: string) {
   return { vendors: rows.length, matched: matched ?? 0 }
 }
 
-// LS allows about one request a second; a run reads for about 45 seconds (a longer call holds up the other scheduled
-// calls in pg_net) and keeps its place for the next one.
-const SCAN_BUDGET_MS = 45_000
+// LS allows about one request a second; a run reads for about 25 seconds (on Oct 16 the other scheduled calls waited
+// in pg_net while a 100-second run went) and keeps its place for the next one.
+const SCAN_BUDGET_MS = 25_000
 const SCAN_PAUSE_MS = 600
 const SCAN_EVERY_DAYS = 7
 
