@@ -2243,3 +2243,10 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   and name), then Dana's line "Please reply to confirm this order. If any quantities don't fit your case packs, let me
   know so I can adjust and then we can finalize the order.", then the whole final order. Once sent, the final order
   becomes the order's lines.
+- Oct 16, 11:40–12:10 UTC, **database outage**: the Supabase project (Nano compute, no add-on) reported db, REST and
+  storage unhealthy; simple reads waited 100+ s on disk (wait event DataFileRead), no lock waits, few connections.
+  The `accounting-file` job had run every minute since 07:30 (3,000+ emails, 628 papers filed, $1.67). Pausing it and
+  cancelling the diagnostic scans brought the project back in about 90 s; restarting it every 2 minutes took the project
+  down again within a minute; paused again at 12:08 and it recovered. **The filing job stays paused** until Dana
+  checks the Disk IO budget graph (Supabase dashboard → Reports → Database) and decides on the compute add-on
+  (Micro, about $10 a month); `setup-mail-cron.mjs` now schedules it every 5 minutes, not every minute.

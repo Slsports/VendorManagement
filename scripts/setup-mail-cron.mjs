@@ -60,7 +60,8 @@ if (!args.includes('--no-schedule')) {
   await query(`select cron.schedule('supplies', ${lit(every)}, ${lit(supplyCall)})`)
   await query(`select cron.schedule('contacts-learn', ${lit(every)}, ${lit(contactsCall)})`)
   await query(`select cron.schedule('freight-quotes', ${lit(every)}, ${lit(quotesCall)})`)
-  await query(`select cron.schedule('accounting-file', ${lit(every)}, ${lit(accountingCall)})`)
+  // every 5 minutes, not every minute: on Oct 16 the Nano database fell over (disk reads of 100+ s) while it ran each minute
+  await query(`select cron.schedule('accounting-file', '*/5 * * * *', ${lit(accountingCall)})`)
   console.log(`gmail-sync, order-check, task-reminders, sent-orders, supplies, contacts-learn and freight-quotes scheduled (${every})`)
 }
 if (args.includes('--run-now')) {
