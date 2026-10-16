@@ -2148,3 +2148,5 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   can be let in later with an "accounting" tick, not admin.
 - The Gmail moves into Workspace as billing@shaverlakesports.com (import + forward) so VMS can read it. Build starts
   once the mail is flowing.
+- Accounting also gets a **contacts list**: the people Dana deals with in that mail (company, person, role, category,
+  how to reach them), one light card each, seeded from the mail as proposals she confirms.

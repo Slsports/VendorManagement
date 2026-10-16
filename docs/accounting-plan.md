@@ -33,6 +33,14 @@ shows what she is missing. Only she sees it; later she may let one more person i
   email they came from. Unsure files go to a review pile; nothing is dropped.
 - A **drop box** page: drag folders of files from Dana's computer (the downloaded backlog); they are filed the same way.
 
+## 4b. Contacts (Dana, Oct 16)
+- `accounting_contacts`: company, person, role (agent, CPA, banker, adjuster, …), category (taxes, insurance, banking,
+  donations, contracts, accounting firm, bills, other), emails, phones, notes, last contact. One simple card each, far
+  lighter than the vendor page: who they are, how to reach them, the mail with them, their files, open tasks.
+- Seeded from the billing@ mail: every sender/recipient that is not bulk becomes a proposed contact (review pile, same as
+  vendor sender proposals), with company guessed from the email domain and signature. Dana confirms or merges.
+- The category tags in §3 come from the contact, so filing and views follow the contact's category.
+
 ## 5. Bills that are not vendor invoices
 - `accounting_bills`: payee, category, amount, due date, paid date, how paid, file, email, notes. Created from emails
   when the reader finds a bill; editable; "Paid" marks it. A Due list like the Payments page.
@@ -47,7 +55,7 @@ shows what she is missing. Only she sees it; later she may let one more person i
 
 ## 7. Order of build
 1. Mailbox row + flag + menu entry + RLS (migration, tests, types, Settings → Users tick).
-2. Accounting mail views and sender categories.
+2. Accounting mail views, contacts list with proposals from the mail, sender categories.
 3. Filing into the folder tree + drop box.
 4. Bills list.
 5. Tasks, auto-made tasks, home page, calendar.
