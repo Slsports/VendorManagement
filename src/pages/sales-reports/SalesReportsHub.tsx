@@ -94,11 +94,11 @@ export default function SalesReportsHub() {
           <div className="space-y-4">
             <FormField label="Report" htmlFor="r-kind">
               <Select id="r-kind" value={p.kind} onChange={(e) => set('kind', e.target.value as ReportParams['kind'])}>
-                <option value="vendor">Vendor report (one vendor, or two side by side)</option>
+                <option value="vendor">Vendor report (one vendor, or several side by side)</option>
                 <option value="category">Category report (every vendor in the category)</option>
               </Select>
             </FormField>
-            <VendorPick vendors={vendors.data ?? []} value={p.vendor_ids} max={p.kind === 'vendor' ? 2 : 10} onChange={(v) => set('vendor_ids', v)} label={p.kind === 'vendor' ? 'Vendor (up to two)' : 'Only these vendors (optional)'} />
+            <VendorPick vendors={vendors.data ?? []} value={p.vendor_ids} onChange={(v) => set('vendor_ids', v)} label={p.kind === 'vendor' ? 'Vendor (one or several)' : 'Only these vendors (optional)'} />
             <CategoryPick categories={categories.data ?? []} value={p.categories} onChange={(v) => set('categories', v)} label={p.kind === 'vendor' ? 'Only these categories (optional)' : 'Category'} />
           </div>
           <div className="space-y-4">
@@ -179,7 +179,7 @@ function download(file: File) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000)
 }
 
-function VendorPick({ vendors, value, max, onChange, label }: { vendors: LsVendorChoice[]; value: string[]; max: number; onChange: (v: string[]) => void; label: string }) {
+function VendorPick({ vendors, value, onChange, label }: { vendors: LsVendorChoice[]; value: string[]; onChange: (v: string[]) => void; label: string }) {
   const [q, setQ] = useState('')
   const matches = q.trim() ? vendors.filter((v) => `${v.name} ${v.vendor_name ?? ''}`.toLowerCase().includes(q.trim().toLowerCase())).slice(0, 12) : []
   const chosen = value.map((id) => vendors.find((v) => v.ls_vendor_id === id)).filter((v): v is LsVendorChoice => !!v)
@@ -190,7 +190,7 @@ function VendorPick({ vendors, value, max, onChange, label }: { vendors: LsVendo
           {chosen.map((v) => <li key={v.ls_vendor_id}><Badge tone="brand">{v.vendor_name ?? v.name}<button type="button" onClick={() => onChange(value.filter((x) => x !== v.ls_vendor_id))} className="ml-1 opacity-70 hover:opacity-100" aria-label={`Remove ${v.name}`}>×</button></Badge></li>)}
         </ul>
       ) : null}
-      {value.length < max ? (
+      {(
         <div className="relative">
           <Input id="r-vendor" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Type a vendor name" autoComplete="off" />
           {matches.length ? (

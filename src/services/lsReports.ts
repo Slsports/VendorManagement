@@ -15,7 +15,7 @@ export type StoreMode = 'together' | 'one' | 'separate'
 
 export interface ReportParams {
   kind: 'vendor' | 'category'
-  /** LS vendor ids (one or two for a vendor report; any number, usually none, for a category report). */
+  /** LS vendor ids (one or more for a vendor report; any number, usually none, for a category report). */
   vendor_ids: string[]
   /** LS category paths; an item counts when its category is one of these or under one. */
   categories: string[]

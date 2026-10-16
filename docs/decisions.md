@@ -2327,3 +2327,4 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   under Reports. Lightspeed's "Vendor ID" is the item's vendor number for its default vendor (ItemVendorNums).
 - Oct 16 (Dana), inventory checklists: a **Vendor ID** column next to Description; the vendor id is no longer appended
   to the description. Overlap and Recommendations tabs on category reports are still to come.
+- Oct 16 (Dana): no limit on how many vendors a sales report can hold ("more than 2 vendors just in case").

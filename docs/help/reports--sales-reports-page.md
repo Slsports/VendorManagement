@@ -8,7 +8,7 @@ The **Sales Reports** page builds vendor and category reports straight from Ligh
 
 ## How to
 1. Click **Sales Reports** in the menu, or **Reports** on a vendor's line in the ordering card (the vendor is then already picked).
-2. Choose the report: **Vendor report** for one vendor, or two side by side (Paricon plus Slippery Racer); **Category report** for every vendor in a category, to catch the same item bought from two vendors.
+2. Choose the report: **Vendor report** for one vendor, or several side by side (Paricon plus Slippery Racer); **Category report** for every vendor in a category, to catch the same item bought from two vendors.
 3. Pick the vendor(s) and, if you want, a category to narrow to (WFS winter only). For a category report, pick the category; it includes everything under it.
 4. Choose the stores: **all stores together** (one Sold and one In Stock column), **kept apart** (a Sold and In Stock column per store, then the combined Need), or **one store**.
 5. Pick the period. **Last 12 months** is the default; or a date range.
