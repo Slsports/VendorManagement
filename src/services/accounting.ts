@@ -44,11 +44,14 @@ export interface ContactInput {
   status: ContactStatus
   /** Email addresses, lower-cased; a bare domain (no @) means every address at that company. */
   addresses: string[]
+  /** Their papers: filed into the Accounting folders, or left in the email because they are handled elsewhere (bill.com). */
+  filing: 'file' | 'skip'
+  filing_note: string
 }
 
 /** Create or update a contact and its addresses, then re-match the mail so the conversations follow. */
 export async function saveAccountingContact(organizationId: string, id: string | null, input: ContactInput): Promise<string> {
-  const row = { company: input.company.trim(), person: input.person.trim(), role: input.role.trim(), category: input.category, phones: input.phones.map((p) => p.trim()).filter(Boolean), notes: input.notes.trim(), status: input.status }
+  const row = { company: input.company.trim(), person: input.person.trim(), role: input.role.trim(), category: input.category, phones: input.phones.map((p) => p.trim()).filter(Boolean), notes: input.notes.trim(), status: input.status, filing: input.filing, filing_note: input.filing_note.trim() }
   let contactId = id
   if (contactId) {
     const { error } = await supabase.from('accounting_contacts').update(row).eq('id', contactId)
@@ -73,6 +76,10 @@ export async function saveAccountingContact(organizationId: string, id: string |
     if (error) throw error
   }
   await rematchAccountingMail(organizationId)
+  // the filing rule re-checks the old (Dana, Oct 14): papers come out, or their emails are looked at again
+  const { data: paths, error: ferr } = await supabase.rpc('accounting_apply_contact_filing', { p_contact: contactId })
+  if (ferr) throw ferr
+  if (paths?.length) await supabase.storage.from('accounting-files').remove(paths)
   return contactId
 }
 

@@ -540,9 +540,9 @@ export type Database = {
         Relationships: [{ foreignKeyName: 'accounting_policy_sends_recipient_id_fkey'; columns: ['recipient_id']; isOneToOne: false; referencedRelation: 'accounting_policy_recipients'; referencedColumns: ['id'] }, { foreignKeyName: 'accounting_policy_sends_policy_id_fkey'; columns: ['policy_id']; isOneToOne: false; referencedRelation: 'accounting_policies'; referencedColumns: ['id'] }]
       }
       accounting_contacts: {
-        Row: { id: string; organization_id: string; company: string; person: string; role: string; category: Database['public']['Enums']['accounting_category']; phones: string[]; notes: string; status: 'proposed' | 'confirmed' | 'ignored'; message_count: number; last_contact_at: string | null; merged_into: string | null; created_by: string | null; created_at: string; updated_at: string }
-        Insert: { id?: string; organization_id: string; company?: string; person?: string; role?: string; category?: Database['public']['Enums']['accounting_category']; phones?: string[]; notes?: string; status?: 'proposed' | 'confirmed' | 'ignored'; message_count?: number; last_contact_at?: string | null; merged_into?: string | null; created_by?: string | null; created_at?: string; updated_at?: string }
-        Update: { id?: string; organization_id?: string; company?: string; person?: string; role?: string; category?: Database['public']['Enums']['accounting_category']; phones?: string[]; notes?: string; status?: 'proposed' | 'confirmed' | 'ignored'; message_count?: number; last_contact_at?: string | null; merged_into?: string | null; created_by?: string | null; created_at?: string; updated_at?: string }
+        Row: { id: string; organization_id: string; company: string; person: string; role: string; category: Database['public']['Enums']['accounting_category']; phones: string[]; notes: string; status: 'proposed' | 'confirmed' | 'ignored'; message_count: number; last_contact_at: string | null; merged_into: string | null; created_by: string | null; created_at: string; updated_at: string ; filing: 'file' | 'skip'; filing_note: string }
+        Insert: { id?: string; organization_id: string; company?: string; person?: string; role?: string; category?: Database['public']['Enums']['accounting_category']; phones?: string[]; notes?: string; status?: 'proposed' | 'confirmed' | 'ignored'; message_count?: number; last_contact_at?: string | null; merged_into?: string | null; created_by?: string | null; created_at?: string; updated_at?: string ; filing?: 'file' | 'skip'; filing_note?: string }
+        Update: { id?: string; organization_id?: string; company?: string; person?: string; role?: string; category?: Database['public']['Enums']['accounting_category']; phones?: string[]; notes?: string; status?: 'proposed' | 'confirmed' | 'ignored'; message_count?: number; last_contact_at?: string | null; merged_into?: string | null; created_by?: string | null; created_at?: string; updated_at?: string ; filing?: 'file' | 'skip'; filing_note?: string }
         Relationships: []
       }
       accounting_contact_addresses: {
@@ -935,6 +935,7 @@ export type Database = {
       task_next_due: { Args: { p_due: string; p_every: number; p_unit: string; p_days?: number[] }; Returns: string | null }
       accounting_sync_contract_tasks: { Args: { p_org?: string | null }; Returns: number }
       accounting_sync_all_tasks: { Args: { p_org?: string | null }; Returns: number }
+      accounting_apply_contact_filing: { Args: { p_contact: string }; Returns: string[] }
       accounting_document_folders: { Args: { p_org: string }; Returns: { category: Database['public']['Enums']['accounting_category']; party: string; doc_year: number; n: number; review_n: number }[] }
       accounting_document_name: { Args: { p_date: string; p_whose: string; p_party: string; p_number: string; p_what: string; p_amount: number | null; p_status: string; p_ext: string }; Returns: string }
       accounting_contract_payment_paid: { Args: { p_payment: string; p_paid_on?: string; p_paid_from?: string }; Returns: undefined }

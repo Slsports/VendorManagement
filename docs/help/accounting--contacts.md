@@ -18,3 +18,4 @@ Accounting contacts are the people and companies in the billing@ mail: the accou
 - Same person or company twice? On one card, pick the other under **Same person or company twice?** and click **Merge**. Emails, conversations and counts move over.
 - Ignored contacts stay under **Ignored** and can be brought back. Newsletters and one-off senders are never proposed.
 - When you change a contact's email addresses, every billing@ conversation is matched again, old mail included.
+- **Their papers** on a contact: normally the files they email are filed in Documents. Choose **Leave them in the email** for a company whose invoices are handled elsewhere (Emery Jensen goes to bill.com) and say where; their files then show that note instead of being filed, and any already filed are taken back out.

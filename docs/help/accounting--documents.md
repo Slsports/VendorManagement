@@ -16,6 +16,6 @@ Every paper that comes to billing@ is read and filed on its own into Accounting 
 
 ## Good to know
 - Filing runs every minute, newest mail first, back through the whole mailbox. **File now** on the Documents page looks at the next emails right away.
-- Pictures in signatures, vendor catalogs, flyers and files over 15 MB are left in their email, each with the reason.
+- Pictures in signatures, vendor catalogs, flyers and files over 15 MB are left in their email, each with the reason. So are papers from a contact set to **Leave them in the email** (Emery Jensen invoices live in bill.com).
 - The same paper never gets filed twice: when it arrives again, the email just points at the copy already on file.
 - Deleting a file here does not touch the email; the attachment stays in Gmail and in VMS mail.

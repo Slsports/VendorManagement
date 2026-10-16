@@ -2229,3 +2229,10 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   email. Step 5 (bills) is next.
 - Oct 16, check page (Dana): the list of issues under the summary repeated the table below it without the product names.
   The summary is now one paragraph and the table follows; the list shows only when there is no table.
+- Oct 16 (Dana): Emery Jensen invoices auto-forward from billing@ to bill.com; she pays through the EJ portal by ACH and
+  records the payment in bill.com, which syncs to QBO. So EJ papers stay out of the Accounting folders. Built (0122): a
+  contact's **Their papers** setting (file / leave in the email, with where they are handled); the filing step skips
+  those with the note, and changing it re-checks the old (filed papers come out, or the emails are looked at again).
+  Emery Jensen confirmed as a Bills contact (emeryjensen.com) set to "handled in bill.com". Gmail's own filters could
+  not be read: the Workspace connection is not allowed mailbox settings (scope gmail.settings.basic). The hand-forwards
+  to shaverlakesports1@bill.com (293 since 2023) name the other companies that go there.
