@@ -2227,3 +2227,5 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   "2026-10-14 GS SCE Licensing 9.4764 License 2028-2032 $5724.60 executed.pdf" on the contract; the Hub Fair Plan
   summary email gave a quote, a DIC quote, a summary sheet (the 23 MB policy stayed in the email). About half a cent an
   email. Step 5 (bills) is next.
+- Oct 16, check page (Dana): the list of issues under the summary repeated the table below it without the product names.
+  The summary is now one paragraph and the table follows; the list shows only when there is no table.

@@ -181,7 +181,8 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
         <section className={cn('mb-4 rounded-2xl border p-5', c.result === 'match' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50')}>
           <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-600">Summary</h2>
           <p className="mt-2 whitespace-pre-line text-sm text-stone-900">{c.summary}</p>
-          {issues.length ? (
+          {/* the line-by-line table below shows each item with its name (Dana, Oct 16: the list repeated it) */}
+          {issues.length && !rows.length ? (
             <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-red-900">{issues.map((x, i) => <li key={i}>{x}</li>)}</ul>
           ) : null}
         </section>
