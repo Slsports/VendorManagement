@@ -2161,3 +2161,16 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   after every sync). Each billing@ conversation is matched to its contact (exact address, then company domain) as it
   arrives; changing a contact re-matches everything. First pass over the mail already in: 251 contacts proposed, 8,600
   of 9,537 conversations matched. Migrations 0114, 0115.
+
+## Oct 16 — Accounting is a training program; calendar views; the business summary
+- Dana: the Accounting area should document everything she does so someone else could do it, "if I want to retire and
+  hire someone". So: every task carries its procedure (steps, who to call, which account pays, what to check, where last
+  year's paperwork is); procedures are the handbook, one per job; contacts say what they do for us; trackers hold the
+  facts (policies, bills, deadlines). First worked example: the property insurance guide (Cal Fair + Hudson/Deans & Homer,
+  10 policies, agent Sam Gibbs at Hub International) → Accounting → Insurance tracker, yearly renewal tasks 30 days
+  ahead with the checklist, a Procedures page.
+- Calendar: week, month and year views of accounting tasks, switch at the top.
+- Later (Dana): a detailed summary of what VMS does, "like if someone were wanting to buy the business": a short summary,
+  then each category expanded. Keep the per-area notes in docs so it can be written when asked.
+- Build order: accounting tasks + calendar + procedures + insurance tracker (step 5 moved up), then documents, then bills.
+  Awaiting Dana's go.
