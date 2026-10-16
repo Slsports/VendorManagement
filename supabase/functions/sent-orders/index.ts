@@ -11,7 +11,7 @@
 // went in. Claude reads the vendor, order and items, and the vendor contact it names (saved to Reps & contacts, Orders
 // mail only); the order on file gets the email, or it is added.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
-import * as XLSX from 'npm:xlsx@0.18.5'
+import { readBook } from '../_shared/sheetFile.ts'
 import { CORS, errorResponse, json, serviceClient } from '../_shared/caller.ts'
 import { aiEnabled, isReadableFile, readSentOrder, readServiceOrder, sortSentEmails, type PaperFile, type SentOrderReading, type ServiceOrderReading } from '../_shared/ai.ts'
 import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
@@ -34,8 +34,15 @@ Deno.serve(async (req) => {
     if (!aiEnabled()) return json({ skipped: 'Claude is not set up' })
     const db = serviceClient()
     const started = Date.now()
-    // a run that died while reading: try those again
-    await db.from('emails').update({ order_scan: { result: 'pending' } }).eq('direction', 'out').eq('order_scan->>result', 'reading').lt('order_scan->>at', new Date(Date.now() - 10 * 60_000).toISOString())
+    // a run that died while reading: try those again, but only once (Oct 16: a too-big spreadsheet stopped every run for
+    // hours, retried every 11 minutes); the second time it is set aside as too big
+    const stale = new Date(Date.now() - 10 * 60_000).toISOString()
+    const { data: died } = await db.from('emails').select('id, order_scan').eq('direction', 'out').eq('order_scan->>result', 'reading').lt('order_scan->>at', stale)
+    for (const d of died ?? []) {
+      const tries = Number((d.order_scan as { tries?: number } | null)?.tries ?? 0) + 1
+      if (tries >= 2) await db.from('emails').update({ order_scan: { result: 'too_big', tries, note: 'Reading this email stopped the run twice (a file too big to open)' }, order_scanned_at: new Date().toISOString() }).eq('id', d.id)
+      else await db.from('emails').update({ order_scan: { result: 'pending', tries } }).eq('id', d.id)
+    }
     await db.from('emails').update({ order_scan: null }).eq('direction', 'in').eq('order_scan->>result', 'reading').lt('order_scan->>at', new Date(Date.now() - 10 * 60_000).toISOString())
     // back-check (Dana, Oct 15; the Oct 14 rule): files already in "Our orders" that only show products go to Images
     const body = await req.json().catch(() => ({})) as { refile_order_files?: boolean }
@@ -87,11 +94,12 @@ async function sortStep(db: SupabaseClient) {
 
 async function nextPending(db: SupabaseClient): Promise<Mail | null> {
   // oldest first, so an order is on file before the "add to order" emails that follow it
-  const { data } = await db.from('emails').select(SELECT).eq('order_scan->>result', 'pending').is('order_scanned_at', null).order('received_at', { ascending: true }).limit(1)
+  const { data } = await db.from('emails').select(`${SELECT}, order_scan`).eq('order_scan->>result', 'pending').is('order_scanned_at', null).order('received_at', { ascending: true }).limit(1)
   const m = (data?.[0] ?? null) as unknown as Mail | null
   if (!m) return null
   // claim it: a run that dies leaves it 'reading' for 10 minutes, then it is tried again
-  const { data: claimed } = await db.from('emails').update({ order_scan: { result: 'reading', at: new Date().toISOString() } }).eq('id', m.id).eq('order_scan->>result', 'pending').select('id')
+  const tries = (m as Mail & { order_scan?: { tries?: number } | null }).order_scan?.tries ?? 0
+  const { data: claimed } = await db.from('emails').update({ order_scan: { result: 'reading', at: new Date().toISOString(), tries } }).eq('id', m.id).eq('order_scan->>result', 'pending').select('id')
   return claimed?.length ? m : null
 }
 
@@ -121,11 +129,11 @@ async function bytesOf(db: SupabaseClient, m: Mail, a: Att): Promise<Uint8Array 
 const isSheet = (a: Att) => /\.(xlsx|xlsm|xls|csv)$/i.test(a.file_name) || /spreadsheet|excel|text\/csv/i.test(a.mime_type ?? '')
 
 /** An order writer as text: the header rows and the rows with a quantity ordered. */
-function sheetText(bytes: Uint8Array): string {
-  const book = XLSX.read(bytes, { type: 'array' })
+async function sheetText(bytes: Uint8Array): Promise<string> {
+  const book = await readBook(bytes)
   const parts: string[] = []
-  for (const name of book.SheetNames) {
-    const rows = XLSX.utils.sheet_to_json<unknown[]>(book.Sheets[name]!, { header: 1, raw: true, blankrows: false, defval: '' })
+  for (const name of book.names) {
+    const rows = book.rows(name, true)
     const cell = (v: unknown) => String(v ?? '').replace(/\s+/g, ' ').trim()
     const head = rows.findIndex((r) => r.some((c) => /^(qty|quantity|order qty|ord(er)?|qty ordered|units?)$/i.test(cell(c))))
     let keep: unknown[][]
@@ -158,7 +166,7 @@ async function readStep(db: SupabaseClient, m: Mail) {
       const bytes = await bytesOf(db, m, a)
       if (!bytes) continue
       if (readable) files.push({ name: a.file_name, mime: a.mime_type ?? 'application/pdf', bytes })
-      else sheets.push({ name: a.file_name, text: sheetText(bytes) })
+      else sheets.push({ name: a.file_name, text: await sheetText(bytes) })
       used.push({ a, bytes })
     }
     const r = await readSentOrder(db, m.organization_id, { vendor: vendor?.name ?? 'Unknown vendor', subject: m.subject, sent_on: day(m.received_at), text: m.body_text ?? '', files, sheets })
@@ -214,7 +222,7 @@ async function refileOrderFiles(db: SupabaseClient, started: number) {
       const bytes = await bytesOf(db, m, a)
       if (!bytes) continue
       if (readable) files.push({ name: a.file_name, mime: a.mime_type ?? 'application/pdf', bytes })
-      else sheets.push({ name: a.file_name, text: sheetText(bytes) })
+      else sheets.push({ name: a.file_name, text: await sheetText(bytes) })
     }
     const r = await readSentOrder(db, m.organization_id, { vendor: vendor?.name ?? 'Unknown vendor', subject: m.subject, sent_on: day(m.received_at), text: m.body_text ?? '', files, sheets })
     for (const a of m.attachments) {

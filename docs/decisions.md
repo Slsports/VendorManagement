@@ -2127,3 +2127,8 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   and compared by Claude like a PDF. Spreadsheets named like price lists, order forms or writers, UPC or cost lists, ATS,
   guides or sales reports are never taken. In a forward, the vendor's words count, not the forwarding note. Back-check over
   12 months: 78 emails with 100 such spreadsheets are being sorted again.
+- Oct 16, Supabase Pro (Dana): the free plan's 1 GB file limit was passed (VMS files 1.29 GB); Dana upgraded the SLSI
+  organization to Pro ($25/month, 100 GB files, daily backups). While checking after the upgrade: the sent-orders job had
+  run out of memory every 11 minutes on Jarrett's Sep 14 "Re: Pure Fishing Order Help" (an 8.6 MB show-order
+  spreadsheet), retrying forever; it never reached Claude, so it cost no API money. Spreadsheets are now opened lightly
+  (values only, first 10,000 rows of a sheet), and an email that stops the run twice is set aside as too big.
