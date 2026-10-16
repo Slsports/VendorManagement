@@ -2202,7 +2202,8 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   number, what it is, the amount when there is one, the kind of paper. Examples:
   always abbreviated, no dash, the amount as paid (whole dollars when there are no cents, $6045.31 when there are), Title Case for the property (Dana, Oct 16):
   "2026-09-25 P&S Cal Fair COM 0301476591 SLS Building $4472 paid.pdf",
-  "2026-10-14 SLS SCE 9.4764 Happy Camper License 2028-2032 executed.pdf".
+  "2026-10-14 GS SCE 9.4764 License 2028-2032 executed.pdf". The SCE licenses are SLM (Shaver Lake Marina) and GS (the
+  Happy Camper general store), never SLS; contract labels: "SCE License 9.4763 SLM 2023-2027", "SCE License 9.4764 GS 2028-2032".
 - Documents uploaded in chat cannot be filed from a cloud session; Dana emails them to billing@ and the filing step
   (plan §4, next) files them with the rest of the old mail.
 - Oct 16 (Dana): the Sports Store building is "SLS building" in names and labels:
