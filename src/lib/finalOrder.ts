@@ -2,8 +2,8 @@
 // quantity, be removed, or be ticked OK (take the confirmation as it is). The email to the vendor lists what changed,
 // each with its item number and name, then the whole final order.
 
-export interface CheckRowLike { what: string; ours: string | null; theirs: string | null; ok: boolean; note: string | null }
-export interface RowEdit { qty?: number | null; removed?: boolean; ok?: boolean }
+export interface CheckRowLike { what: string; ours: string | null; theirs: string | null; ok: boolean; note: string | null; our_cost?: number | null; their_price?: number | null }
+export interface RowEdit { qty?: number | null; removed?: boolean; ok?: boolean; askPrice?: boolean }
 export interface ReadLine { vendor_item_id: string | null; description: string | null; quantity: number | null; unit_cost: number | null }
 export interface FinalLine { item: string; name: string; qty: number; cost: number | null }
 export interface Change { item: string; name: string; text: string }
@@ -57,6 +57,18 @@ export function rowQtys(r: CheckRowLike, e: RowEdit | undefined): { theirs: numb
   return { theirs, ours, final: theirs ?? ours ?? 0 }
 }
 
+/**
+ * Their price is well above what we paid last time (Dana, Oct 16: 20%). Our cost includes our freight, so their price is
+ * usually lower; a price past this is worth a look. Only a note for the buyer, never an issue on its own.
+ */
+export const PRICE_FLAG = 1.2
+export function priceFlag(r: CheckRowLike, lines: ReadLine[] = []): { theirs: number; ours: number } | null {
+  const theirs = r.their_price ?? lineFor(r.what, lines)?.unit_cost ?? null
+  const ours = r.our_cost ?? null
+  if (theirs === null || ours === null || ours <= 0 || isFieldRow(r)) return null
+  return theirs > ours * PRICE_FLAG ? { theirs, ours } : null
+}
+
 /** A row the buyer has dealt with (ticked, changed or removed), or that already matched. */
 export const rowHandled = (r: CheckRowLike, e: RowEdit | undefined) => r.ok || !!e?.ok || !!e?.removed || (e?.qty !== undefined && e.qty !== null)
 
@@ -75,7 +87,11 @@ export function buildFinalOrder(rows: CheckRowLike[], edits: Record<string, RowE
     if (e?.removed && (theirs ?? 0) > 0) changes.push({ item, name, text: 'please remove' })
     else if (!e?.removed && !(theirs ?? 0) && final > 0) changes.push({ item, name, text: `please add ${final}` })
     else if (!e?.removed && (theirs ?? 0) > 0 && final !== theirs) changes.push({ item, name, text: `${theirs} → ${final}` })
-    if (final > 0) items.push({ item, name, qty: final, cost: l?.unit_cost ?? priceIn(r.theirs) ?? priceIn(r.ours) })
+    // "ask about price" (Dana, Oct 16): her words, never our cost (ours includes our freight)
+    const theirPrice = r.their_price ?? l?.unit_cost ?? priceIn(r.theirs)
+    if (e?.askPrice && !e.removed && theirPrice !== null) changes.push({ item, name, text: `your price ${money(theirPrice)} is quite a bit higher than we paid last time. Can you check it?` })
+    // the vendor's price on the final order, never our cost
+    if (final > 0) items.push({ item, name, qty: final, cost: theirPrice })
   }
   // new items picked at the show, and any confirmation line the comparison did not list, stay as they are
   for (const n of newItems) {

@@ -2250,3 +2250,9 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   down again within a minute; paused again at 12:08 and it recovered. **The filing job stays paused** until Dana
   checks the Disk IO budget graph (Supabase dashboard → Reports → Database) and decides on the compute add-on
   (Micro, about $10 a month); `setup-mail-cron.mjs` now schedules it every 5 minutes, not every minute.
+- Oct 16, prices on confirmation checks (Dana: the cost is in the sales report, on By Description; "there's no guarantees
+  about what we're going to pay this time … our shipping costs are included"): the report's cost is read from any tab and
+  shown as **Last cost (ours)** next to **Their price** from the confirmation; a price difference is never an issue. Their
+  price more than 20% above our last cost gets a yellow note and an **Ask about price** box; ticked, the email says "your
+  price $… is quite a bit higher than we paid last time. Can you check it?". Our cost never goes in the email; the final
+  order shows the vendor's price. Dom's WFS check re-run: 48 of 53 rows have our cost, one flagged (XHB-020).

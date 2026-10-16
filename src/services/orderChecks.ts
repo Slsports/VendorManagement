@@ -5,7 +5,8 @@ import type { FinalLine, RowEdit } from '@/lib/finalOrder'
 
 // Order paperwork checks (Dana, Oct 10): confirmation vs our order, invoice vs the final confirmation.
 
-export interface CheckRow { what: string; ours: string | null; theirs: string | null; ok: boolean; note: string | null }
+/** One compared line; our_cost and their_price per unit on item rows (Oct 16). */
+export interface CheckRow { what: string; ours: string | null; theirs: string | null; ok: boolean; note: string | null; our_cost?: number | null; their_price?: number | null }
 
 export type OrderCheckRow = OrderCheck & {
   vendor: { id: string; name: string } | null
