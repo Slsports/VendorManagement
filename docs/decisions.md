@@ -2215,3 +2215,10 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   July 31 re-order sheet) was closed.
 - Oct 16, check page (Dana): the list of issues under the summary repeated the table below it without the product names.
   The summary is now one paragraph and the table follows; the list shows only when there is no table.
+- Oct 16, final confirmed order (Dana: "I should be able to change quantities ... delete it ... check mark that it's
+  ok. And then it should create the final confirmed order back to the vendor in the email with a summary of what was
+  fixed ... with the item number and the name"): each item row on a confirmation check has a **Final** quantity, a tick
+  (take the confirmation's number) and remove. **Review & send final order** writes the email: what changed (item number
+  and name), then Dana's line "Please reply to confirm this order. If any quantities don't fit your case packs, let me
+  know so I can adjust and then we can finalize the order.", then the whole final order. Once sent, the final order
+  becomes the order's lines.

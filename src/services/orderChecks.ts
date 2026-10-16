@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { functionError } from '@/services/mail'
-import type { OrderCheck, VendorLink } from '@/types'
+import type { Json, OrderCheck, VendorLink } from '@/types'
+import type { FinalLine, RowEdit } from '@/lib/finalOrder'
 
 // Order paperwork checks (Dana, Oct 10): confirmation vs our order, invoice vs the final confirmation.
 
@@ -120,6 +121,20 @@ export async function addUsualCharge(vendorId: string, what: string, price: numb
 /** "This is our order" (Dana, Oct 15): the confirmation's lines become the order (a new one when there is none). */
 export async function makeOrderFromCheck(checkId: string): Promise<string> {
   const { data, error } = await supabase.rpc('order_check_use_as_order', { p_check: checkId })
+  if (error) throw error
+  return data as string
+}
+
+/** Save the buyer's edit to one comparison row (final quantity, removed, OK); an empty edit clears it. */
+export async function editCheckRow(checkId: string, what: string, edit: RowEdit | null): Promise<Record<string, RowEdit>> {
+  const { data, error } = await supabase.rpc('order_check_edit_row', { p_check: checkId, p_what: what, p_edit: (edit ?? {}) as Json })
+  if (error) throw error
+  return (data ?? {}) as Record<string, RowEdit>
+}
+
+/** The final order as sent to the vendor becomes the order's lines (Dana, Oct 16). Returns the order id. */
+export async function saveFinalOrder(checkId: string, items: FinalLine[]): Promise<string> {
+  const { data, error } = await supabase.rpc('order_check_save_final', { p_check: checkId, p_lines: items as unknown as Json })
   if (error) throw error
   return data as string
 }
