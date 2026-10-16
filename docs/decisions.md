@@ -2153,3 +2153,11 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
 - Oct 16, built (step 1): the Accounting menu entry and page, the **Accounting** tick on Settings → Users (admin alone is
   not enough; only Dana has it), and billing@shaverlakesports.com in the mail sync as an accounting mailbox: private to
   people with the tick, never shared to Orders, no vendor auto-share; answered from billing@. Migration 0113.
+- Oct 16, built (step 2): **Accounting → Mail** (Primary / Promotions / Everything / Sent; Needs an answer, No answer yet,
+  Waiting on them, All open, Handled; round buttons by category; replies from billing@) and **Accounting → Contacts**:
+  one card per company (by company domain, bill.com covers inform.bill.com) or per person at Gmail-type addresses,
+  proposed from the mail (heard from or written to at least twice, never newsletters only, never our own addresses),
+  To confirm / Confirmed / Ignored, Confirm and save with a category, merge, Find new in the mail (also runs on its own
+  after every sync). Each billing@ conversation is matched to its contact (exact address, then company domain) as it
+  arrives; changing a contact re-matches everything. First pass over the mail already in: 251 contacts proposed, 8,600
+  of 9,537 conversations matched. Migrations 0114, 0115.

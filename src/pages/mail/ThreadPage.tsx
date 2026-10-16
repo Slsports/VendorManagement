@@ -22,6 +22,7 @@ import { ComposeDialog, type ComposeDraft } from '@/components/mail/ComposeDialo
 import { AddOrderDialog } from '@/components/orders/AddOrderDialog'
 import { Alert, Button, Spinner } from '@/components/ui'
 import { ThreadVendorTags } from '@/components/mail/ThreadVendorTags'
+import { AccountingContactLine } from '@/components/accounting/AccountingContactLine'
 import { RecordTasks } from '@/components/tasks/RecordTasks'
 import { TaskDialog } from '@/components/tasks/TaskDialog'
 import { VendorPicker as SharedVendorPicker, type NewVendorPrefill } from '@/components/vendors/VendorPicker'
@@ -192,6 +193,7 @@ export default function ThreadPage() {
       ) : null}
       <RecordTasks button={false} className="mb-4 rounded-2xl border border-stone-200 bg-white px-4 py-3" preset={taskPreset} />
       {addingTask ? <TaskDialog preset={taskPreset} onClose={() => setAddingTask(false)} /> : null}
+      {box?.kind === 'accounting' && organization ? <AccountingContactLine threadId={t.id} organizationId={organization.id} /> : null}
       <ThreadVendorTags threadId={t.id} emailId={(emails.find((e) => e.direction === 'in') ?? emails[0]!).id} filedVendorId={t.vendor?.id ?? null} canEdit={canEdit} />
       {emails.some((e) => e.freight_pct !== null && e.freight_pct !== undefined) ? (
         <p className="mb-4 rounded-xl bg-amber-50 px-4 py-2 text-sm text-amber-900">Freight rate quoted here: <span className="font-semibold">{emails.find((e) => e.freight_pct !== null && e.freight_pct !== undefined)!.freight_pct}%</span>. Check-in offers it for each vendor on this shipment.</p>

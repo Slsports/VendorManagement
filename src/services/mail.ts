@@ -115,6 +115,8 @@ export interface ThreadRow {
   deleted_at?: string | null
   deleted_by_person?: { full_name: string } | null
   vendor: { id: string; name: string } | null
+  /** Accounting mail (Dana, Oct 16): whose conversation this is. */
+  accounting_contact?: { id: string; company: string; person: string; category: string } | null
   owner: { id: string; full_name: string } | null
   /** Someone's own mailbox or the old Gmail (null = orders@); shared to Orders when shared_at is set. */
   mailbox_id?: string | null
@@ -140,9 +142,12 @@ export interface ThreadFilters {
   onlyIds?: string[]
   /** Which mail (Dana, Oct 11): the shared Orders mail (default), or one personal mailbox / the old Gmail by id. */
   mailbox?: string
+  /** Accounting (Dana, Oct 16): one contact's conversations, or every contact in a category ('none' = no contact yet). */
+  contactId?: string
+  category?: string
 }
 
-const THREAD_SELECT = 'id, gmail_thread_id, subject, status, view, vendor_id, owner_id, message_count, last_message_at, follow_up_at, ship_status, mailbox_id, shared_at, vendor:vendors(id, name), owner:profiles!email_threads_owner_id_fkey(id, full_name)'
+const THREAD_SELECT = 'id, gmail_thread_id, subject, status, view, vendor_id, owner_id, message_count, last_message_at, follow_up_at, ship_status, mailbox_id, shared_at, accounting_contact_id, vendor:vendors(id, name), owner:profiles!email_threads_owner_id_fkey(id, full_name), accounting_contact:accounting_contacts(id, company, person, category)'
 
 async function withLastMessage(rows: Omit<ThreadRow, 'last'>[]): Promise<ThreadRow[]> {
   if (!rows.length) return []
@@ -188,6 +193,9 @@ export async function listThreads(organizationId: string, me: string | undefined
   if (f.vendorId) q = q.or(`vendor_id.eq.${f.vendorId},tagged_vendor_ids.cs.{${f.vendorId}}`)
   if (f.carrierId) q = q.eq('carrier_id', f.carrierId)
   if (f.unmatched) q = q.is('vendor_id', null)
+  if (f.contactId) q = q.eq('accounting_contact_id', f.contactId)
+  if (f.category === 'none') q = q.is('accounting_contact_id', null)
+  else if (f.category) q = q.eq('accounting_contact.category', f.category).not('accounting_contact', 'is', null)
   if (f.hideIds?.length) q = q.not('id', 'in', `(${f.hideIds.join(',')})`)
   if (f.onlyIds) q = q.in('id', f.onlyIds.length ? f.onlyIds : ['00000000-0000-0000-0000-000000000000'])
   if (f.q?.trim()) q = q.ilike('subject', `%${f.q.trim().replace(/[%_]/g, '')}%`)

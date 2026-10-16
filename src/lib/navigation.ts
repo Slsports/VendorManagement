@@ -79,7 +79,11 @@ export const NAV_GROUPS: readonly NavGroup[] = [
   {
     label: 'Accounting',
     items: [
-      { label: 'Accounting', to: ROUTES.accounting, icon: Calculator, flag: 'sees_accounting' },
+      { label: 'Accounting', to: ROUTES.accounting, icon: Calculator, flag: 'sees_accounting', children: [
+        { label: 'Overview', to: ROUTES.accounting },
+        { label: 'Mail', to: ROUTES.accountingMail },
+        { label: 'Contacts', to: ROUTES.accountingContacts },
+      ] },
     ],
   },
   {

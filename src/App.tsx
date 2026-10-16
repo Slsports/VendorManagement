@@ -23,6 +23,9 @@ const WorkingOrdersPage = lazy(() => import('@/pages/mail/WorkingOrdersPage'))
 const TeamPage = lazy(() => import('@/pages/TeamPage'))
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'))
 const AccountingHome = lazy(() => import('@/pages/accounting/AccountingHome'))
+const AccountingMailPage = lazy(() => import('@/pages/accounting/AccountingMailPage'))
+const AccountingContactsPage = lazy(() => import('@/pages/accounting/AccountingContactsPage'))
+const AccountingContactPage = lazy(() => import('@/pages/accounting/AccountingContactPage'))
 const ReviewQueue = lazy(() => import('@/pages/review/ReviewQueue'))
 const RepGroupList = lazy(() => import('@/pages/rep-groups/RepGroupList'))
 const WorldwideContacts = lazy(() => import('@/pages/contacts/WorldwideContacts'))
@@ -168,6 +171,9 @@ export default function App() {
 
               <Route element={<RequireAccounting />}>
                 <Route path={ROUTES.accounting} element={<AccountingHome />} />
+                <Route path={ROUTES.accountingMail} element={<AccountingMailPage />} />
+                <Route path={ROUTES.accountingContacts} element={<AccountingContactsPage />} />
+                <Route path={`${ROUTES.accountingContacts}/:id`} element={<AccountingContactPage />} />
               </Route>
 
               <Route element={<RequireRole roles={['admin']} />}>

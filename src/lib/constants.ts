@@ -96,6 +96,8 @@ export const ROUTES = {
   supplies: '/supplies',
   notifications: '/notifications',
   accounting: '/accounting',
+  accountingMail: '/accounting/mail',
+  accountingContacts: '/accounting/contacts',
   lsPos: '/ls-pos',
   help: '/help',
   mergeReport: '/review/merges',

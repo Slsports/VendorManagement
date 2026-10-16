@@ -115,7 +115,7 @@ rules per vendor (seeded for Ty), Lightspeed category standard document, and Mai
 minute (12 months back), sender proposals in the review queue, Mail page, send/reply/forward from orders@
 with signatures, follow-up nudges (see `docs/gmail-connection.md` "As built"), and Tasks (due date, reminders by dashboard/email/text, assign, tag, repeat; `task-reminders` function), Sign in with
 Google plus the staff list at Settings → Users (`admin-users` function; sign-ups are off, only listed emails get in), and the
-Accounting area, step 1 (billing@ mailbox, Accounting tick; `docs/accounting-plan.md` for the rest).
+Accounting area, steps 1–2 (billing@ mailbox, Accounting tick, Accounting mail and contacts; `docs/accounting-plan.md` for the rest).
 
 ## Not built yet, in order
 Gmail label write-back and contact enrichment,

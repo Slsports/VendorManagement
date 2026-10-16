@@ -54,8 +54,8 @@ shows what she is missing. Only she sees it; later she may let one more person i
   first. Feeds the dashboard. A **calendar** view shows the same by month.
 
 ## 7. Order of build
-1. Mailbox row + flag + menu entry + RLS (migration, tests, types, Settings → Users tick).
-2. Accounting mail views, contacts list with proposals from the mail, sender categories.
+1. Mailbox row + flag + menu entry + RLS (migration, tests, types, Settings → Users tick). **Built Oct 16 (0113).**
+2. Accounting mail views, contacts list with proposals from the mail, sender categories. **Built Oct 16 (0114, 0115).**
 3. Filing into the folder tree + drop box.
 4. Bills list.
 5. Tasks, auto-made tasks, home page, calendar.

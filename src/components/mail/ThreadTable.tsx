@@ -13,6 +13,7 @@ import { SortHeader } from '@/components/shared/SortHeader'
 import { SnoozeButton } from '@/components/shared/SnoozeButton'
 import { snoozeText } from '@/lib/snooze'
 import { ThreadStatusBadge } from './ThreadStatusBadge'
+import { contactName } from '@/lib/accounting'
 
 const STATE_ORDER = { needs: 0, no_answer: 1, waiting: 2, handled: 3 }
 
@@ -20,8 +21,8 @@ const STATE_ORDER = { needs: 0, no_answer: 1, waiting: 2, handled: 3 }
  * Mail threads as a sortable table: who, what, vendor, owner, where it stands, when. With `onChanged`, each
  * row has a ✓ to mark it handled without opening it, and checkboxes mark several at once (Dana, Oct 8).
  */
-export function ThreadTable({ rows, showVendor = true, sortParam, onChanged, deletedMode = false, snoozed, back }: {
-  rows: ThreadRow[]; showVendor?: boolean; sortParam?: string; onChanged?: () => void | Promise<unknown>; deletedMode?: boolean
+export function ThreadTable({ rows, showVendor = true, showContact = false, sortParam, onChanged, deletedMode = false, snoozed, back }: {
+  rows: ThreadRow[]; showVendor?: boolean; /** Accounting mail (Dana, Oct 16): the contact the conversation is with. */ showContact?: boolean; sortParam?: string; onChanged?: () => void | Promise<unknown>; deletedMode?: boolean
   /** The Snoozed tab: until when, and who snoozed it when it was not me. */
   snoozed?: Map<string, { until: string; who: string | null }>
   /** Came back from snooze and not opened yet. */
@@ -77,6 +78,7 @@ export function ThreadTable({ rows, showVendor = true, sortParam, onChanged, del
     from: (t) => t.last?.from_name || t.last?.from_email,
     subject: (t) => t.subject,
     vendor: (t) => t.vendor?.name,
+    contact: (t) => contactName(t.accounting_contact),
     owner: (t) => t.owner?.full_name,
     status: (t) => STATE_ORDER[threadState(t)],
     when: (t) => t.last_message_at,
@@ -112,6 +114,7 @@ export function ThreadTable({ rows, showVendor = true, sortParam, onChanged, del
             <SortHeader label="From" sortKey="from" sort={sort} onSort={toggle} className="px-3 py-2" />
             <SortHeader label="Subject" sortKey="subject" sort={sort} onSort={toggle} className="px-3 py-2" />
             {showVendor ? <SortHeader label="Vendor" sortKey="vendor" sort={sort} onSort={toggle} className="hidden px-3 py-2 md:table-cell" /> : null}
+            {showContact ? <SortHeader label="Who" sortKey="contact" sort={sort} onSort={toggle} className="hidden px-3 py-2 md:table-cell" /> : null}
             <SortHeader label="Owner" sortKey="owner" sort={sort} onSort={toggle} className="hidden px-3 py-2 md:table-cell" />
             <SortHeader label="Status" sortKey="status" sort={sort} onSort={toggle} className="px-3 py-2" />
             <SortHeader label="Last" sortKey="when" sort={sort} onSort={toggle} className="px-3 py-2" />
@@ -149,6 +152,11 @@ export function ThreadTable({ rows, showVendor = true, sortParam, onChanged, del
               {showVendor ? (
                 <td className="hidden px-3 py-2 md:table-cell">
                   {t.vendor ? <Link to={`${ROUTES.vendors}/${t.vendor.id}`} className="text-stone-700 hover:text-brand">{t.vendor.name}</Link> : <span className="text-xs text-stone-400">Not filed</span>}
+                </td>
+              ) : null}
+              {showContact ? (
+                <td className="hidden px-3 py-2 md:table-cell">
+                  {t.accounting_contact ? <Link to={`${ROUTES.accountingContacts}/${t.accounting_contact.id}`} className="text-stone-700 hover:text-brand">{contactName(t.accounting_contact)}</Link> : <span className="text-xs text-stone-400">No contact yet</span>}
                 </td>
               ) : null}
               <td className="hidden whitespace-nowrap px-3 py-2 text-stone-600 md:table-cell">{t.owner?.full_name ?? <span className="text-xs text-stone-400">Nobody</span>}</td>

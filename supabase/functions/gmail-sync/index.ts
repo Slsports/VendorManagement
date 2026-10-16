@@ -80,6 +80,12 @@ Deno.serve(async (req) => {
   for (const b of (boxes ?? []).filter((x) => x.kind === 'personal' || x.kind === 'accounting')) {
     const shared = (accounts ?? []).find((a) => a.organization_id === b.organization_id) as Account | undefined
     results.push(await syncAccount(db, { ...b, mailbox: b.address, internal_domains: shared?.internal_domains ?? [], box_id: b.id, owner_id: b.owner_id, legacy: null } as Account))
+    // Accounting (Dana, Oct 16): people and companies in the new mail become proposed contacts; conversations find theirs.
+    if (b.kind === 'accounting') {
+      const { data: n, error } = await db.rpc('accounting_propose_contacts', { p_org: b.organization_id })
+      if (error) console.error('accounting_propose_contacts:', error.message)
+      else if (n) console.log(`accounting: ${n} contact(s) proposed`)
+    }
   }
   return json({ results })
 })

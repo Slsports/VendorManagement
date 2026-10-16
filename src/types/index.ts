@@ -7,6 +7,8 @@ export type Store = Tables<'stores'>
 export type Profile = Tables<'profiles'>
 export type UserStoreAccess = Tables<'user_store_access'>
 export type UserRole = Enums<'user_role'>
+export type AccountingContact = Tables<'accounting_contacts'>
+export type AccountingCategory = Enums<'accounting_category'>
 
 export type Vendor = Tables<'vendors'>
 export type VendorBillingRoute = Tables<'vendor_billing_routes'>
