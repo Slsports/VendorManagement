@@ -13,6 +13,6 @@ Every vendor has one **Proofs** folder in **Documents** for artwork proofs. Each
 4. Clicked by mistake? Click **Not approved** to take the star off.
 
 ## Good to know
-- Proofs that come in by email go to **Proofs** by themselves when the file is named like a proof ("…PROOF.pdf", "Art Approval", "mock-up"). They start as **Not approved yet**.
+- Proofs that come in by email go to **Proofs** by themselves when the file is named like a proof ("…PROOF.pdf", "Art Approval", "mock-up"). They start as **Not approved yet**, and get the **Approved** star by themselves when you approve the artwork by email (from VMS or orders@ in Gmail).
 - A proof with a plain name (like "image001.png") is not spotted. Save it with **Save to documents** › **Proofs**, or **Move** it there.
 - Uploading a file to **Proofs** files it as not approved yet.

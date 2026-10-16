@@ -2256,3 +2256,7 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   price more than 20% above our last cost gets a yellow note and an **Ask about price** box; ticked, the email says "your
   price $… is quite a bit higher than we paid last time. Can you check it?". Our cost never goes in the email; the final
   order shows the vendor's price. Dom's WFS check re-run: 48 of 53 rows have our cost, one flagged (XHB-020).
+- Oct 16, artwork approvals reach the proof and the order (Dana, "go"): Dana approves from orders@ (VMS or Gmail; her own
+  danapowell2024 address is not used for approvals). When a conversation's artwork is approved, the proofs filed from it
+  get the Approved star and the order it is filed to shows "Artwork approved" with the date. Back-check: one approved
+  conversation, no proof or order attached to it.
