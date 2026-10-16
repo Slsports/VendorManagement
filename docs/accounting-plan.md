@@ -60,4 +60,6 @@ shows what she is missing. Only she sees it; later she may let one more person i
 4. Bills list.
 5. Tasks, auto-made tasks, home page, calendar. **Built Oct 16 (0116)**, with the insurance tracker (policies, terms,
    renewal tasks, who needs proof, send log) and procedures as the first worked example. Filing (3) and bills (4) are next.
+6. **Contracts tracker (built Oct 16, 0117–0118)**: licenses, leases, loans with payment schedules, renewal lead time,
+   follow-ups, insurance required; the SCE Camp Edison licenses first.
 Help articles with each step (Accounting section).

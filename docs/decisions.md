@@ -2182,3 +2182,13 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   comes in, Send now from billing@ with the policy attached, Hub sent it, every send logged, "They asked" flag on new
   requests). Accounting home = what am I missing. Hub International: Sam Gibbs and Shelly Recek confirmed as insurance
   contacts. Nearest renewal is Jan 29, 2027 (Sports Store contents), so no renewal task exists yet.
+- Oct 16, built: **Accounting → Contracts** (migrations 0117–0118). Each license, lease or loan: the other party and
+  contact, term, who signs, insurance required (and which of our policies), payment schedule with Paid, season, renewal
+  lead time, follow-up date, renewal procedure. Tasks on their own: each payment 30 days ahead, Start the renewal at the
+  lead time (not when the next agreement is already on file), follow-ups. Loaded: SCE licenses 9.4763 (Marina) and
+  9.4764 (Happy Camper store) 2023–2027 with their January payments (2027: $52,969.55 and $5,452.00), the executed
+  store license 2028–2032 ($5,724.60 rising 5%/yr), the pending Marina 2028–2032 (offer letter sent Oct 16, follow-up
+  Oct 30). SCE split into **SCE Power** (bills) and **SCE Licensing** (contracts; Andrew Torres). The three liability
+  policies the licenses require (workers comp, general liability, auto; dates from the 2024 certificates) added to
+  Insurance with SCE Licensing confirmed as needing all three at each renewal. Procedure: SCE license renewal.
+  Seasons on the contracts: Marina Apr 15–Oct 15; Happy Camper a week or two before Memorial Day to Oct 1–15.

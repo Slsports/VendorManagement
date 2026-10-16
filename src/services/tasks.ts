@@ -7,6 +7,7 @@ export interface TaskRow extends Task {
   procedure?: { id: string; title: string } | null
   policy?: { id: string; label: string } | null
   recipient?: { id: string; company: string; person: string } | null
+  contract?: { id: string; label: string } | null
   vendor: { id: string; name: string } | null
   carrier: { id: string; name: string } | null
   rep_group: { id: string; name: string } | null
@@ -21,7 +22,7 @@ const TASK_SELECT = `*,
   vendor:vendors!tasks_vendor_id_fkey(id, name), carrier:carriers!tasks_carrier_id_fkey(id, name), rep_group:rep_groups!tasks_rep_group_id_fkey(id, name),
   order:orders!tasks_order_id_fkey(id, po_number, description), thread:email_threads!tasks_thread_id_fkey(id, subject),
   assignee:profiles!tasks_assigned_to_fkey(id, full_name), giver:profiles!tasks_created_by_fkey(id, full_name), finisher:profiles!tasks_done_by_fkey(id, full_name),
-  procedure:accounting_procedures!tasks_procedure_id_fkey(id, title), policy:accounting_policies!tasks_policy_id_fkey(id, label), recipient:accounting_policy_recipients!tasks_recipient_id_fkey(id, company, person)`
+  procedure:accounting_procedures!tasks_procedure_id_fkey(id, title), policy:accounting_policies!tasks_policy_id_fkey(id, label), recipient:accounting_policy_recipients!tasks_recipient_id_fkey(id, company, person), contract:accounting_contracts!tasks_contract_id_fkey(id, label)`
 
 /** mine = assigned to the person · given = they gave to others · done = finished, theirs or given · all = everyone's open. */
 export type TaskView = 'mine' | 'given' | 'done' | 'all'

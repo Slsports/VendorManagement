@@ -33,6 +33,8 @@ const ProcedurePage = lazy(() => import('@/pages/accounting/ProcedurePage'))
 const InsurancePage = lazy(() => import('@/pages/accounting/InsurancePage'))
 const PolicyPage = lazy(() => import('@/pages/accounting/PolicyPage'))
 const RecipientPage = lazy(() => import('@/pages/accounting/RecipientPage'))
+const ContractsPage = lazy(() => import('@/pages/accounting/ContractsPage'))
+const ContractPage = lazy(() => import('@/pages/accounting/ContractPage'))
 const ReviewQueue = lazy(() => import('@/pages/review/ReviewQueue'))
 const RepGroupList = lazy(() => import('@/pages/rep-groups/RepGroupList'))
 const WorldwideContacts = lazy(() => import('@/pages/contacts/WorldwideContacts'))
@@ -188,6 +190,8 @@ export default function App() {
                 <Route path={ROUTES.accountingInsurance} element={<InsurancePage />} />
                 <Route path={`${ROUTES.accountingInsurance}/who/:id`} element={<RecipientPage />} />
                 <Route path={`${ROUTES.accountingInsurance}/:id`} element={<PolicyPage />} />
+                <Route path={ROUTES.accountingContracts} element={<ContractsPage />} />
+                <Route path={`${ROUTES.accountingContracts}/:id`} element={<ContractPage />} />
               </Route>
 
               <Route element={<RequireRole roles={['admin']} />}>

@@ -102,6 +102,7 @@ export const ROUTES = {
   accountingCalendar: '/accounting/calendar',
   accountingProcedures: '/accounting/procedures',
   accountingInsurance: '/accounting/insurance',
+  accountingContracts: '/accounting/contracts',
   lsPos: '/ls-pos',
   help: '/help',
   mergeReport: '/review/merges',

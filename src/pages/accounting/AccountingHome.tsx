@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BookOpen, CalendarDays, Contact, ListTodo, Mail, ShieldCheck } from 'lucide-react'
+import { BookOpen, CalendarDays, Contact, FileSignature, ListTodo, Mail, ShieldCheck } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useTasksQuery } from '@/hooks/useTasksQuery'
@@ -8,6 +8,7 @@ import { listMailboxes, listThreads } from '@/services/mail'
 import { countAccountingContacts } from '@/services/accounting'
 import { listAccountingTasks } from '@/services/tasks'
 import { listPolicies, listRecipients } from '@/services/insurance'
+import { listContracts, nextPayment } from '@/services/contracts'
 import { daysUntil } from '@/lib/insurance'
 import { todayLocal } from '@/lib/tasks'
 import { ROUTES } from '@/lib/constants'
@@ -30,6 +31,7 @@ export default function AccountingHome() {
   const contacts = useSupabaseQuery(async () => (org ? countAccountingContacts(org) : null), [org])
   const policies = useSupabaseQuery(async () => (org ? listPolicies(org) : []), [org])
   const recipients = useSupabaseQuery(async () => (org ? listRecipients(org) : []), [org])
+  const contracts = useSupabaseQuery(async () => (org ? listContracts(org) : []), [org])
 
   const today = todayLocal()
   const [week] = useState(() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().slice(0, 10) })
@@ -83,6 +85,7 @@ export default function AccountingHome() {
           badge={box?.last_error ? <Badge tone="danger">Problem</Badge> : undefined} />
         <Door to={ROUTES.accountingContacts} icon={Contact} title="Contacts" line={contacts.data ? `${contacts.data.confirmed} confirmed` : '…'} sub={contacts.data?.proposed ? `${contacts.data.proposed} found in the mail, waiting for you to confirm.` : 'Who you deal with, by category.'} />
         <Door to={ROUTES.accountingInsurance} icon={ShieldCheck} title="Insurance" line={`${(policies.data ?? []).length} policies`} sub={renewing.length ? `${renewing.length} renewing within 45 days.${toConfirm ? ` ${toConfirm} proof requester${toConfirm === 1 ? '' : 's'} to confirm.` : ''}` : toConfirm ? `${toConfirm} proof requester${toConfirm === 1 ? '' : 's'} to confirm.` : 'Policies, renewals, who needs proof.'} />
+        <Door to={ROUTES.accountingContracts} icon={FileSignature} title="Contracts" line={`${(contracts.data ?? []).length} on file`} sub={(() => { const next = (contracts.data ?? []).map((c) => ({ c, p: nextPayment(c) })).filter((x) => x.p).sort((a, b) => a.p!.due_on.localeCompare(b.p!.due_on))[0]; return next ? `Next payment: ${next.c.label} on ${new Date(`${next.p!.due_on}T00:00:00`).toLocaleDateString()}.` : 'Licenses, leases, the loan: payments and renewals.' })()} />
         <Door to={ROUTES.accountingProcedures} icon={BookOpen} title="Procedures" line="The handbook" sub="How each job is done, so someone else could do it." />
       </div>
     </div>
