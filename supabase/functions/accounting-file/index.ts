@@ -17,7 +17,10 @@ const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', ...CORS } })
 const TIME_BUDGET_MS = 40_000
 const EMAILS_PER_RUN = 12
-const MAX_READ_BYTES = 8 * 1024 * 1024
+// The edge worker has little memory (a run died with WORKER_RESOURCE_LIMIT on Oct 16): a file over 5 MB is read by its
+// name and the email, and one Claude call carries at most 12 MB of files.
+const MAX_READ_BYTES = 5 * 1024 * 1024
+const MAX_CALL_BYTES = 12 * 1024 * 1024
 const MAX_KEEP_BYTES = 15 * 1024 * 1024
 const BUCKET = 'accounting-files'
 
@@ -272,6 +275,9 @@ async function fileMail(db: SupabaseClient, mail: Mail, opts: { only?: string; f
       // a few files per call; a long email is read in rounds
       for (let i = 0; i < toRead.length; i += 6) {
         const batch = toRead.slice(i, i + 6)
+        // keep the call within the worker's memory: past the budget, files go by name only
+        let budget = MAX_CALL_BYTES
+        for (const b of batch) { if (b.file.bytes.length > budget) b.file = { ...b.file, bytes: new Uint8Array(), text: undefined }; else budget -= b.file.bytes.length }
         let readings: AccountingPaperReading[]
         try {
           readings = await readAccountingPapers(db, org, ctx, batch.map((b) => b.file))
