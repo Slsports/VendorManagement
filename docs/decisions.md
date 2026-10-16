@@ -2140,3 +2140,11 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   at a company already on file for the vendor or rep group now always counts as theirs; the 14 people skipped that way
   are read again. The Claude cost log now records every billed answer by its id (also answers that could not be used);
   VMS showed $9.52 for a day Anthropic billed about $15, the gap not yet explained.
+
+## Oct 16 — Accounting area (Dana: "go"; plan in docs/accounting-plan.md)
+- Dana's bookkeeping (taxes, insurance, banking, donations, contracts, accounting firm, non-vendor bills) runs out of
+  billing.slsports@gmail.com. She wants it treated like orders@: mail views, automatic document filing into folders,
+  bills list, tasks and reminders, and a home page that shows what she is missing. Only she sees it; one more person
+  can be let in later with an "accounting" tick, not admin.
+- The Gmail moves into Workspace as billing@shaverlakesports.com (import + forward) so VMS can read it. Build starts
+  once the mail is flowing.
