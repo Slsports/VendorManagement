@@ -92,4 +92,5 @@ showing programs, product lines and returns policy with the scrape date.
 - `wwd_portal_vendors` replaces the planned `vendor_portal_data` (one row per portal vendor number, tied to a vendor or
   a line). `vendor_programs` as planned, keyed by portal number and program key (with the brand group). `orders.program_id`
   is not built yet.
-- The portal has no zero-upcharge field.
+- Zero upcharge: the portal shows it as "Zero Upcharge" (data field `rebateProgram`, Y/N). A difference with our
+  `wwd_zero_upcharge` is a card; portal lines are marked (migration 150).

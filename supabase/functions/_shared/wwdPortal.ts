@@ -21,7 +21,9 @@ export interface PortalAddress { address: string | null; city: string | null; st
 export interface PortalResources {
   defective_policy: string | null; ra_required: boolean | null; return_address: string | null
   freight_to_vendor: string | null; freight_from_vendor: string | null; compensation: string | null; comments: string | null
-  liability_insurance: string | null; rebate_program: boolean | null
+  liability_insurance: string | null
+  /** shown on the portal as "Zero Upcharge" (its field is named rebateProgram) */
+  zero_upcharge: boolean | null
 }
 export interface PortalVendor {
   number: string; name: string
@@ -169,7 +171,7 @@ function resources(r: Raw | undefined): PortalResources | null {
     compensation: joined([r.defectiveCompensationMethod, r.defectiveCompensationMethod2]),
     comments: joined([r.defectiveGoodsComment1, r.defectiveGoodsComment2, r.defectiveGoodsComment3, r.defectiveGoodsComment4], ' '),
     liability_insurance: ins ? `${ins}${amt ? ` ($${amt.toLocaleString('en-US')})` : ''}` : null,
-    rebate_program: yn(r.rebateProgram),
+    zero_upcharge: yn(r.rebateProgram),
   }
 }
 

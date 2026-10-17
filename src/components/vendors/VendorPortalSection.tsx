@@ -9,7 +9,7 @@ interface PortalData {
   address?: { address?: string | null; city?: string | null; state?: string | null; postal_code?: string | null; phone?: string | null } | null
   po_address?: { address?: string | null; city?: string | null; state?: string | null; postal_code?: string | null } | null
   product_lines?: { category: string; lines: string[] }[]
-  resources?: { liability_insurance?: string | null; rebate_program?: boolean | null } | null
+  resources?: { liability_insurance?: string | null; zero_upcharge?: boolean | null; rebate_program?: boolean | null } | null
   return_notes?: string | null
   brands?: string[]
   documents?: { name: string; description: string | null }[]
@@ -62,6 +62,7 @@ export function VendorPortalSection({ vendorId }: { vendorId: string }) {
                   <ul className="text-stone-800">{d.product_lines.map((l) => <li key={l.category}>{l.category}{l.lines.length ? <span className="text-stone-500">: {l.lines.join(', ')}</span> : null}</li>)}</ul>
                 </div>
               ) : null}
+              {(d.resources?.zero_upcharge ?? d.resources?.rebate_program) != null ? <p><span className="text-xs font-medium text-stone-500">Zero upcharge </span>{(d.resources?.zero_upcharge ?? d.resources?.rebate_program) ? 'Yes' : 'No'}</p> : null}
               {d.brands?.length ? <p><span className="text-xs font-medium text-stone-500">Brands </span>{d.brands.join(', ')}</p> : null}
               {d.return_notes ? <p><span className="text-xs font-medium text-stone-500">Returns </span>{d.return_notes.replace(/ \(Worldwide portal\)$/, '')}</p> : null}
               {d.po_address ? <p><span className="text-xs font-medium text-stone-500">PO address </span>{[d.po_address.address, d.po_address.city, d.po_address.state, d.po_address.postal_code].filter(Boolean).join(', ')}</p> : null}

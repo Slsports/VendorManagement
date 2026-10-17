@@ -31,6 +31,12 @@ by Vercel from the branch `claude/ecstatic-carson-ziz2a9`.
   explaining why something happened, look at the real data, logs and code and confirm it. Never offer a likely cause as
   the answer. If it can't be confirmed yet, say "I haven't confirmed this", say what you'll check, and check it before
   proposing a fix.
+- **Other systems: go by the labels people see (Dana, Oct 17).** When VMS reads another system (Worldwide portal, LS,
+  EdenRed, a vendor's file), match each field to the label that system shows on its own screen, not to its internal
+  field name (the portal's `rebateProgram` is shown as "Zero Upcharge"). Before a new import writes anything, give Dana
+  the list: their label → where it goes in VMS.
+- **Never say something doesn't exist until every source is checked (Dana, Oct 17).** Saved pages, screenshots, the
+  data and the code. If not all are checked, say "I haven't confirmed this".
 
 ## Screen rules (Dana, Oct 7)
 - **Back goes to where you came from.** Every detail page (vendor, rep group, order, line, review item)

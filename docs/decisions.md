@@ -2275,7 +2275,7 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   TAYLOR BRANDS, Northland Fishing Tackle → NORTHLAND, Tara Toy Corp → TARA TOYS…) are cards; Do-It Corporation and
   Do-All Outdoors no longer match DO-GREE (the portal's spaced dashes are read as one name). 1,281 new lines "not bought
   from yet" (1,577 portal vendors are lines in all); a line tied later (card or Make it a vendor) gets its portal details.
-  The portal has no zero-upcharge field, so `wwd_zero_upcharge` is unchanged. Portal people include reps for other
+  (Corrected Oct 17: the portal does show "Zero Upcharge"; see below.) Portal people include reps for other
   territories; their territory and rep company are in the note. Billing terms VMS has no name for (25, e.g. "2% 30 Net
   60") stay on the program only. No rep groups created.
 - Lightspeed items (Dana): VMS reads every LS item, active and archived, with its vendor, and counts them per vendor:
@@ -2381,3 +2381,12 @@ deployment's result to GitHub, so this session has a scheduled task ("VMS deploy
 that reads the newest deployment's status; a new failure is reproduced, fixed on the branch when the fix is small and
 verified, and reported to Dana in chat; a good deployment says nothing. The Oct 16 10:02 pm UTC failure (commit e53cdcf)
 was the broken push fixed in the next commit.
+- Oct 17, zero upcharge from the Worldwide portal (Dana: "Yes, add the rules and go on the upcharge fix"). I had told
+  Dana the portal has no zero-upcharge field; wrong: its vendor page labels the field `rebateProgram` "Zero Upcharge". I
+  went by the internal name and did not check the saved portal page. Every other portal label was checked against where
+  it landed; only this one was missed. Fix (migration 150): our vendors whose zero upcharge differs from the portal get
+  a **Worldwide portal differences** card (16: 10 portal yes / VMS no, 6 VMS yes / portal no: Crosman, Odd Sox, Prairie
+  Schooner, Punita Group, Harry Koenig, Gordini); never changed silently. 164 portal lines marked zero upcharge (carried
+  by Make it a vendor). The Worldwide portal box shows Zero upcharge. New standing rules in CLAUDE.md: go by the labels
+  people see on the other system's screen, give Dana the label → VMS list before an import writes, and never say
+  something doesn't exist until every source is checked.

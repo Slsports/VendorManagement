@@ -53,6 +53,7 @@ describe('readPortalVendor', () => {
     expect(v.product_lines).toEqual([{ category: 'SHOOTING SPORTS', lines: ['AIR GUNS & ACCESSORIES'] }])
     expect(v.return_notes).toBe('Defective goods: Call For RA. RA required. Return to: Crosman Corp, 7629 Routes 5 & 20, Bloomfield, NY 14443. Paid back by: Credit Memo. (Worldwide portal)')
     expect(v.resources?.liability_insurance).toBe('Yes ($2,000,000)')
+    expect(v.resources?.zero_upcharge).toBe(false)
     expect(v.brands).toEqual(['Crosman', 'Benjamin'])
   })
   it('skips a vendor the portal sent nothing for', () => {

@@ -1,10 +1,10 @@
 ---
 title: Worldwide portal differences: keep ours or use the portal's
 section: Review queue
-keywords: Worldwide portal, WWD portal, difference, conflict, phone, address, free shipping, freight terms, minimum order, returns, keep ours
+keywords: zero upcharge, Worldwide portal, WWD portal, difference, conflict, phone, address, free shipping, freight terms, minimum order, returns, keep ours
 who: Admin, managers and buyers
 ---
-When the Worldwide portal says something different from what VMS has for a vendor (a phone number, an address, free shipping, freight terms), VMS keeps yours and asks with a **Worldwide portal differences** card.
+When the Worldwide portal says something different from what VMS has for a vendor (a phone number, an address, free shipping, freight terms, zero upcharge), VMS keeps yours and asks with a **Worldwide portal differences** card.
 
 ## How to
 1. Open **Review queue** and click **Vendor changes**.
