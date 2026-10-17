@@ -2390,3 +2390,5 @@ was the broken push fixed in the next commit.
   by Make it a vendor). The Worldwide portal box shows Zero upcharge. New standing rules in CLAUDE.md: go by the labels
   people see on the other system's screen, give Dana the label → VMS list before an import writes, and never say
   something doesn't exist until every source is checked.
+- Done Oct 17, 18:31 UTC: the copy holds 334,050 sales and 694,943 sale lines from June 20, 2020 to today, no errors; from
+  here it only pulls what changed each minute.
