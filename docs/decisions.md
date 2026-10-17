@@ -2374,3 +2374,10 @@ started on Lightspeed in May of 2020." Go-ahead given for after the first (24-mo
   LS on Oct 17: 215,725 older sales and 442,953 older lines, oldest sale June 20, 2020; about nine hours at LS's pace.
 - The Sales Reports page says where the history stands; any date range can be run.
 - Dana plans to open VMS to the other employees on Monday Oct 19.
+
+## Oct 17 — Deployment watch
+Dana: "set it up to watch the deployments" (she had been getting Vercel's "deployment failed" emails). Vercel posts each
+deployment's result to GitHub, so this session has a scheduled task ("VMS deployment watch", hourly, 19 past the hour)
+that reads the newest deployment's status; a new failure is reproduced, fixed on the branch when the fix is small and
+verified, and reported to Dana in chat; a good deployment says nothing. The Oct 16 10:02 pm UTC failure (commit e53cdcf)
+was the broken push fixed in the next commit.
