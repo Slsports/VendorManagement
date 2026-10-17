@@ -99,7 +99,7 @@ export default function SalesReportsHub() {
       {fresh ? (
         <p className="text-sm text-stone-600">
           Lightspeed copy: {fresh.items.toLocaleString()} items{fresh.items_pass_finished ? ` (stock as of ${new Date(fresh.items_pass_finished).toLocaleString()})` : ' (first pass still running)'},
-          {' '}{fresh.lines.toLocaleString()} sale lines{soldThrough ? ` through ${soldThrough.toLocaleString()}` : ''}{!fresh.lines_backfill_done ? ', still bringing in the history from ' + new Date(fresh.backfill_from).toLocaleDateString() : ''}.
+          {' '}{fresh.lines.toLocaleString()} sale lines{soldThrough ? ` through ${soldThrough.toLocaleString()}` : ''}{!fresh.lines_backfill_done ? ', still bringing in the history from ' + new Date(fresh.backfill_from).toLocaleDateString() : fresh.older_to && !fresh.older_lines_done ? ', history from ' + new Date(fresh.older_to).toLocaleDateString() + ' with the older years still coming in' : fresh.older_to ? ', history back to the start of Lightspeed (2020)' : ''}.
           {fresh.last_error ? <span className="text-red-700"> Last problem: {fresh.last_error}</span> : null}
         </p>
       ) : null}

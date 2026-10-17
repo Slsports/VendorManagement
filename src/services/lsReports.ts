@@ -64,7 +64,7 @@ export async function listLsCategories(organizationId: string): Promise<{ catego
   return data ?? []
 }
 
-export interface SyncStatus { items_seen: number; items_pass_finished: string | null; lines_since: string | null; lines_backfill_done: boolean; sales_backfill_done: boolean; backfill_from: string; last_error: string | null; items: number; lines: number }
+export interface SyncStatus { items_seen: number; items_pass_finished: string | null; lines_since: string | null; lines_backfill_done: boolean; sales_backfill_done: boolean; backfill_from: string; older_to: string | null; older_lines_done: boolean; last_error: string | null; items: number; lines: number }
 
 /** How fresh the copy of Lightspeed is: when the last item pass finished, how far the sales reach. */
 export async function lsSyncStatus(organizationId: string): Promise<SyncStatus | null> {
@@ -75,7 +75,7 @@ export async function lsSyncStatus(organizationId: string): Promise<SyncStatus |
     supabase.from('ls_items').select('item_id', { count: 'exact', head: true }).eq('organization_id', organizationId),
     supabase.from('ls_sale_lines').select('sale_line_id', { count: 'exact', head: true }).eq('organization_id', organizationId),
   ])
-  return { items_seen: data.items_seen, items_pass_finished: data.items_pass_finished, lines_since: data.lines_since, lines_backfill_done: data.lines_backfill_done, sales_backfill_done: data.sales_backfill_done, backfill_from: data.backfill_from, last_error: data.last_error, items: items ?? 0, lines: lines ?? 0 }
+  return { items_seen: data.items_seen, items_pass_finished: data.items_pass_finished, lines_since: data.lines_since, lines_backfill_done: data.lines_backfill_done, sales_backfill_done: data.sales_backfill_done, backfill_from: data.backfill_from, older_to: data.older_to, older_lines_done: data.older_lines_done, last_error: data.last_error, items: items ?? 0, lines: lines ?? 0 }
 }
 
 type Row = { item_id: string; system_sku: string; upc: string; vendor_item_id: string; custom_sku: string; manufacturer_sku: string; description: string; default_cost: number | null; category_path: string; default_vendor_id: string; vendor_name: string; archived: boolean; item_type: string; qoh: Record<string, number>; sold: Record<string, number>; sold_total: number; last_sold: string | null }

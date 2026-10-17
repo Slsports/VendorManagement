@@ -2365,3 +2365,12 @@ file (same PO, else same vendor ±5 days and total) gets the email, file (Our or
   confirmed order goes back to awaiting confirmation) and opens the email: the add-on items in one table, the
   confirmation on file attached (else our order sheet, else the original lines in the body), and a request for one
   confirmation for the whole order; with no confirmation yet, the email says so.
+
+## Oct 17 — Lightspeed history back to the start (May 2020)
+Dana: "I frequently go back 3 or 4 years … to look at what our sales were during a big year versus a slow year … I think we
+started on Lightspeed in May of 2020." Go-ahead given for after the first (24-month) copy finishes, over the weekend of Oct 17-18.
+- `ls-sync` gets an older pass: once the 24-month copy is complete, it pulls every sale and sale line older than the copy's
+  start (LS filter `timeStamp <`), oldest first, with its own cursors (`ls_sync.older_*`, migration 0145). Checked against
+  LS on Oct 17: 215,725 older sales and 442,953 older lines, oldest sale June 20, 2020; about nine hours at LS's pace.
+- The Sales Reports page says where the history stands; any date range can be run.
+- Dana plans to open VMS to the other employees on Monday Oct 19.

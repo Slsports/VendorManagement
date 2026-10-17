@@ -2,7 +2,8 @@
 // replace LS Analytics). Runs every minute from pg_cron (header x-cron-secret). Each run takes a slice of the item pass
 // (every item with stock per shop and its Vendor ID; a full pass every 6 hours), then a slice of the sales and sale-line
 // passes (a 24-month backfill from the oldest forward, then whatever changed since the last run). A cursor (LS's "next"
-// link) is kept so a run picks up where the last stopped. Reading only; nothing in LS changes.
+// link) is kept so a run picks up where the last stopped. Once that copy is complete, an older pass brings in everything
+// before it (Dana, Oct 17: back to May 2020, to compare a big snow year with a slow one). Reading only; nothing in LS changes.
 //   { }                     → the scheduler's slice
 //   { probe: '<path>' }     → trusted only: one GET, the first record (to learn the API's shapes)
 //   { reset_items: true }   → trusted only: start a full item pass now
@@ -20,6 +21,7 @@ type Sync = {
   sales_cursor: string | null; sales_since: string | null; sales_backfill_done: boolean
   lines_cursor: string | null; lines_since: string | null; lines_backfill_done: boolean; lines_seen: number
   backfill_from: string; last_error: string | null; lock_until: string | null
+  older_to: string | null; older_sales_cursor: string | null; older_lines_cursor: string | null; older_sales_done: boolean; older_lines_done: boolean; older_rows: number
 }
 
 Deno.serve(async (req) => {
@@ -58,6 +60,8 @@ const num = (v: unknown) => { const n = Number(v); return Number.isFinite(n) ? n
 const bool = (v: unknown) => String(v) === 'true'
 /** LS's filter syntax: timeStamp >= a moment, URL-safe. */
 const since = (iso: string) => encodeURIComponent(`>=,${iso.replace(/\.\d+Z$/, 'Z')}`)
+/** LS's filter syntax: timeStamp before a moment (the older pass). */
+const before = (iso: string) => encodeURIComponent(`<,${iso.replace(/\.\d+Z$/, 'Z')}`)
 
 async function syncSlice(db: SupabaseClient, org: string, acct: string) {
   const now = new Date()
@@ -138,6 +142,39 @@ async function syncSlice(db: SupabaseClient, org: string, acct: string) {
         if (url) await new Promise((r) => setTimeout(r, PAGE_PAUSE_MS))
       }
       result[kind] = { pages, rows, backfill_done: !url ? true : s[doneKey], since: s[sinceKey] }
+    }
+
+    // ---- the older pass: everything before the first copy's start, once that copy is complete ---------------------
+    if (s.older_to && s.sales_backfill_done && s.lines_backfill_done) {
+      for (const kind of ['sales', 'lines'] as const) {
+        if (Date.now() >= deadline) break
+        const cursorKey = kind === 'sales' ? 'older_sales_cursor' : 'older_lines_cursor'
+        const doneKey = kind === 'sales' ? 'older_sales_done' : 'older_lines_done'
+        if (s[doneKey]) continue
+        let url: string | null = s[cursorKey] ?? `${base}/${kind === 'sales' ? 'Sale' : 'SaleLine'}.json?limit=100&sort=timeStamp&timeStamp=${before(s.older_to)}`
+        let pages = 0, rows = 0
+        while (url && Date.now() < deadline) {
+          const page = await lsGet<Record<string, unknown>>(token, url)
+          const list = asList(page[kind === 'sales' ? 'Sale' : 'SaleLine'] as unknown) as Record<string, unknown>[]
+          if (list.length) {
+            const { error } = kind === 'sales'
+              ? await db.from('ls_sales').upsert(list.map((x) => saleRow(org, x)), { onConflict: 'organization_id,sale_id' })
+              : await db.from('ls_sale_lines').upsert(list.map((x) => lineRow(org, x)), { onConflict: 'organization_id,sale_line_id' })
+            if (error) throw new Error(`older ${kind}: ${error.message}`)
+            if (kind === 'lines') s.lines_seen += list.length
+          }
+          rows += list.length
+          pages++
+          s.older_rows += list.length
+          const next = (page['@attributes'] as { next?: string } | undefined)?.next
+          url = next ? next.replace(LS_API, '') : null
+          const fields: Partial<Sync> = { [cursorKey]: url, older_rows: s.older_rows, lines_seen: s.lines_seen } as Partial<Sync>
+          if (!url) { (fields as Record<string, unknown>)[doneKey] = true; s[doneKey] = true }
+          await save(fields)
+          if (url) await new Promise((r) => setTimeout(r, PAGE_PAUSE_MS))
+        }
+        result[`older_${kind}`] = { pages, rows, done: s[doneKey] }
+      }
     }
     await save({ lock_until: null, last_error: null })
     return result
