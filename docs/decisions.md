@@ -2502,3 +2502,6 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   shows that one card on top, any status); the viewer renders spreadsheet links. A decided item's next report says so
   ("a replacement is being sourced", "not needed", or the replacement with the need carried) and never makes a second
   card. `item_change_decide` refuses to re-decide anything except Find replacement.
+- Oct 18, shelf tags and price tags (Dana, for Trevor's Proposal 3): every store updates its tags; prices are changed
+  once in LS and cover all stores. **Trevor is in charge** of all shelf-tag and price-change tasks: he prints the labels
+  and takes them to the other stores for the shelf tags and the price tags on the items. (Proposals still not approved.)
