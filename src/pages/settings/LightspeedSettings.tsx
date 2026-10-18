@@ -26,7 +26,7 @@ function Lightspeed({ s, refetch }: { s: LightspeedStatus; refetch: () => Promis
   const [clientId, setClientId] = useState('')
   const [secret, setSecret] = useState('')
   const [editing, setEditing] = useState(!s.secret_saved)
-  const [access, setAccess] = useState<'read' | 'full'>('read')
+  const [access, setAccess] = useState<'read' | 'full'>(s.read_only === false ? 'full' : 'read')
   const [busy, setBusy] = useState<string | null>(null)
 
   async function run(key: string, fn: () => Promise<unknown>, done?: string) {
@@ -104,8 +104,8 @@ function Lightspeed({ s, refetch }: { s: LightspeedStatus; refetch: () => Promis
         <div className="mt-3 flex flex-wrap items-end gap-3">
           <FormField label="Access" htmlFor="ls-access">
             <Select id="ls-access" value={access} onChange={(e) => setAccess(e.target.value as 'read' | 'full')} className="h-10 text-sm">
-              <option value="read">Read only (for now)</option>
-              <option value="full">Full (needed later to create POs)</option>
+              <option value="read">Read only</option>
+              <option value="full">Full (VMS can write markers, notes and POs)</option>
             </Select>
           </FormField>
           <Button loading={busy === 'connect'} disabled={!s.secret_saved || !!busy} onClick={() => void connect()}>{s.connected ? 'Connect again' : 'Connect to Lightspeed'}</Button>
