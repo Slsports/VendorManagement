@@ -79,4 +79,15 @@ describe('prices (Oct 16)', () => {
     expect(email).toContain('- 71237 GRAND SIERRA GLOVE LG was discontinued, replaced with 71240 GRAND SIERRA GLOVE II LG')
     expect(email).toContain('- 60894 NECK GAITER is out of stock, back 11/15/26')
   })
+
+  it('never takes a number inside an item number as the quantity (Dana, Oct 18: Final showed 582)', () => {
+    expect(qtyIn('TS582S qty 1 @ $10.45; PP582S qty 1 @ $13.95')).toBe(1)
+    expect(qtyIn('TS582L qty 2; PP582L qty 2')).toBe(2)
+    expect(qtyIn('qty 2 each')).toBe(2)
+    expect(qtyIn('2 Womens Small')).toBe(2)
+    expect(qtyIn('1 Mens XL (Sept 28 email)')).toBe(1)
+    expect(qtyIn('144 at $0.15')).toBe(144)
+    expect(qtyIn('KID5824T')).toBeNull()
+    expect(qtyIn('12')).toBe(12)
+  })
 })

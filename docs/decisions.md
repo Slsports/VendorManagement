@@ -2466,6 +2466,10 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   says "… was discontinued, replaced with …" / "… is out of stock, back 11/15/26", and the replacement goes on the final
   order at the same quantity. Initials come from `profiles.note_initials`, else the name: Dana = DP; Trevor and Jarrett
   have no last name in VMS, so their notes say TREVOR / JARRETT until their initials are set (asked Dana).
+- Oct 18 (Dana): note initials Trevor Jenkins = TJ, Jarrett Watson = JW (`profiles.note_initials`; their names in VMS
+  are still first names only). Fixed: on a confirmation check the **Final** box showed 582 for the Lazy One Herd Bells
+  rows, the number inside the Vendor ID ("TS582S qty 1 @ $10.45"); a number stuck to letters is never a quantity now
+  and "qty N" wins. Nothing was saved or sent with it (no row edits on that check, no final order sent since Oct 16).
 
 ## Oct 18 — Item Notes copied; discontinued, DNR, out of stock and replacements on sales reports (Fable, go from Dana)
 - `ls-sync` now copies each item's Lightspeed Note (`ls_items.note`, `note_public`; migration 0157). Public = prints on the
