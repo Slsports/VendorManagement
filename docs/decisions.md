@@ -2408,3 +2408,7 @@ was the broken push fixed in the next commit.
   and the show lists override the WWD portal. Applied: Creative Group set to zero upcharge (Donna lists "Creative
   Eyewear/Batali"); Odd Sox and Prairie Schooner stay zero upcharge (Donna yes, Spring 2025/2026 show lists no). Left:
   ALPS Mountaineering card; the 121 portal-only lines question.
+- Oct 18, ALPS (Dana): "some of em go under two names, they're two divisions, and we order from alps mountaineering".
+  ALPS Brands and ALPS Mountaineering are two divisions; we order from ALPS Mountaineering only. Go by the ALPS
+  Mountaineering line on the Fall 2026 show list (not zero upcharge); the ALPS Brands line's zero upcharge does not
+  apply. Card closed, kept No.
