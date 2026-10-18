@@ -2519,3 +2519,7 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   in LS, receiving, entering items) it goes to **Trevor**, who is in charge of inventory and logistics and of keeping LS
   organized (VMS now helps him do that). Today invoice checks and "Create PO" tasks still go to whoever placed the order
   (`order_reviewer`); changing them waits for Dana's go.
+- Oct 18, built (Dana: invoices and Create PO "should both go to Trevor - If he has a question on an invoice he will call
+  me or Jarrett"): migration 175. `profiles.handles_logistics` (Trevor) gets every invoice check and Create PO task VMS
+  assigns; a check or task someone hands to a person by hand stays. Confirmations and Unavailable items stay with whoever
+  placed the order. Back-check moved the open invoice checks and Create PO tasks (counts reported to Dana).

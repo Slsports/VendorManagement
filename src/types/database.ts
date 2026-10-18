@@ -155,7 +155,7 @@ export type Database = {
           is_active: boolean
           created_at: string
           updated_at: string
-       ; email_signature: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null; places_orders: boolean; sees_freight: boolean; sees_accounting: boolean; can_dnr: boolean; note_initials: string | null
+       ; email_signature: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null; places_orders: boolean; sees_freight: boolean; sees_accounting: boolean; can_dnr: boolean; handles_logistics: boolean; note_initials: string | null
           enters_counts: boolean
           sends_counts: boolean; dashboard_layout: Json | null; remind_dashboard: boolean; remind_email: boolean; remind_text: boolean; mobile_phone: string | null; reviews_ls_pos: boolean }
         Insert: {
@@ -169,7 +169,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; can_dnr?: boolean; note_initials?: string | null
+       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; can_dnr?: boolean; handles_logistics?: boolean; note_initials?: string | null
           enters_counts?: boolean
           sends_counts?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
         Update: {
@@ -183,7 +183,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; can_dnr?: boolean; note_initials?: string | null
+       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; can_dnr?: boolean; handles_logistics?: boolean; note_initials?: string | null
           enters_counts?: boolean
           sends_counts?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
         Relationships: [
