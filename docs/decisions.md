@@ -2527,3 +2527,6 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   fishing vendors' orders. Everyone gets an **Away** switch (Dana: "everyone should have that"). Fishing vendors' invoices
   and Create PO tasks still go to Trevor; he hands one to Jarrett when he wants help (option b). Backup details being
   settled; not built yet.
+- Oct 18, Away (Dana): only Dana sets someone away and chooses who their work goes to. When the person is back, the one
+  who covered decides item by item: keep what they have started, send the rest back (e.g. Jarrett keeps 3 he started
+  and sends 4 back to Trevor). Not built yet.
