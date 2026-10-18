@@ -2416,3 +2416,12 @@ was the broken push fixed in the next commit.
 - Oct 18 (Dana): the "Add Vendor ID to item descriptions" setting stays (vendor, order and item), because a few vendors
   need it. The naming convention leaves the Vendor ID off by default; the inventory reports carry their own Vendor ID
   column.
+- Oct 18, discontinued and replaced items (Dana): "I want the notes to show in vms" (LS item Notes: public = prints on the
+  customer's sales receipt, private = internal). Discontinued items only matter when running sales reports to decide
+  what to order and from ordering to the vendor's confirmation; once the order is placed they are no longer needed.
+  Sales reports show discontinued items clearly, and a noted replacement as an item to order. The final confirmation
+  summary says "X was discontinued, replaced with Y". When a vendor's confirmation says items are unavailable or
+  replaced, Claude records it; what Claude can't settle goes to the Review tab of whoever placed the order. "Staff should
+  not have to go in to ls separately … Make the decisions in the review tab and vms relays it to ls": the decision in
+  Review writes the * marker and the note (REPLACED WITH <Vendor ID>) into LS. This changes SOP-INV-001-NC's "VMS never
+  adds, removes, or changes a marker" (Trevor to update the SOP); needs Full access to LS. Not built yet.
