@@ -3,11 +3,13 @@
 // Vendor reports: System ID … By Description tab. Category reports: a VENDOR column and a By Vendor tab. Stores kept
 // apart: a SOLD and an IN STOCK column per store, then the combined NEED.
 import type { Workbook, Worksheet, Fill } from 'exceljs'
-import { needOf, type ReportGroup, type ReportPlan, type SalesItem } from './salesReport'
+import { needOf, orderNeed, type ReportGroup, type ReportPlan, type SalesItem } from './salesReport'
 
 const FONT = 'Aptos Narrow'
 const solid = (argb: string): Fill => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } })
 const NEED_FILL = solid('FFDDEDD3'), ORDER_FILL = solid('FFFFFF00'), FLAG_FILL = solid('FFE2EFDA'), TOTAL_FILL = solid('FFD9D9D9'), GROUP_FILL = solid('FF1F4E79')
+// Dana, Oct 18: discontinued and DNR rows in salmon, out-of-stock rows in light blue, so they stand out from the flag green
+const STOP_FILL = solid('FFF8CBAD'), OOS_FILL = solid('FFDDEBF7')
 const thin = { style: 'thin' as const, color: { argb: 'FF000000' } }
 const BOX = { top: thin, left: thin, bottom: thin, right: thin }
 
@@ -66,6 +68,8 @@ function cellValue(x: SalesItem, c: Col): unknown {
     case 'sold': return c.store ? (x.byStore?.[c.store]?.sold ?? 0) : x.sold
     case 'qoh': return x.nonInv ? '-' : c.store ? (x.byStore?.[c.store]?.qoh ?? 0) : x.qoh
     case 'onorder': return x.onOrder ?? 0
+    // a discontinued or DNR item is not ordered; a replacement starts with the need it carries (Dana, Oct 18)
+    case 'order': return x.status === 'discontinued' || x.status === 'dnr' ? 0 : x.carried ? orderNeed(x) : null
     default: return null
   }
 }
@@ -93,7 +97,8 @@ function itemRow(ws: Worksheet, lay: Layout, r: number, x: SalesItem, shade: boo
     after.fill = NEED_FILL
   }
   ws.getCell(r, lay.at('order')).fill = ORDER_FILL
-  if (shade && x.notes.length) for (let i = 1; i <= lay.cols.length; i++) if (i !== lay.at('need') && i !== lay.at('after') && i !== lay.at('order')) ws.getCell(r, i).fill = FLAG_FILL
+  const rowFill = x.status === 'discontinued' || x.status === 'dnr' ? STOP_FILL : x.status === 'out_of_stock' ? OOS_FILL : x.notes.length ? FLAG_FILL : null
+  if (shade && rowFill) for (let i = 1; i <= lay.cols.length; i++) if (i !== lay.at('need') && i !== lay.at('after') && i !== lay.at('order')) ws.getCell(r, i).fill = rowFill
 }
 
 function totalRow(ws: Worksheet, lay: Layout, r: number, a: number, b: number, label = 'TOTAL', rows: SalesItem[] = []) {
@@ -107,7 +112,7 @@ function totalRow(ws: Worksheet, lay: Layout, r: number, a: number, b: number, l
   ws.getCell(r, 1).value = label
   for (const n of [...lay.soldCols, ...lay.qohCols, lay.at('order'), ...(lay.at('onorder') > 0 ? [lay.at('onorder')] : [])]) {
     const col = lay.cols[n - 1]!
-    const result = col.key === 'order' ? 0 : rows.reduce((t, x) => t + Number(cellValue(x, col) || 0), 0)
+    const result = rows.reduce((t, x) => t + Number(cellValue(x, col) || 0), 0)
     ws.getCell(r, n).value = b >= a ? { formula: `SUM(${L(n)}${a}:${L(n)}${b})`, result } : 0
   }
   const need = lay.at('need')

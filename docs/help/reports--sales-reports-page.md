@@ -1,7 +1,7 @@
 ---
 title: Run a sales report from Lightspeed
 section: Reports
-keywords: sales reports, Lightspeed, LS, vendor report, category report, size summary, stores, date range, spec v49, Analytics
+keywords: sales reports, Lightspeed, LS, vendor report, category report, size summary, stores, date range, spec v49, Analytics, discontinued, do not reorder, DNR, out of stock, replacement, item notes
 who: Admin, managers and buyers run them; everyone can download them
 ---
 The **Sales Reports** page builds vendor and category reports straight from Lightspeed, formatted by the sales report spec, with no export to upload. VMS keeps its own copy of LS's items, stock and sales, brought up to date every minute.
@@ -16,6 +16,7 @@ The **Sales Reports** page builds vendor and category reports straight from Ligh
 7. **Save settings** keeps the choices under a name, so next time it is one click. Every run stays in the **Reports run** list with **Open** and **Download**.
 
 ## Good to know
+- **Discontinued, do not reorder, out of stock and replacements** come straight from Lightspeed's item name and Note. A name starting with * is discontinued and shows in salmon with no Need; when its LS note says "REPLACED WITH" a Vendor ID that is on the report, that replacement row says **REPLACES …**, its **ORDER** box starts with the carried need, and it is the item to order. A name starting with ** is **DO NOT REORDER** (also salmon, no Need). A note saying "OUT OF STOCK AT VENDOR …, BACK …" shows in light blue with the back date. Every other LS note is quoted in **NOTES**, and all of these are on the **Flags** tab.
 - Two columns after NEED: **ON ORDER** (already coming in on open orders, with the order and ship date in Notes) and **NEED AFTER ORDERS**. See "Add to an order that has not shipped".
 - The report follows spec v49 exactly: Size Summary, By Category, By Vendor (category reports) or By Description (vendor reports), Flags, Active, No Data, Archived, and Archived – No Sales (Ignored). File names carry the initials of whoever ran it.
 - The Size Summary groups by gender, subcategory and size. Spelling variants of one size in LS (SZ 8, SIZE 8) are one row, with a note saying what was merged.

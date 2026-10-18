@@ -2453,3 +2453,14 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   COGHLANS").
 - Oct 18 (Dana, "Yes"): notes in LS are newest on top: VMS puts its dated line above whatever note is there. DNR is tied
   to Dana, Trevor and Jarrett by name "for now" (a per-person setting), not to the manager role.
+
+## Oct 18 — Item Notes copied; discontinued, DNR, out of stock and replacements on sales reports (Fable, go from Dana)
+- `ls-sync` now copies each item's Lightspeed Note (`ls_items.note`, `note_public`; migration 0157). Public = prints on the
+  receipt, private = internal. A fresh item pass was started so the notes come in (about 25 minutes).
+- Sales reports (`src/lib/itemStatus.ts`): * at the start or end of the LS name = discontinued (salmon row, no Need);
+  ** = DO NOT REORDER (salmon, no Need); note "REPLACED WITH <Vendor ID>" carries the old item's need to the replacement
+  when it is on the report (its ORDER box starts with that need, note "REPLACES …"); note "OUT OF STOCK AT VENDOR …,
+  BACK …" = light blue row with the back date; any other LS note is quoted in NOTES. All of them land on the Flags tab;
+  Size Summary and line totals leave discontinued/DNR need out and include carried need.
+- Not done here: Opus's Review cards write these markers and notes to LS; the next item pass (every six hours) brings
+  them into the reports.

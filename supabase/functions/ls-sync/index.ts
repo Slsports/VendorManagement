@@ -84,7 +84,7 @@ async function syncSlice(db: SupabaseClient, org: string, acct: string) {
     const itemsDue = !s.items_pass_finished || now.getTime() - new Date(s.items_pass_finished).getTime() > ITEMS_EVERY_MS
     if (itemsRunning || itemsDue) {
       if (!itemsRunning) { s.items_pass_started = now.toISOString(); s.items_pass_finished = null; s.items_cursor = null; s.items_seen = 0 }
-      let url: string | null = s.items_cursor ?? `${base}/Item.json?limit=100&archived=true&load_relations=${encodeURIComponent('["ItemShops","Category","ItemVendorNums"]')}&sort=itemID`
+      let url: string | null = s.items_cursor ?? `${base}/Item.json?limit=100&archived=true&load_relations=${encodeURIComponent('["ItemShops","Category","ItemVendorNums","Note"]')}&sort=itemID`
       let pages = 0
       while (url && Date.now() < deadline) {
         const page = await lsGet<Record<string, unknown>>(token, url)
@@ -194,12 +194,13 @@ function itemRow(org: string, it: Record<string, unknown>) {
   const vendorId = str(it.defaultVendorID) === '0' ? '' : str(it.defaultVendorID)
   const forVendor = vendorNums.find((v) => str(v.vendorID) === vendorId) ?? vendorNums[0]
   const cat = it.Category as Record<string, unknown> | undefined
+  const note = it.Note as { note?: unknown; isPublic?: unknown } | undefined   // the item's Note: public prints on the receipt
   return {
     organization_id: org, item_id: str(it.itemID), system_sku: str(it.systemSku), upc: str(it.upc) || str(it.ean), custom_sku: str(it.customSku), manufacturer_sku: str(it.manufacturerSku),
     vendor_item_id: str(forVendor?.value), description: str(it.description), default_cost: it.defaultCost == null ? null : num(it.defaultCost),
     category_id: str(it.categoryID) === '0' ? '' : str(it.categoryID), category_path: str(cat?.fullPathName), default_vendor_id: vendorId,
     archived: bool(it.archived), item_type: str(it.itemType) || 'default', matrix_id: str(it.itemMatrixID) === '0' ? '' : str(it.itemMatrixID),
-    qoh, ls_updated_at: str(it.timeStamp) || null, synced_at: new Date().toISOString(),
+    qoh, note: str(note?.note).trim(), note_public: bool(note?.isPublic), ls_updated_at: str(it.timeStamp) || null, synced_at: new Date().toISOString(),
   }
 }
 

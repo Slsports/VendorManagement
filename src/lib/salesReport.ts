@@ -28,7 +28,22 @@ export interface SalesItem {
   lsItemId?: string
   /** Sold and in stock per store code when the report keeps the stores apart (SLS, SLM, GS). */
   byStore?: Record<string, { sold: number; qoh: number }>
+  /** The item's Note in Lightspeed, when the items came from the copy of Lightspeed. */
+  lsNote?: string
+  /** From the LS name and note (Dana, Oct 18): * discontinued, ** do not reorder, "OUT OF STOCK AT VENDOR" in the note. */
+  status?: ItemStatus
+  /** The Vendor ID the LS note says replaced this item ("REPLACED WITH 63360"). */
+  replacementVid?: string
+  /** Need carried over from the discontinued items this one replaces (it is the item to order instead). */
+  carried?: number
+  /** The vendor's back-in-stock date from the note ("…, BACK 11/15/26"), as written. */
+  backDate?: string
 }
+
+export type ItemStatus = 'discontinued' | 'dnr' | 'out_of_stock'
+
+/** The need that counts toward ordering: none for discontinued and DNR items; a replacement carries the need of what it replaces. */
+export const orderNeed = (x: SalesItem) => (x.status === 'discontinued' || x.status === 'dnr' ? 0 : Math.max(0, needOf(x)) + (x.carried ?? 0))
 
 const COLORS = ['GREEN', 'RED', 'PINK', 'BLUE', 'YELLOW', 'PURPLE', 'BLACK', 'SILVER', 'WHITE', 'ORANGE', 'GRAY', 'GREY', 'BROWN', 'TAN', 'NAVY']
 
@@ -228,7 +243,7 @@ export function planReport(all: SalesItem[], vendorName: string, runText: string
   const summary = byLine
     ? [...lines.values()].map((l) => ({
         type: title(lineOf(l[0]!.desc, vendorName)), category: l[0]!.cat, skus: l.length,
-        sold: l.reduce((s, x) => s + x.sold, 0), inStock: l.reduce((s, x) => s + Math.max(0, x.qoh), 0), need: l.reduce((s, x) => s + Math.max(0, needOf(x)), 0),
+        sold: l.reduce((s, x) => s + x.sold, 0), inStock: l.reduce((s, x) => s + Math.max(0, x.qoh), 0), need: l.reduce((s, x) => s + orderNeed(x), 0),
       })).sort((a, b) => a.category.localeCompare(b.category) || b.need - a.need)
     : []
 
@@ -241,7 +256,7 @@ export function planReport(all: SalesItem[], vendorName: string, runText: string
       const gender = genderOf(x.desc, x.cat), sub = subcategoryOf(x.cat)
       const k = `${gender}\u0000${sub}\u0000${size!.size}`
       const row = m.get(k) ?? { gender, subcategory: sub, size: size!.size, skus: 0, sold: 0, inStock: 0, need: 0, onOrder: 0, variants: [] }
-      row.skus++; row.sold += x.sold; row.inStock += Math.max(0, x.qoh); row.need += Math.max(0, needOf(x)); row.onOrder += x.onOrder ?? 0
+      row.skus++; row.sold += x.sold; row.inStock += Math.max(0, x.qoh); row.need += orderNeed(x); row.onOrder += x.onOrder ?? 0
       if (!row.variants.includes(size!.raw)) row.variants.push(size!.raw)
       m.set(k, row)
     }

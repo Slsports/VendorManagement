@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
-import { initialsOf, needOf, planReport, reportFileName, runText, type ReportOptions, type ReportPlan, type SalesItem } from '@/lib/salesReport'
+import { initialsOf, orderNeed, planReport, reportFileName, runText, type ReportOptions, type ReportPlan, type SalesItem } from '@/lib/salesReport'
+import { markItemStatus } from '@/lib/itemStatus'
 import { incomingFor, saveSalesReport } from '@/services/ordering'
 import { ADDONS_LABELS, matchIncoming, onOrderNote } from '@/lib/addOns'
 import { openOrdersForVendor } from '@/services/addOns'
@@ -78,7 +79,7 @@ export async function lsSyncStatus(organizationId: string): Promise<SyncStatus |
   return { items_seen: data.items_seen, items_pass_finished: data.items_pass_finished, lines_since: data.lines_since, lines_backfill_done: data.lines_backfill_done, sales_backfill_done: data.sales_backfill_done, backfill_from: data.backfill_from, older_to: data.older_to, older_lines_done: data.older_lines_done, last_error: data.last_error, items: items ?? 0, lines: lines ?? 0 }
 }
 
-type Row = { item_id: string; system_sku: string; upc: string; vendor_item_id: string; custom_sku: string; manufacturer_sku: string; description: string; default_cost: number | null; category_path: string; default_vendor_id: string; vendor_name: string; archived: boolean; item_type: string; qoh: Record<string, number>; sold: Record<string, number>; sold_total: number; last_sold: string | null }
+type Row = { item_id: string; system_sku: string; upc: string; vendor_item_id: string; custom_sku: string; manufacturer_sku: string; description: string; default_cost: number | null; category_path: string; default_vendor_id: string; vendor_name: string; archived: boolean; item_type: string; qoh: Record<string, number>; sold: Record<string, number>; sold_total: number; last_sold: string | null; note: string; note_public: boolean }
 
 /** The report's items from the copy of Lightspeed: sold in the period and on hand, per chosen store and combined. */
 export async function fetchReportItems(organizationId: string, p: ReportParams, stores: LsStore[]): Promise<SalesItem[]> {
@@ -104,6 +105,7 @@ export async function fetchReportItems(organizationId: string, p: ReportParams, 
       cost: r.default_cost == null ? null : Number(r.default_cost), cat: r.category_path, archived: r.archived, sold, nonInv, qoh: nonInv ? 0 : qoh, last: r.last_sold, notes: [],
       lsVendorId: r.default_vendor_id,
       lsItemId: r.item_id,
+      lsNote: r.note || undefined,
       byStore: p.store_mode === 'separate' ? byStore : undefined,
     }
   })
@@ -136,6 +138,8 @@ export async function runLsReport(input: { organizationId: string; params: Repor
     for (const o of open) addonsByOrder.set(o.id, o.addons)
     return inc.lines
   }))).flat()
+  // discontinued (*), do not reorder (**), out of stock and replacements from the LS names and notes (Dana, Oct 18)
+  const marked = markItemStatus(items)
   const matched = matchIncoming(items, incoming)
   for (const x of items) {
     const m = matched.get(x.sid)
@@ -151,7 +155,7 @@ export async function runLsReport(input: { organizationId: string; params: Repor
   const bytes = await buildReportXlsx(plan)
   const fileName = reportFileName(initialsOf(profile.full_name), run, name, p.days ?? { from: p.from, to: p.to })
   const file = new File([bytes], fileName, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-  const summary = { items: items.length, active: plan.active.length, nodata: plan.nodata.length, archived: plan.archived.length, ignored: plan.ignored.length, flags: plan.flagged.length, duplicates: plan.duplicates, sizes: plan.sizes?.length ?? 0, sold: items.reduce((s, x) => s + x.sold, 0), need: items.reduce((s, x) => s + Math.max(0, needOf(x)), 0) }
+  const summary = { items: items.length, active: plan.active.length, nodata: plan.nodata.length, archived: plan.archived.length, ignored: plan.ignored.length, flags: plan.flagged.length, duplicates: plan.duplicates, sizes: plan.sizes?.length ?? 0, sold: items.reduce((s, x) => s + x.sold, 0), need: items.reduce((s, x) => s + orderNeed(x), 0), ...marked }
   const one = p.kind === 'vendor' && p.vendor_ids.length === 1 ? input.vendors.find((v) => v.ls_vendor_id === p.vendor_ids[0]) : null
   let document_id: string | null = null, sales_report_id: string | null = null, storage_path: string | null = null
   if (one?.vendor_id) {
