@@ -2404,3 +2404,7 @@ was the broken push fixed in the next commit.
   Group" without), Odd Sox and Prairie Schooner (Donna's sheet yes, Spring 2025/2026 show lists no). 19 show-list lines
   whose "no" migration 150 had overwritten with the portal's "yes" put back. Still marked from the portal alone: 121
   lines (117 portal-only lines and 4 on the Fall 2024/2025 lists, which have no zero-upcharge column); asked Dana.
+- Oct 18, zero upcharge sources in order (Dana): Donna Hoffman's DandyLines list (sent Aug 2026) overrides the show lists,
+  and the show lists override the WWD portal. Applied: Creative Group set to zero upcharge (Donna lists "Creative
+  Eyewear/Batali"); Odd Sox and Prairie Schooner stay zero upcharge (Donna yes, Spring 2025/2026 show lists no). Left:
+  ALPS Mountaineering card; the 121 portal-only lines question.
