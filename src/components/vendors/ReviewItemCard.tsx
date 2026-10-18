@@ -17,6 +17,7 @@ import { FreightPaymentReview } from '@/components/freight/FreightPaymentReview'
 import { RepLineReview } from '@/components/review/RepLineReview'
 import { ShowLineReview } from '@/components/review/ShowLineReview'
 import { PortalConflictReview } from '@/components/review/PortalConflictReview'
+import { ItemChangeCard } from '@/components/review/ItemChangeCard'
 import { BoothRepReview } from '@/components/review/BoothRepReview'
 
 type VendorRef = { id: string; name: string; lightspeed_name: string | null; aliases: string[] } | null
@@ -59,6 +60,7 @@ const ROUTE_OPTIONS: { value: RouteChoice; label: string }[] = [
  *  - booth_rep (a vendor in a booth with a rep group's lines): Add to that rep group / No.
  *  - show_line (a show list line that may be one of our vendors): Yes / No.
  *  - portal_conflict (the Worldwide portal says something different): Keep ours / Use the portal's.
+ *  - item_change (a vendor confirmation says an item is discontinued, replaced or out of stock): the ItemChangeCard buttons.
  *  - rep_line (a rep's mail names another group's vendor, or a brand we do not have): move/keep, or add/skip.
  *  - vendor_marker and anything else: Done / Dismiss.
  * Any card about one vendor can also delete it as "not a vendor" (never one with orders).
@@ -133,6 +135,19 @@ export function ReviewItemCard({ item, vendor, other, canEdit, onDone, aside }: 
           {aside ? <div className="shrink-0">{aside}</div> : null}
         </div>
         <ShowLineReview item={item} canEdit={canEdit} onDone={() => onDone()} />
+      </div>
+    )
+  }
+
+  if (item.kind === 'item_change') {
+    const changeId = (item.details as { change_id?: string } | null)?.change_id
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <p className="font-medium text-amber-900">{item.title}</p>
+          {aside ? <div className="shrink-0">{aside}</div> : null}
+        </div>
+        {changeId ? <ItemChangeCard changeId={changeId} canEdit={canEdit} onDone={() => onDone()} /> : null}
       </div>
     )
   }

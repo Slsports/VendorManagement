@@ -733,6 +733,17 @@ const CompareAnswer = z.object({
   draft_subject: z.string().nullable(),
   draft_body: z.string().nullable().describe('The email to the vendor about the issues, plain text, no signature'),
   new_items: z.array(z.object({ what: z.string().describe('Vendor ID and short name'), qty: z.number().nullable(), price: z.number().nullable() })).describe('Only when show_order is true: items on the confirmation that are not on our order or sales report at all (picked at the show); else empty'),
+  unavailable: z.array(z.object({
+    vendor_item_id: z.string().nullable().describe('Our item\'s Vendor ID as on our order or the document'),
+    item_name: z.string().describe('Short name of our item'),
+    read_as: z.enum(['discontinued', 'replaced', 'out_of_stock', 'unclear']).describe('replaced: the vendor names the item that replaces it; discontinued: no longer made or sold and no replacement named; out_of_stock: temporarily unavailable or backordered; unclear: the vendor says something about it being unavailable but not clearly which'),
+    sure: z.boolean().describe('true only when the vendor says it plainly about this exact item (and, for replaced, names the replacement\'s Vendor ID)'),
+    replacement_vendor_item_id: z.string().nullable().describe('The replacement\'s Vendor ID exactly as the vendor wrote it; null when none is given'),
+    replacement_name: z.string().nullable(),
+    replacement_price: z.number().nullable().describe('The replacement\'s unit price when shown'),
+    back_date: z.string().nullable().describe('For out_of_stock: the date the vendor says it will be back or ship, YYYY-MM-DD; null when not given'),
+    vendor_words: z.string().describe('The vendor\'s exact words about this item, short'),
+  })).describe('Confirmations only: every item the vendor says is discontinued, replaced or out of stock (on the document or in the email conversation). Empty for invoices or when there are none. Never guess: when the vendor does not say it, it is not here.'),
 })
 export type CompareReading = z.infer<typeof CompareAnswer>
 

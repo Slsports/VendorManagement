@@ -9,7 +9,7 @@
 // Nothing is ever sent from here.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, caller, errorResponse, json, serviceClient } from '../_shared/caller.ts'
-import { aiEnabled, comparePaperwork, compareWithSalesReport, isReadableFile, nameNewItems, pickPaperOrder, readPaperwork, type PaperFile, type PaperReading } from '../_shared/ai.ts'
+import { aiEnabled, comparePaperwork, compareWithSalesReport, isReadableFile, nameNewItems, pickPaperOrder, readPaperwork, type CompareReading, type PaperFile, type PaperReading } from '../_shared/ai.ts'
 import { readSalesSheet, sheetForClaude } from '../_shared/salesSheet.ts'
 import { sheetFileText } from '../_shared/sheetFile.ts'
 import * as XLSX from 'npm:xlsx@0.18.5'
@@ -184,6 +184,17 @@ async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
   } })
   if (error) throw new Error(error.message)
   await db.from('order_checks').update({ new_items: r.new_items ?? [] }).eq('id', c.id)
+  if (c.kind === 'confirmation') await recordUnavailable(db, c.id, r.unavailable)
+}
+
+/**
+ * Items the vendor says are discontinued, replaced or out of stock (Dana, Oct 18): each becomes an item change with a
+ * Review card for whoever placed the order. Nothing goes to Lightspeed until a person decides on the card.
+ */
+async function recordUnavailable(db: SupabaseClient, checkId: string, items: CompareReading['unavailable'] | undefined) {
+  if (!items?.length) return
+  const { error } = await db.rpc('item_changes_from_check', { p_check: checkId, p_items: items })
+  if (error) throw new Error(`Unavailable items: ${error.message}`)
 }
 
 const realPo = (po: string | null | undefined) => !!po && po.replace(/[^A-Za-z0-9]/g, '').length >= 3 && !/^\s*(n\/?a|none|tbd|pending|na|no po)\s*$/i.test(po)
@@ -230,6 +241,7 @@ async function compareReport(db: SupabaseClient, c: Check, doc: PaperFile, order
   } })
   if (e2) throw new Error(e2.message)
   await db.from('order_checks').update({ new_items: r.new_items ?? [] }).eq('id', c.id)
+  await recordUnavailable(db, c.id, r.unavailable)
   return true
 }
 

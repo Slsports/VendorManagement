@@ -9,6 +9,9 @@ export interface UsualCharge { what: string; price: number | null; per: string |
 export type PictureKind = 'product' | 'proof' | 'advertising' | 'logo' | 'other'
 export type OrderCheckStatus = 'reading' | 'needs_order' | 'comparing' | 'to_review' | 'done' | 'not_paperwork' | 'dismissed' | 'failed'
 
+export type ItemChangeDecision = 'replacement' | 'discontinued' | 'out_of_stock' | 'dnr' | 'leave'
+export type ItemChangeLsStatus = 'pending' | 'written' | 'not_needed' | 'no_item' | 'no_access' | 'failed'
+
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
@@ -152,7 +155,7 @@ export type Database = {
           is_active: boolean
           created_at: string
           updated_at: string
-       ; email_signature: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null; places_orders: boolean; sees_freight: boolean; sees_accounting: boolean
+       ; email_signature: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null; places_orders: boolean; sees_freight: boolean; sees_accounting: boolean; can_dnr: boolean; note_initials: string | null
           enters_counts: boolean
           sends_counts: boolean; dashboard_layout: Json | null; remind_dashboard: boolean; remind_email: boolean; remind_text: boolean; mobile_phone: string | null; reviews_ls_pos: boolean }
         Insert: {
@@ -166,7 +169,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean
+       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; can_dnr?: boolean; note_initials?: string | null
           enters_counts?: boolean
           sends_counts?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
         Update: {
@@ -180,7 +183,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean
+       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; can_dnr?: boolean; note_initials?: string | null
           enters_counts?: boolean
           sends_counts?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
         Relationships: [
@@ -875,6 +878,16 @@ export type Database = {
         Update: { organization_id?: string; started_at?: string | null; finished_at?: string | null; cursor?: string | null; pages?: number; items?: number; archived?: number; no_vendor?: number; counts?: Json; last_error?: string | null; lock_until?: string | null; updated_at?: string }
         Relationships: []
       }
+      item_changes: {
+        Row: { id: string; organization_id: string; vendor_id: string | null; order_id: string | null; check_id: string | null; item_key: string; vendor_item_id: string | null; item_name: string | null; read_as: 'discontinued' | 'replaced' | 'out_of_stock' | 'unclear'; sure: boolean; replacement_vendor_item_id: string | null; replacement_name: string | null; replacement_price: number | null; back_date: string | null; vendor_words: string | null; ls_item_id: string | null; ls_name: string | null; decision: ItemChangeDecision | null; dnr_reason: string | null; decided_by: string | null; decided_at: string | null; note_line: string | null; ls_status: ItemChangeLsStatus | null; ls_error: string | null; ls_written_at: string | null; review_item_id: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; vendor_id?: string | null; order_id?: string | null; check_id?: string | null; item_key: string; vendor_item_id?: string | null; item_name?: string | null; read_as: 'discontinued' | 'replaced' | 'out_of_stock' | 'unclear'; sure?: boolean; replacement_vendor_item_id?: string | null; replacement_name?: string | null; replacement_price?: number | null; back_date?: string | null; vendor_words?: string | null; ls_item_id?: string | null; ls_name?: string | null; decision?: ItemChangeDecision | null; dnr_reason?: string | null; decided_by?: string | null; decided_at?: string | null; note_line?: string | null; ls_status?: ItemChangeLsStatus | null; ls_error?: string | null; ls_written_at?: string | null; review_item_id?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; vendor_id?: string | null; order_id?: string | null; check_id?: string | null; item_key?: string; vendor_item_id?: string | null; item_name?: string | null; read_as?: 'discontinued' | 'replaced' | 'out_of_stock' | 'unclear'; sure?: boolean; replacement_vendor_item_id?: string | null; replacement_name?: string | null; replacement_price?: number | null; back_date?: string | null; vendor_words?: string | null; ls_item_id?: string | null; ls_name?: string | null; decision?: ItemChangeDecision | null; dnr_reason?: string | null; decided_by?: string | null; decided_at?: string | null; note_line?: string | null; ls_status?: ItemChangeLsStatus | null; ls_error?: string | null; ls_written_at?: string | null; review_item_id?: string | null; created_at?: string; updated_at?: string }
+        Relationships: [
+          { foreignKeyName: 'item_changes_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
+          { foreignKeyName: 'item_changes_order_id_fkey'; columns: ['order_id']; isOneToOne: false; referencedRelation: 'orders'; referencedColumns: ['id'] },
+          { foreignKeyName: 'item_changes_check_id_fkey'; columns: ['check_id']; isOneToOne: false; referencedRelation: 'order_checks'; referencedColumns: ['id'] },
+        ]
+      }
       wwd_portal_vendors: {
         Row: { id: string; organization_id: string; number: string; name: string; data: Json; read_at: string; vendor_id: string | null; line_id: string | null; match_how: 'exact' | 'line' | 'confirmed' | 'manual' | null; applied_at: string | null; applied: Json | null; created_at: string; updated_at: string }
         Insert: { id?: string; organization_id: string; number: string; name: string; data: Json; read_at: string; vendor_id?: string | null; line_id?: string | null; match_how?: 'exact' | 'line' | 'confirmed' | 'manual' | null; applied_at?: string | null; applied?: Json | null; created_at?: string; updated_at?: string }
@@ -942,6 +955,8 @@ export type Database = {
     Functions: {
       resolve_booth_rep: { Args: { p_item: string; p_yes: boolean }; Returns: undefined }
       resolve_show_line: { Args: { p_item: string; p_yes: boolean }; Returns: undefined }
+      item_change_decide: { Args: { p_change: string; p_decision: ItemChangeDecision; p_back_date?: string | null; p_reason?: string | null; p_replacement?: string | null }; Returns: Database['public']['Tables']['item_changes']['Row'] }
+      item_change_dnr_request: { Args: { p_change: string; p_to: string; p_reason: string }; Returns: string }
       resolve_portal_conflict: { Args: { p_item: string; p_use_portal: boolean }; Returns: undefined }
       list_sent_emails: { Args: { p_org: string; p_mailbox?: string | null; p_vendor?: string | null; p_q?: string | null; p_limit?: number }; Returns: { id: string; thread_id: string; to_emails: string[]; cc_emails: string[]; subject: string | null; snippet: string | null; sent_at: string; vendor_id: string | null; vendor_name: string | null; sent_by_name: string | null; has_attachments: boolean }[] }
       amazon_monthly: { Args: { p_org: string; p_months?: number }; Returns: { month: string; store_code: string; person_name: string; orders: number; total: number }[] }

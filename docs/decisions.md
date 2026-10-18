@@ -2453,6 +2453,19 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   COGHLANS").
 - Oct 18 (Dana, "Yes"): notes in LS are newest on top: VMS puts its dated line above whatever note is there. DNR is tied
   to Dana, Trevor and Jarrett by name "for now" (a per-person setting), not to the manager role.
+- Oct 18, built (Dana, "Yes"): unavailable items on vendor confirmations. Claude's confirmation comparison lists items the
+  vendor says are discontinued, replaced or out of stock (with the replacement's Vendor ID, name and price, the
+  back-in-stock date and the vendor's words); each becomes an item change (`item_changes`, migration 170) with a card in
+  the new Review tab **Unavailable items**, assigned to the check's reviewer (whoever placed the order), and on the
+  check under **Unavailable items**. Buttons: Use replacement, Discontinued no replacement, Out of stock (date box),
+  DNR (only `profiles.can_dnr`: Dana, Trevor, Jarrett; others get "Send a message about DNR…", a task to the one they
+  pick) and Leave as is. Claude's choice is pre-picked when it is sure. Nothing goes to LS without the click. The
+  lightspeed function writes it (Full access checked first): * (replaced, discontinued) or ** (DNR; an existing ** is
+  kept) at the start of the name, and the dated line on top of the item's note; LS is read back and the change counts
+  only when LS shows it. A note that prints on receipts is left alone (the line stays in VMS). The final order email
+  says "… was discontinued, replaced with …" / "… is out of stock, back 11/15/26", and the replacement goes on the final
+  order at the same quantity. Initials come from `profiles.note_initials`, else the name: Dana = DP; Trevor and Jarrett
+  have no last name in VMS, so their notes say TREVOR / JARRETT until their initials are set (asked Dana).
 
 ## Oct 18 — Item Notes copied; discontinued, DNR, out of stock and replacements on sales reports (Fable, go from Dana)
 - `ls-sync` now copies each item's Lightspeed Note (`ls_items.note`, `note_public`; migration 0157). Public = prints on the
