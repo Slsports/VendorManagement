@@ -2481,3 +2481,8 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   Size Summary and line totals leave discontinued/DNR need out and include carried need.
 - Not done here: Opus's Review cards write these markers and notes to LS; the next item pass (every six hours) brings
   them into the reports.
+- Oct 18, Ordering box and Ordering card (Dana): now that VMS reads LS directly, each vendor gets **Run report** (one
+  click: that vendor's sales report from LS, last 12 months, all stores together; filed under the vendor like a run from
+  the Sales Reports page) and **Run order** (runs the report unless one was run today, then opens Suggested order). On
+  the vendor page's Ordering box and on each vendor in the dashboard Ordering card. Other settings: the Sales Reports
+  page. **Upload sales report** stays (historical reports). Fable builds it (he built the reports and the Reports button).
