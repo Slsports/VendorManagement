@@ -2530,3 +2530,6 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
 - Oct 18, Away (Dana): only Dana sets someone away and chooses who their work goes to. When the person is back, the one
   who covered decides item by item: keep what they have started, send the rest back (e.g. Jarrett keeps 3 he started
   and sends 4 back to Trevor). Not built yet.
+- Oct 18 (Dana): Jarrett and Trevor can always see each other's view ("I should let Jarrett & Trevor always see what they
+  have to do"): the Showing switch for each other, set by Dana per person, not only while someone is away. Personal
+  mail and accounting stay private. With the Away switch, waiting for Dana's go.
