@@ -2432,3 +2432,12 @@ was the broken push fixed in the next commit.
   Dana asked why "Not discontinued" (for a misread): offered as "Leave as is", not decided.
 - Oct 18 (Dana): when the vendor gives a back-in-stock date, the out-of-stock note in LS includes it ("OUT OF STOCK AT
   VENDOR 10/18/26, BACK 11/15/26").
+
+## Oct 18 — Item naming follow-ups (Fable session)
+Dana, on the two open questions in `docs/sop/item-naming-notes-for-fable.md`:
+- Keep the **Leave as is** button on the unavailable-item Review card (Claude can misread a confirmation).
+- ** (DNR) items show on sales reports as well as * (discontinued), marked DNR so they look different.
+Proposed split, awaiting Dana's go: Fable copies item Notes into `ls_items` (in `ls-sync`, built fresh; the Opus draft is
+dropped) and shows discontinued / DNR / out of stock with back date / noted replacement on sales reports; Opus reads
+confirmations for unavailable items, builds the Review cards and the final-confirmation line, and writes * / ** and notes
+to LS from Review. Waits on Dana: LS reconnect with Full access; approval of Trevor's three proposals.
