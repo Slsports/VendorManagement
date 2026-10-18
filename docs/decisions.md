@@ -2486,3 +2486,7 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   the Sales Reports page) and **Run order** (runs the report unless one was run today, then opens Suggested order). On
   the vendor page's Ordering box and on each vendor in the dashboard Ordering card. Other settings: the Sales Reports
   page. **Upload sales report** stays (historical reports). Fable builds it (he built the reports and the Reports button).
+- Oct 18 (Dana, "handle the chain too"): a discontinued item keeps its own Sold, In Stock and Need on the report (only
+  its ORDER is 0); its need is carried to the replacement's ORDER box and noted there ("REPLACES … (sold 12, need 10)").
+  Replacement chains are followed to the end (A → B → C: A's need lands on C, "via B"); a chain that ends at another
+  discontinued or DNR item, or loops, carries nothing and says to check in LS.

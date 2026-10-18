@@ -37,7 +37,8 @@ export function markerOf(desc: string): 'dnr' | 'discontinued' | null {
 
 /**
  * Mark the items (in place) from their LS names and notes, and carry each discontinued item's need to its replacement
- * when the note names one that is on the report. Returns how many were marked.
+ * when the note names one that is on the report. A chain is followed to the end (A replaced by B, B replaced by C: A's
+ * need lands on C). Returns how many were marked.
  */
 export function markItemStatus(items: SalesItem[]): { discontinued: number; dnr: number; outOfStock: number; replaced: number } {
   const counts = { discontinued: 0, dnr: 0, outOfStock: 0, replaced: 0 }
@@ -45,34 +46,26 @@ export function markItemStatus(items: SalesItem[]): { discontinued: number; dnr:
   for (const x of items) {
     for (const k of [x.vid, x.upc, x.sid]) if (k) { byVid.set(key(k), x); byVid.set(noZeros(k), x) }
   }
+  const clean = (d: string) => d.replace(/^\*+\s*|\s*\*$/g, '')
+  const quoted = (note: string) => (note ? ` LS note: "${note}".` : '')
+  // first pass: markers, replacements named, out of stock
+  const next = new Map<SalesItem, SalesItem>()   // discontinued item → the item its note names (when on the report)
   for (const x of items) {
     const note = (x.lsNote ?? '').trim()
     const marker = markerOf(x.desc)
-    const noteText = note ? ` LS note: "${note}".` : ''
     if (marker === 'dnr') {
       x.status = 'dnr'
       counts.dnr++
-      x.notes.unshift(`DO NOT REORDER (** in LS).${noteText || ' No reason noted in LS.'}`)
+      x.notes.unshift(`DO NOT REORDER (** in LS).${quoted(note) || ' No reason noted in LS.'}`)
       continue
     }
     if (marker === 'discontinued') {
       x.status = 'discontinued'
       counts.discontinued++
       const vid = replacementIn(note)
+      if (vid) x.replacementVid = vid
       const target = vid ? (byVid.get(key(vid)) ?? byVid.get(noZeros(vid))) : undefined
-      if (target && target !== x) {
-        x.replacementVid = vid!
-        const need = Math.max(0, needOf(x))
-        target.carried = (target.carried ?? 0) + need
-        target.notes.push(`REPLACES ${x.vid || x.sid} ${x.desc.replace(/^\*+\s*|\s*\*$/g, '')} (sold ${x.sold}, need ${need}): order this item instead.`)
-        counts.replaced++
-        x.notes.unshift(`DISCONTINUED (* in LS): replaced with ${vid} — order the replacement instead; its need is carried there.${noteText}`)
-      } else if (vid) {
-        x.replacementVid = vid
-        x.notes.unshift(`DISCONTINUED (* in LS): replaced with ${vid}, which is not on this report — check the replacement in LS.${noteText}`)
-      } else {
-        x.notes.unshift(`DISCONTINUED (* in LS): no replacement noted.${noteText}`)
-      }
+      if (target && target !== x) next.set(x, target)
       continue
     }
     const oos = outOfStockIn(note)
@@ -80,9 +73,32 @@ export function markItemStatus(items: SalesItem[]): { discontinued: number; dnr:
       x.status = 'out_of_stock'
       x.backDate = oos.back ?? undefined
       counts.outOfStock++
-      x.notes.unshift(`OUT OF STOCK AT VENDOR${oos.since ? ` since ${oos.since}` : ''}${oos.back ? `, back ${oos.back}` : ', no back date given'}.${noteText}`)
+      x.notes.unshift(`OUT OF STOCK AT VENDOR${oos.since ? ` since ${oos.since}` : ''}${oos.back ? `, back ${oos.back}` : ', no back date given'}.${quoted(note)}`)
     } else if (note) {
       x.notes.push(`LS note: "${note}".`)
+    }
+  }
+  // second pass: follow each chain to its end and carry the need there
+  for (const x of items) {
+    if (x.status !== 'discontinued') continue
+    const note = quoted((x.lsNote ?? '').trim())
+    const chain: SalesItem[] = []
+    let cur: SalesItem | undefined = next.get(x)
+    while (cur && !chain.includes(cur) && cur !== x && chain.length < 10) { chain.push(cur); cur = next.get(cur) }
+    const end = chain[chain.length - 1]
+    const path = chain.map((c) => c.vid || c.sid).join(', then ')
+    if (end && end.status !== 'discontinued' && end.status !== 'dnr') {
+      const need = Math.max(0, needOf(x))
+      end.carried = (end.carried ?? 0) + need
+      end.notes.push(`REPLACES ${x.vid || x.sid} ${clean(x.desc)} (sold ${x.sold}, need ${need}${chain.length > 1 ? `, via ${chain.slice(0, -1).map((c) => c.vid || c.sid).join(', ')}` : ''}): order this item instead.`)
+      counts.replaced++
+      x.notes.unshift(`DISCONTINUED (* in LS): replaced with ${path}${chain.length > 1 ? ` — order ${end.vid || end.sid}` : ' — order the replacement'} instead; its need is carried there.${note}`)
+    } else if (end) {
+      x.notes.unshift(`DISCONTINUED (* in LS): replaced with ${path}, which is ${end.status === 'dnr' ? 'marked do not reorder' : 'also discontinued with no replacement on this report'} — check in LS.${note}`)
+    } else if (x.replacementVid) {
+      x.notes.unshift(`DISCONTINUED (* in LS): replaced with ${x.replacementVid}, which is not on this report — check the replacement in LS.${note}`)
+    } else {
+      x.notes.unshift(`DISCONTINUED (* in LS): no replacement noted.${note}`)
     }
   }
   return counts
