@@ -2430,3 +2430,5 @@ was the broken push fixed in the next commit.
   the next sales report shows it), DNR / do not reorder for bad quality or poor sellers (** + note with the reason).
   Only Dana, Trevor and Jarrett can choose DNR; anyone else sees "Send a message about DNR to Dana, Trevor or Jarrett".
   Dana asked why "Not discontinued" (for a misread): offered as "Leave as is", not decided.
+- Oct 18 (Dana): when the vendor gives a back-in-stock date, the out-of-stock note in LS includes it ("OUT OF STOCK AT
+  VENDOR 10/18/26, BACK 11/15/26").
