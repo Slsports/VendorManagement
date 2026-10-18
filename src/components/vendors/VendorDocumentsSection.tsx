@@ -1,9 +1,10 @@
-import { useState, type DragEvent } from 'react'
+import { useEffect, useState, type DragEvent } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { SquareCheck, Square, Pencil, Download, ExternalLink, FileText, Folder, FolderInput, FolderOpen, Link2, Mail, Star, Trash2, Upload } from 'lucide-react'
 import { addVendorLink, deleteVendorLink, downloadVendorFile, listVendorLinks, renameVendorLink, setProofApproved, tickSalesReport, uploadVendorFile, zipVendorDocuments, type VendorLinkRow } from '@/services/lines'
 import { kickOrderChecks } from '@/services/orderChecks'
+import { onOrderingChanged } from '@/services/ordering'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { saveBlob } from '@/lib/viewer'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
@@ -27,6 +28,9 @@ const MAX_MB = MAX_UPLOAD_MB
  */
 export function VendorDocumentsSection({ vendorId, vendorName, organizationId, userId, canEdit }: { vendorId: string; vendorName: string; organizationId: string; userId: string | null; canEdit: boolean }) {
   const q = useSupabaseQuery(() => listVendorLinks(vendorId), [vendorId])
+  // a sales report filed from the Ordering box (Run report, Upload) shows up here without a reload (Dana, Oct 18)
+  const { refetch } = q
+  useEffect(() => onOrderingChanged(() => { void refetch() }), [refetch])
   const [openFolder, setOpenFolder] = useState<DocFolder | null>(null)
   const [adding, setAdding] = useState<{ mode: 'file' | 'link'; folder: DocFolder; files: File[] } | null>(null)
   const [moving, setMoving] = useState<VendorLinkRow | null>(null)
