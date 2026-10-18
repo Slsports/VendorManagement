@@ -62,20 +62,22 @@ Deno.serve(async (req) => {
       const { data: c } = await db.from('lightspeed_connections').select('client_id').eq('organization_id', org).maybeSingle()
       if (!c?.client_id) throw new HttpError(400, 'Save the Client ID and Secret first')
       const state = crypto.randomUUID()
-      await db.from('lightspeed_connections').update({ oauth_state: state, oauth_state_at: new Date().toISOString() }).eq('organization_id', org)
-      const url = `${LS_AUTHORIZE}?${new URLSearchParams({ response_type: 'code', client_id: c.client_id, scope: body.access === 'full' ? LS_SCOPE_FULL : LS_SCOPE_READ, state, redirect_uri: LS_REDIRECT })}`
+      const scope = body.access === 'full' ? LS_SCOPE_FULL : LS_SCOPE_READ
+      // LS's token answer carries no scope, so the access asked for here is what Settings shows after the sign-in
+      await db.from('lightspeed_connections').update({ oauth_state: state, oauth_state_at: new Date().toISOString(), oauth_scope: scope }).eq('organization_id', org)
+      const url = `${LS_AUTHORIZE}?${new URLSearchParams({ response_type: 'code', client_id: c.client_id, scope, state, redirect_uri: LS_REDIRECT })}`
       return json({ url })
     }
 
     if (body.action === 'exchange') {
-      const { data: c } = await db.from('lightspeed_connections').select('client_id, client_secret, oauth_state, oauth_state_at').eq('organization_id', org).maybeSingle()
+      const { data: c } = await db.from('lightspeed_connections').select('client_id, client_secret, oauth_state, oauth_state_at, oauth_scope').eq('organization_id', org).maybeSingle()
       if (!c?.client_id || !c.client_secret) throw new HttpError(400, 'Save the Client ID and Secret first')
       const fresh = c.oauth_state_at && Date.now() - new Date(c.oauth_state_at).getTime() < 30 * 60_000
       if (!body.state || body.state !== c.oauth_state || !fresh) throw new HttpError(400, 'This sign-in link is old. Click Connect to Lightspeed again.')
       if (!body.code) throw new HttpError(400, 'Lightspeed did not send a sign-in code')
       try {
         const t = await lsTokenRequest({ grant_type: 'authorization_code', code: body.code, client_id: c.client_id, client_secret: c.client_secret, redirect_uri: LS_REDIRECT })
-        await db.from('lightspeed_connections').update({ oauth_state: null, connected_at: new Date().toISOString(), connected_by: me.id }).eq('organization_id', org)
+        await db.from('lightspeed_connections').update({ oauth_state: null, oauth_scope: null, connected_at: new Date().toISOString(), connected_by: me.id, scope: t.scope ?? c.oauth_scope ?? null }).eq('organization_id', org)
         await saveTokens(db, org, t)
       } catch (e) {
         await db.from('lightspeed_connections').update({ oauth_state: null, last_error: (e instanceof Error ? e.message : String(e)).slice(0, 500) }).eq('organization_id', org)

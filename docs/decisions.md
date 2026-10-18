@@ -2441,3 +2441,9 @@ Proposed split, awaiting Dana's go: Fable copies item Notes into `ls_items` (in 
 dropped) and shows discontinued / DNR / out of stock with back date / noted replacement on sales reports; Opus reads
 confirmations for unavailable items, builds the Review cards and the final-confirmation line, and writes * / ** and notes
 to LS from Review. Waits on Dana: LS reconnect with Full access; approval of Trevor's three proposals.
+
+## Oct 18 — Lightspeed access level fix
+Bug (from the Sonnet session): Lightspeed's token answer has no scope, so `lightspeed_connections.scope` stayed null and
+Settings › Lightspeed said "read only" even after a Full reconnect (Dana reconnected at 19:05 UTC; scope was null).
+Fix: the access asked for at Connect is kept in `oauth_scope` (migration 0156) and copied into `scope` when the sign-in
+completes. Dana clicks **Connect again** with Full once more so the label and `scope` are right.
