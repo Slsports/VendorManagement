@@ -2413,3 +2413,6 @@ was the broken push fixed in the next commit.
   Mountaineering line on the Fall 2026 show list (not zero upcharge); the ALPS Brands line's zero upcharge does not
   apply. Card closed, kept No.
 - Oct 18 (Dana): the 121 lines marked zero upcharge only by the WWD portal stay marked ("No, leave it").
+- Oct 18 (Dana): the "Add Vendor ID to item descriptions" setting stays (vendor, order and item), because a few vendors
+  need it. The naming convention leaves the Vendor ID off by default; the inventory reports carry their own Vendor ID
+  column.
