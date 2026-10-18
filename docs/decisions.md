@@ -2451,3 +2451,5 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   has no date or time stamp: "10/18/26 JW: REPLACED WITH 71240", "10/18/26 JW: OUT OF STOCK AT VENDOR, BACK 11/15/26",
   "10/18/26 DP: DNR: POOR QUALITY" (initials, as the team writes them today, e.g. "8/12/26 JW: DISCONTINUED BY
   COGHLANS").
+- Oct 18 (Dana, "Yes"): notes in LS are newest on top: VMS puts its dated line above whatever note is there. DNR is tied
+  to Dana, Trevor and Jarrett by name "for now" (a per-person setting), not to the manager role.
