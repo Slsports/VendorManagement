@@ -2533,3 +2533,10 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
 - Oct 18 (Dana): Jarrett and Trevor can always see each other's view ("I should let Jarrett & Trevor always see what they
   have to do"): the Showing switch for each other, set by Dana per person, not only while someone is away. Personal
   mail and accounting stay private. With the Away switch, waiting for Dana's go.
+- Oct 18, built (Dana: "If Jarrett can always see Trevor and vice versa, maybe we don't need the away module?? … yes, go
+  with the can see"): the Away module is dropped for now. Migration 180 adds `profiles.can_see` (Dana ticks it in
+  Settings › Users, **Can see** column); Trevor and Jarrett are set to see each other. Their top bar gets the Showing
+  switch with only those names (no Everyone; that stays Dana's). They see that person's dashboard, Review queue, tasks
+  and orders, and can take a task (Assigned to) or finish it. Personal mail, Accounting and tasks tied to personal mail
+  stay private. Only the admin can change Can see, Can DNR, logistics and note initials (the profile guard now covers
+  them).

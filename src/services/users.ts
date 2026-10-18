@@ -69,6 +69,12 @@ export async function setUserAccounting(id: string, sees_accounting: boolean) {
   if (error) throw error
 }
 
+/** Whose work this person can see in their Showing switch (Dana sets it). */
+export async function setUserCanSee(id: string, can_see: string[]) {
+  const { error } = await supabase.from('profiles').update({ can_see }).eq('id', id)
+  if (error) throw error
+}
+
 export async function setStoreGrants(userId: string, storeIds: string[]) {
   const { error: delError } = await supabase.from('user_store_access').delete().eq('user_id', userId)
   if (delError) throw delError

@@ -155,7 +155,7 @@ export type Database = {
           is_active: boolean
           created_at: string
           updated_at: string
-       ; email_signature: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null; places_orders: boolean; sees_freight: boolean; sees_accounting: boolean; can_dnr: boolean; handles_logistics: boolean; note_initials: string | null
+       ; email_signature: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null; places_orders: boolean; sees_freight: boolean; sees_accounting: boolean; can_dnr: boolean; handles_logistics: boolean; note_initials: string | null; can_see: string[]
           enters_counts: boolean
           sends_counts: boolean; dashboard_layout: Json | null; remind_dashboard: boolean; remind_email: boolean; remind_text: boolean; mobile_phone: string | null; reviews_ls_pos: boolean }
         Insert: {
@@ -169,7 +169,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; can_dnr?: boolean; handles_logistics?: boolean; note_initials?: string | null
+       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; can_dnr?: boolean; handles_logistics?: boolean; note_initials?: string | null; can_see?: string[]
           enters_counts?: boolean
           sends_counts?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
         Update: {
@@ -183,7 +183,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; can_dnr?: boolean; handles_logistics?: boolean; note_initials?: string | null
+       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; can_dnr?: boolean; handles_logistics?: boolean; note_initials?: string | null; can_see?: string[]
           enters_counts?: boolean
           sends_counts?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean }
         Relationships: [
@@ -1064,6 +1064,7 @@ export type Database = {
       accounting_recount: { Args: { p_org: string }; Returns: undefined }
       share_thread_to_orders: { Args: { p_thread: string; p_share?: boolean }; Returns: undefined }
       can_see_mailbox: { Args: { p_mailbox: string }; Returns: boolean }
+      can_see_person: { Args: { p_person: string }; Returns: boolean }
       mail_with: { Args: { p_org: string; p_email: string; p_company?: boolean; p_limit?: number }; Returns: { id: string; thread_id: string; direction: 'in' | 'out' | 'internal'; from_email: string | null; from_name: string | null; to_emails: string[]; cc_emails: string[]; subject: string | null; snippet: string | null; received_at: string; has_attachments: boolean; vendor_id: string | null; vendor_name: string | null }[] }
       mail_free_domain: { Args: { p_domain: string }; Returns: boolean }
       set_art_status: { Args: { p_thread: string; p_status: 'waiting' | 'needs_changes' | 'changes_sent' | 'approved' | 'none' }; Returns: undefined }

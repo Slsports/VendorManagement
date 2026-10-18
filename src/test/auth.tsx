@@ -19,7 +19,7 @@ export function withAuth(role: UserRole, ui: ReactNode, initialEntries: string[]
       remind_email: true,
       remind_text: false,
       mobile_phone: null,
-      reviews_ls_pos: false, can_dnr: false, handles_logistics: false, note_initials: null,
+      reviews_ls_pos: false, can_dnr: false, handles_logistics: false, note_initials: null, can_see: [],
       places_orders: false,
       sees_freight: false,
       sees_accounting: false,
