@@ -2447,3 +2447,7 @@ Bug (from the Sonnet session): Lightspeed's token answer has no scope, so `light
 Settings › Lightspeed said "read only" even after a Full reconnect (Dana reconnected at 19:05 UTC; scope was null).
 Fix: the access asked for at Connect is kept in `oauth_scope` (migration 0156) and copied into `scope` when the sign-in
 completes. Dana clicks **Connect again** with Full once more so the label and `scope` are right.
+- Oct 18 (Dana): every note VMS writes to an LS item starts with the date and who decided, because the LS Notes field
+  has no date or time stamp: "10/18/26 JW: REPLACED WITH 71240", "10/18/26 JW: OUT OF STOCK AT VENDOR, BACK 11/15/26",
+  "10/18/26 DP: DNR: POOR QUALITY" (initials, as the team writes them today, e.g. "8/12/26 JW: DISCONTINUED BY
+  COGHLANS").
