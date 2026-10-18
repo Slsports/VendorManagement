@@ -2540,3 +2540,10 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   and orders, and can take a task (Assigned to) or finish it. Personal mail, Accounting and tasks tied to personal mail
   stay private. Only the admin can change Can see, Can DNR, logistics and note initials (the profile guard now covers
   them).
+- Oct 18 (Dana, "We may not have the vendor Id of the replacement item until we get the invoice"): the Find replacement
+  card gets a third choice, **Replacement ordered, ID to come** (what was ordered and from whom, or the order). The
+  task becomes "Enter the Vendor ID for the replacement of X when the invoice comes", tagged to that order. LS gets a
+  dated "REPLACEMENT ORDERED" line on the old item right away (Dana: "i want a dated 'replacement ordered'"); the real
+  REPLACED WITH <id> line goes on once the ID is known. When the order's confirmation or invoice arrives, the card lists
+  its lines so the replacement is picked with one click. Meanwhile reports say "replacement ordered, Vendor ID to come
+  from the invoice" and carry no need (the new item is not in LS yet). Not built yet: waiting for Dana's go.
