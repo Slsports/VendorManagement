@@ -2412,3 +2412,4 @@ was the broken push fixed in the next commit.
   ALPS Brands and ALPS Mountaineering are two divisions; we order from ALPS Mountaineering only. Go by the ALPS
   Mountaineering line on the Fall 2026 show list (not zero upcharge); the ALPS Brands line's zero upcharge does not
   apply. Card closed, kept No.
+- Oct 18 (Dana): the 121 lines marked zero upcharge only by the WWD portal stay marked ("No, leave it").
