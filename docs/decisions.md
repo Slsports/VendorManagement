@@ -2514,3 +2514,8 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   Run order = reuse a report whose run date is today, else run one, then open Suggested order. A vendor with no
   `lightspeed_vendor_id` (or tied to more than one) gets a plain message pointing to In Lightspeed as / the Sales
   Reports page. **Reports** stays for custom runs; **Upload sales report** is now a smaller link for historical reports.
+- Oct 18, who gets what (Dana): from sales reports through creating an order to confirming it, every flag goes to the
+  **person who placed the order**. From shipping on (freight, matching the invoice to the confirmation, creating the PO
+  in LS, receiving, entering items) it goes to **Trevor**, who is in charge of inventory and logistics and of keeping LS
+  organized (VMS now helps him do that). Today invoice checks and "Create PO" tasks still go to whoever placed the order
+  (`order_reviewer`); changing them waits for Dana's go.
