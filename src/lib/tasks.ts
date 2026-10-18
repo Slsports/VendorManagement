@@ -124,6 +124,8 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   if (kind === 'promise' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}?do=reply`, label: 'Reply' }
   if (kind === 'freight_quote' && id) return { kind: 'page', to: `/freight/quotes/${id}`, label: 'Open the freight quote' }
   if (kind === 'lspo' && id) return { kind: 'page', to: `/ls-pos/${id}`, label: 'Open the LS PO' }
+  // Find a replacement (Dana, Oct 18): the task lands on the item's Review card, where the Vendor ID goes
+  if (kind === 'item_change' && id) return { kind: 'page', to: `/review?tab=items&item=${id}`, label: 'Open the item card' }
   if (kind === 'supply') return { kind: 'page', to: t.thread_id ? `/mail/${t.thread_id}` : '/supplies', label: t.thread_id ? 'Open the request' : 'Open Supplies' }
   if ((kind === 'wwd' || kind === 'order') && id) return { kind: 'pay', label: 'Pay it', bill: kind, id }
   // tasks people make: whatever they are tagged to

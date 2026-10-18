@@ -2490,3 +2490,15 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   its ORDER is 0); its need is carried to the replacement's ORDER box and noted there ("REPLACES … (sold 12, need 10)").
   Replacement chains are followed to the end (A → B → C: A's need lands on C, "via B"); a chain that ends at another
   discontinued or DNR item, or loops, carries nothing and says to find a replacement.
+- Oct 18 (Dana, "If its a decision to be made"): a discontinued item with no usable replacement is a decision, not a
+  note. A report that finds one (no replacement noted, one not in LS, or a chain that dead-ends) makes one Review card
+  per LS item in Unavailable items for whoever ran the report (migration 0171: `item_changes.source = 'report'`,
+  `report_run_id`, `task_id`; `item_changes_from_report`, `item_changes_set_run`). Two buttons: **Find replacement**
+  (a task "Find a replacement for …" on that person's list, due in a week, `auto_key item_change:<review item>`; its Go
+  button opens the card, where the Vendor ID goes in **Use replacement**, which writes REPLACED WITH to LS and finishes
+  the task) and **Don't need** (dated "NO REPLACEMENT NEEDED" line on the LS note, the * stays; we stop ordering it).
+  **I know the replacement** is there for when it is known right away. The report's NOTES cell reads "DISCONTINUED: no
+  replacement on file — decide on the Review tab" and is a link straight to the card (`/review?tab=items&item=<id>`
+  shows that one card on top, any status); the viewer renders spreadsheet links. A decided item's next report says so
+  ("a replacement is being sourced", "not needed", or the replacement with the need carried) and never makes a second
+  card. `item_change_decide` refuses to re-decide anything except Find replacement.

@@ -21,7 +21,7 @@ export async function listCheckItemChanges(checkId: string): Promise<ItemChange[
 export async function decideItemChange(id: string, decision: ItemChangeDecision, opts: { backDate?: string | null; reason?: string | null; replacement?: string | null } = {}): Promise<{ status: string; error: string | null }> {
   const { error } = await supabase.rpc('item_change_decide', { p_change: id, p_decision: decision, p_back_date: opts.backDate || null, p_reason: opts.reason || null, p_replacement: opts.replacement || null })
   if (error) throw error
-  if (decision === 'leave') return { status: 'not_needed', error: null }
+  if (decision === 'leave' || decision === 'find_replacement') return { status: 'not_needed', error: null }
   return writeItemChangeToLs(id)
 }
 

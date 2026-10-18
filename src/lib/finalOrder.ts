@@ -2,13 +2,15 @@
 // quantity, be removed, or be ticked OK (take the confirmation as it is). The email to the vendor lists what changed,
 // each with its item number and name, then the whole final order.
 
+import type { ItemChangeDecision } from '@/types/database'
+
 export interface CheckRowLike { what: string; ours: string | null; theirs: string | null; ok: boolean; note: string | null; our_cost?: number | null; their_price?: number | null }
 export interface RowEdit { qty?: number | null; removed?: boolean; ok?: boolean; askPrice?: boolean }
 export interface ReadLine { vendor_item_id: string | null; description: string | null; quantity: number | null; unit_cost: number | null }
 export interface FinalLine { item: string; name: string; qty: number; cost: number | null }
 export interface Change { item: string; name: string; text: string; sentence?: boolean }
 /** A decided unavailable item (Dana, Oct 18): replaced, discontinued, out of stock or DNR; "leave" changes nothing. */
-export interface Unavailable { vendor_item_id: string | null; decision: 'replacement' | 'discontinued' | 'out_of_stock' | 'dnr' | 'leave' | null; replacement_vendor_item_id: string | null; replacement_name: string | null; replacement_price: number | null; back_date: string | null }
+export interface Unavailable { vendor_item_id: string | null; decision: ItemChangeDecision | null; replacement_vendor_item_id: string | null; replacement_name: string | null; replacement_price: number | null; back_date: string | null }
 
 /** Header rows (total, freight, terms…) are compared but have no quantity to change. */
 const FIELD = /^(sub ?total|total|grand total|freight|shipping|ship(ping)? (date|window|via)|terms|payment terms|po\b|po number|ship to|bill to|tax|discount|fees?|handling|deposit|cancel)/i

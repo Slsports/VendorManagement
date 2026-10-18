@@ -78,8 +78,9 @@ function itemRow(ws: Worksheet, lay: Layout, r: number, x: SalesItem, shade: boo
   lay.cols.forEach((col, i) => {
     const c = ws.getCell(r, i + 1)
     const v = col.key === 'notes' ? x.notes.join(' ') : cellValue(x, col)
-    c.value = v as never
-    c.font = { name: FONT, size: 11 }
+    // a dead-end discontinued item's note clicks through to its Review card (Dana, Oct 18)
+    c.value = (col.key === 'notes' && x.link ? { text: v as string, hyperlink: x.link } : v) as never
+    c.font = col.key === 'notes' && x.link ? { name: FONT, size: 11, underline: true, color: { argb: 'FF1D4ED8' } } : { name: FONT, size: 11 }
     c.border = BOX
     c.alignment = { horizontal: col.key === 'desc' || col.key === 'notes' || col.key === 'vendor' ? 'left' : col.key === 'cat' ? 'right' : 'center', vertical: 'middle', wrapText: col.key === 'notes' }
     if (col.key === 'sid' || col.key === 'upc' || col.key === 'vid') c.numFmt = '@'

@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import { initialsOf, orderNeed, planReport, reportFileName, runText, type ReportOptions, type ReportPlan, type SalesItem } from '@/lib/salesReport'
+import { initialsOf, needOf, orderNeed, planReport, reportFileName, runText, type ReportOptions, type ReportPlan, type SalesItem } from '@/lib/salesReport'
 import { markItemStatus } from '@/lib/itemStatus'
 import { incomingFor, saveSalesReport } from '@/services/ordering'
 import { ADDONS_LABELS, matchIncoming, onOrderNote } from '@/lib/addOns'
@@ -140,6 +140,7 @@ export async function runLsReport(input: { organizationId: string; params: Repor
   }))).flat()
   // discontinued (*), do not reorder (**), out of stock and replacements from the LS names and notes (Dana, Oct 18)
   const marked = markItemStatus(items)
+  const newCards = await reviewCardsForDeadEnds(organizationId, items)
   const matched = matchIncoming(items, incoming)
   for (const x of items) {
     const m = matched.get(x.sid)
@@ -184,7 +185,52 @@ export async function runLsReport(input: { organizationId: string; params: Repor
     organization_id: organizationId, kind: p.kind === 'category' ? 'category' : 'vendor', title: name, params: p as unknown as Json, file_name: fileName, storage_path, document_id, sales_report_id, summary: summary as unknown as Json, created_by: profile.id,
   }).select('*').single()
   if (error) throw error
+  if (newCards.length) { const { error: rerr } = await supabase.rpc('item_changes_set_run', { p_ids: newCards, p_run: data.id }); if (rerr) throw rerr }
   return { run: data, file, plan }
+}
+
+const key = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, '')
+
+/**
+ * A discontinued item with no usable replacement is a decision (Dana, Oct 18): one Review card per LS item, in
+ * Unavailable items, for whoever ran the report. The report's note says where it stands and links to the card.
+ * Returns the ids of the item changes made by this run (to stamp the run on them).
+ */
+async function reviewCardsForDeadEnds(organizationId: string, items: SalesItem[]): Promise<string[]> {
+  const dead = items.filter((x) => x.deadEnd && x.lsItemId)
+  if (!dead.length) return []
+  const { data, error } = await supabase.rpc('item_changes_from_report', {
+    p_org: organizationId,
+    p_items: dead.map((x) => ({ ls_item_id: x.lsItemId, vendor_item_id: x.vid, item_name: x.desc.replace(/^\*+\s*|\s*\*$/g, ''), ls_vendor_id: x.lsVendorId ?? null, ls_vendor_name: x.lsVendor, ls_note: x.lsNote ?? null })) as unknown as Json,
+  })
+  if (error) throw error
+  const byVid = new Map<string, SalesItem>()
+  for (const x of items) if (x.vid) byVid.set(key(x.vid), x)
+  const fresh: string[] = []
+  for (const row of data ?? []) {
+    const x = dead.find((d) => d.lsItemId === row.ls_item_id)
+    if (!x) continue
+    if (!row.decided_at) fresh.push(row.change_id)
+    const link = row.review_item_id ? `${window.location.origin}/review?tab=items&item=${row.review_item_id}` : undefined
+    const lsNote = (x.lsNote ?? '').trim() ? ` LS note: "${(x.lsNote ?? '').trim()}".` : ''
+    const when = row.decided_at ? ` (decided ${new Date(row.decided_at).toLocaleDateString()})` : ''
+    const target = row.decision === 'replacement' && row.replacement_vendor_item_id ? byVid.get(key(row.replacement_vendor_item_id)) : undefined
+    if (target && target !== x && target.status !== 'discontinued' && target.status !== 'dnr') {
+      // decided on the card but LS has not shown it yet: carry the need the same way the LS note would
+      const need = Math.max(0, needOf(x))
+      target.carried = (target.carried ?? 0) + need
+      target.notes.push(`REPLACES ${x.vid || x.sid} ${x.desc.replace(/^\*+\s*|\s*\*$/g, '')} (sold ${x.sold}, need ${need}): order this item instead.`)
+      x.notes[0] = `DISCONTINUED: replaced with ${row.replacement_vendor_item_id}${when} — order it instead; its need is carried there.${lsNote}`
+      continue
+    }
+    x.link = link
+    x.notes[0] = row.decision === 'find_replacement' ? `DISCONTINUED: a replacement is being sourced (task on the list${when}). Type its Vendor ID on the Review card when found.${lsNote}`
+      : row.decision === 'dont_need' ? `DISCONTINUED: not needed${when}; we stop ordering it.${lsNote}`
+      : row.decision === 'replacement' ? `DISCONTINUED: replaced with ${row.replacement_vendor_item_id ?? '?'}${when}, which is not on this report.${lsNote}`
+      : row.decision ? `DISCONTINUED: ${row.decision === 'dnr' ? 'do not reorder' : 'no replacement'}${when}.${lsNote}`
+      : `DISCONTINUED: no replacement on file — decide on the Review tab (Find replacement or Don’t need).${lsNote}`
+  }
+  return fresh
 }
 
 export async function listReportRuns(organizationId: string, limit = 100): Promise<ReportRun[]> {

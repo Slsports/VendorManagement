@@ -213,7 +213,7 @@ const markerOf = (name: string) => /^\*{1,2}/.exec(name.trimStart())?.[0] ?? ''
 async function writeItemChange(db: SupabaseClient, org: string, changeId: string) {
   const { data: ch } = await db.from('item_changes').select('*, vendor:vendors(lightspeed_vendor_id)').eq('id', changeId).maybeSingle()
   if (!ch || ch.organization_id !== org) throw new HttpError(404, 'Item not found')
-  if (!ch.decision || ch.decision === 'leave') return { status: 'not_needed' }
+  if (!ch.decision || ch.decision === 'leave' || ch.decision === 'find_replacement') return { status: 'not_needed' }
   const result = async (status: string, error: string | null, item?: string | null, name?: string | null) => {
     await db.rpc('item_change_ls_result', { p_change: changeId, p_status: status, p_error: error, p_ls_item: item ?? null, p_ls_name: name ?? null })
     return { status, error }
@@ -237,7 +237,8 @@ async function writeItemChange(db: SupabaseClient, org: string, changeId: string
     const read = async () => (await lsGet<{ Item?: LsItem }>(token, `${path}?load_relations=${encodeURIComponent('["Note"]')}`)).Item ?? {}
     const now = await read()
     const name = String(now.description ?? '')
-    const want = ch.decision === 'dnr' ? '**' : ch.decision === 'out_of_stock' ? '' : '*'
+    // Don't need (a report dead end, Dana Oct 18) keeps the marker the item already has; only the note line is added
+    const want = ch.decision === 'dnr' ? '**' : ch.decision === 'out_of_stock' || ch.decision === 'dont_need' ? '' : '*'
     const has = markerOf(name)
     const marker = has === '**' ? '**' : want || has
     const newName = marker ? marker + name.trimStart().replace(/^\*{1,2}\s*/, '') : name

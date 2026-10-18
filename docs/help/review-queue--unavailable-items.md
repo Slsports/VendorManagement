@@ -1,7 +1,7 @@
 ---
 title: "Unavailable items: replaced, discontinued or out of stock"
 section: Review queue
-keywords: unavailable, discontinued, replaced, replacement, out of stock, backorder, back in stock, DNR, do not reorder, asterisk, Lightspeed note, confirmation
+keywords: unavailable, discontinued, replaced, replacement, out of stock, backorder, back in stock, DNR, do not reorder, asterisk, Lightspeed note, confirmation, find replacement, don't need, sales report, no replacement on file
 who: Admin, managers and buyers
 ---
 When a vendor's confirmation says an item is discontinued, replaced or out of stock, Claude puts a card in the **Unavailable items** tab of the Review queue for whoever placed the order. The same cards show on the confirmation check under **Unavailable items**. What you choose is written to Lightspeed for you, so nobody has to go into Lightspeed separately.
@@ -16,6 +16,13 @@ When a vendor's confirmation says an item is discontinued, replaced or out of st
    - **DNR (do not reorder)**: for bad quality or poor sellers. Type why.
    - **Leave as is**: when Claude misread and nothing should change.
 4. Click **Save and write to Lightspeed** (or **Leave as is**).
+
+## Discontinued items a sales report found
+A sales report also puts a card here for every item marked * discontinued in Lightspeed whose note names no replacement we can use (none noted, one that is not in Lightspeed, or a chain of replacements that dead-ends). The card goes to whoever ran the report. The report's **NOTES** cell says "DISCONTINUED: no replacement on file — decide on the Review tab"; click it in the viewer and the card opens on top of the **Unavailable items** tab.
+- **Find replacement**: click **Make the task**. A task "Find a replacement for …" goes on your task list, due in a week. Its **Open the item card** button brings you back here; type the replacement's Vendor ID and click **Use replacement**. VMS writes "REPLACED WITH …" to Lightspeed and finishes the task. **Don't need after all** is there too.
+- **I know the replacement**: type the Vendor ID and save. Same as **Use replacement** above.
+- **Don't need**: we stop ordering it. A dated "NO REPLACEMENT NEEDED" line goes on the item's note in Lightspeed; the * stays.
+- The next report shows the decision in **NOTES** ("a replacement is being sourced", "not needed", or the replacement with its need carried over) instead of asking again. One card per item, never two.
 
 ## What goes into Lightspeed
 - **Use replacement** and **Discontinued** put * at the start of the item's name. **DNR** puts **. **Out of stock** never changes the name.

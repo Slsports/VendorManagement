@@ -5,7 +5,7 @@ import { ClipboardCheck, Settings2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useViewAs } from '@/hooks/useViewAs'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { applyVendorRename, listReviewQueue } from '@/services/vendors'
+import { applyVendorRename, getReviewQueueItem, listReviewQueue } from '@/services/vendors'
 import { assignReviewItem, listPeople } from '@/services/reviews'
 import { REVIEW_KIND_LABELS, REVIEW_TABS, reviewTabOfCheck, reviewTabOfKind, type ReviewTab } from '@/lib/reviews'
 import { listOpenChecks } from '@/services/orderChecks'
@@ -32,6 +32,9 @@ export default function ReviewQueuePage() {
   const q = useSupabaseQuery(async () => (organization ? listReviewQueue(organization.id) : []), [organization?.id])
   const checksQ = useSupabaseQuery(async () => (organization ? listOpenChecks(organization.id, null) : []), [organization?.id])
   const [params, setParams] = useSearchParams()
+  // ?item= (Dana, Oct 18): a report note or a task lands on one card, shown on top whatever its status
+  const openedId = params.get('item')
+  const openedQ = useSupabaseQuery(async () => (organization && openedId ? getReviewQueueItem(organization.id, openedId) : null), [organization?.id, openedId])
   const neverQ = useSupabaseQuery(async () => (organization ? listNeverBought(organization.id) : []), [organization?.id])
   const neverToCheck = (neverQ.data ?? []).filter((r) => !r.checked_at).length
   const peopleQ = useSupabaseQuery(async () => (organization ? listPeople(organization.id) : []), [organization?.id])
@@ -44,9 +47,9 @@ export default function ReviewQueuePage() {
   const hidden = snoozeQ.data?.hidden ?? new Map<string, string>()
   const back = snoozeQ.data?.back ?? new Set<string>()
   const snoozedBy = new Map((allSnoozes.data ?? []).map((s) => [s.review_item_id!, s]))
-  const refresh = async () => { await Promise.all([q.refetch(), checksQ.refetch(), snoozeQ.refetch(), allSnoozes.refetch()]) }
+  const refresh = async () => { await Promise.all([q.refetch(), checksQ.refetch(), snoozeQ.refetch(), allSnoozes.refetch(), openedQ.refetch()]) }
 
-  const everything = q.data ?? []
+  const everything = (q.data ?? []).filter((i) => i.id !== openedId)
   const items = showSnoozed ? everything.filter((i) => snoozedBy.has(i.id)) : [...everything.filter((i) => back.has(i.id)), ...everything.filter((i) => !back.has(i.id) && !hidden.has(i.id))]
   const checks = showSnoozed ? [] : checksQ.data ?? []
   const people = peopleQ.data ?? []
@@ -130,6 +133,18 @@ export default function ReviewQueuePage() {
         </ul>
       </nav>
       <p className="mb-3 text-sm text-stone-600">{REVIEW_TABS.find((t) => t.id === tab)!.help}</p>
+      {openedId ? (
+        <section className="mb-6 rounded-2xl border-2 border-brand/40 bg-brand-soft/30 p-3">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-600">The item you opened</h2>
+            <button type="button" className="text-sm text-brand hover:underline" onClick={() => { const next = new URLSearchParams(params); next.delete('item'); setParams(next, { replace: true }) }}>Back to the list</button>
+          </div>
+          {openedQ.error ? <Alert variant="error">{openedQ.error}</Alert>
+            : openedQ.isLoading && !openedQ.data ? <Spinner />
+            : !openedQ.data ? <p className="text-sm text-stone-600">That item is not in Review any more.</p>
+            : <ReviewItemCard item={openedQ.data} vendor={openedQ.data.vendor} other={openedQ.data.other} canEdit={canEdit} onDone={() => refresh()} />}
+        </section>
+      ) : null}
       {tab === 'never' ? <NeverBoughtList canEdit={canEdit} /> : null}
       {tab !== 'never' && inTab.length > 0 ? (
         <div className="mb-4 flex flex-wrap items-center gap-3">

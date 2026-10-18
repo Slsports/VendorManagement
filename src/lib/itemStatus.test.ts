@@ -68,11 +68,18 @@ describe('marking the report items', () => {
     expect(counts.replaced).toBe(0)
     expect(a.notes[0]).toContain('also discontinued')
     expect(b.carried).toBeUndefined()
+    expect(a.deadEnd).toBe(true)
+    expect(b.deadEnd).toBe(true)
   })
   it('says when the replacement is not on the report', () => {
     const old = item('1', { desc: '*OLD', lsNote: 'REPLACED WITH 99999' })
     markItemStatus([old])
     expect(old.notes[0]).toContain('not on this report')
+    expect(old.deadEnd).toBe(true)
+    const none = item('2', { desc: '*GONE', lsNote: '' })
+    markItemStatus([none])
+    expect(none.deadEnd).toBe(true)
+    expect(none.notes[0]).toContain('no replacement noted')
   })
   it('keeps the marked items on the Flags tab and out of the need totals', () => {
     const old = item('1', { desc: '*OLD', vid: '63300', lsNote: 'REPLACED WITH 63360', sold: 12, qoh: 2, cat: 'TOYS/SLEDS' })

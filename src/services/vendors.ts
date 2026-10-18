@@ -235,6 +235,17 @@ export async function listReviewQueue(organizationId: string): Promise<ReviewIte
   }))
 }
 
+/** One review item by id whatever its status (a report note or a task lands on it), with its vendor. */
+export async function getReviewQueueItem(organizationId: string, id: string): Promise<ReviewItemRow | null> {
+  const { data, error } = await supabase.from('review_items').select('*').eq('organization_id', organizationId).eq('id', id).maybeSingle()
+  if (error) throw error
+  if (!data) return null
+  const vendorId = data.entity_type === 'vendor' ? data.entity_id : null
+  const { data: v, error: verr } = vendorId ? await supabase.from('vendors').select('id, name, lightspeed_name, aliases, is_active').eq('id', vendorId).maybeSingle() : { data: null, error: null }
+  if (verr) throw verr
+  return { ...data, vendor: v ?? null, other: null }
+}
+
 // ---- merge / split (duplicate review) ----
 /** Fold `removeId` into `keepId`. Optionally state the usual billing route of the result. */
 export async function mergeVendors(keepId: string, removeId: string, route?: BillingRoute | null): Promise<string> {

@@ -17,6 +17,8 @@ const day = (d: string | null) => (d ? new Date(`${d}T12:00:00`).toLocaleDateStr
  * An item the vendor says is unavailable (Dana, Oct 18). Use replacement, Discontinued no replacement, Out of stock (with
  * the back-in-stock date), DNR (Dana, Trevor and Jarrett only) or Leave as is. The choice goes to Lightspeed: * or ** at
  * the start of the name and a dated line on top of the item's note.
+ * A card from a sales report (a discontinued item with no replacement on file) has Find replacement (a task on the
+ * list to source a new item or vendor; the Vendor ID goes here when found) and Don't need (we stop ordering it).
  */
 export function ItemChangeCard({ changeId, canEdit, onDone }: { changeId: string; canEdit: boolean; onDone?: () => void | Promise<void> }) {
   const q = useSupabaseQuery(() => getItemChange(changeId), [changeId])
@@ -28,7 +30,8 @@ export function ItemChangeCard({ changeId, canEdit, onDone }: { changeId: string
 function ItemChangeBody({ ch, canEdit, onChanged }: { ch: ItemChange; canEdit: boolean; onChanged: () => Promise<void> }) {
   const { profile, organization } = useAuth()
   const canDnr = !!profile?.can_dnr
-  const [choice, setChoice] = useState<ItemChangeDecision | ''>(ch.sure ? (ch.read_as === 'replaced' ? 'replacement' : ch.read_as === 'discontinued' ? 'discontinued' : ch.read_as === 'out_of_stock' ? 'out_of_stock' : '') : '')
+  const fromReport = ch.source === 'report'
+  const [choice, setChoice] = useState<ItemChangeDecision | ''>(fromReport ? '' : ch.sure ? (ch.read_as === 'replaced' ? 'replacement' : ch.read_as === 'discontinued' ? 'discontinued' : ch.read_as === 'out_of_stock' ? 'out_of_stock' : '') : '')
   const [replacement, setReplacement] = useState(ch.replacement_vendor_item_id ?? '')
   const [backDate, setBackDate] = useState(ch.back_date ?? '')
   const [reason, setReason] = useState('')
@@ -36,12 +39,13 @@ function ItemChangeBody({ ch, canEdit, onChanged }: { ch: ItemChange; canEdit: b
   const [busy, setBusy] = useState(false)
   const dnrPeople = useSupabaseQuery(async () => (organization && !canDnr ? listDnrPeople(organization.id) : []), [organization?.id, canDnr])
 
-  async function decide() {
-    if (!choice) return
+  async function decide(pick: ItemChangeDecision | '' = choice) {
+    if (!pick) return
     setBusy(true)
     try {
-      const r = await decideItemChange(ch.id, choice, { backDate: backDate || null, reason, replacement })
-      if (r.status === 'written') toast.success('Written to Lightspeed')
+      const r = await decideItemChange(ch.id, pick, { backDate: backDate || null, reason, replacement })
+      if (pick === 'find_replacement') toast.success('On the task list: find a replacement')
+      else if (r.status === 'written') toast.success('Written to Lightspeed')
       else if (r.status === 'not_needed') toast.success('Left as is')
       else toast(r.error ?? 'Saved in VMS', { duration: 8000 })
       await onChanged()
@@ -83,19 +87,49 @@ function ItemChangeBody({ ch, canEdit, onChanged }: { ch: ItemChange; canEdit: b
     <div className="mt-2 space-y-2 text-sm">
       <p className="text-stone-800"><span className="font-medium">{label || 'Item'}</span>{ch.ls_name ? <span className="text-stone-500"> · in LS as {ch.ls_name}</span> : <span className="text-stone-500"> · not found in Lightspeed yet</span>}</p>
       {ch.vendor_words ? <p className="rounded-lg bg-white/70 px-3 py-2 text-stone-700">The vendor wrote: “{ch.vendor_words}”</p> : null}
-      <p className="text-stone-600">
+      {fromReport ? (
+        <p className="text-stone-600">
+          Marked * discontinued in Lightspeed{ch.vendor_words ? <> with the note “{ch.vendor_words}”</> : ' with no replacement noted'}; no usable replacement on file. Found by a sales report.
+        </p>
+      ) : <p className="text-stone-600">
         Claude read: <strong>{ITEM_CHANGE_LABELS[ch.read_as]}</strong>
         {ch.replacement_vendor_item_id ? <> · replacement {ch.replacement_vendor_item_id}{ch.replacement_name ? ` ${ch.replacement_name}` : ''}{ch.replacement_price != null ? ` at ${formatCurrency(ch.replacement_price)}` : ''}</> : null}
         {ch.back_date ? <> · back {day(ch.back_date)}</> : null}
         {ch.sure ? '' : ' (not sure)'}
         {ch.order_id ? <> · <Link to={`${ROUTES.orders}/${ch.order_id}`} className="text-brand hover:underline">the order</Link></> : null}
-      </p>
+      </p>}
 
-      {ch.decision ? (
+      {ch.decision === 'find_replacement' ? (
+        <div className="space-y-2">
+          <p className="text-stone-800">Decided: <strong>Find replacement</strong> · {ch.task_id ? <Link to={`${ROUTES.tasks}/${ch.task_id}`} className="text-brand hover:underline">the task</Link> : 'a task'} is on the list to source a new item or vendor.</p>
+          {canEdit ? (
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="block text-stone-600">Replacement's Vendor ID <Input value={replacement} onChange={(e) => setReplacement(e.target.value)} className="mt-1 h-9 w-48" /></label>
+              <Button size="sm" loading={busy} disabled={!replacement.trim()} onClick={() => void decide('replacement')}>Use replacement</Button>
+              <Button size="sm" variant="secondary" loading={busy} onClick={() => void decide('dont_need')}>Don’t need after all</Button>
+            </div>
+          ) : null}
+        </div>
+      ) : ch.decision ? (
         <div className="space-y-1">
           <p className="text-stone-800">Decided: <strong>{ITEM_CHANGE_LABELS[ch.decision]}</strong>{ch.note_line ? <span className="text-stone-500"> · note “{ch.note_line}”</span> : null}</p>
           {ch.ls_status ? <p className={ch.ls_status === 'written' || ch.ls_status === 'not_needed' ? 'text-green-700' : 'text-amber-800'}>{LS_STATUS_TEXT[ch.ls_status]}{ch.ls_error ? ` ${ch.ls_error}` : ''}</p> : null}
           {canEdit && (ch.ls_status === 'failed' || ch.ls_status === 'no_access' || ch.ls_status === 'pending') ? <Button size="sm" variant="secondary" loading={busy} onClick={() => void retry()}>Try Lightspeed again</Button> : null}
+        </div>
+      ) : canEdit && fromReport ? (
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="What to do">
+            {(['find_replacement', 'replacement', 'dont_need'] as ItemChangeDecision[]).map((d) => (
+              <button key={d} type="button" role="radio" aria-checked={choice === d} onClick={() => setChoice(d)}
+                className={`rounded-lg border px-3 py-1.5 text-sm ${choice === d ? 'border-brand bg-brand-soft font-medium text-brand' : 'border-stone-300 bg-white text-stone-700 hover:bg-stone-50'}`}>
+                {d === 'replacement' ? 'I know the replacement' : ITEM_CHANGE_LABELS[d]}
+              </button>
+            ))}
+          </div>
+          {choice === 'find_replacement' ? <p className="text-stone-600">A task goes on the list to source a new item or vendor. Nothing changes in Lightspeed until the replacement is typed here.</p> : null}
+          {choice === 'replacement' ? <label className="block text-stone-600">Replacement's Vendor ID <Input value={replacement} onChange={(e) => setReplacement(e.target.value)} className="mt-1 h-9 w-48" /></label> : null}
+          {choice === 'dont_need' ? <p className="text-stone-600">We stop ordering it. A dated “NO REPLACEMENT NEEDED” line goes on the item's note in Lightspeed.</p> : null}
+          {choice ? <Button size="sm" loading={busy} onClick={() => void decide()}>{choice === 'find_replacement' ? 'Make the task' : 'Save and write to Lightspeed'}</Button> : null}
         </div>
       ) : canEdit ? (
         <div className="space-y-2">

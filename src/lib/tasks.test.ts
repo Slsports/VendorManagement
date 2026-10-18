@@ -52,6 +52,7 @@ describe('Go to it', () => {
     const { taskTarget } = await import('./tasks')
     expect(taskTarget({ ...base, auto_key: 'create_po:c1', order_id: 'o1' })).toEqual({ kind: 'page', to: '/orders/o1?do=create-po', label: 'Create the PO' })
     expect(taskTarget({ ...base, auto_key: 'create_po:c1' })).toEqual({ kind: 'page', to: '/orders/paperwork/c1', label: 'Pick the order' })
+    expect(taskTarget({ ...base, auto_key: 'item_change:r1', vendor_id: 'v1' })).toEqual({ kind: 'page', to: '/review?tab=items&item=r1', label: 'Open the item card' })
     expect(taskTarget({ ...base, auto_key: 'promise:e1', thread_id: 't1' })?.kind === 'page' && taskTarget({ ...base, auto_key: 'promise:e1', thread_id: 't1' })).toMatchObject({ to: '/mail/t1?do=reply' })
     expect(taskTarget({ ...base, auto_key: 'wwd:w1:30' })).toEqual({ kind: 'pay', label: 'Pay it', bill: 'wwd', id: 'w1' })
     expect(taskTarget({ ...base, auto_key: 'lspo:p1:to_review' })).toMatchObject({ to: '/ls-pos/p1' })

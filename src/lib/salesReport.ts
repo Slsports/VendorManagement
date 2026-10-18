@@ -38,6 +38,10 @@ export interface SalesItem {
   carried?: number
   /** The vendor's back-in-stock date from the note ("…, BACK 11/15/26"), as written. */
   backDate?: string
+  /** Discontinued with no usable replacement (none noted, one not in LS, or a chain that dead-ends): a decision for the Review tab. */
+  deadEnd?: boolean
+  /** Where the Notes cell links to (the item's Review card), when it does. */
+  link?: string
 }
 
 export type ItemStatus = 'discontinued' | 'dnr' | 'out_of_stock'

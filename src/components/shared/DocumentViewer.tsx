@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { Link } from 'react-router-dom'
 import { Download, ExternalLink, X } from 'lucide-react'
 import { docType, saveBlob } from '@/lib/viewer'
 import { cn, errorMessage } from '@/lib/utils'
@@ -15,12 +16,39 @@ export interface ViewerDoc {
 
 type Shown =
   | { kind: 'pdf' | 'image'; url: string }
-  | { kind: 'sheet'; sheets: { name: string; rows: string[][]; more: number }[] }
+  | { kind: 'sheet'; sheets: { name: string; rows: Cell[][]; more: number }[] }
   | { kind: 'word'; html: string }
   | { kind: 'text'; text: string }
   | { kind: 'other' }
 
 const MAX_ROWS = 1000
+
+type Cell = { text: string; link?: string }
+
+/** The sheet as rows of text, blank rows left out, with each cell's link (a report note that opens its Review card). */
+function sheetRows(XLSX: typeof import('xlsx'), ws: import('xlsx').WorkSheet): Cell[][] {
+  const ref = ws['!ref']
+  if (!ref) return []
+  const range = XLSX.utils.decode_range(ref)
+  const rows: Cell[][] = []
+  for (let r = range.s.r; r <= range.e.r; r++) {
+    const row: Cell[] = []
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      const cell = ws[XLSX.utils.encode_cell({ r, c })] as import('xlsx').CellObject | undefined
+      const text = cell == null || cell.v == null ? '' : cell.w ?? (cell.v instanceof Date ? cell.v.toLocaleDateString() : String(cell.v))
+      row.push(cell?.l?.Target ? { text, link: cell.l.Target } : { text })
+    }
+    if (row.some((x) => x.text !== '')) rows.push(row)
+  }
+  return rows
+}
+
+function CellText({ cell }: { cell: Cell }) {
+  if (!cell.link) return <>{cell.text}</>
+  const cls = 'text-brand underline hover:text-brand-dark'
+  if (cell.link.startsWith(window.location.origin + '/')) return <Link to={cell.link.slice(window.location.origin.length)} className={cls}>{cell.text}</Link>
+  return <a href={cell.link} target="_blank" rel="noreferrer" className={cls}>{cell.text}</a>
+}
 
 /**
  * Look at a document without downloading it (Dana, Oct 8): PDFs and pictures as they are, spreadsheets as
@@ -50,8 +78,8 @@ export function DocumentViewer({ doc, onClose }: { doc: ViewerDoc; onClose: () =
           const book = XLSX.read(await b.arrayBuffer(), { type: 'array', cellDates: true })
           setShown({
             kind, sheets: book.SheetNames.map((name) => {
-              const rows = XLSX.utils.sheet_to_json<unknown[]>(book.Sheets[name]!, { header: 1, raw: false, blankrows: false, defval: '' })
-              return { name, rows: rows.slice(0, MAX_ROWS).map((r) => r.map((c) => String(c ?? ''))), more: Math.max(0, rows.length - MAX_ROWS) }
+              const rows = sheetRows(XLSX, book.Sheets[name]!)
+              return { name, rows: rows.slice(0, MAX_ROWS), more: Math.max(0, rows.length - MAX_ROWS) }
             }),
           })
         } else if (kind === 'word') {
@@ -104,7 +132,7 @@ export function DocumentViewer({ doc, onClose }: { doc: ViewerDoc; onClose: () =
               <tbody>
                 {sheet.rows.map((r, i) => (
                   <tr key={i} className={i === 0 ? 'bg-stone-50 font-semibold' : ''}>
-                    {r.map((c, j) => <td key={j} className="whitespace-nowrap border border-stone-200 px-2 py-1 text-stone-800">{c}</td>)}
+                    {r.map((c, j) => <td key={j} className={cn('border border-stone-200 px-2 py-1 text-stone-800', c.link ? 'max-w-md whitespace-normal' : 'whitespace-nowrap')}><CellText cell={c} /></td>)}
                   </tr>
                 ))}
               </tbody>
