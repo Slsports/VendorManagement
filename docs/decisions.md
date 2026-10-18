@@ -2425,3 +2425,8 @@ was the broken push fixed in the next commit.
   not have to go in to ls separately … Make the decisions in the review tab and vms relays it to ls": the decision in
   Review writes the * marker and the note (REPLACED WITH <Vendor ID>) into LS. This changes SOP-INV-001-NC's "VMS never
   adds, removes, or changes a marker" (Trevor to update the SOP); needs Full access to LS. Not built yet.
+- Oct 18, Review buttons for unavailable items (Dana): Use replacement (* + "REPLACED WITH <Vendor ID>" note in LS),
+  Discontinued, no replacement (* + note), Out of stock (no marker; a note in LS like "OUT OF STOCK AT VENDOR 10/18/26";
+  the next sales report shows it), DNR / do not reorder for bad quality or poor sellers (** + note with the reason).
+  Only Dana, Trevor and Jarrett can choose DNR; anyone else sees "Send a message about DNR to Dana, Trevor or Jarrett".
+  Dana asked why "Not discontinued" (for a misread): offered as "Leave as is", not decided.
