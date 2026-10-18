@@ -2392,3 +2392,15 @@ was the broken push fixed in the next commit.
   something doesn't exist until every source is checked.
 - Done Oct 17, 18:31 UTC: the copy holds 334,050 sales and 694,943 sale lines from June 20, 2020 to today, no errors; from
   here it only pulls what changed each minute.
+- Oct 18, zero upcharge: the show lists win over the WWD portal (Dana: "I would take the show docs over the wwd db. Its
+  very out of date. Move the ones from review if the WWD Database is the only thing confirming"). Where VMS's zero
+  upcharge came from: 41 vendors from Worldwide show lists (Spring 2025 line listing and WWD's zero-upcharge list, Spring
+  2026, Fall 2026), 15 from Donna Hoffman's DandyLines sheet. Migration 155: the portal's zero upcharge no longer asks or
+  marks anything (shown in the Worldwide portal box only). 12 cards taken out (kept as VMS has it): 8 portal-only yes
+  (Cascade Mountain Tech, Charbroil, Mykos-Lamo, Okuma, Primemotion, Rapala - Normark, Triple T, Troll Co) and 4 where a
+  show list or Donna's sheet said yes and only the portal said no (Crosman, Gordini, Harry Koenig, Punita; Donna's
+  sheet treated like a show list). Left for Dana: ALPS Mountaineering (Fall 2026 lists "ALPS Brands" zero upcharge),
+  Creative Group (Donna lists "Creative Eyewear/Batali" zero upcharge; Spring 2025 lists "Creative Eyewear/Creative
+  Group" without), Odd Sox and Prairie Schooner (Donna's sheet yes, Spring 2025/2026 show lists no). 19 show-list lines
+  whose "no" migration 150 had overwritten with the portal's "yes" put back. Still marked from the portal alone: 121
+  lines (117 portal-only lines and 4 on the Fall 2024/2025 lists, which have no zero-upcharge column); asked Dana.
