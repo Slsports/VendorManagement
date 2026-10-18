@@ -94,9 +94,9 @@ export function markItemStatus(items: SalesItem[]): { discontinued: number; dnr:
       counts.replaced++
       x.notes.unshift(`DISCONTINUED (* in LS): replaced with ${path}${chain.length > 1 ? ` — order ${end.vid || end.sid}` : ' — order the replacement'} instead; its need is carried there.${note}`)
     } else if (end) {
-      x.notes.unshift(`DISCONTINUED (* in LS): replaced with ${path}, which is ${end.status === 'dnr' ? 'marked do not reorder' : 'also discontinued with no replacement on this report'} — check in LS.${note}`)
+      x.notes.unshift(`DISCONTINUED (* in LS): replaced with ${path}, which is ${end.status === 'dnr' ? 'marked do not reorder' : 'also discontinued with no replacement on this report'} — find a replacement.${note}`)
     } else if (x.replacementVid) {
-      x.notes.unshift(`DISCONTINUED (* in LS): replaced with ${x.replacementVid}, which is not on this report — check the replacement in LS.${note}`)
+      x.notes.unshift(`DISCONTINUED (* in LS): replaced with ${x.replacementVid}, which is not on this report — find the replacement.${note}`)
     } else {
       x.notes.unshift(`DISCONTINUED (* in LS): no replacement noted.${note}`)
     }

@@ -2489,4 +2489,4 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
 - Oct 18 (Dana, "handle the chain too"): a discontinued item keeps its own Sold, In Stock and Need on the report (only
   its ORDER is 0); its need is carried to the replacement's ORDER box and noted there ("REPLACES … (sold 12, need 10)").
   Replacement chains are followed to the end (A → B → C: A's need lands on C, "via B"); a chain that ends at another
-  discontinued or DNR item, or loops, carries nothing and says to check in LS.
+  discontinued or DNR item, or loops, carries nothing and says to find a replacement.
