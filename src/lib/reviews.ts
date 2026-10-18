@@ -11,6 +11,7 @@ export const REVIEW_KIND_LABELS: Record<string, { title: string; help: string }>
   art_approval: { title: 'Artwork to approve?', help: 'Claude was not sure whether the vendor is waiting on us to approve artwork, a proof or a design. Yes puts it on the Artwork approvals card.' },
   booth_rep: { title: 'Booth-mates', help: 'At a Worldwide show this vendor shared a booth with lines of one rep group. Same booth is generally the same rep group.' },
   show_line: { title: 'Show list and portal lines', help: 'A brand on a Worldwide show list or in the Worldwide portal that may be one of our vendors under another name. Yes puts the show, booth and portal details on the vendor\'s page.' },
+  item_change: { title: 'Unavailable items', help: 'The vendor says these are discontinued, replaced or out of stock. Pick what to do; VMS writes it to Lightspeed with a dated note.' },
   portal_conflict: { title: 'Worldwide portal differences', help: 'The Worldwide portal says something different from what VMS has for a vendor. Keep ours, or use the portal\'s.' },
   rep_line: { title: 'Rep group lines', help: 'A rep\'s emails name a line that is with another rep group, or a brand that is not one of our vendors yet. Lines with no rep group are added on their own.' },
   vendor_form: { title: 'From vendor forms', help: 'A vendor wrote on our contact form that they also represent companies VMS does not have. Add them as vendors or lines, then mark it handled.' },
@@ -65,10 +66,11 @@ export function categorySuggestions(typed: string, categories: string[], max = 1
  * Paperwork tabs list Claude's order checks (each opens its check page); the rest list review items by kind.
  * "Never bought from" is only on the Review queue page, not a dashboard count.
  */
-export type ReviewTab = 'confirmations' | 'invoices' | 'hand' | 'answer' | 'who' | 'vendor' | 'freight' | 'never'
+export type ReviewTab = 'confirmations' | 'invoices' | 'items' | 'hand' | 'answer' | 'who' | 'vendor' | 'freight' | 'never'
 export const REVIEW_TABS: { id: ReviewTab; label: string; help: string }[] = [
   { id: 'confirmations', label: 'Confirmations', help: 'Vendor confirmations Claude checked against our order. Open one to look it over.' },
   { id: 'invoices', label: 'Invoices', help: 'Invoices Claude checked against the confirmation. Open one to look it over.' },
+  { id: 'items', label: 'Unavailable items', help: 'Items a vendor confirmation says are discontinued, replaced or out of stock. Your choice is written to Lightspeed.' },
   { id: 'hand', label: 'Needs a hand', help: 'Paperwork Claude could not read, or could not match to an order.' },
   { id: 'answer', label: 'Needs an answer?', help: 'Claude is not sure these need an answer from us.' },
   { id: 'who', label: 'Who is this?', help: 'Senders Claude could not place. One answer files all their mail.' },
@@ -83,6 +85,7 @@ export function reviewTabOfKind(kind: string): ReviewTab {
     case 'mail_reply': case 'art_approval': return 'answer'
     case 'email_sender': return 'who'
     case 'delivery_receipt': case 'freight_card': return 'freight'
+    case 'item_change': return 'items'
     default: return 'vendor'
   }
 }

@@ -68,6 +68,17 @@ export async function lsPost<T>(token: string, path: string, body: unknown): Pro
   }
 }
 
+/** PUT to the LS API (changes a record). Waits and retries when LS says slow down. */
+export async function lsPut<T>(token: string, path: string, body: unknown): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(`${LS_API}${path}`, { method: 'PUT', headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    if (res.status === 429 && attempt < 3) { await new Promise((r) => setTimeout(r, 2000 * (attempt + 1))); continue }
+    const out = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(`Lightspeed ${res.status}: ${(out as { message?: string }).message ?? 'request failed'}`)
+    return out as T
+  }
+}
+
 /** LS answers one record as an object and several as a list. */
 export const asList = <T>(x: T | T[] | undefined | null): T[] => (x == null ? [] : Array.isArray(x) ? x : [x])
 

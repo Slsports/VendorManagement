@@ -10,10 +10,11 @@
 //   { action: 'create_po', order_id, shop_id? }  → the empty PO in LS for the order's vendor and store; our PO on the order
 //   { action: 'send_items', ls_po_id }           → the approved LS PO draft's items onto that PO in LS
 //   { action: 'scan_items' }                     → read every LS item again now (counts per vendor; Dana, Oct 16)
+//   { action: 'item_change_write', change_id }   → a Review decision on an unavailable item into LS: * or ** and a dated note line
 //   { action: 'scan_status' }                    → the running or last reading
 // pg_cron (header x-cron-secret), every 2 minutes: carries on a reading, or starts one when the last is a week old.
 import { CORS, HttpError, caller, errorResponse, json, serviceClient } from '../_shared/caller.ts'
-import { LS_API, LS_AUTHORIZE, LS_REDIRECT, LS_SCOPE_FULL, LS_SCOPE_READ, asList, lsAccessToken, lsGet, lsGetAll, lsPost, lsTokenRequest, saveTokens } from '../_shared/lightspeed.ts'
+import { LS_API, LS_AUTHORIZE, LS_REDIRECT, LS_SCOPE_FULL, LS_SCOPE_READ, asList, lsAccessToken, lsGet, lsGetAll, lsPost, lsPut, lsTokenRequest, saveTokens } from '../_shared/lightspeed.ts'
 import type { Caller } from '../_shared/caller.ts'
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 
@@ -30,15 +31,16 @@ Deno.serve(async (req) => {
     }
     const me = await caller(req, db)
     const org = me.organization_id
-    const body = await req.json().catch(() => ({})) as { action?: string; client_id?: string; client_secret?: string; access?: string; code?: string; state?: string; order_id?: string; shop_id?: string; ls_po_id?: string }
+    const body = await req.json().catch(() => ({})) as { action?: string; client_id?: string; client_secret?: string; access?: string; code?: string; state?: string; order_id?: string; shop_id?: string; ls_po_id?: string; change_id?: string }
 
     // the buyers' steps
     if (body.action === 'scan_status') {
       const { data } = await db.from('ls_item_scans').select('started_at, finished_at, pages, items, archived, no_vendor, last_error').eq('organization_id', org).maybeSingle()
       return json(data ?? {})
     }
-    if (body.action === 'sync_vendors' || body.action === 'create_po' || body.action === 'send_items' || body.action === 'scan_items') {
+    if (body.action === 'sync_vendors' || body.action === 'create_po' || body.action === 'send_items' || body.action === 'scan_items' || body.action === 'item_change_write') {
       if (!['admin', 'manager', 'buyer'].includes(me.role)) throw new HttpError(403, 'Only admins, managers and buyers do this')
+      if (body.action === 'item_change_write') return json(await writeItemChange(db, org, String(body.change_id ?? '')))
       if (body.action === 'scan_items') return json(await scanItems(db, org, true))
       if (body.action === 'sync_vendors') return json(await syncVendors(db, org))
       if (body.action === 'create_po') return json(await createPo(db, me, String(body.order_id ?? ''), body.shop_id ?? null))
@@ -193,6 +195,71 @@ async function scanItems(db: SupabaseClient, org: string, fresh: boolean) {
     const msg = e instanceof Error ? e.message : String(e)
     await save({ lock_until: null, last_error: /Lightspeed 429/.test(msg) ? null : msg.slice(0, 500) })
     return { started_at: s.started_at, finished_at: null, pages: s.pages, items: s.items, error: msg }
+  }
+}
+
+// ---- unavailable items (Dana, Oct 18): the Review decision written to LS ------------------------------------------
+
+const NO_FULL_ACCESS = 'Lightspeed needs Full access first: Settings › Lightspeed, choose Full, Connect again.'
+
+/** "*COGHLANS …" → "*", "**ROOSTER …" → "**", else "". */
+const markerOf = (name: string) => /^\*{1,2}/.exec(name.trimStart())?.[0] ?? ''
+
+/**
+ * Write one decided item change to LS: * (discontinued or replaced) or ** (DNR) at the start of the name, an existing **
+ * kept; the dated note line on top of the item's note (newest first). A note that prints on customer receipts is left
+ * alone. LS is read back afterwards, and the change counts as written only when LS shows it.
+ */
+async function writeItemChange(db: SupabaseClient, org: string, changeId: string) {
+  const { data: ch } = await db.from('item_changes').select('*, vendor:vendors(lightspeed_vendor_id)').eq('id', changeId).maybeSingle()
+  if (!ch || ch.organization_id !== org) throw new HttpError(404, 'Item not found')
+  if (!ch.decision || ch.decision === 'leave') return { status: 'not_needed' }
+  const result = async (status: string, error: string | null, item?: string | null, name?: string | null) => {
+    await db.rpc('item_change_ls_result', { p_change: changeId, p_status: status, p_error: error, p_ls_item: item ?? null, p_ls_name: name ?? null })
+    return { status, error }
+  }
+  const { data: conn } = await db.from('lightspeed_connections').select('scope').eq('organization_id', org).maybeSingle()
+  if (!String(conn?.scope ?? '').split(/\s+/).includes('employee:all')) return result('no_access', NO_FULL_ACCESS)
+
+  // the item in LS: the one found when Claude read the confirmation, else by the vendor's LS vendor and the Vendor ID
+  let itemId: string | null = ch.ls_item_id
+  const lsVendor = (ch.vendor as { lightspeed_vendor_id: string | null } | null)?.lightspeed_vendor_id ?? null
+  if (!itemId && lsVendor && ch.vendor_item_id) {
+    const { data: hit } = await db.from('ls_items').select('item_id').eq('organization_id', org).eq('default_vendor_id', lsVendor).ilike('vendor_item_id', ch.vendor_item_id).order('archived').limit(1)
+    itemId = hit?.[0]?.item_id ?? null
+  }
+  if (!itemId) return result('no_item', `${ch.vendor_item_id ?? ch.item_name ?? 'This item'} is not in Lightspeed under this vendor. The decision is kept in VMS.`)
+
+  try {
+    const { token } = await lsAccessToken(db, org)
+    const path = `/Account/${await accountId(db, org)}/Item/${itemId}.json`
+    type LsItem = { description?: string; Note?: { note?: string; isPublic?: string } }
+    const read = async () => (await lsGet<{ Item?: LsItem }>(token, `${path}?load_relations=${encodeURIComponent('["Note"]')}`)).Item ?? {}
+    const now = await read()
+    const name = String(now.description ?? '')
+    const want = ch.decision === 'dnr' ? '**' : ch.decision === 'out_of_stock' ? '' : '*'
+    const has = markerOf(name)
+    const marker = has === '**' ? '**' : want || has
+    const newName = marker ? marker + name.trimStart().replace(/^\*{1,2}\s*/, '') : name
+    const oldNote = String(now.Note?.note ?? '').trim()
+    const publicNote = String(now.Note?.isPublic) === 'true' && !!oldNote
+    const line = String(ch.note_line ?? '')
+    const update: Record<string, unknown> = {}
+    if (newName !== name) update.description = newName
+    if (line && !publicNote) update.Note = { note: oldNote ? `${line}\n${oldNote}` : line, isPublic: 'false' }
+    if (!Object.keys(update).length) {
+      return result('failed', publicNote ? 'This item\'s note prints on customer receipts, so VMS did not add to it. The decision is kept in VMS.' : 'Nothing to change in Lightspeed.', itemId, name)
+    }
+    await lsPut(token, path, update)
+    const after = await read()
+    const nameOk = !('description' in update) || String(after.description ?? '') === newName
+    const noteOk = !('Note' in update) || String(after.Note?.note ?? '').trim().startsWith(line)
+    if (!nameOk || !noteOk) {
+      return result('failed', `Lightspeed took the change but does not show it: the name reads "${after.description ?? ''}"${'Note' in update ? `, the note starts "${String(after.Note?.note ?? '').slice(0, 60)}"` : ''}.`, itemId, String(after.description ?? name))
+    }
+    return result('written', publicNote ? 'Marker written. The item\'s note prints on customer receipts, so the note line is kept in VMS only.' : null, itemId, newName)
+  } catch (e) {
+    return result('failed', (e instanceof Error ? e.message : String(e)).slice(0, 400), itemId)
   }
 }
 

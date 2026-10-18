@@ -6,7 +6,9 @@ export interface CheckRowLike { what: string; ours: string | null; theirs: strin
 export interface RowEdit { qty?: number | null; removed?: boolean; ok?: boolean; askPrice?: boolean }
 export interface ReadLine { vendor_item_id: string | null; description: string | null; quantity: number | null; unit_cost: number | null }
 export interface FinalLine { item: string; name: string; qty: number; cost: number | null }
-export interface Change { item: string; name: string; text: string }
+export interface Change { item: string; name: string; text: string; sentence?: boolean }
+/** A decided unavailable item (Dana, Oct 18): replaced, discontinued, out of stock or DNR; "leave" changes nothing. */
+export interface Unavailable { vendor_item_id: string | null; decision: 'replacement' | 'discontinued' | 'out_of_stock' | 'dnr' | 'leave' | null; replacement_vendor_item_id: string | null; replacement_name: string | null; replacement_price: number | null; back_date: string | null }
 
 /** Header rows (total, freight, terms…) are compared but have no quantity to change. */
 const FIELD = /^(sub ?total|total|grand total|freight|shipping|ship(ping)? (date|window|via)|terms|payment terms|po\b|po number|ship to|bill to|tax|discount|fees?|handling|deposit|cancel)/i
@@ -73,17 +75,33 @@ export function priceFlag(r: CheckRowLike, lines: ReadLine[] = []): { theirs: nu
 export const rowHandled = (r: CheckRowLike, e: RowEdit | undefined) => r.ok || !!e?.ok || !!e?.removed || (e?.qty !== undefined && e.qty !== null)
 
 /** The final order and the changes from the confirmation. */
-export function buildFinalOrder(rows: CheckRowLike[], edits: Record<string, RowEdit>, lines: ReadLine[], newItems: { what: string; qty: number | null; price: number | null }[] = []): { items: FinalLine[]; changes: Change[] } {
+export function buildFinalOrder(rows: CheckRowLike[], edits: Record<string, RowEdit>, lines: ReadLine[], newItems: { what: string; qty: number | null; price: number | null }[] = [], unavailable: Unavailable[] = []): { items: FinalLine[]; changes: Change[] } {
   const items: FinalLine[] = []
   const changes: Change[] = []
   const used = new Set<ReadLine>()
+  const decided = unavailable.filter((u) => u.decision && u.decision !== 'leave' && norm(u.vendor_item_id))
+  // a replacement the confirmation already lists keeps its own row
+  const listed = new Set([...rows.filter((r) => !isFieldRow(r)).map((r) => norm(itemOf(r, lines).item)), ...lines.map((l) => norm(l.vendor_item_id))])
   for (const r of rows) {
     if (isFieldRow(r)) continue
     const e = edits[r.what]
     const { item, name } = itemOf(r, lines)
     const l = lineFor(r.what, lines)
     if (l) used.add(l)
-    const { theirs, final } = rowQtys(r, e)
+    const { theirs, ours, final } = rowQtys(r, e)
+    // the vendor says it is unavailable and the buyer decided (Dana, Oct 18): off the order, said in plain words
+    const u = decided.find((x) => norm(x.vendor_item_id) === norm(item))
+    if (u) {
+      if (u.decision === 'replacement') {
+        const rep = [u.replacement_vendor_item_id, u.replacement_name].filter(Boolean).join(' ')
+        changes.push({ item, name, text: `was discontinued, replaced with ${rep}`, sentence: true })
+        const qty = e?.qty ?? ours ?? theirs ?? 0
+        if (qty > 0 && !listed.has(norm(u.replacement_vendor_item_id))) items.push({ item: u.replacement_vendor_item_id ?? '', name: u.replacement_name ?? '', qty, cost: u.replacement_price })
+      } else if (u.decision === 'discontinued') changes.push({ item, name, text: 'was discontinued', sentence: true })
+      else if (u.decision === 'out_of_stock') changes.push({ item, name, text: `is out of stock${u.back_date ? `, back ${shortDate(u.back_date)}` : ''}`, sentence: true })
+      else changes.push({ item, name, text: 'please remove' })
+      continue
+    }
     if (e?.removed && (theirs ?? 0) > 0) changes.push({ item, name, text: 'please remove' })
     else if (!e?.removed && !(theirs ?? 0) && final > 0) changes.push({ item, name, text: `please add ${final}` })
     else if (!e?.removed && (theirs ?? 0) > 0 && final !== theirs) changes.push({ item, name, text: `${theirs} → ${final}` })
@@ -109,13 +127,15 @@ export function buildFinalOrder(rows: CheckRowLike[], edits: Record<string, RowE
 }
 
 const money = (n: number) => `$${n.toFixed(2)}`
+/** "2026-11-15" → "11/15/26" */
+const shortDate = (d: string) => { const [y, m, dd] = d.split('-'); return `${Number(m)}/${Number(dd)}/${(y ?? '').slice(2)}` }
 export const CASE_PACK_LINE = "Please reply to confirm this order. If any quantities don't fit your case packs, let me know so I can adjust and then we can finalize the order."
 
 /** The email to the vendor: what changed, the case-pack line, then the final order. No signature (added when sent). */
 export function finalOrderEmail(o: { firstName: string | null; docNumber: string | null; po: string | null; items: FinalLine[]; changes: Change[] }): string {
   const label = (x: { item: string; name: string }) => [x.item, x.name].filter(Boolean).join(' ')
   const out = [`Hi ${o.firstName || 'there'},`, '', `Thank you for the confirmation${o.docNumber ? ` (${o.docNumber})` : ''}. Here is our final order${o.po ? ` for PO ${o.po}` : ''}.`, '']
-  if (o.changes.length) out.push('What changed:', ...o.changes.map((c) => `- ${label(c)}: ${c.text}`), '')
+  if (o.changes.length) out.push('What changed:', ...o.changes.map((c) => `- ${label(c)}${c.sentence ? ' ' : ': '}${c.text}`), '')
   else out.push('Everything on your confirmation is right.', '')
   out.push(CASE_PACK_LINE, '', 'Final order:')
   let units = 0

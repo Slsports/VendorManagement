@@ -1,7 +1,7 @@
 ---
 title: Fix a confirmation and send the final order
 section: Order paperwork
-keywords: final order, price, last cost, their price, ask about price, higher price, confirmed order, change quantity, remove item, delete item, OK, tick, case pack, what changed, confirmation, send back, final qty
+keywords: final order, discontinued, replaced, out of stock, unavailable, price, last cost, their price, ask about price, higher price, confirmed order, change quantity, remove item, delete item, OK, tick, case pack, what changed, confirmation, send back, final qty
 who: Admin, managers and buyers
 ---
 When a vendor's confirmation is not quite right, fix it right in the table and send them the final order. The email lists what changed, each item with its number and name, then the whole final order.
@@ -24,4 +24,5 @@ When a vendor's confirmation is not quite right, fix it right in the table and s
 - The final order in the email shows the vendor's price.
 - Rows like Total, Freight and Terms have no **Final** box; they are part of the summary.
 - When it is sent, the final order becomes the order's lines in VMS, so the invoice is checked against what you agreed.
+- When the vendor says an item is discontinued, replaced or out of stock, it shows under **Unavailable items** on the check. Once you decide, the email says it plainly, for example "71237 GRAND SIERRA GLOVE was discontinued, replaced with 71240 GRAND SIERRA GLOVE II", and the replacement goes on the final order at the same quantity. See **Unavailable items: replaced, discontinued or out of stock**.
 - Nothing is sent until you press **Send**.

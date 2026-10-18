@@ -61,4 +61,22 @@ describe('prices (Oct 16)', () => {
     const r = { what: 'ZZ9 Lantern', ours: '6 at $10.00', theirs: '6', ok: true, note: null, our_cost: 10, their_price: null }
     expect(buildFinalOrder([r], {}, []).items[0]?.cost).toBeNull()
   })
+
+  it('says unavailable items in plain words and puts the replacement on the order (Dana, Oct 18)', () => {
+    const lines = [{ vendor_item_id: '71237', description: 'GRAND SIERRA GLOVE LG', quantity: 0, unit_cost: null }, { vendor_item_id: '60894', description: 'NECK GAITER', quantity: 0, unit_cost: null }, { vendor_item_id: '33074', description: 'CAMO GLOVE', quantity: 12, unit_cost: 4 }]
+    const rows = [
+      { what: '71237 GRAND SIERRA GLOVE LG', ours: '12', theirs: '0', ok: false, note: null },
+      { what: '60894 NECK GAITER', ours: '6', theirs: '0', ok: false, note: null },
+      { what: '33074 CAMO GLOVE', ours: '12', theirs: '12', ok: true, note: null },
+    ]
+    const u = [
+      { vendor_item_id: '71237', decision: 'replacement' as const, replacement_vendor_item_id: '71240', replacement_name: 'GRAND SIERRA GLOVE II LG', replacement_price: 12.5, back_date: null },
+      { vendor_item_id: '60894', decision: 'out_of_stock' as const, replacement_vendor_item_id: null, replacement_name: null, replacement_price: null, back_date: '2026-11-15' },
+    ]
+    const f = buildFinalOrder(rows, {}, lines, [], u)
+    expect(f.items.map((i) => [i.item, i.qty, i.cost])).toEqual([['71240', 12, 12.5], ['33074', 12, 4]])
+    const email = finalOrderEmail({ firstName: 'Sam', docNumber: null, po: 'BECKER101826', items: f.items, changes: f.changes })
+    expect(email).toContain('- 71237 GRAND SIERRA GLOVE LG was discontinued, replaced with 71240 GRAND SIERRA GLOVE II LG')
+    expect(email).toContain('- 60894 NECK GAITER is out of stock, back 11/15/26')
+  })
 })
