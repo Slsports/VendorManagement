@@ -2505,3 +2505,6 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
 - Oct 18, shelf tags and price tags (Dana, for Trevor's Proposal 3): every store updates its tags; prices are changed
   once in LS and cover all stores. **Trevor is in charge** of all shelf-tag and price-change tasks: he prints the labels
   and takes them to the other stores for the shelf tags and the price tags on the items. (Proposals still not approved.)
+- Oct 18 (Dana): web search is OK as a last resort for item details (Trevor's Proposal 1), but anything found on the
+  web needs the approval of whoever placed the order before it is used. Proposals still not approved; Dana wants to
+  nail down more details first.
