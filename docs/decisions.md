@@ -2547,3 +2547,6 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   REPLACED WITH <id> line goes on once the ID is known. When the order's confirmation or invoice arrives, the card lists
   its lines so the replacement is picked with one click. Meanwhile reports say "replacement ordered, Vendor ID to come
   from the invoice" and carry no need (the new item is not in LS yet). Not built yet: waiting for Dana's go.
+- Oct 18, item names from web search (Dana): web search is a last resort, and **Trevor approves** every name found that
+  way (not the person who placed the order). Trevor can assign it to Jarrett when he needs Jarrett's input (the normal
+  Assigned to). Part of Trevor's naming proposals; not built yet.
