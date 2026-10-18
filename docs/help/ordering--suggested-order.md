@@ -1,13 +1,13 @@
 ---
 title: The suggested order
 section: Ordering
-keywords: suggested order, need, on order, incoming, reorder, quantity, what to order
+keywords: suggested order, need, on order, incoming, reorder, quantity, what to order, run order
 who: Admin, managers and buyers
 ---
 The suggested order is what LS says we need minus what is already coming in.
 
 ## How to
-1. On the vendor's page click **Suggested order** (or **Suggested order** on the Ordering card).
+1. On the vendor's page click **Run order** (or **Run order** on the vendor's line on the Ordering card). VMS uses today's sales report from Lightspeed, running one first if there is none today (last 12 months, all stores together), then opens the suggested order. **Suggested order** reopens it from the latest report without running anything.
 2. Each line shows **Vendor ID**, **Description**, **Sold**, **In stock**, **Need**, **On order** and **Order**.
 3. Change any quantity in the yellow **Order** column. Set it to 0 to leave an item out.
 4. The bottom shows units, items and cost.

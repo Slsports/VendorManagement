@@ -14,12 +14,13 @@ import { money } from '@/lib/freight'
 import { cn, errorMessage } from '@/lib/utils'
 import { AddOrderDialog } from '@/components/orders/AddOrderDialog'
 import { Button } from '@/components/ui'
+import { RunReportButtons } from './RunReportButtons'
 import { SalesReportUpload } from './SalesReportUpload'
 import { SuggestedOrderDialog } from './SuggestedOrder'
 
 type Row = 'check' | 'to_order' | 'working' | 'placed' | 'confirmed' | 'ls_po' | 'overdue'
 const ROWS: { id: Row; label: string; help: string }[] = [
-  { id: 'check', label: 'Check stock', help: 'Flagged "Check if we need it". Upload the LS sales report to see what to order.' },
+  { id: 'check', label: 'Check stock', help: 'Flagged "Check if we need it". Run order opens the suggested order from today\'s Lightspeed sales report (Run report just files the report).' },
   { id: 'to_order', label: 'To order', help: 'Flagged "Remind me to order", or the stock check said we need it.' },
   { id: 'working', label: 'Working on', help: 'Email conversations flagged "Working on order" while an order goes back and forth with the rep.' },
   { id: 'placed', label: 'Placed', help: 'Sent to the rep, no confirmation yet.' },
@@ -113,9 +114,10 @@ function FlagList({ rows }: { rows: OrderingRow[] }) {
                 {[f.assignee ? `for ${f.assignee.full_name.split(' ')[0]}` : null, f.flagger ? `flagged by ${f.flagger.full_name.split(' ')[0]}` : null, new Date(f.created_at).toLocaleDateString(), f.note].filter(Boolean).join(' · ')}
               </span>
             </span>
-            {f.stage === 'check' && !f.report_id ? <SalesReportUpload vendor={f.vendor} onSaved={(used) => { if (!used) setSuggest(f.vendor) }} /> : null}
+            <RunReportButtons vendor={f.vendor} compact onSuggest={() => setSuggest(f.vendor!)} />
             {f.report_id ? <Button size="sm" variant="secondary" onClick={() => setSuggest(f.vendor)}>Suggested order</Button> : null}
-            <Link to={`${ROUTES.salesReports}?vendor=${f.vendor.id}`} className="inline-flex h-8 items-center rounded-lg border border-stone-200 px-2.5 text-xs font-medium text-stone-700 hover:bg-stone-50" title="Run a sales report from Lightspeed for this vendor">Reports</Link>
+            <Link to={`${ROUTES.salesReports}?vendor=${f.vendor.id}`} className="inline-flex h-8 items-center rounded-lg border border-stone-200 px-2.5 text-xs font-medium text-stone-700 hover:bg-stone-50" title="The Sales Reports page with this vendor picked: other periods, stores apart">Reports</Link>
+            {f.stage === 'check' && !f.report_id ? <SalesReportUpload vendor={f.vendor} variant="ghost" onSaved={(used) => { if (!used) setSuggest(f.vendor) }} /> : null}
             {f.stage === 'check' ? <Button size="sm" variant="ghost" onClick={() => act(moveOrderingItem(f.id, 'to_order'), `${f.vendor!.name}: moved to To order`)}>Order it</Button> : null}
             {f.stage === 'to_order' && !f.report_id ? <Button size="sm" variant="secondary" onClick={() => setPlacing(f)}>Order placed</Button> : null}
             <Button size="sm" variant="ghost" onClick={() => act(finishOrderingItem(f.id, f.stage === 'check' ? 'not_needed' : 'removed'), f.stage === 'check' ? `${f.vendor!.name}: not needed` : 'Taken off the list')}>{f.stage === 'check' ? "Don't need it" : 'Remove'}</Button>

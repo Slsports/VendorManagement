@@ -4,7 +4,7 @@ section: Ordering
 keywords: sales report, LS Analytics, export, upload, need, stock, spec, xlsx, formatted report
 who: Admin, managers and buyers
 ---
-Upload a vendor's sales report: the raw LS Analytics export (VMS formats it), or a report that is already formatted, like one you filled in with Order quantities (VMS files it as it is). Either way it goes in the vendor's **Sales reports** folder and VMS works out a suggested order.
+Most of the time you don't upload anything: **Run report** and **Run order** in the vendor's **Ordering** box build the report straight from Lightspeed. **Upload sales report** (the smaller link next to them) is for historical reports: the raw LS Analytics export (VMS formats it), or a report that is already formatted, like one you filled in with Order quantities (VMS files it as it is). Either way it goes in the vendor's **Sales reports** folder and VMS works out a suggested order.
 
 ## How to
 1. Export the vendor's sales from LS Analytics (the usual columns: System ID, UPC, Default Vendor, Vendor ID, Description, Cost, Category, Archived, Quantity Sold, Quantity on Hand, Days Since Sold).

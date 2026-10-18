@@ -2502,3 +2502,9 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   shows that one card on top, any status); the viewer renders spreadsheet links. A decided item's next report says so
   ("a replacement is being sourced", "not needed", or the replacement with the need carried) and never makes a second
   card. `item_change_decide` refuses to re-decide anything except Find replacement.
+- Oct 18 (Dana, "'Today' is good enough. and go"): **Run report** and **Run order** built (`RunReportButtons`), in the
+  vendor page's Ordering box and on each vendor line of the dashboard Ordering card. Run report = that vendor's LS
+  report, last 12 months, all stores together, through `runLsReport` (filed under the vendor, feeds Suggested order);
+  Run order = reuse a report whose run date is today, else run one, then open Suggested order. A vendor with no
+  `lightspeed_vendor_id` (or tied to more than one) gets a plain message pointing to In Lightspeed as / the Sales
+  Reports page. **Reports** stays for custom runs; **Upload sales report** is now a smaller link for historical reports.

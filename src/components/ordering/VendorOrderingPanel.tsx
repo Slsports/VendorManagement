@@ -9,10 +9,11 @@ import { errorMessage } from '@/lib/utils'
 import { Button } from '@/components/ui'
 import { FoldSection } from '@/components/shared/FoldSection'
 import { FlagButtons } from './FlagButtons'
+import { RunReportButtons } from './RunReportButtons'
 import { SalesReportUpload } from './SalesReportUpload'
 import { SuggestedOrderDialog } from './SuggestedOrder'
 
-/** On a vendor page: where the vendor is on the Ordering card, the two flags, the sales report and the suggested order. */
+/** On a vendor page: where the vendor is on the Ordering card, the two flags, Run report / Run order, the sales report and the suggested order. */
 export function VendorOrderingPanel({ vendor, assignedBuyerId, canEdit, className }: {
   vendor: { id: string; name: string; aliases?: string[] }
   assignedBuyerId?: string | null
@@ -50,9 +51,11 @@ export function VendorOrderingPanel({ vendor, assignedBuyerId, canEdit, classNam
         {canEdit ? (
           <div className="mt-2 flex flex-wrap gap-2">
             <FlagButtons vendor={vendor} assignedBuyerId={assignedBuyerId} />
-            <SalesReportUpload vendor={vendor} onSaved={(used) => { void report.refetch(); if (!used) setOpen(true) }} />
-            {report.data ? <Button size="sm" onClick={() => setOpen(true)}>Suggested order</Button> : null}
-            <Link to={`${ROUTES.salesReports}?vendor=${vendor.id}`} className="inline-flex h-8 items-center rounded-lg border border-stone-200 px-2.5 text-xs font-medium text-stone-700 hover:bg-stone-50" title="Run a sales report from Lightspeed for this vendor">Reports</Link>
+            {/* Run report / Run order (Dana, Oct 18): straight from Lightspeed; Upload stays for historical reports */}
+            <RunReportButtons vendor={vendor} onSuggest={() => { void report.refetch(); setOpen(true) }} />
+            {report.data ? <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>Suggested order</Button> : null}
+            <Link to={`${ROUTES.salesReports}?vendor=${vendor.id}`} className="inline-flex h-8 items-center rounded-lg border border-stone-200 px-2.5 text-xs font-medium text-stone-700 hover:bg-stone-50" title="The Sales Reports page with this vendor picked: other periods, stores apart">Reports</Link>
+            <SalesReportUpload vendor={vendor} variant="ghost" onSaved={(used) => { void report.refetch(); if (!used) setOpen(true) }} />
           </div>
         ) : null}
       </FoldSection>

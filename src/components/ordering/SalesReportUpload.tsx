@@ -18,7 +18,7 @@ export function SalesReportUpload({ vendor, onSaved, label = 'Upload sales repor
   /** used: we already placed an order from this report (no suggested order needed) */
   onSaved: (used: boolean) => void
   label?: string
-  variant?: 'primary' | 'secondary'
+  variant?: 'primary' | 'secondary' | 'ghost'
 }) {
   const { organization, profile } = useAuth()
   const input = useRef<HTMLInputElement>(null)

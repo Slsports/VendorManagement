@@ -1,16 +1,15 @@
 ---
 title: Vendor sales reports
 section: Reports
-keywords: sales report, used to place the order, report used, LS Analytics, export, Need, Order, 365 days, vendor report, category report, sales reports folder
+keywords: sales report, used to place the order, report used, LS Analytics, export, Need, Order, 365 days, vendor report, category report, sales reports folder, run report
 who: Everyone
 ---
-Claude turns a raw LS Analytics sales export into a formatted sales report, following Dana's Sales Report Formatting Spec, and files it on the vendor's page.
+VMS builds a vendor's sales report straight from Lightspeed, following Dana's Sales Report Formatting Spec, and files it on the vendor's page.
 
 ## How to
-1. Run the sales export in LS Analytics for the vendor.
-2. On the vendor's page, click **Upload sales report** in the **Ordering** box and pick the file (see "Upload a sales report").
-3. VMS formats it and saves it to the vendor's Documents, in the **Sales reports** folder, and opens the suggested order.
-   Category reports, or a file to split across many vendors at once, can still be done by asking Claude.
+1. On the vendor's page, click **Run report** in the **Ordering** box. VMS runs the last 12 months, all stores together, and says when it is filed (or why it couldn't: a vendor not tied to Lightspeed needs **In Lightspeed as** set first).
+2. For another period, stores kept apart, or several vendors at once, click **Reports** (the Sales Reports page with the vendor picked).
+3. A historical LS Analytics export can still be filed with **Upload sales report** (see "Upload a sales report").
 4. To open one: open the vendor, find the **Documents** box, and open the **Sales reports** folder.
 
 ## What is in a report

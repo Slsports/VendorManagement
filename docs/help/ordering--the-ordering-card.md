@@ -1,13 +1,13 @@
 ---
 title: The Ordering card
 section: Ordering
-keywords: ordering, dashboard, check stock, to order, placed, confirmed, LS PO, overdue, reorder
+keywords: ordering, dashboard, check stock, to order, placed, confirmed, LS PO, overdue, reorder, run report, run order
 who: Everyone
 ---
 The **Ordering** card on the dashboard follows a vendor from "do we need anything?" to a confirmed order. It shows seven counts; click one to see its list.
 
 ## The counts
-- **Check stock**: vendors flagged **Check if we need it**. Click **Reports** on the vendor's line to run its sales report straight from Lightspeed (or upload an LS export) to see what to order.
+- **Check stock**: vendors flagged **Check if we need it**. Click **Run order** on the vendor's line: VMS runs its sales report straight from Lightspeed (last 12 months, all stores together) and opens the suggested order. **Run report** only files the report.
 - **To order**: vendors flagged **Remind me to order**, or ones where the stock check said we need something.
 - **Working on**: emails flagged **Working on order** while an order goes back and forth with the rep. It also says how many need an answer; **Open the full list** opens the Orders I'm working on page.
 - **Placed**: orders sent to the rep with no confirmation yet.
@@ -18,7 +18,8 @@ The **Ordering** card on the dashboard follows a vendor from "do we need anythin
 ## How to
 1. Click a count. Its list opens across the dashboard.
 2. Click a vendor or order name to open it.
-3. In **Check stock** and **To order**, use the buttons on each row: **Upload sales report**, **Suggested order**, **Order it**, **Order placed**, **Don't need it** or **Remove**.
+3. In **Check stock** and **To order**, use the buttons on each row: **Run report**, **Run order**, **Suggested order**, **Reports** (the Sales Reports page for other periods or stores apart), **Upload sales report** (a historical LS export), **Order it**, **Order placed**, **Don't need it** or **Remove**.
+4. If a line says the vendor is not tied to a Lightspeed vendor yet, open the vendor and set **In Lightspeed as**; then run again.
 
 ## Good to know
 - When Dana uses **Showing** for one person, Check stock and To order show only that person's flags, and Working on only their emails. Placed, Confirmed and Overdue always show every order.
