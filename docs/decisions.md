@@ -2523,3 +2523,7 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   me or Jarrett"): migration 175. `profiles.handles_logistics` (Trevor) gets every invoice check and Create PO task VMS
   assigns; a check or task someone hands to a person by hand stays. Confirmations and Unavailable items stay with whoever
   placed the order. Back-check moved the open invoice checks and Create PO tasks (counts reported to Dana).
+- Oct 18, covering for each other (Dana): Jarrett enters orders when Trevor is busy or out, and usually helps with
+  fishing vendors' orders. Everyone gets an **Away** switch (Dana: "everyone should have that"). Fishing vendors' invoices
+  and Create PO tasks still go to Trevor; he hands one to Jarrett when he wants help (option b). Backup details being
+  settled; not built yet.
