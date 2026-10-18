@@ -14,9 +14,16 @@ export interface Unavailable { vendor_item_id: string | null; decision: 'replace
 const FIELD = /^(sub ?total|total|grand total|freight|shipping|ship(ping)? (date|window|via)|terms|payment terms|po\b|po number|ship to|bill to|tax|discount|fees?|handling|deposit|cancel)/i
 export const isFieldRow = (r: { what: string }) => FIELD.test(r.what.trim())
 
-/** The first number in a cell: "12" → 12, "144 at $0.15" → 144; null when there is none. */
+/**
+ * The quantity in a cell: "12" → 12, "144 at $0.15" → 144, "TS582S qty 1 @ $10.45" → 1 (Dana, Oct 18: the Final box
+ * showed 582, the number inside the Vendor ID). A number stuck to letters is part of an item number, never a quantity;
+ * "qty 2" wins when it is there. Null when there is none.
+ */
 export function qtyIn(text: string | null): number | null {
-  const m = /-?\d+(?:\.\d+)?/.exec((text ?? '').replace(/,/g, '').replace(/\$\s?\d+(?:\.\d+)?/g, ''))
+  const s = (text ?? '').replace(/,/g, '').replace(/\$\s?\d+(?:\.\d+)?/g, '')
+  const q = /\b(?:qty|quantity)\.?\s*:?\s*(\d+(?:\.\d+)?)/i.exec(s)
+  if (q) return Number(q[1])
+  const m = /(?<![A-Za-z0-9.\-/])-?\d+(?:\.\d+)?(?![A-Za-z0-9/])/.exec(s)
   return m ? Number(m[0]) : null
 }
 const priceIn = (text: string | null) => { const m = /\$\s?(\d+(?:\.\d+)?)/.exec(text ?? ''); return m ? Number(m[1]) : null }
