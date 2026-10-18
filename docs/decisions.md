@@ -2502,6 +2502,12 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   shows that one card on top, any status); the viewer renders spreadsheet links. A decided item's next report says so
   ("a replacement is being sourced", "not needed", or the replacement with the need carried) and never makes a second
   card. `item_change_decide` refuses to re-decide anything except Find replacement.
+- Oct 18, shelf tags and price tags (Dana, for Trevor's Proposal 3): every store updates its tags; prices are changed
+  once in LS and cover all stores. **Trevor is in charge** of all shelf-tag and price-change tasks: he prints the labels
+  and takes them to the other stores for the shelf tags and the price tags on the items. (Proposals still not approved.)
+- Oct 18 (Dana): web search is OK as a last resort for item details (Trevor's Proposal 1), but anything found on the
+  web needs the approval of whoever placed the order before it is used. Proposals still not approved; Dana wants to
+  nail down more details first.
 - Oct 18 (Dana, "'Today' is good enough. and go"): **Run report** and **Run order** built (`RunReportButtons`), in the
   vendor page's Ordering box and on each vendor line of the dashboard Ordering card. Run report = that vendor's LS
   report, last 12 months, all stores together, through `runLsReport` (filed under the vendor, feeds Suggested order);
