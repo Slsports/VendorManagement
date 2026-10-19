@@ -2661,3 +2661,11 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   starts over and the new billing@ mail since Oct 16 never comes in (Dana: more than 10 since the 17th). One run (Oct
   19, 15:00) stopped on a Gmail 400 for one 2022 message; that message reads fine now. Who or what added the old mail
   is not confirmed. gmail-sync has a read-only `diagnose` request (scheduler secret) for this.
+- Oct 19 (Dana, Bill.com): light integration only, no auto-entry, no auto-payment. Plan agreed in outline (not built):
+  connect with a VMS developer key in Settings (hosted settings, never the repo); every 15 minutes pull the Bill.com
+  inbox (not yet entered), unpaid bills with due dates, and the vendor list; dashboard line "Waiting in Bill.com: N to
+  enter" (Dana only) and pay-by tasks 7 days ahead that finish themselves when paid. Forwarding is VMS's own mail
+  sync, not the Apps Script (Dana: too many labels, too much "needs attention"): when Claude files a vendor invoice from
+  orders@ or billing@, forward that email with attachments to shaverlakesports1@bill.com once and mark it "Sent to
+  Bill.com". **Which vendors: a Bill.com tag on the vendor that Dana can turn on or off** ("I need to be able to turn on
+  or off the bill.com tag on any vendor"); only tagged vendors' invoices are forwarded. Open: WWD left out? 7 days ok?
