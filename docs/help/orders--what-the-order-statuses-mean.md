@@ -10,7 +10,7 @@ Every order has one status that shows how far along it is, from placed to paid.
 1. **Open**: placed with the vendor.
 2. **Awaiting confirmation**: waiting for the vendor's confirmation.
 3. **Confirmed**: the vendor confirmed it.
-4. **Shipped**: on its way.
+4. **Shipped**: on its way. A packing slip landing in the vendor's **Shipping** folder moves the order here by itself.
 5. **Received**: in the store.
 6. **Entered**: entered in LS.
 7. **Ready to pay**: checked and OK to pay.

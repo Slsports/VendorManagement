@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { X } from 'lucide-react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { useLiveTable } from '@/hooks/useLiveTable'
 import { finishOrderingItem, getOpenOrderingItem, latestSalesReport, onOrderingChanged, ORDERING_STAGE_LABELS } from '@/services/ordering'
 import { errorMessage } from '@/lib/utils'
 import { Button } from '@/components/ui'
@@ -26,6 +27,8 @@ export function VendorOrderingPanel({ vendor, assignedBuyerId, canEdit, classNam
   const { refetch: refetchFlag } = flag
   const { refetch: refetchReport } = report
   useEffect(() => onOrderingChanged(() => { void refetchFlag(); void refetchReport() }), [refetchFlag, refetchReport])
+  useLiveTable('sales_reports', `vendor_id=eq.${vendor.id}`, () => { void refetchReport() })
+  useLiveTable('ordering_items', `vendor_id=eq.${vendor.id}`, () => { void refetchFlag() })
   const f = flag.data
   // starts closed on the vendor page; the title bar says whether it is on the Ordering card (Dana, Oct 12)
   const summary = flag.isLoading ? null : f ? `On the card: ${ORDERING_STAGE_LABELS[f.stage as 'check' | 'to_order']}` : report.data ? `Sales report ${new Date(`${report.data.run_date}T12:00:00`).toLocaleDateString()}` : 'Not on the card'

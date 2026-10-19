@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { Check, ClipboardCheck, FileText, RefreshCw, Send, Trash2, Undo2, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { useLiveTable } from '@/hooks/useLiveTable'
 import { useTableSort } from '@/hooks/useTableSort'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { addUsualCharge, checkIssues, checkNewItems, checkRows, editCheckRow, makeOrderFromCheck, saveFinalOrder, getOrderCheck, listCheckDocuments, orderCheckAction, runOrderChecks, type CheckAction, type CheckRow, type OrderCheckRow } from '@/services/orderChecks'
@@ -43,6 +44,8 @@ const COLUMNS = {
 export default function OrderCheckPage() {
   const { id = '' } = useParams()
   const q = useSupabaseQuery(() => getOrderCheck(id), [id])
+  const { refetch } = q
+  useLiveTable('order_checks', `id=eq.${id}`, () => { void refetch() })
   if (q.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading…" className="text-brand" /></div>
   if (q.error || !q.data) return <Alert variant="error">{q.error ?? 'Not found'}</Alert>
   return <CheckView c={q.data} refetch={q.refetch} />

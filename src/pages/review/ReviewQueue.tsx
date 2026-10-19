@@ -5,6 +5,7 @@ import { ClipboardCheck, Settings2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useViewAs } from '@/hooks/useViewAs'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { useLiveTable } from '@/hooks/useLiveTable'
 import { applyVendorRename, getReviewQueueItem, listReviewQueue } from '@/services/vendors'
 import { assignReviewItem, listPeople } from '@/services/reviews'
 import { REVIEW_KIND_LABELS, REVIEW_TABS, reviewTabOfCheck, reviewTabOfKind, type ReviewTab } from '@/lib/reviews'
@@ -48,6 +49,9 @@ export default function ReviewQueuePage() {
   const back = snoozeQ.data?.back ?? new Set<string>()
   const snoozedBy = new Map((allSnoozes.data ?? []).map((s) => [s.review_item_id!, s]))
   const refresh = async () => { await Promise.all([q.refetch(), checksQ.refetch(), snoozeQ.refetch(), allSnoozes.refetch(), openedQ.refetch()]) }
+  // paperwork Claude reads and cards that land while the page is open (Dana, Oct 19)
+  useLiveTable('order_checks', null, () => { void checksQ.refetch() })
+  useLiveTable('review_items', null, () => { void q.refetch() })
 
   const everything = (q.data ?? []).filter((i) => i.id !== openedId)
   const items = showSnoozed ? everything.filter((i) => snoozedBy.has(i.id)) : [...everything.filter((i) => back.has(i.id)), ...everything.filter((i) => !back.has(i.id) && !hidden.has(i.id))]

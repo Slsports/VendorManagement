@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { useLiveTable } from '@/hooks/useLiveTable'
 import { listDocumentsFor } from '@/services/accountingDocuments'
 import { ROUTES } from '@/lib/constants'
 import { Spinner } from '@/components/ui'
@@ -9,6 +10,7 @@ import { DocumentRows } from './DocumentRows'
 /** The papers filed to a policy or a contract (Dana, Oct 16), on its page. */
 export function FiledDocuments({ policyId, contractId, className }: { policyId?: string; contractId?: string; className?: string }) {
   const [tick, setTick] = useState(0)
+  useLiveTable('accounting_documents', null, () => setTick((t) => t + 1))
   const docs = useSupabaseQuery(() => listDocumentsFor(policyId ? { policy_id: policyId } : { contract_id: contractId ?? '' }), [policyId, contractId, tick])
   return (
     <section className={className ?? 'mt-6 rounded-2xl border border-stone-200 bg-white'}>

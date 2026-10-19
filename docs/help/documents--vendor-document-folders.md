@@ -1,7 +1,7 @@
 ---
 title: The folders in a vendor's Documents
 section: Documents
-keywords: folders, documents, files, catalogs, price lists, invoices, confirmations, credits, shipping, images, year folders
+keywords: folders, documents, files, catalogs, price lists, invoices, confirmations, credits, shipping, images, year folders, refresh, live
 who: Admin, managers and buyers
 ---
 Every vendor page has a **Documents** box with one folder per kind of paper, and a year folder inside each, the way the files were kept in Dropbox ("Stansport / Invoices / 2026").
@@ -19,3 +19,4 @@ Every vendor page has a **Documents** box with one folder per kind of paper, and
 - **Credits** is for credit memos, credit notices and return authorizations.
 - **Damaged Items** holds photos of damaged goods to attach to a return email. **Proofs** holds artwork proofs, each marked **Not approved yet** or **Approved** with a gold star.
 - A folder icon is amber when it has files, gray when empty.
+- The folders refresh themselves the moment a file lands, whoever filed it. Some folders start the next step by themselves: see "What happens when a file lands".

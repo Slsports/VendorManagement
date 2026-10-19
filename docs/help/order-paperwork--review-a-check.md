@@ -4,7 +4,7 @@ section: Order paperwork
 keywords: review, looks good, done, no email needed, summary, differences, check page, mark looked at, email conversation, emails, thread
 who: Admin, managers and buyers
 ---
-Look over what Claude found and either send the vendor an email or mark it done.
+Look over what Claude found and either send the vendor an email or mark it done. Claude starts the check the moment the confirmation or invoice lands, from the mailbox or an upload.
 
 ## How to
 1. Open the check: click **Confirmations** or **Invoices** on the Dashboard **Review** card and pick it, or find it in the order's **Paperwork** box.

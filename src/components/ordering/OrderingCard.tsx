@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { ShoppingCart } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { useLiveTable } from '@/hooks/useLiveTable'
 import { useViewAs } from '@/hooks/useViewAs'
 import { finishOrderingItem, isOverdue, isPlaced, listOrderingItems, listPlacedAndConfirmed, moveOrderingItem, needsLsPo, onOrderingChanged, type OrderingOrderRow, type OrderingRow } from '@/services/ordering'
 import { listWorkingOrders, type WorkingRow } from '@/services/mail'
@@ -46,6 +47,8 @@ export function OrderingCard() {
   const { refetch: ro } = orders
   const { refetch: rl } = lsPos
   useEffect(() => onOrderingChanged(() => { void rf(); void ro(); void rl() }), [rf, ro, rl])
+  useLiveTable('ordering_items', null, () => { void rf() })
+  useLiveTable('sales_reports', null, () => { void rf() })
   const [open, setOpen] = useState<Row | null>(null)
 
   // flags: the person's own when the admin shows one person; orders are everyone's

@@ -1,5 +1,5 @@
 import { useEffect, useState, type DragEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { SquareCheck, Square, Pencil, Download, ExternalLink, FileText, Folder, FolderInput, FolderOpen, Link2, Mail, Star, Trash2, Upload } from 'lucide-react'
 import { addVendorLink, deleteVendorLink, downloadVendorFile, listVendorLinks, renameVendorLink, setProofApproved, tickSalesReport, uploadVendorFile, zipVendorDocuments, type VendorLinkRow } from '@/services/lines'
@@ -8,6 +8,7 @@ import { onOrderingChanged } from '@/services/ordering'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { saveBlob } from '@/lib/viewer'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { useLiveTable } from '@/hooks/useLiveTable'
 import { DOC_FOLDERS, byYear, folderLabel, folderOf, isPictureFile, kindFor, thisYear, todayIso, yearChoices, type DocFolder } from '@/lib/documents'
 import { LINK_KIND_LABELS } from '@/lib/vendors'
 import { ROUTES } from '@/lib/constants'
@@ -31,7 +32,15 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
   // a sales report filed from the Ordering box (Run report, Upload) shows up here without a reload (Dana, Oct 18)
   const { refetch } = q
   useEffect(() => onOrderingChanged(() => { void refetch() }), [refetch])
-  const [openFolder, setOpenFolder] = useState<DocFolder | null>(null)
+  // and anything filed by anyone, from anywhere (Claude from the mailbox, another screen) lands here live (Dana, Oct 19)
+  useLiveTable('vendor_links', `vendor_id=eq.${vendorId}`, () => { void refetch() })
+  // ?folder=proofs opens that folder (a task's Go to it)
+  const [params] = useSearchParams()
+  const asked = DOC_FOLDERS.find((f) => f.id === params.get('folder'))?.id ?? null
+  const [picked, setPicked] = useState<{ asked: DocFolder | null; folder: DocFolder | null }>({ asked, folder: asked })
+  if (picked.asked !== asked) setPicked({ asked, folder: asked ?? picked.folder })
+  const openFolder = picked.folder
+  const setOpenFolder = (f: DocFolder | null | ((x: DocFolder | null) => DocFolder | null)) => setPicked((p) => ({ ...p, folder: typeof f === 'function' ? f(p.folder) : f }))
   const [adding, setAdding] = useState<{ mode: 'file' | 'link'; folder: DocFolder; files: File[] } | null>(null)
   const [moving, setMoving] = useState<VendorLinkRow | null>(null)
   const [renaming, setRenaming] = useState<VendorLinkRow | null>(null)

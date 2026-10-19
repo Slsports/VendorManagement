@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { ChevronRight, FolderOpen, RefreshCw, Search, UploadCloud } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { useLiveTable } from '@/hooks/useLiveTable'
 import { countUnfiledEmails, dropDocument, listDocumentFolders, listDocuments, runFiling, type DocumentFolder, type DropResult } from '@/services/accountingDocuments'
 import { listMailboxes } from '@/services/mail'
 import { ACCOUNTING_CATEGORIES, categoryLabel } from '@/lib/accounting'
@@ -30,6 +31,7 @@ export default function AccountingDocumentsPage() {
   const [search, setSearch] = useState(q)
   const [tick, setTick] = useState(0)
   const refresh = () => setTick((t) => t + 1)
+  useLiveTable('accounting_documents', null, refresh)
 
   const folders = useSupabaseQuery(async () => (organization ? listDocumentFolders(organization.id) : []), [organization?.id, tick])
   const boxes = useSupabaseQuery(async () => (organization ? listMailboxes(organization.id) : []), [organization?.id])

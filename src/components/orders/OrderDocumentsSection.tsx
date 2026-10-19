@@ -4,6 +4,7 @@ import { ExternalLink, FileText, Plus, Trash2 } from 'lucide-react'
 import { addVendorLink, deleteVendorLink, downloadVendorFile, uploadVendorFile } from '@/services/lines'
 import { kickOrderChecks } from '@/services/orderChecks'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
+import { useLiveTable } from '@/hooks/useLiveTable'
 import { LINK_KIND_LABELS } from '@/lib/vendors'
 import { errorMessage } from '@/lib/utils'
 import type { VendorLink, VendorLinkKind } from '@/types'
@@ -15,6 +16,8 @@ const KINDS: VendorLinkKind[] = ['order', 'ls_po', 'confirmation', 'invoice', 'p
 export function OrderDocumentsSection({ orderId, vendorId, organizationId, userId, documents, canEdit, onChange }: { orderId: string; vendorId: string; organizationId: string; userId: string | null; documents: VendorLink[]; canEdit: boolean; onChange: () => Promise<void> }) {
   const [adding, setAdding] = useState(false)
   const { view, viewer } = useDocumentViewer()
+  // a paper Claude files to this order from the mailbox shows up without a reload (Dana, Oct 19)
+  useLiveTable('vendor_links', `order_id=eq.${orderId}`, () => { void onChange() })
   const [kind, setKind] = useState<VendorLinkKind>('confirmation')
   const [label, setLabel] = useState('')
   const [url, setUrl] = useState('')

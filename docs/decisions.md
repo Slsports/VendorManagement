@@ -2611,3 +2611,17 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
 - Oct 19 (Dana): the contact rules use one window, **24 months**, for both confirming a portal contact by email (#2) and
   the Main rep (#3). Jarrett's mailbox (jarrett@) is read back to the beginning (backfill from 2015, about 2.5 years
   of mail expected; old threads come in as handled, no duplicates), so his vendor mail counts too.
+- Oct 19 (Dana, "all documents folders should refresh itself when any doc lands in there and there is a next process
+  that is supposed to take place when it lands"; "Build all 3"): migration 0186. (1) Live refresh: vendor_links,
+  order_checks, accounting_documents, sales_reports, report_runs, review_items, ordering_items and tasks are in the
+  Realtime publication (replica identity full); `useLiveTable` refetches the vendor Documents box, the order page
+  documents, Accounting Documents, the Review tabs, the check page and the Ordering box/card when a row lands, whoever
+  filed it. (2) The order check starts on landing: `order_checks_kick` trigger calls order-check through pg_net with the
+  check id (vault secret; the scheduler still catches anything missed; never blocks the filing). (3) Next steps: proof
+  lands → task "Approve the proof from …" for the order's placer, else the vendor's buyer, else Dana, due +3, auto_key
+  `proof:<link>`, finished by Mark approved; credit lands → task "Credit from …" for Dana in Accounting, due +7,
+  `credit:<link>`; packing slip lands → tied to its order (PO number / LS PO number / the vendor's one open order,
+  `vendor_links_tie_order`) and the order moves to Shipped; LS PO lands → tied the same way. Removing or moving a proof or
+  credit drops its task. Back-check: tasks made for proofs and credits filed in the last 30 days (older ones are history),
+  untied LS POs and packing slips tied, tied packing slips ship their orders; counts reported to Dana. `?folder=` on a
+  vendor page opens that Documents folder (the tasks' Go to it). Help: "What happens when a file lands".
