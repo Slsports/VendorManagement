@@ -2676,3 +2676,7 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
 - Oct 19 (Dana): **WWD is never to go to Bill.com, totally separate process.** The Bill.com tag cannot be set on
   Worldwide Distributors, and nothing routed through WWD (WWD invoices, WWD-billed vendors' WWD paperwork) is ever
   forwarded; WWD stays on the Payments page flow (EdenRed, payment sheets).
+- Oct 19 (Dana, final on the Bill.com tag): "All vendors have a on off switch for sending an invoice to bill.com period.
+  No automation needed. I will select the ones that need to go to bill.com, no other method." The switch is on every
+  vendor, including WWD-routed ones (some WWD vendors now want to be paid another way), and can be changed any time.
+  Nothing else decides forwarding: not the route, not Bill.com's list. Due alerts 7 days ahead.
