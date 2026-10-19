@@ -3,7 +3,24 @@
 // sender, subject, time and the start of the text; the body is fetched by id when something needs reading in full.
 //   NODE_USE_ENV_PROXY=1 node scripts/provider-mail.mjs 70        (minutes back, default 70)
 //   NODE_USE_ENV_PROXY=1 node scripts/provider-mail.mjs --body <email id>
+//   NODE_USE_ENV_PROXY=1 node scripts/provider-mail.mjs --task <email id> "<what to do>" "<one plain line why>" [YYYY-MM-DD]
+//     makes a task for the mailbox owner (Dana) on that email's conversation, reminded at once, so it shows on her
+//     dashboard under Tasks and Go to it opens the email. One task per email; the text is Claude's own words, never the mail.
 import { query } from './db.mjs'
+
+const esc = (v) => String(v).replace(/'/g, "''")
+if (process.argv[2] === '--task') {
+  const [, , , id, title, note, due] = process.argv
+  if (!id || !title) { console.error('usage: --task <email id> "<title>" "<note>" [YYYY-MM-DD]'); process.exit(1) }
+  const rows = await query(`insert into public.tasks (organization_id, title, notes, due_date, remind_at, assigned_to, created_by, thread_id, auto_key, area)
+    select e.organization_id, '${esc(title)}', '${esc(note ?? '')}', ${due ? `'${esc(due)}'::date` : "(now() at time zone 'America/Los_Angeles')::date"}, now(),
+      m.owner_id, m.owner_id, e.thread_id, 'provider:' || e.id, case when m.kind = 'accounting' then 'accounting' else 'general' end
+    from emails e join mailboxes m on m.id = e.mailbox_id
+    where e.id = '${esc(id).replace(/[^0-9a-f-]/g, '')}' and not exists (select 1 from public.tasks t where t.auto_key = 'provider:' || e.id)
+    returning id, title, due_date, area`)
+  console.log(rows.length ? rows[0] : 'No task made: email not found or a task for it already exists.')
+  process.exit(0)
+}
 
 const DOMAINS = ['anthropic.com', 'vercel.com', 'github.com', 'supabase.com', 'supabase.io']
 const BOXES = ['dana@shaverlakesports.com', 'billing@shaverlakesports.com']

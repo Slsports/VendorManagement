@@ -2755,3 +2755,6 @@ session runs `scripts/provider-mail.mjs` (read-only) over dana@ and billing@ for
 that matters (quota, spend, failures, security, billing problems, service notices) and tells Dana what it says and whether
 something needs doing. Sign-in links, login codes, receipts, newsletters and marketing are skipped silently. Nothing is
 copied into VMS tables and no mail is sent.
+Dana (Oct 19, "go"): when a provider email needs something done, the watch makes a task for Dana (her dashboard, Tasks,
+reminded at once, **Go to it** opens the email) with the to-do in Claude's own words and a due date; one task per email
+(`scripts/provider-mail.mjs --task`). The email text itself is never copied into the task.
