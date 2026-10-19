@@ -2598,3 +2598,10 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   from WFS; he stays on Triple T (from his own emails). Still on Mykos-Lamo from the portal: not confirmed. Proposed,
   waiting for Dana's go: portal-only contacts never show as Main rep and are marked "not confirmed"; a list of the
   portal's reps to confirm or remove; a re-import must not add back a contact Dana removed.
+- Oct 19 (Dana): keep a running list of outdated info on the WWD vendor portal to take to WWD at the January show:
+  Claude Doc "Outdated info in the WWD vendor portal" (https://claude.ai/code/artifact/46d5281c-f197-4287-833a-7ca5d6685df0).
+  Started with 8 confirmed (WFS/Jeff Lipke, Mack's Lure/Greg Trouth retired, PNW/May Zhou left, Kershaw/Luke Johns,
+  Badlands, Midland and Rock Ridge/Brad Grieder, Maschmedt lines/Nick Peterson) and 14 likely (portal Sales Reps with no
+  orders@ email in 2 years while someone else is our rep). Add to it as more are found; orders@ mail only.
+- Oct 19 (Dana): "The current email threads need to override the WWD vendor info. If Jeff never emailed us in the past
+  year, we probably don't work with him at WFS." Process change proposed, waiting for Dana's go (see chat).
