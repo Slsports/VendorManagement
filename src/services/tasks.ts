@@ -141,7 +141,13 @@ export function onTasksChanged(fn: () => void): () => void {
 // ---- pay-by tasks (Dana, Oct 14): the bill, "I paid it", and the pay pages ----
 export interface PayBill { vendor: string | null; number: string | null; po: string | null; amount: number | null; discount: number | null; terms: string | null; due: string | null; order_id: string | null; paid: boolean; via: 'edenred' | 'billcom' }
 
-export async function getPayBill(bill: 'wwd' | 'order', id: string): Promise<PayBill | null> {
+export async function getPayBill(bill: 'wwd' | 'order' | 'billcom', id: string): Promise<PayBill | null> {
+  if (bill === 'billcom') {
+    const { data, error } = await supabase.from('billcom_bills').select('vendor_name, invoice_number, amount, due_amount, due_date, payment_status').eq('bill_id', id).maybeSingle()
+    if (error) throw error
+    if (!data) return null
+    return { vendor: data.vendor_name, number: data.invoice_number, po: null, amount: data.due_amount ?? data.amount, discount: null, terms: null, due: data.due_date, order_id: null, paid: data.payment_status === 'PAID', via: 'billcom' }
+  }
   if (bill === 'wwd') {
     const { data, error } = await supabase.from('wwd_invoices').select('wwd_vendor_name, vendor_invoice_number, po_number, amount, discount, terms, due_date, order_id, paid_date, sheet_paid_date, vendor:vendors!wwd_invoices_vendor_id_fkey(name)').eq('id', id).maybeSingle()
     if (error) throw error

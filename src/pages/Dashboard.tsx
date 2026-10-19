@@ -11,6 +11,7 @@ import { OrderCountCard } from '@/components/dashboard/OrderCountCard'
 import { TasksCard } from '@/components/tasks/TasksCard'
 import { OrderingCard } from '@/components/ordering/OrderingCard'
 import { TaskNotices } from '@/components/tasks/TaskNotices'
+import { BillcomCard } from '@/components/dashboard/BillcomCard'
 
 // The order number boxes (ids kept from the first dashboard so saved layouts still match).
 // Open and Overdue now live on the Ordering card (Dana, Oct 12); Payments due and Future-dated stay boxes.
@@ -44,6 +45,8 @@ export default function DashboardPage() {
         { id: 'art', label: 'Artwork approvals', node: <ArtApprovalsPanel /> },
         { id: 'recent_activity', label: 'Recent activity', node: <PlaceholderPanel p={PANELS[0]} /> },
         { id: 'freight', label: 'Freight', node: <FreightForYouPanel /> },
+        // Bill.com (Dana, Oct 19): bills due within 7 days and invoices sent but not entered, for people who see Accounting
+        ...(profile?.sees_accounting ? [{ id: 'billcom', label: 'Bill.com', node: <BillcomCard /> }] : []),
       ]} />
     </div>
   )

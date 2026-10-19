@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { AlertTriangle, BadgeCheck, Ban, Fish, FolderUp, Plus, Search } from 'lucide-react'
+import { AlertTriangle, BadgeCheck, Ban, Fish, FolderUp, Plus, Receipt, Search } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useViewAs } from '@/hooks/useViewAs'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
@@ -28,6 +28,7 @@ export default function VendorListPage() {
   const review = params.get('review') === '1'
   const dno = params.get('dno') === '1'
   const fishing = params.get('fishing') === '1'
+  const billcom = params.get('billcom') === '1'
   /** '' everyone, 'me', 'none', or a person's id */
   const viewAs = useViewAs()
   // An admin looking at one person sees that person's vendors (Dana, Oct 8); a choice made here wins.
@@ -55,13 +56,14 @@ export default function VendorListPage() {
     if (review) list = list.filter((v) => v.needs_review)
     if (dno) list = list.filter((v) => v.do_not_order)
     if (fishing) list = list.filter((v) => v.is_fishing)
+    if (billcom) list = list.filter((v) => v.billcom_send)
     if (who === 'none') list = list.filter((v) => !v.assigned_buyer_id)
     else if (who) list = list.filter((v) => v.assigned_buyer_id === (who === 'me' ? profile?.id : who))
     if (confirm) list = list.filter((v) => (statesQ.data?.get(v.id) ?? 'not_asked') === confirm)
     if (ls === 'unlinked') list = list.filter((v) => !v.ls_status)
     else if (ls) list = list.filter((v) => v.ls_status === ls)
     return list
-  }, [data, status, search, route, review, dno, fishing, who, profile?.id, confirm, statesQ.data, ls])
+  }, [data, status, search, route, review, dno, fishing, billcom, who, profile?.id, confirm, statesQ.data, ls])
 
   const { sorted, sort, toggle } = useTableSort(rows, {
     name: (v) => v.name,
@@ -70,7 +72,7 @@ export default function VendorListPage() {
     assigned: (v) => nameOf(v.assigned_buyer_id),
     phone: (v) => v.phone ?? v.email,
     ls: (v) => lsSortValue(v),
-    flags: (v) => [STANDING_BADGE[v.standing]?.label, v.is_fishing ? 'Fishing' : '', v.needs_review ? 'Review' : ''].filter(Boolean).join(' ') || null,
+    flags: (v) => [STANDING_BADGE[v.standing]?.label, v.is_fishing ? 'Fishing' : '', v.billcom_send ? 'Bill.com' : '', v.needs_review ? 'Review' : ''].filter(Boolean).join(' ') || null,
   }, { descFirst: ['ls'] })
 
   function setParam(key: string, value: string) {
@@ -86,6 +88,7 @@ export default function VendorListPage() {
   const flagged = activeVendors.filter((v) => v.needs_review).length
   const doNotOrder = activeVendors.filter((v) => v.do_not_order).length
   const fishingCount = activeVendors.filter((v) => v.is_fishing).length
+  const billcomCount = activeVendors.filter((v) => v.billcom_send).length
   const lsCount = (s: LsStatus | 'unlinked') => activeVendors.filter((v) => (s === 'unlinked' ? !v.ls_status : v.ls_status === s)).length
 
   return (
@@ -171,6 +174,9 @@ export default function VendorListPage() {
           </Button>
           <Button type="button" variant={fishing ? 'primary' : 'secondary'} onClick={() => setParam('fishing', fishing ? '' : '1')} leftIcon={<Fish className="size-4" aria-hidden="true" />}>
             Fishing{fishingCount ? ` (${fishingCount})` : ''}
+          </Button>
+          <Button type="button" variant={billcom ? 'primary' : 'secondary'} onClick={() => setParam('billcom', billcom ? '' : '1')} leftIcon={<Receipt className="size-4" aria-hidden="true" />}>
+            Bill.com{billcomCount ? ` (${billcomCount})` : ''}
           </Button>
         </div>
       </form>

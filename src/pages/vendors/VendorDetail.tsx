@@ -155,6 +155,7 @@ export default function VendorDetailPage() {
             {v.ls_status ? <Badge tone={LS_STATUS_TONE[v.ls_status]}>{LS_STATUS_LABELS[v.ls_status]}</Badge> : null}
             {v.wwd_zero_upcharge ? <Badge tone="success">WWD 0% upcharge</Badge> : null}
             {v.is_fishing ? <Badge tone="info">Fishing</Badge> : null}
+            {v.billcom_send ? <Badge tone="success">Invoices to Bill.com</Badge> : null}
             {v.web_orders ? <Badge tone="info">Web orders, no confirmation</Badge> : null}
             {v.ask_before_pictures ? <Badge tone="neutral">Pictures saved by hand</Badge> : null}
             {v.is_delivery_vendor ? <Badge tone="neutral">Delivery vendor</Badge> : null}

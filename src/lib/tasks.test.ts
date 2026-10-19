@@ -54,6 +54,7 @@ describe('Go to it', () => {
     expect(taskTarget({ ...base, auto_key: 'create_po:c1' })).toEqual({ kind: 'page', to: '/orders/paperwork/c1', label: 'Pick the order' })
     expect(taskTarget({ ...base, auto_key: 'item_change:r1', vendor_id: 'v1' })).toEqual({ kind: 'page', to: '/review?tab=items&item=r1', label: 'Open the item card' })
     expect(taskTarget({ ...base, auto_key: 'proof:l1', vendor_id: 'v1' })).toEqual({ kind: 'page', to: '/vendors/v1?folder=proofs', label: 'Open the proof' })
+    expect(taskTarget({ ...base, auto_key: 'billcom:00n123' })).toEqual({ kind: 'pay', label: 'Pay it', bill: 'billcom', id: '00n123' })
     expect(taskTarget({ ...base, auto_key: 'credit:l2', vendor_id: 'v1', order_id: 'o1' })).toEqual({ kind: 'page', to: '/vendors/v1?folder=credits', label: 'Open the credit' })
     expect(taskTarget({ ...base, auto_key: 'promise:e1', thread_id: 't1' })?.kind === 'page' && taskTarget({ ...base, auto_key: 'promise:e1', thread_id: 't1' })).toMatchObject({ to: '/mail/t1?do=reply' })
     expect(taskTarget({ ...base, auto_key: 'wwd:w1:30' })).toEqual({ kind: 'pay', label: 'Pay it', bill: 'wwd', id: 'w1' })

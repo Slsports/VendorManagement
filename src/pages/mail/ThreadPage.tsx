@@ -359,6 +359,7 @@ function Message({ email: e, startOpen, vendor, carrierId, accounting = false, o
           ) : null}
           {files.length || pictures.length ? (
             <div className="mb-3 flex flex-wrap items-center gap-2">
+              {e.billcom_sent_at ? <span className="inline-flex items-center rounded-lg bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700" title="Forwarded to Bill.com's inbox with its attachments">Sent to Bill.com {new Date(e.billcom_sent_at).toLocaleDateString()}</span> : null}
               {files.map(chip)}
               {pictures.length ? (
                 showPictures ? pictures.map(chip) : (

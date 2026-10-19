@@ -81,6 +81,7 @@ const ReviewAssignmentSettings = lazy(() => import('@/pages/settings/ReviewAssig
 const MailSettings = lazy(() => import('@/pages/settings/MailSettings'))
 const LightspeedSettings = lazy(() => import('@/pages/settings/LightspeedSettings'))
 const LightspeedCallback = lazy(() => import('@/pages/settings/LightspeedCallback'))
+const BillcomSettings = lazy(() => import('@/pages/settings/BillcomSettings'))
 const MailPage = lazy(() => import('@/pages/mail/MailPage'))
 const ThreadPage = lazy(() => import('@/pages/mail/ThreadPage'))
 const MailWithPage = lazy(() => import('@/pages/mail/MailWithPage'))
@@ -211,6 +212,7 @@ export default function App() {
                   <Route path="review-assignments" element={<ReviewAssignmentSettings />} />
                   <Route path="mail" element={<MailSettings />} />
                   <Route path="lightspeed" element={<LightspeedSettings />} />
+                  <Route path="billcom" element={<BillcomSettings />} />
                   <Route path=":tab" element={<PlaceholderSettings />} />
                 </Route>
                 <Route path={ROUTES.lightspeedCallback} element={<LightspeedCallback />} />

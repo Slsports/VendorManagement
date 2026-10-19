@@ -7,7 +7,7 @@ who: Everyone
 Every Documents folder refreshes itself the moment a file lands in it, whoever filed it: Claude from the mailbox, someone uploading on another screen, or a report run. No reload needed. And for some folders, landing starts the next step by itself.
 
 ## What follows a landing
-- **Confirmations** and **Invoices**: Claude starts comparing it with the order the second it lands. The check shows on the **Review** card (Confirmations / Invoices) and in the order's **Paperwork** box.
+- **Confirmations** and **Invoices**: Claude starts comparing it with the order the second it lands. The check shows on the **Review** card (Confirmations / Invoices) and in the order's **Paperwork** box. An invoice from an email for a vendor with **Send invoices to Bill.com** switched on is also forwarded to Bill.com's inbox, once, with its attachments.
 - **Proofs**: a task **Approve the proof from [vendor]** goes to whoever placed the order (else the vendor's buyer, else Dana), due in 3 days. Its button opens the Proofs folder. Click **Mark approved** on the proof and the task finishes itself.
 - **Credits**: a task **Credit from [vendor]** goes to Dana in Accounting › Tasks, due in a week, to check it against the invoice and apply it to the next payment.
 - **Shipping** (a packing slip): VMS ties it to the order by PO number (or the vendor's one open order) and moves that order to **Shipped**.

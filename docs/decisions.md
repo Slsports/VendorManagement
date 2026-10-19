@@ -2687,3 +2687,19 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   forwards back-check run (158 forwards re-read across the mailboxes; of their 943 emails 95 are forwards now read from
   the vendor's From line, 31 tied to a vendor; 140 forwarded senders are new "Who is this?" senders for the queue in
   the usual way, 2 cards made so far). Any new staff address goes on that list.
+- Oct 19 (Dana, "ok go on bill.com"): built (migration 0196, functions `billcom` and `billcom-forward`). Settings › Bill.com
+  takes the developer key, organization ID and a sync token (token name = username, token = password; POST
+  {base}/v3/login → sessionId; devKey + sessionId headers). `billcom` reads GET /v3/bills every 15 minutes (pg_cron),
+  fields per the "Get list of bills" page Dana sent: results, nextPage, id, vendorId, vendorName, amount, dueAmount,
+  dueDate, invoice.invoiceNumber, paymentStatus (PAID/UNPAID/PARTIALLY_PAID/SCHEDULED/IN_PROCESS), recordStatus,
+  archived; kept in `billcom_bills`; `billcom_bill_tasks` makes pay-by tasks 7 days ahead (`billcom:<bill id>`, "Pay X
+  $Y by date (Bill.com)") and closes them when paid or scheduled; "I paid it" just closes the task. No vendor list is
+  read (vendorName comes with each bill). Forwarding: `vendors.billcom_send` switch (Edit, "Send invoices to Bill.com";
+  Vendors list filter; badge); trigger on vendor_links: an invoice from an email for a switched-on vendor queues one
+  forward per email (`billcom_forwards`) and pg_net calls `billcom-forward`, which sends the email with its attachments
+  from the mailbox it came to (orders@ or billing@) to the inbox address (shaverlakesports1@bill.com), with the
+  X-VMS-Notice header so the mail sync never stores the copy; `emails.billcom_sent_at` shows "Sent to Bill.com" on the
+  thread. The Bill.com inbox has no documented list endpoint (v3 lists documents per bill only), so "waiting to be
+  entered" = forwards with no bill matching their invoice number (or vendor + amount) in 90 days (`billcom_waiting`).
+  Dashboard Bill.com card (sees_accounting): bills due in 7 days, sent-not-entered. Production API address
+  https://gateway.prod.bill.com/connect is from a third-party page, editable in Settings; Save and connect proves it.

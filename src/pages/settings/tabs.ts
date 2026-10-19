@@ -9,6 +9,7 @@ export const SETTINGS_TABS = [
   { slug: 'worldwide', label: 'Worldwide' },
   { slug: 'mail', label: 'Mail' },
   { slug: 'lightspeed', label: 'Lightspeed' },
+  { slug: 'billcom', label: 'Bill.com' },
   { slug: 'integrations', label: 'Integrations' },
   { slug: 'branding', label: 'Branding' },
 ] as const

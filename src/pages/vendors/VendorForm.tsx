@@ -56,6 +56,7 @@ interface FormState {
   vid_in_description: boolean
   item_name_vendor: string
   is_fishing: boolean
+  billcom_send: boolean
   web_orders: boolean
   ask_before_pictures: boolean
   order_set_at_show: boolean
@@ -88,7 +89,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   name: '', aliases: '', routes: [], defaultRoute: '', payMethod: '', rep_group_id: '', assigned_buyer_id: '', payment_terms_id: '', ordering_frequency: '',
-  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, freight_allowance_on_time: false, vid_in_description: false, item_name_vendor: '', is_fishing: false, web_orders: false, ask_before_pictures: false, order_set_at_show: false, usual_charges: [],
+  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, freight_allowance_on_time: false, vid_in_description: false, item_name_vendor: '', is_fishing: false, billcom_send: false, web_orders: false, ask_before_pictures: false, order_set_at_show: false, usual_charges: [],
   website: '', phone: '', email: '', fax: '', account_number: '', catalog: '', address: '', city: '', state: '', postal_code: '',
   pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', shipping_contact_email: '', minimum_order: '', freight_program: '', free_shipping_policy: '', free_shipping_threshold: '', freight_routing: '', product_types: '',
   notes: '', return_notes: '', windows: [],
@@ -119,6 +120,7 @@ function formFromVendor(v: VendorDetail): FormState {
     vid_in_description: v.vid_in_description,
     item_name_vendor: v.item_name_vendor ?? '',
     is_fishing: v.is_fishing,
+    billcom_send: v.billcom_send,
     web_orders: v.web_orders,
     ask_before_pictures: v.ask_before_pictures,
     order_set_at_show: v.order_set_at_show,
@@ -210,6 +212,7 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
       vid_in_description: form.vid_in_description,
       item_name_vendor: nz(form.item_name_vendor.toUpperCase()),
       is_fishing: form.is_fishing,
+      billcom_send: form.billcom_send,
       web_orders: form.web_orders,
       ask_before_pictures: form.ask_before_pictures,
       order_set_at_show: form.order_set_at_show,
@@ -340,6 +343,7 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.freight_allowance_on_time} onChange={(e) => set('freight_allowance_on_time', e.target.checked)} /> Credits the freight back when we pay on time (orders show a pay-by reminder)</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.vid_in_description} onChange={(e) => set('vid_in_description', e.target.checked)} /> Add Vendor ID to item names, last after one space (LAZY ONE MENS PAJAMA SET BLUE 2XL PJ5512); each order can change it</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_fishing} onChange={(e) => set('is_fishing', e.target.checked)} /> Fishing vendor (Jarrett runs these reports)</label>
+            <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.billcom_send} onChange={(e) => set('billcom_send', e.target.checked)} /> Send invoices to Bill.com (each invoice email is forwarded to Bill.com's inbox; off = nothing is sent)</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.web_orders} onChange={(e) => set('web_orders', e.target.checked)} /> Web orders, no confirmation needed (their order email confirms it; items they can't ship just aren't billed)</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.ask_before_pictures} onChange={(e) => set('ask_before_pictures', e.target.checked)} /> Ask before saving pictures (their advertising waits for Save pictures in the email; proofs, invoices and confirmations still save)</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.order_set_at_show} onChange={(e) => set('order_set_at_show', e.target.checked)} /> Order is finalized at the show (new items on their confirmation are listed to double check, not flagged; quantities and prices still are)</label>

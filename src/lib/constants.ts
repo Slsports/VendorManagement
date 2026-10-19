@@ -83,6 +83,7 @@ export const ROUTES = {
   files: '/files',
   settings: '/settings',
   lightspeedSettings: '/settings/lightspeed',
+  billcomSettings: '/settings/billcom',
   lightspeedCallback: '/integrations/lightspeed/callback',
   upload: '/upload',
   search: '/search',

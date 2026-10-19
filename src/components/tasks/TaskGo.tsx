@@ -24,7 +24,7 @@ export function TaskGo({ task, onGo }: { task: TaskRow; onGo: () => void }) {
 }
 
 /** A pay-by task: the bill, the pay page (Edenred for WWD, else Bill.com), and "I paid it". VMS never pays anything itself. */
-function PayPanel({ task, bill, id, onDone }: { task: TaskRow; bill: 'wwd' | 'order'; id: string; onDone: () => void }) {
+function PayPanel({ task, bill, id, onDone }: { task: TaskRow; bill: 'wwd' | 'order' | 'billcom'; id: string; onDone: () => void }) {
   const { organization, role, refreshProfile } = useAuth()
   const q = useSupabaseQuery(() => getPayBill(bill, id), [bill, id])
   const [busy, setBusy] = useState(false)

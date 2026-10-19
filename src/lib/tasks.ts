@@ -108,7 +108,7 @@ export function aboutText(t: AboutParts): string {
 
 // ---- Go to it (Dana, Oct 14: "take me there") ----------------------------------------------------------------------
 /** Where a task's work is: a page that lands on the step itself, or the pay panel (pay-by tasks pay outside VMS). */
-export type TaskTarget = { kind: 'page'; to: string; label: string } | { kind: 'pay'; label: string; bill: 'wwd' | 'order'; id: string }
+export type TaskTarget = { kind: 'page'; to: string; label: string } | { kind: 'pay'; label: string; bill: 'wwd' | 'order' | 'billcom'; id: string }
 
 export function taskTarget(t: { auto_key: string | null; order_id: string | null; thread_id: string | null; vendor_id: string | null; carrier_id: string | null; rep_group_id: string | null; policy_id?: string | null; recipient_id?: string | null; procedure_id?: string | null; contract_id?: string | null }): TaskTarget | null {
   const [kind, id] = (t.auto_key ?? '').split(':')
@@ -130,7 +130,7 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   if (kind === 'proof' && t.vendor_id) return { kind: 'page', to: `/vendors/${t.vendor_id}?folder=proofs`, label: 'Open the proof' }
   if (kind === 'credit' && t.vendor_id) return { kind: 'page', to: `/vendors/${t.vendor_id}?folder=credits`, label: 'Open the credit' }
   if (kind === 'supply') return { kind: 'page', to: t.thread_id ? `/mail/${t.thread_id}` : '/supplies', label: t.thread_id ? 'Open the request' : 'Open Supplies' }
-  if ((kind === 'wwd' || kind === 'order') && id) return { kind: 'pay', label: 'Pay it', bill: kind, id }
+  if ((kind === 'wwd' || kind === 'order' || kind === 'billcom') && id) return { kind: 'pay', label: 'Pay it', bill: kind, id }
   // tasks people make: whatever they are tagged to
   if (t.order_id) return { kind: 'page', to: `/orders/${t.order_id}`, label: 'Open the order' }
   if (t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open the email' }
