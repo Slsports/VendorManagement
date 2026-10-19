@@ -2605,3 +2605,6 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   orders@ email in 2 years while someone else is our rep). Add to it as more are found; orders@ mail only.
 - Oct 19 (Dana): "The current email threads need to override the WWD vendor info. If Jeff never emailed us in the past
   year, we probably don't work with him at WFS." Process change proposed, waiting for Dana's go (see chat).
+- Oct 19 (Dana, on the proposed contact rules, #3): the Main rep comes from email over the last **24 months** (not 12),
+  unless Dana picks someone. Pelican Products added to the outdated-portal list (John Waters, from Jarrett's mail).
+  The five contact rules are still waiting for Dana's go.
