@@ -2748,3 +2748,10 @@ Found on the way, confirmed in `ai_usage` and git: the unlabeled Sonnet calls (1
 item-naming call for a 42-item PO hitting its 4000-token answer cap and retrying about every 30 minutes for three days; the
 Oct 19 LS PO commit raised the cap to 6000 and the call succeeded. No other wasted spend found: the 4,305 billing@ filing
 calls were the one-time pass over the mailbox history, now finished.
+
+## Oct 19 — Provider mail watch (Dana: "go on provider email watch")
+Dana asked to be told when Anthropic, Vercel, GitHub (and Supabase) write to her. An hourly scheduled task in the Fable
+session runs `scripts/provider-mail.mjs` (read-only) over dana@ and billing@ for the last 70 minutes; Claude reads anything
+that matters (quota, spend, failures, security, billing problems, service notices) and tells Dana what it says and whether
+something needs doing. Sign-in links, login codes, receipts, newsletters and marketing are skipped silently. Nothing is
+copied into VMS tables and no mail is sent.
