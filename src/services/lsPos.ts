@@ -22,6 +22,16 @@ export interface LsPoLine {
   /** set when it went onto the PO in Lightspeed (Send to Lightspeed) */
   ls_item_id?: string | null
   ls_line_id?: string | null
+  /** in LS with a name that breaks the naming SOP: the SOP name, renamed in LS on Send when ticked (rename on reorder) */
+  rename?: string | null
+  rename_ok?: boolean
+  renamed?: boolean
+  /** * or ** at the start of its LS name */
+  marker?: '' | '*' | '**'
+  /** what to look at before sending (SOP problems, [brackets], the Vendor ID to check on the invoice) */
+  flags?: string[]
+  /** what happened when VMS entered a new item in LS */
+  created_note?: string | null
 }
 
 export interface LsPoRow extends Omit<LsPo, 'lines'> {

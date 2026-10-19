@@ -2573,3 +2573,16 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
 - Still to build (part 2): names on the LS PO (new items named by the SOP from memory, invoice, confirmation, tag photo,
   catalog, web search last with the check-in person approving), new items created in LS, rename on reorder, marker
   warnings on orders, price-change shelf-tag tasks (needs prices in `ls_items`: Fable's ls-sync).
+- Oct 19, part 2 built (same go): naming on the LS PO. New items are named by the SOP (`ITEM_NAME_SOP` in
+  `_shared/itemNameSopText.ts`, with the vendor's Name in item names and Vendor ID setting), cleaned by the checker,
+  unknown parts in [brackets], and flagged (⚑) for whoever checks the order in: Needs manual description, Vendor ID to
+  check on the invoice / waiting on the Vendor ID, a name another LS item has. Items already in LS are matched from
+  `ls_items` (the vendor's item number, then a UPC only one item has), not only the sales report; their * / ** shows as
+  Discontinued / Do not reorder, and a name that breaks the SOP gets a ticked **Rename in LS** suggestion (rename on
+  reorder) that joins the Item names queue on Send. **Send to Lightspeed** now enters new items in LS (name, category LS
+  already has, vendor, Vendor ID, UPC, cost, retail from Check-in pricing), read back; held back while a blocking flag is
+  open. Found while building: the old send matched LS items by manufacturer SKU, which only 318 of 16,725 items have; it
+  now matches from VMS's copy first.
+- Not built yet: tag photos for Claude to read, web search (last resort, approved by the check-in person), marker
+  warnings while working on / sending an order, price-change shelf-tag tasks (needs LS prices in `ls_items`, Fable's
+  ls-sync), the dashboard flags list.

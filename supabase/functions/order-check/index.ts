@@ -9,6 +9,8 @@
 // Nothing is ever sent from here.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, caller, errorResponse, json, serviceClient } from '../_shared/caller.ts'
+import { checkName, fixName, fixVendorId, lsContext, splitMarker } from '../_shared/itemNameSop.ts'
+import { ITEM_NAME_SOP } from '../_shared/itemNameSopText.ts'
 import { aiEnabled, comparePaperwork, compareWithSalesReport, isReadableFile, nameNewItems, pickPaperOrder, readPaperwork, type CompareReading, type PaperFile, type PaperReading } from '../_shared/ai.ts'
 import { readSalesSheet, sheetForClaude } from '../_shared/salesSheet.ts'
 import { sheetFileText } from '../_shared/sheetFile.ts'
@@ -345,7 +347,18 @@ async function sentOrderFiles(db: SupabaseClient, org: string, orderId: string, 
 
 // ---- LS PO drafts ----------------------------------------------------------------------------------------------
 interface Draft { id: string; organization_id: string; order_id: string; vendor_id: string | null }
-interface PoLine { vid: string | null; upc: string | null; desc: string; qty: number; cost: number | null; system_id: string | null; name: string; category: string; is_new: boolean; note: string | null }
+interface PoLine {
+  vid: string | null; upc: string | null; desc: string; qty: number; cost: number | null; system_id: string | null; name: string; category: string; is_new: boolean; note: string | null
+  /** the LS item when it is already in LS */
+  ls_item_id?: string | null
+  /** an item in LS whose name breaks the naming SOP: the SOP name, sent with the PO when ticked (rename on reorder) */
+  rename?: string | null
+  rename_ok?: boolean
+  /** * or ** at the start of its LS name */
+  marker?: '' | '*' | '**'
+  /** what the person checking it in should look at (SOP problems, brackets, the Vendor ID to check on the invoice) */
+  flags?: string[]
+}
 interface ReportItem { sid: string; upc: string; vid: string; desc: string; cat: string; cost: number | null; archived: boolean }
 
 async function nextDraft(db: SupabaseClient, org: string | null): Promise<Draft | null> {
@@ -379,38 +392,85 @@ async function draftLsPo(db: SupabaseClient, p: Draft) {
       await db.from('ls_pos').update({ status: 'to_approve', lines: [], draft_note: 'No item list yet: the confirmation could not be read and the order has no items. Add the items, or click Redraft once the confirmation is in.', working_at: null }).eq('id', p.id)
       return { id: p.id, lines: 0 }
     }
-    // what the vendor already has in LS, from its latest sales report
+    const { data: vendor } = p.vendor_id ? await db.from('vendors').select('name, lightspeed_vendor_id, vid_in_description, item_name_vendor').eq('id', p.vendor_id).maybeSingle() : { data: null }
+    // what the vendor has in LS: VMS's copy of LS (ls_items; the Vendor ID is the vendor's item number there), else its
+    // latest sales report
+    type LsHit = { item_id: string; system_sku: string; description: string; vendor_item_id: string; upc: string; category_path: string; archived: boolean }
+    const lsItems: LsHit[] = []
+    if (vendor?.lightspeed_vendor_id) {
+      for (let from = 0; from < 20000; from += 1000) {
+        const { data } = await db.from('ls_items').select('item_id, system_sku, description, vendor_item_id, upc, category_path, archived').eq('organization_id', p.organization_id).eq('default_vendor_id', vendor.lightspeed_vendor_id).order('archived').range(from, from + 999)
+        lsItems.push(...((data ?? []) as LsHit[]))
+        if (!data || data.length < 1000) break
+      }
+    }
+    const upcs = raw.map((l) => l.upc).filter((u): u is string => !!u)
+    if (upcs.length) {
+      const { data } = await db.from('ls_items').select('item_id, system_sku, description, vendor_item_id, upc, category_path, archived').eq('organization_id', p.organization_id).in('upc', upcs)
+      for (const x of (data ?? []) as LsHit[]) if (!lsItems.some((y) => y.item_id === x.item_id)) lsItems.push(x)
+    }
     const { data: report } = p.vendor_id ? await db.from('sales_reports').select('items').eq('vendor_id', p.vendor_id).order('created_at', { ascending: false }).limit(1).maybeSingle() : { data: null }
     const items = ((report?.items ?? []) as ReportItem[])
-    const byVid = new Map<string, ReportItem>()
-    const byUpc = new Map<string, ReportItem>()
-    for (const x of items) {
-      if (x.vid) { byVid.set(itemKey(x.vid), x); byVid.set(itemKeyNoZeros(x.vid), x) }
-      if (x.upc) byUpc.set(itemKey(x.upc), x)
+    for (const h of lsItems) items.push({ sid: h.system_sku, upc: h.upc, vid: h.vendor_item_id, desc: h.description, cat: h.category_path, cost: null, archived: h.archived, item_id: h.item_id } as ReportItem & { item_id: string })
+    const byVid = new Map<string, ReportItem & { item_id?: string }>()
+    const byUpc = new Map<string, ReportItem & { item_id?: string }>()
+    // LS's own copy wins over the report: it is added last, active items after archived ones
+    for (const x of items as (ReportItem & { item_id?: string })[]) {
+      if (x.vid && (!x.archived || !byVid.has(itemKey(x.vid)))) { byVid.set(itemKey(x.vid), x); byVid.set(itemKeyNoZeros(x.vid), x) }
+      if (x.upc && (!x.archived || !byUpc.has(itemKey(x.upc)))) byUpc.set(itemKey(x.upc), x)
     }
+    const sopCtx = (vid: string | null, category: string) => lsContext({ category_path: category, vendor_item_id: vid }, vendor)
     const lines: PoLine[] = raw.map((l) => {
       const hit = (l.vid ? byVid.get(itemKey(l.vid)) ?? byVid.get(itemKeyNoZeros(l.vid)) : undefined) ?? (l.upc ? byUpc.get(itemKey(l.upc)) : undefined)
-      return hit
-        ? { ...l, system_id: hit.sid, name: hit.desc, category: hit.cat, is_new: false, note: hit.archived ? 'Archived in LS: unarchive it' : null }
-        : { ...l, system_id: null, name: l.desc, category: '', is_new: true, note: null }
+      if (!hit) return { ...l, system_id: null, name: l.desc, category: '', is_new: true, note: null }
+      // rename on reorder (Trevor's Proposal 3): the SOP name for an item whose LS name breaks it; the marker stays
+      const ctx = sopCtx(l.vid ?? hit.vid, hit.cat)
+      const fixed = fixName(hit.desc, ctx)
+      const sop = fixVendorId(fixed, ctx) ?? fixed
+      const marker = splitMarker(hit.desc).marker
+      const flags = checkName(sop, ctx).filter((x) => !x.fixable).map((x) => x.text)
+      if (marker === '*') flags.unshift('* in LS: discontinued or no longer orderable. Take it off the order or keep it.')
+      if (marker === '**') flags.unshift('** in LS: we chose not to reorder it. Take it off the order or keep it.')
+      return {
+        ...l, system_id: hit.sid, ls_item_id: hit.item_id ?? null, name: hit.desc, category: hit.cat, is_new: false,
+        note: hit.archived ? 'Archived in LS: unarchive it' : null, marker, flags,
+        ...(sop !== hit.desc ? { rename: sop, rename_ok: true } : {}),
+      }
     })
     const fresh = lines.map((l, i) => ({ l, i })).filter((x) => x.l.is_new)
     if (fresh.length) {
-      const { data: vendor } = p.vendor_id ? await db.from('vendors').select('name').eq('id', p.vendor_id).maybeSingle() : { data: null }
       const named = await nameNewItems(db, p.organization_id, {
-        standard: LS_STANDARD, vendor: vendor?.name ?? 'Unknown vendor',
+        standard: LS_STANDARD, sop: ITEM_NAME_SOP, vendor: vendor?.name ?? 'Unknown vendor', vendor_in_names: vendor?.item_name_vendor ?? null,
+        vendor_id_in_names: !!vendor?.vid_in_description,
         existing: items.filter((x) => !x.archived).map((x) => ({ name: x.desc, category: x.cat })),
         items: fresh.map((x) => ({ i: x.i, vendor_id: x.l.vid, description: x.l.desc, cost: x.l.cost })),
       })
       for (const n of named.items) {
         const l = lines[n.i]
-        if (l?.is_new) { l.name = n.name; l.category = n.category; l.note = n.note }
+        if (!l?.is_new) continue
+        const ctx = sopCtx(l.vid, n.category)
+        const fixed = fixName(n.name, ctx)
+        l.name = fixVendorId(fixed, ctx) ?? fixed
+        l.category = n.category
+        l.note = n.note
+        const flags = checkName(l.name, ctx).filter((x) => !x.fixable).map((x) => x.text)
+        if (n.needs_description) flags.unshift('Needs manual description')
+        if (/\[[^\]]*\]/.test(l.name)) flags.unshift('Part of the name is in [brackets]: check it on the tag')
+        if (ctx.fishing || ctx.vidVendor) flags.push(l.vid ? 'Vendor ID from the paperwork: check it against the invoice (the invoice wins)' : 'Waiting on Vendor ID (from the invoice)')
+        l.flags = flags
+      }
+      // no two LS items may have the same name
+      const names = fresh.map((x) => x.l.name).filter(Boolean)
+      if (names.length) {
+        const { data: taken } = await db.from('ls_items').select('description').eq('organization_id', p.organization_id).in('description', names)
+        const used = new Set((taken ?? []).map((t) => t.description))
+        for (const x of fresh) if (used.has(x.l.name)) (x.l.flags ??= []).unshift('Another LS item already has this name: add what tells them apart')
       }
     }
     const newCount = lines.filter((l) => l.is_new).length
     await db.from('ls_pos').update({
       status: 'to_approve', lines, working_at: null, draft_error: null,
-      draft_note: `From ${source}: ${lines.length} item${lines.length === 1 ? '' : 's'}, ${newCount} new to LS${items.length ? '' : ' (no sales report for this vendor, so every item is treated as new)'}.`,
+      draft_note: `From ${source}: ${lines.length} item${lines.length === 1 ? '' : 's'}, ${newCount} new to LS${lines.some((l) => l.rename) ? `, ${lines.filter((l) => l.rename).length} LS name${lines.filter((l) => l.rename).length === 1 ? '' : 's'} to bring up to the naming SOP` : ''}${items.length ? '' : ' (this vendor has no items in LS yet, so every item is treated as new)'}.`,
     }).eq('id', p.id)
     return { id: p.id, lines: lines.length, new: newCount }
   } catch (e) {

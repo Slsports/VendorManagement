@@ -35,7 +35,7 @@ export const syncLsVendors = () => call<{ vendors: number; matched: number }>({ 
 /** The empty PO in LS for the order's vendor and store; our PO goes on the order. */
 export const createLsPo = (orderId: string, shopId: string | null) => call<{ po_number: string; ls_order_id: string; shop_id: string }>({ action: 'create_po', order_id: orderId, shop_id: shopId })
 /** The approved draft's items onto the order's PO in LS; returns what could not be found in LS yet. */
-export const sendLsPoItems = (lsPoId: string) => call<{ po_number: string; added: number; missing: string[]; done: boolean }>({ action: 'send_items', ls_po_id: lsPoId })
+export const sendLsPoItems = (lsPoId: string) => call<{ po_number: string; added: number; created?: number; renamed?: number; missing: string[]; done: boolean }>({ action: 'send_items', ls_po_id: lsPoId })
 
 export async function poNumberPreview(orderId: string): Promise<string | null> {
   const { data, error } = await supabase.rpc('po_number_next', { p_order: orderId })

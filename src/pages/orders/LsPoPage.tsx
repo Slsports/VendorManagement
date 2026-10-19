@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { getLsPo, LS_PO_STATUS, lsPoAction, lsPoCsv, type LsPoLine, type LsPoRow } from '@/services/lsPos'
 import { sendLsPoItems } from '@/services/lightspeed'
+import { checkName, lsContext } from '../../../supabase/functions/_shared/itemNameSop.ts'
 import { ROUTES } from '@/lib/constants'
 import { money } from '@/lib/freight'
 import { saveBlob } from '@/lib/viewer'
@@ -16,6 +17,16 @@ import { StickySaveBar } from '@/components/shared/StickySaveBar'
 import { Alert, Badge, Button, Input, Spinner } from '@/components/ui'
 
 const first = (n: string | null | undefined) => n?.split(' ')[0] ?? ''
+
+/** Trevor's naming SOP on a new item's name, as it is typed (the vendor's Vendor ID setting is not known here). */
+function SopCheck({ name, vid, category }: { name: string; vid: string | null; category: string }) {
+  const problems = name.trim() ? checkName(name.trim(), lsContext({ category_path: category.replace(/\s*>\s*/g, '/'), vendor_item_id: vid })).filter((p) => p.code !== 'vendor_id' && p.code !== 'vendor_id_extra') : []
+  return (
+    <span className={cn('mt-0.5 block text-xs', problems.length ? 'text-amber-800' : 'text-emerald-700')}>
+      {name.trim().length}/52 · {problems.length ? problems.map((p) => p.text).join(' · ') : 'Follows the naming SOP'}
+    </span>
+  )
+}
 
 /**
  * An LS PO (Dana, Oct 12): Claude's draft from the vendor's confirmation; the person who placed the order approves the
@@ -67,8 +78,9 @@ function LsPoView({ po, reload }: { po: LsPoRow; reload: () => void }) {
     try {
       if (dirty) await lsPoAction(po.id, 'save', lines)
       const r = await sendLsPoItems(po.id)
-      if (r.done) toast.success(`All items are on PO ${r.po_number} in Lightspeed`, { id: t })
-      else toast(`${r.added} added to ${r.po_number}. ${r.missing.length} not in Lightspeed yet: add them in LS, then Send again.`, { id: t, duration: 10000 })
+      const extra = `${r.created ? ` ${r.created} new item${r.created === 1 ? '' : 's'} entered in LS.` : ''}${r.renamed ? ` ${r.renamed} name${r.renamed === 1 ? '' : 's'} going to the naming SOP (Item names).` : ''}`
+      if (r.done) toast.success(`All items are on PO ${r.po_number} in Lightspeed.${extra}`, { id: t, duration: 8000 })
+      else toast(`${r.added} added to ${r.po_number}.${extra} ${r.missing.length} not in Lightspeed yet: see the list, fix them or add them in LS, then Send again.`, { id: t, duration: 12000 })
       reload()
     } catch (e) {
       setError(errorMessage(e))
@@ -131,9 +143,19 @@ function LsPoView({ po, reload }: { po: LsPoRow; reload: () => void }) {
                     <span className={cn('mt-1 block text-[11px] font-semibold', l.ls_line_id ? 'text-emerald-700' : l.is_new ? 'text-amber-700' : 'text-emerald-700')}>{l.ls_line_id ? 'On the PO in LS' : l.is_new ? 'New to LS' : `In LS${l.system_id ? ` · ${l.system_id}` : ''}`}</span>
                   </td>
                   <td className="min-w-64 px-3 py-2">
-                    {editable ? <Input aria-label="LS name" value={l.name} onChange={(e) => set(i, { name: e.target.value })} className="h-9" /> : l.name}
+                    {editable && l.is_new ? <Input aria-label="LS name" value={l.name} onChange={(e) => set(i, { name: e.target.value.toUpperCase() })} className="h-9 font-mono text-xs" /> : <span className="font-mono text-xs">{l.name}</span>}
+                    {l.marker ? <Badge tone="danger" className="ml-1">{l.marker === '**' ? '** Do not reorder' : '* Discontinued'}</Badge> : null}
+                    {l.is_new ? <SopCheck name={l.name} vid={l.vid} category={l.category} /> : null}
+                    {!l.is_new && l.rename ? (
+                      <label className="mt-1 flex items-start gap-1.5 text-xs text-stone-700">
+                        <input type="checkbox" className="mt-0.5 size-3.5 accent-brand" checked={!!l.rename_ok} disabled={!editable || l.renamed} onChange={(e) => set(i, { rename_ok: e.target.checked })} />
+                        <span>{l.renamed ? 'Renamed in LS to' : 'Rename in LS to the naming SOP:'} {editable && !l.renamed ? <Input aria-label="SOP name" value={l.rename} onChange={(e) => set(i, { rename: e.target.value.toUpperCase() })} className="mt-1 h-8 font-mono text-xs" /> : <span className="font-mono">{l.rename}</span>}</span>
+                      </label>
+                    ) : null}
                     {l.desc && l.desc !== l.name ? <span className="mt-1 block text-xs text-stone-500">Vendor: {l.desc}</span> : null}
                     {l.note ? <span className="mt-0.5 block text-xs text-amber-700">{l.note}</span> : null}
+                    {(l.flags ?? []).map((f, k) => <span key={k} className="mt-0.5 block text-xs text-amber-800">⚑ {f}</span>)}
+                    {l.created_note ? <span className="mt-0.5 block text-xs text-emerald-700">{l.created_note}</span> : null}
                   </td>
                   <td className="min-w-48 px-3 py-2">{editable ? <Input aria-label="Category" value={l.category} onChange={(e) => set(i, { category: e.target.value })} className="h-9" /> : l.category}</td>
                   <td className="px-3 py-2 text-right">{editable ? <Input aria-label="Quantity" type="number" min={0} value={String(l.qty)} onChange={(e) => set(i, { qty: Math.max(0, Math.round(Number(e.target.value) || 0)) })} className="h-9 w-20 text-right" /> : l.qty}</td>

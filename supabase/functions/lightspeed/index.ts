@@ -17,7 +17,7 @@
 // or starts one when the last is a week old.
 import { CORS, HttpError, caller, errorResponse, json, serviceClient } from '../_shared/caller.ts'
 import { LS_API, LS_AUTHORIZE, LS_REDIRECT, LS_SCOPE_FULL, LS_SCOPE_READ, asList, lsAccessToken, lsGet, lsGetAll, lsPost, lsPut, lsTokenRequest, saveTokens } from '../_shared/lightspeed.ts'
-import { splitMarker } from '../_shared/itemNameSop.ts'
+import { changeKind, splitMarker } from '../_shared/itemNameSop.ts'
 import type { Caller } from '../_shared/caller.ts'
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 
@@ -367,12 +367,13 @@ async function createPo(db: SupabaseClient, me: Caller, orderId: string, shopId:
   return { po_number: po, ls_order_id: String(lsId), shop_id: shop }
 }
 
-interface DraftLine { vid: string | null; upc: string | null; desc: string; qty: number; cost: number | null; system_id: string | null; name: string; is_new: boolean; ls_item_id?: string | null; ls_line_id?: string | null }
+interface DraftLine { vid: string | null; upc: string | null; desc: string; qty: number; cost: number | null; system_id: string | null; name: string; category?: string; is_new: boolean; ls_item_id?: string | null; ls_line_id?: string | null; rename?: string | null; rename_ok?: boolean; renamed?: boolean; flags?: string[]; created_note?: string | null }
 
 /**
  * The approved draft's items onto the order's PO in LS (making the PO first when there is none). Each line is found in
- * LS by System ID, else Vendor ID (manufacturer SKU), else UPC. Lines already sent are skipped, so it can run again after
- * new items are added in LS by hand. All sent → the draft is done and the PO is on the order.
+ * VMS's copy of LS (System ID, the vendor's item number, a UPC only one item has), else in LS itself. A new item the
+ * reviewer checked is entered in LS first (createItem), unless a flag still needs a person. Ticked SOP renames go into
+ * the Item names queue. Lines already sent are skipped, so it can run again. All sent → the draft is done.
  */
 async function sendItems(db: SupabaseClient, me: Caller, lsPoId: string) {
   const org = me.organization_id
@@ -388,13 +389,22 @@ async function sendItems(db: SupabaseClient, me: Caller, lsPoId: string) {
   const { token } = await lsAccessToken(db, org)
   const acct = await accountId(db, org)
   const lines = (p.lines ?? []) as DraftLine[]
+  const { data: po } = await db.from('ls_pos').select('vendor_id, vendor:vendors!ls_pos_vendor_id_fkey(lightspeed_vendor_id, name)').eq('id', p.id).single()
+  const lsVendor = (po?.vendor as unknown as { lightspeed_vendor_id: string | null } | null)?.lightspeed_vendor_id ?? null
   const started = Date.now()
   const missing: string[] = []
   let added = 0
+  let created = 0
   for (const l of lines) {
     if (l.ls_line_id || !(l.qty > 0)) continue
-    if (Date.now() - started > 110_000) break
-    if (!l.ls_item_id) l.ls_item_id = await findItem(token, acct, l)
+    if (Date.now() - started > 100_000) break
+    if (!l.ls_item_id) l.ls_item_id = await findLocalItem(db, org, lsVendor, l) ?? await findItem(token, acct, l)
+    // a new item, named by the SOP and checked in this PO: VMS enters it in LS (Trevor's Proposal 1)
+    if (!l.ls_item_id && l.is_new) {
+      const made = await createItem(db, org, token, acct, p.order_id, lsVendor, l)
+      if (made.item_id) { l.ls_item_id = made.item_id; l.created_note = made.note; created++ }
+      else { missing.push(`${l.vid ?? ''} ${l.name || l.desc}`.trim() + (made.why ? ` (${made.why})` : '')); continue }
+    }
     if (!l.ls_item_id) { missing.push(`${l.vid ?? ''} ${l.name || l.desc}`.trim()); continue }
     const res = await lsPost<{ OrderLine?: { orderLineID: string } }>(token, `/Account/${acct}/OrderLine.json`, {
       orderID: o!.ls_order_id, itemID: l.ls_item_id, quantity: l.qty, ...(l.cost !== null ? { price: l.cost, originalPrice: l.cost } : {}),
@@ -404,15 +414,27 @@ async function sendItems(db: SupabaseClient, me: Caller, lsPoId: string) {
     // keep progress after every line, so a second click never adds a line twice
     await db.from('ls_pos').update({ lines }).eq('id', p.id)
   }
+  // rename on reorder: the ticked SOP names go into the Item names queue (sent within minutes, marker kept, shelf tags)
+  const renames = lines.filter((l) => l.rename && l.rename_ok && l.ls_item_id && !l.is_new && l.rename !== l.name)
+  for (const l of renames) {
+    await db.from('item_name_changes').delete().eq('organization_id', org).eq('ls_item_id', l.ls_item_id!).in('status', ['approved', 'skipped'])
+    await db.from('item_name_changes').insert({
+      organization_id: org, ls_item_id: l.ls_item_id!, vendor_id: po?.vendor_id ?? null, old_name: l.name, new_name: l.rename!.toUpperCase(),
+      kind: changeKind(l.name, l.rename!) === 'content' ? 'content' : 'cosmetic', source: 'reorder', status: 'approved', approved_by: me.id,
+    })
+    // queued once; the line shows it went
+    l.rename_ok = false
+    l.renamed = true
+  }
   const left = lines.filter((l) => l.qty > 0 && !l.ls_line_id)
   const done = left.length === 0
   await db.from('ls_pos').update({
     lines, status: done ? 'sent' : 'ready', ls_po_number: done ? o!.po_number : null, sent_at: done ? new Date().toISOString() : null,
     reviewed_by: me.id, reviewed_at: new Date().toISOString(),
-    draft_note: done ? `In Lightspeed as ${o!.po_number}: ${lines.filter((l) => l.ls_line_id).length} items.`
+    draft_note: done ? `In Lightspeed as ${o!.po_number}: ${lines.filter((l) => l.ls_line_id).length} items${created ? `, ${created} new item${created === 1 ? '' : 's'} entered in LS` : ''}${renames.length ? `, ${renames.length} LS name${renames.length === 1 ? '' : 's'} going to the naming SOP` : ''}.`
       : `${added} added to ${o!.po_number} in Lightspeed. Not in LS yet (add them in LS, then Send again): ${missing.slice(0, 20).join('; ')}${missing.length > 20 ? ` and ${missing.length - 20} more` : ''}`,
   }).eq('id', p.id)
-  return { po_number: o!.po_number, added, missing, done }
+  return { po_number: o!.po_number, added, created, renamed: renames.length, missing, done }
 }
 
 /** The LS item for a draft line: System ID, else Vendor ID (manufacturer SKU, also with leading zeros dropped), else UPC. */
@@ -427,6 +449,70 @@ async function findItem(token: string, acct: string, l: DraftLine): Promise<stri
     if (hits.length === 1) return String(hits[0]!.itemID)
   }
   return null
+}
+
+/** The LS item from VMS's copy of LS: the vendor's item number (the Vendor ID in LS), else a UPC only one item has. */
+async function findLocalItem(db: SupabaseClient, org: string, lsVendor: string | null, l: DraftLine): Promise<string | null> {
+  if (l.system_id) {
+    const { data } = await db.from('ls_items').select('item_id').eq('organization_id', org).eq('system_sku', l.system_id).limit(2)
+    if (data?.length === 1) return data[0]!.item_id
+  }
+  if (lsVendor && l.vid) {
+    const { data } = await db.from('ls_items').select('item_id').eq('organization_id', org).eq('default_vendor_id', lsVendor).ilike('vendor_item_id', l.vid).eq('archived', false).limit(2)
+    if (data?.length === 1) return data[0]!.item_id
+  }
+  if (l.upc) {
+    const { data } = await db.from('ls_items').select('item_id').eq('organization_id', org).eq('upc', l.upc).eq('archived', false).limit(2)
+    if (data?.length === 1) return data[0]!.item_id
+  }
+  return null
+}
+
+// Flags that keep a new item out of LS until a person settles them (SOP: never guessed; Vendor ID from the invoice).
+const BLOCKING = [/^Needs manual description/, /^Part of the name is in \[brackets\]/, /^Waiting on Vendor ID/, /^Another LS item already has this name/]
+
+/**
+ * Enter a new item in LS from a checked LS PO line: the SOP name, its category (one LS already has), the vendor and its
+ * item number (the Vendor ID), the UPC, cost, and the retail price from Check-in pricing when there is one. LS is read
+ * back; the item counts when LS shows the name. What LS did not keep (vendor number, price) goes in the line's note.
+ */
+async function createItem(db: SupabaseClient, org: string, token: string, acct: string, orderId: string, lsVendor: string | null, l: DraftLine): Promise<{ item_id?: string; why?: string; note?: string | null }> {
+  const name = (l.name ?? '').trim().toUpperCase()
+  if (!name) return { why: 'no name yet' }
+  const block = (l.flags ?? []).find((f) => BLOCKING.some((re) => re.test(f)))
+  if (block) return { why: block.split(':')[0] }
+  if (/\[[^\]]*\]/.test(name)) return { why: 'part of the name is in [brackets]' }
+  const { data: same } = await db.from('ls_items').select('item_id').eq('organization_id', org).eq('description', name).limit(1)
+  if (same?.length) return { why: 'another LS item has this name' }
+  const path = String(l.category ?? '').replace(/\s*>\s*/g, '/').trim()
+  const { data: cat } = path ? await db.from('ls_items').select('category_id, category_path').eq('organization_id', org).ilike('category_path', path).neq('category_id', '').limit(1) : { data: null }
+  if (!cat?.length) return { why: path ? `no LS category "${path}" yet: pick one LS has` : 'no category' }
+  const { data: ol } = l.vid ? await db.from('order_lines').select('retail_price').eq('order_id', orderId).ilike('vendor_item_id', l.vid).not('retail_price', 'is', null).limit(1) : { data: null }
+  const retail = ol?.[0]?.retail_price ?? null
+  const body: Record<string, unknown> = {
+    description: name, categoryID: cat[0]!.category_id,
+    ...(l.cost !== null ? { defaultCost: l.cost } : {}),
+    ...(lsVendor ? { defaultVendorID: lsVendor } : {}),
+    ...(l.upc ? { upc: l.upc } : {}),
+    ...(lsVendor && l.vid ? { ItemVendorNums: { ItemVendorNum: [{ vendorID: lsVendor, value: l.vid }] } } : {}),
+    ...(retail !== null ? { Prices: { ItemPrice: [{ amount: retail, useType: 'Default', useTypeID: '1' }] } } : {}),
+  }
+  type LsItem = { itemID?: string; description?: string; ItemVendorNums?: { ItemVendorNum?: unknown }; Prices?: { ItemPrice?: unknown } }
+  const made = (await lsPost<{ Item?: LsItem }>(token, `/Account/${acct}/Item.json`, body)).Item
+  if (!made?.itemID) return { why: 'Lightspeed did not make the item' }
+  const back = (await lsGet<{ Item?: LsItem }>(token, `/Account/${acct}/Item/${made.itemID}.json?load_relations=${encodeURIComponent('["ItemVendorNums","Prices"]')}`)).Item ?? {}
+  if (String(back.description ?? '') !== name) return { why: `Lightspeed shows the name as "${back.description ?? ''}"` }
+  const nums = asList(back.ItemVendorNums?.ItemVendorNum as { value?: string } | { value?: string }[] | undefined)
+  const prices = asList(back.Prices?.ItemPrice as { amount?: string; useType?: string } | { amount?: string; useType?: string }[] | undefined)
+  const notes: string[] = []
+  if (l.vid && !nums.some((n) => String(n.value ?? '').toUpperCase() === l.vid!.toUpperCase())) notes.push('add the Vendor ID in LS (it did not keep it)')
+  if (retail !== null && !prices.some((x) => Number(x.amount) === Number(retail))) notes.push('set the price in LS (it did not keep it)')
+  if (retail === null) notes.push('no retail price yet: price it at check-in')
+  await db.from('ls_items').upsert({
+    organization_id: org, item_id: String(made.itemID), description: name, vendor_item_id: l.vid ?? '', upc: l.upc ?? '', category_id: cat[0]!.category_id,
+    category_path: cat[0]!.category_path, default_vendor_id: lsVendor ?? '', default_cost: l.cost, archived: false, synced_at: new Date().toISOString(),
+  }, { onConflict: 'organization_id,item_id' })
+  return { item_id: String(made.itemID), note: notes.length ? `Entered in LS; ${notes.join('; ')}` : 'Entered in LS' }
 }
 
 /** What the page may see: never the secret or the tokens. */
