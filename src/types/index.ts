@@ -87,6 +87,7 @@ export type OrderCheck = Tables<'order_checks'>
 export type { OrderCheckStatus } from './database'
 export type { ItemChangeDecision, ItemChangeLsStatus, ItemNameChangeStatus } from './database'
 export type Mailbox = Tables<'mailboxes'>
+export type MailWatch = Tables<'mail_watches'>
 export type Task = Tables<'tasks'>
 export type OrderingItem = Tables<'ordering_items'>
 export type SalesReport = Tables<'sales_reports'>

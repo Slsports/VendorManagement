@@ -121,6 +121,8 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   if (t.recipient_id) return { kind: 'page', to: `/accounting/insurance/who/${t.recipient_id}`, label: 'Open the recipient' }
   if (t.procedure_id) return { kind: 'page', to: `/accounting/procedures/${t.procedure_id}`, label: 'Open the procedure' }
   if (kind === 'create_po' && id) return t.order_id ? { kind: 'page', to: `/orders/${t.order_id}?do=create-po`, label: 'Create the PO' } : { kind: 'page', to: `/orders/paperwork/${id}`, label: 'Pick the order' }
+  // Tell me when they reply (Dana, Oct 19): straight to their reply
+  if (kind === 'reply' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open their reply' }
   if (kind === 'promise' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}?do=reply`, label: 'Reply' }
   if (kind === 'freight_quote' && id) return { kind: 'page', to: `/freight/quotes/${id}`, label: 'Open the freight quote' }
   if (kind === 'lspo' && id) return { kind: 'page', to: `/ls-pos/${id}`, label: 'Open the LS PO' }

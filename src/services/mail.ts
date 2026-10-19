@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { Email, EmailAttachment, EmailSenderKind, EmailThreadStatus, MailAccount, Mailbox, MailView, VendorLinkKind } from '@/types'
+import type { Email, EmailAttachment, EmailSenderKind, EmailThreadStatus, MailAccount, Mailbox, MailView, MailWatch, VendorLinkKind } from '@/types'
 import { TEST_LOGIN_PATTERN } from '@/services/reviews'
 import type { Database } from '@/types/database'
 
@@ -557,6 +557,24 @@ export async function listMailboxes(organizationId: string): Promise<MailboxRow[
 /** "Share to Orders": a conversation from my own mailbox joins the shared Orders mail (or leaves it). */
 export async function shareThreadToOrders(threadId: string, share = true): Promise<void> {
   const { error } = await supabase.rpc('share_thread_to_orders', { p_thread: threadId, p_share: share })
+  if (error) throw error
+}
+
+// ---- Tell me when they reply (Dana, Oct 19) ----------------------------------------------------------
+/** My open watch on this address, if any. */
+export async function getMyWatch(address: string): Promise<MailWatch | null> {
+  const { data, error } = await supabase.from('mail_watches').select('*').eq('address', address.trim().toLowerCase()).is('fired_at', null).maybeSingle()
+  if (error) throw error
+  return data
+}
+
+export async function watchForReply(threadId: string, address: string, name: string | null): Promise<void> {
+  const { error } = await supabase.rpc('mail_watch_set', { p_thread: threadId, p_address: address, p_name: name })
+  if (error) throw error
+}
+
+export async function stopWatching(id: string): Promise<void> {
+  const { error } = await supabase.rpc('mail_watch_stop', { p_id: id })
   if (error) throw error
 }
 

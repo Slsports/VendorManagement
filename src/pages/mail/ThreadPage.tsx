@@ -2,10 +2,10 @@ import { useEffect, useRef, useState, useMemo } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useHasInAppHistory } from '@/hooks/useHasInAppHistory'
 import toast from 'react-hot-toast'
-import { Check, CheckCircle2, ClipboardList, ListTodo, Palette, ExternalLink, Trash2, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
+import { Bell, BellOff, Check, CheckCircle2, ClipboardList, ListTodo, Palette, ExternalLink, Trash2, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { assignEmailThread, fetchEmailHtml, fileAttachmentToVendor, getMailbox, getThread, fetchAttachment, listMailboxes, shareThreadToOrders, setArtStatus, setEmailThreadStatus, setEmailVendor, setThreadView, setWorkingOrder, trashThreads, type ThreadDetail } from '@/services/mail'
+import { assignEmailThread, fetchEmailHtml, getMyWatch, stopWatching, watchForReply, fileAttachmentToVendor, getMailbox, getThread, fetchAttachment, listMailboxes, shareThreadToOrders, setArtStatus, setEmailThreadStatus, setEmailVendor, setThreadView, setWorkingOrder, trashThreads, type ThreadDetail } from '@/services/mail'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { MakeFreightBillDialog } from '@/components/freight/MakeFreightBillDialog'
 import { SaveToDocumentsDialog } from '@/components/vendors/SaveToDocumentsDialog'
@@ -58,6 +58,15 @@ export default function ThreadPage() {
   useEffect(() => {
     if (cameBack && profile) void clearSnooze(profile.id, 'thread', id).catch(() => {})
   }, [cameBack, profile, id])
+  // Tell me when they reply (Dana, Oct 19): the outside person on this email, and my watch on them
+  const watchParty = useMemo(() => {
+    const es = q.data?.emails ?? []
+    const lastIn = [...es].reverse().find((e) => e.direction === 'in' && e.from_email && !isOurAddress(e.from_email))
+    if (lastIn) return { email: lastIn.from_email!, name: lastIn.from_name }
+    const lastOutTo = [...es].reverse().find((e) => e.direction === 'out')?.to_emails.find((a) => !isOurAddress(a))
+    return lastOutTo ? { email: lastOutTo, name: null } : null
+  }, [q.data])
+  const watchQ = useSupabaseQuery(async () => (watchParty ? getMyWatch(watchParty.email) : null), [watchParty?.email])
   // "Go to it" from a reply task (Dana, Oct 14): the reply to the latest email they sent is open, ready to write
   const wantsReply = params.get('do') === 'reply'
   const autoReply = useMemo(() => {
@@ -162,6 +171,9 @@ export default function ThreadPage() {
           <ThreadVendorPicker current={t.vendor} prefill={newVendorPrefill({ ...party, isDomain: false })} onPick={(v) => act(v ? `Filed to ${v.name}` : 'Unfiled', () => setEmailVendor(emails[0]!.id, v?.id ?? null))} />
           {t.vendor ? <Button size="sm" variant="ghost" onClick={() => setAddingOrder(true)}>Add order from this email</Button> : null}
           <Button size="sm" variant="ghost" onClick={() => setAddingTask(true)} leftIcon={<ListTodo className="size-4" aria-hidden="true" />}>Task</Button>
+          {watchParty && !watchQ.data ? (
+            <Button size="sm" variant="ghost" onClick={() => void act(`VMS will tell you when ${watchParty.name || watchParty.email} replies`, async () => { await watchForReply(t.id, watchParty.email, watchParty.name); await watchQ.refetch() })} leftIcon={<Bell className="size-4" aria-hidden="true" />}>Tell me when they reply</Button>
+          ) : null}
           {!t.art_status ? <Button size="sm" variant="ghost" onClick={() => void act('On the Artwork approvals card', () => setArtStatus(t.id, 'waiting'))} leftIcon={<Palette className="size-4" aria-hidden="true" />}>Artwork to approve</Button> : null}
           <SnoozeButton kind="thread" ids={[t.id]} until={myUntil} onDone={async () => {
             await snoozeQ.refetch()
@@ -191,6 +203,13 @@ export default function ThreadPage() {
               <Button size="sm" variant="ghost" onClick={() => void act('Not an artwork approval', () => setArtStatus(t.id, 'none'))}>Not artwork</Button>
             </span>
           ) : null}
+        </div>
+      ) : null}
+      {watchQ.data ? (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <Bell className="size-4" aria-hidden="true" />
+          <span>Watching for a reply from <span className="font-medium">{watchQ.data.name || watchQ.data.address}</span>. You'll get a reminder as soon as they write.</span>
+          <Button size="sm" variant="ghost" className="ml-auto" onClick={() => void act('Stopped watching', async () => { await stopWatching(watchQ.data!.id); await watchQ.refetch() })} leftIcon={<BellOff className="size-4" aria-hidden="true" />}>Stop watching</Button>
         </div>
       ) : null}
       <RecordTasks button={false} className="mb-4 rounded-2xl border border-stone-200 bg-white px-4 py-3" preset={taskPreset} />

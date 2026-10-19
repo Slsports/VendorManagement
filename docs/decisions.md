@@ -2703,3 +2703,13 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   entered" = forwards with no bill matching their invoice number (or vendor + amount) in 90 days (`billcom_waiting`).
   Dashboard Bill.com card (sees_accounting): bills due in 7 days, sent-not-entered. Production API address
   https://gateway.prod.bill.com/connect is from a third-party page, editable in Settings; Save and connect proves it.
+
+## 2026-10-19 — Tell me when they reply; Edenred from Nichole
+- Dana: "flag that email from Nichole so you can tell me when she has responded." Built **Tell me when they reply** on
+  any email: the next email from that person (any conversation, received after the watch was set) becomes a task
+  **Reply from [name]** for the person who set it, reminded at once by their own reminder choices, opening the reply.
+  One reply ends it; **Stop watching** cancels. A reply in mail the watcher can't open never fires it. Migration 0197.
+  Turned on for Dana on Nichole Pence (nicholep@worldwidebuygroup.com), waiting on Edenred's **Save** fix.
+- Edenred (Nichole, Oct 19 call): invoices back to Nov 2025 are emailed to orders@ in groups ("Emailed invoices",
+  noreply@edenredpayinvoice.com, one PDF each); the line-by-line Excel (WWD sequence #, vendor's invoice #, PO) comes
+  once Edenred fixes Save. Filing the emailed PDFs is proposed, not built.

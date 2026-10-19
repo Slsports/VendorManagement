@@ -612,6 +612,12 @@ export type Database = {
         Update: { organization_id?: string; address?: string; is_domain?: boolean; contact_id?: string; created_at?: string }
         Relationships: [{ foreignKeyName: 'accounting_contact_addresses_contact_id_fkey'; columns: ['contact_id']; isOneToOne: false; referencedRelation: 'accounting_contacts'; referencedColumns: ['id'] }]
       }
+      mail_watches: {
+        Row: { id: string; organization_id: string; watcher: string; address: string; name: string | null; thread_id: string | null; created_at: string; fired_at: string | null; fired_email_id: string | null; task_id: string | null }
+        Insert: { id?: string; organization_id: string; watcher: string; address: string; name?: string | null; thread_id?: string | null; created_at?: string; fired_at?: string | null; fired_email_id?: string | null; task_id?: string | null }
+        Update: { id?: string; organization_id?: string; watcher?: string; address?: string; name?: string | null; thread_id?: string | null; created_at?: string; fired_at?: string | null; fired_email_id?: string | null; task_id?: string | null }
+        Relationships: []
+      }
       mailboxes: {
         Row: { id: string; organization_id: string; kind: 'personal' | 'legacy' | 'accounting'; address: string; label: string; owner_id: string; gmail_box: string; is_active: boolean; history_id: string | null; backfill_after: string | null; backfill_page_token: string | null; backfill_done: boolean; last_sync_at: string | null; sync_started_at: string | null; last_error: string | null; last_error_at: string | null; messages_synced: number; auto_share_vendor_mail: boolean; created_at: string; updated_at: string }
         Insert: { id?: string; organization_id: string; kind: 'personal' | 'legacy' | 'accounting'; address: string; label: string; owner_id: string; gmail_box: string; is_active?: boolean; history_id?: string | null; backfill_after?: string | null; backfill_page_token?: string | null; backfill_done?: boolean; last_sync_at?: string | null; sync_started_at?: string | null; last_error?: string | null; last_error_at?: string | null; messages_synced?: number; auto_share_vendor_mail?: boolean; created_at?: string; updated_at?: string }
@@ -1097,6 +1103,8 @@ export type Database = {
       accounting_set_thread_contact: { Args: { p_thread: string; p_contact: string | null }; Returns: undefined }
       accounting_recount: { Args: { p_org: string }; Returns: undefined }
       share_thread_to_orders: { Args: { p_thread: string; p_share?: boolean }; Returns: undefined }
+      mail_watch_set: { Args: { p_thread: string; p_address: string; p_name?: string | null }; Returns: string }
+      mail_watch_stop: { Args: { p_id: string }; Returns: undefined }
       can_see_mailbox: { Args: { p_mailbox: string }; Returns: boolean }
       can_see_person: { Args: { p_person: string }; Returns: boolean }
       mail_with: { Args: { p_org: string; p_email: string; p_company?: boolean; p_limit?: number }; Returns: { id: string; thread_id: string; direction: 'in' | 'out' | 'internal'; from_email: string | null; from_name: string | null; to_emails: string[]; cc_emails: string[]; subject: string | null; snippet: string | null; received_at: string; has_attachments: boolean; vendor_id: string | null; vendor_name: string | null }[] }
