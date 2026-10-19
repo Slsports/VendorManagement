@@ -18,9 +18,10 @@ const TIME_BUDGET_MS = 20_000
 const PAGE = 25
 const PARALLEL = 5
 const MAX_PER_RUN = 100
-// Reading further back into a mailbox that already had its first load (Dana, Oct 19: "as much historical data as
-// possible"): a slice of each run only, so new mail, filing, sorting and the reply check never wait on history.
-const HISTORY_SLICE_MS = 7_000
+// Each run: new mail, then Claude's reading until AI_UNTIL_MS, filing until FILES_UNTIL_MS, then history (Dana, Oct 19:
+// "as much historical data as possible", without new mail, the reply check or filing ever waiting on it).
+const AI_UNTIL_MS = 10_000
+const FILES_UNTIL_MS = 16_000
 const FREEMAIL = new Set(['gmail.com', 'googlemail.com', 'yahoo.com', 'ymail.com', 'outlook.com', 'hotmail.com', 'live.com', 'msn.com', 'icloud.com', 'me.com', 'mac.com', 'aol.com', 'comcast.net', 'att.net', 'sbcglobal.net', 'verizon.net', 'protonmail.com', 'proton.me'])
 
 interface Account {
@@ -142,33 +143,41 @@ async function syncAccount(db: SupabaseClient, acct: Account) {
       await saveState(db, acct, { history_id: historyId })
     }
 
-    // Backfill slices while there is time left in this run.
+    // Backfill: a first load takes the whole run; reading further back into a mailbox already in use comes last, in
+    // the time left (Dana, Oct 19), so new mail, Claude's reading and filing never wait on history.
     let pageToken = acct.backfill_page_token ?? undefined
     let done = acct.backfill_done
-    // a first load takes the whole run; reading further back into a mailbox already in use takes a slice
     const inUse = (acct.messages_synced ?? 0) > 0
     const ready = done || inUse
-    while (!done && Date.now() - started < (inUse ? HISTORY_SLICE_MS : TIME_BUDGET_MS) && stored < MAX_PER_RUN) {
-      const after = (acct.backfill_after ?? new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10)).replace(/-/g, '/')
-      const page = await gmail.list(`after:${after} -in:chats`, pageToken, PAGE)
-      stored += await storeMessages(db, gmail, ctx, (page.messages ?? []).map((m) => m.id), true)
-      pageToken = page.nextPageToken
-      done = !pageToken
-      await saveState(db, acct, { backfill_page_token: pageToken ?? null, backfill_done: done })
+    const history = async (until: number) => {
+      while (!done && Date.now() - started < until && stored < MAX_PER_RUN) {
+        const after = (acct.backfill_after ?? new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10)).replace(/-/g, '/')
+        const page = await gmail.list(`after:${after} -in:chats`, pageToken, PAGE)
+        stored += await storeMessages(db, gmail, ctx, (page.messages ?? []).map((m) => m.id), true)
+        pageToken = page.nextPageToken
+        done = !pageToken
+        await saveState(db, acct, { backfill_page_token: pageToken ?? null, backfill_done: done })
+      }
     }
+    if (!inUse) await history(TIME_BUDGET_MS)
 
+    // Claude reads what the rules could not place (only with an API key): the reply check and artwork approvals
+    // first, until AI_UNTIL_MS into the run (each step stops at its own deadline: `started` moved earlier).
+    if (ready && !acct.box_id && aiEnabled() && Date.now() - started < AI_UNTIL_MS) await aiSteps(db, org, started - (TIME_BUDGET_MS - AI_UNTIL_MS))
+    // Then filing, newest mail first, until FILES_UNTIL_MS.
+    const filesStarted = started - (TIME_BUDGET_MS - FILES_UNTIL_MS)
     // Older mail stored before the views existed: read its bulk-mail headers, a few hundred a run.
-    if (ready && Date.now() - started < TIME_BUDGET_MS) await readBulkHeaders(db, gmail, org, ctx.mailbox)
+    if (ready && Date.now() - started < FILES_UNTIL_MS) await readBulkHeaders(db, gmail, org, ctx.mailbox)
     // Price lists, catalogs and order forms into the vendor's files, a few emails a run.
-    if (ready && Date.now() - started < TIME_BUDGET_MS) await saveVendorFiles(db, gmail, org, started, ctx.mailbox)
+    if (ready && Date.now() - started < FILES_UNTIL_MS) await saveVendorFiles(db, gmail, org, filesStarted, ctx.mailbox)
     // Vendors' order confirmations and invoices into their folders; order-check compares them with the order.
-    if (ready && Date.now() - started < TIME_BUDGET_MS) await savePaperwork(db, gmail, org, started, ctx.mailbox)
+    if (ready && Date.now() - started < FILES_UNTIL_MS) await savePaperwork(db, gmail, org, filesStarted, ctx.mailbox)
     // Pictures of items from vendors into their Images folder (all history); artwork proofs stay in the email.
-    if (ready && Date.now() - started < TIME_BUDGET_MS) await saveItemPictures(db, gmail, org, started, ctx.mailbox)
+    if (ready && Date.now() - started < FILES_UNTIL_MS) await saveItemPictures(db, gmail, org, filesStarted, ctx.mailbox)
     // Freight bills from carriers: a bill per invoice email; Claude reads the PDF when it is attached.
-    if (ready && Date.now() - started < TIME_BUDGET_MS) await freightBills(db, gmail, org, started, ctx.mailbox)
-    // Claude reads what the rules could not place (only with an API key).
-    if (ready && !acct.box_id && aiEnabled() && Date.now() - started < TIME_BUDGET_MS) await aiSteps(db, org, started)
+    if (ready && Date.now() - started < FILES_UNTIL_MS) await freightBills(db, gmail, org, filesStarted, ctx.mailbox)
+    // History in whatever time is left.
+    if (inUse) await history(TIME_BUDGET_MS)
 
     await saveState(db, acct, { last_sync_at: new Date().toISOString(), last_error: null, sync_started_at: null, messages_synced: acct.messages_synced + stored })
     return { org, mailbox: acct.mailbox, stored, backfill_done: done, ms: Date.now() - started }
@@ -858,14 +867,6 @@ async function removePictureLink(db: SupabaseClient, linkId: string, path: strin
  */
 async function aiSteps(db: SupabaseClient, org: string, started: number) {
   try {
-    const { data: unsure } = await db.rpc('mail_unsure_emails', { p_org: org, p_limit: 40 })
-    const list = (unsure ?? []) as UnsureEmail[]
-    for (let i = 0; i < list.length && Date.now() - started < TIME_BUDGET_MS; i += 20) {
-      const batch = list.slice(i, i + 20)
-      const views = await sortEmails(db, org, batch)
-      await check(db.rpc('mail_set_ai_views', { p_org: org, p_ids: batch.map((e) => e.id), p_views: batch.map((e) => views.get(e.id) ?? 'unsure') }))
-    }
-
     // Does the newest email of each conversation waiting on us need an answer? (Dana, Oct 8.) Ads go to
     // Handled without asking; Claude reads the rest, ten at a time; unsure ones become review cards.
     const { data: waiting } = await db.rpc('mail_reply_queue', { p_org: org, p_limit: 30 })
@@ -908,6 +909,17 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
         await check(db.rpc('mail_apply_art', { p_email: e.email_id, p_art: art, p_note: r?.note ?? '' }))
       }
     }
+
+    // Sorting what the rules could not place: after the reply check and artwork (with history coming in, the sort
+    // queue is long and must not hold those up).
+    const { data: unsure } = await db.rpc('mail_unsure_emails', { p_org: org, p_limit: 40 })
+    const list = (unsure ?? []) as UnsureEmail[]
+    for (let i = 0; i < list.length && Date.now() - started < TIME_BUDGET_MS; i += 20) {
+      const batch = list.slice(i, i + 20)
+      const views = await sortEmails(db, org, batch)
+      await check(db.rpc('mail_set_ai_views', { p_org: org, p_ids: batch.map((e) => e.id), p_views: batch.map((e) => views.get(e.id) ?? 'unsure') }))
+    }
+
 
     // Mail from Worldwide, carriers, services and rep groups: every vendor it names gets the email too, and a
     // quoted freight rate (Worldwide's pallet rate) is kept for check-in. Last 90 days, a few a run.

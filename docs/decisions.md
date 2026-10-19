@@ -2640,3 +2640,6 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   credit drops its task. Back-check: tasks made for proofs and credits filed in the last 30 days (older ones are history),
   untied LS POs and packing slips tied, tied packing slips ship their orders; counts reported to Dana. `?folder=` on a
   vendor page opens that Documents folder (the tasks' Go to it). Help: "What happens when a file lands".
+- Oct 19, fix 2: with every year's paperwork and pictures open for filing, filing used the whole run and Claude's reply
+  check and artwork approvals (last in the run) never ran. Each gmail-sync run is now: new mail; Claude's reading until
+  10 s (reply check and artwork first, sorting after); filing, newest first, until 16 s; history in the time left.
