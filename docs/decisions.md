@@ -2592,3 +2592,9 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   Before, "SET - 9869" became "SET- 9869", and "-1354" was not seen as the Vendor ID at all, so the page wrongly said it
   was "in the middle". A bare dash after a digit stays (21-4410 is one code). New counts: 6,412 pass, about 7,600 quick
   fixes, 1,338 Vendor IDs to take off.
+- Oct 19 (Dana): Jeff Lipke (jefflipke@comcast.net, The Cascade Group) "has nothing to do with WFS and hasn't since I've
+  been going to the shows the past 5 years". The Worldwide portal import (Oct 16) had added him to World Famous Sports
+  as a rep from WWD's out-of-date WFS page, and with no main rep picked the vendor page showed him as Main rep. Removed
+  from WFS; he stays on Triple T (from his own emails). Still on Mykos-Lamo from the portal: not confirmed. Proposed,
+  waiting for Dana's go: portal-only contacts never show as Main rep and are marked "not confirmed"; a list of the
+  portal's reps to confirm or remove; a re-import must not add back a contact Dana removed.
