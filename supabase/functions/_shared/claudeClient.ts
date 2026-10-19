@@ -23,8 +23,21 @@ function row(organization: string, purpose: string, model: string, u: RawUsage, 
   return {
     organization_id: organization, purpose, model, items, request_id: id,
     input_tokens: u.input_tokens + (u.cache_creation_input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0),
+    cache_read_tokens: u.cache_read_input_tokens ?? 0, cache_write_tokens: u.cache_creation_input_tokens ?? 0,
     output_tokens: u.output_tokens, cost_usd: Number(costOf(model, u).toFixed(5)),
   }
+}
+
+/**
+ * A call's fixed instructions as a cacheable system block (Dana, Oct 19: Anthropic wrote that VMS's cache hit rate
+ * is low). The same instructions sent again within five minutes are read from Anthropic's cache at a tenth of the
+ * price; the crons send most of them every minute. Below the model's minimum (512 tokens) the mark does nothing.
+ * Anything that changes per call must come after this block, never inside it.
+ */
+export function sys(text: string, more?: string): Anthropic.TextBlockParam[] {
+  const blocks: Anthropic.TextBlockParam[] = [{ type: 'text', text, cache_control: { type: 'ephemeral' } }]
+  if (more) blocks.push({ type: 'text', text: more })
+  return blocks
 }
 
 /** fetch for the Claude client: passes everything through and records what each successful answer used. */

@@ -2703,3 +2703,14 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   entered" = forwards with no bill matching their invoice number (or vendor + amount) in 90 days (`billcom_waiting`).
   Dashboard Bill.com card (sees_accounting): bills due in 7 days, sent-not-entered. Production API address
   https://gateway.prod.bill.com/connect is from a third-party page, editable in Settings; Save and connect proves it.
+
+## Oct 19 — Claude prompt cache on every VMS call (Dana: "go")
+Anthropic emailed Dana that VMS's prompt cache hit rate is low. Dana said go. Every Claude call in VMS now marks its fixed
+instructions as cacheable (`sys()` in `_shared/claudeClient.ts`); the compare prompt was reordered so the per-order lines come
+after the fixed text. `ai_usage` keeps `cache_read_tokens` and `cache_write_tokens` per call (migration 0197). Honest
+expectation: most of VMS's spend is the emails and PDFs themselves, which change every call and cannot be cached, so the
+saving is well under Anthropic's "up to 27%"; the numbers in `ai_usage` will say what it really is.
+Found on the way, confirmed in `ai_usage` and git: the unlabeled Sonnet calls (151 of them, $10.63 in the week) were the LS PO
+item-naming call for a 42-item PO hitting its 4000-token answer cap and retrying about every 30 minutes for three days; the
+Oct 19 LS PO commit raised the cap to 6000 and the call succeeded. No other wasted spend found: the 4,305 billing@ filing
+calls were the one-time pass over the mailbox history, now finished.

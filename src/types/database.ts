@@ -658,9 +658,9 @@ export type Database = {
         ]
       }
       ai_usage: {
-        Row: { id: string; organization_id: string; purpose: string; model: string; input_tokens: number; output_tokens: number; cost_usd: number; items: number; created_at: string; request_id: string | null }
-        Insert: { id?: string; organization_id: string; purpose: string; model: string; input_tokens?: number; output_tokens?: number; cost_usd?: number; items?: number; created_at?: string; request_id?: string | null }
-        Update: { id?: string; organization_id?: string; purpose?: string; model?: string; input_tokens?: number; output_tokens?: number; cost_usd?: number; items?: number; created_at?: string; request_id?: string | null }
+        Row: { id: string; organization_id: string; purpose: string; model: string; input_tokens: number; output_tokens: number; cost_usd: number; items: number; created_at: string; request_id: string | null; cache_read_tokens: number; cache_write_tokens: number }
+        Insert: { id?: string; organization_id: string; purpose: string; model: string; input_tokens?: number; output_tokens?: number; cost_usd?: number; items?: number; created_at?: string; request_id?: string | null; cache_read_tokens?: number; cache_write_tokens?: number }
+        Update: { id?: string; organization_id?: string; purpose?: string; model?: string; input_tokens?: number; output_tokens?: number; cost_usd?: number; items?: number; created_at?: string; request_id?: string | null; cache_read_tokens?: number; cache_write_tokens?: number }
         Relationships: []
       }
       rep_group_contacts: {
