@@ -2728,4 +2728,6 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   Dana: Edenred's "Posted Date" is the day WWD posted the invoice to Edenred, so it is never used as the WWD date
   or the document date (migration 0199). We receive everything at SLS and transfer in LS, so the export needs no
   Ship To Location or Member Name.
+- Nichole (via Dana, Oct 19): fields marked AP in Edenred are WWD's own; we use the AR fields. The Edenred import
+  reads AR Terms (else Terms Text) and Hard Due Date (AR), never AP Terms or Hard Due Date (AP).
   Found while building: Pucci's invoice 0100056-IN ($394.44) is on two WWD invoices, 7200324 and 7200998.

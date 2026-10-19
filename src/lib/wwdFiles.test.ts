@@ -24,6 +24,17 @@ describe('WWD files', () => {
     expect(batch.invoices[0]).toMatchObject({ seq: '7202949', kind: 'credit', po_number: 'RAPALA-FALL8-17-2025', vendor_name: 'NORMARK CORP / RAPALA', wwd_date: '2025-11-04', vendor_invoice_number: '1856719', amount: -256.95 })
   })
 
+  it('reads the AR terms and due date, never the AP ones (Nichole, Oct 19)', () => {
+    const t = [
+      ['Invoice Type', 'Seq No / AR Invoice No', 'Vendor Name', 'Invoice Amount', 'Terms Text', 'AP Terms', 'AR Terms', 'Hard Due Date (AP)', 'Hard Due Date (AR)'],
+      ['DS', '07200324', 'G PUCCI & SONS INC', 394.44, '2% 30 NET 60', 'ASAP - 01', 'NET 30', '11/05/2025', '12/03/2025'],
+      ['DS', '07200325', 'G PUCCI & SONS INC', 10, '2% 30 NET 60', 'ASAP - 01', '', '11/05/2025', ''],
+    ]
+    const { batch } = parseWwdTable(t, 'ER.xlsx')
+    expect(batch.invoices[0]).toMatchObject({ terms: 'NET 30', due_date: '2025-12-03' })
+    expect(batch.invoices[1]).toMatchObject({ terms: '2% 30 NET 60', due_date: null })
+  })
+
   it('reads a payment sheet: title date, discount, a total row skipped', () => {
     const t = [
       ['WORLDWIDE PAYMENT 1/16/26   $15,483.81'],
