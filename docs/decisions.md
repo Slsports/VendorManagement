@@ -2680,3 +2680,10 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   No automation needed. I will select the ones that need to go to bill.com, no other method." The switch is on every
   vendor, including WWD-routed ones (some WWD vendors now want to be paid another way), and can be changed any time.
   Nothing else decides forwarding: not the route, not Bill.com's list. Due alerts 7 days ahead.
+- Oct 19 (Dana): invoices forwarded by Tyler (typowslm@gmail.com) or Greg (gpowell.slsports@yahoo.com) are the vendor's
+  emails: "read who the email is actually from, not who forwarded it", and never flag Ty or Greg as new vendors. VMS
+  already read forwards from our own addresses that way (Oct 15) but did not know these two addresses: added to the
+  organization's own addresses, both senders marked internal, Tyler's pending "which vendor?" card closed, and the
+  forwards back-check run (158 forwards re-read across the mailboxes; of their 943 emails 95 are forwards now read from
+  the vendor's From line, 31 tied to a vendor; 140 forwarded senders are new "Who is this?" senders for the queue in
+  the usual way, 2 cards made so far). Any new staff address goes on that list.
