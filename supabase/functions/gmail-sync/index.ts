@@ -18,6 +18,9 @@ const TIME_BUDGET_MS = 20_000
 const PAGE = 25
 const PARALLEL = 5
 const MAX_PER_RUN = 100
+// More new emails than this since the last sync is old mail arriving in bulk: take the new mail by date instead.
+const HISTORY_CAP = 500
+const BULK_HISTORY_MS = 45_000
 // Each run: new mail, then Claude's reading until AI_UNTIL_MS, filing until FILES_UNTIL_MS, then history (Dana, Oct 19:
 // "as much historical data as possible", without new mail, the reply check or filing ever waiting on it).
 const AI_UNTIL_MS = 10_000
@@ -26,7 +29,7 @@ const FREEMAIL = new Set(['gmail.com', 'googlemail.com', 'yahoo.com', 'ymail.com
 
 interface Account {
   organization_id: string; mailbox: string; internal_domains: string[]; history_id: string | null; backfill_after: string | null
-  backfill_page_token: string | null; backfill_done: boolean; sync_started_at: string | null; messages_synced: number
+  backfill_page_token: string | null; backfill_done: boolean; sync_started_at: string | null; last_sync_at: string | null; messages_synced: number
   /** A personal mailbox (Dana, Oct 11): its row in mailboxes and its owner; null for the shared orders@. */
   box_id: string | null; owner_id: string | null
   /** The old Gmail, which arrives in orders@ (only on the shared account). */
@@ -53,9 +56,19 @@ Deno.serve(async (req) => {
   }
 
   // the picture back-check (Dana, Oct 15), run by hand from the scheduler's secret
-  const body = await req.clone().json().catch(() => ({})) as { pictures_backcheck?: boolean; forwards_backcheck?: boolean; diagnose?: string; message?: string }
+  const body = await req.clone().json().catch(() => ({})) as { pictures_backcheck?: boolean; forwards_backcheck?: boolean; diagnose?: string; message?: string; attachment?: string }
   // Read-only look at one mailbox's Gmail changes since its stored cursor (Oct 19, billing@ stuck since Oct 16): pages,
   // added and relabeled counts, time taken, and one message fetched three ways. Scheduler secret only; changes nothing.
+  // Read-only: one stored attachment's bytes (base64), to look at a new kind of paperwork before building for it.
+  if (trusted && body.attachment) {
+    const { data: a } = await db.from('email_attachments').select('file_name, gmail_attachment_id, email:emails!email_attachments_email_id_fkey(gmail_id, gmail_box)').eq('id', body.attachment).maybeSingle()
+    const em = a?.email as unknown as { gmail_id: string; gmail_box: string | null } | null
+    if (!a?.gmail_attachment_id || !em?.gmail_box) return json({ error: 'no such attachment' }, 404)
+    const bytes = await attachmentBytes(new Gmail(await googleAccessToken(em.gmail_box)), em.gmail_id, a.gmail_attachment_id)
+    let bin = ''
+    for (const b of bytes) bin += String.fromCharCode(b)
+    return json({ file_name: a.file_name, size: bytes.length, base64: btoa(bin) })
+  }
   if (trusted && body.diagnose) {
     const t0 = Date.now()
     const { data: box } = await db.from('mailboxes').select('address, history_id').eq('address', body.diagnose).maybeSingle()
@@ -107,7 +120,7 @@ Deno.serve(async (req) => {
   const { data: accounts, error } = await q
   if (error) return json({ error: error.message }, 500)
   // Personal mailboxes and the old Gmail (Dana, Oct 11) after orders@.
-  let mq = db.from('mailboxes').select('id, organization_id, kind, address, owner_id, history_id, backfill_after, backfill_page_token, backfill_done, sync_started_at, messages_synced').eq('is_active', true)
+  let mq = db.from('mailboxes').select('id, organization_id, kind, address, owner_id, history_id, backfill_after, backfill_page_token, backfill_done, sync_started_at, last_sync_at, messages_synced').eq('is_active', true)
   if (onlyOrg) mq = mq.eq('organization_id', onlyOrg)
   const { data: boxes } = await mq
   const results = []
@@ -172,9 +185,32 @@ async function syncAccount(db: SupabaseClient, acct: Account) {
         fresh.push(...(recent.messages ?? []).map((m) => m.id))
         historyId = (await gmail.profile()).historyId
       }
-      stored += await storeMessages(db, gmail, ctx, fresh, false)
-      await updateLabels(db, gmail, ctx, [...relabel].filter((id) => !fresh.includes(id)))
-      await saveState(db, acct, { history_id: historyId })
+      if (fresh.length > HISTORY_CAP) {
+        // A huge change list is old mail arriving in bulk (billing@, Oct 19: 6,514 emails from 2022 imported after
+        // the first load), and storing it all at once outlived the run every time, so new mail never came in. Take
+        // the new mail by date instead, newest first, a slice per run; the cursor moves on only once it is all in.
+        // The old mail is left for that mailbox's history load.
+        const since = Math.floor(((acct.last_sync_at ? new Date(acct.last_sync_at).getTime() : Date.now() - 3 * 86_400_000) - 86_400_000) / 1000)
+        const recent: string[] = []
+        let token: string | undefined
+        do {
+          const page = await gmail.list(`after:${since} -in:chats`, token, 500)
+          recent.push(...(page.messages ?? []).map((m) => m.id))
+          token = page.nextPageToken
+        } while (token && recent.length < 2_000)
+        const t0 = Date.now()
+        let all = true
+        for (let i = 0; i < recent.length; i += PAGE) {
+          if (Date.now() - t0 > BULK_HISTORY_MS) { all = false; break }
+          stored += await storeMessages(db, gmail, ctx, recent.slice(i, i + PAGE), false)
+        }
+        console.log(`${acct.mailbox}: ${fresh.length} changes since the last sync; took the ${recent.length} newer than the last sync by date${all ? '' : ' (more next run)'}`)
+        if (all) await saveState(db, acct, { history_id: historyId })
+      } else {
+        stored += await storeMessages(db, gmail, ctx, fresh, false)
+        await updateLabels(db, gmail, ctx, [...relabel].filter((id) => !fresh.includes(id)))
+        await saveState(db, acct, { history_id: historyId })
+      }
     }
 
     // Backfill: a first load takes the whole run; reading further back into a mailbox already in use comes last, in

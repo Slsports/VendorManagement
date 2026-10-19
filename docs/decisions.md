@@ -2713,3 +2713,8 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
 - Edenred (Nichole, Oct 19 call): invoices back to Nov 2025 are emailed to orders@ in groups ("Emailed invoices",
   noreply@edenredpayinvoice.com, one PDF each); the line-by-line Excel (WWD sequence #, vendor's invoice #, PO) comes
   once Edenred fixes Save. Filing the emailed PDFs is proposed, not built.
+- billing@ sync fixed (Dana's go, Oct 19): when Gmail reports more than 500 new emails since the last sync (old mail
+  arriving in bulk, like the 6,514 from 2022), VMS takes the mail newer than the last sync by date, a slice per run,
+  and moves the cursor on once it is all in. The old ones wait for billing@'s full history load after launch. First
+  run: 24 new billing@ emails since Oct 16 came in. gmail-sync also has a read-only "attachment" request (scheduler
+  secret) to look at a new kind of paperwork before building for it.
