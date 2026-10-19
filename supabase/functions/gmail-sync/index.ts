@@ -13,11 +13,14 @@ import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type Picture
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
-// messages and the scheduler comes back every minute until the 12 months are in.
+// messages and the scheduler comes back every minute until the history is in (from backfill_after).
 const TIME_BUDGET_MS = 20_000
 const PAGE = 25
 const PARALLEL = 5
 const MAX_PER_RUN = 100
+// Reading further back into a mailbox that already had its first load (Dana, Oct 19: "as much historical data as
+// possible"): a slice of each run only, so new mail, filing, sorting and the reply check never wait on history.
+const HISTORY_SLICE_MS = 7_000
 const FREEMAIL = new Set(['gmail.com', 'googlemail.com', 'yahoo.com', 'ymail.com', 'outlook.com', 'hotmail.com', 'live.com', 'msn.com', 'icloud.com', 'me.com', 'mac.com', 'aol.com', 'comcast.net', 'att.net', 'sbcglobal.net', 'verizon.net', 'protonmail.com', 'proton.me'])
 
 interface Account {
@@ -142,7 +145,10 @@ async function syncAccount(db: SupabaseClient, acct: Account) {
     // Backfill slices while there is time left in this run.
     let pageToken = acct.backfill_page_token ?? undefined
     let done = acct.backfill_done
-    while (!done && Date.now() - started < TIME_BUDGET_MS && stored < MAX_PER_RUN) {
+    // a first load takes the whole run; reading further back into a mailbox already in use takes a slice
+    const inUse = (acct.messages_synced ?? 0) > 0
+    const ready = done || inUse
+    while (!done && Date.now() - started < (inUse ? HISTORY_SLICE_MS : TIME_BUDGET_MS) && stored < MAX_PER_RUN) {
       const after = (acct.backfill_after ?? new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10)).replace(/-/g, '/')
       const page = await gmail.list(`after:${after} -in:chats`, pageToken, PAGE)
       stored += await storeMessages(db, gmail, ctx, (page.messages ?? []).map((m) => m.id), true)
@@ -152,17 +158,17 @@ async function syncAccount(db: SupabaseClient, acct: Account) {
     }
 
     // Older mail stored before the views existed: read its bulk-mail headers, a few hundred a run.
-    if (done && Date.now() - started < TIME_BUDGET_MS) await readBulkHeaders(db, gmail, org, ctx.mailbox)
+    if (ready && Date.now() - started < TIME_BUDGET_MS) await readBulkHeaders(db, gmail, org, ctx.mailbox)
     // Price lists, catalogs and order forms into the vendor's files, a few emails a run.
-    if (done && Date.now() - started < TIME_BUDGET_MS) await saveVendorFiles(db, gmail, org, started, ctx.mailbox)
+    if (ready && Date.now() - started < TIME_BUDGET_MS) await saveVendorFiles(db, gmail, org, started, ctx.mailbox)
     // Vendors' order confirmations and invoices into their folders; order-check compares them with the order.
-    if (done && Date.now() - started < TIME_BUDGET_MS) await savePaperwork(db, gmail, org, started, ctx.mailbox)
-    // Pictures of items from vendors into their Images folder (12 months back); artwork proofs stay in the email.
-    if (done && Date.now() - started < TIME_BUDGET_MS) await saveItemPictures(db, gmail, org, started, ctx.mailbox)
+    if (ready && Date.now() - started < TIME_BUDGET_MS) await savePaperwork(db, gmail, org, started, ctx.mailbox)
+    // Pictures of items from vendors into their Images folder (all history); artwork proofs stay in the email.
+    if (ready && Date.now() - started < TIME_BUDGET_MS) await saveItemPictures(db, gmail, org, started, ctx.mailbox)
     // Freight bills from carriers: a bill per invoice email; Claude reads the PDF when it is attached.
-    if (done && Date.now() - started < TIME_BUDGET_MS) await freightBills(db, gmail, org, started, ctx.mailbox)
+    if (ready && Date.now() - started < TIME_BUDGET_MS) await freightBills(db, gmail, org, started, ctx.mailbox)
     // Claude reads what the rules could not place (only with an API key).
-    if (done && !acct.box_id && aiEnabled() && Date.now() - started < TIME_BUDGET_MS) await aiSteps(db, org, started)
+    if (ready && !acct.box_id && aiEnabled() && Date.now() - started < TIME_BUDGET_MS) await aiSteps(db, org, started)
 
     await saveState(db, acct, { last_sync_at: new Date().toISOString(), last_error: null, sync_started_at: null, messages_synced: acct.messages_synced + stored })
     return { org, mailbox: acct.mailbox, stored, backfill_done: done, ms: Date.now() - started }
@@ -596,13 +602,13 @@ async function linkExistingCopy(db: SupabaseClient, vendorId: string, a: { id: s
  * vendor's Confirmations or Invoices folder for the year; saving it starts the order check (order-check reads
  * it, finds the order, compares, and puts it in front of whoever placed the order). Credit memos go to Credits (Dana,
  * Oct 14). Mail from billing systems (WFS's NetSuite) counts too, by file name and subject only. A file the vendor already
- * has on file is linked, never saved twice. Last 12 months, a few a run (only the last 6 months get an order check).
+ * has on file is linked, never saved twice. Every year of mail, newest first, a few a run (Dana, Oct 19: as much history as
+ * possible); only paperwork from the last 6 months starts an order check (order_check_from_document).
  */
 async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, started: number, box: string) {
   const { data: queue } = await db.from('emails')
     .select('id, gmail_id, vendor_id, subject, body_text, view, is_bulk, received_at, forwarded_from, vendor:vendors!emails_vendor_id_fkey(name), attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
     .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).or('direction.eq.in,forwarded_from.not.is.null').not('vendor_id', 'is', null).is('paper_scanned_at', null).eq('has_attachments', true)
-    .gte('received_at', new Date(Date.now() - 365 * 86_400_000).toISOString())
     .order('received_at', { ascending: false }).limit(10)
   let asked = 0
   for (const e of queue ?? []) {
@@ -667,7 +673,7 @@ async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, star
  * of the companies it reps add those names to its lines; proofs go to Proofs; product photos, advertising and the rest
  * go to Images, except for vendors marked "Ask before saving pictures" (Nationwide), whose pictures wait for Save
  * pictures in the email (proofs still save). The same picture sent again is not saved twice. Files the other steps
- * save (price lists, confirmations, invoices) are theirs. 12 months back, a batch a run.
+ * save (price lists, confirmations, invoices) are theirs. Every year of mail, newest first, a batch a run (Dana, Oct 19).
  */
 async function saveItemPictures(db: SupabaseClient, gmail: Gmail, org: string, started: number, box: string) {
   const twoHours = new Date(Date.now() - 2 * 3600_000).toISOString()
@@ -675,7 +681,6 @@ async function saveItemPictures(db: SupabaseClient, gmail: Gmail, org: string, s
     .select('id, gmail_id, vendor_id, sender_id, subject, body_text, received_at, vendor:vendors!emails_vendor_id_fkey(name, ask_before_pictures), attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
     .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).or('direction.eq.in,forwarded_from.not.is.null').not('vendor_id', 'is', null).eq('has_attachments', true).is('images_scanned_at', null)
     .not('is_bulk', 'is', true).not('files_scanned_at', 'is', null).or(`art_read_at.not.is.null,received_at.lt.${twoHours}`)
-    .gte('received_at', new Date(Date.now() - 365 * 86_400_000).toISOString())
     .order('received_at', { ascending: false }).limit(10)
   let lineIndex: Awaited<ReturnType<typeof freightIndex>> | null = null
   for (const e of queue ?? []) {

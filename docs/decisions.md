@@ -2611,6 +2611,21 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
 - Oct 19 (Dana): the contact rules use one window, **24 months**, for both confirming a portal contact by email (#2) and
   the Main rep (#3). Jarrett's mailbox (jarrett@) is read back to the beginning (backfill from 2015, about 2.5 years
   of mail expected; old threads come in as handled, no duplicates), so his vendor mail counts too.
+- Oct 19, built (Dana: "I want as much historical data as possible added to vms without adding to do's … if something
+  came in 2 months ago and it needed attention, but you can see no one has responded, I want to know about it"; "6
+  months is good, go"). Migration 190: old mail read in from history is handled only when one of us wrote back to that
+  person afterward (any of our mailboxes, any thread: `mail_answered`), we wrote last, it is bulk mail, or it is over 6
+  months old; an unanswered question from the last 6 months waits on us (Needs an answer) and Claude's reply check
+  reads it; an unsure answer on old mail stays in Needs an answer with no Review card. Senders last heard from over a
+  year ago get no "which vendor?" card. Back-check (`mail_reopen_unanswered`): 827 handled threads checked, 494 back to
+  Needs an answer (orders@ 367, personal 127) for the reply check to sort. billing@ keeps its 30-day reply check (Oct
+  16) and the old Gmail is left alone. gmail-sync files confirmations, invoices, credits, pictures and proofs from every
+  year (only the last 6 months start an order check). orders@ is read back to the beginning (it started Oct 2025), as
+  is Jarrett's mailbox.
+- Oct 19, fix: while orders@ read back into its history, gmail-sync skipped every later step for orders@ (filing,
+  paperwork, pictures, freight bills, Claude's sort and reply check) because those waited for the backfill to finish.
+  Now a mailbox already in use reads history in a 7-second slice of each run and the daily steps always run. Jarrett's
+  mailbox finished: Gmail has nothing older than May 9, 2025 in it.
 - Oct 19 (Dana, "all documents folders should refresh itself when any doc lands in there and there is a next process
   that is supposed to take place when it lands"; "Build all 3"): migration 0186. (1) Live refresh: vendor_links,
   order_checks, accounting_documents, sales_reports, report_runs, review_items, ordering_items and tasks are in the

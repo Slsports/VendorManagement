@@ -17,4 +17,4 @@ Every conversation gets an owner, and it lands on that person's Mail list and da
 - Artwork waiting on approval goes to Dana.
 - "Other – not a vendor" senders go to Dana.
 - Mail in a personal mailbox is always its owner's.
-- Old mail from the first load that had been quiet for a week started as handled.
+- Old mail read in from a mailbox's history is handled when one of us answered it (from any of our addresses), when we wrote last, or when it is over 6 months old. A question from the last 6 months that nobody answered shows under **Needs an answer**.
