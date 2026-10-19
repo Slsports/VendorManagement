@@ -53,7 +53,41 @@ Deno.serve(async (req) => {
   }
 
   // the picture back-check (Dana, Oct 15), run by hand from the scheduler's secret
-  const body = await req.clone().json().catch(() => ({})) as { pictures_backcheck?: boolean; forwards_backcheck?: boolean }
+  const body = await req.clone().json().catch(() => ({})) as { pictures_backcheck?: boolean; forwards_backcheck?: boolean; diagnose?: string; message?: string }
+  // Read-only look at one mailbox's Gmail changes since its stored cursor (Oct 19, billing@ stuck since Oct 16): pages,
+  // added and relabeled counts, time taken, and one message fetched three ways. Scheduler secret only; changes nothing.
+  if (trusted && body.diagnose) {
+    const t0 = Date.now()
+    const { data: box } = await db.from('mailboxes').select('address, history_id').eq('address', body.diagnose).maybeSingle()
+    if (!box) return json({ error: 'no such mailbox' }, 404)
+    const gmail = new Gmail(await googleAccessToken(box.address))
+    const out: Record<string, unknown> = { mailbox: box.address, history_id: box.history_id, profile: await gmail.profile() }
+    let pages = 0, added = 0, relabeled = 0, pageToken: string | undefined
+    const addedIds: string[] = []
+    try {
+      do {
+        const h = await gmail.history(box.history_id, pageToken)
+        pages++
+        for (const item of h.history ?? []) {
+          for (const a of item.messagesAdded ?? []) { added++; if (addedIds.length < 30) addedIds.push(a.message.id) }
+          relabeled += (item.labelsAdded?.length ?? 0) + (item.labelsRemoved?.length ?? 0)
+        }
+        pageToken = h.nextPageToken
+      } while (pageToken && Date.now() - t0 < 60_000)
+      Object.assign(out, { pages, added, relabeled, more: !!pageToken, added_sample: addedIds, ms: Date.now() - t0 })
+    } catch (e) {
+      Object.assign(out, { history_error: e instanceof Error ? e.message.slice(0, 300) : String(e), pages, added, relabeled, ms: Date.now() - t0 })
+    }
+    if (body.message) {
+      const tries: Record<string, unknown> = {}
+      for (const f of ['minimal', 'metadata', 'full'] as const) {
+        try { const m = await gmail.message(body.message, f); tries[f] = { ok: true, labels: m.labelIds, internalDate: m.internalDate, sizeEstimate: m.sizeEstimate } }
+        catch (e) { tries[f] = e instanceof Error ? e.message.slice(0, 200) : String(e) }
+      }
+      out.message = tries
+    }
+    return json(out)
+  }
   if (trusted && body.forwards_backcheck) {
     const { data: accts } = await db.from('mail_accounts').select('*')
     const out: unknown[] = []

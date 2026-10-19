@@ -2654,3 +2654,10 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
 - Seen Oct 19 (not fixed, billing@ is Dana's last priority): billing@ has not synced since Oct 16, 09:51 (Gmail 400
   "Precondition check failed" on one message), and the accounting-file job has hit the worker memory limit every minute
   since at least Oct 18.
+- Oct 19, cause found (Dana: "Please find out what is causing the billing@ mail"): since Oct 16, 09:51 Gmail's change
+  list for billing@ shows 6,514 messages ADDED, and they are old mail (samples dated Apr–Jun 2022, older than VMS's
+  billing@ copy, which starts Jun 10, 2022); billing@ now holds 38,407 messages in Gmail, VMS 31,748. gmail-sync tries to
+  take all of them in one run, runs past the 150-second limit and is cut off before it saves its place, so every run
+  starts over and the new billing@ mail since Oct 16 never comes in (Dana: more than 10 since the 17th). One run (Oct
+  19, 15:00) stopped on a Gmail 400 for one 2022 message; that message reads fine now. Who or what added the old mail
+  is not confirmed. gmail-sync has a read-only `diagnose` request (scheduler secret) for this.
