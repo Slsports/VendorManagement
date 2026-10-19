@@ -36,7 +36,7 @@ export function WwdInvoiceTable({ rows, action, showVendor = false }: { rows: Ww
             return (
               <tr key={i.id}>
                 <td className="whitespace-nowrap py-1.5 pr-3 font-medium text-stone-900">{i.seq}{k ? <Badge tone={k.tone} className="ml-1">{k.label}</Badge> : null}</td>
-                <td className="whitespace-nowrap py-1.5 pr-3 text-stone-600">{shortDate(i.wwd_date)}</td>
+                <td className="whitespace-nowrap py-1.5 pr-3 text-stone-600">{shortDate(i.wwd_date)}{i.posted_date ? <span className="block text-xs text-stone-400" title="Posted to Edenred">Edenred {shortDate(i.posted_date)}</span> : null}</td>
                 {showVendor ? <td className="py-1.5 pr-3 text-stone-700">{i.wwd_vendor_name ?? '—'}</td> : null}
                 <td className="py-1.5 pr-3 text-stone-600">
                   {[i.vendor_invoice_number ? `#${i.vendor_invoice_number}` : null, i.po_number ? `PO ${i.po_number}` : null].filter(Boolean).join(' · ') || '—'}

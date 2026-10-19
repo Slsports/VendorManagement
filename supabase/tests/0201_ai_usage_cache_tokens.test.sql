@@ -1,4 +1,4 @@
--- 0197: ai_usage keeps cache read and write tokens, defaulting to 0 for rows the client does not fill.
+-- 0201: ai_usage keeps cache read and write tokens, defaulting to 0 for rows the client does not fill.
 do $$
 declare v_org uuid; v_id uuid;
 begin

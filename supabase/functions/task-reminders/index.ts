@@ -18,12 +18,12 @@ const BATCH = 40
 interface Person { id: string; full_name: string | null; email: string; remind_email: boolean; remind_text: boolean; mobile_phone: string | null }
 interface TaskRow {
   id: string; organization_id: string; title: string; notes: string | null; due_date: string | null; assigned_to: string; created_by: string | null
-  done_by: string | null; done_note: string | null; tag_other: string | null
+  done_by: string | null; done_note: string | null; tag_other: string | null; auto_key: string | null; thread_id: string | null
   vendor: { name: string } | null; carrier: { name: string } | null; rep_group: { name: string } | null
   order: { po_number: string | null; description: string | null } | null
   thread: { subject: string | null; mailbox_id: string | null; shared_at: string | null } | null
 }
-const SELECT = `id, organization_id, title, notes, due_date, assigned_to, created_by, done_by, done_note, tag_other,
+const SELECT = `id, organization_id, title, notes, due_date, assigned_to, created_by, done_by, done_note, tag_other, auto_key, thread_id,
   vendor:vendors!tasks_vendor_id_fkey(name), carrier:carriers!tasks_carrier_id_fkey(name), rep_group:rep_groups!tasks_rep_group_id_fkey(name),
   order:orders!tasks_order_id_fkey(po_number, description), thread:email_threads!tasks_thread_id_fkey(subject, mailbox_id, shared_at)`
 
@@ -84,7 +84,8 @@ function reminderText(t: TaskRow): string {
     t.due_date ? `Due: ${day(t.due_date)}` : null,
     about(t) ? `About: ${about(t)}` : null,
     t.notes ? `\n${t.notes}` : null,
-    `\nOpen it in VMS: ${APP_URL}/tasks?task=${t.id}`,
+    // a reply someone asked to hear about (Dana, Oct 19) opens that reply
+    t.auto_key?.startsWith('reply:') && t.thread_id ? `\nOpen their reply: ${APP_URL}/mail/${t.thread_id}` : `\nOpen it in VMS: ${APP_URL}/tasks?task=${t.id}`,
   ].filter((x) => x !== null).join('\n')
 }
 

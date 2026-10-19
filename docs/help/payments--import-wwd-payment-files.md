@@ -17,4 +17,5 @@ Worldwide's portals never show the whole picture, so VMS puts it together from s
 - Names VMS does not know are listed after import under **WWD names to match**. Import anyway; you pick the vendor once.
 - Invoices tie to orders by our PO, else the vendor's only order for exactly that amount. An order whose WWD invoices are all paid is marked paid with the WWD payment #.
 - The $275 lines are WWD's monthly membership fee, filed under WORLDWIDE.
+- From the EdenRed invoice export, VMS keeps the **Posted Date** as **posted to Edenred** on each WWD invoice: the day WWD posted it there, not the invoice date. It reads the AR columns (AR Terms, Hard Due Date (AR)); the AP columns are WWD's own.
 - "Check #" in WWD is not a check; VMS calls it the **WWD payment #**.

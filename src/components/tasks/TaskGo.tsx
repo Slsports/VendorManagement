@@ -23,7 +23,8 @@ export function TaskGo({ task, onGo }: { task: TaskRow; onGo: () => void }) {
   )
 }
 
-/** A pay-by task: the bill, the pay page (Edenred for WWD, else Bill.com), and "I paid it". VMS never pays anything itself. */
+/** A pay-by task: the bill, the pay page (the WWD portal for WWD, else Bill.com), and "I paid it". VMS never pays anything itself.
+ * WWD bills are paid in the WWD portal, not Edenred (Dana, Oct 19); its address is kept in organizations.edenred_url. */
 function PayPanel({ task, bill, id, onDone }: { task: TaskRow; bill: 'wwd' | 'order' | 'billcom'; id: string; onDone: () => void }) {
   const { organization, role, refreshProfile } = useAuth()
   const q = useSupabaseQuery(() => getPayBill(bill, id), [bill, id])
@@ -32,7 +33,7 @@ function PayPanel({ task, bill, id, onDone }: { task: TaskRow; bill: 'wwd' | 'or
   const admin = role === 'admin'
   const b = q.data
   const payUrl = b?.via === 'billcom' ? organization?.billcom_url || 'https://app.bill.com' : organization?.edenred_url ?? null
-  const payName = b?.via === 'billcom' ? 'Bill.com' : 'Edenred'
+  const payName = b?.via === 'billcom' ? 'Bill.com' : 'the WWD portal'
 
   async function paid() {
     setBusy(true)
@@ -76,7 +77,7 @@ function PayPanel({ task, bill, id, onDone }: { task: TaskRow; bill: 'wwd' | 'or
                 </a>
               ) : admin ? (
                 <span className="flex flex-wrap items-center gap-2">
-                  <Input aria-label="Edenred pay page address" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Paste your Edenred pay page address once" className="h-9 w-72" />
+                  <Input aria-label="WWD portal pay page address" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Paste your WWD portal pay page address once" className="h-9 w-72" />
                   <Button size="sm" variant="secondary" disabled={!/^https:\/\//i.test(url.trim())} onClick={() => void saveUrl()}>Save</Button>
                 </span>
               ) : <span className="text-stone-600">Pay in {payName}.</span>}

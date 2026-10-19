@@ -9,7 +9,7 @@ import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type
 import { forwardedBody, forwardedSender } from '../_shared/forwarded.ts'
 import { extractLinks, itemPicture, maybePaperwork, maybeSheetPaperwork, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
 import { sheetFileText } from '../_shared/sheetFile.ts'
-import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type PictureKind, readArtwork, readEmailVendors, readExpectsReply, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type SentEmailToCheck, type UnsureEmail } from '../_shared/ai.ts'
+import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type PictureKind, readArtwork, readEdenredPdf, readEmailVendors, readExpectsReply, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type SentEmailToCheck, type UnsureEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
@@ -18,6 +18,9 @@ const TIME_BUDGET_MS = 20_000
 const PAGE = 25
 const PARALLEL = 5
 const MAX_PER_RUN = 100
+// More new emails than this since the last sync is old mail arriving in bulk: take the new mail by date instead.
+const HISTORY_CAP = 500
+const BULK_HISTORY_MS = 45_000
 // Each run: new mail, then Claude's reading until AI_UNTIL_MS, filing until FILES_UNTIL_MS, then history (Dana, Oct 19:
 // "as much historical data as possible", without new mail, the reply check or filing ever waiting on it).
 const AI_UNTIL_MS = 10_000
@@ -26,7 +29,7 @@ const FREEMAIL = new Set(['gmail.com', 'googlemail.com', 'yahoo.com', 'ymail.com
 
 interface Account {
   organization_id: string; mailbox: string; internal_domains: string[]; history_id: string | null; backfill_after: string | null
-  backfill_page_token: string | null; backfill_done: boolean; sync_started_at: string | null; messages_synced: number
+  backfill_page_token: string | null; backfill_done: boolean; sync_started_at: string | null; last_sync_at: string | null; messages_synced: number
   /** A personal mailbox (Dana, Oct 11): its row in mailboxes and its owner; null for the shared orders@. */
   box_id: string | null; owner_id: string | null
   /** The old Gmail, which arrives in orders@ (only on the shared account). */
@@ -53,9 +56,19 @@ Deno.serve(async (req) => {
   }
 
   // the picture back-check (Dana, Oct 15), run by hand from the scheduler's secret
-  const body = await req.clone().json().catch(() => ({})) as { pictures_backcheck?: boolean; forwards_backcheck?: boolean; diagnose?: string; message?: string }
+  const body = await req.clone().json().catch(() => ({})) as { pictures_backcheck?: boolean; forwards_backcheck?: boolean; diagnose?: string; message?: string; attachment?: string }
   // Read-only look at one mailbox's Gmail changes since its stored cursor (Oct 19, billing@ stuck since Oct 16): pages,
   // added and relabeled counts, time taken, and one message fetched three ways. Scheduler secret only; changes nothing.
+  // Read-only: one stored attachment's bytes (base64), to look at a new kind of paperwork before building for it.
+  if (trusted && body.attachment) {
+    const { data: a } = await db.from('email_attachments').select('file_name, gmail_attachment_id, email:emails!email_attachments_email_id_fkey(gmail_id, gmail_box)').eq('id', body.attachment).maybeSingle()
+    const em = a?.email as unknown as { gmail_id: string; gmail_box: string | null } | null
+    if (!a?.gmail_attachment_id || !em?.gmail_box) return json({ error: 'no such attachment' }, 404)
+    const bytes = await attachmentBytes(new Gmail(await googleAccessToken(em.gmail_box)), em.gmail_id, a.gmail_attachment_id)
+    let bin = ''
+    for (const b of bytes) bin += String.fromCharCode(b)
+    return json({ file_name: a.file_name, size: bytes.length, base64: btoa(bin) })
+  }
   if (trusted && body.diagnose) {
     const t0 = Date.now()
     const { data: box } = await db.from('mailboxes').select('address, history_id').eq('address', body.diagnose).maybeSingle()
@@ -107,7 +120,7 @@ Deno.serve(async (req) => {
   const { data: accounts, error } = await q
   if (error) return json({ error: error.message }, 500)
   // Personal mailboxes and the old Gmail (Dana, Oct 11) after orders@.
-  let mq = db.from('mailboxes').select('id, organization_id, kind, address, owner_id, history_id, backfill_after, backfill_page_token, backfill_done, sync_started_at, messages_synced').eq('is_active', true)
+  let mq = db.from('mailboxes').select('id, organization_id, kind, address, owner_id, history_id, backfill_after, backfill_page_token, backfill_done, sync_started_at, last_sync_at, messages_synced').eq('is_active', true)
   if (onlyOrg) mq = mq.eq('organization_id', onlyOrg)
   const { data: boxes } = await mq
   const results = []
@@ -172,9 +185,32 @@ async function syncAccount(db: SupabaseClient, acct: Account) {
         fresh.push(...(recent.messages ?? []).map((m) => m.id))
         historyId = (await gmail.profile()).historyId
       }
-      stored += await storeMessages(db, gmail, ctx, fresh, false)
-      await updateLabels(db, gmail, ctx, [...relabel].filter((id) => !fresh.includes(id)))
-      await saveState(db, acct, { history_id: historyId })
+      if (fresh.length > HISTORY_CAP) {
+        // A huge change list is old mail arriving in bulk (billing@, Oct 19: 6,514 emails from 2022 imported after
+        // the first load), and storing it all at once outlived the run every time, so new mail never came in. Take
+        // the new mail by date instead, newest first, a slice per run; the cursor moves on only once it is all in.
+        // The old mail is left for that mailbox's history load.
+        const since = Math.floor(((acct.last_sync_at ? new Date(acct.last_sync_at).getTime() : Date.now() - 3 * 86_400_000) - 86_400_000) / 1000)
+        const recent: string[] = []
+        let token: string | undefined
+        do {
+          const page = await gmail.list(`after:${since} -in:chats`, token, 500)
+          recent.push(...(page.messages ?? []).map((m) => m.id))
+          token = page.nextPageToken
+        } while (token && recent.length < 2_000)
+        const t0 = Date.now()
+        let all = true
+        for (let i = 0; i < recent.length; i += PAGE) {
+          if (Date.now() - t0 > BULK_HISTORY_MS) { all = false; break }
+          stored += await storeMessages(db, gmail, ctx, recent.slice(i, i + PAGE), false)
+        }
+        console.log(`${acct.mailbox}: ${fresh.length} changes since the last sync; took the ${recent.length} newer than the last sync by date${all ? '' : ' (more next run)'}`)
+        if (all) await saveState(db, acct, { history_id: historyId })
+      } else {
+        stored += await storeMessages(db, gmail, ctx, fresh, false)
+        await updateLabels(db, gmail, ctx, [...relabel].filter((id) => !fresh.includes(id)))
+        await saveState(db, acct, { history_id: historyId })
+      }
     }
 
     // Backfill: a first load takes the whole run; reading further back into a mailbox already in use comes last, in
@@ -200,6 +236,9 @@ async function syncAccount(db: SupabaseClient, acct: Account) {
     if (ready && !acct.box_id && aiEnabled() && Date.now() - started < AI_UNTIL_MS) await aiSteps(db, org, started - (TIME_BUDGET_MS - AI_UNTIL_MS))
     // Then filing, newest mail first, until FILES_UNTIL_MS.
     const filesStarted = started - (TIME_BUDGET_MS - FILES_UNTIL_MS)
+    // Edenred's invoice PDFs (WWD's invoices, emailed to orders@ in groups) into each vendor's Invoices, tied to the WWD invoice;
+    // first, as they are few and quick next to the history the other steps are working through.
+    if (ready && !acct.box_id && aiEnabled() && Date.now() - started < FILES_UNTIL_MS) await edenredInvoices(db, gmail, org, filesStarted, ctx.mailbox)
     // Older mail stored before the views existed: read its bulk-mail headers, a few hundred a run.
     if (ready && Date.now() - started < FILES_UNTIL_MS) await readBulkHeaders(db, gmail, org, ctx.mailbox)
     // Price lists, catalogs and order forms into the vendor's files, a few emails a run.
@@ -706,6 +745,94 @@ async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, star
     if (deferred) {
       await db.from('emails').update({ paper_scanned_at: null }).eq('id', e.id)
       break
+    }
+  }
+}
+
+/**
+ * Edenred invoices (Dana, Oct 19): Worldwide's invoice portal emails the WWD invoices to orders@ in groups, one PDF each
+ * (Worldwide's Invoice Summary page, then the vendor's invoice; sometimes the vendor's invoice alone). Claude reads each
+ * PDF's numbers; wwd_edenred_place finds the WWD invoice (adding a Worldwide number VMS has not seen) and its vendor and
+ * order. The file goes to the vendor's Invoices or Credits for the invoice's year, once: one already on file with the
+ * same number, or the same file, is linked instead. Files it can't place are left in the email and a task for Dana
+ * opens it. Every Edenred email, newest first, a few files a run.
+ */
+async function edenredInvoices(db: SupabaseClient, gmail: Gmail, org: string, started: number, box: string) {
+  const { data: queue } = await db.from('emails')
+    .select('id, gmail_id, thread_id, received_at, attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
+    .eq('organization_id', org).eq('gmail_box', box).ilike('from_email', '%@edenredpayinvoice.com').eq('has_attachments', true).is('paper_scanned_at', null)
+    .order('received_at', { ascending: false }).limit(3)
+  let read = 0
+  for (const e of queue ?? []) {
+    if (Date.now() - started > TIME_BUDGET_MS) break
+    const atts = ((e.attachments ?? []) as { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; vendor_link_id: string | null }[])
+      .filter((a) => !a.vendor_link_id && a.gmail_attachment_id && /\.pdf$/i.test(a.file_name))
+    const { data: tried } = await db.from('email_attachments').select('id').eq('email_id', e.id).not('accounting_skip', 'is', null)
+    const left = new Set((tried ?? []).map((x) => x.id))
+    let unplaced = left.size
+    let done = true
+    for (const a of atts.filter((x) => !left.has(x.id))) {
+      // a few a run; the rest wait for the next run
+      if (read >= 6 || Date.now() - started > TIME_BUDGET_MS) { done = false; break }
+      read++
+      try {
+        const bytes = await attachmentBytes(gmail, e.gmail_id, a.gmail_attachment_id!)
+        const r = await readEdenredPdf(db, org, { name: a.file_name, mime: 'application/pdf', bytes })
+        const { data: place, error: pErr } = r ? await db.rpc('wwd_edenred_place', { p_org: org, p: {
+          seq: r.wwd_invoice_number, vendor_invoice_number: r.vendor_invoice_number, vendor_name: r.vendor_name, amount: r.amount, credit: r.credit,
+          posted_date: r.posted_date || null, invoice_date: r.invoice_date || null, po_number: r.po_number || null,
+        } }) : { data: null, error: null }
+        if (pErr) throw new Error(pErr.message)
+        const p = place as { placed: boolean; invoice_ids?: string[]; vendor_id?: string | null; order_id?: string | null; existing_doc?: string | null; doc_number?: string | null; kind?: 'invoice' | 'credit'; seqs?: string[] } | null
+        if (!p?.placed || !p.vendor_id) {
+          // left in the email; the skip note marks it tried so it is not read again
+          await db.from('email_attachments').update({ accounting_skip: p?.placed ? 'Edenred: WWD invoice has no vendor yet' : 'Edenred: no WWD invoice found' }).eq('id', a.id)
+          unplaced++
+          continue
+        }
+        let linkId = p.existing_doc ?? null
+        if (linkId) {
+          const { data: doc } = await db.from('vendor_links').select('storage_path').eq('id', linkId).single()
+          await db.from('email_attachments').update({ vendor_link_id: linkId, storage_path: doc?.storage_path ?? null }).eq('id', a.id)
+        } else if (!(await linkExistingCopy(db, p.vendor_id, a))) {
+          // the vendor's invoice date; Edenred's Posted Date is only when WWD posted it there (Dana, Oct 19)
+          const docDate = r!.invoice_date || e.received_at.slice(0, 10)
+          const label = `${p.kind === 'credit' ? 'Credit' : 'Invoice'} ${p.doc_number ?? a.file_name.replace(/\.pdf$/i, '')}`
+          const path = `${org}/${p.vendor_id}/${crypto.randomUUID()}-${label.replace(/[^A-Za-z0-9._-]+/g, '_')}.pdf`
+          const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: 'application/pdf', upsert: false })
+          if (upErr) throw new Error(`Saving ${a.file_name}: ${upErr.message}`)
+          const { data: link, error } = await db.from('vendor_links').insert({
+            organization_id: org, vendor_id: p.vendor_id, order_id: p.order_id ?? null, kind: p.kind ?? 'invoice', label, storage_path: path, file_name: a.file_name,
+            file_size: bytes.length, mime_type: 'application/pdf', received_at: e.received_at.slice(0, 10), doc_year: Number(docDate.slice(0, 4)),
+            doc_number: p.doc_number ?? null, doc_date: /^\d{4}-\d{2}-\d{2}$/.test(docDate) ? docDate : null, doc_total: r!.amount,
+            source: 'email', email_id: e.id, notes: `From Edenred (WWD ${(p.seqs ?? []).join(', ')})`.slice(0, 300),
+          }).select('id').single()
+          if (error) throw new Error(error.message)
+          linkId = link.id
+          await db.from('email_attachments').update({ vendor_link_id: link.id, storage_path: path }).eq('id', a.id)
+        } else {
+          const { data: att } = await db.from('email_attachments').select('vendor_link_id').eq('id', a.id).single()
+          linkId = att?.vendor_link_id ?? null
+        }
+        if (linkId) await db.from('wwd_invoices').update({ document_id: linkId }).in('id', p.invoice_ids ?? []).is('document_id', null)
+      } catch (err) {
+        console.error(`edenred ${a.file_name} in ${e.id}:`, err instanceof Error ? err.message : err)
+        done = false
+      }
+    }
+    if (!done) break
+    await db.from('emails').update({ paper_scanned_at: new Date().toISOString() }).eq('id', e.id)
+    // files VMS could not place: one task for Dana that opens the email
+    if (unplaced) {
+      const { data: admin } = await db.rpc('org_admin', { p_org: org })
+      if (admin) {
+        // auto_key is unique: a second try for the same email adds nothing
+        await db.from('tasks').insert({
+          organization_id: org, title: `Edenred: ${unplaced} invoice file${unplaced === 1 ? '' : 's'} VMS couldn't place`,
+          notes: 'No WWD invoice, or no vendor, matched these files. Save them to the vendor\'s documents from the email.',
+          due_date: new Date().toISOString().slice(0, 10), assigned_to: admin as string, thread_id: e.thread_id, auto_key: `edenred:${e.id}`,
+        })
+      }
     }
   }
 }

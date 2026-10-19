@@ -2704,10 +2704,44 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   Dashboard Bill.com card (sees_accounting): bills due in 7 days, sent-not-entered. Production API address
   https://gateway.prod.bill.com/connect is from a third-party page, editable in Settings; Save and connect proves it.
 
+## 2026-10-19 — Tell me when they reply; Edenred from Nichole
+- Dana: "flag that email from Nichole so you can tell me when she has responded." Built **Tell me when they reply** on
+  any email: the next email from that person (any conversation, received after the watch was set) becomes a task
+  **Reply from [name]** for the person who set it, reminded at once by their own reminder choices, opening the reply.
+  One reply ends it; **Stop watching** cancels. A reply in mail the watcher can't open never fires it. Migration 0197.
+  Turned on for Dana on Nichole Pence (nicholep@worldwidebuygroup.com), waiting on Edenred's **Save** fix.
+- Edenred (Nichole, Oct 19 call): invoices back to Nov 2025 are emailed to orders@ in groups ("Emailed invoices",
+  noreply@edenredpayinvoice.com, one PDF each); the line-by-line Excel (WWD sequence #, vendor's invoice #, PO) comes
+  once Edenred fixes Save. Filing the emailed PDFs is proposed, not built.
+- billing@ sync fixed (Dana's go, Oct 19): when Gmail reports more than 500 new emails since the last sync (old mail
+  arriving in bulk, like the 6,514 from 2022), VMS takes the mail newer than the last sync by date, a slice per run,
+  and moves the cursor on once it is all in. The old ones wait for billing@'s full history load after launch. First
+  run: 24 new billing@ emails since Oct 16 came in. gmail-sync also has a read-only "attachment" request (scheduler
+  secret) to look at a new kind of paperwork before building for it.
+- Edenred invoice PDFs (Dana's go, Oct 19): each PDF in Edenred's "Emailed invoices" mail to orders@ is read by
+  Claude (cheapest model), placed on its WWD invoice by the Worldwide Invoice Number on the Invoice Summary page, else
+  by the vendor's invoice number (dashes, spaces and leading zeros ignored) and amount; a Worldwide number VMS has not
+  seen is added (source edenred). Only blanks are filled, never overwritten. The PDF goes to the vendor's Invoices or
+  Credits for the invoice's year, tied to the order; one already on file with the same number, or the same file, is
+  linked instead (no duplicates); wwd_invoices.document_id points at it. Files it can't place stay in the email with a
+  task for Dana that opens it. Runs first among the filing steps, every Edenred email newest first. Migration 0198.
+  Dana: Edenred's "Posted Date" is the day WWD posted the invoice to Edenred, so it is never used as the WWD date
+  or the document date (migration 0199). We receive everything at SLS and transfer in LS, so the export needs no
+  Ship To Location or Member Name.
+- Nichole (via Dana, Oct 19): fields marked AP in Edenred are WWD's own; we use the AR fields. The Edenred import
+  reads AR Terms (else Terms Text) and Hard Due Date (AR), never AP Terms or Hard Due Date (AP).
+- Dana: keep Edenred's Posted Date. wwd_invoices.posted_date ("posted to Edenred"), from the export's Posted Date
+  column and from a PDF's Invoice Summary when blank; shown on WWD invoice lists. The seven Oct 19 PDFs with a
+  summary page filled from their pages (migration 0200).
+  Found while building: Pucci's invoice 0100056-IN ($394.44) is on two WWD invoices, 7200324 and 7200998.
+- Dana (Oct 19): WWD invoices are paid in the WWD portal, not Edenred; Edenred does not track payments (that we know
+  of). The pay-by button for WWD bills is **Pay in the WWD portal** (address saved once; kept in
+  organizations.edenred_url). Edenred is building an API; WWD may later report payments through it. Ask at the show.
+
 ## Oct 19 — Claude prompt cache on every VMS call (Dana: "go")
 Anthropic emailed Dana that VMS's prompt cache hit rate is low. Dana said go. Every Claude call in VMS now marks its fixed
 instructions as cacheable (`sys()` in `_shared/claudeClient.ts`); the compare prompt was reordered so the per-order lines come
-after the fixed text. `ai_usage` keeps `cache_read_tokens` and `cache_write_tokens` per call (migration 0197). Honest
+after the fixed text. `ai_usage` keeps `cache_read_tokens` and `cache_write_tokens` per call (migration 0201). Honest
 expectation: most of VMS's spend is the emails and PDFs themselves, which change every call and cannot be cached, so the
 saving is well under Anthropic's "up to 27%"; the numbers in `ai_usage` will say what it really is.
 Found on the way, confirmed in `ai_usage` and git: the unlabeled Sonnet calls (151 of them, $10.63 in the week) were the LS PO
