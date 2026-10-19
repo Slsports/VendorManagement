@@ -2718,3 +2718,11 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   and moves the cursor on once it is all in. The old ones wait for billing@'s full history load after launch. First
   run: 24 new billing@ emails since Oct 16 came in. gmail-sync also has a read-only "attachment" request (scheduler
   secret) to look at a new kind of paperwork before building for it.
+- Edenred invoice PDFs (Dana's go, Oct 19): each PDF in Edenred's "Emailed invoices" mail to orders@ is read by
+  Claude (cheapest model), placed on its WWD invoice by the Worldwide Invoice Number on the Invoice Summary page, else
+  by the vendor's invoice number (dashes, spaces and leading zeros ignored) and amount; a Worldwide number VMS has not
+  seen is added (source edenred). Only blanks are filled, never overwritten. The PDF goes to the vendor's Invoices or
+  Credits for the invoice's year, tied to the order; one already on file with the same number, or the same file, is
+  linked instead (no duplicates); wwd_invoices.document_id points at it. Files it can't place stay in the email with a
+  task for Dana that opens it. Runs first among the filing steps, every Edenred email newest first. Migration 0198.
+  Found while building: Pucci's invoice 0100056-IN ($394.44) is on two WWD invoices, 7200324 and 7200998.
