@@ -13,7 +13,7 @@ import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type Picture
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
-// messages and the scheduler comes back every minute until the 12 months are in.
+// messages and the scheduler comes back every minute until the history is in (from backfill_after).
 const TIME_BUDGET_MS = 20_000
 const PAGE = 25
 const PARALLEL = 5
@@ -157,7 +157,7 @@ async function syncAccount(db: SupabaseClient, acct: Account) {
     if (done && Date.now() - started < TIME_BUDGET_MS) await saveVendorFiles(db, gmail, org, started, ctx.mailbox)
     // Vendors' order confirmations and invoices into their folders; order-check compares them with the order.
     if (done && Date.now() - started < TIME_BUDGET_MS) await savePaperwork(db, gmail, org, started, ctx.mailbox)
-    // Pictures of items from vendors into their Images folder (12 months back); artwork proofs stay in the email.
+    // Pictures of items from vendors into their Images folder (all history); artwork proofs stay in the email.
     if (done && Date.now() - started < TIME_BUDGET_MS) await saveItemPictures(db, gmail, org, started, ctx.mailbox)
     // Freight bills from carriers: a bill per invoice email; Claude reads the PDF when it is attached.
     if (done && Date.now() - started < TIME_BUDGET_MS) await freightBills(db, gmail, org, started, ctx.mailbox)
@@ -596,13 +596,13 @@ async function linkExistingCopy(db: SupabaseClient, vendorId: string, a: { id: s
  * vendor's Confirmations or Invoices folder for the year; saving it starts the order check (order-check reads
  * it, finds the order, compares, and puts it in front of whoever placed the order). Credit memos go to Credits (Dana,
  * Oct 14). Mail from billing systems (WFS's NetSuite) counts too, by file name and subject only. A file the vendor already
- * has on file is linked, never saved twice. Last 12 months, a few a run (only the last 6 months get an order check).
+ * has on file is linked, never saved twice. Every year of mail, newest first, a few a run (Dana, Oct 19: as much history as
+ * possible); only paperwork from the last 6 months starts an order check (order_check_from_document).
  */
 async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, started: number, box: string) {
   const { data: queue } = await db.from('emails')
     .select('id, gmail_id, vendor_id, subject, body_text, view, is_bulk, received_at, forwarded_from, vendor:vendors!emails_vendor_id_fkey(name), attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
     .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).or('direction.eq.in,forwarded_from.not.is.null').not('vendor_id', 'is', null).is('paper_scanned_at', null).eq('has_attachments', true)
-    .gte('received_at', new Date(Date.now() - 365 * 86_400_000).toISOString())
     .order('received_at', { ascending: false }).limit(10)
   let asked = 0
   for (const e of queue ?? []) {
@@ -667,7 +667,7 @@ async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, star
  * of the companies it reps add those names to its lines; proofs go to Proofs; product photos, advertising and the rest
  * go to Images, except for vendors marked "Ask before saving pictures" (Nationwide), whose pictures wait for Save
  * pictures in the email (proofs still save). The same picture sent again is not saved twice. Files the other steps
- * save (price lists, confirmations, invoices) are theirs. 12 months back, a batch a run.
+ * save (price lists, confirmations, invoices) are theirs. Every year of mail, newest first, a batch a run (Dana, Oct 19).
  */
 async function saveItemPictures(db: SupabaseClient, gmail: Gmail, org: string, started: number, box: string) {
   const twoHours = new Date(Date.now() - 2 * 3600_000).toISOString()
@@ -675,7 +675,6 @@ async function saveItemPictures(db: SupabaseClient, gmail: Gmail, org: string, s
     .select('id, gmail_id, vendor_id, sender_id, subject, body_text, received_at, vendor:vendors!emails_vendor_id_fkey(name, ask_before_pictures), attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
     .eq('organization_id', org).eq('gmail_box', box).is('copy_of', null).or('direction.eq.in,forwarded_from.not.is.null').not('vendor_id', 'is', null).eq('has_attachments', true).is('images_scanned_at', null)
     .not('is_bulk', 'is', true).not('files_scanned_at', 'is', null).or(`art_read_at.not.is.null,received_at.lt.${twoHours}`)
-    .gte('received_at', new Date(Date.now() - 365 * 86_400_000).toISOString())
     .order('received_at', { ascending: false }).limit(10)
   let lineIndex: Awaited<ReturnType<typeof freightIndex>> | null = null
   for (const e of queue ?? []) {

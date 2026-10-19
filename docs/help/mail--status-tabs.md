@@ -18,6 +18,7 @@ The row of small tabs under the views shows mail by where it stands.
    - **Deleted**: conversations someone deleted, with Restore.
 
 ## Good to know
+- Old mail read in from history follows the conversation: if one of us wrote back to that person afterward (from orders@ or our own address), it is **Handled**. An unanswered question from the last 6 months shows in **Needs an answer**; older ones are **Handled**. History never creates tasks or Review cards.
 - The same words show as a colored tag on each row and at the top of a conversation.
 - Handled mail leaves every tab except **Handled** and **All**; it stays on its vendor's page too.
 - A carrier update can also show a shipping tag, such as **Delivered** or **In transit**.
