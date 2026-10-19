@@ -1224,7 +1224,7 @@ const EdenredAnswer = z.object({
   vendor_name: z.string().describe('The vendor (the summary\'s "Vendor Name", else the company that issued the invoice)'),
   amount: z.number().nullable().describe('"Invoice Amount" on the summary, else the invoice total; always positive'),
   credit: z.boolean().describe('True for a credit memo or a return credit (negative quantities or "Credit" on the page)'),
-  posted_date: z.string().describe('"Posted Date" on the summary, YYYY-MM-DD; empty when there is none'),
+  posted_date: z.string().describe('"Posted Date" on the summary (the day WWD posted it to Edenred), YYYY-MM-DD; empty when there is none'),
   invoice_date: z.string().describe("The vendor's invoice date, YYYY-MM-DD; empty when not shown"),
   po_number: z.string().describe('Our PO ("Customer P.O.", "PO #") as printed; empty when none'),
 })

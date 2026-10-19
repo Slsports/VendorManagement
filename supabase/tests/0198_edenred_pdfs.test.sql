@@ -22,8 +22,8 @@ select r->>'kind' = 'credit' and r->>'existing_doc' is null as credit
   from public.wwd_edenred_place('00000000-0000-0000-0000-000000000001', '{"seq":"07300003","vendor_invoice_number":"CM-9","amount":50,"credit":true}') r;
 -- a Worldwide number VMS has never seen is added
 select (r->>'placed')::boolean and (r->>'added')::boolean as added
-  from public.wwd_edenred_place('00000000-0000-0000-0000-000000000001', '{"seq":"07399999","vendor_invoice_number":"A-1","vendor_name":"Edentest Lures","amount":10,"posted_date":"2025-11-20"}') r;
-select kind = 'invoice' and amount = 10 and sources = array['edenred'] and wwd_date = '2025-11-20' as new_row from public.wwd_invoices where seq = '7399999';
+  from public.wwd_edenred_place('00000000-0000-0000-0000-000000000001', '{"seq":"07399999","vendor_invoice_number":"A-1","vendor_name":"Edentest Lures","amount":10,"invoice_date":"2025-11-12","posted_date":"2025-11-20"}') r;
+select kind = 'invoice' and amount = 10 and sources = array['edenred'] and wwd_date is null and vendor_invoice_date = '2025-11-12' as new_row from public.wwd_invoices where seq = '7399999';
 -- nothing to go on
 select not (r->>'placed')::boolean as unplaced
   from public.wwd_edenred_place('00000000-0000-0000-0000-000000000001', '{"seq":"","vendor_invoice_number":"NOPE-404","amount":1}') r;

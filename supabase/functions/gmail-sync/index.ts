@@ -795,7 +795,8 @@ async function edenredInvoices(db: SupabaseClient, gmail: Gmail, org: string, st
           const { data: doc } = await db.from('vendor_links').select('storage_path').eq('id', linkId).single()
           await db.from('email_attachments').update({ vendor_link_id: linkId, storage_path: doc?.storage_path ?? null }).eq('id', a.id)
         } else if (!(await linkExistingCopy(db, p.vendor_id, a))) {
-          const docDate = r!.invoice_date || r!.posted_date || e.received_at.slice(0, 10)
+          // the vendor's invoice date; Edenred's Posted Date is only when WWD posted it there (Dana, Oct 19)
+          const docDate = r!.invoice_date || e.received_at.slice(0, 10)
           const label = `${p.kind === 'credit' ? 'Credit' : 'Invoice'} ${p.doc_number ?? a.file_name.replace(/\.pdf$/i, '')}`
           const path = `${org}/${p.vendor_id}/${crypto.randomUUID()}-${label.replace(/[^A-Za-z0-9._-]+/g, '_')}.pdf`
           const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: 'application/pdf', upsert: false })

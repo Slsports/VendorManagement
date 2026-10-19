@@ -2725,4 +2725,7 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   Credits for the invoice's year, tied to the order; one already on file with the same number, or the same file, is
   linked instead (no duplicates); wwd_invoices.document_id points at it. Files it can't place stay in the email with a
   task for Dana that opens it. Runs first among the filing steps, every Edenred email newest first. Migration 0198.
+  Dana: Edenred's "Posted Date" is the day WWD posted the invoice to Edenred, so it is never used as the WWD date
+  or the document date (migration 0199). We receive everything at SLS and transfer in LS, so the export needs no
+  Ship To Location or Member Name.
   Found while building: Pucci's invoice 0100056-IN ($394.44) is on two WWD invoices, 7200324 and 7200998.
