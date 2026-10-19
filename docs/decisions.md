@@ -2608,3 +2608,6 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
 - Oct 19 (Dana, on the proposed contact rules, #3): the Main rep comes from email over the last **24 months** (not 12),
   unless Dana picks someone. Pelican Products added to the outdated-portal list (John Waters, from Jarrett's mail).
   The five contact rules are still waiting for Dana's go.
+- Oct 19 (Dana): the contact rules use one window, **24 months**, for both confirming a portal contact by email (#2) and
+  the Main rep (#3). Jarrett's mailbox (jarrett@) is read back to the beginning (backfill from 2015, about 2.5 years
+  of mail expected; old threads come in as handled, no duplicates), so his vendor mail counts too.
