@@ -2622,3 +2622,7 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   16) and the old Gmail is left alone. gmail-sync files confirmations, invoices, credits, pictures and proofs from every
   year (only the last 6 months start an order check). orders@ is read back to the beginning (it started Oct 2025), as
   is Jarrett's mailbox.
+- Oct 19, fix: while orders@ read back into its history, gmail-sync skipped every later step for orders@ (filing,
+  paperwork, pictures, freight bills, Claude's sort and reply check) because those waited for the backfill to finish.
+  Now a mailbox already in use reads history in a 7-second slice of each run and the daily steps always run. Jarrett's
+  mailbox finished: Gmail has nothing older than May 9, 2025 in it.
