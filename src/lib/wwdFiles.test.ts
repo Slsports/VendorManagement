@@ -26,12 +26,12 @@ describe('WWD files', () => {
 
   it('reads the AR terms and due date, never the AP ones (Nichole, Oct 19)', () => {
     const t = [
-      ['Invoice Type', 'Seq No / AR Invoice No', 'Vendor Name', 'Invoice Amount', 'Terms Text', 'AP Terms', 'AR Terms', 'Hard Due Date (AP)', 'Hard Due Date (AR)'],
-      ['DS', '07200324', 'G PUCCI & SONS INC', 394.44, '2% 30 NET 60', 'ASAP - 01', 'NET 30', '11/05/2025', '12/03/2025'],
-      ['DS', '07200325', 'G PUCCI & SONS INC', 10, '2% 30 NET 60', 'ASAP - 01', '', '11/05/2025', ''],
+      ['Invoice Type', 'Seq No / AR Invoice No', 'Vendor Name', 'Invoice Amount', 'Terms Text', 'AP Terms', 'AR Terms', 'Hard Due Date (AP)', 'Hard Due Date (AR)', 'Posted Date'],
+      ['DS', '07200324', 'G PUCCI & SONS INC', 394.44, '2% 30 NET 60', 'ASAP - 01', 'NET 30', '11/05/2025', '12/03/2025', '11/18/2025'],
+      ['DS', '07200325', 'G PUCCI & SONS INC', 10, '2% 30 NET 60', 'ASAP - 01', '', '11/05/2025', '', ''],
     ]
     const { batch } = parseWwdTable(t, 'ER.xlsx')
-    expect(batch.invoices[0]).toMatchObject({ terms: 'NET 30', due_date: '2025-12-03' })
+    expect(batch.invoices[0]).toMatchObject({ terms: 'NET 30', due_date: '2025-12-03', posted_date: '2025-11-18' })
     expect(batch.invoices[1]).toMatchObject({ terms: '2% 30 NET 60', due_date: null })
   })
 

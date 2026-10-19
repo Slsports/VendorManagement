@@ -2730,4 +2730,7 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   Ship To Location or Member Name.
 - Nichole (via Dana, Oct 19): fields marked AP in Edenred are WWD's own; we use the AR fields. The Edenred import
   reads AR Terms (else Terms Text) and Hard Due Date (AR), never AP Terms or Hard Due Date (AP).
+- Dana: keep Edenred's Posted Date. wwd_invoices.posted_date ("posted to Edenred"), from the export's Posted Date
+  column and from a PDF's Invoice Summary when blank; shown on WWD invoice lists. The seven Oct 19 PDFs with a
+  summary page filled from their pages (migration 0200).
   Found while building: Pucci's invoice 0100056-IN ($394.44) is on two WWD invoices, 7200324 and 7200998.

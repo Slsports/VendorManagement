@@ -22,6 +22,8 @@ export interface WwdInvoiceRow {
   terms: string | null
   freight_amount: number | null
   sheet_paid_date: string | null
+  /** Edenred's Posted Date: when WWD posted it to Edenred */
+  posted_date?: string | null
   source: 'edenred' | 'sheet' | 'scan'
 }
 export interface WwdPaymentRow { ref: string; pay_date: string; total: number | null }
@@ -117,7 +119,7 @@ export function parseEdenRed(table: unknown[][]): WwdInvoiceRow[] {
     type: col(/^invoice type/), seq: col(/^seq no/), po: col(/^po number/), vendor: col(/^vendor name/), received: col(/^received date/),
     inv: col(/^invoice number/), invDate: col(/^invoice date/), amount: col(/^invoice amount/), freight: col(/^freight amount/),
     // AR is what WWD bills us; AP columns are WWD's own (Nichole, Oct 19) and never read
-    terms: col(/^terms text/), arTerms: col(/^ar terms$/), due: h.findIndex((c) => /^hard due date/.test(c) && !/\(ap\)/.test(c)),
+    posted: col(/^posted date/), terms: col(/^terms text/), arTerms: col(/^ar terms$/), due: h.findIndex((c) => /^hard due date/.test(c) && !/\(ap\)/.test(c)),
   }
   const at = (r: unknown[], i: number) => (i >= 0 ? r[i] : undefined)
   return table.slice(hi + 1).flatMap((r) => {
@@ -128,7 +130,7 @@ export function parseEdenRed(table: unknown[][]): WwdInvoiceRow[] {
       seq, kind: t === 'CM' ? 'credit' : t === 'DS' ? 'invoice' : null, wwd_date: wwdDate(at(r, C.received)), vendor_name: text(at(r, C.vendor)),
       po_number: text(at(r, C.po)), vendor_invoice_number: text(at(r, C.inv)), vendor_invoice_date: wwdDate(at(r, C.invDate)), amount: wwdMoney(at(r, C.amount)),
       discount: null, due_date: wwdDate(at(r, C.due)), terms: text(at(r, C.arTerms)) ?? text(at(r, C.terms)), freight_amount: wwdMoney(at(r, C.freight)) || null,
-      sheet_paid_date: null, source: 'edenred' as const,
+      sheet_paid_date: null, posted_date: wwdDate(at(r, C.posted)), source: 'edenred' as const,
     }]
   })
 }

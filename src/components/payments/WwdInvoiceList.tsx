@@ -61,6 +61,7 @@ export function WwdInvoiceList({ vendorId, orderId, title = 'WWD invoices', fold
                   <span className="font-medium text-stone-900">WWD #{i.seq}</span>
                   {k ? <Badge tone={k.tone} className="ml-2">{k.label}</Badge> : null}
                   <span className="text-stone-500"> · {shortDate(i.wwd_date)}</span>
+                  {i.posted_date ? <span className="text-stone-500"> · posted to Edenred {shortDate(i.posted_date)}</span> : null}
                   {i.vendor_invoice_number ? <span className="text-stone-500"> · their invoice {i.vendor_invoice_number}</span> : null}
                   {i.po_number ? <span className="text-stone-500"> · PO {i.po_number}</span> : null}
                   {orderId && i.vendor ? <Link to={`${ROUTES.vendors}/${i.vendor.id}`} className="text-brand hover:underline"> · {i.vendor.name}</Link> : null}

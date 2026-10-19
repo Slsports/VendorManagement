@@ -16,4 +16,4 @@ Edenred (Worldwide's invoice site) emails WWD invoices to orders@ in groups, one
 - No duplicates: if that invoice is already in the vendor's documents (same invoice number), the email is linked to the one on file instead.
 - A PDF without the Invoice Summary page is matched by the vendor's invoice number and amount.
 - Files VMS can't place stay in the email, and you get a task, **Edenred: N invoice files VMS couldn't place**, that opens the email.
-- Nothing already in VMS is overwritten; VMS only fills in blanks (like a missing PO).
+- Nothing already in VMS is overwritten; VMS only fills in blanks (like a missing PO, or the **posted to Edenred** date from the Invoice Summary page).
