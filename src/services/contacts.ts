@@ -12,8 +12,9 @@ export function listAddressBook(organizationId: string): Promise<AddressBookEntr
   const p = (async () => {
     const [wwd, reps, vend] = await Promise.all([
       supabase.from('partner_contacts').select('name, email, department, partners(name)').eq('organization_id', organizationId).eq('is_active', true).not('email', 'is', null),
-      supabase.from('rep_group_contacts').select('name, email, rep_groups(name)').eq('organization_id', organizationId).not('email', 'is', null),
-      supabase.from('vendor_emails').select('contact_name, email, contact_type, vendors!vendor_emails_vendor_id_fkey(name, is_active)').eq('organization_id', organizationId).not('email', 'is', null),
+      // former contacts are never suggested (Dana, Oct 19); they stay on the vendor page for finding old mail
+      supabase.from('rep_group_contacts').select('name, email, rep_groups(name)').eq('organization_id', organizationId).not('email', 'is', null).is('former_at', null),
+      supabase.from('vendor_emails').select('contact_name, email, contact_type, vendors!vendor_emails_vendor_id_fkey(name, is_active)').eq('organization_id', organizationId).not('email', 'is', null).is('former_at', null),
     ])
     for (const r of [wwd, reps, vend]) if (r.error) throw r.error
     return [

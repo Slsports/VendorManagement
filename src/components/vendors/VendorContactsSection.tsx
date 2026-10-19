@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { AlertTriangle, Mail, Pencil, Plus, Star, Trash2 } from 'lucide-react'
-import { addVendorEmail, deleteVendorEmail, moveContactToRepGroup, updateVendor, updateVendorEmail } from '@/services/vendors'
+import { AlertTriangle, History, Mail, Pencil, Plus, RotateCcw, Star, Trash2, UserX } from 'lucide-react'
+import { addVendorEmail, moveContactToRepGroup, setRepGroupContact, setVendorContact, updateVendor, updateVendorEmail } from '@/services/vendors'
 import { updateRepGroupContact } from '@/services/lines'
 import { ROUTES } from '@/lib/constants'
 import { CONTACT_TYPE_LABELS } from '@/lib/vendors'
 import { cn, errorMessage } from '@/lib/utils'
 import type { ContactType } from '@/types'
-import { ourReps, peopleFor, type ContactsVendor, type PersonRow } from '@/lib/contacts'
+import { formerFor, ourReps, peopleFor, type ContactsVendor, type PersonRow } from '@/lib/contacts'
+import { mailWithUrl } from '@/lib/mail'
 import { Badge, Button, FormField, Input } from '@/components/ui'
 import { FoldSection } from '@/components/shared/FoldSection'
 import { PhoneLinks, PhonesEditor } from '@/components/shared/Phones'
@@ -41,6 +42,7 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
   const group = v.rep_groups
   const showToGroup = !!group && !editingGroup && form.roles.includes('rep')
   const people = peopleFor(v)
+  const former = formerFor(v)
   const main = new Set(ourReps(v).map((p) => p.key))
 
   // "Add our rep" at the top of the vendor page: open this section on a new contact with Rep ticked, and scroll to it.
@@ -112,10 +114,23 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
   }
   const toggleRole = (r: ContactType) => setForm((f) => ({ ...f, roles: f.roles.includes(r) ? f.roles.filter((x) => x !== r) : [...f.roles, r] }))
 
-  async function remove(id: string) {
-    if (!window.confirm('Remove this contact?')) return
+  /** Someone who has left (Dana, Oct 19): kept, folded under Former contacts, so their old mail can still be found by name. */
+  async function setFormer(p: PersonRow, isFormer: boolean) {
     try {
-      await deleteVendorEmail(id)
+      if (p.kind === 'vendor') await setVendorContact(p.id, isFormer ? 'former' : 'current')
+      else await setRepGroupContact(p.id, isFormer ? 'former' : 'current')
+      toast.success(isFormer ? `${p.name || p.email} moved to Former contacts` : `${p.name || p.email} is a current contact again`)
+      await onChange()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
+
+  /** Delete is for mistakes only: an import never adds them back. */
+  async function remove(p: PersonRow) {
+    if (!window.confirm(`Delete ${p.name || p.email}?\n\nOnly for a mistake (they were never this vendor's contact). Someone who has left goes under "No longer their rep" instead, so you can still find their old emails.`)) return
+    try {
+      await setVendorContact(p.id, 'delete')
       await onChange()
     } catch (err) {
       toast.error(errorMessage(err))
@@ -178,6 +193,7 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
                     {p.confirmedAt ? <Badge tone="success" className="ml-1">Confirmed {new Date(p.confirmedAt).toLocaleDateString()}</Badge> : null}
                     {p.badEmail ? <Badge tone="danger" className="ml-1">Bad email</Badge> : null}
                     {p.learned ? <span className="ml-2 text-xs font-normal text-stone-400" title={p.note ?? undefined}>Learned from email</span> : null}
+                    {p.portalUnconfirmed ? <span title="Only the WWD portal lists them: no email with them about this vendor in 24 months. Never shown as Main rep until confirmed."><Badge tone="warning" className="ml-1">From WWD · not confirmed</Badge></span> : null}
                   </p>
                   {/* links inside the card do their own thing, not open the editor */}
                   <p className="flex flex-wrap gap-x-4 text-stone-600" onClick={(e) => e.stopPropagation()}>
@@ -194,8 +210,11 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
                   <button type="button" onClick={() => edit(p)} aria-label={`Change ${p.name || p.email}`} title="Change" className="rounded-md p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-700">
                     <Pencil className="size-4" aria-hidden="true" />
                   </button>
+                  <button type="button" onClick={() => void setFormer(p, true)} aria-label={`${p.name || p.email} is no longer there`} title={p.roles.includes('rep') ? 'No longer their rep (kept under Former contacts)' : 'No longer there (kept under Former contacts)'} className="rounded-md p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-700">
+                    <UserX className="size-4" aria-hidden="true" />
+                  </button>
                   {p.kind === 'vendor' ? (
-                    <button type="button" onClick={() => void remove(p.id)} aria-label={`Remove ${p.name || p.email}`} className="rounded-md p-1.5 text-stone-400 hover:bg-stone-100 hover:text-red-600">
+                    <button type="button" onClick={() => void remove(p)} aria-label={`Delete ${p.name || p.email}`} title="Delete (a mistake only)" className="rounded-md p-1.5 text-stone-400 hover:bg-stone-100 hover:text-red-600">
                       <Trash2 className="size-4" aria-hidden="true" />
                     </button>
                   ) : null}
@@ -205,8 +224,41 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
           ))}
         </ul>
       )}
+      {former.length ? <FormerContacts people={former} canEdit={canEdit} onCurrent={(p) => void setFormer(p, false)} /> : null}
       {!people.some((p) => p.email) ? <p className="mt-2 inline-flex items-center gap-1 text-xs text-stone-400"><AlertTriangle className="size-3.5" aria-hidden="true" /> The discrepancy and status emails need a contact with an email.</p> : null}
     </FoldSection>
     </div>
+  )
+}
+
+const monthYear = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+
+/**
+ * Former contacts (Dana, Oct 19: "if we don't know the previous rep's name, it's harder to search for them"): folded,
+ * with when we emailed them; the email opens all mail with them.
+ */
+function FormerContacts({ people, canEdit, onCurrent }: { people: PersonRow[]; canEdit: boolean; onCurrent: (p: PersonRow) => void }) {
+  return (
+    <details className="mt-3 rounded-xl bg-stone-50 px-3 py-2 text-sm">
+      <summary className="cursor-pointer select-none font-medium text-stone-700"><History className="mr-1 inline size-4 align-[-3px] text-stone-400" aria-hidden="true" />Former contacts ({people.length})</summary>
+      <ul className="mt-2 divide-y divide-stone-200">
+        {people.map((p) => (
+          <li key={p.key} className="flex items-start justify-between gap-3 py-2">
+            <div className="min-w-0">
+              <p className="font-medium text-stone-800">{p.name || p.email || p.phones[0]?.number}<span className="ml-2 text-xs font-normal text-stone-500">{p.type}{p.title ? ` · ${p.title}` : ''}</span></p>
+              <p className="flex flex-wrap gap-x-4 text-stone-600">
+                {p.email ? <Link to={mailWithUrl(ROUTES.mailWith, p.email)} className="inline-flex items-center gap-1 hover:text-brand" title="All mail with them"><Mail className="size-3.5" aria-hidden="true" />{p.email}</Link> : null}
+                <PhoneLinks phones={p.phones} />
+              </p>
+              <p className="text-xs text-stone-500">
+                {p.firstMailAt && p.lastMailAt ? `Emailed ${monthYear(p.firstMailAt)}${monthYear(p.firstMailAt) !== monthYear(p.lastMailAt) ? ` to ${monthYear(p.lastMailAt)}` : ''}` : 'No email with them on file'}
+                {' · '}no longer there since {new Date(p.formerAt!).toLocaleDateString()}
+              </p>
+            </div>
+            {canEdit ? <Button size="sm" variant="ghost" onClick={() => onCurrent(p)} leftIcon={<RotateCcw className="size-3.5" aria-hidden="true" />}>Current again</Button> : null}
+          </li>
+        ))}
+      </ul>
+    </details>
   )
 }

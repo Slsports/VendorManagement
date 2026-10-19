@@ -124,6 +124,20 @@ export async function deleteVendorEmail(id: string) {
   if (error) throw error
 }
 
+/**
+ * The five contact rules (Dana, Oct 19): keep a portal contact, mark someone no longer there (kept, folded, never Main
+ * rep), make them current again, or delete a mistake (never added back by an import).
+ */
+export async function setVendorContact(id: string, action: 'keep' | 'former' | 'current' | 'delete'): Promise<void> {
+  const { error } = await supabase.rpc('vendor_contact_set', { p_id: id, p_action: action })
+  if (error) throw error
+}
+
+export async function setRepGroupContact(id: string, action: 'former' | 'current'): Promise<void> {
+  const { error } = await supabase.rpc('rep_group_contact_set', { p_id: id, p_action: action })
+  if (error) throw error
+}
+
 export async function saveOrderWindow(input: TablesInsert<'vendor_order_windows'> & { id?: string }): Promise<VendorOrderWindow> {
   const { data, error } = await supabase.from('vendor_order_windows').upsert(input).select('*').single()
   if (error) throw error

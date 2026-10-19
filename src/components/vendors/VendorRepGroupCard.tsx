@@ -16,7 +16,7 @@ export function VendorRepGroupCard({ vendorId, group }: { vendorId: string; grou
       ) : (
         <>
           <Link to={`${ROUTES.repGroups}/${group.id}`} className="inline-flex items-center gap-1.5 font-medium text-stone-900 hover:text-brand"><Users className="size-4" aria-hidden="true" />{group.name}</Link>
-          <p className="text-sm text-stone-600">{[(group.rep_group_contacts ?? []).map((c) => c.name || c.email).filter(Boolean).join(', '), group.phone].filter(Boolean).join(' · ')}</p>
+          <p className="text-sm text-stone-600">{[(group.rep_group_contacts ?? []).filter((c) => !c.former_at).map((c) => c.name || c.email).filter(Boolean).join(', '), group.phone].filter(Boolean).join(' · ')}</p>
           {q.data && (q.data.vendors.length || q.data.lines.length) ? (
             <div className="mt-3 text-sm">
               <p className="text-xs font-medium text-stone-500">Also reps</p>

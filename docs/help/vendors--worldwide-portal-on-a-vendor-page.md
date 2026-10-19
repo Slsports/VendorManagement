@@ -14,6 +14,6 @@ For a Worldwide vendor, the **Worldwide portal** box on the vendor page shows wh
 
 ## Good to know
 - A green tag shows how long a show program runs, amber means it ends within 30 days, and gray means expired. Expired programs stay, so you can check an order against the terms it was placed under.
-- The people the portal lists are in **Reps & contacts** as not yet confirmed. The portal lists reps for every area of the country, not only ours; the territory and rep company are in each person's note.
+- The people the portal lists are in **Reps & contacts**, tagged **From WWD · not confirmed** until we've emailed them about this vendor in the last 24 months (or the vendor confirms them on its update form, or you click **Keep** on its review card). They are never the main rep while not confirmed. The portal lists reps for every area of the country, not only ours; the territory and rep company are in each person's note.
 - Zero upcharge in this box is what the portal says, for reference only. The vendor's **WWD 0% upcharge** tag comes from the Worldwide show lists and rep sheets, which win over the portal.
 - The box only shows for vendors found in the portal. Direct and Faire vendors are not in the portal.

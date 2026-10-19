@@ -34,7 +34,7 @@ export default function RepGroupDetailPage() {
       <PageHeader
         eyebrow="Rep group"
         title={g.name}
-        description={[g.rep_group_contacts.length ? `${g.rep_group_contacts.length} rep${g.rep_group_contacts.length === 1 ? '' : 's'}` : 'No reps on file yet', g.phone, g.email].filter(Boolean).join(' · ')}
+        description={[g.rep_group_contacts.filter((c) => !c.former_at).length ? `${g.rep_group_contacts.filter((c) => !c.former_at).length} rep${g.rep_group_contacts.filter((c) => !c.former_at).length === 1 ? '' : 's'}` : 'No reps on file yet', g.phone, g.email].filter(Boolean).join(' · ')}
         actions={canEdit && !editing ? (
           <div className="flex gap-2">
             <Button variant="ghost" className="text-red-700 hover:bg-red-50" leftIcon={<Trash2 className="size-4" aria-hidden="true" />} onClick={async () => {

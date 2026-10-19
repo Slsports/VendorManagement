@@ -1,7 +1,7 @@
 ---
 title: Add reps and contacts to a vendor
 section: Vendors
-keywords: contact, rep, sales rep, works for rep group, enter once, our rep, star, assigned rep, phone, cell, work phone, fax, several phones, email, accounting, customer service, owner, checkbox, edit contact
+keywords: contact, rep, former rep, no longer their rep, old rep, delete contact, sales rep, works for rep group, enter once, our rep, star, assigned rep, phone, cell, work phone, fax, several phones, email, accounting, customer service, owner, checkbox, edit contact
 who: Admin, managers and buyers
 ---
 The **Reps & contacts** box holds everyone you deal with at a vendor. It is on the vendor's page and at the top of its **Edit** page. One of them is our **Main rep**: the person we place orders through.
@@ -20,6 +20,6 @@ The **Reps & contacts** box holds everyone you deal with at a vendor. It is on t
 - When the vendor has a rep group, the rep group's rep is the main rep unless you pick someone else. The company's own people (customer service, shipping, billing) are there for reference, even when they write to us.
 - The rep group's reps are listed here too, tagged with the rep group's name. Changing one here changes them on every vendor they rep. Remove them on the rep group's page.
 - Click an email address to write to them from VMS (from orders@, with your signature).
-- To remove a contact, click the trash can on its row.
+- Someone left? Click the person-with-an-x button on their row (**No longer their rep**). They move to **Former contacts** at the bottom of the box, so you can still find their old emails. The trash can (**Delete**) is only for a mistake, someone who was never this vendor's contact. See "Former contacts".
 - Each number shows with its kind (Cell, Work, or the name you typed). Tap a number to call it.
 - If no contact has an email, a note reminds you: the discrepancy and status emails need one.

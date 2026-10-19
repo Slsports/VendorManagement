@@ -2758,3 +2758,22 @@ copied into VMS tables and no mail is sent.
 Dana (Oct 19, "go"): when a provider email needs something done, the watch makes a task for Dana (her dashboard, Tasks,
 reminded at once, **Go to it** opens the email) with the to-do in Claude's own words and a due date; one task per email
 (`scripts/provider-mail.mjs --task`). The email text itself is never copied into the task.
+
+## 2026-10-19 — The five contact rules, with former contacts (Dana's go)
+- Dana: "with outdated reps is there still a record that that person was our rep at one point … if we don't know the
+  previous reps name, its harder to search for them." Built with the five rules (migration 0202):
+  1. Portal contacts start unconfirmed ("From WWD · not confirmed").
+  2. Confirmed by mail with that address about that vendor (filed to it, naming it or tagged) in the last 24 months, the
+     vendor's update form, or Dana's Keep. Mail dates from every mailbox but Accounting; only dates are kept.
+  3. Main rep: starred, else the rep group (not portal-only people), else the vendor's own reps, most recent mail about
+     the vendor first. Unconfirmed portal people and former contacts never.
+  4. One Review card per vendor (kind portal_contact): Keep / No longer their rep / Delete; closes when all answered;
+     refreshed hourly (contacts-hourly cron, :41). The answers are the outdated-portal list for the show.
+  5. Removed stays removed: deletes leave a contact_removals row (Jeff Lipke on WFS added); the portal import skips
+     them and former contacts.
+- Former contacts (vendor_emails.former_at, rep_group_contacts.former_at): "No longer their rep" keeps them folded under
+  Former contacts / Former reps with first and last email dates and a link to all mail with them; never Main rep,
+  never suggested in the address book; mail from them still files. Delete is for mistakes only.
+- Back-check (Oct 19): 467 portal contacts, 63 confirmed by mail about their vendor, 404 not confirmed on 196 vendor
+  cards. 122 vendors whose Main rep was a portal-only rep now show none until one is picked or confirmed. Jeff Lipke:
+  confirmed on Triple T, not confirmed on Mykos-Lamo (on its card).

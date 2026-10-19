@@ -1,9 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Mail, Pencil, Plus, Trash2, UserPlus } from 'lucide-react'
+import { History, Mail, Pencil, Plus, RotateCcw, Trash2, UserPlus, UserX } from 'lucide-react'
 import { addRepGroupContact, deleteRepGroupContact, updateRepGroupContact } from '@/services/lines'
-import { listRepsOnGroupVendors, moveContactToRepGroup } from '@/services/vendors'
+import { mailWithUrl } from '@/lib/mail'
+import { ROUTES } from '@/lib/constants'
+import { listRepsOnGroupVendors, moveContactToRepGroup, setRepGroupContact } from '@/services/vendors'
 import { cn, errorMessage } from '@/lib/utils'
 import { cleanPhones, phonesOf, type ContactPhone } from '@/lib/phones'
 import { PhoneLinks, PhonesEditor } from '@/components/shared/Phones'
@@ -61,8 +64,19 @@ export function RepGroupPeople({ repGroupId, people, canEdit, onChange }: { repG
     setAdding(true)
   }
 
+  /** No longer with the group (Dana, Oct 19): kept under Former reps, so their old mail can be found by name. */
+  async function setFormer(p: RepGroupContact, isFormer: boolean) {
+    try {
+      await setRepGroupContact(p.id, isFormer ? 'former' : 'current')
+      toast.success(isFormer ? `${p.name || p.email} moved to Former reps` : `${p.name || p.email} is a current rep again`)
+      await onChange()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
+
   async function remove(p: RepGroupContact) {
-    if (!window.confirm(`Remove ${p.name || p.email || 'this rep'}?`)) return
+    if (!window.confirm(`Delete ${p.name || p.email || 'this rep'}?\n\nOnly for a mistake. Someone who has left goes under "No longer with them", so their old emails can still be found.`)) return
     try {
       await deleteRepGroupContact(p.id)
       await onChange()
@@ -71,10 +85,12 @@ export function RepGroupPeople({ repGroupId, people, canEdit, onChange }: { repG
     }
   }
 
+  const current = people.filter((p) => !p.former_at)
+  const former = people.filter((p) => p.former_at)
   return (
     <section className="mb-6 rounded-2xl border border-stone-200 bg-white p-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Reps <span className="font-normal text-stone-400">({people.length})</span></h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Reps <span className="font-normal text-stone-400">({current.length})</span></h2>
         {canEdit && !adding ? <Button size="sm" variant="secondary" onClick={() => { setForm({ name: '', title: '', email: '', phones: [] }); setEditingId(null); setAdding(true) }} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add rep</Button> : null}
       </div>
       <p className="mt-1 text-xs text-stone-500">Mail from any of these addresses files to this rep group. They are the main rep on the vendors they rep, unless someone else is picked there.{canEdit ? ' Click a rep to change them.' : ''}</p>
@@ -105,9 +121,9 @@ export function RepGroupPeople({ repGroupId, people, canEdit, onChange }: { repG
           </div>
         </form>
       ) : null}
-      {people.length === 0 && !adding ? <p className="mt-3 text-sm text-stone-500">No reps on file yet.</p> : (
+      {current.length === 0 && !adding ? <p className="mt-3 text-sm text-stone-500">No reps on file yet.</p> : (
         <ul className="mt-3 divide-y divide-stone-100">
-          {people.map((p) => (
+          {current.map((p) => (
             <li key={p.id} onClick={canEdit ? () => edit(p) : undefined} className={cn('flex items-start justify-between gap-3 py-2.5 text-sm', canEdit && 'cursor-pointer rounded-lg hover:bg-stone-50')}>
               <div className="min-w-0">
                 <p className="font-medium text-stone-900">
@@ -124,7 +140,10 @@ export function RepGroupPeople({ repGroupId, people, canEdit, onChange }: { repG
                   <button type="button" onClick={() => edit(p)} aria-label={`Change ${p.name || p.email}`} title="Change" className="rounded-md p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-700">
                     <Pencil className="size-4" aria-hidden="true" />
                   </button>
-                  <button type="button" onClick={() => void remove(p)} aria-label={`Remove ${p.name || p.email}`} className="rounded-md p-1.5 text-stone-400 hover:bg-stone-100 hover:text-red-600">
+                  <button type="button" onClick={() => void setFormer(p, true)} aria-label={`${p.name || p.email} is no longer with them`} title="No longer with them (kept under Former reps)" className="rounded-md p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-700">
+                    <UserX className="size-4" aria-hidden="true" />
+                  </button>
+                  <button type="button" onClick={() => void remove(p)} aria-label={`Delete ${p.name || p.email}`} title="Delete (a mistake only)" className="rounded-md p-1.5 text-stone-400 hover:bg-stone-100 hover:text-red-600">
                     <Trash2 className="size-4" aria-hidden="true" />
                   </button>
                 </span>
@@ -133,6 +152,31 @@ export function RepGroupPeople({ repGroupId, people, canEdit, onChange }: { repG
           ))}
         </ul>
       )}
+      {former.length ? (
+        <details className="mt-3 rounded-xl bg-stone-50 px-3 py-2 text-sm">
+          <summary className="cursor-pointer select-none font-medium text-stone-700"><History className="mr-1 inline size-4 align-[-3px] text-stone-400" aria-hidden="true" />Former reps ({former.length})</summary>
+          <ul className="mt-2 divide-y divide-stone-200">
+            {former.map((p) => (
+              <li key={p.id} className="flex items-start justify-between gap-3 py-2">
+                <div className="min-w-0">
+                  <p className="font-medium text-stone-800">{p.name || p.email || p.phone}{p.title ? <span className="ml-2 text-xs font-normal text-stone-500">{p.title}</span> : null}</p>
+                  <p className="flex flex-wrap gap-x-4 text-stone-600">
+                    {p.email ? <Link to={mailWithUrl(ROUTES.mailWith, p.email)} className="inline-flex items-center gap-1 hover:text-brand" title="All mail with them"><Mail className="size-3.5" aria-hidden="true" />{p.email}</Link> : null}
+                    <PhoneLinks phones={phonesOf(p)} />
+                  </p>
+                  <p className="text-xs text-stone-500">
+                    {p.first_mail_at && p.last_mail_at ? `Emailed ${monthYear(p.first_mail_at)}${monthYear(p.first_mail_at) !== monthYear(p.last_mail_at) ? ` to ${monthYear(p.last_mail_at)}` : ''}` : 'No email with them on file'}
+                    {' · '}no longer with them since {new Date(p.former_at!).toLocaleDateString()}
+                  </p>
+                </div>
+                {canEdit ? <Button size="sm" variant="ghost" onClick={() => void setFormer(p, false)} leftIcon={<RotateCcw className="size-3.5" aria-hidden="true" />}>Current again</Button> : null}
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
     </section>
   )
 }
+
+const monthYear = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
