@@ -66,6 +66,19 @@ describe('fixName (cosmetic and shorthand only)', () => {
   for (const [from, ctx, to] of cases) it(from, () => expect(fixName(from, ctx)).toBe(to))
 })
 
+describe('no dash or mark before the Vendor ID (Dana, Oct 19: the same on every name)', () => {
+  const c = (vendorItemId: string): NameContext => ({ vidVendor: true, vendorItemId })
+  it('SET - 9869', () => expect(fixName('COGHLANS DITTY BAG MESH 3 PC SET - 9869', c('9869'))).toBe('COGHLANS DITTY BAG MESH 3 PC SET 9869'))
+  it('FT-7610', () => expect(fixName('COGHLANS UTILITY STRAP 10 FT-7610', c('7610'))).toBe("COGHLANS UTILITY STRAP 10' 7610"))
+  it('POUCH -1354', () => expect(fixName('COGHLANS POUCH -1354', c('1354'))).toBe('COGHLANS POUCH 1354'))
+  it('CUP - 7625BP keeps the marker', () => expect(fixName('*COGHLANS SIERRA CUP - 7625BP', c('7625BP'))).toBe('*COGHLANS SIERRA CUP 7625BP'))
+  it('#1116', () => expect(fixName('COGHLANS SACK #1116', c('1116'))).toBe('COGHLANS SACK 1116'))
+  it('a longer code stays whole', () => expect(fixName('WFS TEE NAVY LG 21-4410', c('4410'))).toBe('WFS TEE NAVY LG 21-4410'))
+  it('the dash before it is flagged, not "in the middle"', () => expect(checkName('COGHLANS LOCK N LOAD AIRTIGHT WATERPROOF POUCH -1354', c('1354')).map((p) => p.text)).toEqual(['Just one space before the Vendor ID: no dash or # in front of it']))
+  it('no flag once the dash goes', () => expect(checkName('COGHLANS CANDLES 7615BP', c('7615BP'))).toEqual([]))
+  it('cosmetic: no new tag', () => expect(changeKind('COGHLANS UTILITY STRAP 10 FT-7610', "COGHLANS UTILITY STRAP 10' 7610")).toBe('cosmetic'))
+})
+
 describe('fixVendorId', () => {
   it('adds it last', () => expect(fixVendorId('COGHLANS STOOL BLUE', { vidVendor: true, vendorItemId: '8256' })).toBe('COGHLANS STOOL BLUE 8256'))
   it('moves it to the end', () => expect(fixVendorId('RODDY HUNTER DN548-WL FISHING COMBO', { fishing: true, vendorItemId: 'DN548-WL' })).toBe('RODDY HUNTER FISHING COMBO DN548-WL'))
@@ -76,6 +89,7 @@ describe('fixVendorId', () => {
 })
 
 describe('checkName flags', () => {
+  it('a name VMS would change never passes', () => expect(checkName('COGHLANS DITTY BAG MESH 3 PC SET - 9869', { vidVendor: true, vendorItemId: '9869' }).length).toBeGreaterThan(0))
   const codes = (n: string, c: NameContext = {}) => checkName(n, c).map((p) => p.code)
   it('length', () => expect(codes('A'.repeat(53))).toContain('length'))
   it('length exception', () => expect(codes('A'.repeat(53), { lengthException: true })).not.toContain('length'))

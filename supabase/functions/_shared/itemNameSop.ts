@@ -32,7 +32,7 @@ export interface NameContext {
 
 export type ProblemCode =
   | 'length' | 'duplicate' | 'lowercase' | 'accents' | 'marks' | 'spacing' | 'units' | 'shorthand' | 'size'
-  | 'marker' | 'vendor_id' | 'vendor_id_extra' | 'sizing' | 'colors' | 'pound' | 'period' | 'birthday' | 'asst' | 'brand'
+  | 'marker' | 'vendor_id' | 'vendor_id_extra' | 'vid_sep' | 'sizing' | 'colors' | 'pound' | 'period' | 'birthday' | 'asst' | 'brand'
 
 export interface NameProblem {
   code: ProblemCode
@@ -68,9 +68,17 @@ function parts(name: string, ctx: NameContext): Parts {
   }
   let vid = ''
   const v = (ctx.vendorItemId ?? '').trim()
-  if (v && body.toUpperCase().endsWith(v.toUpperCase()) && (body.length === v.length || body[body.length - v.length - 1] === ' ')) {
-    vid = body.slice(body.length - v.length)
-    body = body.slice(0, body.length - v.length).trim()
+  if (v && body.toUpperCase().endsWith(v.toUpperCase())) {
+    // the Vendor ID is last; whatever stands between it and the rest (" - ", "-", " #") is a separator the SOP drops
+    // ("SET - 9869", "FT-7610", "POUCH -1354"). A bare dash after a digit is part of a longer code (21-4410), not that.
+    const before = body.slice(0, body.length - v.length)
+    const sep = /(?:\s*[-#]+\s*|\s+)$/.exec(before)?.[0] ?? ''
+    const head = before.slice(0, before.length - sep.length)
+    const bareDashAfterDigit = /^-+$/.test(sep) && /\d$/.test(head)
+    if (!before || (sep && !bareDashAfterDigit)) {
+      vid = body.slice(body.length - v.length)
+      body = head.trim()
+    }
   }
   return { marker, brand, body, vid }
 }
@@ -159,7 +167,7 @@ function cleanBody(body: string, ctx: NameContext, firstPartIsBrand: boolean): s
   s = s.replace(SYMBOLS, '').toUpperCase()
   s = s.replace(/,/g, ' ')
   // spacing around dashes, slashes (except W/ and W/O) and the dimension X
-  s = s.replace(/\s+-\s+/g, ' ').replace(/\s*-\s*/g, '-').replace(/\bW\s*\/\s*O\b\s*/g, 'W/O ').replace(/\bW\s*\/(?!O\b)\s*/g, 'W/ ')
+  s = s.replace(/^\s*-+\s*|\s*-+\s*$/g, '').replace(/\s+-\s+/g, ' ').replace(/\s*-\s*/g, '-').replace(/\bW\s*\/\s*O\b\s*/g, 'W/O ').replace(/\bW\s*\/(?!O\b)\s*/g, 'W/ ')
   s = s.replace(/(\S)\s+\/\s*(?=\S)|(\S)\s*\/\s+(?=\S)/g, (_m, a, b) => `${a ?? b}/`).replace(/\bW\/(?=[A-Z0-9])(?!O\b)/g, 'W/ ')
   s = s.replace(/(\d['"]?)\s*X\s*(?=\d)/g, '$1X')
   for (const [re, to] of WORD_SWAPS) s = s.replace(re, to)
@@ -232,7 +240,7 @@ export function fixVendorId(name: string, ctx: NameContext = {}): string | null 
   const want = !!(ctx.fishing || ctx.vidVendor)
   const p = parts(name, ctx)
   if (!v) return null
-  if (want && p.vid) return name
+  if (want && p.vid) return join(p)
   if (!want && !p.vid) return name
   if (!want) return join({ ...p, vid: '' })
   const re = new RegExp(`(^|\\s)#?${esc(v)}(?=\\s|$)`)
@@ -288,6 +296,9 @@ export function checkName(name: string, ctx: NameContext = {}): NameProblem[] {
   const wantVid = ctx.fishing || ctx.vidVendor
   if (wantVid && v && !p.vid) add('vendor_id', `The Vendor ID (${v}) goes last${body.toUpperCase().includes(v.toUpperCase()) ? ', not in the middle' : ''}`, fixVendorId(name, ctx) !== null)
   if (!wantVid && v && p.vid) add('vendor_id_extra', `No Vendor ID in the name for this vendor (${v})`, true)
+  if (p.vid && /(?:[-#]\s*|[^ ])$/.test(splitMarker(name).rest.trimEnd().slice(0, -p.vid.length)) && splitMarker(name).rest.trim() !== p.vid) add('vid_sep', 'Just one space before the Vendor ID: no dash or # in front of it', true)
+  // anything else VMS would change still shows, so no name that needs a fix reads as passing
+  if (fixed !== name && !out.some((x) => x.fixable)) add('spacing', 'Capitals, spacing or marks', true)
   return out
 }
 

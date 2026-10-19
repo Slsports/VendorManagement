@@ -2586,3 +2586,9 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
 - Not built yet: tag photos for Claude to read, web search (last resort, approved by the check-in person), marker
   warnings while working on / sending an order, price-change shelf-tag tasks (needs LS prices in `ls_items`, Fable's
   ls-sync), the dashboard flags list.
+- Oct 19 (Dana, looking at Coghlan's names: "I just want consistency"): the Vendor ID always has just one space in
+  front of it, never a dash or # (SOP: "no dash, pound sign, or other separator"). VMS now reads "SET - 9869",
+  "FT-7610" and "POUCH -1354" as the Vendor ID with a separator and fixes them to one space (a Quick fix, no new tag).
+  Before, "SET - 9869" became "SET- 9869", and "-1354" was not seen as the Vendor ID at all, so the page wrongly said it
+  was "in the middle". A bare dash after a digit stays (21-4410 is one code). New counts: 6,412 pass, about 7,600 quick
+  fixes, 1,338 Vendor IDs to take off.

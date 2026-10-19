@@ -9,7 +9,7 @@ The **Item names** page checks every active Lightspeed item name against Trevor'
 ## How to
 1. In the menu, click **Item names**.
 2. Pick a tab:
-   - **Quick fixes**: capitals, spacing, marks and approved shorthand (YOUTH to YTH, GREY to GRAY, SMALL to SM). No new shelf tag needed.
+   - **Quick fixes**: capitals, spacing, marks and approved shorthand (YOUTH to YTH, GREY to GRAY, SMALL to SM), and a dash or # in front of the Vendor ID (SET - 9869 becomes SET 9869). No new shelf tag needed.
    - **Vendor ID**: the Vendor ID goes last for Fishing items and for Coghlans, World Famous Sports, Lazy One and Ty, and comes off for everyone else.
    - **Needs a look**: things VMS cannot fix on its own, like the order of the parts, a name over 52 characters or two items with the same name. Type the new name in the box.
 3. Narrow it with the vendor, category or search boxes if you like.
