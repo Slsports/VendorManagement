@@ -1,10 +1,10 @@
 ---
 title: Add the Vendor ID to item names
 section: Orders
-keywords: Vendor ID, item name, NAME [Vendor ID], description, item number, check-in
+keywords: Vendor ID, item name, description, item number, check-in, naming SOP
 who: Admin, managers and buyers
 ---
-Some vendors' items are easier to find when the Vendor ID is added to the end of the item name, like NAME [Vendor ID]. You can turn this on or off for one order or one item.
+Some vendors' items are easier to find when the Vendor ID is added to the end of the item name after one space, like LAZY ONE MENS PAJAMA SET BLUE 2XL PJ5512 (Trevor's naming SOP). Coghlans, World Famous Sports, Lazy One, Ty and every Fishing item always get it. You can turn this on or off for one order or one item.
 
 ## How to
 1. Open the order and go to **Check-in pricing**.

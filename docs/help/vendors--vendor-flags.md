@@ -12,7 +12,8 @@ A few tick boxes on the vendor form mark special kinds of vendors.
    - **Delivery vendor**: drops goods with a paper invoice, no order placed ahead.
    - **WWD zero-upcharge vendor**: no 1.5% drop-ship upcharge through Worldwide.
    - **Credits the freight back when we pay on time**.
-   - **Add Vendor ID to item descriptions**, in brackets at the end (MENS HOODIE NAVY [AB1234]). Each order can change it.
+   - **Add Vendor ID to item names**, last after one space (LAZY ONE MENS PAJAMA SET BLUE 2XL PJ5512). On for Coghlans, World Famous Sports, Lazy One and Ty, as the naming SOP says. Each order can change it.
+   - **Name in item names**: the vendor's name as it goes at the start of an item name when the tag has no brand (WFS, LAZY ONE). Never with WWD.
    - **Fishing vendor** (Jarrett runs these reports).
    - **Web orders, no confirmation needed**: we order on their website (like Kelli's). Their order email confirms the order, so there is no confirmation to review, and items they can't ship are simply not billed.
 3. Click **Save changes**.

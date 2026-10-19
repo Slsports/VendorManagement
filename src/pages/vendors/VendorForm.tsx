@@ -54,6 +54,7 @@ interface FormState {
   wwd_zero_upcharge: boolean
   freight_allowance_on_time: boolean
   vid_in_description: boolean
+  item_name_vendor: string
   is_fishing: boolean
   web_orders: boolean
   ask_before_pictures: boolean
@@ -87,7 +88,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   name: '', aliases: '', routes: [], defaultRoute: '', payMethod: '', rep_group_id: '', assigned_buyer_id: '', payment_terms_id: '', ordering_frequency: '',
-  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, freight_allowance_on_time: false, vid_in_description: false, is_fishing: false, web_orders: false, ask_before_pictures: false, order_set_at_show: false, usual_charges: [],
+  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, freight_allowance_on_time: false, vid_in_description: false, item_name_vendor: '', is_fishing: false, web_orders: false, ask_before_pictures: false, order_set_at_show: false, usual_charges: [],
   website: '', phone: '', email: '', fax: '', account_number: '', catalog: '', address: '', city: '', state: '', postal_code: '',
   pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', shipping_contact_email: '', minimum_order: '', freight_program: '', free_shipping_policy: '', free_shipping_threshold: '', freight_routing: '', product_types: '',
   notes: '', return_notes: '', windows: [],
@@ -116,6 +117,7 @@ function formFromVendor(v: VendorDetail): FormState {
     wwd_zero_upcharge: v.wwd_zero_upcharge,
     freight_allowance_on_time: v.freight_allowance_on_time,
     vid_in_description: v.vid_in_description,
+    item_name_vendor: v.item_name_vendor ?? '',
     is_fishing: v.is_fishing,
     web_orders: v.web_orders,
     ask_before_pictures: v.ask_before_pictures,
@@ -206,6 +208,7 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
       wwd_zero_upcharge: form.wwd_zero_upcharge,
       freight_allowance_on_time: form.freight_allowance_on_time,
       vid_in_description: form.vid_in_description,
+      item_name_vendor: nz(form.item_name_vendor.toUpperCase()),
       is_fishing: form.is_fishing,
       web_orders: form.web_orders,
       ask_before_pictures: form.ask_before_pictures,
@@ -329,12 +332,13 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
           </FormField>
           <FormField label="Free shipping over (order value at cost)" htmlFor="fst"><Input id="fst" inputMode="decimal" value={form.free_shipping_threshold} onChange={(e) => set('free_shipping_threshold', e.target.value)} placeholder="e.g. 500" disabled={form.free_shipping_policy === 'never'} /></FormField>
           <FormField label="Freight routing instructions" htmlFor="froute" className="sm:col-span-2"><Input id="froute" value={form.freight_routing} onChange={(e) => set('freight_routing', e.target.value)} placeholder="e.g. UPS Ground collect on our account; never air" /></FormField>
+          <FormField label="Name in item names (when the tag has no brand)" htmlFor="inv" hint="ALL CAPS, never with WWD: LAZY ONE, not LAZY ONE (WWD)" className="sm:col-span-2"><Input id="inv" value={form.item_name_vendor} onChange={(e) => set('item_name_vendor', e.target.value.toUpperCase())} placeholder="e.g. WFS" /></FormField>
           <FormField label="Product types" htmlFor="products" className="sm:col-span-2"><Input id="products" value={form.product_types} onChange={(e) => set('product_types', e.target.value)} placeholder="e.g. Fly line, leader, tippet" /></FormField>
           <div className="flex flex-col gap-2 sm:col-span-2">
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_delivery_vendor} onChange={(e) => set('is_delivery_vendor', e.target.checked)} /> Delivery vendor (drops goods with a paper invoice, no order placed ahead)</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.wwd_zero_upcharge} onChange={(e) => set('wwd_zero_upcharge', e.target.checked)} /> WWD zero-upcharge vendor (no 1.5% drop-ship upcharge through Worldwide)</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.freight_allowance_on_time} onChange={(e) => set('freight_allowance_on_time', e.target.checked)} /> Credits the freight back when we pay on time (orders show a pay-by reminder)</label>
-            <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.vid_in_description} onChange={(e) => set('vid_in_description', e.target.checked)} /> Add Vendor ID to item descriptions, in brackets at the end (MENS HOODIE NAVY [AB1234]); each order can change it</label>
+            <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.vid_in_description} onChange={(e) => set('vid_in_description', e.target.checked)} /> Add Vendor ID to item names, last after one space (LAZY ONE MENS PAJAMA SET BLUE 2XL PJ5512); each order can change it</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_fishing} onChange={(e) => set('is_fishing', e.target.checked)} /> Fishing vendor (Jarrett runs these reports)</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.web_orders} onChange={(e) => set('web_orders', e.target.checked)} /> Web orders, no confirmation needed (their order email confirms it; items they can't ship just aren't billed)</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.ask_before_pictures} onChange={(e) => set('ask_before_pictures', e.target.checked)} /> Ask before saving pictures (their advertising waits for Save pictures in the email; proofs, invoices and confirmations still save)</label>

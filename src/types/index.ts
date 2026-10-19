@@ -49,6 +49,7 @@ export type Line = Tables<'vendor_directory'>
 export type WwdPortalVendor = Tables<'wwd_portal_vendors'>
 export type VendorProgram = Tables<'vendor_programs'>
 export type ItemChange = Tables<'item_changes'>
+export type ItemNameChange = Tables<'item_name_changes'>
 export type ShowAppearance = Tables<'show_appearances'>
 export type VendorLink = Tables<'vendor_links'>
 export type VendorLinkKind = VendorLink['kind']
@@ -84,7 +85,7 @@ export type Need = Tables<'needs'>
 export type MailView = EmailThread['view']
 export type OrderCheck = Tables<'order_checks'>
 export type { OrderCheckStatus } from './database'
-export type { ItemChangeDecision, ItemChangeLsStatus } from './database'
+export type { ItemChangeDecision, ItemChangeLsStatus, ItemNameChangeStatus } from './database'
 export type Mailbox = Tables<'mailboxes'>
 export type Task = Tables<'tasks'>
 export type OrderingItem = Tables<'ordering_items'>

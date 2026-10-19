@@ -12,9 +12,12 @@
 //   { action: 'scan_items' }                     → read every LS item again now (counts per vendor; Dana, Oct 16)
 //   { action: 'item_change_write', change_id }   → a Review decision on an unavailable item into LS: * or ** and a dated note line
 //   { action: 'scan_status' }                    → the running or last reading
-// pg_cron (header x-cron-secret), every 2 minutes: carries on a reading, or starts one when the last is a week old.
+//   { action: 'rename_now' }                     → sends approved item names to LS now (item_name_changes; SOP-INV-001-NC)
+// pg_cron (header x-cron-secret), every 2 minutes: sends approved item names; with none waiting, carries on a reading,
+// or starts one when the last is a week old.
 import { CORS, HttpError, caller, errorResponse, json, serviceClient } from '../_shared/caller.ts'
 import { LS_API, LS_AUTHORIZE, LS_REDIRECT, LS_SCOPE_FULL, LS_SCOPE_READ, asList, lsAccessToken, lsGet, lsGetAll, lsPost, lsPut, lsTokenRequest, saveTokens } from '../_shared/lightspeed.ts'
+import { splitMarker } from '../_shared/itemNameSop.ts'
 import type { Caller } from '../_shared/caller.ts'
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 
@@ -26,7 +29,12 @@ Deno.serve(async (req) => {
     if (cronSecret && req.headers.get('x-cron-secret') === cronSecret) {
       const { data: conns } = await db.from('lightspeed_connections').select('organization_id').not('refresh_token', 'is', null)
       const out = []
-      for (const c of conns ?? []) out.push(await scanItems(db, c.organization_id, false).catch((e) => ({ error: e instanceof Error ? e.message : String(e) })))
+      for (const c of conns ?? []) {
+        const renamed = await renameQueue(db, c.organization_id, RENAME_BUDGET_MS).catch((e) => ({ sent: 0, failed: 0, waiting: 0, error: e instanceof Error ? e.message : String(e) }))
+        // one slow job per call (pg_net waits on it): the reading carries on once no names are waiting
+        if (renamed.sent || renamed.failed) { out.push({ renamed }); continue }
+        out.push(await scanItems(db, c.organization_id, false).catch((e) => ({ error: e instanceof Error ? e.message : String(e) })))
+      }
       return json(out)
     }
     const me = await caller(req, db)
@@ -38,8 +46,9 @@ Deno.serve(async (req) => {
       const { data } = await db.from('ls_item_scans').select('started_at, finished_at, pages, items, archived, no_vendor, last_error').eq('organization_id', org).maybeSingle()
       return json(data ?? {})
     }
-    if (body.action === 'sync_vendors' || body.action === 'create_po' || body.action === 'send_items' || body.action === 'scan_items' || body.action === 'item_change_write') {
+    if (body.action === 'sync_vendors' || body.action === 'create_po' || body.action === 'send_items' || body.action === 'scan_items' || body.action === 'item_change_write' || body.action === 'rename_now') {
       if (!['admin', 'manager', 'buyer'].includes(me.role)) throw new HttpError(403, 'Only admins, managers and buyers do this')
+      if (body.action === 'rename_now') return json(await renameQueue(db, org, RENAME_BUDGET_MS))
       if (body.action === 'item_change_write') return json(await writeItemChange(db, org, String(body.change_id ?? '')))
       if (body.action === 'scan_items') return json(await scanItems(db, org, true))
       if (body.action === 'sync_vendors') return json(await syncVendors(db, org))
@@ -262,6 +271,57 @@ async function writeItemChange(db: SupabaseClient, org: string, changeId: string
   } catch (e) {
     return result('failed', (e instanceof Error ? e.message : String(e)).slice(0, 400), itemId)
   }
+}
+
+const RENAME_BUDGET_MS = 20_000
+
+/**
+ * Approved item names into LS (item_name_changes, oldest first). Each item is read first: when its LS name is no longer
+ * the one approved against, nothing is written (someone changed it in LS; it shows again on the Item names page). The
+ * * or ** marker LS has is always kept (VMS never changes markers here), no name another LS item has is written, and the
+ * change counts only when LS answers with the new name. Renames that change what the name says then go on Trevor's
+ * shelf-tag task.
+ */
+async function renameQueue(db: SupabaseClient, org: string, budgetMs: number): Promise<{ sent: number; failed: number; waiting: number; error?: string }> {
+  const started = Date.now()
+  // a run that died part way: its names go back in line
+  await db.from('item_name_changes').update({ status: 'approved' }).eq('organization_id', org).eq('status', 'sending').lt('claimed_at', new Date(Date.now() - 5 * 60_000).toISOString())
+  const waiting = async () => (await db.from('item_name_changes').select('id', { count: 'exact', head: true }).eq('organization_id', org).eq('status', 'approved')).count ?? 0
+  const { data: rows } = await db.from('item_name_changes').select('id, ls_item_id, old_name, new_name, tries').eq('organization_id', org).eq('status', 'approved').order('approved_at').limit(60)
+  if (!rows?.length) return { sent: 0, failed: 0, waiting: 0 }
+  const { data: conn } = await db.from('lightspeed_connections').select('scope').eq('organization_id', org).maybeSingle()
+  if (!String(conn?.scope ?? '').split(/\s+/).includes('employee:all')) return { sent: 0, failed: 0, waiting: rows.length, error: NO_FULL_ACCESS }
+  const { token } = await lsAccessToken(db, org)
+  const acct = await accountId(db, org)
+  let sent = 0
+  let failed = 0
+  const fail = async (id: string, msg: string) => { failed++; await db.from('item_name_changes').update({ status: 'failed', ls_error: msg.slice(0, 400) }).eq('id', id) }
+  for (const r of rows) {
+    if (Date.now() - started > budgetMs) break
+    const { data: claimed } = await db.from('item_name_changes').update({ status: 'sending', tries: r.tries + 1, claimed_at: new Date().toISOString() }).eq('id', r.id).eq('status', 'approved').select('id')
+    if (!claimed?.length) continue
+    try {
+      const path = `/Account/${acct}/Item/${r.ls_item_id}.json`
+      const now = String((await lsGet<{ Item?: { description?: string } }>(token, path)).Item?.description ?? '')
+      if (now !== r.old_name) { await fail(r.id, `The name in LS changed since this was approved (it now reads "${now}"). Look at it again.`); continue }
+      const marker = splitMarker(now).marker
+      const name = marker + splitMarker(r.new_name).rest.trim()
+      const { data: dup } = await db.from('ls_items').select('item_id').eq('organization_id', org).eq('description', name).neq('item_id', r.ls_item_id).limit(1)
+      if (dup?.length) { await fail(r.id, `Another LS item (System ID ${dup[0]!.item_id}) already has the name "${name}". Add what tells them apart.`); continue }
+      const back = String((await lsPut<{ Item?: { description?: string } }>(token, path, { description: name })).Item?.description ?? '')
+      if (back !== name) { await fail(r.id, `Lightspeed took the change but shows "${back}".`); continue }
+      await db.from('ls_items').update({ description: name }).eq('organization_id', org).eq('item_id', r.ls_item_id)
+      await db.from('item_name_changes').update({ status: 'sent', new_name: name, sent_at: new Date().toISOString(), ls_error: null }).eq('id', r.id)
+      sent++
+    } catch (e) {
+      const msg = (e instanceof Error ? e.message : String(e)).slice(0, 400)
+      // LS busy or down: tried again on the next round, three tries in all
+      if (r.tries + 1 >= 3) await fail(r.id, msg)
+      else await db.from('item_name_changes').update({ status: 'approved', ls_error: msg }).eq('id', r.id)
+    }
+  }
+  if (sent) await db.rpc('item_names_shelf_task', { p_org: org })
+  return { sent, failed, waiting: await waiting() }
 }
 
 async function accountId(db: SupabaseClient, org: string): Promise<string> {

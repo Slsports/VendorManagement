@@ -98,7 +98,7 @@ export function CheckInPricing({ order: o, canEdit, onOrderChange }: { order: Or
 
       <label className="mt-3 flex flex-wrap items-center gap-2 text-sm text-stone-800">
         <input type="checkbox" className="size-4 accent-brand" checked={orderVid} disabled={!canEdit || busy} onChange={(e) => void setOrderVid(e.target.checked)} />
-        Add Vendor ID to item names <span className="text-stone-500">(NAME [Vendor ID])</span>
+        Add Vendor ID to item names <span className="text-stone-500">(last, after one space)</span>
         <span className="text-xs text-stone-400">{o.vid_in_description === null ? `${o.vendor?.name ?? 'the vendor'}'s setting` : 'changed for this order'}</span>
       </label>
 

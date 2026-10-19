@@ -8,9 +8,10 @@ describe('Vendor ID in item names', () => {
     expect(vidOn(false, false, true)).toBe(true)
     expect(vidOn(undefined, null)).toBe(false)
   })
-  it('adds the Vendor ID in brackets at the end, once', () => {
-    expect(itemName('MENS HOODIE NAVY', 'AB1234', true)).toBe('MENS HOODIE NAVY [AB1234]')
-    expect(itemName('MENS HOODIE NAVY [AB1234]', 'AB1234', true)).toBe('MENS HOODIE NAVY [AB1234]')
+  it('adds the Vendor ID last after one space, once (SOP-INV-001-NC)', () => {
+    expect(itemName('MENS HOODIE NAVY', 'AB1234', true)).toBe('MENS HOODIE NAVY AB1234')
+    expect(itemName('MENS HOODIE NAVY AB1234', 'AB1234', true)).toBe('MENS HOODIE NAVY AB1234')
+    expect(itemName('MENS HOODIE NAVY [AB1234]', 'AB1234', true)).toBe('MENS HOODIE NAVY AB1234')
     expect(itemName('MENS HOODIE NAVY', 'AB1234', false)).toBe('MENS HOODIE NAVY')
     expect(itemName('MENS HOODIE NAVY', null, true)).toBe('MENS HOODIE NAVY')
   })

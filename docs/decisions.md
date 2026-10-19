@@ -2550,3 +2550,26 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
 - Oct 18, item names from web search (Dana): web search is a last resort. A name found that way goes first to **whoever
   is checking the order in**, who approves it or reassigns it if needed (e.g. Trevor to Jarrett when he needs Jarrett's
   input; the normal Assigned to). Not the person who placed the order. Part of Trevor's naming proposals; not built yet.
+
+## Oct 19 — Item naming conventions, part 1: Item names page (Dana: "let's build the naming conventions and we will just adjust where needed")
+- Built: Trevor's SOP-INV-001-NC as a checker (`supabase/functions/_shared/itemNameSop.ts`, used by the page and the
+  functions; tested on the SOP's own examples). VMS fixes only cosmetic and shorthand things on its own (capitals,
+  spacing, marks, accents, approved shorthand, SZ, units); part order, brand, measurements and names over 52 are flagged
+  for a person. A change is "cosmetic" (no new shelf tag) or "content" (new shelf tag) by the SOP's rename rule.
+- **Item names** page (menu, Operations): tabs Quick fixes / Vendor ID / Needs a look / Sent / waiting / Left as is /
+  Pass the SOP, with vendor, category and search filters. Approve and send, or Leave as is. Migration 185:
+  `item_name_changes` (the decisions and the send queue), `item_names_decide`, `item_names_undo`.
+- Sending: the lightspeed function (`rename_now`, and every 2 minutes from cron) reads each item first and writes nothing
+  when the LS name changed since; keeps the * or ** marker LS has; never writes a name another LS item has; counts it
+  only when LS answers with the new name.
+- Shelf tags: renames that change what the name says go on one task a day for the logistics person (Trevor), "Print new
+  shelf tags (N items)", due in 7 days, listing old → new (Dana Oct 18: Trevor is in charge of shelf and price tags).
+- Proposal 2: vendor field **Name in item names** (`vendors.item_name_vendor`: WFS, LAZY ONE, COGHLANS, TY set). The
+  Vendor ID setting was turned on for Lazy One, World Famous Sports and Ty (Coghlan already had it), as the SOP lists.
+  The Vendor ID now goes last after one space (SOP), not in brackets.
+- Counts on Oct 19 (16,725 active LS items; 116 rentals/labor/fees not checked): 6,689 already pass; about 7,300 have
+  quick fixes only; Vendor ID: 1,061 to add, 1,334 to take off (other vendors), 329 to move to the end, 895 VMS can't
+  tell (the name ends in a different code); about 2,800 need a look. Nothing was sent to LS: it waits for Trevor's clicks.
+- Still to build (part 2): names on the LS PO (new items named by the SOP from memory, invoice, confirmation, tag photo,
+  catalog, web search last with the check-in person approving), new items created in LS, rename on reorder, marker
+  warnings on orders, price-change shelf-tag tasks (needs prices in `ls_items`: Fable's ls-sync).
