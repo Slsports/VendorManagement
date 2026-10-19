@@ -2734,3 +2734,6 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   column and from a PDF's Invoice Summary when blank; shown on WWD invoice lists. The seven Oct 19 PDFs with a
   summary page filled from their pages (migration 0200).
   Found while building: Pucci's invoice 0100056-IN ($394.44) is on two WWD invoices, 7200324 and 7200998.
+- Dana (Oct 19): WWD invoices are paid in the WWD portal, not Edenred; Edenred does not track payments (that we know
+  of). The pay-by button for WWD bills is **Pay in the WWD portal** (address saved once; kept in
+  organizations.edenred_url). Edenred is building an API; WWD may later report payments through it. Ask at the show.

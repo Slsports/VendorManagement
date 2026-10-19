@@ -13,7 +13,7 @@ Click a task and VMS takes you to where the work is done, already on the step.
 - **Get freight quote**: the freight quote.
 - **Approve / Review the LS PO**: the LS PO.
 - **Approve the proof from [vendor]**: the vendor's Proofs folder, open. **Credit from [vendor]**: the vendor's Credits folder, open.
-- **Pay [vendor] by…**: the task box opens with the bill, **Pay in Edenred** or **Pay in Bill.com**, and **I paid it** (see "Pay-by reminders").
+- **Pay [vendor] by…**: the task box opens with the bill, **Pay in the WWD portal** or **Pay in Bill.com**, and **I paid it** (see "Pay-by reminders").
 - Tasks you made yourself: whatever they're tagged to (the order, the email, then the vendor).
 
 ## Good to know
