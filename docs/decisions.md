@@ -2673,3 +2673,6 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   every vendor is in there; Dana marks the Bill.com tag herself on the vendors she wants sent. The vendor list is not
   pulled at all. An invoice VMS cannot place (no vendor, vendor untagged and unclear, not sure it is an invoice) is
   flagged for Dana's attention, never forwarded on a guess.
+- Oct 19 (Dana): **WWD is never to go to Bill.com, totally separate process.** The Bill.com tag cannot be set on
+  Worldwide Distributors, and nothing routed through WWD (WWD invoices, WWD-billed vendors' WWD paperwork) is ever
+  forwarded; WWD stays on the Payments page flow (EdenRed, payment sheets).
