@@ -2669,3 +2669,7 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
   orders@ or billing@, forward that email with attachments to shaverlakesports1@bill.com once and mark it "Sent to
   Bill.com". **Which vendors: a Bill.com tag on the vendor that Dana can turn on or off** ("I need to be able to turn on
   or off the bill.com tag on any vendor"); only tagged vendors' invoices are forwarded. Open: WWD left out? 7 days ok?
+- Oct 19 (Dana, Bill.com, correction): **no pre-ticking from Bill.com's vendor list** — Bill.com is synced with QBO so
+  every vendor is in there; Dana marks the Bill.com tag herself on the vendors she wants sent. The vendor list is not
+  pulled at all. An invoice VMS cannot place (no vendor, vendor untagged and unclear, not sure it is an invoice) is
+  flagged for Dana's attention, never forwarded on a guess.
