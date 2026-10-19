@@ -9,7 +9,7 @@ import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type
 import { forwardedBody, forwardedSender } from '../_shared/forwarded.ts'
 import { extractLinks, itemPicture, maybePaperwork, maybeSheetPaperwork, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
 import { sheetFileText } from '../_shared/sheetFile.ts'
-import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type PictureKind, readArtwork, readEmailVendors, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type UnsureEmail } from '../_shared/ai.ts'
+import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type PictureKind, readArtwork, readEmailVendors, readExpectsReply, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type SentEmailToCheck, type UnsureEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
@@ -907,6 +907,20 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
         const real = e.attachments.some((a) => !/^(image0\d\d|outlook-|logo|signature)/i.test(a) && !/\((\d|1\d) KB\)$/.test(a)) || /https?:\/\//i.test(e.body_text ?? '')
         const art = e.direction === 'out' ? (r?.art === 'approved' || r?.art === 'changes' ? r.art : 'none') : (r?.art === 'yes' || r?.art === 'unsure') && real ? r.art : 'no'
         await check(db.rpc('mail_apply_art', { p_email: e.email_id, p_art: art, p_note: r?.note ?? '' }))
+      }
+    }
+
+    // Questions we asked that nobody answered, in mail read in from history (Dana, Oct 19): Claude reads our email;
+    // one that asked them something shows under No answer yet. A batch a run until the history is through.
+    if (Date.now() - started < TIME_BUDGET_MS) {
+      const { data: asked } = await db.rpc('mail_unanswered_out_queue', { p_org: org, p_limit: 10 })
+      const askedList = (asked ?? []) as SentEmailToCheck[]
+      if (askedList.length) {
+        const readings = await readExpectsReply(db, org, askedList)
+        for (const e of askedList) {
+          if (!readings.has(e.email_id)) continue
+          await check(db.rpc('mail_apply_expects_reply', { p_email: e.email_id, p_expects: readings.get(e.email_id)! }))
+        }
       }
     }
 

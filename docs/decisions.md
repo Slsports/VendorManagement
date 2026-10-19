@@ -2643,3 +2643,14 @@ completes. Dana clicks **Connect again** with Full once more so the label and `s
 - Oct 19, fix 2: with every year's paperwork and pictures open for filing, filing used the whole run and Claude's reply
   check and artwork approvals (last in the run) never ran. Each gmail-sync run is now: new mail; Claude's reading until
   10 s (reply check and artwork first, sorting after); filing, newest first, until 16 s; history in the time left.
+- Oct 19, built (Dana: "yes on the 220 old threads"): questions we asked that nobody answered (migration 195). Old mail
+  from history (last 6 months, over a week old) where we wrote last and nobody we wrote to has written back since, in
+  any thread: Claude reads our email (`readExpectsReply`, gmail-sync, 10 a run); one that asked them something goes to
+  No answer yet (waiting on vendor, past its follow-up date), a "thanks" stays handled. No tasks or cards. Of the 220,
+  58 qualified; in the rest the person had written back in another thread.
+- Oct 19 (Dana): billing@ is read back to its very beginning (she thinks 2020 or early 2021; VMS has it from June
+  2022), but **last priority: after VMS is launched to the employees**, so nothing fights for priority. Its documents
+  then go into Accounting › Documents. Not started.
+- Seen Oct 19 (not fixed, billing@ is Dana's last priority): billing@ has not synced since Oct 16, 09:51 (Gmail 400
+  "Precondition check failed" on one message), and the accounting-file job has hit the worker memory limit every minute
+  since at least Oct 18.
