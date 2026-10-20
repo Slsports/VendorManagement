@@ -193,7 +193,7 @@ export default function ThreadPage() {
       {t.art_status ? (
         <div className={`mb-4 flex flex-wrap items-center gap-2 rounded-2xl border px-4 py-3 text-sm ${t.art_status === 'approved' ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900'}`}>
           <Palette className="size-4" aria-hidden="true" />
-          <span className="font-medium">{t.art_status === 'approved' ? 'Artwork approved' : t.art_status === 'needs_changes' ? 'Changes to send: you have changes to send the vendor' : t.art_status === 'changes_sent' ? 'Changes sent: waiting on the vendor\'s new proof' : `Artwork waiting on your approval${t.art_since ? ` since ${new Date(t.art_since).toLocaleDateString()}` : ''}`}</span>
+          <span className="font-medium">{t.art_status === 'approved' ? 'Artwork approved' : t.art_status === 'needs_changes' ? 'Need to send revisions: write back to the vendor with your changes' : t.art_status === 'changes_sent' ? 'Changes sent: waiting on the vendor\'s new proof' : `Artwork waiting on your approval${t.art_since ? ` since ${new Date(t.art_since).toLocaleDateString()}` : ''}`}</span>
           {t.art_note ? <span className="text-xs opacity-80">{t.art_note}</span> : null}
           {t.art_status === 'approved' ? <span className="text-xs">Save the final proof: Save to documents › Proofs, then Mark approved.</span> : null}
           {canEdit ? (
