@@ -27,3 +27,5 @@ Each person at a vendor gets an email with a link to a short form showing what w
 - Anyone who hasn't answered after a week gets one reminder. An email that bounces is marked **Bad email**.
 - Contacts show **Confirmed** with the date on the vendor's page. The vendors list can be filtered by Confirmed, Waiting, No answer, Bad email or Not asked yet.
 - People not confirmed in 12 months are included the next time you prepare emails.
+- The email goes only to people we know: never former contacts, and never people only the Worldwide portal lists (tagged **From WWD · not confirmed**). Those still show on the vendor's form, so the people who know can tick **No longer works here**.
+- Someone ticked **No longer works here** is kept on the vendor page under **Former contacts**, not deleted, so their old mail can still be found.

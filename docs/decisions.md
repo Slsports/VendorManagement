@@ -2777,3 +2777,10 @@ reminded at once, **Go to it** opens the email) with the to-do in Claude's own w
 - Back-check (Oct 19): 467 portal contacts, 63 confirmed by mail about their vendor, 404 not confirmed on 196 vendor
   cards. 122 vendors whose Main rep was a portal-only rep now show none until one is picked or confirmed. Jeff Lipke:
   confirmed on Triple T, not confirmed on Mykos-Lamo (on its card).
+- Oct 20 (Dana: "YES"): the contact confirmation email goes only to people we know: not former contacts and not
+  unconfirmed portal contacts (those stay on the form for the vendor to remove). The form leaves former contacts out;
+  "No longer works here" on the form makes the person a former contact instead of deleting them (migration 0203).
+  Before the change: 476 people at 186 vendors; after: about 250. Email text: Dana's new wording (WWD members updating
+  records) drafted, waiting for her OK. 116 vendors we've ordered from have no email for anyone (13 more are covered by
+  their rep group); our mail suggests one for 29 of them, for Dana to approve. shaverlakesports@gmail.com: VMS only has
+  what it forwarded to oldslsgmail@ (248 emails since Mar 2024); its older mail isn't in VMS.
