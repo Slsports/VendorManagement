@@ -2784,3 +2784,9 @@ reminded at once, **Go to it** opens the email) with the to-do in Claude's own w
   records) drafted, waiting for her OK. 116 vendors we've ordered from have no email for anyone (13 more are covered by
   their rep group); our mail suggests one for 29 of them, for Dana to approve. shaverlakesports@gmail.com: VMS only has
   what it forwarded to oldslsgmail@ (248 emails since Mar 2024); its older mail isn't in VMS.
+- Oct 20 (Dana: "fix all 4"): Aaron Garcia moved from the Pure Fishing vendor to the JRA Sales rep group; Melissa Nokes
+  moved from Jackson Cardinal to the Heckel-Nokes Outdoors rep group (she stays on Panther Martin from the portal, not
+  confirmed); the "Pure Fishing" rep group made at the Oct 5 import was deleted and taken off Shakespeare (Pure Fishing
+  is a vendor). Jane Grace (peteacher6@yahoo.com) is a former employee (had Trevor's job; jane@shaverlakesports.com).
+  Faire vendors skip the confirmation email: built, held until Dana finishes the vendor list (routes and send/skip
+  choices are applied together). Dana's list: https://claude.ai/code/artifact/ea97e5cb-e19d-4f52-ac0d-0dcc84b4ee4e
