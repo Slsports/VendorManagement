@@ -2798,3 +2798,7 @@ reminded at once, **Go to it** opens the email) with the to-do in Claude's own w
 The hourly deployment watch and provider mail watch ran as turns in the Fable session and used Dana's Fable usage
 (95% with three days to the reset). Dana: pause both now; after the reset, rebuild each as its own small Sonnet session
 that starts fresh each run, every few hours. Both scheduled tasks are disabled, not deleted.
+
+## Oct 20 — Texts are live (Dana)
+Dana: "Twilio set up, verification approved — texts are live." Task reminders by text now go out through Twilio
+(`task-reminders`, secrets TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM in the hosted function settings).
