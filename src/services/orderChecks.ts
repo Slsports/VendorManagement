@@ -9,14 +9,14 @@ import type { FinalLine, RowEdit } from '@/lib/finalOrder'
 export interface CheckRow { what: string; ours: string | null; theirs: string | null; ok: boolean; note: string | null; our_cost?: number | null; their_price?: number | null }
 
 export type OrderCheckRow = OrderCheck & {
-  vendor: { id: string; name: string } | null
+  vendor: { id: string; name: string; po_code: string | null } | null
   order: { id: string; po_number: string | null; order_date: string | null; description: string | null; est_cost: number | null; status: string } | null
   document: { id: string; label: string; file_name: string | null; storage_path: string | null; mime_type: string | null; url: string | null } | null
   assignee: { full_name: string } | null
   email: { id: string; thread_id: string } | null
 }
 
-const SELECT = '*, vendor:vendors!order_checks_vendor_id_fkey(id, name), order:orders!order_checks_order_id_fkey(id, po_number, order_date, description, est_cost, status), document:vendor_links!order_checks_document_id_fkey(id, label, file_name, storage_path, mime_type, url), assignee:profiles!order_checks_assigned_to_fkey(full_name), email:emails!order_checks_email_id_fkey(id, thread_id)'
+const SELECT = '*, vendor:vendors!order_checks_vendor_id_fkey(id, name, po_code), order:orders!order_checks_order_id_fkey(id, po_number, order_date, description, est_cost, status), document:vendor_links!order_checks_document_id_fkey(id, label, file_name, storage_path, mime_type, url), assignee:profiles!order_checks_assigned_to_fkey(full_name), email:emails!order_checks_email_id_fkey(id, thread_id)'
 
 /** Waiting on a person (to review, pick the order, or a failed read): one person's, or everyone's. Oldest first. */
 export async function listOpenChecks(organizationId: string, profileId: string | null): Promise<OrderCheckRow[]> {

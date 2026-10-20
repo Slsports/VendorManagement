@@ -2832,3 +2832,15 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   message asks us to approve it (the artwork reader's asks_approval, quoted mail ignored); our own emails never do. A file
   named like a proof ("…_PROOF.pdf", "Art Approval") still goes to Proofs. Back-check of all 29 proofs: 18 moved to Images
   (catalog pictures, our own emails, product updates, ads), 11 stay; the 2 Planet Cotton catalog-picture tasks are gone.
+- Artwork labels (Dana, Oct 20): "Changes to send" is now "Need to send revisions"; "Changes sent, waiting on a new proof"
+  is now "Waiting on revisions".
+- The PO on a confirmation is checked against ours (Dana, Oct 20: catch vendors that list no PO "or they do a random one
+  that doesn't fit our naming conventions"). The review opens with a PO line: matches ours / fits our naming / no PO /
+  not ours (order has a different PO) / doesn't fit our naming. Our naming, as people type it: letters for the vendor then
+  the date (LUXPRO9226, Panthermrtn9126 count; 26569 does not). Missing, not ours and off our naming get the Create PO task
+  or the email asking them to use our PO, which opens right on the review ("Open the email asking them to use our PO").
+  Claude's comparison leaves the PO to that email. Back-check (60 days, 29 confirmations): 9 ours, 13 fit, 2 missing,
+  3 not ours (Royal Resortwear from April: too old; Kelli's: web orders), 1 off: Planet Cotton 104125 shows 26569 and the
+  mountain shirt order has no PO yet: a Create PO task was made.
+- Fall 2025 and Spring 2025 show lists were read with their two columns mixed ("Broner Aqua Case" = Aqua Case + Broner Hat
+  and Glove): 105 of 265 Fall 2025 entries and 191 Spring 2025 booth-holder names are wrong. Fix proposed to Dana.

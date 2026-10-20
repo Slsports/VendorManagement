@@ -24,6 +24,7 @@ import { SortHeader } from '@/components/shared/SortHeader'
 import { AssigneeSelect } from '@/components/review/AssigneeSelect'
 import { ComposeDialog } from '@/components/mail/ComposeDialog'
 import { EmailConversation } from '@/components/orders/EmailConversation'
+import { ConfirmationPoLine } from '@/components/orders/ConfirmationPoLine'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner } from '@/components/ui'
 import { Modal } from '@/components/shared/Modal'
 
@@ -189,16 +190,8 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
           <p className="mt-2 text-xs">To use a different report, tick it in {c.vendor ? <Link to={`${ROUTES.vendors}/${c.vendor.id}`} className="font-medium underline">{c.vendor.name} › Sales reports</Link> : 'the vendor\'s Sales reports folder'}, then click <strong>check again</strong>.</p>
         </Alert>
       ) : null}
-      {c.po_task_id || c.po_draft_id ? (
-        <Alert variant="info" className="mb-4">
-          This confirmation shows no PO of ours.{' '}
-          {c.po_draft_id
-            ? <>The email asking them to add our PO is in <Link to={`${ROUTES.mail}?view=drafts`} className="font-medium underline">Mail › Drafts</Link>.</>
-            : c.order
-              ? <>Open <Link to={`${ROUTES.orders}/${c.order.id}`} className="font-medium underline">the order</Link> and click <strong>Create PO in LS</strong>: VMS makes our PO, and the email asking them to add it waits in Mail › Drafts.</>
-              : <>Pick the order above first, then open it and click <strong>Create PO in LS</strong>. The email asking them to add our PO then waits in Mail › Drafts.</>}
-        </Alert>
-      ) : null}
+      {/* the PO on their confirmation against ours (Dana, Oct 20) */}
+      <ConfirmationPoLine c={c} onChanged={() => void refetch()} />
 
       <section className="mb-4 grid gap-3 sm:grid-cols-2">
         <DocCard title={`This ${CHECK_KIND_LABEL[c.kind].toLowerCase()}`} docs={c.document ? [c.document] : []} onOpen={open} />

@@ -608,6 +608,13 @@ export interface DraftRow {
 }
 
 /** My drafts (the admin can ask for everyone's), newest first. */
+/** One draft, to open it right where it is needed (Dana, Oct 20: the PO email from the confirmation review). */
+export async function getDraft(id: string): Promise<DraftRow | null> {
+  const { data, error } = await supabase.from('email_drafts').select('*, vendor:vendors!email_drafts_vendor_id_fkey(id, name), owner:profiles!email_drafts_owner_id_fkey(full_name)').eq('id', id).maybeSingle()
+  if (error) throw error
+  return data as unknown as DraftRow | null
+}
+
 export async function listDrafts(organizationId: string, ownerId: string | null): Promise<DraftRow[]> {
   let q = supabase.from('email_drafts').select('*, vendor:vendors!email_drafts_vendor_id_fkey(id, name), owner:profiles!email_drafts_owner_id_fkey(full_name)').eq('organization_id', organizationId)
   if (ownerId) q = q.eq('owner_id', ownerId)

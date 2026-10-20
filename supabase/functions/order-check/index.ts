@@ -176,7 +176,7 @@ async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
   const conversation = await conversationFor(db, c, o.id)
   const r = await comparePaperwork(db, c.organization_id, {
     kind: c.kind, vendor: vendor?.name ?? null, order: { ...o, vendor: undefined }, order_lines: lines ?? [], doc, doc_reading: c.reading,
-    against, against_readings: readings, contact, others, conversation, web_order: !!vendor?.web_orders, po_handled: c.kind === 'confirmation' && !realPo(c.reading?.po_number),
+    against, against_readings: readings, contact, others, conversation, web_order: !!vendor?.web_orders, po_handled: c.kind === 'confirmation' && await poHandled(db, c.id, c.reading?.po_number),
     usual_charges: vendor?.usual_charges ?? [], show_order: !!vendor?.order_set_at_show,
   })
   const issues = r.issues.filter((x) => x.trim())
@@ -197,6 +197,13 @@ async function recordUnavailable(db: SupabaseClient, checkId: string, items: Com
   if (!items?.length) return
   const { error } = await db.rpc('item_changes_from_check', { p_check: checkId, p_items: items })
   if (error) throw new Error(`Unavailable items: ${error.message}`)
+}
+
+/** Their PO is missing, someone else's, or off our naming (Dana, Oct 20): the PO email handles it, so Claude doesn't ask too. */
+async function poHandled(db: SupabaseClient, checkId: string, po: string | null | undefined): Promise<boolean> {
+  const { data, error } = await db.rpc('po_check_state', { p_check: checkId })
+  if (error) return !realPo(po)
+  return data !== 'ours' && data !== 'fits'
 }
 
 const realPo = (po: string | null | undefined) => !!po && po.replace(/[^A-Za-z0-9]/g, '').length >= 3 && !/^\s*(n\/?a|none|tbd|pending|na|no po)\s*$/i.test(po)
@@ -233,7 +240,7 @@ async function compareReport(db: SupabaseClient, c: Check, doc: PaperFile, order
   const conversation = await conversationFor(db, c, (order?.id as string | undefined) ?? null)
   const r = await compareWithSalesReport(db, c.organization_id, {
     vendor: vendor?.name ?? null, doc, doc_reading: c.reading, report_name: name, column: sheet.column, report: sheetForClaude(sheet),
-    order: order ? { ...order, vendor: undefined } : null, conversation, contact, po_handled: !realPo(c.reading?.po_number), usual_charges: vendor?.usual_charges ?? [], show_order: !!vendor?.order_set_at_show,
+    order: order ? { ...order, vendor: undefined } : null, conversation, contact, po_handled: await poHandled(db, c.id, c.reading?.po_number), usual_charges: vendor?.usual_charges ?? [], show_order: !!vendor?.order_set_at_show,
   })
   const issues = r.issues.filter((x) => x.trim())
   const { error: e2 } = await db.rpc('order_check_apply_compare', { p_check: c.id, p_result: {
