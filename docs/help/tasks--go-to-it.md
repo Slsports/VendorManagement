@@ -12,7 +12,7 @@ Click a task and VMS takes you to where the work is done, already on the step.
 - **Reply from [name]** (from **Tell me when they reply**): their reply.
 - **Get freight quote**: the freight quote.
 - **Approve / Review the LS PO**: the LS PO.
-- **Approve the proof from [vendor]**: the vendor's Proofs folder, open. **Credit from [vendor]**: the vendor's Credits folder, open.
+- **Approve the proof from [vendor]**: the proof itself opens, on the vendor's page with the Proofs folder open. **Credit from [vendor]**: the credit itself opens, with the Credits folder open. This works from the vendor's own page too. The task also shows **Email: …**, the email the file came in on; click it to open that email.
 - **Pay [vendor] by…**: the task box opens with the bill, **Pay in the WWD portal** or **Pay in Bill.com**, and **I paid it** (see "Pay-by reminders").
 - Tasks you made yourself: whatever they're tagged to (the order, the email, then the vendor).
 

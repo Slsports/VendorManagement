@@ -1,5 +1,5 @@
-import { useEffect, useState, type DragEvent } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useEffect, useRef, useState, type DragEvent } from 'react'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { SquareCheck, Square, Pencil, Download, ExternalLink, FileText, Folder, FolderInput, FolderOpen, Link2, Mail, Star, Trash2, Upload } from 'lucide-react'
 import { addVendorLink, deleteVendorLink, downloadVendorFile, listVendorLinks, renameVendorLink, setProofApproved, tickSalesReport, uploadVendorFile, zipVendorDocuments, type VendorLinkRow } from '@/services/lines'
@@ -50,6 +50,13 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
   const [find, setFind] = useState('')
   const [shown, setShown] = useState(false)
   const { view, viewer } = useDocumentViewer()
+  // a task's Go to it (Dana, Oct 20: "When I click on one it does nothing"): open this box and the folder, bring it into
+  // view and open the file itself (?doc=), every time it is clicked, also from this same page
+  const location = useLocation()
+  const askedDoc = params.get('doc')
+  const boxRef = useRef<HTMLDivElement>(null)
+  const handled = useRef<string | null>(null)
+  const [goKey, setGoKey] = useState<string | null>(null)
 
   const links = q.data ?? []
   const inFolder = (f: DocFolder) => links.filter((l) => folderOf(l.kind) === f)
@@ -95,6 +102,20 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
     onDragLeave: () => setDropOn((x) => (x === f ? null : x)),
     onDrop: (e: DragEvent) => void drop(e, f),
   } : {}
+
+  if ((asked || askedDoc) && goKey !== location.key) {
+    setGoKey(location.key)
+    setShown(true)
+    if (asked) setPicked({ asked, folder: asked })
+  }
+  useEffect(() => {
+    if (!goKey || handled.current === goKey || (askedDoc && q.isLoading)) return
+    handled.current = goKey
+    boxRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+    const doc = askedDoc ? (q.data ?? []).find((l) => l.id === askedDoc) : null
+    if (doc) open(doc)
+    else if (askedDoc) toast('That file is no longer in this vendor\'s documents')
+  }, [goKey, askedDoc, q.isLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function open(link: VendorLinkRow) {
     if (link.storage_path) view({ name: link.file_name ?? link.label, mime: link.mime_type, load: () => downloadVendorFile(link.storage_path!) })
@@ -198,7 +219,8 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
   const summary = q.isLoading ? null : links.length === 0 ? 'None' : links.length === 1 ? '1 file' : `${links.length} files`
   return (
     <>
-      <FoldSection title="Documents" summary={summary} className="lg:col-span-3" open={shown} onOpenChange={setShown}
+      <div ref={boxRef} className="scroll-mt-4 lg:col-span-3">
+      <FoldSection title="Documents" summary={summary} open={shown} onOpenChange={setShown}
         actions={canEdit ? (<>
           <Button size="sm" variant="secondary" loading={busy} onClick={() => setAdding({ mode: 'file', folder: openFolder ?? 'invoices', files: [] })} leftIcon={<Upload className="size-4" aria-hidden="true" />}>Upload</Button>
           <Button size="sm" variant="ghost" onClick={() => setAdding({ mode: 'link', folder: openFolder ?? 'catalogs', files: [] })} leftIcon={<Link2 className="size-4" aria-hidden="true" />}>Add a link</Button>
@@ -263,6 +285,7 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
           </div>
         ) : null}
       </FoldSection>
+      </div>
 
       {/* dialogs sit outside the box so Upload works while it is closed */}
       {adding ? (

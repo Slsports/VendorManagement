@@ -2816,3 +2816,8 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
 - Dates always carry the year (Dana, Oct 20: "anywhere a date shows I want year also"): task due dates and reminders,
   snooze times, drafts, the Bill.com card, suggested orders, supply and reminder emails, and pay-by task titles
   (0205 renames open ones). Plain dates elsewhere already showed 10/20/2026.
+- Proof and credit tasks take you to the file (Dana, Oct 20: "When I click on one it does nothing … if I click on the
+  email nothing opens"): clicking the task (or Go to it) opens the file itself with its folder open, also from the vendor's
+  own page; the task carries the email the file came in on (Orders mail only), shown as "Email: …" in the task box (0206,
+  back-check on every open proof and credit task). Six old Planet Cotton proof tasks (2024-2025 proofs filed from past
+  mail) closed at Dana's request; the two from Oct 12, 2026 stay open.
