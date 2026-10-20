@@ -25,7 +25,9 @@ export function poState(theirs: string | null | undefined, ours: string | null |
   const example = code ? `${poNorm(code)}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}${String(d.getFullYear()).slice(2)}` : null
   if (!isRealPo(theirs)) return { state: 'missing', example }
   if (isRealPo(ours)) return { state: poNorm(theirs).includes(poNorm(ours)) ? 'ours' : 'not_ours', example }
-  // letters for the vendor, then the date, as people type it: LUXPRO9226, Panthermrtn9126 (Oct 20 back-check)
-  if (/^[A-Z]{2,}[0-9]{4,6}/.test(poNorm(theirs))) return { state: 'fits', example }
+  // with a PO abbreviation on the vendor, ours start with it (Dana, Oct 20: WFS101526, PLANET51026); without one, letters
+  // for the vendor then the date, as people type it: LUXPRO9226, Panthermrtn9126 (Oct 20 back-check)
+  const set = vendor?.po_code?.trim()
+  if (set ? new RegExp(`^${poNorm(set)}[0-9]{4,6}`).test(poNorm(theirs)) : /^[A-Z]{2,}[0-9]{4,6}/.test(poNorm(theirs))) return { state: 'fits', example }
   return { state: 'off', example }
 }

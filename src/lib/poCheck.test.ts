@@ -16,6 +16,11 @@ describe('PO on a confirmation', () => {
     expect(poState('Panthermrtn9126', null, { name: 'PANTHER MARTIN', po_code: null }).state).toBe('fits')
     expect(poState('26569', null, v).state).toBe('off')
   })
+  it('with a PO abbreviation set, ours start with it', () => {
+    const pc = { name: 'PLANET COTTON', po_code: 'PLANET' }
+    expect(poState('PLANET51026', null, pc).state).toBe('fits')
+    expect(poState('PC51026', null, pc).state).toBe('off')
+  })
   it('off our naming, and missing', () => {
     expect(poState('NCDXZQN3DZ', null, v).state).toBe('off')
     expect(poState('N/A', null, v).state).toBe('missing')

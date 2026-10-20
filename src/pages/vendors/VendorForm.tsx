@@ -18,6 +18,7 @@ import { resolveEmailSender, setEmailVendor } from '@/services/mail'
 import { listOrderers } from '@/services/reviews'
 import { RepGroupPicker } from '@/components/rep-groups/RepGroupPicker'
 import { useHasInAppHistory } from '@/hooks/useHasInAppHistory'
+import { poCodeDefault } from '@/lib/poCheck'
 import { Alert, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
 
 const ROUTE_KEYS = Object.keys(BILLING_ROUTE_LABELS) as BillingRoute[]
@@ -77,6 +78,7 @@ interface FormState {
   shipping_contact_phone: string
   shipping_contact_email: string
   minimum_order: string
+  po_code: string
   freight_program: string
   free_shipping_policy: FreeShippingPolicy | ''
   free_shipping_threshold: string
@@ -91,7 +93,7 @@ const EMPTY: FormState = {
   name: '', aliases: '', routes: [], defaultRoute: '', payMethod: '', rep_group_id: '', assigned_buyer_id: '', payment_terms_id: '', ordering_frequency: '',
   is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, freight_allowance_on_time: false, vid_in_description: false, item_name_vendor: '', is_fishing: false, billcom_send: false, web_orders: false, ask_before_pictures: false, order_set_at_show: false, usual_charges: [],
   website: '', phone: '', email: '', fax: '', account_number: '', catalog: '', address: '', city: '', state: '', postal_code: '',
-  pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', shipping_contact_email: '', minimum_order: '', freight_program: '', free_shipping_policy: '', free_shipping_threshold: '', freight_routing: '', product_types: '',
+  pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', shipping_contact_email: '', minimum_order: '', po_code: '', freight_program: '', free_shipping_policy: '', free_shipping_threshold: '', freight_routing: '', product_types: '',
   notes: '', return_notes: '', windows: [],
 }
 
@@ -129,7 +131,7 @@ function formFromVendor(v: VendorDetail): FormState {
     website: v.website ?? '', phone: v.phone ?? '', email: v.email ?? '', fax: v.fax ?? '', account_number: v.account_number ?? '', catalog: v.catalog ?? '',
     address: v.address ?? '', city: v.city ?? '', state: v.state ?? '', postal_code: v.postal_code ?? '',
     pickup_address: v.pickup_address ?? '', pickup_times: v.pickup_times ?? '',
-    shipping_contact: v.shipping_contact ?? '', shipping_contact_phone: v.shipping_contact_phone ?? '', shipping_contact_email: v.shipping_contact_email ?? '', minimum_order: v.minimum_order ?? '', freight_program: v.freight_program ?? '', free_shipping_policy: v.free_shipping_policy ?? '', free_shipping_threshold: v.free_shipping_threshold !== null ? String(v.free_shipping_threshold) : '', freight_routing: v.freight_routing ?? '', product_types: v.product_types ?? '',
+    shipping_contact: v.shipping_contact ?? '', shipping_contact_phone: v.shipping_contact_phone ?? '', shipping_contact_email: v.shipping_contact_email ?? '', minimum_order: v.minimum_order ?? '', po_code: v.po_code ?? '', freight_program: v.freight_program ?? '', free_shipping_policy: v.free_shipping_policy ?? '', free_shipping_threshold: v.free_shipping_threshold !== null ? String(v.free_shipping_threshold) : '', freight_routing: v.freight_routing ?? '', product_types: v.product_types ?? '',
     notes: v.notes ?? '', return_notes: v.return_notes ?? '',
     windows: v.vendor_order_windows.map((w) => ({ id: w.id, kind: w.kind, label: w.label ?? '', months: w.months, notes: w.notes ?? '' })),
   }
@@ -221,7 +223,7 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
       website: nz(form.website), phone: nz(form.phone), email: nz(form.email), fax: nz(form.fax), account_number: nz(form.account_number), catalog: nz(form.catalog),
       address: nz(form.address), city: nz(form.city), state: nz(form.state), postal_code: nz(form.postal_code),
       pickup_address: nz(form.pickup_address), pickup_times: nz(form.pickup_times),
-      shipping_contact: nz(form.shipping_contact), shipping_contact_phone: nz(form.shipping_contact_phone), shipping_contact_email: nz(form.shipping_contact_email), minimum_order: nz(form.minimum_order), freight_program: nz(form.freight_program), free_shipping_policy: form.free_shipping_policy || null, free_shipping_threshold: form.free_shipping_threshold.trim() ? Number(form.free_shipping_threshold.replace(/[^0-9.]/g, '')) : null, freight_routing: nz(form.freight_routing), product_types: nz(form.product_types),
+      shipping_contact: nz(form.shipping_contact), shipping_contact_phone: nz(form.shipping_contact_phone), shipping_contact_email: nz(form.shipping_contact_email), minimum_order: nz(form.minimum_order), po_code: form.po_code.toUpperCase().replace(/[^A-Z0-9]/g, '') || null, freight_program: nz(form.freight_program), free_shipping_policy: form.free_shipping_policy || null, free_shipping_threshold: form.free_shipping_threshold.trim() ? Number(form.free_shipping_threshold.replace(/[^0-9.]/g, '')) : null, freight_routing: nz(form.freight_routing), product_types: nz(form.product_types),
       notes: nz(form.notes), return_notes: nz(form.return_notes),
     }
     try {
@@ -326,6 +328,10 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
             </Select>
           </FormField>
           <FormField label="Minimum order" htmlFor="min"><Input id="min" value={form.minimum_order} onChange={(e) => set('minimum_order', e.target.value)} placeholder="e.g. $250 or 12 units" /></FormField>
+          {/* the vendor part of our PO numbers (Dana, Oct 20: "WFS101526 or PLANET51026 … that's how Claude can create them") */}
+          <FormField label="PO abbreviation" htmlFor="po-code" hint={`Our POs: this + the order date. Next PO: ${poPreview(form.po_code, form.name)}`}>
+            <Input id="po-code" value={form.po_code} onChange={(e) => set('po_code', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} placeholder={poCodeDefault(form.name || 'VENDOR')} maxLength={16} />
+          </FormField>
           <FormField label="Freight program" htmlFor="freight"><Input id="freight" value={form.freight_program} onChange={(e) => set('freight_program', e.target.value)} placeholder="e.g. Free freight over $500" /></FormField>
           <FormField label="Free shipping" htmlFor="fsp">
             <Select id="fsp" value={form.free_shipping_policy} onChange={(e) => set('free_shipping_policy', e.target.value as FreeShippingPolicy | '')}>
@@ -488,4 +494,11 @@ function UsualChargesEditor({ value, onChange }: { value: { what: string; price:
       <Button type="button" size="sm" variant="secondary" onClick={() => onChange([...value, { what: '', price: '', per: 'each' }])}>Add a usual charge</Button>
     </fieldset>
   )
+}
+
+/** "PLANET102026": the abbreviation (or the one made from the name) and today's date as MMDDYY. */
+function poPreview(code: string, name: string): string {
+  const d = new Date()
+  const c = code.trim() || poCodeDefault(name || 'VENDOR')
+  return `${c}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}${String(d.getFullYear()).slice(2)}`
 }

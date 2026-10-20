@@ -1,10 +1,10 @@
 ---
 title: Create the PO in Lightspeed
 section: Orders
-keywords: PO number, create PO, Lightspeed, LS, reference number, PO code, YAKIMA080626, one PO, store, location
+keywords: PO number, create PO, Lightspeed, LS, reference number, PO code, PO abbreviation, abbreviation, YAKIMA080626, one PO, store, location
 who: Admin, managers and buyers
 ---
-We use one PO number for each order: the vendor's **PO code** and the order date, like **YAKIMA080626**. VMS makes it and creates the empty PO in Lightspeed with it in the **Reference #** field.
+We use one PO number for each order: the vendor's **PO abbreviation** and the order date, like **YAKIMA080626** or **PLANET102026**. VMS makes it and creates the empty PO in Lightspeed with it in the **Reference #** field.
 
 ## How to
 1. Open the order. In the **LS PO** box you see the PO number VMS will use.
@@ -13,9 +13,10 @@ We use one PO number for each order: the vendor's **PO code** and the order date
 4. If the vendor's confirmation had no PO, the email asking them to add ours is waiting in **Mail › Drafts**, and the **Create PO** task is done.
 5. When the final confirmation is in, the items go on the same PO with **Send to Lightspeed** on the LS PO (see "The LS PO").
 
-## The vendor's PO code and Lightspeed vendor
-- On the vendor page, the **Lightspeed** box shows which Lightspeed vendor it is and its **PO code**.
-- The PO code starts from the vendor name (KELLIS, SHARKEYES, YAKIMA). Type a shorter one and click **Save** if you like.
+## The vendor's PO abbreviation and Lightspeed vendor
+- On the vendor page, the **Lightspeed** box shows which Lightspeed vendor it is and its **PO abbreviation**. It's also in **Edit** › **PO abbreviation**, under Minimum order, with the next PO shown under it.
+- Type the abbreviation you want for long names (WFS for World Famous Sports, PLANET for Planet Cotton). With none typed, VMS makes one from the vendor name (KELLIS, SHARKEYES, YAKIMA).
+- A vendor's confirmation is checked against it: a PO that starts with the abbreviation and a date is ours.
 - If it says **not matched yet**, type part of the name under **Find it in Lightspeed** and click the right one. **Refresh from Lightspeed** brings in vendors added in LS since.
 
 ## Good to know

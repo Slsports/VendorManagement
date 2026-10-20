@@ -2856,3 +2856,9 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
     into the line already on file, 11 renamed and read again by Claude, 1 that was only the header removed).
   - Review queue: 24 cards about names that were never on a list removed. Fall 2026, Spring 2026 and the Spring 2026
     Pre-Show checked against their PDFs: fine. Fall 2024's PDF is not on hand; spot checks look right.
+- PO abbreviation (Dana, Oct 20: "a field in the vendor record for PO naming conventions … WFS101526 or PLANET51026 … that's
+  how Claude can create them"). The existing PO code field is now "PO abbreviation", in the vendor Edit form (with the next
+  PO shown) and the Lightspeed box, and on the Overview. Our next PO = abbreviation + order date. A confirmation's PO
+  fits our naming when it starts with the vendor's abbreviation (none set: letters then the date). Suggestions from past
+  POs (99 vendors; WFS and PLANET as Dana gave them; 198 ordered-from vendors with no clear one left blank) are in the
+  Claude Doc "PO abbreviations to approve" for Dana; nothing saved until she says.

@@ -16,7 +16,7 @@ const defaultCode = (name: string) => {
 }
 
 /**
- * Lightspeed on the vendor page (Dana, Oct 13): the PO code our PO numbers start with (YAKIMA → YAKIMA080626) and which
+ * Lightspeed on the vendor page (Dana, Oct 13): the PO abbreviation our PO numbers start with (YAKIMA → YAKIMA080626) and which
  * Lightspeed vendor this is, so "Create PO in LS" can make the PO.
  */
 export function VendorLightspeedBox({ vendor, canEdit, onChange }: { vendor: { id: string; name: string; po_code: string | null; lightspeed_vendor_id: string | null; lightspeed_name: string | null }; canEdit: boolean; onChange: () => void }) {
@@ -78,7 +78,7 @@ export function VendorLightspeedBox({ vendor, canEdit, onChange }: { vendor: { i
           </div>
         ) : null}
         <div className="flex flex-wrap items-end gap-2">
-          <FormField label="PO code" htmlFor={`po-code-${vendor.id}`}>
+          <FormField label="PO abbreviation" htmlFor={`po-code-${vendor.id}`}>
             <Input id={`po-code-${vendor.id}`} value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder={defaultCode(vendor.name)} disabled={!canEdit} className="w-40" />
           </FormField>
           {canEdit && code !== (vendor.po_code ?? '') ? <Button size="sm" loading={busy === 'save'} onClick={() => void save(vendor.lightspeed_vendor_id, code)}>Save</Button> : null}

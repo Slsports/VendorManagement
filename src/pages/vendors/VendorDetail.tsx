@@ -111,6 +111,7 @@ export default function VendorDetailPage() {
     ['Address', [v.address, [v.city, v.state].filter(Boolean).join(', '), v.postal_code].filter(Boolean).join(', ') || null],
     ['Ordering', v.ordering_frequency ? ORDERING_FREQUENCY_LABELS[v.ordering_frequency] : null],
     ['Minimum order', v.minimum_order],
+    ['PO abbreviation', v.po_code],
     ['Free shipping', freeShippingRule(v)],
     ['Freight program', v.free_shipping_policy ? v.freight_program : null],
     ['Freight routing', v.freight_routing],
