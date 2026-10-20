@@ -9,7 +9,7 @@ A few tick boxes on the vendor form mark special kinds of vendors.
 ## How to
 1. Open the vendor's page and click **Edit**.
 2. Under Basics, tick what applies:
-   - **Delivery vendor**: drops goods with a paper invoice, no order placed ahead.
+   - **Delivery vendor**: drops goods with a paper invoice, no order placed ahead. Their invoices are filed (and sent to Bill.com when switched on) with no check against an order, so they never wait in Needs a hand as "No order found".
    - **WWD zero-upcharge vendor**: no 1.5% drop-ship upcharge through Worldwide.
    - **Credits the freight back when we pay on time**.
    - **Add Vendor ID to item names**, last after one space (LAZY ONE MENS PAJAMA SET BLUE 2XL PJ5512). On for Coghlans, World Famous Sports, Lazy One and Ty, as the naming SOP says. Each order can change it.

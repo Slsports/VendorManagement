@@ -2932,3 +2932,8 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   "Scanned invoices to file" (pick vendor, store, folder, File it; the store picked is saved as the vendor's alias; or
   set aside). Bill.com: an uploaded invoice for a switched-on vendor is sent once from orders@ with the file and shows
   "Sent to Bill.com". Tyler Powell will be a Manager, not added yet (Dana: not until further down the road).
+- Delivery vendors' invoices skip the order check (Dana, Oct 20: "Yes you should"). Every invoice started a check against
+  an order, so store delivery vendors with no orders in VMS piled up as "No order found" in Needs a hand (Rod's had 6).
+  Now a vendor ticked Delivery vendor gets no order check; invoices are still filed and sent to Bill.com (0217). Ticked:
+  RODS POWER BAIT, SALTER'S DISTRIBUTING, MOUNTAIN MILK & CREAM, BRAD'S. Scope, Hendrix, Kelli's and Dick's are ordered
+  ahead, so not ticked. Back-check: Rod's 6 open "No order found" checks set aside.
