@@ -18,3 +18,4 @@ Every Documents folder refreshes itself the moment a file lands in it, whoever f
 ## Good to know
 - The order page, Accounting › Documents and the Review tabs refresh live the same way.
 - Removing a proof or a credit from its folder removes its task; moving a file to another folder does the same.
+- Only proofs and credits that came in within the last 30 days get a task. Older ones filed from past mail are kept in their folder as history, with no task.

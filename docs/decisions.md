@@ -2821,3 +2821,8 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   own page; the task carries the email the file came in on (Orders mail only), shown as "Email: …" in the task box (0206,
   back-check on every open proof and credit task). Six old Planet Cotton proof tasks (2024-2025 proofs filed from past
   mail) closed at Dana's request; the two from Oct 12, 2026 stay open.
+- Old paper makes no tasks (Dana, Oct 20: yes): a proof or credit gets its task only when it came in within 30 days
+  (0207); the 88 open tasks for files more than 60 days old were closed (67 credits, 21 proofs). Planet Cotton's two
+  open "proof" tasks (Oct 12) are not proofs: the picture sort read two Planet Cotton catalog samples (R5567 Horizon
+  Black Bear tees, R5561 Horizon Pines hoodie), carried in every reply since Maryellen's Sep 29 email, as proofs. The
+  only proof received is R6886 SL Mountain (Kristen, Oct 15), already marked approved. Fix proposed to Dana.
