@@ -185,7 +185,7 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
           {l.is_current ? <Badge tone="success" className="mr-1">Current</Badge> : null}
           {l.kind === 'sales_report' && l.report_used_at ? <Badge tone="success" className="mr-1">Used to place the order</Badge> : null}
           {l.kind === 'approved_proof' ? <Badge tone="warning" className="mr-1"><Star className="mr-0.5 inline size-3 fill-amber-400 text-amber-500" aria-hidden="true" />Approved{l.approved_at ? ` ${new Date(l.approved_at).toLocaleDateString()}` : ''}</Badge> : null}
-          {l.kind === 'proof' ? <Badge tone="neutral" className="mr-1">Not approved yet</Badge> : null}
+          {l.kind === 'proof' ? <Badge tone="neutral" className="mr-1">{l.superseded_at ? 'Earlier version, not used' : 'Not approved yet'}</Badge> : null}
           {folder && folder.kinds.length > 1 && folder.id !== 'proofs' ? <Badge tone="neutral" className="mr-1">{LINK_KIND_LABELS[l.kind]}</Badge> : null}
           {l.doc_number || l.doc_total != null ? <span className="mr-1 font-medium text-stone-700">{[l.doc_number ? `#${l.doc_number}` : null, l.doc_date ? new Date(`${l.doc_date}T12:00:00`).toLocaleDateString() : null, l.doc_total != null ? `$${Number(l.doc_total).toFixed(2)}` : null].filter(Boolean).join(' · ')} ·</span> : null}
           {l.season_label ? `${l.season_label} · ` : ''}{l.file_name ?? l.url?.replace(/^https?:\/\//, '')}{l.received_at ? ` · ${new Date(`${l.received_at}T12:00:00`).toLocaleDateString()}` : ''}

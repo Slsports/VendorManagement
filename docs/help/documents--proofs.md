@@ -1,7 +1,7 @@
 ---
 title: Proofs: approved or not yet
 section: Documents
-keywords: proof, proofs, artwork, art approval, mock-up, design, approved, star, not approved, approve the proof task
+keywords: proof, proofs, versions, earlier version, not used, revisions, order, artwork, art approval, mock-up, design, approved, star, not approved, approve the proof task
 who: Admin, managers and buyers
 ---
 Every vendor has one **Proofs** folder in **Documents** for artwork proofs. Each proof shows whether we approved it.
@@ -16,5 +16,7 @@ Every vendor has one **Proofs** folder in **Documents** for artwork proofs. Each
 ## Good to know
 - Proofs that come in by email go to **Proofs** by themselves when the file is named like a proof ("…PROOF.pdf", "Art Approval", "mock-up"). They start as **Not approved yet**, and get the **Approved** star by themselves when you approve the artwork by email (from VMS or orders@ in Gmail).
 - A picture with a plain name (like "image.png") goes to **Proofs** only when the email asks us to approve it ("please approve this proof", "approve the design"). It doesn't matter who sent it: the vendor, or a rep forwarding it. Pictures in our own emails, and catalog pictures carried along in replies, go to **Images**.
+- Going back and forth: when you approve by email, only the version you approved gets the star (the one in the vendor's latest email before your OK). Earlier versions in that conversation say **Earlier version, not used**, and their tasks close. Star one by hand if you picked an earlier one.
+- Each proof is tied to its order (the order of the confirmation in the same email or conversation, else the vendor's one open order). Once it's approved, the order shows **Artwork approved**.
 - Missed one? Save it with **Save to documents** › **Proofs**, or **Move** it there.
 - Uploading a file to **Proofs** files it as not approved yet.

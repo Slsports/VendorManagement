@@ -2879,3 +2879,10 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   right under the Summary, above the line-by-line table (it had been above the Summary since it was added Oct 13).
   Then (Dana, Oct 20): "I want the line by line right below the summary, emails below that": Summary, line-by-line table,
   then the email conversation.
+- Proof versions and the order (Dana, Oct 20: "Sometimes we go back and forth a few times before deciding on the final";
+  go on "star only the approved proof" and "the order link"). When a conversation's artwork is approved, only the proof(s)
+  in the vendor's latest email with proofs before our OK get the star; earlier versions in that conversation show
+  "Earlier version, not used" and their tasks close (starring one by hand clears that). Proofs are tied to their order:
+  the order of the confirmation or paper in the same email, else of the conversation, else the vendor's one open order; a
+  confirmation tied to an order later brings its proofs along; an approved proof tied to an order marks it "Artwork
+  approved" (0212). Back-check: every proof on file; R6886 (Planet Cotton) tied to the mountain shirt order (144 pcs).
