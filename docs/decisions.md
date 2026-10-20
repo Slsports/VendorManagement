@@ -2826,3 +2826,9 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   open "proof" tasks (Oct 12) are not proofs: the picture sort read two Planet Cotton catalog samples (R5567 Horizon
   Black Bear tees, R5561 Horizon Pines hoodie), carried in every reply since Maryellen's Sep 29 email, as proofs. The
   only proof received is R6886 SL Mountain (Kristen, Oct 15), already marked approved. Fix proposed to Dana.
+- A proof is decided by the email (Dana, Oct 20: "I want the email read. It will always say something like 'Please
+  approve this proof or this design, etc.' That is what will tell you its a proof"). Proofs come from the vendor (Planet
+  Cotton sends them after Maryellen submits the order); a rep may forward one. A picture goes to Proofs only when the new
+  message asks us to approve it (the artwork reader's asks_approval, quoted mail ignored); our own emails never do. A file
+  named like a proof ("…_PROOF.pdf", "Art Approval") still goes to Proofs. Back-check of all 29 proofs: 18 moved to Images
+  (catalog pictures, our own emails, product updates, ads), 11 stay; the 2 Planet Cotton catalog-picture tasks are gone.

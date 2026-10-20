@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
   }
 
   // the picture back-check (Dana, Oct 15), run by hand from the scheduler's secret
-  const body = await req.clone().json().catch(() => ({})) as { pictures_backcheck?: boolean; forwards_backcheck?: boolean; diagnose?: string; message?: string; attachment?: string }
+  const body = await req.clone().json().catch(() => ({})) as { pictures_backcheck?: boolean; proofs_backcheck?: boolean; forwards_backcheck?: boolean; diagnose?: string; message?: string; attachment?: string }
   // Read-only look at one mailbox's Gmail changes since its stored cursor (Oct 19, billing@ stuck since Oct 16): pages,
   // added and relabeled counts, time taken, and one message fetched three ways. Scheduler secret only; changes nothing.
   // Read-only: one stored attachment's bytes (base64), to look at a new kind of paperwork before building for it.
@@ -105,6 +105,12 @@ Deno.serve(async (req) => {
     const { data: accts } = await db.from('mail_accounts').select('*')
     const out: unknown[] = []
     for (const a of (accts ?? []) as Account[]) out.push(await forwardsBackcheck(db, { ...a, box_id: null, owner_id: null, legacy: null }))
+    return json(out)
+  }
+  if (trusted && body.proofs_backcheck) {
+    const { data: orgs } = await db.from('mail_accounts').select('organization_id')
+    const out: unknown[] = []
+    for (const o of orgs ?? []) out.push(await proofsBackcheck(db, o.organization_id))
     return json(out)
   }
   if (trusted && body.pictures_backcheck) {
@@ -876,6 +882,8 @@ async function saveItemPictures(db: SupabaseClient, gmail: Gmail, org: string, s
       }
       if (!todo.length) continue
       const pics = await sortPictures(db, gmail, org, e.gmail_id, todo, { vendor: vendor?.name ?? null, subject: e.subject, text: e.body_text })
+      // a proof only when the email asks us to approve it (Dana, Oct 20); else it is a picture like any other
+      if (pics.some((p) => p.kind === 'proof') && !(await asksApproval(db, org, [e.id])).has(e.id)) for (const p of pics) if (p.kind === 'proof') p.kind = 'product'
       const companies: string[] = []
       for (const p of pics) {
         await db.from('email_attachments').update({ picture_kind: p.kind, picture_company: p.company }).eq('id', p.a.id)
@@ -959,6 +967,50 @@ async function repLogoLines(db: SupabaseClient, senderId: string, companies: str
 }
 
 /**
+ * Which of these emails ask us to approve artwork (Dana, Oct 20: "I want the email read. It will always say something
+ * like 'Please approve this proof or this design' … That is what will tell you it's a proof"). Our own emails never do.
+ * An email the artwork step already read keeps that answer; the rest are read now, ten at a time.
+ */
+async function asksApproval(db: SupabaseClient, org: string, emailIds: string[]): Promise<Set<string>> {
+  const yes = new Set<string>()
+  const toRead: ArtEmail[] = []
+  for (let i = 0; i < emailIds.length; i += 100) {
+    const { data } = await db.from('emails').select('id, direction, subject, from_name, body_text, art_needed, art_read_at, attachments:email_attachments(file_name)').in('id', emailIds.slice(i, i + 100))
+    for (const e of data ?? []) {
+      if (e.direction === 'out') continue
+      if (e.art_read_at && e.art_needed) { if (e.art_needed === 'yes') yes.add(e.id); continue }
+      toRead.push({ email_id: e.id, direction: e.direction, subject: e.subject, from_name: e.from_name, body_text: e.body_text, attachments: ((e.attachments ?? []) as { file_name: string }[]).map((a) => a.file_name), art_status: null })
+    }
+  }
+  for (let i = 0; i < toRead.length; i += 10) {
+    const readings = await readArtwork(db, org, toRead.slice(i, i + 10))
+    for (const [id, r] of readings) if (r.art === 'yes') yes.add(id)
+  }
+  return yes
+}
+
+/**
+ * Back-check for the proof rule (Dana, Oct 20): every file in a Proofs folder that came from an email is checked against
+ * its email. When nobody asked us to approve it, it goes to Images and its "Approve the proof" task goes away. Files
+ * added by hand and approved proofs are left alone. Counts come back for Dana.
+ */
+async function proofsBackcheck(db: SupabaseClient, org: string) {
+  const { data: links } = await db.from('vendor_links').select('id, email_id, vendor_id').eq('organization_id', org).eq('kind', 'proof').not('email_id', 'is', null)
+  const list = links ?? []
+  const yes = await asksApproval(db, org, [...new Set(list.map((l) => l.email_id!))])
+  const tally = { proofs: list.length, kept: 0, moved_to_images: 0, tasks_cleared: 0 }
+  for (const l of list) {
+    if (yes.has(l.email_id!)) { tally.kept++; continue }
+    const { count } = await db.from('tasks').select('id', { count: 'exact', head: true }).eq('auto_key', `proof:${l.id}`).is('done_at', null)
+    await check(db.from('vendor_links').update({ kind: 'image' }).eq('id', l.id))
+    await check(db.from('email_attachments').update({ picture_kind: 'product' }).eq('vendor_link_id', l.id))
+    tally.moved_to_images++
+    tally.tasks_cleared += count ?? 0
+  }
+  return tally
+}
+
+/**
  * Back-check for the picture rule (Dana, Oct 15; the Oct 14 rule): every picture already in an Images folder is looked
  * at again. Logos come out of the folder (the email keeps them), proofs move to Proofs, and for vendors marked "Ask
  * before saving pictures" everything but proofs comes out. Counts come back for Dana.
@@ -981,6 +1033,7 @@ async function picturesBackcheck(db: SupabaseClient, org: string, started: numbe
     const { data: e } = await db.from('emails').select('subject, body_text, sender_id, vendor:vendors!emails_vendor_id_fkey(name, ask_before_pictures)').eq('id', emailId).single()
     const vendor = e?.vendor as unknown as { name: string; ask_before_pictures: boolean } | null
     const pics = await sortPictures(db, null, org, null, open.map((l) => ({ id: l.id, file_name: l.file_name ?? 'picture', mime_type: l.mime_type, size: l.file_size, gmail_attachment_id: null, vendor_link_id: l.id, storage_path: l.storage_path })), { vendor: vendor?.name ?? null, subject: e?.subject ?? null, text: e?.body_text ?? null }, false)
+    if (pics.some((p) => p.kind === 'proof') && !(await asksApproval(db, org, [emailId])).has(emailId)) for (const p of pics) if (p.kind === 'proof') p.kind = 'product'
     const companies: string[] = []
     for (const p of pics) {
       tally.looked++
