@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { CircleCheck, Mail, TriangleAlert } from 'lucide-react'
+import { CircleCheck, Mail } from 'lucide-react'
 import { getDraft, type DraftRow } from '@/services/mail'
 import type { OrderCheckRow } from '@/services/orderChecks'
 import { poState } from '@/lib/poCheck'
@@ -50,7 +50,7 @@ export function ConfirmationPoLine({ c, onChanged }: { c: OrderCheckRow; onChang
   return (
     <>
       <Alert variant="warning" className="mb-4">
-        <p className="flex items-start gap-2"><TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden="true" /><span>{problem}</span></p>
+        <p>{problem}</p>
         <div className="mt-2 text-sm">
           {c.po_draft_id ? (
             <Button size="sm" loading={loading} onClick={() => void openDraft()} leftIcon={<Mail className="size-4" aria-hidden="true" />}>Open the email asking them to use our PO</Button>
