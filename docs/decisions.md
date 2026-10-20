@@ -2886,3 +2886,14 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   the order of the confirmation or paper in the same email, else of the conversation, else the vendor's one open order; a
   confirmation tied to an order later brings its proofs along; an approved proof tied to an order marks it "Artwork
   approved" (0212). Back-check: every proof on file; R6886 (Planet Cotton) tied to the mountain shirt order (144 pcs).
+- After the confirmation is approved (Dana, Oct 20: "we need a shipping email to be prepared with our freight routing
+  instructions. At that point the order is passed to Trevor for proper routing, creating the po in LS and receipt of the
+  product. We will work on the content of that email & routing instructions letter later"). Nothing did this before
+  (confirming only started the LS PO draft). Now, when a person confirms an order (confirmation check done or sent, or
+  "This is our order"): the shipping email goes into the logistics person's Mail › Drafts (Trevor, handles_logistics),
+  to the vendor's orders / shipping / rep contacts, with the current routing letter attached when one is uploaded (none is
+  yet; a letter uploaded later is attached to the waiting drafts); and Trevor gets "Ship and receive: (vendor), PO …",
+  which opens the order's new Shipping & receiving box (the email, the freight and LS PO boxes, Mark received). Mark
+  received sets Received and today's date and closes the task; so does any later status or Cancelled. Web-order vendors
+  and imports are left out. The email text is a placeholder until Dana writes it (0213). Back-check: no confirmed order
+  today needs it (the one confirmed order is Kelli's, a web-order vendor).

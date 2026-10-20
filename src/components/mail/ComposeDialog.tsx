@@ -33,6 +33,8 @@ export interface ComposeDraft {
   routing_send_id?: string | null
   /** A contact confirmation email prepared from Vendors › Contact confirmations. */
   confirmation_id?: string | null
+  /** A shipping email (Dana, Oct 20): the current routing letter goes with it. */
+  attach_routing_letter?: boolean
 }
 
 const MAX_BYTES = 20 * 1024 * 1024
@@ -68,7 +70,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
     name: profile?.signature_name || profile?.full_name || null, title: profile?.job_title ?? null, direct: profile?.direct_phone ?? null, own: profile?.email_signature ?? null,
   }))
   const [choice, setChoice] = useState<{ reason: string; input: SendEmailInput } | null>(null)
-  const [attachLetter, setAttachLetter] = useState(false)
+  const [attachLetter, setAttachLetter] = useState(!!draft.attach_routing_letter)
   const fileInput = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const book = useSupabaseQuery(async () => (organization ? listAddressBook(organization.id) : []), [organization?.id])

@@ -16,6 +16,7 @@ import { OrderPaperworkSection } from '@/components/orders/OrderPaperworkSection
 import { ReportUsedCard } from '@/components/orders/ReportUsedCard'
 import { RecordTasks } from '@/components/tasks/RecordTasks'
 import { LsPoCard } from '@/components/ordering/LsPoCard'
+import { ShipCard } from '@/components/orders/ShipCard'
 import { OrderRepsCard } from '@/components/orders/OrderRepsCard'
 import { CheckInPricing } from '@/components/orders/CheckInPricing'
 import { FreeShippingCard } from '@/components/orders/FreeShippingCard'
@@ -33,6 +34,8 @@ export default function OrderDetailPage() {
   // "Go to it" from a Create PO task (Dana, Oct 14): land on the Create PO box
   const [params] = useSearchParams()
   const focusPo = params.get('do') === 'create-po'
+  // the Ship and receive task (Dana, Oct 20): land on the Shipping & receiving box
+  const focusShip = params.get('do') === 'ship'
   const { role, profile } = useAuth()
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
   const q = useSupabaseQuery(() => getOrder(id), [id])
@@ -118,6 +121,7 @@ export default function OrderDetailPage() {
           {extra.length ? <section className="rounded-2xl border border-stone-200 bg-white p-5"><h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Also on the sheet</h2><dl className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">{extra.map(([k, v]) => <div key={k}><dt className="text-xs font-medium text-stone-500">{k}</dt><dd className="text-sm text-stone-900">{v}</dd></div>)}</dl></section> : null}
         </div>
         <div className="space-y-6">
+          <ShipCard order={o} canEdit={canEdit} onChange={() => void q.refetch()} focus={focusShip} />
           <LsPoCard key={o.ls_po_number ?? ''} order={o} vendor={o.vendor} documents={o.documents} canEdit={canEdit} onChange={() => void q.refetch()} focus={focusPo} />
           <RecordTasks className="rounded-2xl border border-stone-200 bg-white p-5" preset={{ order: { id: o.id, name: [o.po_number ? `PO ${o.po_number}` : null, o.description].filter(Boolean).join(' · ') || 'This order' }, vendor: o.vendor ? { id: o.vendor.id, name: o.vendor.name } : null }} />
           {o.vendor ? <OrderRepsCard orderId={o.id} vendorId={o.vendor.id} takenBy={o.taken_by} canEdit={canEdit} onChange={q.refetch} /> : null}

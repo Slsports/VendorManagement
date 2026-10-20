@@ -618,6 +618,7 @@ export interface DraftRow {
   id: string; owner_id: string; created_by: string | null; to_emails: string[]; cc_emails: string[]; subject: string; body: string
   thread_id: string | null; reply_to_email_id: string | null; forward_email_id: string | null; vendor_id: string | null; mailbox_id: string | null
   note: string | null; gmail_draft_id: string | null; signature: string | null; routing_send_id: string | null; confirmation_id: string | null; updated_at: string
+  order_id: string | null; attach_routing_letter: boolean
   vendor: { id: string; name: string } | null; owner: { full_name: string } | null
 }
 

@@ -160,3 +160,26 @@ export async function quotedFreightRate(vendorId: string, since: string | null):
   return h ? { pct: Number(h.freight_pct), subject: h.subject, received_at: h.received_at, thread_id: h.thread_id } : null
 }
 
+
+// ---- after the confirmation (Dana, Oct 20): the shipping email and the hand-off to logistics ----------------------------
+export interface ShipStep {
+  task: { id: string; done_at: string | null; assignee: { full_name: string } | null } | null
+  draft_id: string | null
+}
+
+/** The order's Ship and receive task and its shipping email still in Drafts (seen by its owner and the admin). */
+export async function getShipStep(orderId: string): Promise<ShipStep> {
+  const [t, d] = await Promise.all([
+    supabase.from('tasks').select('id, done_at, assignee:profiles!tasks_assigned_to_fkey(full_name)').eq('auto_key', `ship:${orderId}`).maybeSingle(),
+    supabase.from('email_drafts').select('id').eq('order_id', orderId).limit(1).maybeSingle(),
+  ])
+  if (t.error) throw t.error
+  if (d.error) throw d.error
+  return { task: t.data as unknown as ShipStep['task'], draft_id: d.data?.id ?? null }
+}
+
+/** Start the shipping steps by hand, or mark the order received (which closes the task). */
+export async function orderShipAction(orderId: string, action: 'start' | 'received'): Promise<void> {
+  const { error } = await supabase.rpc('order_ship_action', { p_order: orderId, p_action: action })
+  if (error) throw error
+}

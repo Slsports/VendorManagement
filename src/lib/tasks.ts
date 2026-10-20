@@ -126,6 +126,8 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   if (kind === 'reply' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open their reply' }
   if (kind === 'promise' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}?do=reply`, label: 'Reply' }
   if (kind === 'freight_quote' && id) return { kind: 'page', to: `/freight/quotes/${id}`, label: 'Open the freight quote' }
+  // after the confirmation (Dana, Oct 20): the order's Shipping & receiving box, the shipping email one click away
+  if (kind === 'ship' && id) return { kind: 'page', to: `/orders/${id}?do=ship`, label: 'Open the shipping steps' }
   if (kind === 'lspo' && id) return { kind: 'page', to: `/ls-pos/${id}`, label: 'Open the LS PO' }
   // Find a replacement (Dana, Oct 18): the task lands on the item's Review card, where the Vendor ID goes
   if (kind === 'item_change' && id) return { kind: 'page', to: `/review?tab=items&item=${id}`, label: 'Open the item card' }
