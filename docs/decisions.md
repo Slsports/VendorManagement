@@ -2897,3 +2897,24 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   received sets Received and today's date and closes the task; so does any later status or Cancelled. Web-order vendors
   and imports are left out. The email text is a placeholder until Dana writes it (0213). Back-check: no confirmed order
   today needs it (the one confirmed order is Kelli's, a web-order vendor).
+- Store delivery vendors and Bill.com (Dana, Oct 20). Check-in in VMS is for ordered vendors received at SLS: Trevor does
+  most, Jarrett helps. The Happy and the Marina get nearly everything by LS transfer; their own vendors (none are WWD)
+  are not checked in in VMS: Frito Lay (SLS-SLM-GS; ordered online, confirmations and credit notices by email, one account's
+  mail goes to the Marina address VMS won't have; credits are applied for on Frito Lay's website; charged to our card,
+  never Bill.com), Rod's Power Bait, Salter's, Mountain Milk, Scope, Hendrix (Jarrett orders from John by email), Kelli's
+  (Raelee orders online) and Dick's Mountain Tackle (Jarrett orders; paid by direct deposit): paper invoice at delivery,
+  scanned and uploaded in VMS, paid in Bill.com. Brad's (bundled wood, Brad Wright): texts the bundles per store, no
+  email, no paper; paid in Bill.com. Mountain Milk (Cat collects every store's invoices and will scan them): the
+  handwritten corrections are saved with the invoice and matched to Howard's corrected invoice (to billing@), with a flag
+  when his correction hasn't come; the payment spreadsheet VMS makes for Howard (mountainmilkandcream@gmail.com) with the
+  lump-sum Bill.com payment; his monthly statement per store matched against what we paid, the gaps listed for Cat. Not
+  built yet. Credit due from a check-in goes to Trevor. Mark received stays its own step: received is not checked in and
+  not in LS (often waiting on the freight bill).
+- Bill.com switch on (Dana, Oct 20: YES) for RODS POWER BAIT, SALTER'S DISTRIBUTING, MOUNTAIN MILK & CREAM, SCOPE
+  ENTERPRISES, HENDRIX OUTDOORS, KELLI'S, DICK'S MOUNTAIN TACKLE and BRAD'S; Frito Lay no. Those vendors had 83 emailed
+  invoices on file, long paid, so a vendor's invoices are forwarded only when emailed on or after the day its switch
+  went on (`vendors.billcom_send_on_at`, 0214); none was sent when the switch went on. Scanned and uploaded invoices are
+  not forwarded yet (only emails are): to build with the Scan only screen.
+- Scan only login (Dana, Oct 20): sees only Upload an invoice; after uploading, sees the pages and presses Submit to send
+  it on for processing. Tyler Powell (typow.slm@gmail.com), General Manager: runs the Marina (closed for winter), works on
+  boats and the ski shop inside SLS in winter, helps oversee SLH. The Marina's summer scanner is hired next spring.

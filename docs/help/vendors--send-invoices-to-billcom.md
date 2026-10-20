@@ -13,6 +13,7 @@ Every vendor has one switch: **Send invoices to Bill.com**. On, each invoice ema
 
 ## Good to know
 - Only invoices Claude files from an email (orders@ or billing@) are forwarded, once per email, with all its attachments, from the mailbox it came to. The email shows **Sent to Bill.com** with the date.
+- Only invoices that arrive from the day you turn the switch on are sent. Older ones already on file are never sent, even if VMS files them again.
 - An invoice VMS can't place (no vendor, or not sure it is an invoice) is never forwarded; it stays in the Review queue for you.
 - On the **Vendors** list, the **Bill.com** button shows the vendors switched on.
 - Settings › Bill.com lists what was sent lately; a failed send has **Send again**.
