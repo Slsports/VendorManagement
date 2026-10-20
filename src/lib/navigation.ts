@@ -64,6 +64,8 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       { label: 'Incoming Shipments', to: ROUTES.shipments, icon: Truck },
       { label: 'Freight', to: ROUTES.freight, icon: Receipt },
       { label: 'Supplies', to: ROUTES.supplies, icon: Package },
+      // scan or upload paper invoices (Dana, Oct 20)
+      { label: 'Invoice Uploads', to: ROUTES.upload, icon: Upload, roles: ['admin', 'manager', 'buyer'] },
       { label: 'Item names', to: ROUTES.itemNames, icon: SpellCheck, roles: ['admin', 'manager', 'buyer'] },
       { label: 'Buying Shows', to: ROUTES.buyingShows, icon: CalendarDays },
       { label: 'Payments', to: ROUTES.payments, icon: Banknote, roles: ['admin', 'manager'] },
@@ -107,7 +109,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
 export const UPLOADER_NAV: readonly NavGroup[] = [
   {
     label: 'Invoices',
-    items: [{ label: 'Upload invoice', to: ROUTES.upload, icon: Upload, roles: ['uploader'] }],
+    items: [{ label: 'Invoice Uploads', to: ROUTES.upload, icon: Upload, roles: ['uploader'] }],
   },
 ]
 

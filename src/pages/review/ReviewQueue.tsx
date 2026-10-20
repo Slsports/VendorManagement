@@ -80,7 +80,8 @@ export default function ReviewQueuePage() {
   const isPaperwork = tab === 'confirmations' || tab === 'invoices' || tab === 'hand'
   const shown = items.filter((i) => reviewTabOfKind(i.kind) === tab && whoMatch(i))
   const shownChecks = checks.filter((c) => reviewTabOfCheck(c) === tab && whoMatch(c))
-  const shownCount = isPaperwork ? shownChecks.length : shown.length
+  // paperwork tabs list order checks; Needs a hand also has the scanned invoices to file (Dana, Oct 20)
+  const shownCount = isPaperwork ? shownChecks.length + shown.length : shown.length
   const nameOf = (id: string | null) => (id ? (people.find((p) => p.id === id)?.full_name ?? 'Someone') : 'nobody')
 
   async function assign(itemId: string, profileId: string | null) {
@@ -111,6 +112,40 @@ export default function ReviewQueuePage() {
   if (q.isLoading || checksQ.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading review queue…" className="text-brand" /></div>
   if (q.error || checksQ.error) return <Alert variant="error">{q.error ?? checksQ.error}</Alert>
   const kinds = [...new Set(shown.map((i) => i.kind))].sort((a, b) => Object.keys(REVIEW_KIND_LABELS).indexOf(a) - Object.keys(REVIEW_KIND_LABELS).indexOf(b))
+
+  const itemSections = kinds.map((kind) => {
+          const meta = REVIEW_KIND_LABELS[kind] ?? { title: kind, help: '' }
+          const group = shown.filter((i) => i.kind === kind)
+          return (
+            <section key={kind} className="mb-8">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">{meta.title} <span className="font-normal text-stone-400">({group.length})</span></h2>
+                {kind === 'vendor_rename' && canEdit && group.length > 1 ? <Button size="sm" variant="secondary" loading={applyingAll} onClick={() => void applyAllRenames(group.map((i) => i.id))}>Apply all as proposed</Button> : null}
+              </div>
+              {meta.help ? <p className="mb-3 text-sm text-stone-600">{meta.help}</p> : null}
+              <div className="space-y-2">
+                {group.map((item) => (
+                  <ReviewItemCard
+                    key={item.id}
+                    item={item}
+                    vendor={item.vendor}
+                    other={item.other}
+                    canEdit={canEdit}
+                    onDone={() => refresh()}
+                    aside={<span className="flex flex-col items-end gap-1">
+                      {back.has(item.id) ? <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800">Back from snooze</span> : null}
+                      {snoozedBy.has(item.id) ? <span className="text-xs text-stone-500">Snoozed until {snoozeText(snoozedBy.get(item.id)!.until)}{snoozedBy.get(item.id)!.profile_id !== me ? ` by ${snoozedBy.get(item.id)!.person?.full_name ?? 'someone'}` : ''}</span> : null}
+                      {canEdit
+                        ? <AssigneeSelect value={item.assigned_to} people={people} onChange={(id) => assign(item.id, id)} />
+                        : item.assigned_to ? <span className="text-xs text-amber-800">Assigned to {nameOf(item.assigned_to)}</span> : null}
+                      <SnoozeButton kind="review" ids={[item.id]} until={hidden.get(item.id) ?? null} onDone={() => refresh()} />
+                    </span>}
+                  />
+                ))}
+              </div>
+            </section>
+          )
+        })
 
   return (
     <div>
@@ -183,41 +218,12 @@ export default function ReviewQueuePage() {
           <Button variant="ghost" size="sm" className="mt-2" onClick={() => setWhoChoice('all')}>Show everyone's ({inTab.length})</Button>
         </div>
       ) : isPaperwork ? (
-        <ChecksList rows={shownChecks} showWho={who !== 'me'} />
+        <>
+          {shownChecks.length ? <ChecksList rows={shownChecks} showWho={who !== 'me'} /> : null}
+          {shown.length ? <div className={shownChecks.length ? 'mt-8' : ''}>{itemSections}</div> : null}
+        </>
       ) : (
-        kinds.map((kind) => {
-          const meta = REVIEW_KIND_LABELS[kind] ?? { title: kind, help: '' }
-          const group = shown.filter((i) => i.kind === kind)
-          return (
-            <section key={kind} className="mb-8">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">{meta.title} <span className="font-normal text-stone-400">({group.length})</span></h2>
-                {kind === 'vendor_rename' && canEdit && group.length > 1 ? <Button size="sm" variant="secondary" loading={applyingAll} onClick={() => void applyAllRenames(group.map((i) => i.id))}>Apply all as proposed</Button> : null}
-              </div>
-              {meta.help ? <p className="mb-3 text-sm text-stone-600">{meta.help}</p> : null}
-              <div className="space-y-2">
-                {group.map((item) => (
-                  <ReviewItemCard
-                    key={item.id}
-                    item={item}
-                    vendor={item.vendor}
-                    other={item.other}
-                    canEdit={canEdit}
-                    onDone={() => refresh()}
-                    aside={<span className="flex flex-col items-end gap-1">
-                      {back.has(item.id) ? <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800">Back from snooze</span> : null}
-                      {snoozedBy.has(item.id) ? <span className="text-xs text-stone-500">Snoozed until {snoozeText(snoozedBy.get(item.id)!.until)}{snoozedBy.get(item.id)!.profile_id !== me ? ` by ${snoozedBy.get(item.id)!.person?.full_name ?? 'someone'}` : ''}</span> : null}
-                      {canEdit
-                        ? <AssigneeSelect value={item.assigned_to} people={people} onChange={(id) => assign(item.id, id)} />
-                        : item.assigned_to ? <span className="text-xs text-amber-800">Assigned to {nameOf(item.assigned_to)}</span> : null}
-                      <SnoozeButton kind="review" ids={[item.id]} until={hidden.get(item.id) ?? null} onDone={() => refresh()} />
-                    </span>}
-                  />
-                ))}
-              </div>
-            </section>
-          )
-        })
+        itemSections
       )}
     </div>
   )

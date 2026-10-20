@@ -2918,3 +2918,17 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
 - Scan only login (Dana, Oct 20): sees only Upload an invoice; after uploading, sees the pages and presses Submit to send
   it on for processing. Tyler Powell (typow.slm@gmail.com), General Manager: runs the Marina (closed for winter), works on
   boats and the ski shop inside SLS in winter, helps oversee SLH. The Marina's summer scanner is hired next spring.
+- Invoice Uploads (Dana, Oct 20, "go"). The role "Invoice uploader" is now **Invoice Uploads**. Its login sees only
+  Invoice Uploads: take photos (camera) or choose files (the phone's or iPad's files and photos, or the computer), check
+  the pages, Submit; then "My uploads" in folders by upload date, only their own ("they should only see what they
+  uploaded"). Enforced in the database (0215: `user_in_org` is false for uploaders; they read their own profile,
+  organization, uploads and upload folder only). Office editors have the same page in the menu. Claude reads each upload
+  with the scanned-paper reader (now also the store it is for, as printed), splits stacks, and files each invoice to the
+  vendor's Documents with its store (`vendor_links.store_code`, source upload), the same file the upload shows. Store:
+  "someone could be uploading invoices for 2 stores at one time, I don't want them to have to make any choices": the
+  vendor's **Invoice alias** (`vendors.invoice_store_aliases`; Mountain Milk: Town Store = SLS, Camp Store = GS, Marina =
+  SLM, set), else our store codes, names and aliases. Same file again, or the same vendor and number on file: "Already
+  submitted by (name) on (date)", never saved twice. Unknown vendor or store, or unclear: Review › Needs a hand,
+  "Scanned invoices to file" (pick vendor, store, folder, File it; the store picked is saved as the vendor's alias; or
+  set aside). Bill.com: an uploaded invoice for a switched-on vendor is sent once from orders@ with the file and shows
+  "Sent to Bill.com". Tyler Powell will be a Manager, not added yet (Dana: not until further down the road).

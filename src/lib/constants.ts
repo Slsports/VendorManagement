@@ -9,7 +9,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   manager: 'Manager',
   buyer: 'Buyer',
   viewer: 'Viewer',
-  uploader: 'Invoice uploader',
+  uploader: 'Invoice Uploads',
 }
 
 /** Store codes for the default tenant. Other tenants define their own in the stores table. */

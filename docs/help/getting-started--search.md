@@ -15,4 +15,4 @@ The search box at the top of every page finds a vendor as you type.
 - Names that start with what you typed come first. Inactive vendors show in grey, marked "Inactive vendor", below active ones.
 - The last line, **Search everything for "…"**, opens the Search page. Searching orders, invoices and files from there is not ready yet; for now use the search box on the Orders or Mail page.
 - On a phone the box is a magnifying glass; see "Use VMS on a phone".
-- Invoice uploaders do not have the search box.
+- Invoice Uploads logins do not have the search box.

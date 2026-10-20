@@ -62,6 +62,7 @@ interface FormState {
   ask_before_pictures: boolean
   order_set_at_show: boolean
   usual_charges: { what: string; price: string; per: string }[]
+  invoice_store_aliases: { name: string; store: string }[]
   website: string
   phone: string
   email: string
@@ -91,7 +92,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   name: '', aliases: '', routes: [], defaultRoute: '', payMethod: '', rep_group_id: '', assigned_buyer_id: '', payment_terms_id: '', ordering_frequency: '',
-  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, freight_allowance_on_time: false, vid_in_description: false, item_name_vendor: '', is_fishing: false, billcom_send: false, web_orders: false, ask_before_pictures: false, order_set_at_show: false, usual_charges: [],
+  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, freight_allowance_on_time: false, vid_in_description: false, item_name_vendor: '', is_fishing: false, billcom_send: false, web_orders: false, ask_before_pictures: false, order_set_at_show: false, usual_charges: [], invoice_store_aliases: [],
   website: '', phone: '', email: '', fax: '', account_number: '', catalog: '', address: '', city: '', state: '', postal_code: '',
   pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', shipping_contact_email: '', minimum_order: '', po_code: '', freight_program: '', free_shipping_policy: '', free_shipping_threshold: '', freight_routing: '', product_types: '',
   notes: '', return_notes: '', windows: [],
@@ -126,6 +127,7 @@ function formFromVendor(v: VendorDetail): FormState {
     web_orders: v.web_orders,
     ask_before_pictures: v.ask_before_pictures,
     order_set_at_show: v.order_set_at_show,
+    invoice_store_aliases: Object.entries((v.invoice_store_aliases ?? {}) as Record<string, string>).map(([name, store]) => ({ name, store })),
     usual_charges: (v.usual_charges ?? []).map((c) => ({ what: c.what, price: c.price != null ? String(c.price) : '', per: c.per ?? 'each' })),
     do_not_order_reason: v.do_not_order_reason ?? '',
     website: v.website ?? '', phone: v.phone ?? '', email: v.email ?? '', fax: v.fax ?? '', account_number: v.account_number ?? '', catalog: v.catalog ?? '',
@@ -218,6 +220,7 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
       web_orders: form.web_orders,
       ask_before_pictures: form.ask_before_pictures,
       order_set_at_show: form.order_set_at_show,
+      invoice_store_aliases: Object.fromEntries(form.invoice_store_aliases.filter((a) => a.name.trim() && a.store).map((a) => [a.name.trim(), a.store])),
       usual_charges: form.usual_charges.filter((c) => c.what.trim()).map((c) => ({ what: c.what.trim(), price: c.price.trim() ? Number(c.price.replace(/[^0-9.]/g, '')) : null, per: c.per.trim() || 'each' })),
       do_not_order_reason: form.standing !== 'ok' ? nz(form.do_not_order_reason) : null,
       website: nz(form.website), phone: nz(form.phone), email: nz(form.email), fax: nz(form.fax), account_number: nz(form.account_number), catalog: nz(form.catalog),
@@ -354,6 +357,7 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.ask_before_pictures} onChange={(e) => set('ask_before_pictures', e.target.checked)} /> Ask before saving pictures (their advertising waits for Save pictures in the email; proofs, invoices and confirmations still save)</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.order_set_at_show} onChange={(e) => set('order_set_at_show', e.target.checked)} /> Order is finalized at the show (new items on their confirmation are listed to double check, not flagged; quantities and prices still are)</label>
             <UsualChargesEditor value={form.usual_charges} onChange={(v) => set('usual_charges', v)} />
+            <InvoiceAliasEditor value={form.invoice_store_aliases} onChange={(v) => set('invoice_store_aliases', v)} />
             {isEdit ? <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_active} onChange={(e) => set('is_active', e.target.checked)} /> Active</label> : null}
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.needs_review} onChange={(e) => set('needs_review', e.target.checked)} /> Flag for review</label>
             {form.needs_review ? <Input aria-label="Review note" value={form.review_note} onChange={(e) => set('review_note', e.target.value)} placeholder="What needs checking?" /> : null}
@@ -492,6 +496,30 @@ function UsualChargesEditor({ value, onChange }: { value: { what: string; price:
         </div>
       ))}
       <Button type="button" size="sm" variant="secondary" onClick={() => onChange([...value, { what: '', price: '', per: 'each' }])}>Add a usual charge</Button>
+    </fieldset>
+  )
+}
+
+/** Invoice alias (Dana, Oct 20): what this vendor calls our stores on its invoices, so uploads file to the right store. */
+function InvoiceAliasEditor({ value, onChange }: { value: { name: string; store: string }[]; onChange: (v: { name: string; store: string }[]) => void }) {
+  const { stores } = useAuth()
+  const change = (i: number, patch: Partial<{ name: string; store: string }>) => onChange(value.map((a, n) => (n === i ? { ...a, ...patch } : a)))
+  return (
+    <fieldset className="rounded-xl border border-stone-200 p-3">
+      <legend className="px-1 text-sm font-medium text-stone-700">Invoice alias</legend>
+      <p className="mb-2 text-xs text-stone-500">What they call our stores on their invoices, like Town Store = SLS. Scanned invoices use it to file to the right store.</p>
+      {value.map((a, i) => (
+        <div key={i} className="mb-2 flex flex-wrap items-center gap-2">
+          <Input aria-label="Name on their invoice" value={a.name} onChange={(e) => change(i, { name: e.target.value })} placeholder="Town Store" className="w-48" />
+          <span className="text-sm text-stone-500">=</span>
+          <Select aria-label="Our store" value={a.store} onChange={(e) => change(i, { store: e.target.value })} className="h-9 w-48">
+            <option value="">Which store?</option>
+            {stores.map((s) => <option key={s.code} value={s.code}>{s.code} · {s.name}</option>)}
+          </Select>
+          <Button type="button" size="sm" variant="ghost" onClick={() => onChange(value.filter((_, n) => n !== i))}>Remove</Button>
+        </div>
+      ))}
+      <Button type="button" size="sm" variant="secondary" onClick={() => onChange([...value, { name: '', store: '' }])}>Add a store name</Button>
     </fieldset>
   )
 }

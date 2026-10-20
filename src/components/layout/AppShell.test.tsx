@@ -31,7 +31,7 @@ describe('AppShell', () => {
     renderShell('uploader', '/upload')
     const nav = screen.getAllByRole('navigation', { name: 'Main' })[0]!
     const links = within(nav).getAllByRole('link')
-    expect(links.map((l) => l.textContent?.trim())).toEqual(['Upload invoice'])
+    expect(links.map((l) => l.textContent?.trim())).toEqual(['Invoice Uploads'])
   })
 
   it('marks the current order status sub-item', () => {

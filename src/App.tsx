@@ -218,7 +218,7 @@ export default function App() {
                 <Route path={ROUTES.lightspeedCallback} element={<LightspeedCallback />} />
               </Route>
 
-              <Route element={<RequireRole roles={['uploader', 'admin', 'manager']} />}>
+              <Route element={<RequireRole roles={['uploader', 'admin', 'manager', 'buyer']} />}>
                 <Route path={ROUTES.upload} element={<UploadInvoice />} />
               </Route>
 

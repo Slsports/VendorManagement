@@ -20,6 +20,7 @@ import { PortalConflictReview } from '@/components/review/PortalConflictReview'
 import { PortalContactReview } from '@/components/review/PortalContactReview'
 import { ItemChangeCard } from '@/components/review/ItemChangeCard'
 import { BoothRepReview } from '@/components/review/BoothRepReview'
+import { InvoiceUploadReview } from '@/components/review/InvoiceUploadReview'
 
 type VendorRef = { id: string; name: string; lightspeed_name: string | null; aliases: string[] } | null
 
@@ -63,6 +64,7 @@ const ROUTE_OPTIONS: { value: RouteChoice; label: string }[] = [
  *  - portal_conflict (the Worldwide portal says something different): Keep ours / Use the portal's.
  *  - item_change (a vendor confirmation says an item is discontinued, replaced or out of stock): the ItemChangeCard buttons.
  *  - rep_line (a rep's mail names another group's vendor, or a brand we do not have): move/keep, or add/skip.
+ *  - invoice_upload (a scanned invoice Claude could not file): pick vendor, store and folder, File it.
  *  - vendor_marker and anything else: Done / Dismiss.
  * Any card about one vendor can also delete it as "not a vendor" (never one with orders).
  * Every merge, confirm or split can state WWD / Faire / Not WWD so the result's usual route is right.
@@ -112,6 +114,18 @@ export function ReviewItemCard({ item, vendor, other, canEdit, onDone, aside }: 
           {aside ? <div className="shrink-0">{aside}</div> : null}
         </div>
         <FreightPaymentReview item={item} canEdit={canEdit} onDone={() => onDone()} />
+      </div>
+    )
+  }
+
+  if (item.kind === 'invoice_upload') {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <p className="font-medium text-amber-900">{item.title}</p>
+          {aside ? <div className="shrink-0">{aside}</div> : null}
+        </div>
+        <InvoiceUploadReview item={item} canEdit={canEdit} onDone={() => onDone()} />
       </div>
     )
   }

@@ -16,6 +16,7 @@ export const REVIEW_KIND_LABELS: Record<string, { title: string; help: string }>
   portal_conflict: { title: 'Worldwide portal differences', help: 'The Worldwide portal says something different from what VMS has for a vendor. Keep ours, or use the portal\'s.' },
   rep_line: { title: 'Rep group lines', help: 'A rep\'s emails name a line that is with another rep group, or a brand that is not one of our vendors yet. Lines with no rep group are added on their own.' },
   vendor_form: { title: 'From vendor forms', help: 'A vendor wrote on our contact form that they also represent companies VMS does not have. Add them as vendors or lines, then mark it handled.' },
+  invoice_upload: { title: 'Scanned invoices to file', help: 'Invoices someone uploaded that Claude could not file by itself: the vendor, the store or the paper was unclear. Pick what is missing and click File it. A store you pick is remembered for that vendor.' },
   category_change: { title: 'Category clean-up', help: 'Proposed Lightspeed category changes, by batch. Nothing changes in Lightspeed until a batch is approved.' },
 }
 
@@ -87,6 +88,7 @@ export function reviewTabOfKind(kind: string): ReviewTab {
     case 'email_sender': return 'who'
     case 'delivery_receipt': case 'freight_card': return 'freight'
     case 'item_change': return 'items'
+    case 'invoice_upload': return 'hand'
     default: return 'vendor'
   }
 }

@@ -28,7 +28,7 @@ describe('navForRole', () => {
   })
 
   it('shows uploaders only the upload screen', () => {
-    expect(labels('uploader')).toEqual(['Upload invoice'])
+    expect(labels('uploader')).toEqual(['Invoice Uploads'])
   })
 
   it('returns nothing when signed out', () => {

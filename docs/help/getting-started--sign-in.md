@@ -14,7 +14,7 @@ VMS is a website: open https://vms.shaverlakesports.com on a computer, tablet or
 
 ## Good to know
 - There is no sign-up. Dana (the administrator) sets up each person's login.
-- After signing in you land on the dashboard, or on the page you were trying to open. Invoice uploaders land on their Upload invoice page.
+- After signing in you land on the dashboard, or on the page you were trying to open. Invoice Uploads logins land on their **Invoice Uploads** page.
 - "That email and password combination is not right" means the email or password is wrong. Try again, or use **Forgot password?**.
 - "Too many attempts" means wait a minute before trying again.
 - You stay signed in on that device until you sign out.

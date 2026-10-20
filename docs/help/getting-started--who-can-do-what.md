@@ -11,7 +11,7 @@ Each login has a role. The role decides which pages you see in the menu and whet
 - **Manager** (Trevor, Jarrett): everything except Team and Settings, including **Payments**.
 - **Buyer**: can add and change vendors, orders, mail, freight bills, rep groups and lines, and settle the review queue. No Payments, Team or Settings.
 - **Viewer**: can look at vendors, orders, mail and the rest, but cannot change anything. No Review queue, Payments, Team or Settings.
-- **Invoice uploader**: only sees the **Upload invoice** page.
+- **Invoice Uploads**: only sees the **Invoice Uploads** page and what they uploaded themselves.
 
 ## Good to know
 - If you open a page your role can't use, VMS says "You don't have access to this page". Click **Go back home**.
