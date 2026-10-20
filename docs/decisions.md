@@ -2813,3 +2813,6 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
 - Back-check: gmail-sync writes each vendor's newest lines first until every vendor (292 with mail) has its 5.
 - Also Oct 20: the two Planet Cotton credit tasks (170809CM, 159549CM) closed: both credited, Trevor checked 170809CM
   against the vendor return Aug 14. Dana: anywhere a date shows, show the year too (next).
+- Dates always carry the year (Dana, Oct 20: "anywhere a date shows I want year also"): task due dates and reminders,
+  snooze times, drafts, the Bill.com card, suggested orders, supply and reminder emails, and pay-by task titles
+  (0205 renames open ones). Plain dates elsewhere already showed 10/20/2026.

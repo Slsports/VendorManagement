@@ -68,7 +68,7 @@ async function claim(db: SupabaseClient, ids: string[], column: 'reminded_at' | 
   return (data ?? []) as unknown as TaskRow[]
 }
 
-const day = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: TZ, weekday: 'short', month: 'short', day: 'numeric' })
+const day = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: TZ, weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
 
 /** What the task is about, without the subject of anyone's private mail. */
 function about(t: TaskRow): string | null {

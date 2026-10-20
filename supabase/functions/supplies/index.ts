@@ -111,7 +111,7 @@ async function orderStep(db: SupabaseClient, org: string, started: number) {
   return matched
 }
 
-const day = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: TZ, weekday: 'long', month: 'short', day: 'numeric' })
+const day = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: TZ, weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })
 
 interface Notice { id: string; summary: string; requested_by_name: string | null; requested_by_email: string; ordered_from: string | null; order_number: string | null; expected_at: string | null; gmail_thread_id: string | null; message_id_header: string | null; subject: string | null }
 

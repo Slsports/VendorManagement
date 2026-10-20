@@ -9,7 +9,7 @@ import { ROUTES } from '@/lib/constants'
 import { money } from '@/lib/freight'
 import { CountCard } from './CountCard'
 
-const day = (d: string | null) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '')
+const day = (d: string | null) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '')
 
 /**
  * Bill.com on the dashboard (Dana, Oct 19; only for people who see Accounting): bills due within 7 days (or overdue)
@@ -45,7 +45,7 @@ export function BillcomCard() {
           {waiting.data.slice(0, 5).map((w) => (
             <li key={w.email_id} className="flex items-center justify-between gap-2 py-1.5">
               <span className="min-w-0 truncate">{w.thread_id ? <Link to={`${ROUTES.mail}/${w.thread_id}`} className="font-medium text-stone-900 hover:text-brand">{w.vendor_name ?? 'Vendor'}</Link> : <span className="font-medium text-stone-900">{w.vendor_name ?? 'Vendor'}</span>}{w.file_name ? <span className="text-stone-500"> · {w.file_name}</span> : null}</span>
-              <span className="shrink-0 text-xs text-stone-500">{w.doc_total != null ? `${money(Number(w.doc_total))} · ` : ''}sent {new Date(w.sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+              <span className="shrink-0 text-xs text-stone-500">{w.doc_total != null ? `${money(Number(w.doc_total))} · ` : ''}sent {new Date(w.sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
             </li>
           ))}
         </ul>

@@ -53,8 +53,9 @@ export function localDay(d: Date): string {
 const asDate = (day: string) => new Date(`${day}T12:00:00`)
 const daysBetween = (a: string, b: string) => Math.round((asDate(b).getTime() - asDate(a).getTime()) / 86_400_000)
 
+/** "Mon, Oct 26, 2026": always with the year (Dana, Oct 20); withYear drops the weekday where room is short. */
 export function dateText(day: string, withYear = false): string {
-  return asDate(day).toLocaleDateString([], withYear ? { month: 'short', day: 'numeric', year: 'numeric' } : { weekday: 'short', month: 'short', day: 'numeric' })
+  return asDate(day).toLocaleDateString([], withYear ? { month: 'short', day: 'numeric', year: 'numeric' } : { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 export type DueState = 'late' | 'today' | 'soon' | 'later' | 'none'
@@ -65,7 +66,7 @@ export function dueState(due: string | null, today: string): DueState {
   return n < 0 ? 'late' : n === 0 ? 'today' : n <= 7 ? 'soon' : 'later'
 }
 
-/** "Today", "Tomorrow", "2 days late", "Mon, Oct 14". */
+/** "Today", "Tomorrow", "2 days late", "Mon, Oct 14, 2026". */
 export function dueText(due: string | null, today: string): string {
   if (!due) return 'No date'
   const n = daysBetween(today, due)
@@ -86,9 +87,9 @@ export function fromLocalInput(local: string): string | null {
   return local ? new Date(local).toISOString() : null
 }
 
-/** "Tue, Oct 14, 9:00 AM". */
+/** "Tue, Oct 14, 2026, 9:00 AM". */
 export function remindText(iso: string): string {
-  return new Date(iso).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+  return new Date(iso).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 
 /** For components: today against the clock now. */

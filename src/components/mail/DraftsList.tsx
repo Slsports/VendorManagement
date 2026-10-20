@@ -10,7 +10,7 @@ import { SortHeader } from '@/components/shared/SortHeader'
 import { ComposeDialog } from '@/components/mail/ComposeDialog'
 import { Alert, Button, Spinner } from '@/components/ui'
 
-const when = (d: string) => new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+const when = (d: string) => new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
 
 /**
  * Mail › Drafts (Dana, Oct 12): emails saved before sending, by you or prepared by Claude for you to look over. Click one

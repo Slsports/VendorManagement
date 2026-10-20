@@ -20,7 +20,7 @@ import { Button, Spinner } from '@/components/ui'
 import { SalesReportUpload } from './SalesReportUpload'
 
 const STAGE_WORD = { placed: 'placed', confirmed: 'confirmed', shipped: 'shipped, not in LS yet' } as const
-const day = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' })
+const day = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
 
 /**
  * The suggested order for a vendor (Dana, Oct 11): from the latest sales report, what LS says we need minus what is

@@ -17,11 +17,11 @@ export function snoozeChoices(now: Date): SnoozeChoice[] {
   ]
 }
 
-/** "Tue 8:00 AM", or "Oct 21, 8:00 AM" when more than a week away. */
+/** "Tue, Oct 21, 2026, 8:00 AM": always the date with its year (Dana, Oct 20). */
 export function snoozeLabel(until: string | Date, now: Date): string {
   const d = new Date(until)
   const far = d.getTime() - now.getTime() > 6 * 86400_000
-  return d.toLocaleString([], far ? { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' } : { weekday: 'short', hour: 'numeric', minute: '2-digit' })
+  return d.toLocaleString([], far ? { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' } : { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
 }
 
 export interface MySnoozes {

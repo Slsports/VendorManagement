@@ -7,10 +7,10 @@ who: Admin only
 VMS turns every bill worth paying by a date into a task for Dana, reminded 5 days before the date.
 
 ## What makes a task
-- **Early-pay discounts** on WWD invoices, from their terms (for example "2% 30, NET 90" or "6%30, 4%60, 3%90, NET91"): "Pay Panther Martin by Oct 14 for 4% off ($74.14)".
+- **Early-pay discounts** on WWD invoices, from their terms (for example "2% 30, NET 90" or "6%30, 4%60, 3%90, NET91"): "Pay Panther Martin by Oct 14, 2026 for 4% off ($74.14)".
 - **Discount terms in an order's AR due** notes, when the order has no WWD invoice: pay by its AR due date.
-- **Freight back** for paying on time, from the order's **Freight allowance** box: "Pay Water Sports by Oct 30 to get the freight back ($542.28)".
-- **Bills in Bill.com** due within 7 days: "Pay Paricon $412.00 by Oct 26 (Bill.com)". The task closes itself once Bill.com shows the bill paid or scheduled.
+- **Freight back** for paying on time, from the order's **Freight allowance** box: "Pay Water Sports by Oct 30, 2026 to get the freight back ($542.28)".
+- **Bills in Bill.com** due within 7 days: "Pay Paricon $412.00 by 10/26/26 (Bill.com)". The task closes itself once Bill.com shows the bill paid or scheduled.
 
 ## How it works
 1. The task appears in **My tasks** with the pay-by date as its due date.
