@@ -2790,3 +2790,8 @@ reminded at once, **Go to it** opens the email) with the to-do in Claude's own w
   is a vendor). Jane Grace (peteacher6@yahoo.com) is a former employee (had Trevor's job; jane@shaverlakesports.com).
   Faire vendors skip the confirmation email: built, held until Dana finishes the vendor list (routes and send/skip
   choices are applied together). Dana's list: https://claude.ai/code/artifact/ea97e5cb-e19d-4f52-ac0d-0dcc84b4ee4e
+
+## Oct 20 — Watches paused until the usage reset (Dana)
+The hourly deployment watch and provider mail watch ran as turns in the Fable session and used Dana's Fable usage
+(95% with three days to the reset). Dana: pause both now; after the reset, rebuild each as its own small Sonnet session
+that starts fresh each run, every few hours. Both scheduled tasks are disabled, not deleted.
