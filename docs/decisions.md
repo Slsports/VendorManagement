@@ -2877,3 +2877,5 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   Turner Group Reps, Sugar B Sales, Caraway & Co., Lauren Marsh/Starlight Toy Group…).
 - Confirmation check page (Dana, Oct 20: "The email threads should be below the summary"): the email conversation now sits
   right under the Summary, above the line-by-line table (it had been above the Summary since it was added Oct 13).
+  Then (Dana, Oct 20): "I want the line by line right below the summary, emails below that": Summary, line-by-line table,
+  then the email conversation.

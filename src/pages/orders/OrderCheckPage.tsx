@@ -210,9 +210,6 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
         </section>
       ) : null}
 
-      {/* the emails under the summary (Dana, Oct 20: "The email threads should be below the summary") */}
-      <EmailConversation emailId={c.email?.id ?? null} orderId={c.order?.id ?? null} canEdit={canEdit} onShared={() => void act('Shared to Orders; Claude compares again', 'recheck', {}, () => void checkNow())} />
-
       {rows.length ? (
         <section className="mb-4 overflow-x-auto rounded-2xl border border-stone-200 bg-white">
           <table className="w-full text-sm">
@@ -243,6 +240,9 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
                         {editable && !e?.removed ? <label className="ml-2 inline-flex items-center gap-1 text-stone-700"><input type="checkbox" checked={!!e?.askPrice} onChange={(ev) => void edit(r.what, { ...(e ?? {}), askPrice: ev.target.checked || undefined })} className="size-3.5 accent-brand" /> Ask about price</label> : e?.askPrice ? ' Asked in the email.' : null}
                       </span>
                     ) : null}
+
+      {/* summary, then the line-by-line table, then the emails (Dana, Oct 20) */}
+      <EmailConversation emailId={c.email?.id ?? null} orderId={c.order?.id ?? null} canEdit={canEdit} onShared={() => void act('Shared to Orders; Claude compares again', 'recheck', {}, () => void checkNow())} />
                     {!r.ok && canEdit && c.vendor && c.status === 'to_review' ? <button type="button" onClick={() => setUsual({ what: r.what, price: priceIn(r.theirs)?.toString() ?? '', per: 'each' })} className="mt-1 block text-xs font-normal text-brand hover:underline">This is a usual charge for this vendor</button> : null}</td>
                   <td className="px-3 py-2 text-stone-700">{r.ours ?? '—'}</td>
                   <td className="px-3 py-2 text-stone-700">{r.theirs ?? '—'}</td>

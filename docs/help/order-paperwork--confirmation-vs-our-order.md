@@ -22,7 +22,7 @@ Claude uses the first of these it can find:
 - A **Summary**, green when everything matches, red when there are issues, with each issue listed.
 - A table of every item and field: **What**, **We ordered**, **Confirmation**, and **OK** (a tick or a cross). Rows that differ are shaded red.
 - With issues, an email Claude drafted to the vendor. Claude reads the whole email conversation first, so it leaves out what was already agreed or answered (an item taken off, a discount promised, a ship date already asked for).
-- **The email conversation**, right under the summary, so you can see what Claude read.
+- **The email conversation**, under the summary and the line-by-line table, so you can see what Claude read.
 
 ## Good to know
 - The top of the check page shows **Compared with:** and what Claude used, so you know what it looked at. Click **Our order in VMS** there to see what we ordered, line by line.
