@@ -2790,6 +2790,9 @@ reminded at once, **Go to it** opens the email) with the to-do in Claude's own w
   is a vendor). Jane Grace (peteacher6@yahoo.com) is a former employee (had Trevor's job; jane@shaverlakesports.com).
   Faire vendors skip the confirmation email: built, held until Dana finishes the vendor list (routes and send/skip
   choices are applied together). Dana's list: https://claude.ai/code/artifact/ea97e5cb-e19d-4f52-ac0d-0dcc84b4ee4e
+- Oct 20 (Dana): Panther Martin's rep group is Heckel-Nokes Outdoors, with Melissa Nokes as its Main rep (her portal
+  copy on Panther Martin moved onto the rep group).
+
 
 ## Oct 20 — Watches paused until the usage reset (Dana)
 The hourly deployment watch and provider mail watch ran as turns in the Fable session and used Dana's Fable usage
