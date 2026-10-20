@@ -4,7 +4,9 @@ import { withAuth } from '@/test/auth'
 import { EmailSenderReview } from './EmailSenderReview'
 import type { ReviewItem } from '@/types'
 
-const { resolveEmailSender, listVendorNames, listRepGroupNames, listSenderEmails, reviewSenderEmails } = vi.hoisted(() => ({
+const { resolveEmailSender, resolveSenderMany, getSenderCompany, listVendorNames, listRepGroupNames, listSenderEmails, reviewSenderEmails } = vi.hoisted(() => ({
+  resolveSenderMany: vi.fn(async () => ({ linked: 3, lines_added: ['STANSPORT'], kept_with_other_group: [] })),
+  getSenderCompany: vi.fn(async (): Promise<string | null> => null),
   listSenderEmails: vi.fn(async () => [
     { id: 'e1', thread_id: 't1', subject: 'Order 1', from_name: 'Amy', from_email: 'amy@wfsports.com', received_at: '2026-10-01T00:00:00Z', snippet: 'hi', has_attachments: false, vendor_id: null, disposition: null, vendors: null },
     { id: 'e2', thread_id: 't2', subject: 'Order 2', from_name: 'Amy', from_email: 'amy@wfsports.com', received_at: '2026-10-02T00:00:00Z', snippet: 'hi', has_attachments: false, vendor_id: null, disposition: null, vendors: null },
@@ -14,7 +16,7 @@ const { resolveEmailSender, listVendorNames, listRepGroupNames, listSenderEmails
   listVendorNames: vi.fn(async () => [{ id: 'v-stan', name: 'STANSPORT', is_active: true }, { id: 'v-wfs', name: 'WORLD FAMOUS SPORTS', is_active: true }, { id: 'v-old', name: 'OLD STAN', is_active: false }]),
   listRepGroupNames: vi.fn(async () => [{ id: 'r-pin', name: 'Pinnacle Team' }]),
 }))
-vi.mock('@/services/mail', () => ({ resolveEmailSender, listVendorNames, listRepGroupNames, listSenderEmails, reviewSenderEmails, getEmailBody: vi.fn(), fetchAttachment: vi.fn(), clearPickerCache: vi.fn() }))
+vi.mock('@/services/mail', () => ({ resolveEmailSender, resolveSenderMany, getSenderCompany, listVendorNames, listRepGroupNames, listSenderEmails, reviewSenderEmails, getEmailBody: vi.fn(), fetchAttachment: vi.fn(), clearPickerCache: vi.fn() }))
 
 const item = {
   id: 'ri1', organization_id: 'o1', kind: 'email_sender', entity_type: 'email_sender', entity_id: 's1', title: 'Mail from @wfsports.com looks like WORLD FAMOUS SPORTS',
@@ -31,25 +33,42 @@ describe('EmailSenderReview', () => {
     await waitFor(() => expect(resolveEmailSender).toHaveBeenCalledWith('s1', 'vendor', 'v-wfs', undefined))
     expect(onDone).toHaveBeenCalled()
   })
-  it('files a rep group so each email is matched on its own', async () => {
-    render(withAuth('buyer', <EmailSenderReview item={item} canEdit onDone={vi.fn()} />))
-    fireEvent.click(screen.getByRole('button', { name: /A rep group/ }))
+  it('picks a rep group and the lines they write about, then saves once', async () => {
+    const onDone = vi.fn()
+    render(withAuth('buyer', <EmailSenderReview item={item} canEdit onDone={onDone} />))
+    fireEvent.click(screen.getByRole('button', { name: /Pick rep group \/ vendors/ }))
     await screen.findByRole('option', { name: 'Pinnacle Team' })
     fireEvent.change(screen.getByLabelText('Rep group'), { target: { value: 'r-pin' } })
-    fireEvent.click(screen.getByRole('button', { name: /This rep group/ }))
-    await waitFor(() => expect(resolveEmailSender).toHaveBeenCalledWith('s1', 'rep_group', undefined, 'r-pin'))
-  })
-  it('picks another vendor by typing; an inactive one asks to reactivate first', async () => {
-    render(withAuth('buyer', <EmailSenderReview item={item} canEdit onDone={vi.fn()} />))
-    fireEvent.click(screen.getByRole('button', { name: 'Another vendor' }))
+    // the proposed vendor is already in the list; add another and the card stays open
     const box = screen.getByRole('combobox', { name: 'Vendor' })
     fireEvent.change(box, { target: { value: 'stan' } })
     fireEvent.mouseDown(await screen.findByRole('option', { name: 'STANSPORT' }))
-    await waitFor(() => expect(resolveEmailSender).toHaveBeenCalledWith('s1', 'vendor', 'v-stan', undefined))
+    expect(onDone).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Remove WORLD FAMOUS SPORTS' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(resolveSenderMany).toHaveBeenCalledWith('s1', 'r-pin', ['v-wfs', 'v-stan']))
+    expect(onDone).toHaveBeenCalled()
+  })
+  it('a vendor alone is the company\'s own staff; an inactive one asks to reactivate first', async () => {
+    render(withAuth('buyer', <EmailSenderReview item={item} canEdit onDone={vi.fn()} />))
+    fireEvent.click(screen.getByRole('button', { name: /Pick rep group \/ vendors/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Remove WORLD FAMOUS SPORTS' }))
+    const box = screen.getByRole('combobox', { name: 'Vendor' })
+    fireEvent.change(box, { target: { value: 'stan' } })
+    fireEvent.mouseDown(await screen.findByRole('option', { name: 'STANSPORT' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(resolveSenderMany).toHaveBeenCalledWith('s1', null, ['v-stan']))
     fireEvent.change(box, { target: { value: 'old' } })
     fireEvent.focus(box)
     fireEvent.mouseDown(await screen.findByRole('option', { name: /OLD STAN/ }))
     expect(await screen.findByRole('dialog', { name: 'Reactivate this vendor?' })).toBeInTheDocument()
+  })
+  it('offers a rep agency Claude found as a new rep group', async () => {
+    getSenderCompany.mockResolvedValueOnce('Anthony & Associates')
+    const rep = { ...item, details: { ...(item.details as Record<string, unknown>), proposed_vendor_id: null, proposed_vendor_name: null, ai_kind: 'unsure', ai_note: 'Rep agency handling Franklin Sports orders; not on rep group list.' } } as ReviewItem
+    render(withAuth('buyer', <EmailSenderReview item={rep} canEdit onDone={vi.fn()} />))
+    fireEvent.click(await screen.findByRole('button', { name: 'New rep group: Anthony & Associates' }))
+    expect(await screen.findByDisplayValue('Anthony & Associates')).toBeInTheDocument()
   })
   it('names a service like Bill.com or Faire', async () => {
     render(withAuth('buyer', <EmailSenderReview item={item} canEdit onDone={vi.fn()} />))

@@ -2862,3 +2862,16 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   fits our naming when it starts with the vendor's abbreviation (none set: letters then the date). Suggestions from past
   POs (99 vendors; WFS and PLANET as Dana gave them; 198 ordered-from vendors with no clear one left blank) are in the
   Claude Doc "PO abbreviations to approve" for Dana; nothing saved until she says.
+- Anthony & Associates is a rep group (Dana, Oct 20: "WHY IS ANTHONY AND ASSOCIATES NOT SHOWING AS A REP GROUP?"). There was
+  no rep group for them; their sender waited as a Who is this? card (Claude: "rep agency handling Franklin Sports orders;
+  not on rep group list"), and the Worldwide portal had put Dan Adamson on CARAVAN GLOBAL as its rep, so their mail filed to
+  Caravan Global. Now: rep group Anthony & Associates (anthonyandassociates.com, office 360-546-3026) with Trena Wayrynen and
+  Dan Adamson; lines Franklin Sports and Caravan Global (the portal lists Dan as Caravan's rep); Dan moved off Caravan's
+  contacts (kept off by the tombstone); their 30 emails filed again: 27 to Franklin Sports, 3 (May 2024 freight charge) name
+  no line. The filing step also added our own addresses from forwarded mail as reps; removed.
+- Who is this? card (Dana, Oct 20: "I should be able to select all options that apply without the card disappearing"):
+  "Pick rep group / vendors" picks a rep group (or a new one) and the vendors they write about, then Save. A rep group: the
+  vendors become its lines (one with another rep group is left as is), each email files to the vendor it names. One vendor:
+  the company's own staff. Several vendors: each email by the vendor it names. When Claude read the sender as a rep agency
+  not in VMS, the card offers "New rep group: (name)". About 20 such cards are waiting (Maschmedt, Morton and Associates,
+  Turner Group Reps, Sugar B Sales, Caraway & Co., Lauren Marsh/Starlight Toy Group…).

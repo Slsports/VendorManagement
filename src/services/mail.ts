@@ -46,6 +46,20 @@ export async function resolveEmailSender(senderId: string, kind: Exclude<EmailSe
   return data ?? 0
 }
 
+/** Who is this? saved at once (Dana, Oct 20): a rep group and the lines they carry, one vendor, or several vendors. */
+export async function resolveSenderMany(senderId: string, repGroupId: string | null, vendorIds: string[]): Promise<{ linked: number; lines_added: string[]; kept_with_other_group: string[] }> {
+  const { data, error } = await supabase.rpc('resolve_email_sender_many', { p_sender: senderId, p_rep_group: repGroupId, p_vendors: vendorIds })
+  if (error) throw error
+  return data as unknown as { linked: number; lines_added: string[]; kept_with_other_group: string[] }
+}
+
+/** The company Claude read from a sender's mail (Who is this? suggests it as a new rep group). */
+export async function getSenderCompany(senderId: string): Promise<string | null> {
+  const { data, error } = await supabase.from('email_senders').select('company_name').eq('id', senderId).maybeSingle()
+  if (error) throw error
+  return (data?.company_name as string | null | undefined) ?? null
+}
+
 export async function setEmailVendor(emailId: string, vendorId: string | null): Promise<void> {
   const { error } = await supabase.rpc('set_email_vendor', { p_email: emailId, p_vendor: vendorId })
   if (error) throw error

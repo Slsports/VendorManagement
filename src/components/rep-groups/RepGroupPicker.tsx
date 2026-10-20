@@ -14,8 +14,10 @@ const ADD = '__add__'
 export interface NewRepGroupPrefill { name?: string; repName?: string; email?: string }
 
 /** Rep group dropdown with "+ Add new rep group…" as its first choice (a small pop-up, picked on save). */
-export function RepGroupPicker({ value, onChange, prefill, className, emptyLabel = 'Which rep group?' }: {
+export function RepGroupPicker({ value, onChange, prefill, className, emptyLabel = 'Which rep group?', startAdding = false }: {
   value: string
+  /** Open the "new rep group" box right away (Claude's suggestion on a Who is this? card). */
+  startAdding?: boolean
   emptyLabel?: string
   onChange: (id: string, group?: NamedRef) => void
   prefill?: NewRepGroupPrefill
@@ -23,7 +25,7 @@ export function RepGroupPicker({ value, onChange, prefill, className, emptyLabel
 }) {
   const { organization } = useAuth()
   const q = useSupabaseQuery(async () => (organization ? listRepGroupNames(organization.id) : []), [organization?.id])
-  const [adding, setAdding] = useState(false)
+  const [adding, setAdding] = useState(startAdding)
   return (
     <>
       <Select value={value} aria-label="Rep group" className={className ?? 'h-9 sm:w-72'} onChange={(e) => {
