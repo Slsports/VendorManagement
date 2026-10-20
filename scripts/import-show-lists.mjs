@@ -7,6 +7,9 @@
  *   node scripts/import-show-lists.mjs --show wwd_fall_2026 --label "Fall 2026 (Reno, Sept 1-3)" --date 2026-09-01 \
  *        --exhibitors ExhibitorListing.pdf --lines ShowTime.pdf --lines-pages 6-9 [--new-pages 18] [--dry]
  *   --skip "Name;Other name" leaves those listing names unmatched (look-alikes of a different vendor).
+ *   --drop "Text;Other" leaves out text on the page that is not an exhibitor (a floor-map legend).
+ *   --holders-only (with --exhibitors) refreshes who holds each booth on a show already loaded, nothing else.
+ *   --print lists every name read, to check against the PDF before writing.
  *   --exhibitors-min-x 0.35 skips what sits left of the listing (the Pre-Show page has the schedule there).
  *   Page lists may be ranges and commas: --lines-pages 8-11,14,16-19. When the packet has no separate
  *   exhibitor listing, leave --exhibitors out: booth holders are then unknown (booth-mates still work).
@@ -45,11 +48,24 @@ function parseListing(pdf, pages, columns, maxX = 1, minX = 0) {
   for (const page of xml.split('<page ').slice(1)) {
     const width = Number(page.match(/width="([\d.]+)"/)[1])
     const cols = Array.from({ length: columns }, () => [])
+    const words = []
     for (const wm of page.matchAll(/<word xMin="([\d.]+)" yMin="([\d.]+)" xMax="([\d.]+)" yMax="([\d.]+)">([^<]*)<\/word>/g)) {
       const x = Number(wm[1]), yc = (Number(wm[2]) + Number(wm[4])) / 2, text = decode(wm[5]).trim()
       if (!text || x > width * maxX || x < width * minX) continue   // decorative vertical titles sit past the booth column; a schedule may sit left of it
-      cols[Math.min(columns - 1, Math.floor((x - width * minX) / (width * (maxX - minX) / columns)))].push({ x, y: yc, text })
+      words.push({ x, xMax: Number(wm[3]), y: yc, text })
     }
+    // Columns end at their booth numbers (Oct 20: an equal split put the first word of a right-column name, which starts
+    // left of the middle, onto the left column: "Broner Aqua Case"). Each column's booths line up; the widest gaps between
+    // booth positions mark where the next column begins, just past the booths of the one before.
+    const booths = words.filter((w) => BOOTH.test(w.text.replace(/,$/, ''))).sort((a, b) => a.x - b.x)
+    const cuts = []
+    if (columns > 1 && booths.length >= columns) {
+      const gaps = booths.slice(1).map((b, i) => ({ i, gap: b.x - booths[i].x })).sort((a, b) => b.gap - a.gap).slice(0, columns - 1).sort((a, b) => a.i - b.i)
+      for (const g of gaps) cuts.push(Math.max(...booths.slice(0, g.i + 1).map((b) => b.xMax)) + 2)
+    } else {
+      for (let k = 1; k < columns; k++) cuts.push(width * minX + (width * (maxX - minX) / columns) * k)
+    }
+    for (const w of words) cols[cuts.filter((c) => w.x >= c).length].push(w)
     for (const col of cols) {
       col.sort((a, b) => a.y - b.y || a.x - b.x)
       const rows = []
@@ -62,7 +78,8 @@ function parseListing(pdf, pages, columns, maxX = 1, minX = 0) {
       for (const r of rows) {
         r.words.sort((a, b) => a.x - b.x)
         const text = r.words.map((w) => w.text).join(' ')
-        if (/^(ShowTime|Page \d|Worldwide \||LINE LISTING|BOOTH #|EXHIBITOR|LISTING|Exhibitor|Booth #)/.test(text) || /^[A-Z]$/.test(text)) { carry = null; continue }
+        // page titles and column headers ("Line Listing", "Line List Booth # Zero Upcharge") are never part of a name (Oct 20)
+        if (/^(ShowTime|Page \d|Worldwide \||LINE LISTING|Line List|BOOTH #|EXHIBITOR|LISTING|Exhibitor|Booth #)/i.test(text) || /^[A-Z]$/.test(text)) { carry = null; continue }
         const toks = r.words.map((w) => w.text)
         const firstBooth = toks.findIndex((t) => BOOTH.test(t.replace(/,$/, '')))
         const boothTok = toks.filter((t) => BOOTH.test(t.replace(/,$/, ''))).map((t) => t.replace(/,$/, ''))
@@ -106,11 +123,29 @@ if (args['new-pages']) {
   for (const raw of t.split('\n')) { const m = raw.trim().match(/^(.+?)\s+(\d{3,4})$/); if (m) newNames.add(dbKey(m[1])) }
 }
 
+// --holders-only: refresh who holds each booth on a show already loaded (Oct 20: the Spring 2025 holders were read with
+// the columns mixed), nothing else changes
+if (args['holders-only']) {
+  const rows = await query(`select id, booth from public.show_appearances where organization_id = ${lit(ORG)} and show_code = ${lit(args.show)}`)
+  let changed = 0
+  for (const r of rows) {
+    const holder = String(r.booth || '').split(',').map((b) => exhibitorByBooth.get(b.trim())).filter(Boolean).join(' / ') || null
+    if (dry) { if (args.print) console.log(`  ${r.booth}\t${holder}`); continue }
+    const res = await query(`update public.show_appearances set exhibitor = ${lit(holder)} where id = ${lit(r.id)} and exhibitor is distinct from ${lit(holder)} returning id`)
+    changed += res.length
+  }
+  console.log(`booth holders on ${args.show}: ${rows.length} appearances, ${dry ? 'dry run' : `${changed} changed`}`)
+  process.exit(0)
+}
+
+// --drop "name;name": text on the page that is not an exhibitor (Fall 2025's floor-map legend "D -2 RL 8, WO")
+const drop = new Set(String(args.drop || '').split(';').map((x) => dbKey(x)).filter(Boolean))
+
 // dedupe + skip services
 const seen = new Map()
 for (const l of lines) {
   const k = dbKey(l.name)
-  if (!k || k.length < 2) continue
+  if (!k || k.length < 2 || drop.has(k)) continue
   const booths = l.booth.split(',')
   if (booths.every((b) => SKIP_BOOTHS.has(b)) || SERVICE.test(l.name)) continue
   const zero = !!l.zero || zeroNames.has(k)
@@ -136,6 +171,7 @@ for (const e of entries) {
 }
 console.log(`matched vendors ${matched.length} | no route yet (will get WWD) ${noRoute.length} | tagged without WWD (left alone) ${notWwd.length}`)
 if (notWwd.length) for (const c of notWwd) console.log(`  check: ${c.v.name} (VMS: ${c.routes.join(', ')})`)
+if (args.print) for (const e of entries) console.log(`  ${e.booth}\t${e.name}${e.exhibitor && e.exhibitor !== e.name ? `\t(booth: ${e.exhibitor})` : ''}`)
 if (dry) {
   console.log('\nNon-exact matches to eyeball:')
   for (const m of matched.filter((m) => m.how !== 'exact')) console.log(`  ${m.name}  => ${m.vendorName}`)

@@ -2844,3 +2844,15 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   mountain shirt order has no PO yet: a Create PO task was made.
 - Fall 2025 and Spring 2025 show lists were read with their two columns mixed ("Broner Aqua Case" = Aqua Case + Broner Hat
   and Glove): 105 of 265 Fall 2025 entries and 191 Spring 2025 booth-holder names are wrong. Fix proposed to Dana.
+- Show lists fixed (Dana, Oct 20: "go on the vendor name bug", and clear the random names from the review queue). The
+  two-column exhibitor listings were split down the middle of the page, but the right column starts left of the middle, so
+  its first word joined the left name ("Broner Aqua Case", "Cactus Atwood Rope Manufacturing", "Century Bearpaw"). The
+  reader now splits each page just past the left column's booth numbers, and page headers ("Line List Booth # Zero
+  Upcharge") are never part of a name. Every name read was checked against the PDF text.
+  - Fall 2025: 82 misread entries removed and the list loaded again: 434 lines (was 265), 98 vendors matched; 3 vendors
+    without a route got WWD (the list rule); Nationwide (direct) left alone. Taylor's & Co. stays unmatched (look-alike);
+    the floor-map legend "D -2 RL 8, WO" left out.
+  - Spring 2025: booth holders refreshed from its exhibitor listing; 20 line names with the header glued on fixed (8 merged
+    into the line already on file, 11 renamed and read again by Claude, 1 that was only the header removed).
+  - Review queue: 24 cards about names that were never on a list removed. Fall 2026, Spring 2026 and the Spring 2026
+    Pre-Show checked against their PDFs: fine. Fall 2024's PDF is not on hand; spot checks look right.
