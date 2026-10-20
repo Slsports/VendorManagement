@@ -10,7 +10,7 @@ When a vendor sends a proof or design for us to approve, the conversation shows 
 1. Open the conversation. The bar says **Artwork waiting on your approval** and since when.
 2. If it is good, click **Approved**. Then save the final proof: **Save to documents** › **Proofs**, and click **Mark approved** on it.
 3. If it needs changes, click **Needs changes**. It stays on your list as "Need to send revisions".
-4. Once you have emailed the changes, click **Changes sent**. It now waits on the vendor's new proof.
+4. Once you have emailed the changes, click **Changes sent**. It now shows "Waiting on revisions" until the vendor's new proof comes in.
 5. Use **Waiting on approval again** to put it back, or **Not artwork** if it was never an approval.
 6. To add one VMS missed, click **Artwork to approve** in the conversation's buttons.
 

@@ -14,6 +14,6 @@ When a vendor is waiting on us to approve artwork, a proof or a design before th
 ## Good to know
 - The number counts the ones waiting on us. A wait of 2 days or more is red.
 - **Need to send revisions** means you chose Needs changes and still have to write back.
-- Ones where changes were sent are listed last in grey ("changes sent, waiting on a new proof") and counted separately as "waiting on vendor".
+- Ones where changes were sent are listed last in grey ("waiting on revisions") and counted separately as "waiting on vendor".
 - Claude reads incoming vendor mail to spot these; they go to Dana as the art approver.
 - The card only shows when there is something in it.

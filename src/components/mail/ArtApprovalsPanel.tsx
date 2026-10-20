@@ -11,7 +11,7 @@ import { CountCard } from '@/components/dashboard/CountCard'
  * Dashboard (Dana, Oct 10): artwork, proofs and designs a vendor is waiting on us to approve before the order
  * goes ahead, oldest first, each a link to its email. Red after 2 days. Hidden when there are none.
  * "Needs changes" is on us (Dana: "I need it to pop up in there that I have something to do on it"), so it is
- * listed with the approvals as "Need to send revisions" (Dana, Oct 20); "Changes sent" waits on the vendor and goes last, in grey.
+ * listed with the approvals as "Need to send revisions" (Dana, Oct 20); "Waiting on revisions" waits on the vendor and goes last, in grey.
  */
 export function ArtApprovalsPanel() {
   const { organization } = useAuth()
@@ -33,7 +33,7 @@ export function ArtApprovalsPanel() {
                 <span className="flex items-baseline justify-between gap-2">
                   <span className={`min-w-0 truncate font-medium ${sent ? 'text-stone-500' : 'text-stone-900'}`}>{t.vendor?.name ?? 'Vendor not filed'}</span>
                   <span className={`shrink-0 text-xs ${!sent && days >= 2 ? 'font-semibold text-red-700' : 'text-stone-500'}`}>
-                    {sent ? 'changes sent, waiting on a new proof' : t.art_status === 'needs_changes' ? `Need to send revisions · ${when}` : when}
+                    {sent ? 'waiting on revisions' : t.art_status === 'needs_changes' ? `Need to send revisions · ${when}` : when}
                   </span>
                 </span>
                 <span className="block truncate text-xs text-stone-500">{t.subject || '(no subject)'}{t.art_note ? ` · ${t.art_note}` : ''}</span>
