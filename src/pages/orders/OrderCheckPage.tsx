@@ -199,8 +199,6 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
           order={c.order && !c.against?.startsWith('Sales report') && c.kind === 'confirmation' ? c.order : null} />
       </section>
 
-      <EmailConversation emailId={c.email?.id ?? null} orderId={c.order?.id ?? null} canEdit={canEdit} onShared={() => void act('Shared to Orders; Claude compares again', 'recheck', {}, () => void checkNow())} />
-
       {c.summary ? (
         <section className={cn('mb-4 rounded-2xl border p-5', c.result === 'match' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50')}>
           <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-600">Summary</h2>
@@ -211,6 +209,9 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
           ) : null}
         </section>
       ) : null}
+
+      {/* the emails under the summary (Dana, Oct 20: "The email threads should be below the summary") */}
+      <EmailConversation emailId={c.email?.id ?? null} orderId={c.order?.id ?? null} canEdit={canEdit} onShared={() => void act('Shared to Orders; Claude compares again', 'recheck', {}, () => void checkNow())} />
 
       {rows.length ? (
         <section className="mb-4 overflow-x-auto rounded-2xl border border-stone-200 bg-white">

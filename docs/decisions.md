@@ -2875,3 +2875,5 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   the company's own staff. Several vendors: each email by the vendor it names. When Claude read the sender as a rep agency
   not in VMS, the card offers "New rep group: (name)". About 20 such cards are waiting (Maschmedt, Morton and Associates,
   Turner Group Reps, Sugar B Sales, Caraway & Co., Lauren Marsh/Starlight Toy Group…).
+- Confirmation check page (Dana, Oct 20: "The email threads should be below the summary"): the email conversation now sits
+  right under the Summary, above the line-by-line table (it had been above the Summary since it was added Oct 13).
