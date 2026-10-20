@@ -2802,3 +2802,14 @@ that starts fresh each run, every few hours. Both scheduled tasks are disabled, 
 ## Oct 20 — Texts are live (Dana)
 Dana: "Twilio set up, verification approved — texts are live." Task reminders by text now go out through Twilio
 (`task-reminders`, secrets TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM in the hosted function settings).
+
+## Oct 20, 2026 — Recent Activity on the vendor page
+Dana: "when we first open a vendor I'd like a bulleted summary of 'Recent Activity' where it lists (most recent first)
+date and brief, one sentence summary of what happened … maybe do the last 5 interactions."
+- Top of the vendor page (under the main rep strip and any warnings): the last 5 emails in the vendor's Primary mail,
+  newest first, as "10/20/26" plus one sentence Claude writes once per email (cheapest model). A line opens that email,
+  scrolled to it. Thank-yous, "got it", out-of-office and automatic notices are left out.
+- The sentence lives on the email, so private mail stays private (owner and admin only, unless shared to Orders).
+- Back-check: gmail-sync writes each vendor's newest lines first until every vendor (292 with mail) has its 5.
+- Also Oct 20: the two Planet Cotton credit tasks (170809CM, 159549CM) closed: both credited, Trevor checked 170809CM
+  against the vendor return Aug 14. Dana: anywhere a date shows, show the year too (next).

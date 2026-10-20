@@ -26,3 +26,11 @@ export function errorMessage(err: unknown, fallback = 'Something went wrong') {
   }
   return fallback
 }
+
+/** A date as 10/20/26, always with the year (Dana, Oct 20). Takes a timestamp or a YYYY-MM-DD day (read as that day). */
+export function shortDate(value: string | Date | null | undefined): string {
+  if (!value) return ''
+  const d = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T12:00:00`) : new Date(value)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' })
+}

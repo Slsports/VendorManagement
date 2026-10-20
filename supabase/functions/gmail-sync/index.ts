@@ -9,7 +9,7 @@ import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type
 import { forwardedBody, forwardedSender } from '../_shared/forwarded.ts'
 import { extractLinks, itemPicture, maybePaperwork, maybeSheetPaperwork, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
 import { sheetFileText } from '../_shared/sheetFile.ts'
-import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type PictureKind, readArtwork, readEdenredPdf, readEmailVendors, readExpectsReply, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type SentEmailToCheck, type UnsureEmail } from '../_shared/ai.ts'
+import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type PictureKind, readActivity, readArtwork, readEdenredPdf, readEmailVendors, readExpectsReply, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ActivityEmail, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type SentEmailToCheck, type UnsureEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
@@ -1125,6 +1125,21 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
           const r = readings.get(e.email_id)
           const due = r?.due && /^\d{4}-\d{2}-\d{2}$/.test(r.due) ? r.due : null
           await check(db.rpc('mail_apply_promise', { p_email: e.email_id, p_promise: !!r?.promise, p_task: r?.task ?? null, p_due: due, p_quote: r?.quote ?? null, p_writer: r?.writer ?? null }))
+        }
+      }
+    }
+
+    // Recent Activity (Dana, Oct 20): one sentence per email in a vendor's mail, each vendor's newest first, until
+    // every vendor page has its last 5.
+    if (Date.now() - started < TIME_BUDGET_MS) {
+      const { data: acts } = await db.rpc('mail_activity_queue', { p_org: org, p_limit: 20 })
+      const actList = (acts ?? []) as ActivityEmail[]
+      for (let i = 0; i < actList.length && Date.now() - started < TIME_BUDGET_MS; i += 10) {
+        const batch = actList.slice(i, i + 10)
+        const readings = await readActivity(db, org, batch)
+        for (const e of batch) {
+          const r = readings.get(e.email_id)
+          await check(db.from('emails').update({ activity_line: r?.line.trim() || null, activity_minor: r?.minor ?? false, activity_read_at: new Date().toISOString() }).eq('id', e.email_id))
         }
       }
     }

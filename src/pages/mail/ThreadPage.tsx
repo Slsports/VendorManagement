@@ -69,6 +69,8 @@ export default function ThreadPage() {
   const watchQ = useSupabaseQuery(async () => (watchParty ? getMyWatch(watchParty.email) : null), [watchParty?.email])
   // "Go to it" from a reply task (Dana, Oct 14): the reply to the latest email they sent is open, ready to write
   const wantsReply = params.get('do') === 'reply'
+  // a line in a vendor's Recent Activity (Dana, Oct 20): that email open and in view
+  const focusEmail = params.get('email')
   const autoReply = useMemo(() => {
     if (!wantsReply || !q.data || !mailbox.data || !mayAnswer || !canEdit) return null
     const latest = [...q.data.emails].reverse().find((e) => e.direction === 'in') ?? q.data.emails[q.data.emails.length - 1]
@@ -222,7 +224,7 @@ export default function ThreadPage() {
       <ol className="space-y-3">
         {/* Newest first and open; older ones closed to one line (Dana, Oct 8). */}
         {[...emails].reverse().map((e, i) => (
-          <Message key={e.id} email={e} startOpen={i === 0} vendor={t.vendor} carrierId={t.carrier_id ?? null} accounting={box?.kind === 'accounting'}
+          <Message key={e.id} email={e} startOpen={i === 0 || e.id === focusEmail} focus={e.id === focusEmail} vendor={t.vendor} carrierId={t.carrier_id ?? null} accounting={box?.kind === 'accounting'}
             onCompose={canEdit && mayAnswer && mailbox.data ? (kind) => setDraft(kind === 'forward' ? forwardDraft(t, e, e.attachments.length) : replyDraft(t, e, mailbox.data!, kind === 'all')) : undefined}
             onEmailAddress={canEdit ? (address) => setDraft({ to: [address], subject: '', body: '', vendor_id: t.vendor?.id ?? null }) : undefined} />
         ))}
@@ -238,8 +240,10 @@ export default function ThreadPage() {
   )
 }
 
-function Message({ email: e, startOpen, vendor, carrierId, accounting = false, onCompose, onEmailAddress }: { email: ThreadDetail['emails'][number]; startOpen: boolean; vendor: { id: string; name: string } | null; carrierId: string | null; accounting?: boolean; onCompose?: (kind: 'reply' | 'all' | 'forward') => void; onEmailAddress?: (address: string) => void }) {
+function Message({ email: e, startOpen, focus = false, vendor, carrierId, accounting = false, onCompose, onEmailAddress }: { email: ThreadDetail['emails'][number]; startOpen: boolean; focus?: boolean; vendor: { id: string; name: string } | null; carrierId: string | null; accounting?: boolean; onCompose?: (kind: 'reply' | 'all' | 'forward') => void; onEmailAddress?: (address: string) => void }) {
   const [open, setOpen] = useState(startOpen)
+  const itemRef = useRef<HTMLLIElement>(null)
+  useEffect(() => { if (focus) itemRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }) }, [focus])
   // Accounting mail (Dana, Oct 16): where each file was filed, or why it was left here, and "File in Accounting".
   const [filingId, setFilingId] = useState<string | null>(null)
   const [filedNow, setFiledNow] = useState<Record<string, string>>({})
@@ -352,7 +356,7 @@ function Message({ email: e, startOpen, vendor, carrierId, accounting = false, o
     }
   }
   return (
-    <li className={cn('rounded-2xl border bg-white', e.direction === 'out' ? 'border-brand/30' : 'border-stone-200')}>
+    <li ref={itemRef} className={cn('scroll-mt-4 rounded-2xl border bg-white', e.direction === 'out' ? 'border-brand/30' : 'border-stone-200', focus && 'ring-2 ring-brand/40')}>
       {/* The whole header opens and closes the email; the sender's name opens all mail with them (Dana, Oct 10). */}
       <div className="relative flex w-full flex-wrap items-baseline justify-between gap-2 px-4 py-3 text-left">
         <button type="button" onClick={() => setOpen((v) => !v)} className="absolute inset-0 rounded-2xl" aria-expanded={open} aria-label={open ? 'Close this email' : 'Open this email'} />

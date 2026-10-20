@@ -34,6 +34,7 @@ import { VendorItemRulesSection } from '@/components/vendors/VendorItemRulesSect
 import { PhoneLinks } from '@/components/shared/Phones'
 import { VendorRoutingLetter } from '@/components/vendors/VendorRoutingLetter'
 import { VendorConfirmBox } from '@/components/vendors/VendorConfirmBox'
+import { VendorRecentActivity } from '@/components/vendors/VendorRecentActivity'
 import { Alert, Badge, Button, Select, Spinner, Textarea } from '@/components/ui'
 
 export default function VendorDetailPage() {
@@ -222,6 +223,9 @@ export default function VendorDetailPage() {
           })}
         </section>
       ) : null}
+
+      {/* What happened lately, newest first (Dana, Oct 20) */}
+      <VendorRecentActivity vendorId={v.id} />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-2">

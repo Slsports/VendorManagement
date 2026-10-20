@@ -227,6 +227,15 @@ export async function countVendorThreads(organizationId: string, vendorId: strin
   return { attention, offers }
 }
 
+export type ActivityRow = Database['public']['Functions']['vendor_recent_activity']['Returns'][number]
+
+/** A vendor's Recent Activity (Dana, Oct 20): its last emails, newest first, each with Claude's one sentence. */
+export async function listVendorActivity(vendorId: string, limit = 5): Promise<ActivityRow[]> {
+  const { data, error } = await supabase.rpc('vendor_recent_activity', { p_vendor: vendorId, p_limit: limit })
+  if (error) throw error
+  return data ?? []
+}
+
 /** What is waiting on this person: vendor replies to answer, and sent mail with no answer past the follow-up date. */
 /** Dashboard: replies waiting on `me` (everyone's when null), and mail with no answer past its follow-up date. */
 export async function listMailForMe(organizationId: string, me: string | null, seesFreight = false): Promise<{ needs: ThreadRow[]; noAnswer: ThreadRow[] }> {
