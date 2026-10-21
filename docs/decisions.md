@@ -2999,3 +2999,18 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   counted as on order (pending / placed / shipped) with one-click links to the order, the confirmation or invoice it
   read, and the email it came from.
 - Dana: a small Help link everywhere there are help files, opening the help for the page being worked on.
+
+## Oct 21, 2026: Mail search, headers on screen, Back to the suggested order, on order from the rep's confirmation
+- Mail search (Dana: "search by contact name, vendor name or email, not just subjects"): one box over the text, names,
+  addresses, vendor and other names, contacts, attachment file names and PO; suggestions (people, vendors, rep groups,
+  orders); filter buttons (attachment or not, PDF / spreadsheet / pictures, dates, received / sent, what Claude found);
+  why it matched; opens the exact email. Same search in a vendor's Mail box and Accounting mail. Private mail stays
+  private (the search applies the mail privacy rule itself; 0222, 0224, 0225).
+- The database disk filled during the first search load (my one-shot fill, rolled back); Supabase grew the disk from 2 to
+  8 GB on its own and saving came back. Big loads now run in small batches (emails_search_fill).
+- Every table and report keeps its headers on screen when scrolling (global rule in src/index.css).
+- Back from an order opened in the suggested order reopens the suggested order with the typed quantities.
+- On order uses the vendor's newest confirmation for the order even before it is confirmed (Lazy One: Sharon's Sep 29
+  confirmation of SO 316992, 163 items), else our order's items; the word stays pending until confirmed.
+- Learned contacts keep the exact email they were learned from (0223); older ones open all mail with that person.
+- WWD's old invoice PDFs (1,162 pages since 2020, plus 217 pages of warehouse orders): later, once VMS is fine-tuned.
