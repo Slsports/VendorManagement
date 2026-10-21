@@ -8,7 +8,7 @@ import { addNote, getVendor, listNotes, listReviewQueue, setVendorAssignee, upda
 import { listOrderers } from '@/services/reviews'
 import { clearPickerCache } from '@/services/mail'
 import { ROUTES } from '@/lib/constants'
-import { BILLING_ROUTE_HELP, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, monthsLabel, freeShippingRule, standingWhy, STANDING_BADGE, LS_STATUS_LABELS, LS_STATUS_TONE, lsItemsText } from '@/lib/vendors'
+import { BILLING_ROUTE_HELP, ORDERING_FREQUENCY_LABELS, freeShippingRule, standingWhy, STANDING_BADGE, LS_STATUS_LABELS, LS_STATUS_TONE, lsItemsText } from '@/lib/vendors'
 import { errorMessage, shortDate } from '@/lib/utils'
 import { VendorPoUseBadge } from '@/components/vendors/VendorPoUseBadge'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -259,22 +259,7 @@ export default function VendorDetailPage() {
         <VendorRoutingLetter vendorId={v.id} organizationId={v.organization_id} />
         <VendorLightspeedBox vendor={v} canEdit={canEdit} onChange={() => void vendorQ.refetch()} />
 
-        <FoldSection title="Ordering windows" summary={v.vendor_order_windows.length === 0 ? 'None' : `${v.vendor_order_windows.length} window${v.vendor_order_windows.length === 1 ? '' : 's'}`}>
-          {v.vendor_order_windows.length === 0 ? (
-            <p className="text-sm text-stone-500">None recorded. Add them on the edit page.</p>
-          ) : (
-            <ul className="space-y-2 text-sm">
-              {v.vendor_order_windows.map((w) => (
-                <li key={w.id} className="rounded-lg bg-stone-50 px-3 py-2">
-                  <p className="font-medium text-stone-900">{w.label || ORDER_WINDOW_KIND_LABELS[w.kind]}</p>
-                  <p className="text-stone-600">{w.months.length ? monthsLabel(w.months) : ORDER_WINDOW_KIND_LABELS[w.kind]}{w.notes ? ` · ${w.notes}` : ''}</p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </FoldSection>
-
-        <VendorOrderingPanel vendor={{ id: v.id, name: v.name, aliases: v.aliases }} assignedBuyerId={v.assigned_buyer_id} canEdit={canEdit} />
+        <VendorOrderingPanel vendor={{ id: v.id, name: v.name, aliases: v.aliases }} assignedBuyerId={v.assigned_buyer_id} canEdit={canEdit} windows={v.vendor_order_windows} />
         <RecordTasks fold preset={{ vendor: { id: v.id, name: v.name } }} />
         <VendorDocumentsSection vendorId={v.id} vendorName={v.name} organizationId={v.organization_id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorMailSection vendorId={v.id} organizationId={v.organization_id} onNewEmail={canEdit ? () => compose(suggestions[0] ? [suggestions[0].email] : []) : undefined} />

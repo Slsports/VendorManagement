@@ -7,6 +7,8 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useLiveTable } from '@/hooks/useLiveTable'
 import { finishOrderingItem, getOpenOrderingItem, latestSalesReport, onOrderingChanged, ORDERING_STAGE_LABELS } from '@/services/ordering'
 import { errorMessage } from '@/lib/utils'
+import { ORDER_WINDOW_KIND_LABELS, monthsLabel } from '@/lib/vendors'
+import type { VendorOrderWindow } from '@/types'
 import { Button } from '@/components/ui'
 import { FoldSection } from '@/components/shared/FoldSection'
 import { FlagButtons } from './FlagButtons'
@@ -14,10 +16,14 @@ import { RunReportButtons } from './RunReportButtons'
 import { SalesReportUpload } from './SalesReportUpload'
 import { SuggestedOrderDialog } from './SuggestedOrder'
 
-/** On a vendor page: where the vendor is on the Ordering card, the two flags, Run report / Run order, the sales report and the suggested order. */
-export function VendorOrderingPanel({ vendor, assignedBuyerId, canEdit, className }: {
+/**
+ * On a vendor page: where the vendor is on the Ordering card, the two flags, Run report / Run order, the sales report,
+ * the suggested order, and the vendor's ordering windows beside the sales report date (Dana, Oct 21: one box, not two).
+ */
+export function VendorOrderingPanel({ vendor, assignedBuyerId, canEdit, className, windows }: {
   vendor: { id: string; name: string; aliases?: string[] }
   assignedBuyerId?: string | null
+  windows?: Pick<VendorOrderWindow, 'id' | 'kind' | 'label' | 'months' | 'notes'>[]
   canEdit: boolean
   className?: string
 }) {
@@ -48,9 +54,16 @@ export function VendorOrderingPanel({ vendor, assignedBuyerId, canEdit, classNam
             ) : null}
           </p>
         ) : null}
-        <p className="text-xs text-stone-500">
-          {report.data ? `Last sales report ${new Date(`${report.data.run_date}T12:00:00`).toLocaleDateString()} (${report.data.days} days).` : 'No sales report yet.'}
-        </p>
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-xs text-stone-500">
+          <p>{report.data ? `Last sales report ${new Date(`${report.data.run_date}T12:00:00`).toLocaleDateString()} (${report.data.days} days).` : 'No sales report yet.'}</p>
+          {windows ? (
+            <p>
+              <span className="font-medium text-stone-700">Ordering windows: </span>
+              {windows.length ? windows.map((w) => `${w.label || ORDER_WINDOW_KIND_LABELS[w.kind]}${w.months.length ? ` (${monthsLabel(w.months)})` : ''}${w.notes ? `, ${w.notes}` : ''}`).join(' · ')
+                : canEdit ? <Link to={`${ROUTES.vendors}/${vendor.id}/edit`} className="text-brand hover:underline">none yet, add on the edit page</Link> : 'none'}
+            </p>
+          ) : null}
+        </div>
         {canEdit ? (
           <div className="mt-2 flex flex-wrap gap-2">
             <FlagButtons vendor={vendor} assignedBuyerId={assignedBuyerId} />

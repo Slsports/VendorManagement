@@ -159,43 +159,83 @@ export async function latestSalesReport(vendorId: string): Promise<SalesReport |
 interface Reading { lines?: { vendor_item_id?: string | null; description?: string | null; quantity?: number | null }[] }
 
 /**
+ * Where an order's On order numbers came from (Dana, Oct 21: one click to the source): the paper VMS read (the vendor's
+ * confirmation or invoice, and the email it came in), or our order's own items, and how the order got into VMS (the
+ * email Claude made it from, the Placed Order Summary, Edenred's WWD invoice lines).
+ */
+export interface OnOrderSource {
+  orderId: string; label: string; stage: IncomingStage; items: number
+  from: 'confirmation' | 'invoice' | 'our_order' | 'none'
+  paper: { id: string; file_name: string | null; storage_path: string | null; mime_type: string | null } | null
+  paperEmail: { thread_id: string; subject: string | null; received_at: string } | null
+  made: string | null
+  madeEmail: { thread_id: string; subject: string | null; received_at: string } | null
+  wwdLines: boolean
+}
+
+/**
  * What is already coming in from a vendor, item by item: confirmed orders (the confirmation's lines), shipped or
  * received but not yet entered in LS (the invoice's lines), and placed orders (our order's lines). Orders with no
  * item list are returned separately, to check by hand.
  */
-export async function incomingFor(vendorId: string): Promise<{ lines: IncomingLine[]; unlisted: { id: string; label: string; stage: IncomingStage }[] }> {
-  const { data: orders, error } = await supabase.from('orders').select('id, status, po_number, description, order_date, est_ship_date')
+export async function incomingFor(vendorId: string): Promise<{ lines: IncomingLine[]; unlisted: { id: string; label: string; stage: IncomingStage }[]; sources: OnOrderSource[] }> {
+  const { data: orders, error } = await supabase.from('orders').select('id, status, source, po_number, description, order_date, est_ship_date')
     .eq('vendor_id', vendorId).in('status', ['open', 'awaiting_confirmation', 'confirmed', 'shipped', 'received'])
   if (error) throw error
-  if (!orders?.length) return { lines: [], unlisted: [] }
+  if (!orders?.length) return { lines: [], unlisted: [], sources: [] }
   const ids = orders.map((o) => o.id)
-  const [ol, checks] = await Promise.all([
-    supabase.from('order_lines').select('order_id, vendor_item_id, description, quantity').in('order_id', ids),
-    supabase.from('order_checks').select('order_id, kind, reading, created_at').in('order_id', ids).not('reading', 'is', null).order('created_at', { ascending: false }),
+  const [ol, checks, mail] = await Promise.all([
+    supabase.from('order_lines').select('order_id, vendor_item_id, description, quantity, wwd_invoice_id').in('order_id', ids),
+    supabase.from('order_checks').select('order_id, kind, reading, created_at, document_id, email_id').in('order_id', ids).not('reading', 'is', null).order('created_at', { ascending: false }),
+    supabase.from('emails').select('id, order_id, thread_id, subject, received_at').in('order_id', ids).order('received_at'),
   ])
   if (ol.error) throw ol.error
   if (checks.error) throw checks.error
+  if (mail.error) throw mail.error
+  // the papers and the emails the checks read
+  const docIds = [...new Set((checks.data ?? []).map((c) => c.document_id).filter((x): x is string => !!x))]
+  const emailIds = [...new Set((checks.data ?? []).map((c) => c.email_id).filter((x): x is string => !!x))]
+  const [docs, paperMail] = await Promise.all([
+    docIds.length ? supabase.from('vendor_links').select('id, file_name, storage_path, mime_type').in('id', docIds) : Promise.resolve({ data: [], error: null }),
+    emailIds.length ? supabase.from('emails').select('id, thread_id, subject, received_at').in('id', emailIds) : Promise.resolve({ data: [], error: null }),
+  ])
+  if (docs.error) throw docs.error
+  if (paperMail.error) throw paperMail.error
   const lines: IncomingLine[] = []
   const unlisted: { id: string; label: string; stage: IncomingStage }[] = []
+  const sources: OnOrderSource[] = []
+  const MADE: Record<string, string> = { email: 'Made by Claude from the email', placed_order_summary: 'From the Placed Order Summary', order_guide: 'From the Placed Order Summary', manual: 'Entered in VMS', show_scan: 'Read by Claude from the show sheet', confirmation: 'Made from the vendor\'s confirmation' }
   for (const o of orders) {
     const stage: IncomingStage = o.status === 'shipped' || o.status === 'received' ? 'shipped' : o.status === 'confirmed' ? 'confirmed' : 'placed'
     const label = [o.po_number ? `PO ${o.po_number}` : null, o.description, o.order_date ? `ordered ${new Date(`${o.order_date}T12:00:00`).toLocaleDateString()}` : null].filter(Boolean).join(' · ') || 'Order'
-    const reading = (kind: 'invoice' | 'confirmation') => (checks.data ?? []).find((c) => c.order_id === o.id && c.kind === kind)?.reading as Reading | undefined
-    const paper = (stage === 'shipped' ? reading('invoice') ?? reading('confirmation') : stage === 'confirmed' ? reading('confirmation') : undefined)?.lines ?? []
+    const check = (kind: 'invoice' | 'confirmation') => (checks.data ?? []).find((c) => c.order_id === o.id && c.kind === kind)
+    const read = stage === 'shipped' ? (check('invoice')?.reading ? check('invoice') : check('confirmation')) : stage === 'confirmed' ? check('confirmation') : undefined
+    const paper = (read?.reading as Reading | undefined)?.lines ?? []
     const ours = (ol.data ?? []).filter((l) => l.order_id === o.id)
     const use = paper.length ? paper.map((l) => ({ vid: l.vendor_item_id ?? null, desc: l.description ?? null, qty: Number(l.quantity ?? 0) }))
       : ours.map((l) => ({ vid: l.vendor_item_id, desc: l.description, qty: Number(l.quantity) }))
+    const firstMail = (mail.data ?? []).find((e) => e.order_id === o.id) ?? null
+    const doc = paper.length && read?.document_id ? (docs.data ?? []).find((d) => d.id === read.document_id) ?? null : null
+    const docMail = paper.length && read?.email_id ? (paperMail.data ?? []).find((e) => e.id === read.email_id) ?? null : null
+    sources.push({
+      orderId: o.id, label, stage, items: use.filter((l) => l.qty > 0).length,
+      from: paper.length ? (read?.kind === 'invoice' ? 'invoice' : 'confirmation') : ours.length ? 'our_order' : 'none',
+      paper: doc, paperEmail: docMail ? { thread_id: docMail.thread_id, subject: docMail.subject, received_at: docMail.received_at } : null,
+      made: o.source ? MADE[o.source] ?? null : null,
+      madeEmail: o.source === 'email' && firstMail ? { thread_id: firstMail.thread_id, subject: firstMail.subject, received_at: firstMail.received_at } : null,
+      wwdLines: !paper.length && ours.some((l) => l.wwd_invoice_id),
+    })
     if (!use.length) { unlisted.push({ id: o.id, label, stage }); continue }
     for (const l of use) if (l.qty > 0) lines.push({ ...l, orderId: o.id, orderLabel: label, stage, expected: o.est_ship_date })
   }
-  return { lines, unlisted }
+  return { lines, unlisted, sources }
 }
 
-export async function suggestedOrderFor(vendorId: string): Promise<{ report: SalesReport | null; lines: SuggestedLine[]; unlisted: { id: string; label: string; stage: IncomingStage }[] }> {
+export async function suggestedOrderFor(vendorId: string): Promise<{ report: SalesReport | null; lines: SuggestedLine[]; unlisted: { id: string; label: string; stage: IncomingStage }[]; sources: OnOrderSource[] }> {
   const report = await latestSalesReport(vendorId)
-  if (!report) return { report: null, lines: [], unlisted: [] }
+  if (!report) return { report: null, lines: [], unlisted: [], sources: [] }
   const incoming = await incomingFor(vendorId)
-  return { report, lines: suggestOrder(report.items as unknown as SalesItem[], incoming.lines), unlisted: incoming.unlisted }
+  return { report, lines: suggestOrder(report.items as unknown as SalesItem[], incoming.lines), unlisted: incoming.unlisted, sources: incoming.sources }
 }
 
 export async function setLsPoNumber(orderId: string, value: string | null): Promise<void> {

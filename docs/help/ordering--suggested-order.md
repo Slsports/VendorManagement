@@ -1,7 +1,7 @@
 ---
 title: The suggested order
 section: Ordering
-keywords: suggested order, need, on order, incoming, reorder, quantity, what to order, run order
+keywords: suggested order, need, on order, incoming, reorder, quantity, what to order, run order, pending, placed, where it came from, source
 who: Admin, managers and buyers
 ---
 The suggested order is what LS says we need minus what is already coming in.
@@ -16,5 +16,6 @@ The suggested order is what LS says we need minus what is already coming in.
 ## Good to know
 - **Need** = sold minus in stock. Overstock in one item never offsets another.
 - **On order** counts orders the vendor confirmed (**placed**, from the confirmation), orders shipped or invoiced but not yet in LS (**shipped, not in LS yet**, from the invoice), and orders not confirmed yet (**pending**, our order's items). Each links to its order with its ship date. The sales report's notes use the same words.
-- Open orders with no item list are named at the top; check them before ordering.
+- At the top, **Where "On order" comes from** lists every order counted, with one click to each source: the order, the vendor's **Confirmation** or **Invoice** VMS read, the **Email it came in**, and the email Claude made the order from. Orders with no item list are marked; check them before ordering.
+- Only orders not yet received and entered count. Orders closed in VMS (received and entered, cancelled, paid) never count.
 - **Download the report** gets the formatted sales report.

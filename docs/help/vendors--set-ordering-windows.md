@@ -17,4 +17,4 @@ Ordering windows record when you usually order from a vendor, like the February 
 
 ## Good to know
 - To remove a window, click the trash can beside its notes, then save.
-- The windows show on the vendor page in the **Ordering windows** box, with their months and notes.
+- The windows show on the vendor page in the **Ordering** box, beside the date of the last sales report, with their months and notes.

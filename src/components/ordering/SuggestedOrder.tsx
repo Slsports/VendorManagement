@@ -18,6 +18,7 @@ import { addLinesToOrder, openOrdersForVendor, orderPapers, vendorOrderAddresses
 import { addOnEmail, orderWord } from '@/lib/addOns'
 import { Button, Spinner } from '@/components/ui'
 import { SalesReportUpload } from './SalesReportUpload'
+import { OnOrderSources } from './OnOrderSources'
 
 // Dana, Oct 21: pending until the vendor confirms, placed once confirmed
 const STAGE_WORD = { placed: 'pending', confirmed: 'placed', shipped: 'shipped, not in LS yet' } as const
@@ -99,11 +100,7 @@ export function SuggestedOrderDialog({ vendor, onClose }: { vendor: { id: string
               </div>
             ) : (
               <>
-                {q.data?.unlisted.length ? (
-                  <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-amber-900">
-                    Also open, with no item list to subtract: {q.data.unlisted.map((u, i) => <span key={u.id}>{i ? ', ' : ''}<Link to={`${ROUTES.orders}/${u.id}`} className="underline">{u.label}</Link> ({STAGE_WORD[u.stage]})</span>)}. Check them before ordering.
-                  </p>
-                ) : null}
+                <OnOrderSources sources={q.data?.sources ?? []} />
                 {lines.length === 0 ? <p className="py-6 text-center text-stone-600">Nothing needed: every item has enough in stock or on order.</p> : (
                   <div className="overflow-x-auto">
                     <table className="w-full">

@@ -10,7 +10,7 @@ Each vendor has one page with everything about them: details, documents, mail, p
 1. Click **Vendors** in the menu and click the vendor's name (or pick it from the top search bar).
 2. Read the tags under the name: billing routes, standing (**Do not order**, **Last resort**, **On hold**), **WWD 0% upcharge**, **Fishing**, **Delivery vendor**, **Inactive**.
 3. Right under the name is **Main rep**: the person we place orders through, with email and phone. With a rep group, it is the rep group's rep. Click the email to write to them, or the phone number to call. No rep yet? Click **Add main rep**: **Reps & contacts** opens right there with **Rep** ticked. Fill in the name, email and phone and click **Save contact**; they become our main rep.
-4. Below the **Overview** are the other boxes: **Ordering windows**, **Ordering** (flags, sales report, suggested order), **Tasks**, **Documents**, **Mail**, **Rep group**, **Reps & contacts**, **Worldwide shows**, **Scorecard**, **What to order from them**, **Order history**, **Payments**, **WWD invoices** and **Notes**.
+4. Below the **Overview** are the other boxes: **Ordering** (flags, sales report and ordering windows, suggested order), **Tasks**, **Documents**, **Mail**, **Rep group**, **Reps & contacts**, **Worldwide shows**, **Scorecard**, **What to order from them**, **Order history**, **Payments**, **WWD invoices** and **Notes**.
 5. Each box starts closed, showing just its name and a count, for example "Mail · 142 conversations" or "Documents · 37 files". Click the box's title bar to open it, and click it again to close it.
 6. Click **Edit** (top right) to change the vendor's details.
 7. Click **Back** (top left) to return to where you came from.
