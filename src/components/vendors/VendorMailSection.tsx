@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { PenLine } from 'lucide-react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
@@ -9,6 +9,8 @@ import { ThreadTable } from '@/components/mail/ThreadTable'
 import { SentTable } from '@/components/mail/SentTable'
 import { Button } from '@/components/ui'
 import { FoldSection } from '@/components/shared/FoldSection'
+import { MailSearchBar, MailSearchResults } from '@/components/mail/MailSearch'
+import { filtersFromParams, filtersToParams, isSearching, type MailFilters } from '@/lib/mailSearch'
 import { cn, errorMessage } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants'
 import { mailWithUrl } from '@/lib/mail'
@@ -24,6 +26,11 @@ const TABS: { value: Tab; label: string }[] = [
 /** Every conversation with this vendor, newest first, whoever owns it: Primary (opens here), Promotions, and Sent: every email we sent them (Dana, Oct 12). */
 export function VendorMailSection({ vendorId, organizationId, onNewEmail }: { vendorId: string; organizationId: string; onNewEmail?: () => void }) {
   const [view, setView] = useState<Tab>('attention')
+  // the Mail search, inside this vendor's mail (Dana, Oct 21); kept in the page address so Back returns to it
+  const [params, setParams] = useSearchParams()
+  const filters = filtersFromParams(params)
+  const searching = isSearching(filters)
+  const setFilters = (f: MailFilters) => setParams(filtersToParams(params, f), { replace: true })
   const q = useSupabaseQuery(() => (view === 'sent' ? Promise.resolve([]) : listVendorThreads(organizationId, vendorId, view)), [organizationId, vendorId, view])
   const sent = useSupabaseQuery(() => listSentEmails(organizationId, { vendorId, limit: 200 }), [organizationId, vendorId])
   const counts = useSupabaseQuery(() => countVendorThreads(organizationId, vendorId), [organizationId, vendorId])
@@ -58,7 +65,10 @@ export function VendorMailSection({ vendorId, organizationId, onNewEmail }: { ve
         </ul>
         {view !== 'sent' && rows.length >= 50 ? <span className="text-xs text-stone-500">Showing the newest 50</span> : null}
       </div>
-      {view === 'sent' ? (
+      <div className="mt-3"><MailSearchBar filters={filters} onChange={setFilters} placeholder="Search this vendor's mail: names, words, PO, file names…" /></div>
+      {searching ? (
+        <MailSearchResults organizationId={organizationId} filters={filters} scope={{ vendorId }} showVendor={false} onClear={() => setFilters({ q: '' })} />
+      ) : view === 'sent' ? (
         sent.isLoading ? <p className="mt-3 text-sm text-stone-500">Loading sent mail…</p>
           : sent.error ? <p className="mt-3 text-sm text-red-700">{sent.error}</p>
           : (sent.data ?? []).length === 0 ? <p className="mt-3 text-sm text-stone-500">We have not sent this vendor any email yet.</p>

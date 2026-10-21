@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Inbox, PenLine, Search } from 'lucide-react'
+import { Inbox, PenLine } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useViewAs } from '@/hooks/useViewAs'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
@@ -14,6 +14,8 @@ import { SentTable } from '@/components/mail/SentTable'
 import { DraftsList } from '@/components/mail/DraftsList'
 import { ComposeDialog } from '@/components/mail/ComposeDialog'
 import { Alert, Button, Select, Spinner } from '@/components/ui'
+import { MailSearchBar, MailSearchResults } from '@/components/mail/MailSearch'
+import { filtersFromParams, filtersToParams, isSearching, type MailFilters } from '@/lib/mailSearch'
 
 type MailTab = NonNullable<ThreadFilters['view']> | 'sent' | 'drafts'
 const VIEWS: { value: MailTab; label: string; help: string }[] = [
@@ -54,8 +56,9 @@ export default function MailPage() {
   // Handled mail leaves every tab (Dana, Oct 8); it stays under Handled, on its vendor and on its carrier.
   const status = (params.get('status') ?? 'open') as ThreadFilters['status']
   const unmatched = params.get('unmatched') === '1'
-  const search = params.get('q') ?? ''
-  const [draft, setDraft] = useState(search)
+  // Search (Dana, Oct 21): names, addresses, vendors, words, PO, file names, with filter buttons; kept in the address
+  const filters = filtersFromParams(params)
+  const searching = isSearching(filters)
   const people = useSupabaseQuery(async () => (organization ? listPeople(organization.id) : []), [organization?.id])
   // Which mail (Dana, Oct 11): the shared Orders mail, my own mailbox, and for the admin everyone's and the old Gmail.
   const boxes = useSupabaseQuery(async () => (organization ? listMailboxes(organization.id) : []), [organization?.id])
@@ -66,7 +69,7 @@ export default function MailPage() {
   // Snooze (Dana, Oct 9): my snoozed conversations leave my lists until their time; the Snoozed tab shows
   // mine, or everyone's when looking at everyone, with who and until when.
   const q = useSupabaseQuery(async () => {
-    if (!organization || !profile || listless) return { rows: [], snoozed: new Map<string, { until: string; who: string | null }>(), back: new Set<string>() }
+    if (!organization || !profile || listless || searching) return { rows: [], snoozed: new Map<string, { until: string; who: string | null }>(), back: new Set<string>() }
     if (status === 'snoozed') {
       const list = await listSnoozes(organization.id, 'thread', who === 'all' ? null : who === 'mine' ? profile.id : who === 'none' ? profile.id : who)
       const rows = await listThreads(organization.id, profile.id, { view: 'all', who: 'all', status: 'all', onlyIds: [...new Set(list.map((x) => x.thread_id!))] }, 300)
@@ -75,14 +78,17 @@ export default function MailPage() {
     }
     const mine = await mySnoozes(profile.id, 'thread')
     // in someone's own mailbox every conversation is theirs: no "whose" filter
-    const rows = await listThreads(organization.id, profile.id, { view, who: ownBox ? 'all' : who, status, unmatched, q: search, hideIds: [...mine.hidden.keys()], mailbox }, 300, profile.sees_freight)
+    const rows = await listThreads(organization.id, profile.id, { view, who: ownBox ? 'all' : who, status, unmatched, hideIds: [...mine.hidden.keys()], mailbox }, 300, profile.sees_freight)
     // back from snooze: to the top of the list
     const back = rows.filter((t) => mine.back.has(t.id))
     return { rows: [...back, ...rows.filter((t) => !mine.back.has(t.id))], snoozed: new Map<string, { until: string; who: string | null }>(), back: mine.back }
-  }, [organization?.id, profile?.id, profile?.sees_freight, view, who, status, unmatched, search, mailbox, listless])
+  }, [organization?.id, profile?.id, profile?.sees_freight, view, who, status, unmatched, mailbox, listless, searching])
   // Sent (Dana, Oct 12): every email we sent, found by who it went to
-  const sentQ = useSupabaseQuery(async () => (organization && sent ? listSentEmails(organization.id, { mailbox, q: search }) : []), [organization?.id, sent, mailbox, search])
+  const sentQ = useSupabaseQuery(async () => (organization && sent && !searching ? listSentEmails(organization.id, { mailbox }) : []), [organization?.id, sent, mailbox, searching])
   const rows = q.data?.rows ?? []
+
+  function setFilters(f: MailFilters) { setParams(filtersToParams(params, f), { replace: true }) }
+  const clearSearch = () => setFilters({ q: '' })
 
   function setParam(key: string, value: string) {
     const next = new URLSearchParams(params)
@@ -130,11 +136,8 @@ export default function MailPage() {
           ))}
         </ul>
       </nav>}
-      {drafts ? null : <form onSubmit={(e) => { e.preventDefault(); setParam('q', draft.trim()) }} className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
-        <div className="relative flex-1 sm:min-w-72">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-stone-400" aria-hidden="true" />
-          <input type="search" value={draft} onChange={(e) => { setDraft(e.target.value); if (!e.target.value) setParam('q', '') }} placeholder={sent ? 'Who it went to, vendor or subject…' : 'Search subjects…'} aria-label="Search mail" className="h-11 w-full rounded-lg border border-stone-300 bg-white pl-9 pr-3 text-base shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-ring-brand sm:text-sm" />
-        </div>
+      {drafts ? null : <MailSearchBar filters={filters} onChange={setFilters} showDirection={!sent} />}
+      {drafts || searching ? null : <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
         {ownBox || sent ? null : <Select value={who} onChange={(e) => setParam('who', e.target.value === whoDefault ? '' : e.target.value)} aria-label="Whose mail" className="lg:w-56">
           <option value="mine">Mine</option>
           <option value="all">Everyone</option>
@@ -145,11 +148,13 @@ export default function MailPage() {
           <input type="checkbox" checked={unmatched} onChange={(e) => setParam('unmatched', e.target.checked ? '1' : '')} className="size-4 rounded border-stone-300" />
           Not filed to a vendor
         </label>}
-      </form>}
-      {drafts ? <DraftsList /> : sent ? (
+      </div>}
+      {drafts ? <DraftsList /> : searching && organization ? (
+        <MailSearchResults organizationId={organization.id} filters={filters} scope={{ box: mailbox, dir: sent ? 'out' : undefined }} onClear={clearSearch} />
+      ) : sent ? (
         sentQ.isLoading ? <div className="flex justify-center py-16"><Spinner label="Loading sent mail…" className="text-brand" /></div>
           : sentQ.error ? <Alert variant="error">{sentQ.error}</Alert>
-          : (sentQ.data ?? []).length === 0 ? <p className="rounded-2xl border border-dashed border-stone-300 py-12 text-center text-sm text-stone-600">{search ? 'Nothing sent matches.' : 'Nothing sent yet.'}</p>
+          : (sentQ.data ?? []).length === 0 ? <p className="rounded-2xl border border-dashed border-stone-300 py-12 text-center text-sm text-stone-600">Nothing sent yet.</p>
           : <>
               <SentTable rows={sentQ.data ?? []} />
               {(sentQ.data ?? []).length >= 300 ? <p className="mt-2 text-xs text-stone-500">Showing the newest 300. Search to find older ones.</p> : null}

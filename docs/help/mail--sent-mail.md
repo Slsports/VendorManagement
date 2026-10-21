@@ -8,7 +8,7 @@ The **Sent** tab lists every email we sent, newest first, so you can quickly che
 
 ## How to
 1. Click **Mail** in the menu, then the **Sent** tab.
-2. Type in the search box: a name, an email address, a vendor or words from the subject. Press Enter.
+2. Type in the search box (a name, an email address, a vendor, words, a PO or a file name) and press Enter, or pick a suggestion. The search shows sent conversations only. See "Search and filter the mail" for the filter buttons.
 3. Each row shows who it went to, the vendor, the subject, when it was sent and who sent it. Click a column header to sort.
 4. Click a row to open the whole conversation.
 

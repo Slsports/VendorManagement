@@ -14,6 +14,9 @@ import { SnoozeButton } from '@/components/shared/SnoozeButton'
 import { snoozeText } from '@/lib/snooze'
 import { ThreadStatusBadge } from './ThreadStatusBadge'
 import { contactName } from '@/lib/accounting'
+import { MailMatchLine } from './MailMatchLine'
+import { matchLink } from '@/lib/mailSearch'
+import type { MailMatch } from '@/services/mailSearch'
 
 const STATE_ORDER = { needs: 0, no_answer: 1, waiting: 2, handled: 3 }
 
@@ -21,12 +24,14 @@ const STATE_ORDER = { needs: 0, no_answer: 1, waiting: 2, handled: 3 }
  * Mail threads as a sortable table: who, what, vendor, owner, where it stands, when. With `onChanged`, each
  * row has a ✓ to mark it handled without opening it, and checkboxes mark several at once (Dana, Oct 8).
  */
-export function ThreadTable({ rows, showVendor = true, showContact = false, sortParam, onChanged, deletedMode = false, snoozed, back }: {
+export function ThreadTable({ rows, showVendor = true, showContact = false, sortParam, onChanged, deletedMode = false, snoozed, back, matches }: {
   rows: ThreadRow[]; showVendor?: boolean; /** Accounting mail (Dana, Oct 16): the contact the conversation is with. */ showContact?: boolean; sortParam?: string; onChanged?: () => void | Promise<unknown>; deletedMode?: boolean
   /** The Snoozed tab: until when, and who snoozed it when it was not me. */
   snoozed?: Map<string, { until: string; who: string | null }>
   /** Came back from snooze and not opened yet. */
   back?: Set<string>
+  /** Search results (Dana, Oct 21): why each came up; the subject opens the email that matched. */
+  matches?: Map<string, MailMatch>
 }) {
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const [busy, setBusy] = useState(false)
@@ -143,7 +148,8 @@ export function ThreadTable({ rows, showVendor = true, showContact = false, sort
                 {t.message_count > 1 ? <span className="text-xs text-stone-500">{t.message_count} messages</span> : null}
               </td>
               <td className="max-w-md px-3 py-2">
-                <Link to={`${ROUTES.mail}/${t.id}`} className="font-medium text-stone-900 hover:text-brand">{t.subject || '(no subject)'}</Link>
+                <Link to={matchLink(t.id, matches?.get(t.id))} className="font-medium text-stone-900 hover:text-brand">{t.subject || '(no subject)'}</Link>
+                {matches?.get(t.id) ? <MailMatchLine m={matches.get(t.id)!} /> : null}
                 {t.last?.has_attachments ? <Paperclip className="ml-1 inline size-3.5 text-stone-400" aria-label="Has attachments" /> : null}
                 {back?.has(t.id) ? <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800">Back from snooze</span> : null}
                 {snoozed?.has(t.id) ? <span className="ml-2 rounded bg-stone-100 px-1.5 py-0.5 text-xs text-stone-600">Snoozed until {snoozeText(snoozed.get(t.id)!.until)}{snoozed.get(t.id)!.who ? ` by ${snoozed.get(t.id)!.who}` : ''}</span> : null}

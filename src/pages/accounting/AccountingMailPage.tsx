@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Inbox, PenLine, Search } from 'lucide-react'
+import { Inbox, PenLine } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listMailboxes, listSentEmails, listThreads, type ThreadFilters } from '@/services/mail'
@@ -13,6 +13,8 @@ import { ThreadTable } from '@/components/mail/ThreadTable'
 import { SentTable } from '@/components/mail/SentTable'
 import { ComposeDialog } from '@/components/mail/ComposeDialog'
 import { Alert, Button, Spinner } from '@/components/ui'
+import { MailSearchBar, MailSearchResults } from '@/components/mail/MailSearch'
+import { filtersFromParams, filtersToParams, isSearching, type MailFilters } from '@/lib/mailSearch'
 
 type Tab = 'attention' | 'offers' | 'all' | 'sent'
 const VIEWS: { value: Tab; label: string; help: string }[] = [
@@ -40,15 +42,17 @@ export default function AccountingMailPage() {
   const sent = tab === 'sent'
   const status = (params.get('status') ?? 'open') as ThreadFilters['status']
   const category = params.get('cat') ?? ''
-  const search = params.get('q') ?? ''
-  const [draft, setDraft] = useState(search)
+  // the same search as Mail (Dana, Oct 21), inside billing@
+  const filters = filtersFromParams(params)
+  const searching = isSearching(filters)
   const boxes = useSupabaseQuery(async () => (organization ? listMailboxes(organization.id) : []), [organization?.id])
   const box = (boxes.data ?? []).find((b) => b.kind === 'accounting') ?? null
   const q = useSupabaseQuery(async () => {
-    if (!organization || !box || sent) return []
-    return listThreads(organization.id, undefined, { view: tab, who: 'all', status, q: search, mailbox: box.id, category: category || undefined }, 300)
-  }, [organization?.id, box?.id, tab, status, search, category, sent])
-  const sentQ = useSupabaseQuery(async () => (organization && box && sent ? listSentEmails(organization.id, { mailbox: box.id, q: search }) : []), [organization?.id, box?.id, sent, search])
+    if (!organization || !box || sent || searching) return []
+    return listThreads(organization.id, undefined, { view: tab, who: 'all', status, mailbox: box.id, category: category || undefined }, 300)
+  }, [organization?.id, box?.id, tab, status, category, sent, searching])
+  const sentQ = useSupabaseQuery(async () => (organization && box && sent && !searching ? listSentEmails(organization.id, { mailbox: box.id }) : []), [organization?.id, box?.id, sent, searching])
+  const setFilters = (f: MailFilters) => setParams(filtersToParams(params, f), { replace: true })
   const rows = q.data ?? []
 
   function setParam(key: string, value: string) {
@@ -100,23 +104,20 @@ export default function AccountingMailPage() {
           ))}
         </div>
       )}
-      <form onSubmit={(e) => { e.preventDefault(); setParam('q', draft.trim()) }} className="mb-4">
-        <div className="relative max-w-xl">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-stone-400" aria-hidden="true" />
-          <input type="search" value={draft} onChange={(e) => { setDraft(e.target.value); if (!e.target.value) setParam('q', '') }} placeholder={sent ? 'Who it went to or subject…' : 'Search subjects…'} aria-label="Search mail" className="h-11 w-full rounded-lg border border-stone-300 bg-white pl-9 pr-3 text-base shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-ring-brand sm:text-sm" />
-        </div>
-      </form>
-      {sent ? (
+      <MailSearchBar filters={filters} onChange={setFilters} showDirection={!sent} />
+      {searching && organization && box ? (
+        <MailSearchResults organizationId={organization.id} filters={filters} scope={{ box: box.id, dir: sent ? 'out' : undefined }} showVendor={false} showContact onClear={() => setFilters({ q: '' })} />
+      ) : sent ? (
         sentQ.isLoading ? <div className="flex justify-center py-16"><Spinner label="Loading sent mail…" className="text-brand" /></div>
           : sentQ.error ? <Alert variant="error">{sentQ.error}</Alert>
-          : (sentQ.data ?? []).length === 0 ? <p className="rounded-2xl border border-dashed border-stone-300 py-12 text-center text-sm text-stone-600">{search ? 'Nothing sent matches.' : 'Nothing sent from billing@ yet.'}</p>
+          : (sentQ.data ?? []).length === 0 ? <p className="rounded-2xl border border-dashed border-stone-300 py-12 text-center text-sm text-stone-600">Nothing sent from billing@ yet.</p>
           : <SentTable rows={sentQ.data ?? []} />
       ) : q.isLoading || boxes.isLoading ? <div className="flex justify-center py-16"><Spinner label="Loading mail…" className="text-brand" /></div>
         : q.error ? <Alert variant="error">{q.error}</Alert>
         : rows.length === 0 ? (
           <div className="flex flex-col items-center rounded-2xl border border-dashed border-stone-300 py-16 text-center">
             <Inbox className="size-8 text-stone-400" aria-hidden="true" />
-            <p className="mt-3 text-sm text-stone-600">{status === 'open' && !category && !search ? 'Nothing open.' : 'No mail matches.'}</p>
+            <p className="mt-3 text-sm text-stone-600">{status === 'open' && !category ? 'Nothing open.' : 'No mail matches.'}</p>
           </div>
         ) : (
           <>
