@@ -183,3 +183,44 @@ export async function orderShipAction(orderId: string, action: 'start' | 'receiv
   const { error } = await supabase.rpc('order_ship_action', { p_order: orderId, p_action: action })
   if (error) throw error
 }
+
+// ---- where an order came from (Dana, Oct 21: "where it got its data needs to be accessible with one click") ----------
+export interface OrderSources {
+  emails: { id: string; thread_id: string; subject: string | null; received_at: string; from_name: string | null; from_email: string | null }[]
+  wwd: { id: string; seq: string; lines: number; doc: { storage_path: string | null; file_name: string | null; mime_type: string | null } | null }[]
+  freight: { bill_id: string; invoice_number: string | null; carrier: string | null; amount: number; confirmed: boolean }[]
+}
+
+/** The emails tied to an order (the first is the one an email-made order came from), the WWD invoices its items were
+ * filled from, and the freight bills its freight came from. */
+export async function orderSources(orderId: string): Promise<OrderSources> {
+  const [mail, lines, fl] = await Promise.all([
+    supabase.from('emails').select('id, thread_id, subject, received_at, from_name, from_email').eq('order_id', orderId).order('received_at'),
+    supabase.from('order_lines').select('wwd_invoice_id').eq('order_id', orderId).not('wwd_invoice_id', 'is', null),
+    supabase.from('freight_bill_lines').select('bill_id, amount, confirmed, freight_bills!inner(invoice_number, carriers(name))').eq('order_id', orderId),
+  ])
+  if (mail.error) throw mail.error
+  if (lines.error) throw lines.error
+  if (fl.error) throw fl.error
+  const count = new Map<string, number>()
+  for (const l of lines.data ?? []) count.set(l.wwd_invoice_id!, (count.get(l.wwd_invoice_id!) ?? 0) + 1)
+  let wwd: OrderSources['wwd'] = []
+  if (count.size) {
+    const { data, error } = await supabase.from('wwd_invoices').select('id, seq, document_id').in('id', [...count.keys()])
+    if (error) throw error
+    const docIds = (data ?? []).map((w) => w.document_id).filter((x): x is string => !!x)
+    const docs = docIds.length ? (await supabase.from('vendor_links').select('id, storage_path, file_name, mime_type').in('id', docIds)).data ?? [] : []
+    wwd = (data ?? []).map((w) => ({ id: w.id, seq: w.seq, lines: count.get(w.id) ?? 0, doc: docs.find((d) => d.id === w.document_id) ?? null }))
+  }
+  type FlRow = { bill_id: string; amount: number; confirmed: boolean; freight_bills: { invoice_number: string | null; carriers: { name: string } | null } | null }
+  const freight = ((fl.data ?? []) as unknown as FlRow[]).map((f) => ({ bill_id: f.bill_id, invoice_number: f.freight_bills?.invoice_number ?? null, carrier: f.freight_bills?.carriers?.name ?? null, amount: Number(f.amount), confirmed: f.confirmed }))
+  return { emails: (mail.data ?? []) as OrderSources['emails'], wwd, freight }
+}
+
+/** The threads of the emails some files were saved from, by email id. */
+export async function threadsOfEmails(emailIds: string[]): Promise<Map<string, string>> {
+  if (!emailIds.length) return new Map()
+  const { data, error } = await supabase.from('emails').select('id, thread_id').in('id', emailIds)
+  if (error) throw error
+  return new Map((data ?? []).map((e) => [e.id, e.thread_id]))
+}

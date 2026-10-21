@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { LsReceivedBox } from '@/components/ordering/LsReceivedBox'
 import { getLsPo, LS_PO_STATUS, lsPoAction, lsPoCsv, type LsPoLine, type LsPoRow } from '@/services/lsPos'
+import { confirmationCheckFor } from '@/services/orderChecks'
 import { sendLsPoItems } from '@/services/lightspeed'
 import { checkName, lsContext } from '../../../supabase/functions/_shared/itemNameSop.ts'
 import { ROUTES } from '@/lib/constants'
@@ -106,7 +107,7 @@ function LsPoView({ po, reload }: { po: LsPoRow; reload: () => void }) {
     <form onSubmit={save} className="pb-4">
       <BackLink fallback={po.order ? `${ROUTES.orders}/${po.order.id}` : ROUTES.orders} fallbackLabel="Order" />
       <PageHeader eyebrow="LS PO" title={po.vendor?.name ?? 'LS PO'}
-        description={<span>{po.order ? <Link to={`${ROUTES.orders}/${po.order.id}`} className="text-brand hover:underline">{[po.order.po_number ? `PO ${po.order.po_number}` : null, po.order.description].filter(Boolean).join(' · ') || 'The order'}</Link> : null}{po.store_code ? ` · ${po.store_code}` : ''}</span>}
+        description={<span>{po.order ? <Link to={`${ROUTES.orders}/${po.order.id}`} className="text-brand hover:underline">{[po.order.po_number ? `PO ${po.order.po_number}` : null, po.order.description].filter(Boolean).join(' · ') || 'The order'}</Link> : null}{po.store_code ? ` · ${po.store_code}` : ''}{po.order ? <DraftedFrom orderId={po.order.id} /> : null}</span>}
         actions={<Badge tone={po.status === 'sent' ? 'success' : 'warning'}>{LS_PO_STATUS[po.status].label}</Badge>} />
 
       <ol className="mb-4 flex flex-wrap gap-2 text-xs">
@@ -216,4 +217,11 @@ function LsPoView({ po, reload }: { po: LsPoRow; reload: () => void }) {
       {dirty ? <div className="mt-4"><StickySaveBar saving={busy} error={error} onCancel={() => setLines(po.lines)} /></div> : null}
     </form>
   )
+}
+
+/** The vendor's confirmation Claude drafted this PO from, one click away (Dana, Oct 21). */
+function DraftedFrom({ orderId }: { orderId: string }) {
+  const q = useSupabaseQuery(() => confirmationCheckFor(orderId), [orderId])
+  if (!q.data) return null
+  return <> · <Link to={`${ROUTES.orderChecks}/${q.data.id}`} className="text-brand hover:underline">drafted from the vendor's confirmation{q.data.doc_number ? ` #${q.data.doc_number}` : ''}</Link></>
 }

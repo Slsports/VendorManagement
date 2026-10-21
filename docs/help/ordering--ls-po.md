@@ -29,6 +29,7 @@ At the bottom of the LS PO, **What LS received** › **Check LS** reads LS's sto
 
 ## Good to know
 - Items show **In LS** (with the LS System ID) or **New to LS**. VMS knows what is in LS from its own copy of LS (updated every few hours) and the vendor's latest sales report.
+- Under the vendor's name, **drafted from the vendor's confirmation** opens the confirmation Claude read.
 - **Redraft** has Claude draft it again from the latest confirmation (your changes are replaced).
 - A confirmed order from before this started shows "confirmed, no LS PO yet" with **Draft it**.
 - Items already sent show **On the PO in LS**, so nothing is ever added twice.

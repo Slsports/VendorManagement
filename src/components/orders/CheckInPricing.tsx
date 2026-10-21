@@ -10,6 +10,8 @@ import { itemName, vidOn } from '@/lib/vidName'
 import { errorMessage } from '@/lib/utils'
 import type { OrderLine } from '@/types'
 import { Button, Input, Textarea } from '@/components/ui'
+import { Link } from 'react-router-dom'
+import { ROUTES } from '@/lib/constants'
 
 /**
  * Check-in pricing (Dana, Oct 8): the items on the invoice with a retail price each. The summary line shows
@@ -75,7 +77,7 @@ export function CheckInPricing({ order: o, canEdit, onOrderChange }: { order: Or
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-stone-50 px-4 py-3 text-sm" aria-label="How the prices are figured">
         <span>
           <span className="font-medium text-stone-900">Freight {b.freightPct === null ? 'not billed yet' : pct(b.freightPct)}</span>
-          {b.freightPct !== null ? <span className="text-stone-500"> ({rate !== null ? (o.freight_pct_note ?? 'quoted rate') : o.free_shipping ? 'free shipping' : `${money(freight)} on ${money(productTotal)}`})</span> : null}
+          {b.freightPct !== null ? <span className="text-stone-500"> ({rate !== null ? <RateNote note={o.freight_pct_note} /> : o.free_shipping ? 'free shipping' : `${money(freight)} on ${money(productTotal)}`})</span> : null}
           {rate !== null && canEdit ? <button type="button" className="ml-1 text-xs text-brand hover:underline" onClick={() => void run('Back to the freight bill', async () => { await updateOrder(o.id, { freight_pct: null, freight_pct_note: null }); await onOrderChange?.() })}>use the freight bill instead</button> : null}
         </span>
         <span className="text-stone-400">·</span>
@@ -87,9 +89,9 @@ export function CheckInPricing({ order: o, canEdit, onOrderChange }: { order: Or
       </div>
       {quoted.data && rate === null && canEdit ? (
         <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          <span>Freight rate quoted in mail: <span className="font-semibold">{quoted.data.pct}%</span> on {new Date(quoted.data.received_at).toLocaleDateString()} ({quoted.data.subject ?? 'an email'}).</span>
+          <span>Freight rate quoted in mail: <span className="font-semibold">{quoted.data.pct}%</span> on {new Date(quoted.data.received_at).toLocaleDateString()} (<Link to={`${ROUTES.mail}/${quoted.data.thread_id}`} className="underline">{quoted.data.subject ?? 'the email'}</Link>).</span>
           <Button size="sm" loading={busy} onClick={() => void run(`Freight ${quoted.data!.pct}% used`, async () => {
-            await updateOrder(o.id, { freight_pct: quoted.data!.pct, freight_pct_note: `rate quoted ${new Date(quoted.data!.received_at).toLocaleDateString()}` })
+            await updateOrder(o.id, { freight_pct: quoted.data!.pct, freight_pct_note: `rate quoted ${new Date(quoted.data!.received_at).toLocaleDateString()} (mail:${quoted.data!.thread_id})` })
             await onOrderChange?.()
           })}>Use {quoted.data.pct}%</Button>
         </div>
@@ -209,4 +211,11 @@ function PriceRow({ line: l, suggested, canEdit, busy, vid, onVid, onSave, onDel
       </td>
     </tr>
   )
+}
+
+/** "rate quoted 10/2/2026 (mail:<thread>)": the email the rate came from, one click away (Dana, Oct 21). */
+function RateNote({ note }: { note: string | null }) {
+  const m = note?.match(/^(.*?)\s*\(mail:([^)]+)\)$/)
+  if (!m) return <>{note ?? 'quoted rate'}</>
+  return <Link to={`${ROUTES.mail}/${m[2]}`} className="underline">{m[1]}</Link>
 }

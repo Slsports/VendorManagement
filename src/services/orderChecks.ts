@@ -144,3 +144,11 @@ export async function saveFinalOrder(checkId: string, items: FinalLine[]): Promi
 export function checkNewItems(c: { new_items: unknown }): { what: string; qty: number | null; price: number | null }[] {
   return Array.isArray(c.new_items) ? (c.new_items as { what: string; qty: number | null; price: number | null }[]).filter((x) => x && typeof x.what === 'string') : []
 }
+
+/** The vendor's confirmation an order's LS PO was drafted from (Dana, Oct 21: the source one click away). */
+export async function confirmationCheckFor(orderId: string): Promise<{ id: string; doc_number: string | null; created_at: string } | null> {
+  const { data, error } = await supabase.from('order_checks').select('id, doc_number, created_at').eq('order_id', orderId).eq('kind', 'confirmation')
+    .not('reading', 'is', null).not('status', 'in', '(dismissed,not_paperwork)').order('created_at', { ascending: false }).limit(1).maybeSingle()
+  if (error) throw error
+  return data
+}

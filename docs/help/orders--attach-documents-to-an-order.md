@@ -14,7 +14,7 @@ Keep the paper behind an order on the order itself: our order, the LS PO, the ve
 5. Click **Save**.
 
 ## Good to know
-- Click a document's name to open it. Click the trash can to remove it.
+- Click a document's name to open it. Click the trash can to remove it. A file Claude saved from an email has **from an email**, which opens that email.
 - A confirmation or invoice you upload is checked by Claude against the order. The result shows in the **Paperwork** box in a minute or two.
 - Files are also saved to the vendor's documents.
 - Viewers can open documents but cannot add or remove them.

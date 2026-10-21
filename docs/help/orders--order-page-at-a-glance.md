@@ -14,6 +14,7 @@ An order page gathers everything about one order. This is a quick tour of what y
 - **Check-in pricing**, **WWD invoices for this order**, **Dana's notes**, and **Also on the sheet** (extra columns from the spreadsheet the order came from).
 
 ## On the right
+- **Where this order came from**: how it got into VMS (the email Claude made it from, the Placed Order Summary row), every email tied to the order, the WWD invoice its items were filled from (click the WWD Seq # to open it), and the freight bill its freight came from. Each opens with one click.
 - **Tasks**, **Reps**, **Shipping**, **Freight allowance**, **Paperwork**, **Documents**.
 - **History**: every status change with its date, and a link to open the vendor.
 
