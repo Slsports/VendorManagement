@@ -14,6 +14,7 @@ The **Mail** box on a vendor page lists every conversation filed to that vendor,
 5. Type the **Subject** and **Message** and click **Send**.
 
 ## Good to know
+- The search box in the **Mail** box finds this vendor's mail by name, address, words, PO or file name, with the same filter buttons as the Mail page. Click **Clear the search** to see the tabs again.
 - Mail sends from orders@ with your signature, and is filed to this vendor.
 - You can also click any email address on the vendor page (Overview or Reps & contacts) to write to that person.
 - Each tab shows the newest 50 conversations.
