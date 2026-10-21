@@ -2992,3 +2992,10 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   Jan 1, 2027 for new items.
 - Nichole (WWD): N/D Freight (Y/N) says whether the terms discount is allowed on an invoice's freight; NDOF Amount is
   the freight amount with no discount.
+
+## Oct 21, 2026: Where the data came from is one click away; Help on every page
+- Dana: "anytime a report is referencing something that AI did, where it got its data needs to be accessible with one
+  click. That goes for any system or process in this system." The suggested order lists, at the top, every order it
+  counted as on order (pending / placed / shipped) with one-click links to the order, the confirmation or invoice it
+  read, and the email it came from.
+- Dana: a small Help link everywhere there are help files, opening the help for the page being worked on.
