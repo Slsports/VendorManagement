@@ -28,8 +28,11 @@ export interface WwdInvoiceRow {
 }
 export interface WwdPaymentRow { ref: string; pay_date: string; total: number | null }
 export interface WwdLineRow { ref: string; pay_date: string; seq: string; amount: number; wwd_date: string | null }
-export interface WwdBatch { invoices: WwdInvoiceRow[]; payments: WwdPaymentRow[]; lines: WwdLineRow[] }
-export type WwdFileKind = 'history' | 'edenred' | 'sheet'
+/** One invoice's lines from Edenred's line export (Oct 21): MfgStockNo = Vendor ID, ItemNumber = UPC. */
+export interface EdenredLine { vid: string | null; upc: string | null; desc: string | null; qty: number | null; price: number | null; unit_discount: number | null; amount: number | null }
+export interface EdenredInvoice { seq: string; credit: boolean; nd_freight: string | null; vendor_active: string | null; tracking: string | null; misc: number | null; freight: number | null; lines: EdenredLine[] }
+export interface WwdBatch { invoices: WwdInvoiceRow[]; payments: WwdPaymentRow[]; lines: WwdLineRow[]; edenred?: EdenredInvoice[] }
+export type WwdFileKind = 'history' | 'edenred' | 'edenred_lines' | 'sheet'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -87,6 +90,7 @@ export function wwdKind(table: unknown[][]): WwdFileKind | null {
   for (const r of table.slice(0, 15)) {
     const cells = r.map((c) => String(c ?? '').trim().toLowerCase())
     if (cells.some((c) => c.startsWith('check #')) && cells.some((c) => c.startsWith('invoice/credit'))) return 'history'
+    if (cells.includes('sequenceno') && cells.includes('linedescription')) return 'edenred_lines'
     if (cells.some((c) => c.startsWith('seq no'))) return 'edenred'
     if (cells.some((c) => /^invoice\s*#$/.test(c))) return 'sheet'
   }
@@ -187,12 +191,61 @@ export function parseSheet(table: unknown[][], fileName: string): WwdInvoiceRow[
   })
 }
 
+/**
+ * Edenred's line export (Oct 21): one row per invoice line, its columns named as Edenred names them (SequenceNo,
+ * DocumentType, PONumber, InvoiceNumber, MfgStockNo, ItemNumber, LineDescription…). Its invoices go through the usual
+ * WWD import; the lines, ND Freight, Vendor Active and tracking go to wwd_edenred_lines.
+ */
+export function parseEdenredLines(table: unknown[][]): { invoices: WwdInvoiceRow[]; edenred: EdenredInvoice[] } {
+  const hi = table.findIndex((r) => r.some((c) => String(c ?? '').trim().toLowerCase() === 'sequenceno'))
+  const h = table[hi]!.map((c) => String(c ?? '').trim().toLowerCase())
+  const col = (name: string) => h.indexOf(name.toLowerCase())
+  const C = {
+    seq: col('SequenceNo'), type: col('DocumentType'), po: col('PONumber'), vendor: col('VendorName'), received: col('ReceivedDate'),
+    inv: col('InvoiceNumber'), invDate: col('InvoiceDate'), amount: col('InvoiceAmt'), freight: col('FreightAmount'), posted: col('PostedDate'),
+    arTerms: col('ARTerms'), terms: col('TermsText'), due: col('HardDueDateAR'), nd: col('NDFreight'), active: col('VendorActive'),
+    tracking: col('TrackingNo'), misc: col('MiscAmount'), discount: col('DiscountAmount'),
+    vid: col('MfgStockNo'), upc: col('ItemNumber'), desc: col('LineDescription'), qty: col('Quantity'), price: col('UnitPrice'), unitDisc: col('UnitDiscount'), lineAmt: col('LineAmount'),
+  }
+  const at = (r: unknown[], i: number) => (i >= 0 ? r[i] : undefined)
+  const num = (v: unknown) => (v === null || v === undefined || v === '' ? null : wwdMoney(v))
+  // unit prices and discounts keep their cents' fractions (18.1725)
+  const raw = (v: unknown) => { if (v === null || v === undefined || v === '') return null; const n = typeof v === 'number' ? v : Number(String(v).replace(/[$,\s]/g, '')); return Number.isFinite(n) ? n : null }
+  const day = (v: unknown) => (v instanceof Date || typeof v === 'number' ? wwdDate(v) : wwdDate(String(v ?? '').slice(0, 10)))
+  const invoices = new Map<string, WwdInvoiceRow>()
+  const eden = new Map<string, EdenredInvoice>()
+  for (const r of table.slice(hi + 1)) {
+    const seq = seqOf(at(r, C.seq))
+    if (!seq) continue
+    const credit = String(at(r, C.type) ?? '').trim().toUpperCase() === 'CM'
+    if (!invoices.has(seq)) {
+      invoices.set(seq, {
+        seq, kind: credit ? 'credit' : 'invoice', wwd_date: day(at(r, C.received)), vendor_name: text(at(r, C.vendor)),
+        po_number: text(at(r, C.po)), vendor_invoice_number: text(at(r, C.inv)), vendor_invoice_date: day(at(r, C.invDate)),
+        amount: wwdMoney(at(r, C.amount)), discount: num(at(r, C.discount)) || null, due_date: day(at(r, C.due)),
+        terms: text(at(r, C.arTerms)) ?? text(at(r, C.terms)), freight_amount: wwdMoney(at(r, C.freight)) || null, sheet_paid_date: null,
+        posted_date: day(at(r, C.posted)), source: 'edenred',
+      })
+      eden.set(seq, {
+        seq, credit, nd_freight: text(at(r, C.nd)), vendor_active: text(at(r, C.active)), tracking: text(at(r, C.tracking)),
+        misc: num(at(r, C.misc)), freight: num(at(r, C.freight)), lines: [],
+      })
+    }
+    eden.get(seq)!.lines.push({
+      vid: text(at(r, C.vid)), upc: text(at(r, C.upc)), desc: text(at(r, C.desc)), qty: raw(at(r, C.qty)),
+      price: raw(at(r, C.price)), unit_discount: raw(at(r, C.unitDisc)), amount: num(at(r, C.lineAmt)),
+    })
+  }
+  return { invoices: [...invoices.values()], edenred: [...eden.values()] }
+}
+
 /** One table → its part of the batch. */
 export function parseWwdTable(table: unknown[][], fileName: string): { kind: WwdFileKind | null; batch: WwdBatch } {
   const kind = wwdKind(table)
   const empty: WwdBatch = { invoices: [], payments: [], lines: [] }
   if (kind === 'history') return { kind, batch: { ...empty, ...parseHistory(table) } }
   if (kind === 'edenred') return { kind, batch: { ...empty, invoices: parseEdenRed(table) } }
+  if (kind === 'edenred_lines') return { kind, batch: { ...empty, ...parseEdenredLines(table) } }
   if (kind === 'sheet') return { kind, batch: { ...empty, invoices: parseSheet(table, fileName) } }
   return { kind: null, batch: empty }
 }
@@ -210,5 +263,5 @@ export function scanToInvoices(r: { payments: { paid_date: string | null; lines:
 }
 
 export function mergeBatches(parts: WwdBatch[]): WwdBatch {
-  return { invoices: parts.flatMap((p) => p.invoices), payments: parts.flatMap((p) => p.payments), lines: parts.flatMap((p) => p.lines) }
+  return { invoices: parts.flatMap((p) => p.invoices), payments: parts.flatMap((p) => p.payments), lines: parts.flatMap((p) => p.lines), edenred: parts.flatMap((p) => p.edenred ?? []) }
 }

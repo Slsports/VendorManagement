@@ -7,7 +7,7 @@ import { mergeBatches } from '@/lib/wwdFiles'
 import { errorMessage } from '@/lib/utils'
 import { Badge, Button } from '@/components/ui'
 
-const KIND_LABELS = { history: 'Payment History', edenred: 'EdenRed invoices', sheet: 'Payment sheet', scan: 'Scanned sheet (read by Claude)' } as const
+const KIND_LABELS = { history: 'Payment History', edenred: 'EdenRed invoices', edenred_lines: 'EdenRed invoice lines', sheet: 'Payment sheet', scan: 'Scanned sheet (read by Claude)' } as const
 
 /**
  * WWD payments (Dana, Oct 9): drop in any mix of Worldwide's Payment History export, the EdenRed invoice
@@ -106,6 +106,14 @@ export function WwdImportSection({ onImported }: { onImported: () => void | Prom
       {result ? (
         <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
           Added {result.invoices_new} WWD invoices, {result.payments_new} payments and {result.lines_new} paid lines; {result.orders_paid} orders marked paid. {result.linked_orders} orders now have their WWD invoices. {result.no_vendor ? `${result.no_vendor} invoices have no vendor yet.` : ''}
+        </p>
+      ) : null}
+      {result?.edenred ? (
+        <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          EdenRed lines: {result.edenred.lines} lines on {result.edenred.invoices} invoices. {result.edenred.orders_given_items} orders got their items, {result.edenred.freight_filled} got freight,
+          {' '}{result.edenred.tied_by_po} invoices tied to their order by PO, {result.edenred.credits_linked} credits shown on their invoice, {result.edenred.vendors_wwd_status} vendors' WWD status updated.
+          {' '}For Review: {result.edenred.freight_cards} freight differences, {result.edenred.po_cards} PO mismatches, {result.edenred.credit_cards} credits to place.
+          {result.edenred.shared_bills ? ` ${result.edenred.shared_bills} freight bills to share across orders.` : ''}{result.edenred.not_in_vms ? ` ${result.edenred.not_in_vms} invoices not in VMS.` : ''}
         </p>
       ) : null}
     </section>

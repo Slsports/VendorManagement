@@ -53,7 +53,12 @@ export async function readWwdFile(file: File, organizationId: string): Promise<W
 }
 
 export interface WwdPreview { invoices: number; invoices_new: number; payments: number; payments_new: number; lines: number; names: { name: string; count: number; vendor: string | null }[] }
-export interface WwdImportResult { invoices_new: number; payments_new: number; lines_new: number; orders_paid: number; no_vendor: number; linked_orders: number }
+/** What Edenred's line export filled in (Oct 21). */
+export interface EdenredLinesResult {
+  invoices: number; lines: number; not_in_vms: number; tied_by_po: number; po_cards: number; credits_linked: number; credit_cards: number
+  orders_given_items: number; freight_filled: number; freight_cards: number; vendors_wwd_status: number; shared_bills: number
+}
+export interface WwdImportResult { invoices_new: number; payments_new: number; lines_new: number; orders_paid: number; no_vendor: number; linked_orders: number; edenred?: EdenredLinesResult }
 
 async function rpc<T>(fn: 'wwd_preview' | 'wwd_import', p: WwdBatch): Promise<T> {
   const { data, error } = await supabase.rpc(fn, { p: p as unknown as never })
@@ -87,6 +92,20 @@ export async function importWwd(batch: WwdBatch, onProgress?: (done: number, tot
     total.invoices_new += r.invoices_new; total.payments_new += r.payments_new; total.lines_new += r.lines_new; total.orders_paid += r.orders_paid
     total.no_vendor = r.no_vendor; total.linked_orders = r.linked_orders
     onProgress?.(n + 1, steps.length)
+  }
+  // Edenred's lines, after their invoices are in (40 invoices a request)
+  const eden = batch.edenred ?? []
+  if (eden.length) {
+    const sum: EdenredLinesResult = { invoices: 0, lines: 0, not_in_vms: 0, tied_by_po: 0, po_cards: 0, credits_linked: 0, credit_cards: 0, orders_given_items: 0, freight_filled: 0, freight_cards: 0, vendors_wwd_status: 0, shared_bills: 0 }
+    const asOf = new Date().toISOString().slice(0, 10)
+    for (let i = 0; i < eden.length; i += 40) {
+      const { data, error } = await supabase.rpc('wwd_edenred_lines', { p: { as_of: asOf, invoices: eden.slice(i, i + 40) } as unknown as never })
+      if (error) throw error
+      const r = data as unknown as EdenredLinesResult
+      for (const k of Object.keys(sum) as (keyof EdenredLinesResult)[]) sum[k] += Number(r[k] ?? 0)
+      onProgress?.(steps.length + Math.ceil((i + 40) / 40), steps.length + Math.ceil(eden.length / 40))
+    }
+    total.edenred = sum
   }
   return total
 }
