@@ -2944,3 +2944,11 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   LS POs are hardly used in LS today (stock is typed in by hand), so the log is what shows receiving. First answer:
   Kelli's PO kellis91026, Deluxe Vent Brush 92162 (LS item 63069): +6 SLS Sep 18 by Jarrett (quantity typed in), 1 sold
   Sep 26, +6 SLS Sep 28 by Trevor (the reshipped 6, Kelli's order 1040383, due by FedEx that day). All 12 received.
+- Kelli's orders recorded twice (Dana, Oct 21, "go"): VMS had made a second order from Kelli's "Your order #W… has been
+  received!" email for orders already on file from the Placed Order Summary under our PO. Kelli's portal shows one invoice
+  each, so merged: W12464986 into kellis91026 (invoice 1600214, $1,594.02) and W12210139 into KELLIS7192026 (invoice
+  1587967, $2,562.91); their items and emails moved onto our PO, Kelli's number and the email's subtotal/shipping noted,
+  the extra record removed. Final cost from the invoices: those two and W12312241 (invoice 1591968, $1,062.79). Kelli's
+  "Placed by Dana Powell" on email-made orders is because the Kelli's account is in Dana's name; Raelee places them.
+  kellis91026 credits: Kelli's credited the 6 missing vent brushes, reshipped them (1602937, +$19.50) and took the credit
+  back (1603006, −$19.50); "Credits due" cleared.
