@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { FileText, Send, Sparkles, Trash2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
@@ -6,6 +7,7 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useTableSort } from '@/hooks/useTableSort'
 import { deleteDraft, listDrafts, sendEmail, type DraftRow } from '@/services/mail'
 import { errorMessage } from '@/lib/utils'
+import { ROUTES } from '@/lib/constants'
 import { SortHeader } from '@/components/shared/SortHeader'
 import { ComposeDialog } from '@/components/mail/ComposeDialog'
 import { Alert, Button, Spinner } from '@/components/ui'
@@ -97,6 +99,13 @@ export function DraftsList() {
                     <span className="font-medium text-stone-900">{d.subject || '(no subject)'}</span>
                     {!d.created_by ? <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700"><Sparkles className="size-3" aria-hidden="true" />Prepared by Claude</span> : null}
                     {d.note ? <span className="block text-xs text-stone-500">{d.note}</span> : null}
+                    {/* what Claude prepared it from, one click (Dana, Oct 21): the email it came from, the order */}
+                    {!d.created_by && (d.thread_id || d.order_id) ? (
+                      <span className="flex flex-wrap gap-x-3 text-xs" onClick={(e) => e.stopPropagation()}>
+                        {d.thread_id ? <Link to={`${ROUTES.mail}/${d.thread_id}`} className="text-brand hover:underline">The email it came from</Link> : null}
+                        {d.order_id ? <Link to={`${ROUTES.orders}/${d.order_id}`} className="text-brand hover:underline">The order</Link> : null}
+                      </span>
+                    ) : null}
                     <span className="block truncate text-xs text-stone-500">{d.body.replace(/\s+/g, ' ').slice(0, 140)}</span>
                   </td>
                   <td className="whitespace-nowrap px-3 py-2 text-stone-700">{d.vendor?.name ?? ''}</td>

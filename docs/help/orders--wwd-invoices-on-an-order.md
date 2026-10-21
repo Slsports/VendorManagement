@@ -11,7 +11,7 @@ Orders billed through Worldwide show their WWD invoices on the order page, so yo
 2. Find the box **WWD invoices for this order** (it only shows when there are some).
 
 ## What you see
-- The **WWD Seq #** (WWD's number), the date, the **Vendor Inv #** (the vendor's own invoice number), our PO, the amount and any discount.
+- The **WWD Seq #** (WWD's number; click it to open the invoice PDF when it is on file), the date, the **Vendor Inv #** (the vendor's own invoice number), our PO, the amount and any discount.
 - A tag when the PO isn't ours: **Their own PO number**, **No PO**, or **Our PO, written differently**.
 - From Edenred: **No discount on freight** Yes/No (Edenred's N/D Freight: Yes means the pay-on-time terms discount does not apply to the freight; the amount after it is the freight with no discount), the freight and the tracking number. **Show the lines** lists every item billed (Vendor ID, item, quantity, cost, total).
 - A credit for the invoice shows right on it: "Credit note: received WWD credit on (date) for (amount) (ref) (WWD Seq # …)".
@@ -20,7 +20,7 @@ Orders billed through Worldwide show their WWD invoices on the order page, so yo
 - The box header adds up what is not paid yet.
 
 ## Good to know
-- VMS ties invoices to orders by our PO, or by the vendor's only order for exactly that amount.
+- VMS ties invoices to orders by our PO, or by the vendor's only order for exactly that amount. Those say "tied automatically".
 - To tie an invoice to a different order, or untie it, use the WWD invoices box on the vendor page.
 - When all of an order's WWD invoices are paid, the order is marked paid through the Worldwide portal.
 - WWD invoices are loaded on the **Payments** page (WWD box). Edenred's invoice line export also fills in each invoice's lines, and gives an order with no items its items from the invoice (what was billed).

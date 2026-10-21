@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useTableSort } from '@/hooks/useTableSort'
 import { addSupply, countSupplies, listSupplies, setSupply, type SupplyView } from '@/services/supplies'
+import { threadsOfEmails } from '@/services/orders'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -43,6 +44,9 @@ export default function SuppliesPage() {
   const [adding, setAdding] = useState(false)
   const [ordering, setOrdering] = useState<SupplyRequest | null>(null)
   const rows = q.data ?? []
+  // the confirmation email Claude filled the order from (Dana, Oct 21): its conversation, that email open
+  const confirmIds = rows.map((r) => r.confirm_email_id).filter((x): x is string => !!x)
+  const confirmThreads = useSupabaseQuery(() => threadsOfEmails(confirmIds), [confirmIds.join()])
   const { sorted, sort, toggle } = useTableSort(rows, {
     asked: (r) => r.requested_at, what: (r) => r.summary, who: (r) => r.requested_by_name, status: (r) => r.status,
     from: (r) => r.ordered_from, expected: (r) => r.expected_at,
@@ -109,6 +113,7 @@ export default function SuppliesPage() {
                     <td className="px-3 py-2 text-stone-700">
                       {r.ordered_from ?? ''}{r.order_number ? <span className="block text-xs text-stone-500">#{r.order_number}</span> : null}
                       {r.ordered_at ? <span className="block text-xs text-stone-500">{date(r.ordered_at)}</span> : null}
+                      {r.confirm_email_id && confirmThreads.data?.get(r.confirm_email_id) ? <Link to={`${ROUTES.mail}/${confirmThreads.data.get(r.confirm_email_id)}?email=${r.confirm_email_id}`} className="block text-xs text-brand hover:underline">confirmation email</Link> : null}
                     </td>
                     <td className="whitespace-nowrap px-3 py-2 text-stone-700">{r.status === 'arrived' ? <span className="text-emerald-700">Arrived {date(r.arrived_at)}</span> : date(r.expected_at)}{r.tracking ? <span className="block text-xs text-stone-500">{r.tracking}</span> : null}</td>
                     <td className="px-3 py-2">

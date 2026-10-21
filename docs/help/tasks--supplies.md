@@ -9,7 +9,7 @@ When someone on the staff emails orders@ asking for supplies, Claude turns it in
 ## How to
 1. Click **Supplies** in the menu (under Operations).
 2. Pick a tab: **To order**, **Ordered**, **Arrived** or **All**. Click a column header to sort.
-3. Order the supplies the way you always do. When the order confirmation email comes in, Claude fills in **Ordered from**, the order number and when it **Arrives**, and finishes the task.
+3. Order the supplies the way you always do. When the order confirmation email comes in, Claude fills in **Ordered from**, the order number and when it **Arrives**, and finishes the task. Click **confirmation email** under **Ordered from** to see the email it was read from.
 4. The person who asked gets an email from orders@ saying where it was ordered and when it should arrive. The row shows "Emailed …".
 5. Shipping emails update the arrival date, and a delivery email marks it **Arrived**.
 

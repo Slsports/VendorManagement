@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { useDocumentViewer } from '@/hooks/useDocumentViewer'
+import { wwdInvoiceFiles } from '@/services/freight'
+import { downloadVendorFile } from '@/services/lines'
 import { listWwdInvoiceLines, listWwdInvoices, updateWwdInvoice, type WwdInvoiceRow } from '@/services/wwd'
 import { vendorOrderSummary } from '@/services/orders'
 import { money, shortDate } from '@/lib/freight'
@@ -36,6 +39,16 @@ export function WwdInvoiceList({ vendorId, orderId, title = 'WWD invoices', fold
   const [linking, setLinking] = useState<string | null>(null)
   const orders = useSupabaseQuery(async () => (vendorId && linking ? (await vendorOrderSummary(vendorId)).orders : []), [vendorId, !!linking])
   const rows = q.data ?? []
+  // the invoice's PDF, one click from its WWD Seq # (Dana, Oct 21)
+  const withPdf = rows.filter((i) => i.document_id).map((i) => i.id)
+  const files = useSupabaseQuery(async () => wwdInvoiceFiles(withPdf), [withPdf.join()])
+  const { view, viewer } = useDocumentViewer()
+  const seqLink = (i: WwdInvoiceRow) => {
+    const f = files.data?.get(i.id)?.file
+    return f
+      ? <button type="button" onClick={() => view({ name: f.file_name ?? `WWD Seq ${i.seq}.pdf`, mime: f.mime_type, load: () => downloadVendorFile(f.storage_path) })} className="font-medium text-brand hover:underline" title="Open the invoice PDF">WWD Seq # {i.seq}</button>
+      : <span className="font-medium text-stone-900">WWD Seq # {i.seq}</span>
+  }
   if (!rows.length) return null
   const shown = all ? rows : rows.slice(0, 8)
   const open = rows.filter((i) => i.kind !== 'fee' && !i.paid_date && !i.sheet_paid_date).reduce((s, i) => s + (i.amount ?? 0), 0)
@@ -61,7 +74,7 @@ export function WwdInvoiceList({ vendorId, orderId, title = 'WWD invoices', fold
             <li key={i.id} className="py-2">
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                 <span className="min-w-0">
-                  <span className="font-medium text-stone-900">WWD Seq # {i.seq}</span>
+                  {seqLink(i)}
                   {k ? <Badge tone={k.tone} className="ml-2">{k.label}</Badge> : null}
                   <span className="text-stone-500"> · {shortDate(i.wwd_date)}</span>
                   {i.posted_date ? <span className="text-stone-500"> · posted to Edenred {shortDate(i.posted_date)}</span> : null}
@@ -89,6 +102,7 @@ export function WwdInvoiceList({ vendorId, orderId, title = 'WWD invoices', fold
                 <span className={i.paid_date || i.sheet_paid_date ? 'text-stone-500' : 'font-medium text-amber-700'}>{paidText(i)}{i.due_date && !i.paid_date && !i.sheet_paid_date ? ` · due ${shortDate(i.due_date)}` : ''}</span>
                 <span className="flex items-center gap-2">
                   {vendorId && i.order ? <Link to={`${ROUTES.orders}/${i.order.id}`} className="text-brand hover:underline">Order {shortDate(i.order.order_date)}{i.order.po_number ? ` · ${i.order.po_number}` : ''}</Link> : null}
+                  {i.order_id && i.order_set_by === 'auto' ? <span className="text-stone-500" title="VMS tied it by the PO or the amount; Change order or Untie if it is wrong">tied automatically</span> : null}
                   {canEdit && vendorId && i.kind !== 'fee' ? (linking === i.id ? (
                     <span className="flex items-center gap-1">
                       <Select aria-label={`Order for WWD Seq # ${i.seq}`} className="h-8 w-64" defaultValue="" onChange={(e) => { if (e.target.value) void change(i.id, { orderId: e.target.value }) }}>
@@ -108,6 +122,7 @@ export function WwdInvoiceList({ vendorId, orderId, title = 'WWD invoices', fold
         })}
       </ul>
       {rows.length > 8 ? <Button size="sm" variant="ghost" className="mt-2" onClick={() => setAll((a) => !a)}>{all ? 'Show fewer' : `Show all ${rows.length}`}</Button> : null}
+      {viewer}
     </>
   )
 

@@ -249,3 +249,25 @@ export async function listSharedFreightBills(organizationId: string) {
   if (error) throw error
   return (data ?? []) as unknown as { id: string; invoice_number: string | null; invoice_date: string | null; total: number | null; status: string; carriers: { name: string } | null; freight_bill_lines: { order_id: string | null; amount: number; manual_amount: boolean }[] }[]
 }
+
+/** A WWD invoice and its PDF on file (null when none is filed yet). */
+export interface WwdInvoiceFile { id: string; seq: string; file: { storage_path: string; file_name: string | null; mime_type: string | null } | null }
+
+/**
+ * WWD invoices with their PDFs, by invoice id (Dana, Oct 21: what Claude read shows where it came from, one click):
+ * for the Edenred cards, the WWD credits and a freight bill made from a WWD invoice.
+ */
+export async function wwdInvoiceFiles(invoiceIds: string[]): Promise<Map<string, WwdInvoiceFile>> {
+  const ids = [...new Set(invoiceIds.filter(Boolean))]
+  if (!ids.length) return new Map()
+  const { data, error } = await supabase.from('wwd_invoices').select('id, seq, document_id').in('id', ids)
+  if (error) throw error
+  const docIds = (data ?? []).map((i) => i.document_id).filter((x): x is string => !!x)
+  const docs = new Map<string, WwdInvoiceFile['file']>()
+  if (docIds.length) {
+    const { data: links, error: e2 } = await supabase.from('vendor_links').select('id, storage_path, file_name, mime_type').in('id', docIds)
+    if (e2) throw e2
+    for (const l of links ?? []) if (l.storage_path) docs.set(l.id, { storage_path: l.storage_path, file_name: l.file_name, mime_type: l.mime_type })
+  }
+  return new Map((data ?? []).map((i) => [i.id, { id: i.id, seq: i.seq, file: (i.document_id && docs.get(i.document_id)) || null }]))
+}

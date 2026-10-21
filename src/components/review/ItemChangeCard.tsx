@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { useDocumentViewer } from '@/hooks/useDocumentViewer'
+import { supabase } from '@/lib/supabase'
+import { downloadRunFile } from '@/services/lsReports'
 import { askForDnr, decideItemChange, getItemChange, listDnrPeople, writeItemChangeToLs } from '@/services/itemChanges'
 import { ROUTES } from '@/lib/constants'
 import { errorMessage } from '@/lib/utils'
@@ -38,6 +41,14 @@ function ItemChangeBody({ ch, canEdit, onChanged }: { ch: ItemChange; canEdit: b
   const [askTo, setAskTo] = useState('')
   const [busy, setBusy] = useState(false)
   const dnrPeople = useSupabaseQuery(async () => (organization && !canDnr ? listDnrPeople(organization.id) : []), [organization?.id, canDnr])
+  // where it came from, one click (Dana, Oct 21): the sales report that found it
+  const run = useSupabaseQuery(async () => {
+    if (!ch.report_run_id) return null
+    const { data, error } = await supabase.from('report_runs').select('*').eq('id', ch.report_run_id).maybeSingle()
+    if (error) throw error
+    return data
+  }, [ch.report_run_id])
+  const { view, viewer } = useDocumentViewer()
 
   async function decide(pick: ItemChangeDecision | '' = choice) {
     if (!pick) return
@@ -89,7 +100,10 @@ function ItemChangeBody({ ch, canEdit, onChanged }: { ch: ItemChange; canEdit: b
       {ch.vendor_words ? <p className="rounded-lg bg-white/70 px-3 py-2 text-stone-700">The vendor wrote: “{ch.vendor_words}”</p> : null}
       {fromReport ? (
         <p className="text-stone-600">
-          Marked * discontinued in Lightspeed{ch.vendor_words ? <> with the note “{ch.vendor_words}”</> : ' with no replacement noted'}; no usable replacement on file. Found by a sales report.
+          Marked * discontinued in Lightspeed{ch.vendor_words ? <> with the note “{ch.vendor_words}”</> : ' with no replacement noted'}; no usable replacement on file. Found by {run.data
+            ? <button type="button" onClick={() => view({ name: run.data!.file_name, mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', load: () => downloadRunFile(run.data!) })} className="text-brand hover:underline">the sales report ({run.data.title})</button>
+            : 'a sales report'}.
+          {viewer}
         </p>
       ) : <p className="text-stone-600">
         Claude read: <strong>{ITEM_CHANGE_LABELS[ch.read_as]}</strong>
@@ -97,6 +111,7 @@ function ItemChangeBody({ ch, canEdit, onChanged }: { ch: ItemChange; canEdit: b
         {ch.back_date ? <> · back {day(ch.back_date)}</> : null}
         {ch.sure ? '' : ' (not sure)'}
         {ch.order_id ? <> · <Link to={`${ROUTES.orders}/${ch.order_id}`} className="text-brand hover:underline">the order</Link></> : null}
+        {ch.check_id ? <> · <Link to={`${ROUTES.orderChecks}/${ch.check_id}`} className="text-brand hover:underline">the confirmation it came from</Link></> : null}
       </p>}
 
       {ch.decision === 'find_replacement' ? (

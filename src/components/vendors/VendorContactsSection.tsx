@@ -192,14 +192,19 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
                     {p.title ? <span className="ml-2 text-xs font-normal text-stone-500">{p.title}</span> : null}
                     {p.confirmedAt ? <Badge tone="success" className="ml-1">Confirmed {new Date(p.confirmedAt).toLocaleDateString()}</Badge> : null}
                     {p.badEmail ? <Badge tone="danger" className="ml-1">Bad email</Badge> : null}
-                    {p.learned ? <span className="ml-2 text-xs font-normal text-stone-400" title={p.note ?? undefined}>Learned from email</span> : null}
+                    {/* where it was learned, one click (Dana, Oct 21): the mail with that address */}
+                    {p.learned ? (p.email
+                      ? <Link to={mailWithUrl(ROUTES.mailWith, p.email)} onClick={(e) => e.stopPropagation()} className="ml-2 text-xs font-normal text-brand hover:underline" title={p.note ?? 'All mail with them'}>Learned from email</Link>
+                      : <span className="ml-2 text-xs font-normal text-stone-400" title={p.note ?? undefined}>Learned from email</span>) : null}
                     {p.portalUnconfirmed ? <span title="Only the WWD portal lists them: no email with them about this vendor in 24 months. Never shown as Main rep until confirmed."><Badge tone="warning" className="ml-1">From WWD · not confirmed</Badge></span> : null}
                   </p>
                   {/* links inside the card do their own thing, not open the editor */}
                   <p className="flex flex-wrap gap-x-4 text-stone-600" onClick={(e) => e.stopPropagation()}>
                     {p.email ? (canEdit
                       ? <button type="button" onClick={() => onEmail(p.email!)} className="inline-flex items-center gap-1 hover:text-brand" title="Write an email from VMS"><Mail className="size-3.5" aria-hidden="true" />{p.email}</button>
-                      : <a href={`mailto:${p.email}`} className="inline-flex items-center gap-1 hover:text-brand"><Mail className="size-3.5" aria-hidden="true" />{p.email}</a>) : null}
+                      : p.learned
+                        ? <Link to={mailWithUrl(ROUTES.mailWith, p.email)} className="inline-flex items-center gap-1 hover:text-brand" title="All mail with them"><Mail className="size-3.5" aria-hidden="true" />{p.email}</Link>
+                        : <a href={`mailto:${p.email}`} className="inline-flex items-center gap-1 hover:text-brand"><Mail className="size-3.5" aria-hidden="true" />{p.email}</a>) : null}
                     <PhoneLinks phones={p.phones} />
                   </p>
                 </div>

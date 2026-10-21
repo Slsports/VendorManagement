@@ -5,6 +5,7 @@ import { Check, GitMerge, Scissors, Trash2, X } from 'lucide-react'
 import { applyVendorRename, confirmVendorMerge, deleteVendor, mergeVendors, resolveReviewItem, unmergeVendor } from '@/services/vendors'
 import { ROUTES } from '@/lib/constants'
 import { BILLING_ROUTE_LABELS } from '@/lib/vendors'
+import { mailWithUrl } from '@/lib/mail'
 import { errorMessage } from '@/lib/utils'
 import type { BillingRoute, ReviewItem } from '@/types'
 import { Button, Input, Select } from '@/components/ui'
@@ -76,7 +77,7 @@ export function ReviewItemCard({ item, vendor, other, canEdit, onDone, aside }: 
   const [keep, setKeep] = useState<'this' | 'other'>('this')
   const [mode, setModeState] = useState<'idle' | 'merge' | 'split'>('idle')
   const [splitName, setSplitName] = useState('')
-  const details = (item.details ?? {}) as { other_vendor_id?: string; other_name?: string; reason?: string; lightspeed_names?: string[]; question?: string; routes?: string[]; current_name?: string; new_name?: string; alias?: string | null; rep_group_name?: string | null; proposed_assignee_id?: string }
+  const details = (item.details ?? {}) as { other_vendor_id?: string; other_name?: string; reason?: string; lightspeed_names?: string[]; question?: string; routes?: string[]; current_name?: string; new_name?: string; alias?: string | null; rep_group_name?: string | null; proposed_assignee_id?: string; email?: string | null }
   const [newName, setNewName] = useState(details.new_name ?? '')
   const names = details.lightspeed_names ?? []
   const routeArg = route || null
@@ -288,6 +289,8 @@ export function ReviewItemCard({ item, vendor, other, canEdit, onDone, aside }: 
       <p className="mt-1 flex flex-wrap gap-x-3 text-amber-900">
         {vendor ? <Link to={`${ROUTES.vendors}/${vendor.id}`} className="underline">Open {vendor.name}</Link> : null}
         {other ? <Link to={`${ROUTES.vendors}/${other.id}`} className="underline">Open {other.name}</Link> : null}
+        {/* who filled in the contact form: their mail, one click (Dana, Oct 21) */}
+        {item.kind === 'vendor_form' && details.email ? <Link to={mailWithUrl(ROUTES.mailWith, details.email)} className="underline">Mail with {details.email}</Link> : null}
       </p>
 
       {canEdit ? (

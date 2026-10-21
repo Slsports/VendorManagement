@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { PenLine } from 'lucide-react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
@@ -9,6 +10,8 @@ import { SentTable } from '@/components/mail/SentTable'
 import { Button } from '@/components/ui'
 import { FoldSection } from '@/components/shared/FoldSection'
 import { cn, errorMessage } from '@/lib/utils'
+import { ROUTES } from '@/lib/constants'
+import { mailWithUrl } from '@/lib/mail'
 import type { MailView } from '@/types'
 
 type Tab = MailView | 'sent'
@@ -71,7 +74,10 @@ export function VendorMailSection({ vendorId, organizationId, onNewEmail }: { ve
           <ul className="mt-1 space-y-1 text-sm">
             {filings.data.map((f) => (
               <li key={f.id} className="flex flex-wrap items-baseline gap-x-2">
-                <span className="font-medium text-stone-800">{f.sender ? `${f.sender.is_domain ? '@' : ''}${f.sender.sender_key}` : 'A sender'}</span>
+                {/* that sender's mail, one click (Dana, Oct 21); a whole address ending opens everyone at that company */}
+                {f.sender
+                  ? <Link to={f.sender.is_domain ? mailWithUrl(ROUTES.mailWith, `info@${f.sender.sender_key}`, true) : mailWithUrl(ROUTES.mailWith, f.sender.sender_key)} className="font-medium text-brand hover:underline" title="All mail from them">{f.sender.is_domain ? '@' : ''}{f.sender.sender_key}</Link>
+                  : <span className="font-medium text-stone-800">A sender</span>}
                 <span className="text-xs text-stone-500">{f.how === 'claude' ? 'by Claude' : 'from Never bought from'} · {new Date(f.created_at).toLocaleDateString()}{f.note ? ` · ${f.note}` : ''}</span>
                 <button type="button" onClick={() => void undo(f)} className="text-xs font-medium text-brand hover:underline">Undo</button>
               </li>

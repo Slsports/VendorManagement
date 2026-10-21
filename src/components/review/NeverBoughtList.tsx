@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Store } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
@@ -7,10 +7,12 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useTableSort } from '@/hooks/useTableSort'
 import { listNeverBought, neverBoughtIsVendor, neverBoughtLeave, neverBoughtMakeVendor, type NeverBoughtRow } from '@/services/neverBought'
 import { ROUTES } from '@/lib/constants'
+import { mailWithUrl } from '@/lib/mail'
 import { cn, errorMessage } from '@/lib/utils'
 import { SortHeader } from '@/components/shared/SortHeader'
 import { Modal } from '@/components/shared/Modal'
 import { VendorPicker } from '@/components/vendors/VendorPicker'
+import { SenderEmailsPanel } from '@/components/mail/SenderEmailsPanel'
 import { Alert, Button, FormField, Input, Select, Spinner } from '@/components/ui'
 
 type Show = 'to_check' | 'checked' | 'all'
@@ -29,6 +31,15 @@ export function NeverBoughtList({ canEdit }: { canEdit: boolean }) {
   const [show, setShow] = useState<Show>('to_check')
   const [picking, setPicking] = useState<NeverBoughtRow | null>(null)
   const [making, setMaking] = useState<NeverBoughtRow | null>(null)
+  // the emails behind a row, one click (Dana, Oct 21); open in the address (?emails=<sender>) so Back returns to it
+  const [params, setParams] = useSearchParams()
+  const readingId = params.get('emails')
+  const setReading = (id: string | null) => {
+    const next = new URLSearchParams(params)
+    if (id) next.set('emails', id)
+    else next.delete('emails')
+    setParams(next, { replace: true })
+  }
 
   const all = q.data ?? []
   const s = search.trim().toLowerCase()
@@ -47,6 +58,7 @@ export function NeverBoughtList({ canEdit }: { canEdit: boolean }) {
   if (q.isLoading) return <div className="flex justify-center py-12"><Spinner label="Loading…" className="text-brand" /></div>
   if (q.error) return <Alert variant="error">{q.error}</Alert>
   const toCheck = all.filter((r) => !r.checked_at).length
+  const reading = readingId ? all.find((r) => r.sender_ids.includes(readingId)) : null
 
   return (
     <div>
@@ -84,12 +96,16 @@ export function NeverBoughtList({ canEdit }: { canEdit: boolean }) {
                     {r.note ? <span className="mt-0.5 block text-xs text-stone-500">{r.note}</span> : null}
                     {r.checked_at ? <span className="mt-0.5 block text-xs text-stone-500">Checked {day(r.checked_at)}{r.checked_by ? ` by ${r.checked_by.split(' ')[0]}` : ''}</span> : null}
                   </td>
-                  <td className="px-3 py-2 text-xs text-stone-600">{r.addresses.slice(0, 4).map((a) => <span key={a} className="block">{a}</span>)}{r.addresses.length > 4 ? <span className="block">and {r.addresses.length - 4} more</span> : null}</td>
+                  <td className="px-3 py-2 text-xs text-stone-600">{r.addresses.slice(0, 4).map((a) => <Link key={a} to={mailWithUrl(ROUTES.mailWith, a)} className="block hover:text-brand hover:underline" title="All mail with them">{a}</Link>)}{r.addresses.length > 4 ? <span className="block">and {r.addresses.length - 4} more</span> : null}</td>
                   <td className="px-3 py-2 text-xs text-stone-600">
                     {r.website ? <a href={site(r.website)!} target="_blank" rel="noreferrer" className="block text-brand hover:underline">{r.website.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '')}</a> : null}
                     {r.phone ? <span className="block whitespace-nowrap">{r.phone}</span> : null}
                   </td>
-                  <td className="px-3 py-2 text-stone-700">{r.email_count}</td>
+                  <td className="px-3 py-2 text-stone-700">
+                    {r.sender_ids.length === 1
+                      ? <button type="button" onClick={() => setReading(r.sender_ids[0])} className="font-medium text-brand hover:underline" title="See the emails">{r.email_count}</button>
+                      : <span title="From several senders: click an address to see its mail">{r.email_count}</span>}
+                  </td>
                   <td className="whitespace-nowrap px-3 py-2 text-stone-600">{day(r.latest_at)}</td>
                   <td className="px-3 py-2">
                     {canEdit ? (
@@ -116,6 +132,7 @@ export function NeverBoughtList({ canEdit }: { canEdit: boolean }) {
             onPick={async (v) => { const row = picking; setPicking(null); await act(neverBoughtIsVendor(row.sender_ids, v.id), `${row.company}: mail filed to ${v.name}`) }} />
         </Modal>
       ) : null}
+      {reading && readingId ? <SenderEmailsPanel senderId={readingId} senderLabel={reading.company} canEdit={canEdit} onClose={() => setReading(null)} onChanged={() => q.refetch()} /> : null}
       {making ? <MakeVendorDialog row={making} onClose={() => setMaking(null)} onMade={(id) => { setMaking(null); navigate(`${ROUTES.vendors}/${id}`) }} /> : null}
     </div>
   )

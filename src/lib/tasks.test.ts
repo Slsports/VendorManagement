@@ -61,6 +61,7 @@ describe('Go to it', () => {
     expect(taskTarget({ ...base, auto_key: 'wwd:w1:30' })).toEqual({ kind: 'pay', label: 'Pay it', bill: 'wwd', id: 'w1' })
     expect(taskTarget({ ...base, auto_key: 'lspo:p1:to_review' })).toMatchObject({ to: '/ls-pos/p1' })
     expect(taskTarget({ ...base, auto_key: 'ship:o9' })).toMatchObject({ to: '/orders/o9?do=ship' })
+    expect(taskTarget({ ...base, auto_key: 'freight_share:b1', carrier_id: 'c1' })).toEqual({ kind: 'page', to: '/freight/b1', label: 'Open the freight bill' })
   })
   it('opens what a hand-made task is tagged to, else nothing', async () => {
     const { taskTarget } = await import('./tasks')

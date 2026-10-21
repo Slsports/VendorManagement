@@ -8,7 +8,8 @@ When mail comes from one of our rep groups, Claude reads which lines (brands) th
 
 ## How to
 1. Open **Review queue** and click **Vendor changes**.
-2. For a **Rep group lines** card:
+2. Click **See the mail** to read the rep's emails the card came from.
+3. For a **Rep group lines** card:
    - The vendor is already with another rep group: click **Move to (new rep group)** or **Keep with (old rep group)**.
    - The rep sells a brand that is not one of our vendors: click **Add as a vendor** (it joins the rep group) or **Skip**.
 

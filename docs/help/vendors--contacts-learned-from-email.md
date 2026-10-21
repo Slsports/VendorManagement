@@ -9,7 +9,7 @@ VMS adds the people we email with to each vendor's **Reps & contacts** by itself
 ## How it works
 1. When someone at a vendor writes to orders@, or we write to them, Claude reads their signature.
 2. They are added to that vendor's **Reps & contacts** with their name, title and phone numbers (Work, Cell, Fax…). The boxes are ticked for what they do: **Rep**, **Orders**, **AR / Accounting**, **Customer service**, **Warehouse / Shipping** or **Owner**.
-3. They show **Learned from email** next to their name.
+3. They show **Learned from email** next to their name. Click it to see all mail with that address.
 4. Someone already on the list only gets what is missing, like another phone number or their title.
 
 ## Good to know

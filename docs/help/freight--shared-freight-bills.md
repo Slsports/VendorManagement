@@ -7,7 +7,7 @@ who: Admin, managers and buyers
 A carrier bill billed through Worldwide (like XPO) can cover a pallet with several vendors' orders on it. VMS marks these bills **shared**, and you pick which orders came on it.
 
 ## From the freight bill
-1. Open the bill from **Freight**. A shared bill has the box **Share this freight across the orders on the shipment**.
+1. Open the bill from **Freight** (or click **Open the freight bill** on its task). Click **WWD invoice (WWD Seq # …)** at the top to open the WWD invoice PDF the bill was made from. A shared bill has the box **Share this freight across the orders on the shipment**.
 2. In **Find an order**, type a PO, **Vendor Inv #**, **WWD Seq #** or vendor name and click **Find**. Click an order to add it.
 3. Leave an amount blank to share it by merchandise cost (every vendor carries the same freight %), or type an amount for that order.
 4. Click **Save** when the amounts add up to the bill.

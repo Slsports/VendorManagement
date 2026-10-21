@@ -13,7 +13,7 @@ The **Drafts** tab in Mail holds emails saved before sending: ones you saved, an
 4. To throw one away, click the trash can on its row.
 
 ## Good to know
-- Drafts marked **Prepared by Claude** were written for you; read them over before sending.
+- Drafts marked **Prepared by Claude** were written for you; read them over before sending. Click **The email it came from** or **The order** under the subject to see what Claude wrote it from.
 - Some prepared drafts also sit in orders@'s Gmail **Drafts**. Send from either place; sending from VMS removes the Gmail copy.
 - Files attached from your computer are not kept in a draft; attach them again before sending.
 - Your drafts are yours; the admin can see everyone's.

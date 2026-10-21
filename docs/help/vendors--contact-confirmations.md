@@ -22,7 +22,7 @@ Each person at a vendor gets an email with a link to a short form showing what w
 - Once our routing letter is in VMS: **Did you receive our routing instructions?** Yes or No. Yes marks the letter received for them. No puts the routing letter email for them in **Mail › Drafts**, ready to send. The answer shows in the **Got routing letter?** column.
 
 ## Good to know
-- Changes go straight into VMS. A new company name, and vendors VMS doesn't know, go to the **Review queue** for you.
+- Changes go straight into VMS. A new company name, and vendors VMS doesn't know, go to the **Review queue** for you. The card for vendors VMS doesn't know has **Mail with (their email)** to see all mail with the person who filled in the form.
 - Their freight programs fill in the vendor's free-shipping settings when VMS had none.
 - Anyone who hasn't answered after a week gets one reminder. An email that bounces is marked **Bad email**.
 - Contacts show **Confirmed** with the date on the vendor's page. The vendors list can be filtered by Confirmed, Waiting, No answer, Bad email or Not asked yet.

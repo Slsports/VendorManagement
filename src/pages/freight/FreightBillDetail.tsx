@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { Check, ExternalLink, FileText, Mail, RefreshCw, Upload } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { getFreightBill, listVendorOrdersForFreight, readFreightBill, setFreightBillCarrier, setFreightBillPaid, setFreightBillStatus, setFreightLine, uploadFreightPdf, type FreightBillDetail } from '@/services/freight'
+import { getFreightBill, listVendorOrdersForFreight, readFreightBill, setFreightBillCarrier, setFreightBillPaid, setFreightBillStatus, setFreightLine, uploadFreightPdf, wwdInvoiceFiles, type FreightBillDetail } from '@/services/freight'
 import { CarrierPicker } from '@/components/freight/CarrierPicker'
 import { downloadVendorFile } from '@/services/lines'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
@@ -28,6 +28,9 @@ export default function FreightBillDetailPage() {
   const { view, viewer } = useDocumentViewer()
   const fileInput = useRef<HTMLInputElement>(null)
   const b = q.data
+  // a bill made from a WWD invoice (Dana, Oct 21): that invoice's PDF, one click
+  const wwdId = b?.wwd_invoice_id ?? null
+  const wwd = useSupabaseQuery(async () => (wwdId ? (await wwdInvoiceFiles([wwdId])).get(wwdId) ?? null : null), [wwdId])
 
   if (q.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading freight bill…" className="text-brand" /></div>
   if (q.error || !b) return <Alert variant="error">{q.error ?? 'Freight bill not found'}</Alert>
@@ -84,6 +87,11 @@ export default function FreightBillDetailPage() {
         {b.carriers?.ups_account ? <span className="text-stone-700">Our UPS # <span className="font-mono font-semibold">{b.carriers.ups_account}</span></span> : null}
         {b.carriers?.website ? <a href={b.carriers.website} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-brand hover:underline">Log in to {b.carriers.name} <ExternalLink className="size-3.5" aria-hidden="true" /></a> : null}
         {b.emails ? <Link to={`${ROUTES.mail}/${b.emails.thread_id}`} className="inline-flex items-center gap-1 text-brand hover:underline"><Mail className="size-4" aria-hidden="true" /> The email</Link> : null}
+        {wwd.data?.file ? (
+          <button type="button" className="inline-flex items-center gap-1 text-brand hover:underline" onClick={() => { const f = wwd.data!.file!; view({ name: f.file_name ?? `WWD Seq ${wwd.data!.seq}.pdf`, mime: f.mime_type, load: () => downloadVendorFile(f.storage_path) }) }}>
+            <FileText className="size-4" aria-hidden="true" /> WWD invoice (WWD Seq # {wwd.data.seq})
+          </button>
+        ) : wwd.data ? <span className="text-stone-600">WWD Seq # {wwd.data.seq} (no PDF on file)</span> : null}
         {b.receipt_path ? (
           <button type="button" className="inline-flex items-center gap-1 text-brand hover:underline" onClick={() => view({ name: b.receipt_file_name ?? 'Payment receipt.pdf', mime: 'application/pdf', load: () => downloadVendorFile(b.receipt_path!) })}>
             <FileText className="size-4" aria-hidden="true" /> Payment receipt

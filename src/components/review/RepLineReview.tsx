@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Check, Plus, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -8,8 +8,9 @@ import { ROUTES } from '@/lib/constants'
 import { errorMessage } from '@/lib/utils'
 import type { ReviewItem } from '@/types'
 import { Button } from '@/components/ui'
+import { SenderEmailsPanel } from '@/components/mail/SenderEmailsPanel'
 
-interface Details { rep_group_id?: string; rep_group_name?: string; vendor_id?: string; vendor_name?: string; current_rep_group_name?: string; line_name?: string }
+interface Details { rep_group_id?: string; rep_group_name?: string; vendor_id?: string; vendor_name?: string; current_rep_group_name?: string; line_name?: string; sender_id?: string }
 
 /**
  * A rep's mail names a line we could not add on our own (Dana, Oct 12): a vendor with another rep group (move it or keep
@@ -18,6 +19,16 @@ interface Details { rep_group_id?: string; rep_group_name?: string; vendor_id?: 
 export function RepLineReview({ item, canEdit, onDone }: { item: ReviewItem; canEdit: boolean; onDone: () => void | Promise<void> }) {
   const d = (item.details ?? {}) as Details
   const [busy, setBusy] = useState(false)
+  // the mail it was read from, one click (Dana, Oct 21). Open in the address (?emails=<sender>&card=<this card>: one
+  // rep's mail can raise several cards) so Back from an email returns to it.
+  const [params, setParams] = useSearchParams()
+  const reading = !!d.sender_id && params.get('emails') === d.sender_id && params.get('card') === item.id
+  const setReading = (on: boolean) => {
+    const next = new URLSearchParams(params)
+    if (on && d.sender_id) { next.set('emails', d.sender_id); next.set('card', item.id) }
+    else { next.delete('emails'); next.delete('card') }
+    setParams(next, { replace: true })
+  }
   async function answer(action: 'move' | 'keep' | 'add_vendor' | 'skip', label: string) {
     setBusy(true)
     try {
@@ -39,7 +50,9 @@ export function RepLineReview({ item, canEdit, onDone }: { item: ReviewItem; can
         {d.vendor_id
           ? <>Mail from {group} talks about <Link to={`${ROUTES.vendors}/${d.vendor_id}`} className="font-medium text-brand hover:underline">{d.vendor_name}</Link>, which is with {d.current_rep_group_name}.</>
           : <>Mail from {group} says they rep <span className="font-medium">{d.line_name}</span>, which is not one of our vendors.</>}
+        {d.sender_id ? <> <button type="button" onClick={() => setReading(true)} className="font-medium text-brand hover:underline">See the mail</button></> : null}
       </p>
+      {reading && d.sender_id ? <SenderEmailsPanel senderId={d.sender_id} senderLabel={d.rep_group_name ?? 'Rep group'} canEdit={canEdit} onClose={() => setReading(false)} onChanged={onDone} /> : null}
       {canEdit ? (
         <div className="flex flex-wrap gap-2">
           {d.vendor_id ? (

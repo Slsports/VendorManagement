@@ -125,6 +125,8 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   // Tell me when they reply (Dana, Oct 19): straight to their reply
   if (kind === 'reply' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open their reply' }
   if (kind === 'promise' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}?do=reply`, label: 'Reply' }
+  // a WWD pallet bill to share across orders (Dana, Oct 21): the bill itself, where the orders go
+  if (kind === 'freight_share' && id) return { kind: 'page', to: `/freight/${id}`, label: 'Open the freight bill' }
   if (kind === 'freight_quote' && id) return { kind: 'page', to: `/freight/quotes/${id}`, label: 'Open the freight quote' }
   // after the confirmation (Dana, Oct 20): the order's Shipping & receiving box, the shipping email one click away
   if (kind === 'ship' && id) return { kind: 'page', to: `/orders/${id}?do=ship`, label: 'Open the shipping steps' }

@@ -8,7 +8,7 @@ When Claude decides an unknown sender is one of our vendors, it files that sende
 
 ## How to
 1. Open the vendor's page and find **Mail**.
-2. Under the conversations, **Mail filed here automatically** lists each sender Claude filed, with its reason.
+2. Under the conversations, **Mail filed here automatically** lists each sender Claude filed, with its reason. Click the sender to see all mail from them (a sender like @company.com opens everyone at that company).
 3. Click **Undo** next to the sender, then **OK**.
 
 ## Good to know

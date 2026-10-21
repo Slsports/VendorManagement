@@ -8,7 +8,7 @@ Companies Claude thinks we have never bought from: wholesalers, brands and servi
 
 ## How to
 1. Open **Review queue** and click the **Never bought from** tab.
-2. Each row is one company: its name, every email address it wrote from, its website and phone (from email signatures), how many emails, and the latest one.
+2. Each row is one company: its name, every email address it wrote from, its website and phone (from email signatures), how many emails, and the latest one. Click the number of emails to read them, or click an address to see all mail with it.
 3. Use the search box, or click a column header to sort. **To check** shows the ones nobody has looked at yet.
 4. Click one:
    - **This is…**: pick the vendor it really is. Its mail is filed to that vendor from now on, and the company's name is kept as another name for the vendor.
