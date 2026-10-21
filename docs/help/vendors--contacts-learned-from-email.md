@@ -9,7 +9,7 @@ VMS adds the people we email with to each vendor's **Reps & contacts** by itself
 ## How it works
 1. When someone at a vendor writes to orders@, or we write to them, Claude reads their signature.
 2. They are added to that vendor's **Reps & contacts** with their name, title and phone numbers (Work, Cell, Fax…). The boxes are ticked for what they do: **Rep**, **Orders**, **AR / Accounting**, **Customer service**, **Warehouse / Shipping** or **Owner**.
-3. They show **Learned from email** next to their name. Click it to see all mail with that address.
+3. They show **Learned from email** next to their name. Click it to open the email they were learned from. For contacts learned before Oct 21, 2026, it opens all mail with that person instead.
 4. Someone already on the list only gets what is missing, like another phone number or their title.
 
 ## Good to know
@@ -19,5 +19,5 @@ VMS adds the people we email with to each vendor's **Reps & contacts** by itself
 - What you typed is never changed, and the main rep stays the same.
 - When the vendor has a rep group, the company's own people are added as **Customer service** (or shipping, billing), never as **Rep**: our rep is the rep group's person.
 - To remove a wrong contact, click the trash can on its row. It will not come back.
-- People at a rep group are added to the rep group's reps. If someone already typed them on one of its vendors, that card moves to the rep group, so they are never listed twice.
+- People at a rep group are added to the rep group's reps. Those learned from Oct 21, 2026 on also show **Learned from email** on each vendor the group reps. If someone already typed them on one of its vendors, that card moves to the rep group, so they are never listed twice.
 - Someone whose email address is at a company already on file for that vendor or rep group (for example @jrasales.com for JRA Sales) is always counted as theirs.

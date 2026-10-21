@@ -4,6 +4,8 @@ import toast from 'react-hot-toast'
 import { AlertTriangle, History, Mail, Pencil, Plus, RotateCcw, Star, Trash2, UserX } from 'lucide-react'
 import { addVendorEmail, moveContactToRepGroup, setRepGroupContact, setVendorContact, updateVendor, updateVendorEmail } from '@/services/vendors'
 import { updateRepGroupContact } from '@/services/lines'
+import { threadsOfEmails } from '@/services/orders'
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { ROUTES } from '@/lib/constants'
 import { CONTACT_TYPE_LABELS } from '@/lib/vendors'
 import { cn, errorMessage } from '@/lib/utils'
@@ -44,6 +46,10 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
   const people = peopleFor(v)
   const former = formerFor(v)
   const main = new Set(ourReps(v).map((p) => p.key))
+  // the conversation of each email a contact was learned from, to open that exact email (Dana, Oct 21)
+  const learnedIds = [...new Set(people.map((p) => p.learnedEmailId).filter((id): id is string => !!id))]
+  const learnedThreads = useSupabaseQuery(() => threadsOfEmails(learnedIds), [learnedIds.join()])
+  const learnedThread = (p: PersonRow) => (p.learnedEmailId ? learnedThreads.data?.get(p.learnedEmailId) ?? null : null)
 
   // "Add our rep" at the top of the vendor page: open this section on a new contact with Rep ticked, and scroll to it.
   const [seenAddRep, setSeenAddRep] = useState(addRep)
@@ -192,8 +198,10 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
                     {p.title ? <span className="ml-2 text-xs font-normal text-stone-500">{p.title}</span> : null}
                     {p.confirmedAt ? <Badge tone="success" className="ml-1">Confirmed {new Date(p.confirmedAt).toLocaleDateString()}</Badge> : null}
                     {p.badEmail ? <Badge tone="danger" className="ml-1">Bad email</Badge> : null}
-                    {/* where it was learned, one click (Dana, Oct 21): the mail with that address */}
-                    {p.learned ? (p.email
+                    {/* where it was learned, one click (Dana, Oct 21): the exact email; learned before Oct 21, the mail with that address */}
+                    {p.learned ? (learnedThread(p)
+                      ? <Link to={`${ROUTES.mail}/${learnedThread(p)}?email=${p.learnedEmailId}`} onClick={(e) => e.stopPropagation()} className="ml-2 text-xs font-normal text-brand hover:underline" title={p.note ?? 'The email they were learned from'}>Learned from email</Link>
+                      : p.email
                       ? <Link to={mailWithUrl(ROUTES.mailWith, p.email)} onClick={(e) => e.stopPropagation()} className="ml-2 text-xs font-normal text-brand hover:underline" title={p.note ?? 'All mail with them'}>Learned from email</Link>
                       : <span className="ml-2 text-xs font-normal text-stone-400" title={p.note ?? undefined}>Learned from email</span>) : null}
                     {p.portalUnconfirmed ? <span title="Only the WWD portal lists them: no email with them about this vendor in 24 months. Never shown as Main rep until confirmed."><Badge tone="warning" className="ml-1">From WWD · not confirmed</Badge></span> : null}

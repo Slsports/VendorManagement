@@ -7,6 +7,8 @@
 //   3. save   — a new person is added to the vendor's Reps & contacts (or the rep group's reps), marked "Learned from
 //               email"; someone already there only gets what is missing (another phone, a title). Typed details and
 //               the starred rep never change. Each address is read once (contact_learning), so deleted ones stay gone.
+//               The email the details came from is kept on the contact (learned_email_id), so "Learned from email" opens
+//               it (Dana, Oct 21).
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, errorResponse, json, serviceClient } from '../_shared/caller.ts'
 import { aiEnabled, readContacts, type ContactReading, type ContactToRead } from '../_shared/ai.ts'
@@ -14,7 +16,7 @@ import { aiEnabled, readContacts, type ContactReading, type ContactToRead } from
 const TIME_BUDGET_MS = 90_000
 const BATCH = 8
 
-interface Queued { email: string; vendor_id: string | null; rep_group_id: string | null; owner_name: string; emails: { direction: string; from_name: string | null; subject: string | null; text: string }[] }
+interface Queued { email: string; vendor_id: string | null; rep_group_id: string | null; owner_name: string; emails: { id: string; direction: string; from_name: string | null; subject: string | null; text: string }[] }
 interface Phone { number: string; type: 'work' | 'cell' | 'fax' | 'other'; label?: string | null; ext?: string | null }
 
 Deno.serve(async (req) => {
@@ -89,9 +91,10 @@ async function save(db: SupabaseClient, org: string, q: Queued, r: ContactReadin
   const name = r.name?.trim() || null
   const title = r.title?.trim() || null
   const note = 'Learned from email'
+  const learnedEmailId = sourceEmail(q, r)
   if (q.vendor_id) {
-    const { data: have } = await db.from('vendor_emails').select('id, contact_name, title, phones').eq('vendor_id', q.vendor_id).ilike('email', q.email).maybeSingle()
-    if (have) return mark(db, org, q, await fill(db, 'vendor_emails', have, { nameCol: 'contact_name', name, title, phones }))
+    const { data: have } = await db.from('vendor_emails').select('id, contact_name, title, phones, learned_email_id').eq('vendor_id', q.vendor_id).ilike('email', q.email).maybeSingle()
+    if (have) return mark(db, org, q, await fill(db, 'vendor_emails', have, { nameCol: 'contact_name', name, title, phones, learnedEmailId }))
     let roles: string[] = r.roles.length ? r.roles : ['other']
     // a vendor we buy through a rep group: its rep is the group's person; the company's own people are customer service,
     // shipping or billing, never "our rep" (Dana, Oct 15: Heather at Planet Cotton showed as the rep, not Maryellen)
@@ -99,7 +102,7 @@ async function save(db: SupabaseClient, org: string, q: Queued, r: ContactReadin
     if (v?.rep_group_id && roles.includes('rep')) roles = [...new Set(roles.map((x) => (x === 'rep' ? 'customer_service' : x)))]
     const { error } = await db.from('vendor_emails').insert({
       organization_id: org, vendor_id: q.vendor_id, email: q.email, contact_name: name, title, phones, roles, contact_type: roles[0],
-      source: 'email_enrichment', confidence: 0.7, notes: note,
+      source: 'email_enrichment', confidence: 0.7, notes: note, learned_email_id: learnedEmailId,
     })
     if (error) return mark(db, org, q, 'failed', error.message.slice(0, 200))
     return mark(db, org, q, 'added')
@@ -111,15 +114,25 @@ async function save(db: SupabaseClient, org: string, q: Queued, r: ContactReadin
     const { error: moveErr } = await db.rpc('vendor_contact_to_rep_group', { p_contact: typed[0].id })
     if (moveErr) return mark(db, org, q, 'failed', moveErr.message.slice(0, 200))
   }
-  const { data: have } = await db.from('rep_group_contacts').select('id, name, title, phones').eq('rep_group_id', q.rep_group_id!).ilike('email', q.email).maybeSingle()
-  if (have) return mark(db, org, q, await fill(db, 'rep_group_contacts', have, { nameCol: 'name', name, title, phones }))
-  const { error } = await db.from('rep_group_contacts').insert({ organization_id: org, rep_group_id: q.rep_group_id, email: q.email, name, title, phones, notes: note })
+  const { data: have } = await db.from('rep_group_contacts').select('id, name, title, phones, learned_email_id').eq('rep_group_id', q.rep_group_id!).ilike('email', q.email).maybeSingle()
+  if (have) return mark(db, org, q, await fill(db, 'rep_group_contacts', have, { nameCol: 'name', name, title, phones, learnedEmailId }))
+  const { error } = await db.from('rep_group_contacts').insert({ organization_id: org, rep_group_id: q.rep_group_id, email: q.email, name, title, phones, notes: note, learned_email_id: learnedEmailId })
   if (error) return mark(db, org, q, 'failed', error.message.slice(0, 200))
   return mark(db, org, q, 'added')
 }
 
-/** Someone already on file: only what is missing (a name, a title, numbers not there yet). */
-async function fill(db: SupabaseClient, table: 'vendor_emails' | 'rep_group_contacts', have: Record<string, unknown>, r: { nameCol: string; name: string | null; title: string | null; phones: Phone[] }): Promise<string> {
+/**
+ * The email the details were read from: the one Claude names, or the only one it was given. Never a guess: when Claude
+ * read several and named none, it stays empty and the screen opens all mail with them.
+ */
+function sourceEmail(q: Queued, r: ContactReading): string | null {
+  const n = r.source_n
+  if (n != null && Number.isInteger(n) && n >= 1 && n <= q.emails.length) return q.emails[n - 1]!.id ?? null
+  return q.emails.length === 1 ? q.emails[0]!.id ?? null : null
+}
+
+/** Someone already on file: only what is missing (a name, a title, numbers not there yet), with the email it came from when they have none. */
+async function fill(db: SupabaseClient, table: 'vendor_emails' | 'rep_group_contacts', have: Record<string, unknown>, r: { nameCol: string; name: string | null; title: string | null; phones: Phone[]; learnedEmailId: string | null }): Promise<string> {
   const current = (have.phones ?? []) as Phone[]
   const known = new Set(current.map((p) => digits(p.number)))
   const extra = r.phones.filter((p) => !known.has(digits(p.number)))
@@ -129,6 +142,7 @@ async function fill(db: SupabaseClient, table: 'vendor_emails' | 'rep_group_cont
     ...(extra.length ? { phones: [...current, ...extra] } : {}),
   }
   if (!Object.keys(patch).length) return 'same'
+  if (!have.learned_email_id && r.learnedEmailId) patch.learned_email_id = r.learnedEmailId
   const { error } = await db.from(table).update(patch).eq('id', have.id as string)
   return error ? 'failed' : 'updated'
 }

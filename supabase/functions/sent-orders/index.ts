@@ -433,16 +433,18 @@ async function saveContact(db: SupabaseClient, m: Mail, r: ServiceOrderReading):
   const c = r.contact
   const email = c?.email?.trim().toLowerCase()
   if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || NO_REPLY.test(email) || SERVICE_DOMAINS.test(email) || /shaverlakesports\.com$/i.test(email)) return null
-  const { data: have } = await db.from('vendor_emails').select('id, contact_name, phone').eq('vendor_id', m.vendor_id!).ilike('email', email).maybeSingle()
+  const { data: have } = await db.from('vendor_emails').select('id, contact_name, phone, learned_email_id').eq('vendor_id', m.vendor_id!).ilike('email', email).maybeSingle()
   if (have) {
-    const fill = { ...(!have.contact_name && c?.name ? { contact_name: c.name.trim() } : {}), ...(!have.phone && c?.phone ? { phone: c.phone.trim() } : {}) }
+    const fill: Record<string, string> = { ...(!have.contact_name && c?.name ? { contact_name: c.name.trim() } : {}), ...(!have.phone && c?.phone ? { phone: c.phone.trim() } : {}) }
+    // what was filled in came from this email (Dana, Oct 21: sources one click away), unless the card already has its email
+    if (Object.keys(fill).length && !have.learned_email_id) fill.learned_email_id = m.id
     if (Object.keys(fill).length) await db.from('vendor_emails').update(fill).eq('id', have.id)
     return have.id
   }
   const { data, error } = await db.from('vendor_emails').insert({
     organization_id: m.organization_id, vendor_id: m.vendor_id, email, contact_name: c?.name?.trim() || null, phone: c?.phone?.trim() || null, title: c?.title?.trim() || null,
     contact_type: 'rep', roles: ['rep'], source: 'email_enrichment', confidence: 0.8,
-    notes: `Named in the ${r.service ?? 'vendor'} order email of ${day(m.received_at)}`,
+    notes: `Named in the ${r.service ?? 'vendor'} order email of ${day(m.received_at)}`, learned_email_id: m.id,
   }).select('id').single()
   if (error) throw new Error(`Saving the contact: ${error.message}`)
   return data.id
