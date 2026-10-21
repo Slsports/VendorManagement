@@ -2952,3 +2952,10 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   "Placed by Dana Powell" on email-made orders is because the Kelli's account is in Dana's name; Raelee places them.
   kellis91026 credits: Kelli's credited the 6 missing vent brushes, reshipped them (1602937, +$19.50) and took the credit
   back (1603006, −$19.50); "Credits due" cleared.
+- Order emails file to the order already on file (Dana, Oct 21, "go"). Kelli's order emails have no PO and a total with
+  estimated shipping (3-7% over the sheet), so the 3% amount rule missed and a second order was made. Now an ordering
+  service / web store order email also files to the vendor's one order within a day of it when no other order email is
+  filed there and its PO (if any) is not different (sent-orders `matchServiceOrder`). Back-check: other email-made orders
+  sitting beside an order within a day, listed to Dana (not merged): Kelli's W11240476 / JANE123025 (Dec 30-31, 2025),
+  Chase USA, Diamond Visions, Hashir, Keystone Trading, Mack's Lure, Shark Eyes; Frito-Lay's are separate small online
+  orders.

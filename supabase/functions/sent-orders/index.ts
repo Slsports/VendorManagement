@@ -450,8 +450,9 @@ async function saveContact(db: SupabaseClient, m: Mail, r: ServiceOrderReading):
 
 /**
  * The order on file: same PO or order number (the closest amount when the PO is split over several rows); else the
- * vendor's order within 5 days with the same total (within 3%); else one there with no amount and no PO yet (an order
- * typed on Dana's sheet). Never another PO's order.
+ * vendor's order within 5 days with the same total (within 3%); else the vendor's one order within a day that no other
+ * order email is filed to; else one there with no amount and no PO yet (an order typed on Dana's sheet). Never another
+ * PO's order.
  */
 async function matchServiceOrder(db: SupabaseClient, m: Mail, r: ServiceOrderReading['orders'][number], taken: string[]): Promise<string | null> {
   const { data } = await db.from('orders').select('id, po_number, order_date, est_cost, final_cost, notes').eq('vendor_id', m.vendor_id!).neq('status', 'cancelled')
@@ -469,6 +470,14 @@ async function matchServiceOrder(db: SupabaseClient, m: Mail, r: ServiceOrderRea
   if (r.total != null) {
     const same = near.find((o) => amount(o) != null && Math.abs(amount(o)! - r.total!) <= Math.max(5, r.total! * 0.03))
     if (same) return same.id
+  }
+  // the vendor's one order that day (Dana, Oct 21: Kelli's order emails carry no PO and a total with estimated shipping,
+  // so they were added a second time beside the order on her sheet), unless another order email is already filed to it
+  const theirPo = norm(r.po_number)
+  const sameDay = near.filter((o) => dist(o.order_date!) <= 1 && !(theirPo.length >= 3 && o.po_number && norm(o.po_number) !== theirPo))
+  if (sameDay.length === 1) {
+    const { data: other } = await db.from('emails').select('id').eq('order_id', sameDay[0]!.id).eq('order_scan->>kind', 'service').neq('id', m.id).limit(1)
+    if (!other?.length) return sameDay[0]!.id
   }
   const blank = near.filter((o) => amount(o) == null && !o.po_number)
   return blank[0]?.id ?? null
