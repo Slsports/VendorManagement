@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Award, ChartColumn } from 'lucide-react'
+import { Award, ChartColumn, Hash } from 'lucide-react'
 import { ROUTES } from '@/lib/constants'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { ComingSoon } from '@/components/shared/ComingSoon'
@@ -19,6 +19,12 @@ export default function Page() {
           <Link to={ROUTES.vendorScores} className="flex items-start gap-3 rounded-2xl border border-stone-200 bg-white p-4 hover:border-brand">
             <Award className="mt-0.5 size-5 text-brand" aria-hidden="true" />
             <span><span className="block font-medium text-stone-900">Vendor scores</span><span className="block text-sm text-stone-600">Ease, communication, on-time fulfilment, accuracy, shipping and issue resolution, from the order history and staff ratings.</span></span>
+          </Link>
+        </li>
+        <li>
+          <Link to={ROUTES.poUse} className="flex items-start gap-3 rounded-2xl border border-stone-200 bg-white p-4 hover:border-brand">
+            <Hash className="mt-0.5 size-5 text-brand" aria-hidden="true" />
+            <span><span className="block font-medium text-stone-900">Who uses our PO</span><span className="block text-sm text-stone-600">Vendors whose WWD invoices came without our PO (their own number, or none), the worst first.</span></span>
           </Link>
         </li>
       </ul>

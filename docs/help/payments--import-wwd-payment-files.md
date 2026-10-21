@@ -4,7 +4,7 @@ section: Payments
 keywords: WWD, Worldwide, Payment History, EdenRed, payment sheet, scan, import, PB number, WWD payment #, xls
 who: Admin and managers
 ---
-Worldwide's portals never show the whole picture, so VMS puts it together from several files: the Payment History export, the EdenRed invoice export, your own payment sheets, and scans of printed sheets.
+Worldwide's portals never show the whole picture, so VMS puts it together from several files: the Payment History export, the EdenRed invoice export, Edenred's invoice line export, your own payment sheets, and scans of printed sheets.
 
 ## How to
 1. Click **Payments** in the menu.
@@ -18,4 +18,7 @@ Worldwide's portals never show the whole picture, so VMS puts it together from s
 - Invoices tie to orders by our PO, else the vendor's only order for exactly that amount. An order whose WWD invoices are all paid is marked paid with the WWD payment #.
 - The $275 lines are WWD's monthly membership fee, filed under WORLDWIDE.
 - From the EdenRed invoice export, VMS keeps the **Posted Date** as **posted to Edenred** on each WWD invoice: the day WWD posted it there, not the invoice date. It reads the AR columns (AR Terms, Hard Due Date (AR)); the AP columns are WWD's own.
+- Edenred's invoice line export (**Edenred invoice lines**) fills in every WWD invoice's items, gives an order with no items its items, and keeps **ND Freight**, the freight, the tracking number, the **Vendor Inv #** and the **WWD Seq #**. It also marks vendors that are no longer with WWD.
+- After the line export, cards come to the review queue when Edenred's freight differs from the order's, when the invoice PO doesn't match its order, or when a credit's invoice can't be told. See "WWD invoice cards".
+- A WWD credit is filed in the vendor's **Credits** folder and shows on the invoice it is for.
 - "Check #" in WWD is not a check; VMS calls it the **WWD payment #**.

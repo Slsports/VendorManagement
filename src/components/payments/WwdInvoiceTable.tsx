@@ -21,10 +21,10 @@ export function WwdInvoiceTable({ rows, action, showVendor = false }: { rows: Ww
       <table className="w-full text-sm">
         <thead className="text-left text-xs uppercase tracking-wide text-stone-500">
           <tr>
-            <th className="py-1 pr-3">WWD #</th>
+            <th className="py-1 pr-3">WWD Seq #</th>
             <th className="py-1 pr-3">Date</th>
             {showVendor ? <th className="py-1 pr-3">Name on WWD</th> : null}
-            <th className="py-1 pr-3">Their invoice / PO</th>
+            <th className="py-1 pr-3">Vendor Inv # / PO</th>
             <th className="py-1 pr-3 text-right">Amount</th>
             <th className="py-1 pr-3">Paid</th>
             {action ? <th className="py-1" /> : null}
@@ -39,7 +39,7 @@ export function WwdInvoiceTable({ rows, action, showVendor = false }: { rows: Ww
                 <td className="whitespace-nowrap py-1.5 pr-3 text-stone-600">{shortDate(i.wwd_date)}{i.posted_date ? <span className="block text-xs text-stone-400" title="Posted to Edenred">Edenred {shortDate(i.posted_date)}</span> : null}</td>
                 {showVendor ? <td className="py-1.5 pr-3 text-stone-700">{i.wwd_vendor_name ?? '—'}</td> : null}
                 <td className="py-1.5 pr-3 text-stone-600">
-                  {[i.vendor_invoice_number ? `#${i.vendor_invoice_number}` : null, i.po_number ? `PO ${i.po_number}` : null].filter(Boolean).join(' · ') || '—'}
+                  {[i.vendor_invoice_number ? `Vendor Inv # ${i.vendor_invoice_number}` : null, i.po_number ? `PO ${i.po_number}` : null].filter(Boolean).join(' · ') || '—'}
                   {i.order ? <Link to={`${ROUTES.orders}/${i.order.id}`} className="ml-1 text-brand hover:underline">order</Link> : null}
                 </td>
                 <td className="whitespace-nowrap py-1.5 pr-3 text-right font-medium text-stone-900">{money(i.amount ?? i.paid_amount)}{i.discount ? <span className="block text-xs font-normal text-emerald-700">− {money(i.discount)} disc.</span> : null}</td>

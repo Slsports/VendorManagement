@@ -115,7 +115,11 @@ export interface WwdInvoiceRow extends WwdInvoice {
   carrier: { id: string; name: string } | null
   order: { id: string; order_date: string | null; po_number: string | null; description: string | null } | null
   wwd_payment_lines: { amount: number; wwd_payments: { ref: string; pay_date: string } | null }[]
+  /** credits filed against this invoice; for a credit, the invoice it is for (Dana, Oct 21) */
+  credits?: WwdCreditRef[]
+  credit_for?: WwdCreditRef | null
 }
+export interface WwdCreditRef { id: string; seq: string; wwd_date: string | null; amount: number | null; vendor_invoice_number: string | null }
 
 const INVOICE_SELECT = '*, vendor:vendors!wwd_invoices_vendor_id_fkey(id, name), carrier:carriers!wwd_invoices_carrier_id_fkey(id, name), order:orders!wwd_invoices_order_id_fkey(id, order_date, po_number, description), wwd_payment_lines(amount, wwd_payments(ref, pay_date))'
 
@@ -126,7 +130,37 @@ export async function listWwdInvoices(f: { vendorId?: string; orderId?: string }
   if (f.orderId) q = q.eq('order_id', f.orderId)
   const { data, error } = await q.order('wwd_date', { ascending: false, nullsFirst: false }).limit(limit)
   if (error) throw error
-  return (data ?? []) as unknown as WwdInvoiceRow[]
+  const rows = (data ?? []) as unknown as WwdInvoiceRow[]
+  // credits on their invoice, and each credit's invoice, so nobody looks in two places
+  const ids = rows.map((x) => x.id)
+  const forIds = rows.map((x) => x.credit_for_id).filter((x): x is string => !!x)
+  if (ids.length) {
+    const cols = 'id, seq, wwd_date, amount, vendor_invoice_number, credit_for_id'
+    const [cr, orig] = await Promise.all([
+      supabase.from('wwd_invoices').select(cols).in('credit_for_id', ids),
+      forIds.length ? supabase.from('wwd_invoices').select(cols).in('id', forIds) : Promise.resolve({ data: [], error: null }),
+    ])
+    if (cr.error) throw cr.error
+    if (orig.error) throw orig.error
+    for (const x of rows) {
+      x.credits = (cr.data ?? []).filter((c) => c.credit_for_id === x.id)
+      x.credit_for = (orig.data ?? []).find((c) => c.id === x.credit_for_id) ?? null
+    }
+  }
+  return rows
+}
+
+/** A WWD invoice's lines (Edenred's line export). */
+export async function listWwdInvoiceLines(invoiceId: string) {
+  const { data, error } = await supabase.from('wwd_invoice_lines').select('line_no, vendor_item_id, upc, description, quantity, unit_price, unit_discount, amount, is_freight').eq('invoice_id', invoiceId).order('line_no')
+  if (error) throw error
+  return data ?? []
+}
+
+/** Answer an Edenred card: freight (use_edenred / keep), PO (keep / move / untie), credit (pick / none). */
+export async function answerWwdCard(itemId: string, action: string, target?: string | null): Promise<void> {
+  const { error } = await supabase.rpc('wwd_review_answer', { p_item: itemId, p_action: action, p_target: target ?? null })
+  if (error) throw error
 }
 
 /** WWD spellings no vendor is known for yet, with how many invoices and dollars each covers. */
@@ -220,4 +254,18 @@ export async function freightAllowancesDue(organizationId: string): Promise<{ id
     .order('freight_allowance_pay_by', { ascending: true, nullsFirst: false }).limit(50)
   if (error) throw error
   return (data ?? []) as unknown as Awaited<ReturnType<typeof freightAllowancesDue>>
+}
+
+/** How often a vendor's WWD invoices carry our PO (Dana, Oct 21: "I want to know who does that"). */
+export async function vendorPoUse(vendorId: string) {
+  const { data, error } = await supabase.rpc('vendor_po_use', { p_vendor: vendorId })
+  if (error) throw error
+  return data?.[0] ?? null
+}
+
+/** Every vendor that billed without our PO, the worst first. */
+export async function vendorsPoUse(organizationId: string) {
+  const { data, error } = await supabase.rpc('vendors_po_use', { p_org: organizationId })
+  if (error) throw error
+  return data ?? []
 }

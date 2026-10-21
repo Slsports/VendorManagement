@@ -16,6 +16,7 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { VendorPicker } from '@/components/vendors/VendorPicker'
 import { Modal } from '@/components/shared/Modal'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner } from '@/components/ui'
+import { SharedFreightBox } from '@/components/freight/SharedFreightBox'
 
 export default function FreightBillDetailPage() {
   const { id = '' } = useParams()
@@ -108,6 +109,7 @@ export default function FreightBillDetailPage() {
       {b.status === 'needs_pdf' ? <Alert variant="info" className="mb-6">This carrier does not attach the bill. Log in, download it, and add it here: Claude reads the shippers and amounts.</Alert> : null}
       {b.read_note ? <Alert variant="warning" className="mb-6">{b.read_note}</Alert> : null}
 
+      {b.shared ? <SharedFreightBox key={b.updated_at} bill={b} canEdit={canEdit} onChange={() => void q.refetch()} /> : null}
       {paying && profile ? <PaidDialog onClose={() => setPaying(false)} onSave={async (p) => { setPaying(false); await act('Marked paid', () => setFreightBillPaid(b.id, { ...p, paid_by: profile.id })) }} /> : null}
       {b.freight_bill_lines.length ? (
         <section className="overflow-hidden rounded-2xl border border-stone-200 bg-white">

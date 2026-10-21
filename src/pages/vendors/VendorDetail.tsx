@@ -9,7 +9,8 @@ import { listOrderers } from '@/services/reviews'
 import { clearPickerCache } from '@/services/mail'
 import { ROUTES } from '@/lib/constants'
 import { BILLING_ROUTE_HELP, ORDERING_FREQUENCY_LABELS, ORDER_WINDOW_KIND_LABELS, monthsLabel, freeShippingRule, standingWhy, STANDING_BADGE, LS_STATUS_LABELS, LS_STATUS_TONE, lsItemsText } from '@/lib/vendors'
-import { errorMessage } from '@/lib/utils'
+import { errorMessage, shortDate } from '@/lib/utils'
+import { VendorPoUseBadge } from '@/components/vendors/VendorPoUseBadge'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { BackLink } from '@/components/shared/BackLink'
 import { FoldSection } from '@/components/shared/FoldSection'
@@ -161,6 +162,8 @@ export default function VendorDetailPage() {
             {v.web_orders ? <Badge tone="info">Web orders, no confirmation</Badge> : null}
             {v.ask_before_pictures ? <Badge tone="neutral">Pictures saved by hand</Badge> : null}
             {v.is_delivery_vendor ? <Badge tone="neutral">Delivery vendor</Badge> : null}
+            {v.wwd_active === false ? <Badge tone="warning">No longer with WWD{v.wwd_active_as_of ? ` (Edenred, ${shortDate(v.wwd_active_as_of)})` : ''}</Badge> : null}
+            <VendorPoUseBadge vendorId={v.id} />
             {!v.is_active ? <Badge tone="danger">Inactive</Badge> : null}
           </span>
         }

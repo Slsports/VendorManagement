@@ -2959,3 +2959,21 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   sitting beside an order within a day, listed to Dana (not merged): Kelli's W11240476 / JANE123025 (Dec 30-31, 2025),
   Chase USA, Diamond Visions, Hashir, Keystone Trading, Mack's Lure, Shark Eyes; Frito-Lay's are separate small online
   orders.
+
+## Oct 21, 2026: Edenred invoice lines and shared freight
+- Edenred's invoice line export is loaded on the Payments page (WWD box). Every line is kept on its WWD invoice; an order
+  with no items gets its items from the invoice. One Vendor Inv # counts once per order (Edenred repeats some postings).
+- Freight: when Edenred's freight differs from the order's, Dana's rule is to show Edenred's amount and flag it for
+  review, never change it silently.
+- PO check: each WWD invoice is marked our PO / our PO written differently / their own number / no PO. Dana: "Some
+  vendors totally ignore your PO… I want to know who does that." Report: Reports → Who uses our PO; tag on the vendor.
+- Edenred's "Vendor Active" is kept on the vendor as WWD status ("No longer with WWD").
+- ND Freight Y/N and the tracking number are kept on the WWD invoice. Labels: **Vendor Inv #** (the vendor's invoice
+  number) and **WWD Seq #** (WWD's sequence number).
+- Credit memos are filed in Credits and also show on the original invoice: "CREDIT NOTE: RECEIVED WWD CREDIT ON <DATE>
+  FOR <AMT> <CREDIT REF #>". A credit whose invoice can't be told goes to review.
+- XPO and other carrier bills through WWD are shared freight bills. No automation: Trevor picks the orders, at check-in
+  (Shipping & receiving) or on the bill with a search by PO, Vendor Inv #, WWD Seq # or vendor. Blank amounts are shared
+  by merchandise cost.
+- XPO bills from before Trevor started are ignored. Trevor gives a vendor breakdown for the Jun 9 and Aug 11 bills and
+  Claude posts it.

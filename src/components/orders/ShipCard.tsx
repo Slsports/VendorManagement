@@ -8,6 +8,7 @@ import type { Order } from '@/types'
 import { errorMessage, shortDate } from '@/lib/utils'
 import { Button } from '@/components/ui'
 import { ComposeDialog } from '@/components/mail/ComposeDialog'
+import { SharedFreightPick } from '@/components/freight/SharedFreightPick'
 
 const BEFORE = ['open', 'awaiting_confirmation']
 const RECEIVED = ['received', 'entered', 'ready_to_pay', 'paid']
@@ -83,6 +84,7 @@ export function ShipCard({ order, canEdit, onChange, focus = false }: {
           ) : canEdit ? (
             <Button size="sm" variant="secondary" className="mt-1" loading={busy === 'received'} onClick={() => void act('received')} leftIcon={<PackageCheck className="size-4" aria-hidden="true" />}>Mark received</Button>
           ) : null}
+          <SharedFreightPick orderId={order.id} canEdit={canEdit} />
         </li>
       </ol>
       {!step.isLoading && !s?.task && order.status === 'confirmed' && canEdit ? (

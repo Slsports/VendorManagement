@@ -60,7 +60,7 @@ function PaymentDetail({ p }: { p: WwdPaymentSummary }) {
                 const showDisc = !!i.discount && i.amount !== null && i.amount > 0
                 return (
                   <tr key={`${i.id}-${n}`}>
-                    <td className="py-0.5 pr-3">WWD #{i.seq}{k ? <Badge tone={i.kind === 'credit' ? 'success' : 'neutral'} className="ml-1">{k}</Badge> : null}</td>
+                    <td className="py-0.5 pr-3">WWD Seq # {i.seq}{k ? <Badge tone={i.kind === 'credit' ? 'success' : 'neutral'} className="ml-1">{k}</Badge> : null}</td>
                     <td className="py-0.5 pr-3">{shortDate(i.wwd_date)}</td>
                     <td className="py-0.5 pr-3">{i.vendor_invoice_number ? `their #${i.vendor_invoice_number}` : ''}{i.order ? <Link to={`${ROUTES.orders}/${i.order.id}`} className="ml-1 text-brand hover:underline">order</Link> : null}</td>
                     <td className="py-0.5 pr-3 text-right">{i.amount !== null && i.amount !== l.amount ? `invoice ${money(i.amount)}` : ''}</td>

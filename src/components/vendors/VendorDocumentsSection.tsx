@@ -19,6 +19,7 @@ import { Modal } from '@/components/shared/Modal'
 import { FoldSection } from '@/components/shared/FoldSection'
 import { MoveDocumentDialog } from '@/components/vendors/MoveDocumentDialog'
 import { FileThumb } from '@/components/shared/FileThumb'
+import { WwdCreditsInFolder } from '@/components/vendors/WwdCreditsInFolder'
 
 const MAX_MB = MAX_UPLOAD_MB
 
@@ -283,6 +284,7 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
                   : <ul className="ml-1 divide-y divide-stone-100 border-l border-stone-100 pl-3">{rows.map((l) => row(l))}</ul>}
               </details>
             ))}
+            {folder.id === 'credits' ? <WwdCreditsInFolder vendorId={vendorId} /> : null}
           </div>
         ) : null}
       </FoldSection>

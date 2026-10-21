@@ -16,7 +16,7 @@ Every vendor page has a **Documents** box with one folder per kind of paper, and
 - The folders are: **Price lists**, **Catalogs**, **Our orders**, **LS POs**, **Confirmations**, **Invoices**, **Credits**, **Order forms**, **Show specials**, **Shipping**, **Images**, **Damaged Items**, **Proofs**, **Sales reports** and **Other**.
 - **Our orders**, **LS POs**, **Confirmations** and **Invoices** are the four papers of an order; the order page shows a tick for each one on file.
 - **Shipping** holds packing slips, delivery receipts and freight bills. **Invoices** also holds payment papers. **Other** also holds website links.
-- **Credits** is for credit memos, credit notices and return authorizations.
+- **Credits** is for credit memos, credit notices and return authorizations. It also lists the vendor's WWD credits from Edenred under **WWD credits (no PDF on file)**, with the invoice each is for.
 - **Damaged Items** holds photos of damaged goods to attach to a return email. **Proofs** holds artwork proofs, each marked **Not approved yet** or **Approved** with a gold star.
 - A folder icon is amber when it has files, gray when empty.
 - The folders refresh themselves the moment a file lands, whoever filed it. Some folders start the next step by themselves: see "What happens when a file lands".

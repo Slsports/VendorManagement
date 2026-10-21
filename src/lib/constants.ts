@@ -79,6 +79,7 @@ export const ROUTES = {
   itemNames: '/item-names',
   reports: '/reports',
   vendorScores: '/reports/vendor-scores',
+  poUse: '/reports/po-use',
   productSourcing: '/product-sourcing',
   files: '/files',
   settings: '/settings',

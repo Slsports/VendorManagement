@@ -225,3 +225,27 @@ export async function setFreightBillCarrier(billId: string, carrierId: string): 
   const { error } = await supabase.from('freight_bills').update({ carrier_id: carrierId, status: 'to_match', read_note: null }).eq('id', billId)
   if (error) throw error
 }
+
+// ---- shared freight (Dana, Oct 21): one carrier bill through WWD for several vendors' orders on a pallet ----------
+export interface ShareSearchRow { order_id: string; vendor_name: string; po_number: string | null; order_date: string | null; merch_cost: number | null; seqs: string[] | null; vendor_invoices: string[] | null }
+
+/** Orders to add to a shared bill, by PO, Vendor Inv #, WWD Seq # or vendor name. */
+export async function searchOrdersForShare(organizationId: string, q: string): Promise<ShareSearchRow[]> {
+  const { data, error } = await supabase.rpc('freight_share_search', { p_org: organizationId, p_q: q })
+  if (error) throw error
+  return (data ?? []) as ShareSearchRow[]
+}
+
+/** Save the orders on a shared bill: an amount, or null to share by merchandise cost. */
+export async function setFreightShare(billId: string, orders: { order_id: string; amount: number | null }[]): Promise<void> {
+  const { error } = await supabase.rpc('freight_share_set', { p_bill: billId, p_orders: orders })
+  if (error) throw error
+}
+
+/** Shared bills to pick from when checking an order in: newest first. */
+export async function listSharedFreightBills(organizationId: string) {
+  const { data, error } = await supabase.from('freight_bills').select('id, invoice_number, invoice_date, total, status, carriers(name), freight_bill_lines(order_id, amount, manual_amount)')
+    .eq('organization_id', organizationId).eq('shared', true).order('invoice_date', { ascending: false }).limit(30)
+  if (error) throw error
+  return (data ?? []) as unknown as { id: string; invoice_number: string | null; invoice_date: string | null; total: number | null; status: string; carriers: { name: string } | null; freight_bill_lines: { order_id: string | null; amount: number; manual_amount: boolean }[] }[]
+}

@@ -17,6 +17,9 @@ export const REVIEW_KIND_LABELS: Record<string, { title: string; help: string }>
   rep_line: { title: 'Rep group lines', help: 'A rep\'s emails name a line that is with another rep group, or a brand that is not one of our vendors yet. Lines with no rep group are added on their own.' },
   vendor_form: { title: 'From vendor forms', help: 'A vendor wrote on our contact form that they also represent companies VMS does not have. Add them as vendors or lines, then mark it handled.' },
   invoice_upload: { title: 'Scanned invoices to file', help: 'Invoices someone uploaded that Claude could not file by itself: the vendor, the store or the paper was unclear. Pick what is missing and click File it. A store you pick is remembered for that vendor.' },
+  wwd_freight_differs: { title: 'Freight differs from Edenred', help: 'The freight on the order is not what Edenred shows for its WWD invoices (or the order ships free and Edenred charged freight). Use Edenred\'s, or keep ours.' },
+  wwd_po_mismatch: { title: 'WWD invoice PO doesn\'t match its order', help: 'The PO on a WWD invoice is not the PO of the order it is tied to. Keep it, move it to the right order, or untie it.' },
+  wwd_credit_for: { title: 'WWD credits: which invoice?', help: 'A WWD credit with no invoice to show on (no PO, or several could fit). Pick the invoice; the credit then shows on it.' },
   category_change: { title: 'Category clean-up', help: 'Proposed Lightspeed category changes, by batch. Nothing changes in Lightspeed until a batch is approved.' },
 }
 
@@ -88,7 +91,8 @@ export function reviewTabOfKind(kind: string): ReviewTab {
     case 'email_sender': return 'who'
     case 'delivery_receipt': case 'freight_card': return 'freight'
     case 'item_change': return 'items'
-    case 'invoice_upload': return 'hand'
+    case 'invoice_upload': case 'wwd_po_mismatch': case 'wwd_credit_for': return 'hand'
+    case 'wwd_freight_differs': return 'freight'
     default: return 'vendor'
   }
 }

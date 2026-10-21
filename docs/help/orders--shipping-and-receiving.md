@@ -14,6 +14,7 @@ When a vendor's confirmation is approved and the order becomes **Confirmed**, VM
 1. **Open the shipping email**: check it, change anything, and send it. Once sent it shows **Sent** with the date.
 2. **Route the freight and finish the LS PO** in the **Freight quote** and **LS PO** boxes on the same page.
 3. **Mark received** when the product arrives. The order becomes **Received** with today's date, and Trevor's task closes.
+4. If the order came on a pallet with other vendors, pick the bill in **Came on a shared freight bill?** and click **Add this order**. See "Split one freight bill across several orders".
 
 ## Good to know
 - Web-order vendors (like Kelli's) are left out, the same as for the routing letter.
