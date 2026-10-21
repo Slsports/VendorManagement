@@ -1,7 +1,7 @@
 ---
 title: See the WWD invoices for an order
 section: Orders
-keywords: WWD invoice, Worldwide invoice, WWD Seq #, Vendor Inv #, payment number, discount, credit, debit, paid, PB number, lines, ND Freight, tracking, Edenred
+keywords: WWD invoice, Worldwide invoice, WWD Seq #, Vendor Inv #, payment number, discount, credit, debit, paid, PB number, lines, ND Freight, N/D Freight, NDOF, no discount on freight, tracking, Edenred
 who: Everyone
 ---
 Orders billed through Worldwide show their WWD invoices on the order page, so you can see what was billed and when it was paid.
@@ -13,7 +13,7 @@ Orders billed through Worldwide show their WWD invoices on the order page, so yo
 ## What you see
 - The **WWD Seq #** (WWD's number), the date, the **Vendor Inv #** (the vendor's own invoice number), our PO, the amount and any discount.
 - A tag when the PO isn't ours: **Their own PO number**, **No PO**, or **Our PO, written differently**.
-- From Edenred: **ND Freight** Yes/No, the freight and the tracking number. **Show the lines** lists every item billed (Vendor ID, item, quantity, cost, total).
+- From Edenred: **No discount on freight** Yes/No (Edenred's N/D Freight: Yes means the pay-on-time terms discount does not apply to the freight; the amount after it is the freight with no discount), the freight and the tracking number. **Show the lines** lists every item billed (Vendor ID, item, quantity, cost, total).
 - A credit for the invoice shows right on it: "Credit note: received WWD credit on (date) for (amount) (ref) (WWD Seq # …)".
 - A **Credit**, **Debit** or **Membership fee** tag when it is not a plain invoice.
 - When it was paid and with which WWD payment number, or "Not paid yet" (in amber) with the due date.

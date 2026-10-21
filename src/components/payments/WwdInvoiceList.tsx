@@ -74,7 +74,8 @@ export function WwdInvoiceList({ vendorId, orderId, title = 'WWD invoices', fold
               </div>
               {i.lines_loaded_at || i.tracking_no ? (
                 <p className="mt-0.5 text-xs text-stone-500">
-                  {i.nd_freight != null ? `ND Freight: ${i.nd_freight ? 'Yes' : 'No'}` : null}
+                  {/* N/D Freight (Nichole at WWD, Oct 21): no terms discount on the freight; NDOF Amount is that freight */}
+                  {i.nd_freight != null ? `No discount on freight: ${i.nd_freight ? 'Yes' : 'No'}${i.nd_freight && i.ndof_amount ? ` (${money(i.ndof_amount)})` : ''}` : null}
                   {i.edenred_freight ? ` · Freight ${money(i.edenred_freight)} (Edenred)` : null}
                   {i.tracking_no ? ` · Tracking ${i.tracking_no}` : null}
                 </p>

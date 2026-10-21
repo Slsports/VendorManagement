@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dateInTitle, htmlTableRows, parseWwdTable, scanToInvoices, wwdMoney } from './wwdFiles'
+import { dateInTitle, htmlTableRows, parseEdenredLines, parseWwdTable, scanToInvoices, wwdMoney } from './wwdFiles'
 import { allowanceState } from './wwdAllowance'
 
 describe('WWD files', () => {
@@ -81,5 +81,18 @@ describe('freight allowance reminder', () => {
   it('knows when it was paid late or the credit came', () => {
     expect(allowanceState({ freight_allowance_pay_by: '2026-10-01', freight_allowance_received: null, paid_date: '2026-10-05' }, today).tone).toBe('danger')
     expect(allowanceState({ freight_allowance_pay_by: '2026-10-01', freight_allowance_received: '2026-10-07', paid_date: '2026-09-30' }, today).text).toBe('Credit received.')
+  })
+})
+
+describe('parseEdenredLines', () => {
+  it('keeps N/D Freight and its NDOF Amount per invoice', () => {
+    const table = [
+      ['SequenceNo', 'DocumentType', 'InvoiceAmt', 'FreightAmount', 'NDFreight', 'NDOFAmount', 'LineDescription', 'Quantity', 'LineAmount'],
+      ['07323738', 'IN', 100, 21.41, 'Y', 21.41, 'Mugs', 2, 78.59],
+      ['07323738', 'IN', 100, 21.41, 'Y', 21.41, 'Freight', 1, 21.41],
+      ['07400001', 'IN', 50, 0, 'N', null, 'Hats', 1, 50],
+    ]
+    const { edenred } = parseEdenredLines(table)
+    expect(edenred.map((e) => [e.seq, e.nd_freight, e.ndof, e.lines.length])).toEqual([['7323738', 'Y', 21.41, 2], ['7400001', 'N', null, 1]])
   })
 })

@@ -30,7 +30,7 @@ export interface WwdPaymentRow { ref: string; pay_date: string; total: number | 
 export interface WwdLineRow { ref: string; pay_date: string; seq: string; amount: number; wwd_date: string | null }
 /** One invoice's lines from Edenred's line export (Oct 21): MfgStockNo = Vendor ID, ItemNumber = UPC. */
 export interface EdenredLine { vid: string | null; upc: string | null; desc: string | null; qty: number | null; price: number | null; unit_discount: number | null; amount: number | null }
-export interface EdenredInvoice { seq: string; credit: boolean; nd_freight: string | null; vendor_active: string | null; tracking: string | null; misc: number | null; freight: number | null; lines: EdenredLine[] }
+export interface EdenredInvoice { seq: string; credit: boolean; nd_freight: string | null; ndof: number | null; vendor_active: string | null; tracking: string | null; misc: number | null; freight: number | null; lines: EdenredLine[] }
 export interface WwdBatch { invoices: WwdInvoiceRow[]; payments: WwdPaymentRow[]; lines: WwdLineRow[]; edenred?: EdenredInvoice[] }
 export type WwdFileKind = 'history' | 'edenred' | 'edenred_lines' | 'sheet'
 
@@ -194,7 +194,8 @@ export function parseSheet(table: unknown[][], fileName: string): WwdInvoiceRow[
 /**
  * Edenred's line export (Oct 21): one row per invoice line, its columns named as Edenred names them (SequenceNo,
  * DocumentType, PONumber, InvoiceNumber, MfgStockNo, ItemNumber, LineDescription…). Its invoices go through the usual
- * WWD import; the lines, ND Freight, Vendor Active and tracking go to wwd_edenred_lines.
+ * WWD import; the lines, N/D Freight (no terms discount on the freight) with its NDOF Amount, Vendor Active and tracking go to
+ * wwd_edenred_lines.
  */
 export function parseEdenredLines(table: unknown[][]): { invoices: WwdInvoiceRow[]; edenred: EdenredInvoice[] } {
   const hi = table.findIndex((r) => r.some((c) => String(c ?? '').trim().toLowerCase() === 'sequenceno'))
@@ -203,7 +204,7 @@ export function parseEdenredLines(table: unknown[][]): { invoices: WwdInvoiceRow
   const C = {
     seq: col('SequenceNo'), type: col('DocumentType'), po: col('PONumber'), vendor: col('VendorName'), received: col('ReceivedDate'),
     inv: col('InvoiceNumber'), invDate: col('InvoiceDate'), amount: col('InvoiceAmt'), freight: col('FreightAmount'), posted: col('PostedDate'),
-    arTerms: col('ARTerms'), terms: col('TermsText'), due: col('HardDueDateAR'), nd: col('NDFreight'), active: col('VendorActive'),
+    arTerms: col('ARTerms'), terms: col('TermsText'), due: col('HardDueDateAR'), nd: col('NDFreight'), ndof: col('NDOFAmount'), active: col('VendorActive'),
     tracking: col('TrackingNo'), misc: col('MiscAmount'), discount: col('DiscountAmount'),
     vid: col('MfgStockNo'), upc: col('ItemNumber'), desc: col('LineDescription'), qty: col('Quantity'), price: col('UnitPrice'), unitDisc: col('UnitDiscount'), lineAmt: col('LineAmount'),
   }
@@ -227,7 +228,7 @@ export function parseEdenredLines(table: unknown[][]): { invoices: WwdInvoiceRow
         posted_date: day(at(r, C.posted)), source: 'edenred',
       })
       eden.set(seq, {
-        seq, credit, nd_freight: text(at(r, C.nd)), vendor_active: text(at(r, C.active)), tracking: text(at(r, C.tracking)),
+        seq, credit, nd_freight: text(at(r, C.nd)), ndof: num(at(r, C.ndof)), vendor_active: text(at(r, C.active)), tracking: text(at(r, C.tracking)),
         misc: num(at(r, C.misc)), freight: num(at(r, C.freight)), lines: [],
       })
     }
