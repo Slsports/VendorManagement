@@ -29,8 +29,9 @@ Deno.serve(async (req) => {
     const cronSecret = Deno.env.get('MAIL_CRON_SECRET')
     if (cronSecret && req.headers.get('x-cron-secret') === cronSecret) {
       // a look-up from the scheduler's secret (checking a question from the database side)
-      const asked = await req.clone().json().catch(() => ({})) as { action?: string; organization_id?: string; item_ids?: string[]; from?: string; to?: string }
+      const asked = await req.clone().json().catch(() => ({})) as { action?: string; organization_id?: string; item_ids?: string[]; vendor_ids?: string[]; from?: string; to?: string }
       if (asked.action === 'receiving_history' && asked.organization_id) return json(await receivingHistory(db, asked.organization_id, (asked.item_ids ?? []).map(String), String(asked.from ?? ''), asked.to ?? null))
+      if (asked.action === 'purchase_orders' && asked.organization_id) return json(await purchaseOrders(db, asked.organization_id, (asked.vendor_ids ?? []).map(String), String(asked.from ?? '')))
       const { data: conns } = await db.from('lightspeed_connections').select('organization_id').not('refresh_token', 'is', null)
       const out = []
       for (const c of conns ?? []) {
@@ -380,6 +381,40 @@ async function receivingHistory(db: SupabaseClient, org: string, itemIds: string
       count_id: nz(x.inventoryCountID), vendor_return_id: nz(x.vendorReturnID),
     })),
   }
+}
+
+/**
+ * LS purchase orders for some LS vendors since a date, read only (Dana, Oct 21: did the orders VMS still shows as open
+ * come in?). Each PO with its ordered/received dates and how much of it was received.
+ */
+async function purchaseOrders(db: SupabaseClient, org: string, vendorIds: string[], from: string) {
+  const ids = [...new Set(vendorIds.filter((x) => /^\d+$/.test(x)))]
+  if (!ids.length || ids.length > 100) throw new HttpError(400, 'Which vendors?')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) throw new HttpError(400, 'From when?')
+  const { token } = await lsAccessToken(db, org)
+  const acct = await accountId(db, org)
+  type Po = { orderID: string; vendorID?: string; shopID?: string; refNum?: string; orderedDate?: string; receivedDate?: string; arrivalDate?: string; complete?: string; archived?: string; timeStamp?: string }
+  type Line = { orderID: string; itemID?: string; quantity?: string; numReceived?: string; checkedIn?: string }
+  const pos: Po[] = []
+  for (let i = 0; i < ids.length; i += 20) {
+    const q = `vendorID=${encodeURIComponent(`IN,[${ids.slice(i, i + 20).join(',')}]`)}&timeStamp=${encodeURIComponent(`>,${from}T00:00:00-07:00`)}`
+    pos.push(...await lsGetAll<Po>(token, `/Account/${acct}/Order.json?${q}`, 'Order', 20))
+  }
+  const lines: Line[] = []
+  const orderIds = pos.map((p) => p.orderID)
+  for (let i = 0; i < orderIds.length; i += 50) {
+    lines.push(...await lsGetAll<Line>(token, `/Account/${acct}/OrderLine.json?orderID=${encodeURIComponent(`IN,[${orderIds.slice(i, i + 50).join(',')}]`)}`, 'OrderLine', 20))
+  }
+  return pos.map((p) => {
+    const mine = lines.filter((l) => String(l.orderID) === String(p.orderID))
+    return {
+      ls_order_id: String(p.orderID), ls_vendor_id: p.vendorID ?? null, shop_id: p.shopID ?? null, ref: p.refNum ?? null,
+      ordered: p.orderedDate ?? null, received: p.receivedDate ?? null, arrival: p.arrivalDate ?? null,
+      complete: p.complete === 'true', archived: p.archived === 'true', lines: mine.length,
+      qty: mine.reduce((s, l) => s + Number(l.quantity ?? 0), 0), qty_received: mine.reduce((s, l) => s + Number(l.numReceived ?? 0), 0),
+      item_ids: [...new Set(mine.map((l) => String(l.itemID ?? '')).filter((x) => x && x !== '0'))],
+    }
+  })
 }
 
 const LS_DATE = (d: string | null) => `${d ?? new Date().toISOString().slice(0, 10)}T12:00:00-07:00`
