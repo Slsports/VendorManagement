@@ -2,7 +2,10 @@ import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { Star } from 'lucide-react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { getScorecard, rateVendor } from '@/services/scores'
+import { getScorecard, rateVendor, scoreOrders } from '@/services/scores'
+import { Link } from 'react-router-dom'
+import { ROUTES } from '@/lib/constants'
+import { shortDate } from '@/lib/utils'
 import { SCORE_DIMENSIONS, SCORE_WORDS, evidence, scoreTone } from '@/lib/scores'
 import { errorMessage } from '@/lib/utils'
 import { standingWhy } from '@/lib/vendors'
@@ -80,6 +83,7 @@ export function VendorScorecard({ organizationId, vendorId, userId, canEdit }: V
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-stone-900">{d.label}</p>
                     <p className="text-xs text-stone-600">{evidence(c, d.key)}</p>
+                    {d.auto && hasOrders(c, d.key) ? <ScoreOrders vendorId={vendorId} dimension={d.key} /> : null}
                     {rated !== null ? <p className="text-xs text-stone-600">Rated {SCORE_WORDS[rated as 1 | 2 | 3 | 4 | 5].toLowerCase()} by staff{ratedNote(c, d.key) ? `: ${ratedNote(c, d.key)}` : ''}{auto !== null && auto !== rated ? ` (history says ${auto})` : ''}</p> : null}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
@@ -105,5 +109,27 @@ export function VendorScorecard({ organizationId, vendorId, userId, canEdit }: V
       )}
       <p className="mt-3 text-xs text-stone-500">Automatic scores come from the order history; a staff rating replaces them. After a full year in VMS the check-in form and vendor emails feed every line.</p>
     </FoldSection>
+  )
+}
+
+/** Whether a line counts any orders worth listing. */
+function hasOrders(c: Card, key: ScoreDimension) {
+  return key === 'fulfilment' ? c.late > 0 : key === 'accuracy' ? c.accuracy_issues > 0 : key === 'shipping' ? c.free_violations + c.issue_notes > 0 : key === 'resolution' ? c.credits_due > 0 : false
+}
+
+/** "Show the orders": the orders behind an automatic line, each one click away (Dana, Oct 21). */
+function ScoreOrders({ vendorId, dimension }: { vendorId: string; dimension: ScoreDimension }) {
+  const [open, setOpen] = useState(false)
+  const q = useSupabaseQuery(async () => (open ? scoreOrders(vendorId, dimension) : []), [open, vendorId, dimension])
+  if (!open) return <button type="button" onClick={() => setOpen(true)} className="text-xs font-medium text-brand hover:underline">Show the orders</button>
+  return (
+    <ul className="mt-1 space-y-0.5 text-xs">
+      {q.isLoading ? <li className="text-stone-500">Loading…</li> : (q.data ?? []).map((o) => (
+        <li key={o.order_id}>
+          <Link to={`${ROUTES.orders}/${o.order_id}`} className="text-brand hover:underline">{o.po_number ? `PO ${o.po_number}` : 'Order'}{o.order_date ? `, ${shortDate(o.order_date)}` : ''}</Link>
+          {o.why ? <span className="text-stone-600">: {o.why}</span> : null}
+        </li>
+      ))}
+    </ul>
   )
 }

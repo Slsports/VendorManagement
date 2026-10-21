@@ -17,5 +17,6 @@ Each vendor is scored 1 to 5 on six things. Four score themselves from the order
 - **Communication and help**: does the rep answer and help get the order right?
 
 ## Good to know
+- Under an automatic line (on time, accuracy, shipping, credits), click **Show the orders** to see the orders it counted and why. Each opens with one click.
 - A staff rating always replaces the automatic score for that line.
 - **Overall** is the average of the scores the vendor has, to one decimal. The vendor's standing (on hold, last resort, do not order) shows beside it.

@@ -18,3 +18,10 @@ export async function rateVendor(input: { organization_id: string; vendor_id: st
   const { error } = await supabase.from('vendor_ratings').insert(input)
   if (error) throw error
 }
+
+/** The orders behind one automatic scorecard line (Dana, Oct 21: the source one click away). */
+export async function scoreOrders(vendorId: string, dimension: ScoreDimension) {
+  const { data, error } = await supabase.rpc('vendor_score_orders', { p_vendor: vendorId, p_dimension: dimension })
+  if (error) throw error
+  return data ?? []
+}
