@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { Check, Download, Plus, Printer, RotateCcw, Send, Trash2, Undo2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { LsReceivedBox } from '@/components/ordering/LsReceivedBox'
 import { getLsPo, LS_PO_STATUS, lsPoAction, lsPoCsv, type LsPoLine, type LsPoRow } from '@/services/lsPos'
 import { sendLsPoItems } from '@/services/lightspeed'
 import { checkName, lsContext } from '../../../supabase/functions/_shared/itemNameSop.ts'
@@ -211,6 +212,7 @@ function LsPoView({ po, reload }: { po: LsPoRow; reload: () => void }) {
       ) : null}
 
       {po.status === 'sent' ? <p className="mt-4 text-sm text-emerald-800">In LS as PO {po.ls_po_number}{po.sent_at ? ` (${new Date(po.sent_at).toLocaleDateString()})` : ''}.</p> : null}
+      <LsReceivedBox lines={po.lines} from={po.order?.order_date ?? null} />
       {dirty ? <div className="mt-4"><StickySaveBar saving={busy} error={error} onCancel={() => setLines(po.lines)} /></div> : null}
     </form>
   )

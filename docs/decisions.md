@@ -2937,3 +2937,10 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   Now a vendor ticked Delivery vendor gets no order check; invoices are still filed and sent to Bill.com (0217). Ticked:
   RODS POWER BAIT, SALTER'S DISTRIBUTING, MOUNTAIN MILK & CREAM, BRAD'S. Scope, Hendrix, Kelli's and Dick's are ordered
   ahead, so not ticked. Back-check: Rod's 6 open "No order found" checks set aside.
+- LS receiving history (Dana, Oct 21, "go"). VMS reads LS's stock log (read only, `lightspeed` action
+  `receiving_history`): every change to the items' stock between two dates, with LS's reason and the LS employee. LS
+  ignores an item filter on its log, so the days are read in order and kept to the items (six weeks read in one go).
+  Shown on the LS PO page, **What LS received** › **Check LS**: per item, ordered vs added in LS since the order date.
+  LS POs are hardly used in LS today (stock is typed in by hand), so the log is what shows receiving. First answer:
+  Kelli's PO kellis91026, Deluxe Vent Brush 92162 (LS item 63069): +6 SLS Sep 18 by Jarrett (quantity typed in), 1 sold
+  Sep 26, +6 SLS Sep 28 by Trevor (the reshipped 6, Kelli's order 1040383, due by FedEx that day). All 12 received.

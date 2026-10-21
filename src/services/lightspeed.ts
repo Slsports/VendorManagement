@@ -61,3 +61,23 @@ export async function listLsShops(organizationId: string): Promise<{ code: strin
   if (error) throw error
   return (data ?? []) as { code: string; name: string; ls_shop_id: string }[]
 }
+
+/** One change to an item's stock in LS's log (Dana, Oct 21: "see if we received those 6 brushes"). */
+export interface LsStockChange {
+  item_id: string; at: string | null; shop_id: string | null; change: number; reason: string | null; who: string | null
+  ls_order_id: string | null; sale_id: string | null; transfer_id: string | null; count_id: string | null; vendor_return_id: string | null
+}
+/** What LS shows for these items between two dates (read only; a long stretch can take a minute or two). */
+export const lsReceivingHistory = (itemIds: string[], from: string, to?: string | null) =>
+  call<{ from: string; to: string; complete: boolean; read_up_to: string | null; changes: LsStockChange[] }>({ action: 'receiving_history', item_ids: itemIds, from, to: to ?? null })
+
+/** LS's reasons in plain words (the ones seen in our LS log; any other shows as LS writes it). */
+export function lsReasonLabel(reason: string | null): string {
+  switch (reason) {
+    case 'manualAdjustQOH': return 'Quantity typed in by hand'
+    case 'removeInventoryForTransaction': return 'Sold'
+    case 'itemImport': return 'Item import'
+    case 'autoResolvedNegativeInventory': return 'LS fixed a negative count'
+    default: return reason ?? 'Changed'
+  }
+}

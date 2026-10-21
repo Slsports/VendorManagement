@@ -14,6 +14,9 @@ When a vendor confirms an order, Claude drafts its LS PO. The person who placed 
 5. **New items are entered in LS** with their name, category, vendor, Vendor ID, UPC, cost and the retail price from **Check-in pricing**. VMS holds one back while it still has a ⚑ flag that needs you: [brackets] in the name, "Needs manual description", "Waiting on Vendor ID", a name another item has, or a category LS doesn't have.
 6. **Items not in LS yet** are listed with the reason. Fix the name or category here (or add the item in LS), then click **Send again**: only the missing ones are added. When every item is on, it shows **In LS** and the PO is on the order.
 
+## What LS received
+At the bottom of the LS PO, **What LS received** › **Check LS** reads LS's stock log for the items already in LS, from the order date to today. For each item it shows how many were ordered and how many were added in LS, and each change: the store, the date, how (checked in on a PO, or a quantity typed in by hand) and who did it. Sales are left out. It can take a minute.
+
 ## Where to find it
 - On the dashboard's **Ordering** card, click **LS PO** for every PO on its way and who it waits on. "2 with you" means two wait on you.
 - On the order page, the **LS PO** box has **Open the LS PO**.

@@ -13,6 +13,7 @@
 //   { action: 'item_change_write', change_id }   → a Review decision on an unavailable item into LS: * or ** and a dated note line
 //   { action: 'scan_status' }                    → the running or last reading
 //   { action: 'rename_now' }                     → sends approved item names to LS now (item_name_changes; SOP-INV-001-NC)
+//   { action: 'receiving_history', item_ids, from, to? } → read only: LS's stock changes for these items between the dates
 // pg_cron (header x-cron-secret), every 2 minutes: sends approved item names; with none waiting, carries on a reading,
 // or starts one when the last is a week old.
 import { CORS, HttpError, caller, errorResponse, json, serviceClient } from '../_shared/caller.ts'
@@ -27,6 +28,9 @@ Deno.serve(async (req) => {
     const db = serviceClient()
     const cronSecret = Deno.env.get('MAIL_CRON_SECRET')
     if (cronSecret && req.headers.get('x-cron-secret') === cronSecret) {
+      // a look-up from the scheduler's secret (checking a question from the database side)
+      const asked = await req.clone().json().catch(() => ({})) as { action?: string; organization_id?: string; item_ids?: string[]; from?: string; to?: string }
+      if (asked.action === 'receiving_history' && asked.organization_id) return json(await receivingHistory(db, asked.organization_id, (asked.item_ids ?? []).map(String), String(asked.from ?? ''), asked.to ?? null))
       const { data: conns } = await db.from('lightspeed_connections').select('organization_id').not('refresh_token', 'is', null)
       const out = []
       for (const c of conns ?? []) {
@@ -45,6 +49,11 @@ Deno.serve(async (req) => {
     if (body.action === 'scan_status') {
       const { data } = await db.from('ls_item_scans').select('started_at, finished_at, pages, items, archived, no_vendor, last_error').eq('organization_id', org).maybeSingle()
       return json(data ?? {})
+    }
+    if (body.action === 'receiving_history') {
+      if (!['admin', 'manager', 'buyer'].includes(me.role)) throw new HttpError(403, 'Only admins, managers and buyers do this')
+      const b = body as { item_ids?: string[]; from?: string; to?: string }
+      return json(await receivingHistory(db, org, (b.item_ids ?? []).map(String), String(b.from ?? ''), b.to ?? null))
     }
     if (body.action === 'sync_vendors' || body.action === 'create_po' || body.action === 'send_items' || body.action === 'scan_items' || body.action === 'item_change_write' || body.action === 'rename_now') {
       if (!['admin', 'manager', 'buyer'].includes(me.role)) throw new HttpError(403, 'Only admins, managers and buyers do this')
@@ -328,6 +337,49 @@ async function accountId(db: SupabaseClient, org: string): Promise<string> {
   const { data } = await db.from('lightspeed_connections').select('account_id').eq('organization_id', org).maybeSingle()
   if (!data?.account_id) throw new HttpError(400, 'Check the Lightspeed connection in Settings first')
   return data.account_id
+}
+
+/**
+ * What LS shows as received for some items (Dana, Oct 21: "can't you look in the data in LS and see if we received those
+ * 6 brushes?"): every change to their stock in LS's log between two dates, with LS's reason (a PO checked in, a quantity
+ * typed in by hand, a sale, a transfer, a count) and who did it. Read only. LS's log can't be asked for one item, so the
+ * days are read in order and kept to these items; a long stretch stops at the time limit and says how far it got.
+ */
+async function receivingHistory(db: SupabaseClient, org: string, itemIds: string[], from: string, to: string | null) {
+  const ids = new Set(itemIds.filter((x) => /^\d+$/.test(x)))
+  if (!ids.size || ids.size > 300) throw new HttpError(400, 'Which items?')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || (to && !/^\d{4}-\d{2}-\d{2}$/.test(to))) throw new HttpError(400, 'Which dates?')
+  const { token } = await lsAccessToken(db, org)
+  const acct = await accountId(db, org)
+  const started = Date.now()
+  const end = to ? `${to}T23:59:59-07:00` : new Date().toISOString()
+  type Log = { inventoryLogID: string; itemID: string; shopID?: string; employeeID?: string; qohChange?: string; createTime?: string; reason?: string; orderID?: string; saleID?: string; transferID?: string; inventoryCountID?: string; vendorReturnID?: string }
+  const found: Log[] = []
+  let url: string | null = `/Account/${acct}/InventoryLog.json?limit=100&createTime=${encodeURIComponent(`><,${from}T00:00:00-07:00,${end}`)}`
+  let lastTime: string | null = null
+  while (url && Date.now() - started < 110_000) {
+    const body: Record<string, unknown> = await lsGet<Record<string, unknown>>(token, url)
+    const page = asList(body.InventoryLog as Log | Log[] | undefined)
+    for (const x of page) if (ids.has(String(x.itemID))) found.push(x)
+    lastTime = page.at(-1)?.createTime ?? lastTime
+    const next = (body['@attributes'] as { next?: string } | undefined)?.next
+    url = next ? next.replace(LS_API, '') : null
+  }
+  // who did it: LS's employees by name
+  const people = new Map<string, string>()
+  for (const e of new Set(found.map((x) => x.employeeID).filter((x): x is string => !!x && x !== '0'))) {
+    const r = await lsGet<{ Employee?: { firstName?: string; lastName?: string } }>(token, `/Account/${acct}/Employee/${e}.json`).catch(() => null)
+    if (r?.Employee) people.set(e, `${(r.Employee.firstName ?? '').trim()} ${(r.Employee.lastName ?? '').trim()}`.trim())
+  }
+  const nz = (v?: string) => (v && v !== '0' ? v : null)
+  return {
+    from, to: to ?? new Date().toISOString().slice(0, 10), complete: !url, read_up_to: url ? lastTime : null,
+    changes: found.map((x) => ({
+      item_id: String(x.itemID), at: x.createTime ?? null, shop_id: x.shopID ?? null, change: Number(x.qohChange ?? 0), reason: x.reason ?? null,
+      who: x.employeeID ? people.get(x.employeeID) ?? null : null, ls_order_id: nz(x.orderID), sale_id: nz(x.saleID), transfer_id: nz(x.transferID),
+      count_id: nz(x.inventoryCountID), vendor_return_id: nz(x.vendorReturnID),
+    })),
+  }
 }
 
 const LS_DATE = (d: string | null) => `${d ?? new Date().toISOString().slice(0, 10)}T12:00:00-07:00`
