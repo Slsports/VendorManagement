@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Search } from 'lucide-react'
-import { bySection, parseBlocks, parseInline, searchHelp, type HelpArticle } from '@/lib/help'
+import { bySection, parseBlocks, searchHelp, type HelpArticle } from '@/lib/help'
+import { HelpArticleBody } from '@/components/help/HelpArticleBody'
 import { helpArticles } from '@/lib/helpArticles'
 import { ROUTES } from '@/lib/constants'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -79,18 +80,7 @@ function ArticleView({ article }: { article: HelpArticle }) {
       <BackLink fallback={ROUTES.help} fallbackLabel="Help" />
       <PageHeader eyebrow={article.section} title={article.title} description={article.who !== 'Everyone' ? `For: ${article.who}` : undefined} />
       <article className="rounded-2xl border border-stone-200 bg-white p-5 text-sm leading-relaxed text-stone-800 sm:p-6">
-        {parseBlocks(article.body).map((b, i) => {
-          if (b.kind === 'h2') return <h2 key={i} className="mb-2 mt-5 text-base font-semibold text-stone-900 first:mt-0"><Inline text={b.text} /></h2>
-          if (b.kind === 'h3') return <h3 key={i} className="mb-1 mt-4 font-semibold text-stone-900"><Inline text={b.text} /></h3>
-          if (b.kind === 'p') return <p key={i} className="mb-3"><Inline text={b.text} /></p>
-          if (b.kind !== 'ol' && b.kind !== 'ul') return null
-          const List = b.kind === 'ol' ? 'ol' : 'ul'
-          return (
-            <List key={i} className={`mb-3 space-y-1.5 pl-5 ${b.kind === 'ol' ? 'list-decimal' : 'list-disc'}`}>
-              {b.items.map((item, j) => <li key={j}><Inline text={item} /></li>)}
-            </List>
-          )
-        })}
+        <HelpArticleBody article={article} />
       </article>
       {related.length ? (
         <section className="mt-6">
@@ -102,22 +92,6 @@ function ArticleView({ article }: { article: HelpArticle }) {
       ) : null}
       <p className="mt-6 text-sm"><Link to={ROUTES.help} className="font-medium text-brand hover:underline">Search all help</Link></p>
     </div>
-  )
-}
-
-function Inline({ text }: { text: string }) {
-  return (
-    <>
-      {parseInline(text).map((part, i) => {
-        if (part.kind === 'bold') return <strong key={i} className="font-semibold text-stone-900">{part.text}</strong>
-        if (part.kind === 'link') {
-          const to = part.to.startsWith('help:') ? `${ROUTES.help}/${part.to.slice(5)}` : part.to
-          return to.startsWith('/') ? <Link key={i} to={to} className="text-brand hover:underline">{part.text}</Link>
-            : <a key={i} href={to} target="_blank" rel="noreferrer" className="text-brand hover:underline">{part.text}</a>
-        }
-        return <span key={i}>{part.text}</span>
-      })}
-    </>
   )
 }
 

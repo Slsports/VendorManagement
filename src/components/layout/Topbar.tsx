@@ -1,17 +1,21 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Bell, KeyRound, LogOut, Menu, Search, User } from 'lucide-react'
+import { Bell, CircleHelp, KeyRound, LogOut, Menu, Search, User } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { ROLE_LABELS, ROUTES } from '@/lib/constants'
 import { cn, errorMessage, initials } from '@/lib/utils'
 import { Dropdown } from '@/components/ui'
 import { TopSearch } from './TopSearch'
 import { ViewAsSelect } from './ViewAsBar'
+import { HelpPanel } from '@/components/help/HelpPanel'
 
 export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
   const { profile, role, signOut } = useAuth()
   const navigate = useNavigate()
   const canSearch = role !== 'uploader'
+  // Help for the page being worked on (Dana, Oct 21)
+  const [help, setHelp] = useState(false)
 
   async function handleSignOut() {
     try {
@@ -46,6 +50,12 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
             <Search className="size-5" aria-hidden="true" />
           </button>
         ) : null}
+
+        <button type="button" onClick={() => setHelp(true)} aria-label="Help for this page" title="Help for this page"
+          className="inline-flex items-center gap-1 rounded-lg p-2 text-sm font-medium text-stone-600 hover:bg-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring-brand">
+          <CircleHelp className="size-5" aria-hidden="true" /><span className="hidden sm:inline">Help</span>
+        </button>
+        {help ? <HelpPanel onClose={() => setHelp(false)} /> : null}
 
         <Dropdown
           label="Notifications"
