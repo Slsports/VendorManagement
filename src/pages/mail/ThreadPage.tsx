@@ -374,6 +374,17 @@ function Message({ email: e, startOpen, focus = false, vendor, carrierId, accoun
       {open ? (
         <div className="border-t border-stone-100 px-4 py-3">
           <p className="mb-2 text-xs text-stone-500">To <AddressLinks list={e.to_emails} />{e.cc_emails.length ? <> · Cc <AddressLinks list={e.cc_emails} /></> : null}</p>
+          {/* Reply, Forward and Plain text at the top of the email (Dana, Oct 21: "Too much scrolling") */}
+          <div className="mb-3 flex flex-wrap gap-2">
+            {onCompose ? (
+              <>
+                <Button size="sm" variant="secondary" onClick={() => onCompose('reply')} leftIcon={<Reply className="size-4" aria-hidden="true" />}>Reply</Button>
+                {e.to_emails.length + e.cc_emails.length > 1 ? <Button size="sm" variant="ghost" onClick={() => onCompose('all')} leftIcon={<ReplyAll className="size-4" aria-hidden="true" />}>Reply all</Button> : null}
+                <Button size="sm" variant="ghost" onClick={() => onCompose('forward')} leftIcon={<Forward className="size-4" aria-hidden="true" />}>Forward</Button>
+              </>
+            ) : null}
+            {html ? <Button size="sm" variant="ghost" onClick={() => setHtml(null)}>Plain text</Button> : <Button size="sm" variant="ghost" loading={loadingHtml} onClick={() => void showFormatted()}>Show formatted</Button>}
+          </div>
           {canEdit && vendor && waiting.length ? (
             <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
               {waiting.length} picture{waiting.length === 1 ? '' : 's'} not saved ({vendor.name}'s pictures wait for you).
@@ -412,16 +423,6 @@ function Message({ email: e, startOpen, focus = false, vendor, carrierId, accoun
           {saving && vendor ? (
             <SaveToDocumentsDialog attachment={saving} vendor={vendor} subject={e.subject} receivedAt={e.received_at} onClose={() => setSaving(null)} onSaved={(where) => { setSaved((x) => ({ ...x, [saving.id]: where })); setSaving(null) }} />
           ) : null}
-          <div className="mt-3 flex flex-wrap gap-2">
-            {onCompose ? (
-              <>
-                <Button size="sm" variant="secondary" onClick={() => onCompose('reply')} leftIcon={<Reply className="size-4" aria-hidden="true" />}>Reply</Button>
-                {e.to_emails.length + e.cc_emails.length > 1 ? <Button size="sm" variant="ghost" onClick={() => onCompose('all')} leftIcon={<ReplyAll className="size-4" aria-hidden="true" />}>Reply all</Button> : null}
-                <Button size="sm" variant="ghost" onClick={() => onCompose('forward')} leftIcon={<Forward className="size-4" aria-hidden="true" />}>Forward</Button>
-              </>
-            ) : null}
-            {html ? <Button size="sm" variant="ghost" onClick={() => setHtml(null)}>Plain text</Button> : <Button size="sm" variant="ghost" loading={loadingHtml} onClick={() => void showFormatted()}>Show formatted</Button>}
-          </div>
         </div>
       ) : null}
     </li>

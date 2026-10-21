@@ -8,7 +8,7 @@ Answer a vendor right from the conversation. The reply goes out from orders@ und
 
 ## How to
 1. Open the conversation and open the message you are answering.
-2. Click **Reply**, **Reply all** or **Forward** under it.
+2. Click **Reply**, **Reply all** or **Forward** at the top of the email, just under who it was sent to.
 3. Type your message above the quoted email. For a forward, type who it goes to in **To**.
 4. Click **Send**.
 
