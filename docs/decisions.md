@@ -2982,3 +2982,13 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
 - Dana: "up until the order has been confirmed it says pending, and once the order has been confirmed, it should say
   placed." The sales report's On order notes and the suggested order's On order column say **pending** (not confirmed
   yet), **placed** (confirmed) or **shipped, not in LS yet**. The Ordering card's Placed row is renamed **Pending**.
+
+## Oct 21, 2026: XPO bills posted, Ty July order removed
+- Trevor's breakdown posted on the shared XPO bills. Jun 9 #381292391 ($253.85): all to American Plastic WWD819AP26.
+  Aug 11 #454400273 ($400.86): Kid Galaxy 1782516 and Maxxsel DPR 2026, shared by order cost (Dana: no amount typed =
+  share by cost): Kid Galaxy $275.22, Maxxsel $125.64. The Placed Order Summary had $170.36 on each.
+- Ty, Jul 30 2026: never an order. Dana held off on Aug 7 (22 of 49 SKUs out of stock on top of 46 retired, below the
+  freight minimum). Order removed; its four files stay on Ty's page; its confirmation check dismissed. Revisit Ty after
+  Jan 1, 2027 for new items.
+- Nichole (WWD): N/D Freight (Y/N) says whether the terms discount is allowed on an invoice's freight; NDOF Amount is
+  the freight amount with no discount.
