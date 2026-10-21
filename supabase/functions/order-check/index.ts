@@ -11,7 +11,7 @@ import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, caller, errorResponse, json, serviceClient } from '../_shared/caller.ts'
 import { checkName, fixName, fixVendorId, lsContext, splitMarker } from '../_shared/itemNameSop.ts'
 import { ITEM_NAME_SOP } from '../_shared/itemNameSopText.ts'
-import { aiEnabled, comparePaperwork, compareWithSalesReport, isReadableFile, nameNewItems, pickPaperOrder, readPaperwork, type CompareReading, type PaperFile, type PaperReading } from '../_shared/ai.ts'
+import { aiEnabled, comparePaperwork, compareWithSalesReport, isReadableFile, nameNewItems, pickPaperOrder, readAvailabilityReply, readPaperwork, type CompareReading, type PaperFile, type PaperReading } from '../_shared/ai.ts'
 import { readSalesSheet, sheetForClaude } from '../_shared/salesSheet.ts'
 import { sheetFileText } from '../_shared/sheetFile.ts'
 import * as XLSX from 'npm:xlsx@0.18.5'
@@ -50,7 +50,14 @@ Deno.serve(async (req) => {
       if (!p) break
       drafted.push(await draftLsPo(db, p))
     }
-    return json({ done, drafted })
+    // the reps' answers to "can we still order these?" (Dana, Oct 21), with the time left
+    const answered: unknown[] = []
+    while (!body.check_id && Date.now() - started < TIME_BUDGET_MS * 0.9) {
+      const r = await readNextAsk(db)
+      if (!r) break
+      answered.push(r)
+    }
+    return json({ done, drafted, answered })
   } catch (e) {
     return errorResponse(e)
   }
@@ -485,4 +492,64 @@ async function draftLsPo(db: SupabaseClient, p: Draft) {
     await db.from('ls_pos').update({ draft_error: message.slice(0, 500), working_at: new Date(Date.now() + 25 * 60_000).toISOString() }).eq('id', p.id)
     return { id: p.id, error: message }
   }
+}
+
+// ---- the rep's answer to "can we still order these?" (Dana, Oct 21) ----------------------------------------------------
+type Ask = { ask_id: string; organization_id: string; vendor_id: string; vendor_name: string; items: { vid: string | null; name: string | null; qty?: number }[]; thread_id: string; sent_at: string; created_by: string | null }
+
+/**
+ * The next ask the rep has replied to: Claude reads the reply (its new text and any list the rep sent back) and the items
+ * not available become Review cards for the person who asked. Nothing changes until a person decides.
+ */
+async function readNextAsk(db: SupabaseClient): Promise<unknown> {
+  const { data } = await db.rpc('availability_ask_next')
+  const a = ((data ?? []) as Ask[])[0]
+  if (!a) return null
+  try {
+    const { data: mails } = await db.from('emails').select('id, gmail_id, gmail_box, organization_id, from_email, from_name, subject, body_text, snippet, received_at, attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, storage_path)')
+      .eq('thread_id', a.thread_id).eq('direction', 'in').gt('received_at', a.sent_at).order('received_at').limit(5)
+    const replies = mails ?? []
+    if (!replies.length) return { ask: a.ask_id, skipped: 'no reply' }
+    const files: PaperFile[] = []
+    for (const m of replies) {
+      for (const att of (m.attachments ?? []) as { file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; storage_path: string | null }[]) {
+        if (files.length >= 3 || (att.size ?? 0) > MAX_FILE || /^(image\d+|outlook|logo|signature)/i.test(att.file_name)) continue
+        const sheet = /\.(xlsx|xlsm|xls|csv)$/i.test(att.file_name)
+        if (!sheet && !isReadableFile({ name: att.file_name, mime: att.mime_type })) continue
+        const bytes = await attachmentBytes(db, m as unknown as MailRef, att)
+        if (!bytes) continue
+        if (sheet) files.push({ name: att.file_name, mime: att.mime_type ?? 'text/plain', bytes, text: (await sheetFileText(bytes)) ?? undefined })
+        else files.push({ name: att.file_name, mime: att.mime_type ?? 'application/pdf', bytes })
+      }
+    }
+    const reading = await readAvailabilityReply(db, a.organization_id, {
+      vendor: a.vendor_name, items: a.items.map((i) => ({ vid: i.vid, name: i.name })),
+      emails: replies.map((m) => ({ from: [m.from_name, m.from_email].filter(Boolean).join(' '), subject: m.subject, text: m.body_text || m.snippet || '' })), files,
+    })
+    const reply = replies[replies.length - 1]!.id
+    const { data: n, error } = await db.rpc('availability_ask_read', { p_ask: a.ask_id, p_reply: reply, p_answers: reading.items, p_note: reading.note })
+    if (error) throw error
+    return { ask: a.ask_id, cards: n, note: reading.note }
+  } catch (e) {
+    await db.from('availability_asks').update({ working_at: null, read_note: `Could not read the reply yet: ${e instanceof Error ? e.message : String(e)}`.slice(0, 300) }).eq('id', a.ask_id)
+    return { ask: a.ask_id, error: e instanceof Error ? e.message : String(e) }
+  }
+}
+
+type MailRef = { gmail_id: string; gmail_box: string | null; organization_id: string }
+async function attachmentBytes(db: SupabaseClient, m: MailRef, a: { gmail_attachment_id: string | null; storage_path: string | null }): Promise<Uint8Array | null> {
+  if (a.storage_path) {
+    const { data } = await db.storage.from('vendor-files').download(a.storage_path)
+    return data ? new Uint8Array(await data.arrayBuffer()) : null
+  }
+  if (!a.gmail_attachment_id) return null
+  const box = m.gmail_box ?? (await db.from('mail_accounts').select('mailbox').eq('organization_id', m.organization_id).maybeSingle()).data?.mailbox
+  if (!box) return null
+  const gmail = new Gmail(await googleAccessToken(box))
+  const part = await gmail.call<{ data: string }>(`messages/${m.gmail_id}/attachments/${a.gmail_attachment_id}`)
+  const b64 = part.data.replace(/-/g, '+').replace(/_/g, '/')
+  const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4))
+  const out = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i)
+  return out
 }

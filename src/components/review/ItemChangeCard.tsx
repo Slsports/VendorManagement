@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { matchLink } from '@/lib/mailSearch'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
@@ -48,6 +49,13 @@ function ItemChangeBody({ ch, canEdit, onChanged }: { ch: ItemChange; canEdit: b
     if (error) throw error
     return data
   }, [ch.report_run_id])
+  // …or the rep's reply to "what is discontinued?" (asked from the suggested order)
+  const repAsk = useSupabaseQuery(async () => {
+    if (!ch.ask_id) return null
+    const { data, error } = await supabase.from('availability_asks').select('thread_id, reply_email_id').eq('id', ch.ask_id).maybeSingle()
+    if (error) throw error
+    return data
+  }, [ch.ask_id])
   const { view, viewer } = useDocumentViewer()
 
   async function decide(pick: ItemChangeDecision | '' = choice) {
@@ -97,7 +105,7 @@ function ItemChangeBody({ ch, canEdit, onChanged }: { ch: ItemChange; canEdit: b
   return (
     <div className="mt-2 space-y-2 text-sm">
       <p className="text-stone-800"><span className="font-medium">{label || 'Item'}</span>{ch.ls_name ? <span className="text-stone-500"> · in LS as {ch.ls_name}</span> : <span className="text-stone-500"> · not found in Lightspeed yet</span>}</p>
-      {ch.vendor_words ? <p className="rounded-lg bg-white/70 px-3 py-2 text-stone-700">The vendor wrote: “{ch.vendor_words}”</p> : null}
+      {ch.vendor_words ? <p className="rounded-lg bg-white/70 px-3 py-2 text-stone-700">{ch.source === 'rep_reply' ? 'The rep wrote' : 'The vendor wrote'}: “{ch.vendor_words}”</p> : null}
       {fromReport ? (
         <p className="text-stone-600">
           Marked * discontinued in Lightspeed{ch.vendor_words ? <> with the note “{ch.vendor_words}”</> : ' with no replacement noted'}; no usable replacement on file. Found by {run.data
@@ -112,6 +120,7 @@ function ItemChangeBody({ ch, canEdit, onChanged }: { ch: ItemChange; canEdit: b
         {ch.sure ? '' : ' (not sure)'}
         {ch.order_id ? <> · <Link to={`${ROUTES.orders}/${ch.order_id}`} className="text-brand hover:underline">the order</Link></> : null}
         {ch.check_id ? <> · <Link to={`${ROUTES.orderChecks}/${ch.check_id}`} className="text-brand hover:underline">the confirmation it came from</Link></> : null}
+        {repAsk.data?.thread_id ? <> · <Link to={repAsk.data.reply_email_id ? matchLink(repAsk.data.thread_id, { email_id: repAsk.data.reply_email_id }) : `${ROUTES.mail}/${repAsk.data.thread_id}`} className="text-brand hover:underline">the rep's reply</Link></> : null}
       </p>}
 
       {ch.decision === 'find_replacement' ? (

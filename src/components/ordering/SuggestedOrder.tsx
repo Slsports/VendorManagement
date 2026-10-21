@@ -19,6 +19,9 @@ import { addOnEmail, orderWord } from '@/lib/addOns'
 import { Button, Spinner } from '@/components/ui'
 import { SalesReportUpload } from './SalesReportUpload'
 import { OnOrderSources } from './OnOrderSources'
+import { createAvailabilityAsk, latestAvailabilityAsk, repAddresses } from '@/services/availability'
+import { ANSWER_WORD, availabilityEmail } from '@/lib/availability'
+import { matchLink } from '@/lib/mailSearch'
 
 // Dana, Oct 21: pending until the vendor confirms, placed once confirmed
 const STAGE_WORD = { placed: 'pending', confirmed: 'placed', shipped: 'shipped, not in LS yet' } as const
@@ -41,6 +44,10 @@ export function SuggestedOrderDialog({ vendor, onClose }: { vendor: { id: string
   const [busy, setBusy] = useState(false)
   const openOrders = useSupabaseQuery(() => openOrdersForVendor(vendor.id), [vendor.id])
   const [addOnDraft, setAddOnDraft] = useState<ComposeDraft | null>(null)
+  // Ask the rep what is discontinued (Dana, Oct 21): the email, and what the rep answered last time
+  const [askDraft, setAskDraft] = useState<ComposeDraft | null>(null)
+  const ask = useSupabaseQuery(() => latestAvailabilityAsk(vendor.id), [vendor.id])
+  const answers = new Map(((ask.data?.answers ?? []) as { vid?: string; status?: string }[]).filter((a) => a.vid).map((a) => [a.vid!.toUpperCase(), a.status ?? '']))
   const lines = useMemo(() => q.data?.lines ?? [], [q.data])
   const amount = (sid: string, suggested: number) => { const v = qty[sid]; return v === undefined ? suggested : Math.max(0, Math.round(Number(v) || 0)) }
   const picked = lines.map((l) => ({ l, n: amount(l.sid, l.suggested) })).filter((x) => x.n > 0)
@@ -75,6 +82,20 @@ export function SuggestedOrderDialog({ vendor, onClose }: { vendor: { id: string
       setBusy(false)
     }
   }
+  async function emailRep() {
+    setBusy(true)
+    try {
+      const items = lines.map((l) => ({ vid: l.vid || null, name: l.desc, qty: amount(l.sid, l.suggested) }))
+      const askId = await createAvailabilityAsk(vendor.id, report?.id ?? null, items)
+      const m = availabilityEmail(vendor.name, items)
+      setAskDraft({ to: await repAddresses(vendor.id), subject: m.subject, body: m.body, vendor_id: vendor.id, availability_ask_id: askId,
+        note: 'When the rep replies, Claude reads it and puts anything discontinued or out of stock in your Review queue.' })
+    } catch (e) {
+      toast.error(errorMessage(e))
+    } finally {
+      setBusy(false)
+    }
+  }
   function placeOrder() {
     setOrdering({
       description: `Reorder from sales report (${picked.length} item${picked.length === 1 ? '' : 's'})`,
@@ -103,6 +124,15 @@ export function SuggestedOrderDialog({ vendor, onClose }: { vendor: { id: string
               </div>
             ) : (
               <>
+                {ask.data ? (
+                  <p className="mb-2 rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-900">
+                    Asked the rep {ask.data.sent_at ? new Date(ask.data.sent_at).toLocaleDateString() : ''}
+                    {ask.data.thread_id ? <> (<Link to={`${ROUTES.mail}/${ask.data.thread_id}`} className="underline">the email</Link>)</> : null}
+                    {ask.data.status === 'read'
+                      ? <>: {ask.data.read_note ?? 'reply read'}{ask.data.reply_email_id && ask.data.thread_id ? <> · <Link to={matchLink(ask.data.thread_id, { email_id: ask.data.reply_email_id })} className="underline">their reply</Link></> : null} · <Link to={`${ROUTES.review}?tab=items`} className="underline">decide in Review</Link></>
+                      : ': waiting for their reply.'}
+                  </p>
+                ) : null}
                 <OnOrderSources sources={q.data?.sources ?? []} />
                 {lines.length === 0 ? <p className="py-6 text-center text-stone-600">Nothing needed: every item has enough in stock or on order.</p> : (
                   <div className="overflow-x-auto">
@@ -120,7 +150,7 @@ export function SuggestedOrderDialog({ vendor, onClose }: { vendor: { id: string
                           return (
                             <tr key={l.sid} className={cn('align-top', !n && 'text-stone-400')}>
                               <td className="whitespace-nowrap px-2 py-1.5">{l.vid || '—'}</td>
-                              <td className="min-w-48 px-2 py-1.5">{l.desc}</td>
+                              <td className="min-w-48 px-2 py-1.5">{l.desc}{l.vid && answers.get(l.vid.toUpperCase()) && answers.get(l.vid.toUpperCase()) !== 'not_mentioned' ? <span className={cn('ml-1 rounded px-1 text-[11px] font-medium', answers.get(l.vid.toUpperCase()) === 'available' ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-900')}>{ANSWER_WORD[answers.get(l.vid.toUpperCase())!]}</span> : null}</td>
                               <td className="px-2 py-1.5 text-right">{l.sold}</td>
                               <td className="px-2 py-1.5 text-right">{l.inStock}</td>
                               <td className={cn('px-2 py-1.5 text-right font-medium', l.need > 0 ? 'text-emerald-700' : 'text-stone-400')}>{l.need}</td>
@@ -149,6 +179,7 @@ export function SuggestedOrderDialog({ vendor, onClose }: { vendor: { id: string
             <p className="text-sm text-stone-700"><span className="font-semibold">{picked.reduce((s, x) => s + x.n, 0)}</span> units, {picked.length} items · <span className="font-semibold">{money(total)}</span></p>
             <div className="flex flex-wrap gap-2">
               <SalesReportUpload vendor={vendor} label="Upload a newer report" onSaved={() => void q.refetch()} />
+              {lines.length ? <Button size="sm" variant="secondary" disabled={busy} onClick={() => void emailRep()} title="Ask the rep which of these are discontinued or out of stock">Email the rep</Button> : null}
               {flag.data ? <Button size="sm" variant="ghost" disabled={busy} onClick={() => void act(() => finishOrderingItem(flag.data!.id, 'not_needed'), `${vendor.name}: not needed`)}>Don't need it</Button> : null}
               {flag.data?.stage === 'check' ? <Button size="sm" variant="secondary" disabled={busy} onClick={() => void act(() => moveOrderingItem(flag.data!.id, 'to_order'), `${vendor.name}: moved to To order`)}>Order it</Button> : null}
               {(openOrders.data ?? []).filter((o) => o.addons === 'yes').map((o) => <Button key={o.id} size="sm" variant="secondary" disabled={busy || !picked.length} onClick={() => void addToOrder(o)} title={o.est_ship_date ? `Ships ${new Date(`${o.est_ship_date}T12:00:00`).toLocaleDateString()}` : 'No ship date yet'}>Add to {orderWord(o)}</Button>)}
@@ -158,6 +189,7 @@ export function SuggestedOrderDialog({ vendor, onClose }: { vendor: { id: string
           </div>
         ) : null}
       </div>
+      {askDraft ? <ComposeDialog draft={askDraft} onClose={() => setAskDraft(null)} onSent={() => { setAskDraft(null); toast.success('Sent. Claude reads the reply when it comes.'); void ask.refetch() }} /> : null}
       {addOnDraft ? <ComposeDialog draft={addOnDraft} onClose={() => setAddOnDraft(null)} onSent={() => { setAddOnDraft(null); if (flag.data) void finishOrderingItem(flag.data.id, 'ordered'); onClose() }} /> : null}
       {ordering && organization ? (
         <AddOrderDialog vendor={vendor} prefill={ordering} onClose={() => setOrdering(null)} onSaved={async (order) => {

@@ -1,7 +1,7 @@
 ---
 title: The suggested order
 section: Ordering
-keywords: suggested order, need, on order, incoming, reorder, quantity, what to order, run order, pending, placed, where it came from, source
+keywords: suggested order, email the rep, need, on order, incoming, reorder, quantity, what to order, run order, pending, placed, where it came from, source
 who: Admin, managers and buyers
 ---
 The suggested order is what LS says we need minus what is already coming in.
@@ -12,6 +12,7 @@ The suggested order is what LS says we need minus what is already coming in.
 3. Change any quantity in the yellow **Order** column. Set it to 0 to leave an item out.
 4. The bottom shows units, items and cost.
 5. Then click **Order placed**, **Order it** (moves the vendor to To order) or **Don't need it**.
+6. To ask the rep which items are discontinued, click **Email the rep** (see "Ask the rep what is discontinued").
 
 ## Good to know
 - **Need** = sold minus in stock. Overstock in one item never offsets another.

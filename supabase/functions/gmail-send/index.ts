@@ -30,6 +30,7 @@ interface SendRequest {
   routing_send_id?: string | null    // a routing letter email (Dana, Oct 13): the letter is attached and the send is stamped
   attach_routing_letter?: boolean    // attach the current routing letter to any email
   confirmation_id?: string | null    // a "please confirm your contact info" email (Oct 13): stamped as sent
+  availability_ask_id?: string | null // "can we still order these?" to a rep (Oct 21): the reply is read by Claude
 }
 
 const EMAIL = /^[^@\s,;<>]+@[^@\s,;<>]+\.[^@\s,;<>]+$/
@@ -169,6 +170,10 @@ Deno.serve(async (req) => {
     if (r.confirmation_id) {
       const { data: vc } = await db.from('vendor_confirmations').select('id, organization_id').eq('id', r.confirmation_id).maybeSingle()
       if (vc?.organization_id === me.organization_id) await db.rpc('vendor_confirm_mark_sent', { p_id: vc.id, p_email: email.id, p_by: me.id })
+    }
+    if (r.availability_ask_id) {
+      const { data: ask } = await db.from('availability_asks').select('id, organization_id').eq('id', r.availability_ask_id).maybeSingle()
+      if (ask?.organization_id === me.organization_id) await db.rpc('availability_ask_sent', { p_ask: ask.id, p_email: email.id })
     }
     if (r.draft_id) {
       const { data: d } = await db.from('email_drafts').select('id, owner_id, organization_id, gmail_draft_id, order_id').eq('id', r.draft_id).maybeSingle()

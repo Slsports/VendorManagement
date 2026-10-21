@@ -35,6 +35,8 @@ export interface ComposeDraft {
   confirmation_id?: string | null
   /** A shipping email (Dana, Oct 20): the current routing letter goes with it. */
   attach_routing_letter?: boolean
+  /** "Can we still order these?" to a rep (Dana, Oct 21): Claude reads the reply. */
+  availability_ask_id?: string | null
 }
 
 const MAX_BYTES = 20 * 1024 * 1024
@@ -117,6 +119,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
         signature,
         routing_send_id: draft.routing_send_id ?? null,
         confirmation_id: draft.confirmation_id ?? null,
+        availability_ask_id: draft.availability_ask_id ?? null,
         attach_routing_letter: !draft.routing_send_id && attachLetter,
       }
       await send(input)

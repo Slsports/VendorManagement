@@ -331,6 +331,7 @@ export interface SendEmailInput {
   attach_routing_letter?: boolean
   /** A "please confirm your contact info" email: recorded as sent. */
   confirmation_id?: string | null
+  availability_ask_id?: string | null
 }
 
 export type SendResult = { thread_id: string; email_id: string; needs_choice?: undefined } | { needs_choice: true; reason: string }

@@ -95,3 +95,4 @@ export type LsPo = Tables<'ls_pos'>
 export type RepeatUnit = NonNullable<Task['repeat_unit']>
 export type SupplyRequest = Tables<'supply_requests'>
 export type AmazonOrder = Tables<'amazon_orders'>
+export type AvailabilityAsk = Tables<'availability_asks'>

@@ -3014,3 +3014,9 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   confirmation of SO 316992, 163 items), else our order's items; the word stays pending until confirmed.
 - Learned contacts keep the exact email they were learned from (0223); older ones open all mail with that person.
 - WWD's old invoice PDFs (1,162 pages since 2020, plus 217 pages of warehouse orders): later, once VMS is fine-tuned.
+
+## Oct 21, 2026 — Email the rep from the suggested order
+- Dana: from the suggested order, "click on an 'email rep' link and send this to them so I can have them check to see what has been discontinued and what we can still order. When they reply, Claude marks those in our system so when we run this report again it tells us when we can no longer order an item."
+- Built: **Email the rep** on the suggested order opens an email to the vendor's rep (rep/sales contacts first, else the order address) listing every item with Vendor ID and quantity. The person can edit it before **Send**.
+- Claude reads the rep's reply in that conversation (and up to 3 attached files) within minutes. Each item that is discontinued, replaced, out of stock or unclear becomes an Unavailable items card in Review for the person who asked, titled "(the rep says)", with one click to the rep's reply. Nothing goes to LS until a person decides; the decision then shows on every later report.
+- The suggested order shows when the rep was asked, links the email and the reply, and tags each line with what the rep said.
