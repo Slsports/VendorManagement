@@ -74,7 +74,10 @@ export function matchIncoming(items: SalesItem[], incoming: IncomingLine[]): Map
   return out
 }
 
-/** "12 on PO SLS101426, ships Nov 3" for the report's Notes. */
+/** Dana, Oct 21: pending until the vendor confirms, placed once confirmed. */
+const NOTE_STAGE = { placed: 'pending', confirmed: 'placed', shipped: 'shipped' } as const
+
+/** "12 placed on PO SLS101426, ships Nov 3" for the report's Notes. */
 export function onOrderNote(m: OnOrderMatch): string {
-  return m.from.map((f) => `${f.qty} on ${f.orderLabel.split(' · ')[0]}${f.expected ? `, ships ${day(f.expected)}` : f.stage === 'shipped' ? ', shipped' : ', no ship date yet'}`).join('; ')
+  return m.from.map((f) => `${f.qty} ${NOTE_STAGE[f.stage]} on ${f.orderLabel.split(' · ')[0]}${f.expected ? `, ships ${day(f.expected)}` : f.stage === 'shipped' ? '' : ', no ship date yet'}`).join('; ')
 }

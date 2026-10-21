@@ -2977,3 +2977,8 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
   by merchandise cost.
 - XPO bills from before Trevor started are ignored. Trevor gives a vendor breakdown for the Jun 9 and Aug 11 bills and
   Claude posts it.
+
+## Oct 21, 2026: On order says pending until confirmed
+- Dana: "up until the order has been confirmed it says pending, and once the order has been confirmed, it should say
+  placed." The sales report's On order notes and the suggested order's On order column say **pending** (not confirmed
+  yet), **placed** (confirmed) or **shipped, not in LS yet**. The Ordering card's Placed row is renamed **Pending**.

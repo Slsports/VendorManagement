@@ -24,7 +24,7 @@ const ROWS: { id: Row; label: string; help: string }[] = [
   { id: 'check', label: 'Check stock', help: 'Flagged "Check if we need it". Run order opens the suggested order from today\'s Lightspeed sales report (Run report just files the report).' },
   { id: 'to_order', label: 'To order', help: 'Flagged "Remind me to order", or the stock check said we need it.' },
   { id: 'working', label: 'Working on', help: 'Email conversations flagged "Working on order" while an order goes back and forth with the rep.' },
-  { id: 'placed', label: 'Placed', help: 'Sent to the rep, no confirmation yet.' },
+  { id: 'placed', label: 'Pending', help: 'Sent to the rep or still being built, no confirmation yet.' },
   { id: 'confirmed', label: 'Confirmed', help: 'Confirmed by the vendor. Claude drafts the LS PO.' },
   { id: 'ls_po', label: 'LS PO', help: 'LS POs on their way: Claude drafts from the confirmation, the person who placed the order approves, Trevor reviews and sends it to LS.' },
   { id: 'overdue', label: 'Overdue', help: 'Confirmed, and more than 30 days past the ship date.' },
@@ -32,7 +32,7 @@ const ROWS: { id: Row; label: string; help: string }[] = [
 const day = (d: string | null) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString() : '')
 
 /**
- * Dashboard (Dana, Oct 11–12): one Ordering card with the counts — Check stock, To order, Working on, Placed,
+ * Dashboard (Dana, Oct 11–12): one Ordering card with the counts — Check stock, To order, Working on, Pending,
  * Confirmed, LS PO (drafted, approved, reviewed, entered in LS), Overdue. Click a count for its list.
  */
 export function OrderingCard() {
@@ -40,7 +40,7 @@ export function OrderingCard() {
   const { personId, isMe, personName } = useViewAs()
   const flags = useSupabaseQuery(async () => (organization ? listOrderingItems(organization.id) : []), [organization?.id])
   const orders = useSupabaseQuery(async () => (organization ? listPlacedAndConfirmed(organization.id) : []), [organization?.id])
-  // "Working on" (Dana, Oct 12): the emails flagged "Working on order", the step between To order and Placed
+  // "Working on" (Dana, Oct 12): the emails flagged "Working on order", the step between To order and Pending
   const lsPos = useSupabaseQuery(async () => (organization ? listOpenLsPos(organization.id) : []), [organization?.id])
   const working = useSupabaseQuery(async () => (organization ? listWorkingOrders(organization.id, personId) : []), [organization?.id, personId])
   const { refetch: rf } = flags

@@ -19,7 +19,8 @@ import { addOnEmail, orderWord } from '@/lib/addOns'
 import { Button, Spinner } from '@/components/ui'
 import { SalesReportUpload } from './SalesReportUpload'
 
-const STAGE_WORD = { placed: 'placed', confirmed: 'confirmed', shipped: 'shipped, not in LS yet' } as const
+// Dana, Oct 21: pending until the vendor confirms, placed once confirmed
+const STAGE_WORD = { placed: 'pending', confirmed: 'placed', shipped: 'shipped, not in LS yet' } as const
 const day = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
 
 /**

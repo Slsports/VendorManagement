@@ -15,6 +15,6 @@ The suggested order is what LS says we need minus what is already coming in.
 
 ## Good to know
 - **Need** = sold minus in stock. Overstock in one item never offsets another.
-- **On order** counts confirmed orders (from the vendor's confirmation), orders shipped or invoiced but not yet in LS (from the invoice), and placed orders (our order's items). Each links to its order with its ship date.
+- **On order** counts orders the vendor confirmed (**placed**, from the confirmation), orders shipped or invoiced but not yet in LS (**shipped, not in LS yet**, from the invoice), and orders not confirmed yet (**pending**, our order's items). Each links to its order with its ship date. The sales report's notes use the same words.
 - Open orders with no item list are named at the top; check them before ordering.
 - **Download the report** gets the formatted sales report.

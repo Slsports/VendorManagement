@@ -14,4 +14,4 @@ When you send the order to the rep, click **Order placed**. The new order form o
 
 ## Good to know
 - The suggested order's items become the order's item lines.
-- The vendor leaves Check stock or To order, and the order shows under **Placed** until the vendor confirms.
+- The vendor leaves Check stock or To order, and the order shows under **Pending** until the vendor confirms.

@@ -10,7 +10,7 @@ The **Ordering** card on the dashboard follows a vendor from "do we need anythin
 - **Check stock**: vendors flagged **Check if we need it**. Click **Run order** on the vendor's line: VMS runs its sales report straight from Lightspeed (last 12 months, all stores together) and opens the suggested order. **Run report** only files the report.
 - **To order**: vendors flagged **Remind me to order**, or ones where the stock check said we need something.
 - **Working on**: emails flagged **Working on order** while an order goes back and forth with the rep. It also says how many need an answer; **Open the full list** opens the Orders I'm working on page.
-- **Placed**: orders sent to the rep with no confirmation yet.
+- **Pending**: orders sent to the rep, or still being built with the rep, with no confirmation yet.
 - **Confirmed**: orders the vendor confirmed.
 - **LS PO**: LS POs on their way (Claude drafts, the person who placed the order approves, Trevor reviews and enters it in LS), with how many wait on you.
 - **Overdue**: confirmed orders more than 30 days past their ship date (red).
@@ -22,4 +22,4 @@ The **Ordering** card on the dashboard follows a vendor from "do we need anythin
 4. If a line says the vendor is not tied to a Lightspeed vendor yet, open the vendor and set **In Lightspeed as**; then run again.
 
 ## Good to know
-- When Dana uses **Showing** for one person, Check stock and To order show only that person's flags, and Working on only their emails. Placed, Confirmed and Overdue always show every order.
+- When Dana uses **Showing** for one person, Check stock and To order show only that person's flags, and Working on only their emails. Pending, Confirmed and Overdue always show every order.

@@ -10,7 +10,7 @@ When someone emails an order to a vendor (from orders@ or their own VMS mailbox)
 1. Claude looks at the mail we send and picks out the emails that place an order (an order writer, PO or list of items, in the email or attached).
 2. It reads the order: PO number, items and quantities, costs, total, ship date and who placed it (from the signature).
 3. If the order is already in VMS (same PO, or same vendor, date and total), the email, its file and its items are added to that order.
-4. If not, it is added as a new order, status **Open** (it shows under **Placed** on the Ordering card), with the file in the vendor's **Our orders** folder.
+4. If not, it is added as a new order, status **Open** (it shows under **Pending** on the Ordering card), with the file in the vendor's **Our orders** folder.
 5. When the vendor's confirmation comes in, Claude compares it with this order, and the LS PO is drafted once it is confirmed.
 
 ## Good to know
