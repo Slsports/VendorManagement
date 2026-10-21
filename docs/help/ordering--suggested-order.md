@@ -15,7 +15,9 @@ The suggested order is what LS says we need minus what is already coming in.
 
 ## Good to know
 - **Need** = sold minus in stock. Overstock in one item never offsets another.
-- **On order** counts orders the vendor confirmed (**placed**, from the confirmation), orders shipped or invoiced but not yet in LS (**shipped, not in LS yet**, from the invoice), and orders not confirmed yet (**pending**, our order's items). Each links to its order with its ship date. The sales report's notes use the same words.
+- **On order** counts orders the vendor confirmed (**placed**), orders shipped or invoiced but not yet in LS (**shipped, not in LS yet**, from the invoice), and orders not confirmed yet (**pending**). The items come from the vendor's newest confirmation when one came in (even before the order is confirmed, like a rep's "what I have on your order so far"), else from our order's items. Each links to its order with its ship date. The sales report's notes use the same words.
 - At the top, **Where "On order" comes from** lists every order counted, with one click to each source: the order, the vendor's **Confirmation** or **Invoice** VMS read, the **Email it came in**, and the email Claude made the order from. Orders with no item list are marked; check them before ordering.
 - Only orders not yet received and entered count. Orders closed in VMS (received and entered, cancelled, paid) never count.
 - **Download the report** gets the formatted sales report.
+- The column headers stay on screen while you scroll.
+- Click an order, confirmation or email in the box at the top, then **Back**: the suggested order opens again with the quantities you typed.

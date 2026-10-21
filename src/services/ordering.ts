@@ -186,7 +186,8 @@ export async function incomingFor(vendorId: string): Promise<{ lines: IncomingLi
   const ids = orders.map((o) => o.id)
   const [ol, checks, mail] = await Promise.all([
     supabase.from('order_lines').select('order_id, vendor_item_id, description, quantity, wwd_invoice_id').in('order_id', ids),
-    supabase.from('order_checks').select('order_id, kind, reading, created_at, document_id, email_id').in('order_id', ids).not('reading', 'is', null).order('created_at', { ascending: false }),
+    supabase.from('order_checks').select('order_id, kind, reading, created_at, doc_date, document_id, email_id').in('order_id', ids).not('reading', 'is', null)
+      .not('status', 'in', '(dismissed,not_paperwork,failed)').order('created_at', { ascending: false }),
     supabase.from('emails').select('id, order_id, thread_id, subject, received_at').in('order_id', ids).order('received_at'),
   ])
   if (ol.error) throw ol.error
@@ -208,8 +209,13 @@ export async function incomingFor(vendorId: string): Promise<{ lines: IncomingLi
   for (const o of orders) {
     const stage: IncomingStage = o.status === 'shipped' || o.status === 'received' ? 'shipped' : o.status === 'confirmed' ? 'confirmed' : 'placed'
     const label = [o.po_number ? `PO ${o.po_number}` : null, o.description, o.order_date ? `ordered ${new Date(`${o.order_date}T12:00:00`).toLocaleDateString()}` : null].filter(Boolean).join(' · ') || 'Order'
-    const check = (kind: 'invoice' | 'confirmation') => (checks.data ?? []).find((c) => c.order_id === o.id && c.kind === kind)
-    const read = stage === 'shipped' ? (check('invoice')?.reading ? check('invoice') : check('confirmation')) : stage === 'confirmed' ? check('confirmation') : undefined
+    // the vendor's newest paper with items (Dana, Oct 21: Lazy One's confirmation of what Sharon has so far counts even
+    // before the order is confirmed): newest by the email it came in, else its date, else when it was read
+    const when = (c: { email_id: string | null; doc_date: string | null; created_at: string }) => (c.email_id ? (paperMail.data ?? []).find((e) => e.id === c.email_id)?.received_at : null) ?? c.doc_date ?? c.created_at
+    const check = (kind: 'invoice' | 'confirmation') => (checks.data ?? [])
+      .filter((c) => c.order_id === o.id && c.kind === kind && ((c.reading as Reading | null)?.lines?.length ?? 0) > 0)
+      .sort((a, b) => when(b).localeCompare(when(a)))[0]
+    const read = stage === 'shipped' ? check('invoice') ?? check('confirmation') : check('confirmation')
     const paper = (read?.reading as Reading | undefined)?.lines ?? []
     const ours = (ol.data ?? []).filter((l) => l.order_id === o.id)
     const use = paper.length ? paper.map((l) => ({ vid: l.vendor_item_id ?? null, desc: l.description ?? null, qty: Number(l.quantity ?? 0) }))

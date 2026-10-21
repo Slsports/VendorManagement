@@ -52,6 +52,9 @@ by Vercel from the branch `claude/ecstatic-carson-ziz2a9`.
 - **Sources one click away (Dana, Oct 21).** Anything Claude read, filled in or decided (an order made from an email, a
   confirmation's lines, an on-order count, a review card) shows where it came from with one click: the email, the file,
   the order. Build it into every new screen and report.
+- **Headers stay on screen (Dana, Oct 21).** Every table and report keeps its header row on screen while scrolling (global
+  rule in `src/index.css`: sticky `thead th`; a table's `overflow-x-auto` box also scrolls down). Don't fight it with
+  per-table styles.
 - **Save is always in reach.** Long edit forms end with the shared `StickySaveBar` (Save / Cancel pinned to
   the bottom of the screen, full-width on phones, shows "Saving…" and the error). Short forms and pop-up
   boxes keep their buttons where they are.

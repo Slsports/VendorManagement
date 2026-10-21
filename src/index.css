@@ -41,3 +41,25 @@
     background-color: var(--brand-primary-soft);
   }
 }
+
+/*
+ * Headers stay on screen (Dana, Oct 21: "any report we look at needs to have the report headers remain on the screen
+ * always when scrolling down"). Every table's header row sticks: inside a sideways-scrolling box, that box also scrolls
+ * down (at most most of the screen) so the header sticks to its top; a table in the page itself sticks under the top bar.
+ */
+@layer base {
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: #fff;
+  }
+  :where(.overflow-x-auto, .overflow-auto):has(> table > thead) {
+    max-height: 75vh;
+    overflow-y: auto;
+  }
+  /* only when no box around the table clips or scrolls it (a clipping box would push the header down) */
+  table:not(:where([class*="overflow-"]) table) > thead th {
+    top: 4rem;
+  }
+}

@@ -18,6 +18,7 @@ import { Button } from '@/components/ui'
 import { RunReportButtons } from './RunReportButtons'
 import { SalesReportUpload } from './SalesReportUpload'
 import { SuggestedOrderDialog } from './SuggestedOrder'
+import { useSuggestedParam } from '@/hooks/useSuggestedParam'
 
 type Row = 'check' | 'to_order' | 'working' | 'placed' | 'confirmed' | 'ls_po' | 'overdue'
 const ROWS: { id: Row; label: string; help: string }[] = [
@@ -102,7 +103,7 @@ export function OrderingCard() {
 }
 
 function FlagList({ rows }: { rows: OrderingRow[] }) {
-  const [suggest, setSuggest] = useState<{ id: string; name: string } | null>(null)
+  const [suggest, setSuggest] = useSuggestedParam()
   const [placing, setPlacing] = useState<OrderingRow | null>(null)
   const act = (p: Promise<void>, msg: string) => void p.then(() => toast.success(msg)).catch((e) => toast.error(errorMessage(e)))
   if (!rows.length) return <p className="mt-2 text-sm text-stone-500">None. Flag a vendor from its page or a review card.</p>

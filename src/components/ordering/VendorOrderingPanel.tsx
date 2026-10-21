@@ -1,6 +1,6 @@
 import { ROUTES } from '@/lib/constants'
 import { Link } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { X } from 'lucide-react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
@@ -15,6 +15,7 @@ import { FlagButtons } from './FlagButtons'
 import { RunReportButtons } from './RunReportButtons'
 import { SalesReportUpload } from './SalesReportUpload'
 import { SuggestedOrderDialog } from './SuggestedOrder'
+import { useSuggestedParam } from '@/hooks/useSuggestedParam'
 
 /**
  * On a vendor page: where the vendor is on the Ordering card, the two flags, Run report / Run order, the sales report,
@@ -29,7 +30,9 @@ export function VendorOrderingPanel({ vendor, assignedBuyerId, canEdit, classNam
 }) {
   const flag = useSupabaseQuery(() => getOpenOrderingItem(vendor.id), [vendor.id])
   const report = useSupabaseQuery(() => latestSalesReport(vendor.id), [vendor.id])
-  const [open, setOpen] = useState(false)
+  const [suggested, setSuggested] = useSuggestedParam()
+  const open = suggested?.id === vendor.id
+  const setOpen = (v: boolean) => setSuggested(v ? { id: vendor.id, name: vendor.name } : null)
   const { refetch: refetchFlag } = flag
   const { refetch: refetchReport } = report
   useEffect(() => onOrderingChanged(() => { void refetchFlag(); void refetchReport() }), [refetchFlag, refetchReport])

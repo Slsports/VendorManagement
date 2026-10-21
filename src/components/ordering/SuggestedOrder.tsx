@@ -33,7 +33,10 @@ export function SuggestedOrderDialog({ vendor, onClose }: { vendor: { id: string
   const { organization } = useAuth()
   const q = useSupabaseQuery(() => suggestedOrderFor(vendor.id), [vendor.id])
   const flag = useSupabaseQuery(() => getOpenOrderingItem(vendor.id), [vendor.id])
-  const [qty, setQty] = useState<Record<string, string>>({})
+  // typed quantities survive opening a linked order and coming Back (Dana, Oct 21)
+  const qtyKey = `vms.suggested.qty.${vendor.id}`
+  const [qty, setQtyState] = useState<Record<string, string>>(() => { try { return JSON.parse(sessionStorage.getItem(qtyKey) ?? '{}') } catch { return {} } })
+  const setQty = (f: (v: Record<string, string>) => Record<string, string>) => setQtyState((v) => { const n = f(v); try { sessionStorage.setItem(qtyKey, JSON.stringify(n)) } catch { /* private window */ } return n })
   const [ordering, setOrdering] = useState<OrderPrefill | null>(null)
   const [busy, setBusy] = useState(false)
   const openOrders = useSupabaseQuery(() => openOrdersForVendor(vendor.id), [vendor.id])
@@ -46,7 +49,7 @@ export function SuggestedOrderDialog({ vendor, onClose }: { vendor: { id: string
 
   async function act(fn: () => Promise<void>, done: string) {
     setBusy(true)
-    try { await fn(); toast.success(done); onClose() } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(false) }
+    try { await fn(); toast.success(done); try { sessionStorage.removeItem(qtyKey) } catch { /* private window */ } onClose() } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(false) }
   }
   async function download() {
     if (!report?.document_id) return
