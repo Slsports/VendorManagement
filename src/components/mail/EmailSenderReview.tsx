@@ -58,8 +58,10 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
   const company = useSupabaseQuery(() => getSenderCompany(d.sender_id), [d.sender_id])
   // a rep agency Claude found that isn't in VMS yet (Anthony & Associates, Maschmedt…): offered as a new rep group
   const agencyName = d.company ?? company.data ?? null
-  const repAgency = !!agencyName && (d.ai_kind === 'rep_group' || REP_NOTE.test(d.ai_note ?? ''))
   const service = d.ai_kind === 'platform'
+  // mail that names two or more of our vendors often is a rep or a service (Toyology: Thin Air, Blokees, Schylling…)
+  const namesSeveral = named.filter((v) => v.n >= 2).length >= 2
+  const repAgency = !!agencyName && (d.ai_kind === 'rep_group' || REP_NOTE.test(d.ai_note ?? '') || (namesSeveral && !service))
   const [carrierId, setCarrierId] = useState('')
   // The open panel lives in the address (?emails=<sender>), so Back from an email returns to it.
   const [params, setParams] = useSearchParams()

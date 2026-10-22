@@ -94,6 +94,12 @@ describe('EmailSenderReview', () => {
       [{ name: 'Jeff Turner', email: 'jefft@turnergroupreps.com', phone: '555-0101', title: 'Owner' }], ['v-reef', 'v-spin']))
     await waitFor(() => expect(onDone).toHaveBeenCalled())
   })
+  it('offers New rep group when the mail names several vendors often, even if Claude did not call it a rep', async () => {
+    const toy = { ...item, details: { ...(item.details as Record<string, unknown>), proposed_vendor_id: null, proposed_vendor_name: null, ai_kind: null, ai_note: 'We buy from Toyology, but it is not on the vendor list.', company: 'Toyology',
+      named_vendors: [{ id: 'v-thin', name: 'THIN AIR', n: 24, rep_group: null }, { id: 'v-blo', name: 'BLOKEES', n: 10, rep_group: null }] } } as ReviewItem
+    render(withAuth('buyer', <EmailSenderReview item={toy} canEdit onDone={vi.fn()} />))
+    expect(screen.getByRole('button', { name: 'New rep group: Toyology' })).toBeInTheDocument()
+  })
   it('names a service for many vendors', async () => {
     render(withAuth('buyer', <EmailSenderReview item={item} canEdit onDone={vi.fn()} />))
     fireEvent.click(screen.getByRole('button', { name: 'A service for many vendors (MarketTime, Faire, Bill.com)' }))
