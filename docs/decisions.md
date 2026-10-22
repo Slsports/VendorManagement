@@ -3044,3 +3044,9 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
 - Dana: "Donna Hoffman has 2 emails depending on how an order was placed. We mostly communicate with her via donna@dandylinesllc.com." Go on the proposal.
 - Done (0229): DandyLines' main email is donna@dandylinesllc.com; her two entries are labeled "Main address" and "For orders placed through Diverse Marketing" (DonnaH@Diversemail.com).
 - orders@shaverlakesports.com and billing.slsports@gmail.com had been saved as DandyLines contacts when Lauren's sender was filed (forwarded copies of her mail come from our addresses). is_our_address() (staff logins, the organization's own addresses, our mailboxes and mail domains) now keeps our addresses out of filing a rep sender, New rep group and contact learning. Back-check over every vendor and rep group contact list: those 2 were the only ones; deleted (misfiled, never former).
+
+## Oct 22 — Bill.com bill list: paging fixed (Dana's go, scheduled for after the usage reset)
+Found by Sonnet, confirmed in the code and in `billcom_connections.last_error`: Bill.com refuses `sort` together with a
+`page` cursor ("sort and filters parameters are not allowed when page is provided"), so every sync with more than one
+page of bills failed before saving anything (0 bills saved since connecting). Now `sort` is sent only on the first
+request and later pages send only `max` and `page`; the createdTime fallback on a 400 still applies to the first page.

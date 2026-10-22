@@ -152,8 +152,9 @@ async function syncOrg(db: SupabaseClient, c: Conn) {
     const cutoff = new Date(Date.now() - OLD_DAYS * 86_400_000).toISOString().slice(0, 10)
     let sort = 'dueDate:desc'
     for (let i = 0; i < PAGES; i++) {
-      const q = new URLSearchParams({ max: '100', sort })
-      if (page) q.set('page', page)
+      // Bill.com refuses sort (or filters) together with a page cursor; the cursor carries the first page's sort (Oct 22)
+      const q = new URLSearchParams({ max: '100' })
+      if (page) q.set('page', page); else q.set('sort', sort)
       let answer: unknown
       try {
         answer = await api<unknown>(db, c, `/v3/bills?${q}`)
