@@ -3039,3 +3039,8 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
 - Dana: go on making Claude ignore former contacts, "but I think if we are moving a contact because it was not filed properly it should be deleted and not saved as old."
 - Built (0228): a contact marked former no longer files mail by its address or its company domain, no longer makes a sender a known rep group, and is left out of the rep list Claude reads when sorting senders.
 - Rule: a contact moved because it was filed in the wrong place is deleted (moving a vendor contact to its rep group already deletes it). Former is only for a real person who is no longer the rep. Lauren Marsh's laureng@diversemail.com entry under DandyLines (marked former Oct 22) is deleted.
+
+## Oct 22, 2026 — Donna's main email; our own addresses are never contacts
+- Dana: "Donna Hoffman has 2 emails depending on how an order was placed. We mostly communicate with her via donna@dandylinesllc.com." Go on the proposal.
+- Done (0229): DandyLines' main email is donna@dandylinesllc.com; her two entries are labeled "Main address" and "For orders placed through Diverse Marketing" (DonnaH@Diversemail.com).
+- orders@shaverlakesports.com and billing.slsports@gmail.com had been saved as DandyLines contacts when Lauren's sender was filed (forwarded copies of her mail come from our addresses). is_our_address() (staff logins, the organization's own addresses, our mailboxes and mail domains) now keeps our addresses out of filing a rep sender, New rep group and contact learning. Back-check over every vendor and rep group contact list: those 2 were the only ones; deleted (misfiled, never former).

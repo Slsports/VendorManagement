@@ -18,7 +18,11 @@ export async function senderPeople(senderId: string): Promise<RepPerson[]> {
     if (was) { was.n++; if (!was.name && e.from_name) was.name = e.from_name; continue }
     byEmail.set(email, { name: e.from_name ?? '', email, phone: null, title: null, n: 1 })
   }
-  return [...byEmail.values()].sort((a, b) => b.n - a.n).map(({ n: _n, ...p }) => p)
+  // never our own addresses: forwarded copies come from orders@ or a staff Gmail (Dana, Oct 22)
+  const { data: org } = await supabase.from('email_senders').select('organization_id').eq('id', senderId).maybeSingle()
+  const people = [...byEmail.values()]
+  const ours = org ? await Promise.all(people.map(async (p) => (await supabase.rpc('is_our_address', { p_org: org.organization_id, p_email: p.email ?? '' })).data === true)) : people.map(() => false)
+  return people.filter((_, i) => !ours[i]).sort((a, b) => b.n - a.n).map(({ n: _n, ...p }) => p)
 }
 
 /** Claude's people first (they carry phone and title), then anyone else who wrote; one per address. */
