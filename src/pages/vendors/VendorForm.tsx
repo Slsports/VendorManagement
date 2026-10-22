@@ -246,7 +246,8 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
       for (const [i, w] of form.windows.entries()) {
         await saveOrderWindow({ ...(w.id ? { id: w.id } : {}), vendor_id: vendorId!, kind: w.kind, label: nz(w.label), months: w.months, notes: nz(w.notes), sort_order: i })
       }
-      toast.success(isEdit ? 'Vendor saved' : fromSender ? 'Vendor created; their mail is filed to it' : fromEmail ? 'Vendor created; the email is filed to it' : 'Vendor created')
+      const renamed = !!v && (v.name !== form.name.trim() || v.aliases.join('|').toLowerCase() !== form.aliases.split(',').map((a) => a.trim()).filter(Boolean).join('|').toLowerCase())
+      toast.success(isEdit ? (renamed ? 'Vendor saved. VMS is re-checking the old mail and review cards for the name change; the result shows under Aliases.' : 'Vendor saved') : fromSender ? 'Vendor created; their mail is filed to it' : fromEmail ? 'Vendor created; the email is filed to it' : 'Vendor created')
       navigate(`${ROUTES.vendors}/${vendorId}`, { replace: true })
     } catch (err) {
       setError(errorMessage(err))

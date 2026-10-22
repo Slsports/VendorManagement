@@ -16,6 +16,11 @@ const { resolveEmailSender, resolveSenderMany, getSenderCompany, listVendorNames
   listVendorNames: vi.fn(async () => [{ id: 'v-stan', name: 'STANSPORT', is_active: true }, { id: 'v-wfs', name: 'WORLD FAMOUS SPORTS', is_active: true }, { id: 'v-old', name: 'OLD STAN', is_active: false }]),
   listRepGroupNames: vi.fn(async () => [{ id: 'r-pin', name: 'Pinnacle Team' }]),
 }))
+const { senderPeople, repGroupFromSender } = vi.hoisted(() => ({
+  senderPeople: vi.fn(async () => [{ name: 'Jeff Turner', email: 'jefft@turnergroupreps.com', phone: null, title: null }, { name: 'Turner Group Reps', email: 'info@turnergroupreps.com', phone: null, title: null }]),
+  repGroupFromSender: vi.fn(async () => ({ rep_group_id: 'g1', created: true, people: 1, linked: 0, lines_added: ['REEF SPORT'], asked: 1, tagged: 20 })),
+}))
+vi.mock('@/services/repAgency', async (orig) => ({ ...(await orig<typeof import('@/services/repAgency')>()), senderPeople, repGroupFromSender }))
 vi.mock('@/services/mail', () => ({ resolveEmailSender, resolveSenderMany, getSenderCompany, listVendorNames, listRepGroupNames, listSenderEmails, reviewSenderEmails, getEmailBody: vi.fn(), fetchAttachment: vi.fn(), clearPickerCache: vi.fn() }))
 
 const item = {
@@ -70,9 +75,28 @@ describe('EmailSenderReview', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'New rep group: Anthony & Associates' }))
     expect(await screen.findByDisplayValue('Anthony & Associates')).toBeInTheDocument()
   })
-  it('names a service like Bill.com or Faire', async () => {
+  it('lists every vendor the mail names; New rep group saves the people and lines ticked', async () => {
+    const turner = { ...item, title: 'Mail from @turnergroupreps.com: Turner Group Reps, a rep agency not in Rep Groups yet', details: {
+      ...(item.details as Record<string, unknown>), sender_key: 'turnergroupreps.com', display_name: 'Jeff Turner', message_count: 33, proposed_vendor_id: null, proposed_vendor_name: null, proposal_note: 'their mail names 2 of our vendors',
+      ai_kind: 'rep_group', ai_note: 'Rep agency for Reef Sport, Spin-copter and other brands', company: 'Turner Group Reps', website: 'turnergroupreps.com', phone: '555-0100',
+      rep_contacts: [{ name: 'Jeff Turner', email: 'jefft@turnergroupreps.com', phone: '555-0101', title: 'Owner' }],
+      named_vendors: [{ id: 'v-reef', name: 'REEF SPORT', n: 15, rep_group: null }, { id: 'v-spin', name: 'SPIN COPTER', n: 12, rep_group: 'Other Reps' }],
+    } } as ReviewItem
+    const onDone = vi.fn()
+    render(withAuth('buyer', <EmailSenderReview item={turner} canEdit onDone={onDone} />))
+    expect(screen.getByText(/REEF SPORT \(15\), SPIN COPTER \(12\)/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'New rep group: Turner Group Reps' }))
+    expect(await screen.findByDisplayValue('Turner Group Reps')).toBeInTheDocument()
+    fireEvent.click(await screen.findByRole('checkbox', { name: /Turner Group Reps · info@turnergroupreps.com/ }))
+    expect(screen.getByText(/with Other Reps now/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Create rep group' }))
+    await waitFor(() => expect(repGroupFromSender).toHaveBeenCalledWith('s1', 'Turner Group Reps', 'turnergroupreps.com', '555-0100',
+      [{ name: 'Jeff Turner', email: 'jefft@turnergroupreps.com', phone: '555-0101', title: 'Owner' }], ['v-reef', 'v-spin']))
+    await waitFor(() => expect(onDone).toHaveBeenCalled())
+  })
+  it('names a service for many vendors', async () => {
     render(withAuth('buyer', <EmailSenderReview item={item} canEdit onDone={vi.fn()} />))
-    fireEvent.click(screen.getByRole('button', { name: 'A service like Bill.com or Faire' }))
+    fireEvent.click(screen.getByRole('button', { name: 'A service for many vendors (MarketTime, Faire, Bill.com)' }))
     await waitFor(() => expect(resolveEmailSender).toHaveBeenCalledWith('s1', 'platform', undefined, undefined))
   })
   it('opens the sender\'s emails; ticking some files just those', async () => {

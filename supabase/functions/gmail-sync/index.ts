@@ -9,6 +9,7 @@ import { buildVendorIndex, domainVendors, mentionedVendors, shipperVendors, type
 import { forwardedBody, forwardedSender } from '../_shared/forwarded.ts'
 import { extractLinks, itemPicture, maybePaperwork, maybeSheetPaperwork, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
 import { sheetFileText } from '../_shared/sheetFile.ts'
+import { runNameChecks } from '../_shared/nameCheck.ts'
 import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type PictureKind, readActivity, readArtwork, readEdenredPdf, readEmailVendors, readExpectsReply, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ActivityEmail, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type SentEmailToCheck, type UnsureEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
@@ -240,6 +241,8 @@ async function syncAccount(db: SupabaseClient, acct: Account) {
     // Claude reads what the rules could not place (only with an API key): the reply check and artwork approvals
     // first, until AI_UNTIL_MS into the run (each step stops at its own deadline: `started` moved earlier).
     if (ready && !acct.box_id && aiEnabled() && Date.now() - started < AI_UNTIL_MS) await aiSteps(db, org, started - (TIME_BUDGET_MS - AI_UNTIL_MS))
+    // A vendor's name or alias added or removed: its old mail and open review cards are re-checked (Dana, Oct 21).
+    if (ready && !acct.box_id && Date.now() - started < FILES_UNTIL_MS - 2_000) await runNameChecks(db, org, Math.min(Date.now() + 5_000, started + FILES_UNTIL_MS))
     // Then filing, newest mail first, until FILES_UNTIL_MS.
     const filesStarted = started - (TIME_BUDGET_MS - FILES_UNTIL_MS)
     // Edenred's invoice PDFs (WWD's invoices, emailed to orders@ in groups) into each vendor's Invoices, tied to the WWD invoice;
@@ -1266,6 +1269,7 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
       await check(db.rpc('mail_apply_sender_sort', {
         p_sender: r.id, p_decision: r.decision === 'vendor' && !vendorId ? 'unsure' : r.decision, p_vendor: vendorId,
         p_company: r.company, p_website: r.website, p_phone: r.phone, p_note: r.note,
+        p_people: r.decision === 'rep_group' ? (r.people ?? []).filter((x) => x.name.trim() || x.email) : null,
       }))
     }
   } catch (e) {

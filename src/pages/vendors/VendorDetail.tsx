@@ -37,6 +37,8 @@ import { VendorRoutingLetter } from '@/components/vendors/VendorRoutingLetter'
 import { VendorConfirmBox } from '@/components/vendors/VendorConfirmBox'
 import { VendorRecentActivity } from '@/components/vendors/VendorRecentActivity'
 import { Alert, Badge, Button, Select, Spinner, Textarea } from '@/components/ui'
+import { NameCheckNote } from '@/components/vendors/NameCheckNote'
+import { latestNameCheck } from '@/services/repAgency'
 
 export default function VendorDetailPage() {
   const { id = '' } = useParams()
@@ -45,6 +47,8 @@ export default function VendorDetailPage() {
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
   const vendorQ = useSupabaseQuery(() => getVendor(id), [id])
   const notesQ = useSupabaseQuery(() => listNotes('vendor', id), [id])
+  // after a name or alias change: what the re-check of the old mail and review cards found (Dana, Oct 21)
+  const nameCheckQ = useSupabaseQuery(() => latestNameCheck(id), [id])
   const reviewQ = useSupabaseQuery(async () => (organization ? (await listReviewQueue(organization.id)).filter((r) => r.entity_id === id || r.other?.id === id) : []), [id, organization?.id])
   const orderersQ = useSupabaseQuery(async () => (organization ? listOrderers(organization.id) : []), [organization?.id])
   const v = vendorQ.data
@@ -101,6 +105,7 @@ export default function VendorDetailPage() {
     ['Assigned to', assignedTo],
     ['WWD contacts', wwdLink],
     ['Aliases', v.aliases.length ? v.aliases.join(', ') : null],
+    ['Name re-check', nameCheckQ.data ? <NameCheckNote key="name-check" check={nameCheckQ.data} /> : null],
     ['Our rep', ourRep ? contact(ourRep.name, ourRep.phone, ourRep.email) : null],
     ['Payment terms', v.payment_terms?.name],
     ['Orders email', mail(v.email)],

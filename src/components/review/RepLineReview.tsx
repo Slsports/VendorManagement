@@ -10,7 +10,7 @@ import type { ReviewItem } from '@/types'
 import { Button } from '@/components/ui'
 import { SenderEmailsPanel } from '@/components/mail/SenderEmailsPanel'
 
-interface Details { rep_group_id?: string; rep_group_name?: string; vendor_id?: string; vendor_name?: string; current_rep_group_name?: string; line_name?: string; sender_id?: string }
+interface Details { rep_group_id?: string; rep_group_name?: string; vendor_id?: string; vendor_name?: string; current_rep_group_id?: string | null; current_rep_group_name?: string | null; line_name?: string; matched_name?: string; sender_id?: string }
 
 /**
  * A rep's mail names a line we could not add on our own (Dana, Oct 12): a vendor with another rep group (move it or keep
@@ -43,11 +43,15 @@ export function RepLineReview({ item, canEdit, onDone }: { item: ReviewItem; can
       setBusy(false)
     }
   }
+  // a brand "not one of our vendors" that became one under another name (Dana, Oct 21): add it to this group
+  const joins = !!d.vendor_id && (!d.current_rep_group_id || d.current_rep_group_id === d.rep_group_id)
   const group = d.rep_group_id ? <Link to={`${ROUTES.repGroups}/${d.rep_group_id}`} className="font-medium text-brand hover:underline">{d.rep_group_name}</Link> : d.rep_group_name
   return (
     <div className="mt-2 space-y-2">
       <p className="text-stone-700">
-        {d.vendor_id
+        {joins
+          ? <>Mail from {group} says they rep <span className="font-medium">{d.matched_name ?? d.line_name}</span>, which is our vendor <Link to={`${ROUTES.vendors}/${d.vendor_id}`} className="font-medium text-brand hover:underline">{d.vendor_name}</Link> under another name.</>
+          : d.vendor_id
           ? <>Mail from {group} talks about <Link to={`${ROUTES.vendors}/${d.vendor_id}`} className="font-medium text-brand hover:underline">{d.vendor_name}</Link>, which is with {d.current_rep_group_name}.</>
           : <>Mail from {group} says they rep <span className="font-medium">{d.line_name}</span>, which is not one of our vendors.</>}
         {d.sender_id ? <> <button type="button" onClick={() => setReading(true)} className="font-medium text-brand hover:underline">See the mail</button></> : null}
@@ -55,7 +59,12 @@ export function RepLineReview({ item, canEdit, onDone }: { item: ReviewItem; can
       {reading && d.sender_id ? <SenderEmailsPanel senderId={d.sender_id} senderLabel={d.rep_group_name ?? 'Rep group'} canEdit={canEdit} onClose={() => setReading(false)} onChanged={onDone} /> : null}
       {canEdit ? (
         <div className="flex flex-wrap gap-2">
-          {d.vendor_id ? (
+          {joins ? (
+            <>
+              <Button size="sm" loading={busy} onClick={() => void answer('move', `${d.vendor_name} is now with ${d.rep_group_name}`)} leftIcon={<Check className="size-4" aria-hidden="true" />}>Add {d.vendor_name} to {d.rep_group_name}</Button>
+              <Button size="sm" variant="ghost" loading={busy} onClick={() => void answer('skip', 'Skipped')} leftIcon={<X className="size-4" aria-hidden="true" />}>Skip</Button>
+            </>
+          ) : d.vendor_id ? (
             <>
               <Button size="sm" loading={busy} onClick={() => void answer('move', `${d.vendor_name} is now with ${d.rep_group_name}`)} leftIcon={<Check className="size-4" aria-hidden="true" />}>Move to {d.rep_group_name}</Button>
               <Button size="sm" variant="ghost" loading={busy} onClick={() => void answer('keep', `${d.vendor_name} stays with ${d.current_rep_group_name}`)} leftIcon={<X className="size-4" aria-hidden="true" />}>Keep with {d.current_rep_group_name}</Button>

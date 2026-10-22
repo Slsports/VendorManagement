@@ -13,6 +13,8 @@ import { CarrierPicker } from '@/components/freight/CarrierPicker'
 import { SenderEmailsPanel } from '@/components/mail/SenderEmailsPanel'
 import { setSenderCarrier } from '@/services/freight'
 import { Button } from '@/components/ui'
+import { NewRepGroupFromMail } from '@/components/mail/NewRepGroupFromMail'
+import type { NamedVendor, RepPerson } from '@/services/repAgency'
 
 export interface EmailSenderDetails {
   sender_id: string
@@ -27,6 +29,13 @@ export interface EmailSenderDetails {
   /** What Claude read in the sender's mail, when the mail itself named no vendor. */
   ai_kind?: 'vendor' | 'rep_group' | 'platform' | 'not_vendor' | 'unsure' | null
   ai_note?: string | null
+  /** Every vendor the sender's mail names, most named first (Dana, Oct 21). */
+  named_vendors?: NamedVendor[]
+  /** What Claude read from signatures and footers: the company, its website and phone, the reps who wrote. */
+  company?: string | null
+  website?: string | null
+  phone?: string | null
+  rep_contacts?: RepPerson[]
 }
 
 /**
@@ -37,17 +46,20 @@ export interface EmailSenderDetails {
 /** Claude's note says a rep or rep agency ("Rep agency selling Daiwa…", "Independent rep for…", "Toy rep…"). */
 const REP_NOTE = /\b(rep agency|rep group|sales rep|independent (sales )?rep|manufacturer'?s? rep|toy rep|rep for|rep sending|rep covering|repping)\b/i
 
-const AI_KIND_LABELS = { vendor: 'a vendor', rep_group: 'a rep group', platform: 'a service like Bill.com or Faire', not_vendor: 'not a vendor', unsure: 'not sure' } as const
+const AI_KIND_LABELS = { vendor: 'a vendor', rep_group: 'a rep group', platform: 'an order system or service that sends for many vendors', not_vendor: 'not a vendor', unsure: 'not sure' } as const
 
 export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem; canEdit: boolean; onDone: () => void | Promise<void> }) {
   const d = item.details as unknown as EmailSenderDetails
-  const [mode, setMode] = useState<'idle' | 'pick' | 'carrier'>('idle')
+  const [mode, setMode] = useState<'idle' | 'pick' | 'carrier' | 'newgroup'>('idle')
+  const named = d.named_vendors ?? []
   /** Pick everything that applies, then Save (Dana, Oct 20): a rep group and the vendors they write about. */
   const [vendors, setVendors] = useState<{ id: string; name: string }[]>([])
   const [newGroup, setNewGroup] = useState(false)
   const company = useSupabaseQuery(() => getSenderCompany(d.sender_id), [d.sender_id])
   // a rep agency Claude found that isn't in VMS yet (Anthony & Associates, Maschmedt…): offered as a new rep group
-  const repAgency = !!company.data && (d.ai_kind === 'rep_group' || REP_NOTE.test(d.ai_note ?? ''))
+  const agencyName = d.company ?? company.data ?? null
+  const repAgency = !!agencyName && (d.ai_kind === 'rep_group' || REP_NOTE.test(d.ai_note ?? ''))
+  const service = d.ai_kind === 'platform'
   const [carrierId, setCarrierId] = useState('')
   // The open panel lives in the address (?emails=<sender>), so Back from an email returns to it.
   const [params, setParams] = useSearchParams()
@@ -63,7 +75,8 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
   const prefill = newVendorPrefill({ senderKey: d.sender_key, isDomain: d.is_domain, displayName: d.display_name })
 
   function startPick(withNewGroup = false) {
-    setVendors(d.proposed_vendor_id && d.proposed_vendor_name ? [{ id: d.proposed_vendor_id, name: d.proposed_vendor_name }] : [])
+    // the guess, else every vendor their mail names more than once
+    setVendors(d.proposed_vendor_id && d.proposed_vendor_name ? [{ id: d.proposed_vendor_id, name: d.proposed_vendor_name }] : named.filter((v) => v.n >= 2).map((v) => ({ id: v.id, name: v.name })))
     setRepId('')
     setNewGroup(withNewGroup)
     setMode('pick')
@@ -106,6 +119,11 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
         <button type="button" onClick={() => setReading(true)} className="font-medium underline hover:text-amber-950">See the {d.message_count} email{d.message_count === 1 ? '' : 's'}</button>{d.display_name ? ` · from "${d.display_name}"` : ''}{d.proposal_note ? ` · ${d.proposal_note}` : ''}
       </p>
       {d.samples?.length ? <p className="mt-1 truncate text-xs text-amber-700">Recent: {d.samples.join(' · ')}</p> : null}
+      {named.length ? (
+        <p className="mt-1 text-xs text-stone-700">
+          <span className="font-semibold">Their mail names:</span> {named.map((v) => `${v.name} (${v.n})`).join(', ')}
+        </p>
+      ) : null}
       {d.ai_kind && d.ai_kind !== 'unsure' && !(d.ai_kind === 'vendor' && d.proposed_vendor_id) ? (
         <p className="mt-1 text-xs text-sky-800">
           <span className="font-semibold">Claude read the mail:</span> {AI_KIND_LABELS[d.ai_kind]}{d.ai_note ? ` · ${d.ai_note}` : ''}
@@ -113,7 +131,10 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
       ) : null}
       {canEdit ? (
         <div className="mt-3 border-t border-amber-200 pt-3">
-          {mode === 'pick' ? (
+          {mode === 'newgroup' ? (
+            <NewRepGroupFromMail senderId={d.sender_id} company={agencyName ?? ''} website={d.website ?? null} phone={d.phone ?? null}
+              people={d.rep_contacts ?? []} named={named} onDone={onDone} onCancel={() => setMode('idle')} />
+          ) : mode === 'pick' ? (
             <div className="space-y-3">
               <p className="text-xs text-stone-600">A rep? Pick their rep group and the lines they write about. A company's own staff? Pick just that vendor. Then click <strong>Save</strong>.</p>
               <div className="flex flex-col gap-1">
@@ -162,10 +183,10 @@ export function EmailSenderReview({ item, canEdit, onDone }: { item: ReviewItem;
                 <Button size="sm" loading={busy} onClick={() => void answer(`Filed to ${d.proposed_vendor_name}`, 'vendor', d.proposed_vendor_id!)} leftIcon={<Check className="size-4" aria-hidden="true" />}>Yes, {d.proposed_vendor_name}</Button>
               ) : null}
               {repAgency ? (
-                <Button size="sm" disabled={busy} onClick={() => startPick(true)} leftIcon={<Users className="size-4" aria-hidden="true" />} title="Claude read their mail as a rep agency that isn't in VMS yet">New rep group: {company.data}</Button>
+                <Button size="sm" disabled={busy} onClick={() => setMode('newgroup')} leftIcon={<Users className="size-4" aria-hidden="true" />} title="Claude read their mail as a rep agency that isn't in VMS yet">New rep group: {agencyName}</Button>
               ) : null}
-              <Button size="sm" variant={d.proposed_vendor_id || repAgency ? 'secondary' : 'primary'} disabled={busy} onClick={() => startPick()} leftIcon={<Users className="size-4" aria-hidden="true" />}>Pick rep group / vendors</Button>
-              <Button size="sm" variant="secondary" loading={busy} onClick={() => void answer('Each email will be filed by the vendor it names', 'platform')} leftIcon={<Layers className="size-4" aria-hidden="true" />} title="NetSuite, Bill.com, Faire, FashionGo and similar services that send mail for many vendors">A service like Bill.com or Faire</Button>
+              <Button size="sm" variant={d.proposed_vendor_id || repAgency || service ? 'secondary' : 'primary'} disabled={busy} onClick={() => startPick()} leftIcon={<Users className="size-4" aria-hidden="true" />}>Pick rep group / vendors</Button>
+              <Button size="sm" variant={service && !d.proposed_vendor_id ? 'primary' : 'secondary'} loading={busy} onClick={() => void answer('Each email will be filed by the vendor it names', 'platform')} leftIcon={<Layers className="size-4" aria-hidden="true" />} title="MarketTime, NuORDER, Faire, Bill.com and similar order systems and services that send mail for many vendors">A service for many vendors (MarketTime, Faire, Bill.com)</Button>
               <Button size="sm" variant="secondary" disabled={busy} onClick={() => setMode('carrier')} leftIcon={<Truck className="size-4" aria-hidden="true" />}>A freight carrier</Button>
               <Button size="sm" variant="secondary" loading={busy} onClick={() => void answer('Marketing: their mail goes to Promotions', 'marketing')} leftIcon={<Megaphone className="size-4" aria-hidden="true" />} title="Ads from a company we have never bought from">Marketing</Button>
               <Button size="sm" variant="secondary" loading={busy} onClick={() => void answer('Our staff: supply requests in their mail go to Supplies', 'internal')} leftIcon={<UserRound className="size-4" aria-hidden="true" />} title="Someone who works for us, writing from their own address">Our staff</Button>

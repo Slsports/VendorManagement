@@ -12,7 +12,7 @@ Change a vendor's name, contact details, routes, settings or notes.
 3. Click **Save changes** in the bar pinned to the bottom of the screen. Click **Cancel** to leave without saving.
 
 ## Good to know
-- **Aliases** are other names for the vendor, separated by commas (abbreviations, the LS name). Search and mail matching use them.
+- **Aliases** are other names for the vendor, separated by commas (abbreviations, the LS name). Search and mail matching use them. When you add or remove a name and click **Save**, VMS checks all the old mail and the open review cards again within a minute or two: mail that names the vendor by the new name is connected to it, mail that named it only by a removed name no longer is, and **Who is this?** and **Rep group lines** cards are updated. The vendor page shows what it found under **Name re-check**, with **See the mail**.
 - **Orders email** is where orders go. **Shipping contact** (name, phone, email) is under Logistics, with the **Will-call pickup address** and **Pickup hours**.
 - **Payment terms** left on **Organization default** uses the company's usual terms.
 - **Ordering frequency**: Weekly, Monthly, Seasonal, Annual or As needed. **Minimum order** is free text, like "$250 or 12 units".
