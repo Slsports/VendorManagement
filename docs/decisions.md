@@ -3027,3 +3027,6 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
 - "TOYOLOGY" saved as another name for Blokees gets a **Names on the wrong vendor?** card (remove / keep).
 - Adding or removing a vendor's name or alias queues a re-check (vendor_name_checks, run by gmail-sync with the same rule new mail uses): old mail, its tags, "Who is this?" cards and rep line cards. Counts show on the vendor page under Name re-check.
 - Back-check: every open "Who is this?" card refreshed and re-read by Claude with the new rules.
+
+## Oct 22, 2026 — Grand Sierra is a Becker brand
+- Dana: "Grand sierra is a brand not a vendor. The vendor is Becker." Claude had sorted grandsierragloves.com as never bought from. Done: the sender is filed to BECKER (its one email back in Primary), and "Grand Sierra" is another name on Becker, so old and new mail naming it is matched (re-check counts on Becker's page).
