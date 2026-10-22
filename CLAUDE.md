@@ -83,6 +83,10 @@ with a back-check that re-applies the new rule to everything already filed, for 
 Never save a second copy: link to the file on file (`linkExistingCopy` in gmail-sync, the same check in gmail-read and
 uploads); `vendor_links_dedupe()` merges any that slip in (hourly cron).
 
+## Contacts: former vs. misfiled (Oct 22)
+"Former" (former_at) is only for a real rep or vendor person who no longer works there; former contacts never file mail
+or match senders. A contact that was filed in the wrong place is deleted when it is moved, never kept as former.
+
 ## Help articles (Oct 11)
 The in-app Help page (menu → Help, `/help`) is built from `docs/help/*.md`, one "how do I…" per file, named
 `<section>--<topic>.md`, with a header (title, section, keywords, who) — see any existing file and `src/lib/help.ts`

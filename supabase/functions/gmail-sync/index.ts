@@ -1234,8 +1234,10 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
     const { data: vendors } = await db.from('vendors').select('id, name').eq('organization_id', org).eq('is_active', true).is('merged_into_id', null).order('name').limit(5000)
     const byName = new Map((vendors ?? []).map((v) => [v.name.toLowerCase().replace(/[^a-z0-9]+/g, ''), v.id as string]))
     const vendorList = (vendors ?? []).map((v) => v.name).join('\n')
-    const { data: reps } = await db.from('rep_groups').select('id, name, email, vendors(name), rep_group_contacts(name, email)').eq('organization_id', org).eq('is_active', true).order('name')
-    const repList = (reps ?? []).map((g) => `${g.name}${g.email ? ` <${g.email}>` : ''}${((g.rep_group_contacts ?? []) as { name: string | null; email: string | null }[]).length ? ` (reps: ${((g.rep_group_contacts ?? []) as { name: string | null; email: string | null }[]).map((c) => [c.name, c.email].filter(Boolean).join(' ')).join('; ')})` : ''}: ${((g.vendors ?? []) as { name: string }[]).map((v) => v.name).join(', ') || 'no lines on file'}`).join('\n')
+    const { data: reps } = await db.from('rep_groups').select('id, name, email, vendors(name), rep_group_contacts(name, email, former_at)').eq('organization_id', org).eq('is_active', true).order('name')
+    // former contacts (no longer their rep) are left out: Lauren Marsh was once listed under DandyLines (Dana, Oct 22)
+    const current = (g: { rep_group_contacts?: unknown }) => ((g.rep_group_contacts ?? []) as { name: string | null; email: string | null; former_at: string | null }[]).filter((c) => !c.former_at)
+    const repList = (reps ?? []).map((g) => `${g.name}${g.email ? ` <${g.email}>` : ''}${current(g).length ? ` (reps: ${current(g).map((c) => [c.name, c.email].filter(Boolean).join(' ')).join('; ')})` : ''}: ${((g.vendors ?? []) as { name: string }[]).map((v) => v.name).join(', ') || 'no lines on file'}`).join('\n')
     const toSort: SenderToSort[] = []
     for (const s of senders) {
       const { data: mails } = await db.from('emails').select('subject, body_text, snippet').eq('sender_id', s.id).is('mailbox_id', null).order('received_at', { ascending: false }).limit(4)

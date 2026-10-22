@@ -1,7 +1,7 @@
 ---
 title: Former contacts and reps
 section: Vendors
-keywords: former contact, former rep, old rep, previous rep, no longer their rep, left the company, history, search old mail, current again, delete contact
+keywords: wrong rep group, filed wrong, former contact, former rep, old rep, previous rep, no longer their rep, left the company, history, search old mail, current again, delete contact
 who: Admin, managers and buyers
 ---
 When someone leaves a vendor or a rep group, mark them **no longer their rep** instead of deleting them. VMS keeps them, so when you need to look back through old mail you still know who to search for.
@@ -14,6 +14,6 @@ When someone leaves a vendor or a rep group, mark them **no longer their rep** i
 5. Back again? Click **Current again**.
 
 ## Good to know
-- Former contacts are never the **Main rep** and aren't suggested when you write an email. Mail from them still files to the vendor.
+- Former contacts are never the **Main rep** and aren't suggested when you write an email. Mail they sent while they were the rep stays where it is, but new mail from them is no longer filed to this vendor or rep group because of them (they may work somewhere else now).
 - If a former contact was the starred **Main rep**, the star comes off.
-- The trash can (**Delete**) is for mistakes only, like someone who was never this vendor's contact. A deleted contact is never added back by the Worldwide portal.
+- The trash can (**Delete**) is for mistakes only, like someone who was never this vendor's contact or was saved under the wrong rep group. Delete them; don't mark them former. A deleted contact is never added back by the Worldwide portal.
