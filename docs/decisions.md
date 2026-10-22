@@ -3030,3 +3030,7 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
 
 ## Oct 22, 2026 — Grand Sierra is a Becker brand
 - Dana: "Grand sierra is a brand not a vendor. The vendor is Becker." Claude had sorted grandsierragloves.com as never bought from. Done: the sender is filed to BECKER (its one email back in Primary), and "Grand Sierra" is another name on Becker, so old and new mail naming it is matched (re-check counts on Becker's page).
+
+## Oct 22, 2026 — Lauren Marsh is Starlight Toy Group, not DandyLines; MarketTime is an order platform
+- Dana: "Lauren Marsh is not in Donna's rep group. Markettime is an order platform that several reps use, even ones not in the same rep group. It clearly states in Lauren Marsh's email signature that she is with Starlight Group. Please add Lauren as a Rep Group under Starlight Toy Group and file all her emails accordingly. She reps for several vendors."
+- Claude had filed lgehringtoys@gmail.com to DandyLines because a "Lauren Marsh" (laureng@diversemail.com) was listed there. Done: rep group Starlight Toy Group (www.StarlightToyGroup.com) with Lauren Marsh, Sales Representative, cell 360-710-5875, fax 360-637-0307; her sender filed to it. Lines: Water Sports LLC, Marky Sparky, Continuum Games (Claude had moved Continuum to DandyLines; undone). Play Monster is with DandyLines: a Review card asks whether to move it. Lauren's diversemail contact under DandyLines is marked former; the contact Claude added there is removed.
