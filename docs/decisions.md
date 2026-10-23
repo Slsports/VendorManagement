@@ -3050,3 +3050,8 @@ Found by Sonnet, confirmed in the code and in `billcom_connections.last_error`: 
 `page` cursor ("sort and filters parameters are not allowed when page is provided"), so every sync with more than one
 page of bills failed before saving anything (0 bills saved since connecting). Now `sort` is sent only on the first
 request and later pages send only `max` and `page`; the createdTime fallback on a 400 still applies to the first page.
+
+## Oct 23 — Texts: Twilio verified, but VMS not yet given the keys
+Checked the hosted project's function secrets: no TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN or TWILIO_FROM yet, so the
+reminder function still reports "texting is not set up yet" for text reminders. Dana adds the three secrets herself
+(Supabase → Edge Functions → Secrets; values never in chat), then a test task with Text turned on proves it.
