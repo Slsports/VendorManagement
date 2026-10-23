@@ -20,3 +20,4 @@ The Worldwide portal lists people for each vendor, and many are out of date. Whe
 - If we email one of them about the vendor, they're confirmed on their own and drop off the card. VMS checks every hour.
 - Someone you deleted or marked former is never added back when the portal is read again.
 - Your answers are the list of outdated portal info to take to Worldwide at the show.
+- Vendors ticked **Retail store** (Costco, Walmart, Amazon…) are left out (see "Retail stores").

@@ -3055,5 +3055,12 @@ request and later pages send only `max` and `page`; the createdTime fallback on 
 Checked the hosted project's function secrets: no TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN or TWILIO_FROM yet, so the
 reminder function still reports "texting is not set up yet" for text reminders. Dana adds the three secrets herself
 (Supabase → Edge Functions → Secrets; values never in chat), then a test task with Text turned on proves it.
+
+## Oct 23, 2026 — Old vendors made inactive by LS dates (numbers first); Retail stores
+- Dana: vendors with nothing new in LS since we moved to it get marked inactive (reactivate any time); VMS flags them for review if an order email or a catalog / price list request shows we're looking at ordering again. Numbers first, nothing changes yet.
+- Dates, one per store (Dana): SLS since the import of the old database, May 7, 2021 (LS: no name, reason "itemImport", about 3:08–3:17 am); SLM since June 20, 2020 (the marina tried LS first); The Happy Camper (GS) since June 30, 2020 (its first LS sale; it sold groceries, ice, souvenirs, camping, toys, clothing and fishing items in summer 2020). Any one store with something newer keeps the vendor active; transfers between stores never count; the hardware store (SLH) is a separate LS account and is left out. "Something new" = a new item or stock added by a named person.
+- Retail store tick (0230): Amazon, Costco, Dollar Store, Home Depot, Mountain Milk & Cream, Sam's Club, Smart N Final, Walmart, Frito-Lay: no contact update email, no contact check cards, never on the inactive list.
+- The lightspeed function gained a read-only "inventory_adds" look-up (LS InventoryLog, quantity increases after a date, with person, store and reason) for these numbers.
+
 Oct 23, later: Dana added the three Twilio secrets; her "Testing text" task's reminder fired at 22:51 UTC with no error
 (Text on, Email off), so Twilio accepted the text. Text reminders are live.

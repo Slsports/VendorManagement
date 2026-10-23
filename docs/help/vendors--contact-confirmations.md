@@ -29,3 +29,4 @@ Each person at a vendor gets an email with a link to a short form showing what w
 - People not confirmed in 12 months are included the next time you prepare emails.
 - The email goes only to people we know: never former contacts, and never people only the Worldwide portal lists (tagged **From WWD · not confirmed**). Those still show on the vendor's form, so the people who know can tick **No longer works here**.
 - Someone ticked **No longer works here** is kept on the vendor page under **Former contacts**, not deleted, so their old mail can still be found.
+- Vendors ticked **Retail store** (Costco, Walmart, Amazon…) are left out (see "Retail stores").
