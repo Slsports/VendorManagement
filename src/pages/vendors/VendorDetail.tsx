@@ -165,6 +165,7 @@ export default function VendorDetailPage() {
             {v.is_fishing ? <Badge tone="info">Fishing</Badge> : null}
             {v.billcom_send ? <Badge tone="success">Invoices to Bill.com</Badge> : null}
             {v.web_orders ? <Badge tone="info">Web orders, no confirmation</Badge> : null}
+            {v.is_retail_store ? <Badge tone="info">Retail store</Badge> : null}
             {v.ask_before_pictures ? <Badge tone="neutral">Pictures saved by hand</Badge> : null}
             {v.is_delivery_vendor ? <Badge tone="neutral">Delivery vendor</Badge> : null}
             {v.wwd_active === false ? <Badge tone="warning">No longer with WWD{v.wwd_active_as_of ? ` (Edenred, ${shortDate(v.wwd_active_as_of)})` : ''}</Badge> : null}

@@ -32,6 +32,7 @@ Deno.serve(async (req) => {
       const asked = await req.clone().json().catch(() => ({})) as { action?: string; organization_id?: string; item_ids?: string[]; vendor_ids?: string[]; from?: string; to?: string }
       if (asked.action === 'receiving_history' && asked.organization_id) return json(await receivingHistory(db, asked.organization_id, (asked.item_ids ?? []).map(String), String(asked.from ?? ''), asked.to ?? null))
       if (asked.action === 'purchase_orders' && asked.organization_id) return json(await purchaseOrders(db, asked.organization_id, (asked.vendor_ids ?? []).map(String), String(asked.from ?? '')))
+      if (asked.action === 'inventory_adds' && asked.organization_id) return json(await inventoryAdds(db, asked.organization_id, String(asked.from ?? ''), (asked as { cursor?: string | null }).cursor ?? null))
       const { data: conns } = await db.from('lightspeed_connections').select('organization_id').not('refresh_token', 'is', null)
       const out = []
       for (const c of conns ?? []) {
@@ -387,6 +388,36 @@ async function receivingHistory(db: SupabaseClient, org: string, itemIds: string
  * LS purchase orders for some LS vendors since a date, read only (Dana, Oct 21: did the orders VMS still shows as open
  * come in?). Each PO with its ordered/received dates and how much of it was received.
  */
+/**
+ * Read only (Dana, Oct 23: which vendors have had nothing new since we moved to LS): every time LS added to an item's
+ * quantity after `from`, a page run at a time (about 100 seconds), with who did it (0 = no person: the May 7, 2021 import),
+ * the store and why (received order, manual add, count, transfer, sale put back…). `cursor` carries on where the last
+ * call stopped.
+ */
+async function inventoryAdds(db: SupabaseClient, org: string, from: string, cursor: string | null) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) throw new HttpError(400, 'Which date?')
+  if (cursor && !cursor.startsWith('/Account/')) throw new HttpError(400, 'Bad cursor')
+  const { token } = await lsAccessToken(db, org)
+  const acct = await accountId(db, org)
+  const started = Date.now()
+  type Log = { inventoryLogID: string; itemID: string; shopID?: string; employeeID?: string; qohChange?: string; createTime?: string; reason?: string; orderID?: string; saleID?: string; transferID?: string; inventoryCountID?: string; vendorReturnID?: string }
+  const rows: { item_id: string; shop_id: string | null; at: string | null; change: number; reason: string | null; employee_id: string | null; order: boolean; sale: boolean; transfer: boolean; count: boolean }[] = []
+  let url: string | null = cursor ?? `/Account/${acct}/InventoryLog.json?limit=100&sort=inventoryLogID&qohChange=${encodeURIComponent('>,0')}&createTime=${encodeURIComponent(`>,${from}T00:00:00-07:00`)}`
+  let pages = 0
+  while (url && Date.now() - started < 100_000) {
+    const body: Record<string, unknown> = await lsGet<Record<string, unknown>>(token, url)
+    pages++
+    const nz = (v?: string) => !!v && v !== '0'
+    for (const x of asList(body.InventoryLog as Log | Log[] | undefined)) {
+      rows.push({ item_id: String(x.itemID), shop_id: x.shopID ?? null, at: x.createTime ?? null, change: Number(x.qohChange ?? 0), reason: x.reason ?? null,
+        employee_id: nz(x.employeeID) ? String(x.employeeID) : null, order: nz(x.orderID), sale: nz(x.saleID), transfer: nz(x.transferID), count: nz(x.inventoryCountID) })
+    }
+    const next = (body['@attributes'] as { next?: string } | undefined)?.next
+    url = next ? next.replace(LS_API, '') : null
+  }
+  return { from, pages, done: !url, cursor: url, rows }
+}
+
 async function purchaseOrders(db: SupabaseClient, org: string, vendorIds: string[], from: string) {
   const ids = [...new Set(vendorIds.filter((x) => /^\d+$/.test(x)))]
   if (!ids.length || ids.length > 100) throw new HttpError(400, 'Which vendors?')
