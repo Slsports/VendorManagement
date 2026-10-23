@@ -409,6 +409,8 @@ async function inventoryAdds(db: SupabaseClient, org: string, from: string, curs
     pages++
     const nz = (v?: string) => !!v && v !== '0'
     for (const x of asList(body.InventoryLog as Log | Log[] | undefined)) {
+      // LS does not filter this list by quantity: sales and other removals are dropped here
+      if (Number(x.qohChange ?? 0) <= 0 || nz(x.saleID)) continue
       rows.push({ item_id: String(x.itemID), shop_id: x.shopID ?? null, at: x.createTime ?? null, change: Number(x.qohChange ?? 0), reason: x.reason ?? null,
         employee_id: nz(x.employeeID) ? String(x.employeeID) : null, order: nz(x.orderID), sale: nz(x.saleID), transfer: nz(x.transferID), count: nz(x.inventoryCountID) })
     }
