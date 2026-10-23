@@ -3055,3 +3055,5 @@ request and later pages send only `max` and `page`; the createdTime fallback on 
 Checked the hosted project's function secrets: no TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN or TWILIO_FROM yet, so the
 reminder function still reports "texting is not set up yet" for text reminders. Dana adds the three secrets herself
 (Supabase → Edge Functions → Secrets; values never in chat), then a test task with Text turned on proves it.
+Oct 23, later: Dana added the three Twilio secrets; her "Testing text" task's reminder fired at 22:51 UTC with no error
+(Text on, Email off), so Twilio accepted the text. Text reminders are live.
