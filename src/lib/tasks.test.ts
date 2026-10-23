@@ -69,3 +69,12 @@ describe('Go to it', () => {
     expect(taskTarget(base)).toBeNull()
   })
 })
+
+describe('VMS: note reminders', () => {
+  const base = { order_id: null, thread_id: 't1', vendor_id: 'v1', carrier_id: null, rep_group_id: null }
+  it('open the email ready to send, then the conversation once it is sent', async () => {
+    const { taskTarget } = await import('./tasks')
+    expect(taskTarget({ ...base, auto_key: 'vmscmd:c1:2', draft_id: 'd1' })).toEqual({ kind: 'page', to: '/mail?view=drafts&draft=d1', label: 'Open the email to send' })
+    expect(taskTarget({ ...base, auto_key: 'vmscmd:c1:2', draft_id: null })).toEqual({ kind: 'page', to: '/mail/t1', label: 'Open the email' })
+  })
+})

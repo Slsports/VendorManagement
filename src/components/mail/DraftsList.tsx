@@ -1,11 +1,11 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { FileText, Send, Sparkles, Trash2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useTableSort } from '@/hooks/useTableSort'
-import { deleteDraft, listDrafts, sendEmail, type DraftRow } from '@/services/mail'
+import { deleteDraft, getDraft, listDrafts, sendEmail, type DraftRow } from '@/services/mail'
 import { errorMessage } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants'
 import { SortHeader } from '@/components/shared/SortHeader'
@@ -22,6 +22,22 @@ export function DraftsList() {
   const { organization, profile } = useAuth()
   const q = useSupabaseQuery(async () => (organization && profile ? listDrafts(organization.id, profile.id) : []), [organization?.id, profile?.id])
   const [open, setOpen] = useState<DraftRow | null>(null)
+  // ?draft=<id> (a task's "Open the email to send", Dana Oct 23): that draft opens right away
+  const [params, setParams] = useSearchParams()
+  const linked = params.get('draft')
+  useEffect(() => {
+    if (!linked) return
+    let gone = false
+    void getDraft(linked).then((d) => {
+      if (gone) return
+      if (d) setOpen(d)
+      else toast('That email was already sent or deleted. Look in Sent.')
+      const next = new URLSearchParams(params)
+      next.delete('draft')
+      setParams(next, { replace: true })
+    }).catch((e) => toast.error(errorMessage(e)))
+    return () => { gone = true }
+  }, [linked, params, setParams])
   const rows = q.data ?? []
   const { sorted, sort, toggle } = useTableSort(rows, {
     to: (r) => r.to_emails[0] ?? '', subject: (r) => r.subject, vendor: (r) => r.vendor?.name, updated: (r) => r.updated_at,

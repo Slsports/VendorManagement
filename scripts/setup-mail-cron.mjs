@@ -14,7 +14,7 @@ const args = process.argv.slice(2)
 const every = args.includes('--every') ? args[args.indexOf('--every') + 1] : '* * * * *'
 
 await query(`create extension if not exists pg_cron; create extension if not exists pg_net with schema extensions;`)
-await query(`select cron.unschedule(jobid) from cron.job where jobname in ('gmail-sync', 'order-check', 'task-reminders', 'sent-orders', 'supplies', 'contacts-learn', 'freight-quotes', 'accounting-file')`)
+await query(`select cron.unschedule(jobid) from cron.job where jobname in ('gmail-sync', 'order-check', 'task-reminders', 'sent-orders', 'supplies', 'contacts-learn', 'freight-quotes', 'accounting-file', 'mail-commands')`)
 if (args.includes('--off')) {
   console.log('gmail-sync, order-check, task-reminders, sent-orders, supplies, contacts-learn and freight-quotes schedules removed')
   process.exit(0)
@@ -53,6 +53,8 @@ const quotesCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/freig
 const accountingCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/accounting-file')
 // lightspeed (Dana, Oct 16), every 2 minutes: carries on reading every LS item (counts per vendor), or starts again when a week old.
 const lsCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/lightspeed')
+// mail-commands (Dana, Oct 23): "VMS:" notes in email become tasks with reminders and emails ready to send.
+const commandsCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/mail-commands')
 const taskCall = call.replace('/functions/v1/gmail-sync', '/functions/v1/task-reminders').replace('timeout_milliseconds := 150000', 'timeout_milliseconds := 60000')
 if (!args.includes('--no-schedule')) {
   await query(`select cron.schedule('gmail-sync', ${lit(every)}, ${lit(call)})`)
@@ -65,6 +67,7 @@ if (!args.includes('--no-schedule')) {
   // every 5 minutes, not every minute: on Oct 16 the Nano database fell over (disk reads of 100+ s) while it ran each minute
   await query(`select cron.schedule('accounting-file', '*/5 * * * *', ${lit(accountingCall)})`)
   await query(`select cron.schedule('ls-items', '*/2 * * * *', ${lit(lsCall)})`)
+  await query(`select cron.schedule('mail-commands', ${lit(every)}, ${lit(commandsCall)})`)
   console.log(`gmail-sync, order-check, task-reminders, sent-orders, supplies, contacts-learn and freight-quotes scheduled (${every})`)
 }
 if (args.includes('--run-now')) {

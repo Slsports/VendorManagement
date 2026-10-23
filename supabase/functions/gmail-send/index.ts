@@ -179,6 +179,8 @@ Deno.serve(async (req) => {
       const { data: d } = await db.from('email_drafts').select('id, owner_id, organization_id, gmail_draft_id, order_id').eq('id', r.draft_id).maybeSingle()
       // the shipping email (Dana, Oct 20): stamped on its order
       if (d?.order_id && d.organization_id === me.organization_id) await db.rpc('order_ship_email_sent', { p_order: d.order_id, p_email: email.id })
+      // a task's email (VMS: notes, Dana Oct 23): sending it ticks the task done and VMS watches for the vendor's answer
+      if (d && d.organization_id === me.organization_id) await db.rpc('mail_command_sent', { p_draft: d.id, p_email: email.id, p_by: me.id })
       if (d && d.organization_id === me.organization_id && (d.owner_id === me.id || me.role === 'admin')) {
         // Claude's Gmail copies sit in orders@ Drafts
         const drafts = mailbox === acct.mailbox ? gmail : new Gmail(await googleAccessToken(acct.mailbox as string))
