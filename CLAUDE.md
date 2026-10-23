@@ -87,6 +87,11 @@ uploads); `vendor_links_dedupe()` merges any that slip in (hourly cron).
 "Former" (former_at) is only for a real rep or vendor person who no longer works there; former contacts never file mail
 or match senders. A contact that was filed in the wrong place is deleted when it is moved, never kept as former.
 
+## Closing tasks (Oct 23)
+When Claude closes tasks because Dana asked, set `closed_how = 'request'` with the reason in `done_note`; anything VMS closes
+on its own is `vms` (the default for a task closed with no `done_by`). Dana checks the **Closed by VMS** tab, so every
+automatic close needs a plain `done_note` saying what VMS saw.
+
 ## Help articles (Oct 11)
 The in-app Help page (menu → Help, `/help`) is built from `docs/help/*.md`, one "how do I…" per file, named
 `<section>--<topic>.md`, with a header (title, section, keywords, who) — see any existing file and `src/lib/help.ts`

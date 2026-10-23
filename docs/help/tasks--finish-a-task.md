@@ -14,4 +14,4 @@ Check a task off when it is done. Whoever gave it to you is told.
 
 ## Good to know
 - The person who gave the task sees "… finished …" at the top of their dashboard (and by email or text if they chose).
-- Finished tasks are on the **Done** tab.
+- Tasks you or your staff finish are on the **Done** tab. Tasks Claude or VMS closed are on **Closed at your request** and **Closed by VMS** instead.

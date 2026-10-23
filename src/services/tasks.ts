@@ -24,15 +24,21 @@ const TASK_SELECT = `*,
   assignee:profiles!tasks_assigned_to_fkey(id, full_name), giver:profiles!tasks_created_by_fkey(id, full_name), finisher:profiles!tasks_done_by_fkey(id, full_name),
   procedure:accounting_procedures!tasks_procedure_id_fkey(id, title), policy:accounting_policies!tasks_policy_id_fkey(id, label), recipient:accounting_policy_recipients!tasks_recipient_id_fkey(id, company, person), contract:accounting_contracts!tasks_contract_id_fkey(id, label)`
 
-/** mine = assigned to the person · given = they gave to others · done = finished, theirs or given · all = everyone's open. */
-export type TaskView = 'mine' | 'given' | 'done' | 'all'
+/**
+ * mine = assigned to the person · given = they gave to others · all = everyone's open · done = a person ticked it done ·
+ * request = Claude closed it because Dana asked · vms = VMS closed it on its own (Dana, Oct 23: kept apart so she can check
+ * them).
+ */
+export type TaskView = 'mine' | 'given' | 'done' | 'request' | 'vms' | 'all'
+export const CLOSED_VIEWS = ['done', 'request', 'vms'] as const
+const CLOSED_HOW = { done: 'person', request: 'request', vms: 'vms' } as const
 
 /** Tasks for one person (null = everyone, the admin's view). RLS limits the rest. */
 export async function listTasks(organizationId: string, view: TaskView, personId: string | null): Promise<TaskRow[]> {
   // Accounting tasks (Dana, Oct 16) live in the Accounting area, not here.
   let q = supabase.from('tasks').select(TASK_SELECT).eq('organization_id', organizationId).eq('area', 'general')
-  if (view === 'done') {
-    q = q.not('done_at', 'is', null)
+  if (view === 'done' || view === 'request' || view === 'vms') {
+    q = q.not('done_at', 'is', null).eq('closed_how', CLOSED_HOW[view])
     if (personId) q = q.or(`assigned_to.eq.${personId},created_by.eq.${personId}`)
     q = q.order('done_at', { ascending: false }).limit(300)
   } else {

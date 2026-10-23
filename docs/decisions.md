@@ -3064,3 +3064,7 @@ reminder function still reports "texting is not set up yet" for text reminders. 
 
 Oct 23, later: Dana added the three Twilio secrets; her "Testing text" task's reminder fired at 22:51 UTC with no error
 (Text on, Email off), so Twilio accepted the text. Text reminders are live.
+
+## Oct 23, 2026 — Tasks: Done, Closed at your request, Closed by VMS
+- Dana: "I would like the 'Done' group of tasks to only be ones I have actually completed" … "lets keep them separate: Closed at your request & Closed by VMS - I will want to check all the closed by vms for a while to make sure that is functioning the way its supposed to."
+- Built (0231, tasks.closed_how): Done = ticked by a person; Closed at your request = Claude closed it because Dana asked; Closed by VMS = VMS closed it on its own, with "Why VMS closed it". The 120 closed so far: 0 by a person, 96 at Dana's request (88 old paperwork, 6 old proofs, 2 credits), 24 by VMS (20 paid per the WWD payment history, 2 renewals on file, 1 LS PO approved, 1 old re-order sheet).

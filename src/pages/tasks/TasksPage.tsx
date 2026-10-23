@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useViewAs } from '@/hooks/useViewAs'
 import { useTasksQuery } from '@/hooks/useTasksQuery'
 import { useTableSort } from '@/hooks/useTableSort'
-import { deleteTask, getTask, listTasks, type TaskRow, type TaskView } from '@/services/tasks'
+import { CLOSED_VIEWS, deleteTask, getTask, listTasks, type TaskRow, type TaskView } from '@/services/tasks'
 import { aboutText, dateText, dueState, dueText, remindText, repeatLabel, todayLocal } from '@/lib/tasks'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
@@ -28,8 +28,9 @@ export default function TasksPage() {
   const { personId, isMe, personName } = useViewAs()
   const [params, setParams] = useSearchParams()
   const everyone = !personId
-  const view: TaskView = (['mine', 'given', 'done'] as const).find((v) => v === params.get('view')) ?? 'mine'
-  const listView: TaskView = everyone && view !== 'done' ? 'all' : view
+  const view: TaskView = (['mine', 'given', 'done', 'request', 'vms'] as const).find((v) => v === params.get('view')) ?? 'mine'
+  const closed = (CLOSED_VIEWS as readonly string[]).includes(view)
+  const listView: TaskView = everyone && !closed ? 'all' : view
   const q = useTasksQuery(async () => (organization ? listTasks(organization.id, listView, personId) : []), [organization?.id, listView, personId])
   const [adding, setAdding] = useState(false)
   const [open, setOpen] = useState<TaskRow | null>(null)
@@ -72,6 +73,8 @@ export default function TasksPage() {
     { v: 'mine', label: everyone ? 'Open' : `${whose} tasks` },
     ...(everyone ? [] : [{ v: 'given' as const, label: isMe ? 'Given to others' : `Given by ${first(personName)}` }]),
     { v: 'done', label: 'Done' },
+    { v: 'request', label: 'Closed at your request' },
+    { v: 'vms', label: 'Closed by VMS' },
   ]
 
   return (
@@ -91,8 +94,8 @@ export default function TasksPage() {
         : q.error ? <Alert variant="error">{q.error}</Alert>
         : rows.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-stone-300 py-12 text-center text-sm text-stone-600">
-            {view === 'done' ? 'Nothing finished yet.' : view === 'given' ? 'No open tasks given to others.' : 'Nothing on the list.'}
-            {view !== 'done' ? <> <button type="button" onClick={() => setAdding(true)} className="font-medium text-brand hover:underline">Add a task</button></> : null}
+            {view === 'done' ? 'Nothing ticked done yet.' : view === 'request' ? 'Nothing closed at your request.' : view === 'vms' ? 'Nothing closed by VMS.' : view === 'given' ? 'No open tasks given to others.' : 'Nothing on the list.'}
+            {!closed ? <> <button type="button" onClick={() => setAdding(true)} className="font-medium text-brand hover:underline">Add a task</button></> : null}
           </p>
         ) : (
           <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white">
@@ -101,8 +104,8 @@ export default function TasksPage() {
                 <tr>
                   <th scope="col" className="w-8 px-3 py-2"><span className="sr-only">Done</span></th>
                   <SortHeader label="Task" sortKey="task" sort={sort} onSort={toggle} className="px-3 py-2" />
-                  {view === 'done' ? <SortHeader label="Done" sortKey="done" sort={sort} onSort={toggle} className="px-3 py-2" /> : <SortHeader label="Due" sortKey="due" sort={sort} onSort={toggle} className="px-3 py-2" />}
-                  {view !== 'done' ? <SortHeader label="Remind" sortKey="remind" sort={sort} onSort={toggle} className="px-3 py-2" /> : null}
+                  {closed ? <SortHeader label={view === 'done' ? 'Done' : 'Closed'} sortKey="done" sort={sort} onSort={toggle} className="px-3 py-2" /> : <SortHeader label="Due" sortKey="due" sort={sort} onSort={toggle} className="px-3 py-2" />}
+                  {!closed ? <SortHeader label="Remind" sortKey="remind" sort={sort} onSort={toggle} className="px-3 py-2" /> : null}
                   <SortHeader label="Assigned to" sortKey="who" sort={sort} onSort={toggle} className="px-3 py-2" />
                   <SortHeader label="From" sortKey="from" sort={sort} onSort={toggle} className="px-3 py-2" />
                   <SortHeader label="About" sortKey="about" sort={sort} onSort={toggle} className="px-3 py-2" />
@@ -120,12 +123,12 @@ export default function TasksPage() {
                         <button type="button" onClick={() => (t.done_at ? setOpen(t) : go(t, setOpen))} className={cn('text-left font-medium hover:text-brand', t.done_at ? 'text-stone-500 line-through' : 'text-stone-900')}>{t.title}</button>
                         <button type="button" onClick={() => setOpen(t)} className="ml-2 rounded px-1 text-xs text-stone-500 hover:bg-stone-100 hover:text-stone-900" aria-label={`Edit ${t.title}`}>Edit</button>
                         {rep ? <span className="mt-0.5 flex items-center gap-1 text-xs text-stone-500"><Repeat className="size-3" aria-hidden="true" />{rep}</span> : null}
-                        {t.done_note ? <span className="mt-0.5 block text-xs text-stone-500">Note: {t.done_note}</span> : null}
+                        {t.done_note ? <span className="mt-0.5 block text-xs text-stone-500">{t.closed_how === 'vms' ? 'Why VMS closed it' : 'Note'}: {t.done_note}</span> : null}
                       </td>
                       <td className={cn('whitespace-nowrap px-3 py-2', !t.done_at && state === 'late' ? 'font-semibold text-red-700' : !t.done_at && state === 'today' ? 'font-semibold text-amber-700' : 'text-stone-600')}>
                         {t.done_at ? `${dateText(t.done_at.slice(0, 10))}${t.finisher ? ` · ${first(t.finisher.full_name)}` : ''}` : dueText(t.due_date, today)}
                       </td>
-                      {view !== 'done' ? <td className="whitespace-nowrap px-3 py-2 text-stone-600">{t.remind_at ? remindText(t.remind_at) : ''}{t.remind_error ? <span className="block text-xs text-red-700" title={t.remind_error}>not all sent</span> : null}</td> : null}
+                      {!closed ? <td className="whitespace-nowrap px-3 py-2 text-stone-600">{t.remind_at ? remindText(t.remind_at) : ''}{t.remind_error ? <span className="block text-xs text-red-700" title={t.remind_error}>not all sent</span> : null}</td> : null}
                       <td className="whitespace-nowrap px-3 py-2 text-stone-700">{t.assigned_to === profile?.id ? 'Me' : first(t.assignee?.full_name)}</td>
                       <td className="whitespace-nowrap px-3 py-2 text-stone-600">{!t.created_by || t.created_by === t.assigned_to ? '' : t.created_by === profile?.id ? 'Me' : first(t.giver?.full_name)}</td>
                       <td className="px-3 py-2 text-stone-700"><AboutLinks task={t} /></td>
