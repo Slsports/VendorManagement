@@ -1,14 +1,14 @@
 ---
 title: Who looks at a confirmation or invoice
 section: Order paperwork
-keywords: assigned, reviewer, who reviews, placed by, Jarrett, Dana, Trevor, invoice, Create PO, looked at by, owner
+keywords: assigned, reviewer, who reviews, placed by, Jarrett, Dana, Trevor, invoice, LS PO, looked at by, owner
 who: Everyone
 ---
 Every check goes to one person to look over, even when everything matches.
 
 ## Who gets it
 - **Invoices go to Trevor**, who handles everything from shipping on (freight, invoices, creating the PO in Lightspeed). If he has a question on an invoice, he calls whoever placed the order.
-- **"Create PO" tasks go to Trevor** too.
+- **LS PO** steps after approval (review and **Send to Lightspeed**) go to Trevor. For a fishing order he can ask Jarrett, or assign the task to him.
 - **Confirmations go to whoever placed the order**, when they have a VMS login.
 - Orders Jarrett placed go to **Jarrett**.
 - Everything else (Dana, "D&J", people no longer here) goes to **Dana**.

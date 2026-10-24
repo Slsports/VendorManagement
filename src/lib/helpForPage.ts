@@ -15,7 +15,7 @@ const PAGES: [RegExp, PageHelp][] = [
   [/^\/orders\/paperwork/, { name: 'Order paperwork', sections: ['Order paperwork'] }],
   [/^\/orders\/[^/]+/, { name: 'an order', sections: ['Orders', 'Order paperwork'] }],
   [/^\/(orders|purchase-orders|shipments|returns)/, { name: 'Orders', sections: ['Orders'] }],
-  [/^\/ls-pos/, { name: 'LS POs', slugs: ['ordering--ls-po', 'orders--create-po-in-lightspeed', 'settings--ls-po-reviewers'], sections: ['Ordering'] }],
+  [/^\/ls-pos/, { name: 'LS POs', slugs: ['ordering--ls-po', 'orders--our-po-number', 'settings--ls-po-reviewers'], sections: ['Ordering'] }],
   [/^\/item-names/, { name: 'Item names', slugs: ['ordering--clean-up-item-names', 'orders--vendor-id-in-item-names'], sections: ['Ordering'] }],
   [/^\/freight/, { name: 'Freight', sections: ['Freight'] }],
   [/^\/payments/, { name: 'Payments', sections: ['Payments'] }],

@@ -7,13 +7,12 @@ import { getLsPoForOrder, LS_PO_STATUS, startLsPo } from '@/services/lsPos'
 import { ROUTES } from '@/lib/constants'
 import { errorMessage } from '@/lib/utils'
 import type { Order, VendorLink } from '@/types'
-import { Button, Input, Select } from '@/components/ui'
-import { useAuth } from '@/hooks/useAuth'
-import { createLsPo, listLsShops, poNumberPreview } from '@/services/lightspeed'
+import { Button, Input } from '@/components/ui'
 
 /**
  * The LS PO on an order (Dana, Oct 12): once the vendor confirms, Claude drafts it, the person who placed the order
- * approves it, Trevor reviews it and enters it in LS. The number can also be typed here for a PO made by hand.
+ * approves it, Trevor reviews it and sends it to LS, which makes the PO there once, with all its items (Oct 24: no empty
+ * PO first). The number can also be typed here for a PO made by hand.
  */
 export function LsPoCard({ order, documents, canEdit, onChange, vendor, focus = false }: { order: Pick<Order, 'id' | 'status' | 'ls_po_number' | 'po_number' | 'ls_order_id' | 'store_codes'>; documents: VendorLink[]; canEdit: boolean; onChange: () => void; vendor?: { id: string; name: string; lightspeed_vendor_id: string | null } | null; focus?: boolean }) {
   const po = useSupabaseQuery(() => getLsPoForOrder(order.id), [order.id])
@@ -35,7 +34,10 @@ export function LsPoCard({ order, documents, canEdit, onChange, vendor, focus = 
   return (
     <section ref={box} className={`rounded-2xl border p-5 ${waiting ? 'border-amber-300 bg-amber-50' : 'border-stone-200 bg-white'} ${focus ? 'ring-4 ring-brand/40' : ''}`}>
       <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">LS PO</h2>
-      <CreateInLs order={order} vendor={vendor ?? null} canEdit={canEdit} onChange={onChange} />
+      {order.ls_order_id ? <p className="mt-2 text-sm text-stone-900">PO <strong>{order.po_number}</strong> is in Lightspeed.</p> : null}
+      {vendor && !vendor.lightspeed_vendor_id && !order.ls_order_id ? (
+        <p className="mt-2 text-xs text-stone-500">Before it can go to Lightspeed, find {vendor.name} in Lightspeed on <Link to={`${ROUTES.vendors}/${vendor.id}`} className="font-medium text-brand hover:underline">the vendor page</Link> (Lightspeed box).</p>
+      ) : null}
       {draft ? (
         <p className="mt-2 text-sm">
           <Link to={`${ROUTES.lsPos}/${draft.id}`} className="font-medium text-brand hover:underline">Open the LS PO</Link>
@@ -53,52 +55,5 @@ export function LsPoCard({ order, documents, canEdit, onChange, vendor, focus = 
         </form>
       ) : order.ls_po_number ? <p className="mt-2 text-sm text-stone-900">PO {order.ls_po_number}</p> : null}
     </section>
-  )
-}
-
-const realPo = (p: string | null) => !!p && p.replace(/[^A-Za-z0-9]/g, '').length >= 3 && !/^\s*(n\/?a|none|tbd|pending|na|no po)\s*$/i.test(p)
-
-/**
- * "Create PO in LS" (Dana, Oct 13): the empty PO in Lightspeed for this vendor and store, Reference # = our one PO number
- * ([VENDOR][MMDDYY], e.g. YAKIMA080626). The items go on it later, from the approved LS PO draft.
- */
-function CreateInLs({ order, vendor, canEdit, onChange }: { order: Pick<Order, 'id' | 'po_number' | 'ls_order_id' | 'store_codes'>; vendor: { id: string; name: string; lightspeed_vendor_id: string | null } | null; canEdit: boolean; onChange: () => void }) {
-  const { organization } = useAuth()
-  const preview = useSupabaseQuery(async () => (order.ls_order_id || realPo(order.po_number) ? order.po_number : poNumberPreview(order.id)), [order.id, order.po_number, order.ls_order_id])
-  const shops = useSupabaseQuery(async () => (organization ? listLsShops(organization.id) : []), [organization?.id])
-  const [shop, setShop] = useState('')
-  const [busy, setBusy] = useState(false)
-  if (order.ls_order_id) return <p className="mt-2 text-sm text-stone-900">PO <strong>{order.po_number}</strong> is in Lightspeed.</p>
-  if (!canEdit) return null
-  const chosen = shop || (shops.data ?? []).find((s) => s.code === (order.store_codes?.[0] ?? 'SLS'))?.ls_shop_id || (shops.data ?? [])[0]?.ls_shop_id || ''
-  async function create() {
-    setBusy(true)
-    try {
-      const r = await createLsPo(order.id, chosen || null)
-      toast.success(`PO ${r.po_number} created in Lightspeed`)
-      onChange()
-    } catch (e) {
-      toast.error(errorMessage(e))
-    } finally {
-      setBusy(false)
-    }
-  }
-  return (
-    <div className="mt-2 rounded-xl border border-stone-200 bg-white p-3 text-sm">
-      {vendor && !vendor.lightspeed_vendor_id ? (
-        <p className="text-stone-700">To create the PO in Lightspeed, first find {vendor.name} in Lightspeed on <Link to={`${ROUTES.vendors}/${vendor.id}`} className="font-medium text-brand hover:underline">the vendor page</Link> (Lightspeed box).</p>
-      ) : (
-        <>
-          <p className="text-stone-700">PO number: <strong>{preview.data ?? '…'}</strong></p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Select aria-label="Store" value={chosen} onChange={(e) => setShop(e.target.value)} className="h-9 text-sm">
-              {(shops.data ?? []).map((s) => <option key={s.ls_shop_id} value={s.ls_shop_id}>{s.name}</option>)}
-            </Select>
-            <Button size="sm" loading={busy} onClick={() => void create()}>Create PO in LS</Button>
-          </div>
-          <p className="mt-1 text-xs text-stone-500">Makes the empty PO in Lightspeed with this number in Reference #. The items go on it after the confirmation.</p>
-        </>
-      )}
-    </div>
   )
 }

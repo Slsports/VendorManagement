@@ -7,7 +7,7 @@ who: Everyone
 Click a task and VMS takes you to where the work is done, already on the step.
 
 ## Where each task takes you
-- **Create PO: [vendor], [their number]**: the order, with the **Create PO in LS** box at the top and highlighted. If VMS doesn't know the order yet, the confirmation check opens instead, with Claude's best guess already picked; click **Use this order**.
+- **Create PO: [vendor], [their number]** (old tasks; VMS no longer makes them): the order, with the **LS PO** box highlighted.
 - **Reply** tasks from your own promises ("I'll look at this by tomorrow"): the email, with your reply already open.
 - **Reply from [name]** (from **Tell me when they reply**): their reply.
 - **Get freight quote**: the freight quote.

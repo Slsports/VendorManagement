@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { CircleCheck, Mail } from 'lucide-react'
 import { getDraft, type DraftRow } from '@/services/mail'
 import type { OrderCheckRow } from '@/services/orderChecks'
-import { poState } from '@/lib/poCheck'
+import { poNorm, poState } from '@/lib/poCheck'
 import { ROUTES } from '@/lib/constants'
 import { errorMessage } from '@/lib/utils'
 import { Alert, Button } from '@/components/ui'
@@ -40,7 +40,7 @@ export function ConfirmationPoLine({ c, onChanged }: { c: OrderCheckRow; onChang
     return (
       <p className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2 text-sm text-emerald-800">
         <CircleCheck className="size-4 shrink-0" aria-hidden="true" />
-        {state === 'ours' ? <>PO matches ours: <span className="font-semibold">{ours}</span></> : <>Their PO <span className="font-semibold">{theirs}</span> fits our naming. The order has no PO yet: type it on the order if it's ours.</>}
+        {state === 'ours' ? <>PO matches ours: <span className="font-semibold">{ours}</span>{theirs && poNorm(theirs) !== poNorm(ours) ? <> (they wrote {theirs})</> : null}</> : <>Their PO <span className="font-semibold">{theirs}</span> fits our naming. Pick the order above to check it against ours.</>}
       </p>
     )
   }
@@ -55,9 +55,9 @@ export function ConfirmationPoLine({ c, onChanged }: { c: OrderCheckRow; onChang
           {c.po_draft_id ? (
             <Button size="sm" loading={loading} onClick={() => void openDraft()} leftIcon={<Mail className="size-4" aria-hidden="true" />}>Open the email asking them to use our PO</Button>
           ) : c.order && !ours ? (
-            <>Open <Link to={`${ROUTES.orders}/${c.order.id}`} className="font-medium underline">the order</Link> and click <strong>Create PO in LS</strong>. VMS makes our PO, and the email asking them to use it is ready here.</>
+            <>The order has no PO. Type ours on <Link to={`${ROUTES.orders}/${c.order.id}`} className="font-medium underline">the order</Link>; the email asking them to use it is then ready here.</>
           ) : !c.order ? (
-            <>Pick the order above first, then open it and click <strong>Create PO in LS</strong>. The email asking them to use our PO is then ready here.</>
+            <>Pick the order above first. The email asking them to use our PO is then ready here.</>
           ) : (
             <>The email asking them to use our PO is being made; it shows here in a minute.</>
           )}

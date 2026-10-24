@@ -50,7 +50,7 @@ describe('Go to it', () => {
   const base = { auto_key: null, order_id: null, thread_id: null, vendor_id: null, carrier_id: null, rep_group_id: null }
   it('lands on the step when VMS knows where', async () => {
     const { taskTarget } = await import('./tasks')
-    expect(taskTarget({ ...base, auto_key: 'create_po:c1', order_id: 'o1' })).toEqual({ kind: 'page', to: '/orders/o1?do=create-po', label: 'Create the PO' })
+    expect(taskTarget({ ...base, auto_key: 'create_po:c1', order_id: 'o1' })).toEqual({ kind: 'page', to: '/orders/o1?do=create-po', label: 'Open the order' })
     expect(taskTarget({ ...base, auto_key: 'create_po:c1' })).toEqual({ kind: 'page', to: '/orders/paperwork/c1', label: 'Pick the order' })
     expect(taskTarget({ ...base, auto_key: 'item_change:r1', vendor_id: 'v1' })).toEqual({ kind: 'page', to: '/review?tab=items&item=r1', label: 'Open the item card' })
     expect(taskTarget({ ...base, auto_key: 'proof:l1', vendor_id: 'v1' })).toEqual({ kind: 'page', to: '/vendors/v1?folder=proofs&doc=l1', label: 'Open the proof' })

@@ -1,11 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { poCodeDefault, poState } from './poCheck'
+import { poCodeDefault, poSame, poState } from './poCheck'
 
 const v = { name: 'PO208 YAKTEST', po_code: 'YAKT' }
 
 describe('PO on a confirmation', () => {
   it('ours, with case, dashes and extra words aside', () => {
     expect(poState('yakt-101226 early buy', 'YAKT101226', v).state).toBe('ours')
+  })
+  it('ours written another way: no leading zeros, or a shorter vendor name', () => {
+    expect(poSame('OKUMA9126', 'OKUMA090126')).toBe(true)
+    expect(poSame('planet101926', 'PLANETCOTTON101926')).toBe(true)
+    expect(poSame('LAZY9226', 'LAZYONE090226')).toBe(true)
+    expect(poSame('OKUMA9127', 'OKUMA090126')).toBe(false)
+    expect(poSame('WW Show 9-2026', 'SONA090226')).toBe(false)
+    expect(poState('OKUMA9126', 'OKUMA090126', { name: 'OKUMA', po_code: null }).state).toBe('ours')
   })
   it('someone else\'s number when the order has ours', () => {
     expect(poState('1250540', 'YAKT101226', v).state).toBe('not_ours')

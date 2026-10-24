@@ -10,7 +10,7 @@ When a vendor confirms an order, Claude drafts its LS PO. The person who placed 
 1. **Claude drafts it** from the vendor's confirmation (or our order's items when there is no confirmation yet). Items already in LS keep their LS name and category; new items get a name by Trevor's naming SOP and a category by the LS category standard. Anything Claude could not confirm is in [brackets], never guessed.
 2. **The person who placed the order approves it.** They get a task "Approve the LS PO for …". Open it, check quantities and costs, change anything, and click **Approve**.
 3. **Trevor reviews it.** He gets "Review the LS PO for …". He checks names, categories and new items, and clicks **Send to Lightspeed** (or **Send back** to the person who placed it).
-4. **Send to Lightspeed** puts the items on our PO in LS (and makes the PO there first if nobody clicked **Create PO in LS** yet). Each item is found in LS by its System ID, Vendor ID or UPC.
+4. **Send to Lightspeed** puts the items on our PO in LS (the PO is made in LS right then, once, with our PO in **Reference #**). Each item is found in LS by its System ID, Vendor ID or UPC.
 5. **New items are entered in LS** with their name, category, vendor, Vendor ID, UPC, cost and the retail price from **Check-in pricing**. VMS holds one back while it still has a ⚑ flag that needs you: [brackets] in the name, "Needs manual description", "Waiting on Vendor ID", a name another item has, or a category LS doesn't have.
 6. **Items not in LS yet** are listed with the reason. Fix the name or category here (or add the item in LS), then click **Send again**: only the missing ones are added. When every item is on, it shows **In LS** and the PO is on the order.
 

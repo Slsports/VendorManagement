@@ -32,16 +32,8 @@ export const lsItemScanStatus = () => call<LsItemScan>({ action: 'scan_status' }
 
 /** LS's vendors into VMS, matched to ours by name where exactly one fits. */
 export const syncLsVendors = () => call<{ vendors: number; matched: number }>({ action: 'sync_vendors' })
-/** The empty PO in LS for the order's vendor and store; our PO goes on the order. */
-export const createLsPo = (orderId: string, shopId: string | null) => call<{ po_number: string; ls_order_id: string; shop_id: string }>({ action: 'create_po', order_id: orderId, shop_id: shopId })
-/** The approved draft's items onto the order's PO in LS; returns what could not be found in LS yet. */
+/** The approved draft into LS: the PO is made then (once), with its items; returns what could not be found in LS yet. */
 export const sendLsPoItems = (lsPoId: string) => call<{ po_number: string; added: number; created?: number; renamed?: number; missing: string[]; done: boolean }>({ action: 'send_items', ls_po_id: lsPoId })
-
-export async function poNumberPreview(orderId: string): Promise<string | null> {
-  const { data, error } = await supabase.rpc('po_number_next', { p_order: orderId })
-  if (error) throw error
-  return data
-}
 
 export interface LsVendor { ls_vendor_id: string; name: string; archived: boolean }
 export async function listLsVendors(organizationId: string): Promise<LsVendor[]> {

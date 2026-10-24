@@ -32,7 +32,7 @@ const d = (s: string | null | undefined) => (s ? new Date(s).toLocaleDateString(
 
 export default function OrderDetailPage() {
   const { id = '' } = useParams()
-  // "Go to it" from a Create PO task (Dana, Oct 14): land on the Create PO box
+  // "Go to it" from an old Create PO task (stopped Oct 24): land on the LS PO box
   const [params] = useSearchParams()
   const focusPo = params.get('do') === 'create-po'
   // the Ship and receive task (Dana, Oct 20): land on the Shipping & receiving box

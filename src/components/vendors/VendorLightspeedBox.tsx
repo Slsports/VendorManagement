@@ -17,7 +17,7 @@ const defaultCode = (name: string) => {
 
 /**
  * Lightspeed on the vendor page (Dana, Oct 13): the PO abbreviation our PO numbers start with (YAKIMA → YAKIMA080626) and which
- * Lightspeed vendor this is, so "Create PO in LS" can make the PO.
+ * Lightspeed vendor this is, so sending an LS PO draft can make the PO there.
  */
 export function VendorLightspeedBox({ vendor, canEdit, onChange }: { vendor: { id: string; name: string; po_code: string | null; lightspeed_vendor_id: string | null; lightspeed_name: string | null }; canEdit: boolean; onChange: () => void }) {
   const { organization } = useAuth()

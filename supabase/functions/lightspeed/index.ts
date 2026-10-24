@@ -7,8 +7,7 @@
 //   { action: 'disconnect' }                     → forgets the sign-in (the Client ID and Secret stay)
 // Editors (admin, manager, buyer), once connected (Dana, Oct 13: one PO number, [VENDOR][MMDDYY] in LS's Reference #):
 //   { action: 'sync_vendors' }                   → LS's vendors into VMS, matched to ours by name
-//   { action: 'create_po', order_id, shop_id? }  → the empty PO in LS for the order's vendor and store; our PO on the order
-//   { action: 'send_items', ls_po_id }           → the approved LS PO draft's items onto that PO in LS
+//   { action: 'send_items', ls_po_id }           → the approved LS PO draft: the PO in LS (made then, once) with its items
 //   { action: 'scan_items' }                     → read every LS item again now (counts per vendor; Dana, Oct 16)
 //   { action: 'item_change_write', change_id }   → a Review decision on an unavailable item into LS: * or ** and a dated note line
 //   { action: 'scan_status' }                    → the running or last reading
@@ -57,13 +56,12 @@ Deno.serve(async (req) => {
       const b = body as { item_ids?: string[]; from?: string; to?: string }
       return json(await receivingHistory(db, org, (b.item_ids ?? []).map(String), String(b.from ?? ''), b.to ?? null))
     }
-    if (body.action === 'sync_vendors' || body.action === 'create_po' || body.action === 'send_items' || body.action === 'scan_items' || body.action === 'item_change_write' || body.action === 'rename_now') {
+    if (body.action === 'sync_vendors' || body.action === 'send_items' || body.action === 'scan_items' || body.action === 'item_change_write' || body.action === 'rename_now') {
       if (!['admin', 'manager', 'buyer'].includes(me.role)) throw new HttpError(403, 'Only admins, managers and buyers do this')
       if (body.action === 'rename_now') return json(await renameQueue(db, org, RENAME_BUDGET_MS))
       if (body.action === 'item_change_write') return json(await writeItemChange(db, org, String(body.change_id ?? '')))
       if (body.action === 'scan_items') return json(await scanItems(db, org, true))
       if (body.action === 'sync_vendors') return json(await syncVendors(db, org))
-      if (body.action === 'create_po') return json(await createPo(db, me, String(body.order_id ?? ''), body.shop_id ?? null))
       return json(await sendItems(db, me, String(body.ls_po_id ?? '')))
     }
     if (me.role !== 'admin') throw new HttpError(403, 'Only the admin connects Lightspeed')
@@ -453,8 +451,9 @@ async function purchaseOrders(db: SupabaseClient, org: string, vendorIds: string
 const LS_DATE = (d: string | null) => `${d ?? new Date().toISOString().slice(0, 10)}T12:00:00-07:00`
 
 /**
- * The empty PO in LS for an order: its vendor (matched in LS), the store, Reference # = our PO ([CODE][MMDDYY]). The PO
- * goes on the order (po_number); that drafts the email asking the vendor to add it and closes the Create PO task.
+ * The PO in LS for an order, made only when its approved LS PO draft is sent (Dana, Oct 24: "The only create po should be
+ * when Trevor creates it in lightspeed with all the item attached"): its vendor (matched in LS), the store, Reference # =
+ * our PO, which every order has from the day it is in VMS.
  */
 async function createPo(db: SupabaseClient, me: Caller, orderId: string, shopId: string | null) {
   const org = me.organization_id

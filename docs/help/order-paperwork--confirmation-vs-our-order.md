@@ -28,6 +28,6 @@ Claude uses the first of these it can find:
 - The top of the check page shows **Compared with:** and what Claude used, so you know what it looked at. Click **Our order in VMS** there to see what we ordered, line by line.
 - Pictures sent with a typed order (the products or the design) are not the order: they go to the vendor's **Images** folder, not **Our orders**.
 - An order shipped in parts can have several confirmations; Claude takes the others into account.
-- A confirmation with no PO of ours gets a **Create PO** task (see "A confirmation with no PO").
+- A confirmation with no PO, or someone else's, gets the email asking them to use ours, ready in **Mail › Drafts** (see "The PO on a confirmation").
 - When you finish looking at a confirmation, an Open or Awaiting confirmation order becomes **Confirmed**.
 - Vendors ticked **Web orders, no confirmation needed** (like Kelli's) get no confirmation check: their order email confirms the order. Their invoices are still checked, but items they couldn't ship are just noted, since they aren't billed.
