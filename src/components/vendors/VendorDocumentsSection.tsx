@@ -11,6 +11,7 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useLiveTable } from '@/hooks/useLiveTable'
 import { DOC_FOLDERS, byYear, folderLabel, folderOf, isPictureFile, kindFor, thisYear, todayIso, yearChoices, type DocFolder } from '@/lib/documents'
 import { LINK_KIND_LABELS } from '@/lib/vendors'
+import { matchLink } from '@/lib/mailSearch'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
 import { MAX_UPLOAD_MB } from '@/lib/upload'
@@ -187,6 +188,8 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
           {l.kind === 'sales_report' && l.report_used_at ? <Badge tone="success" className="mr-1">Used to place the order</Badge> : null}
           {l.kind === 'approved_proof' ? <Badge tone="warning" className="mr-1"><Star className="mr-0.5 inline size-3 fill-amber-400 text-amber-500" aria-hidden="true" />Approved{l.approved_at ? ` ${new Date(l.approved_at).toLocaleDateString()}` : ''}</Badge> : null}
           {l.kind === 'proof' ? <Badge tone="neutral" className="mr-1">{l.superseded_at ? 'Earlier version, not used' : 'Not approved yet'}</Badge> : null}
+          {l.kind === 'invoice' && l.paid_at ? <Badge tone="success" className="mr-1">Paid {new Date(`${l.paid_at}T12:00:00`).toLocaleDateString()}{l.paid_how ? ` · ${l.paid_how}` : ''}</Badge> : null}
+          {l.kind === 'invoice' && l.paid_at && l.paid_thread_id ? <Link to={l.paid_email_id ? matchLink(l.paid_thread_id, { email_id: l.paid_email_id }) : `${ROUTES.mail}/${l.paid_thread_id}`} className="mr-1 text-brand hover:underline">payment email</Link> : null}
           {l.kind === 'confirmation' && l.replaced_po ? <Badge tone="success" className="mr-1">Final (replaced PO {l.replaced_po})</Badge> : null}
           {l.kind === 'confirmation' && l.superseded_at ? <Badge tone="neutral" className="mr-1">Old: replaced by an updated confirmation</Badge> : null}
           {folder && folder.kinds.length > 1 && folder.id !== 'proofs' ? <Badge tone="neutral" className="mr-1">{LINK_KIND_LABELS[l.kind]}</Badge> : null}

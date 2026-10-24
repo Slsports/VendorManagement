@@ -3109,3 +3109,8 @@ Oct 23, later: Dana added the three Twilio secrets; her "Testing text" task's re
 ## Oct 24, 2026 — No texts at night
 - Dana got three reminder texts at 12:46 am (tasks VMS made at 12:45 and 1:03 am with an immediate reminder; the sender texted with no time check). "no one should not receive texts before 8am or after 6 pm unless they specifically set it that way themselves."
 - Rule: texts go only between 8 AM and 6 PM Pacific unless the person sets their own hours (How I get reminders › Text me only between). Outside those hours the dashboard and email still come right away; the text waits for the start time and is skipped if the task is done by then.
+
+## Oct 24, 2026 — Paid invoices; Rossignol is paperwork only
+- Dana: Tyler's Oct 22 email said he paid Rossignol on their portal; "They should be showing us paid." And: "Rossignol invoices don't need an order. This process is how it always goes. Tyler places those orders on the rossignol website, the confirmation goes to only him, then after he receives them, he pays them on the rossignol portal. Vms just needs to file the paperwork accurately."
+- Rule: a payment email (our forward of a bill-pay receipt, a vendor's payment receipt) marks the invoices it names or carries as **Paid**, with the date, how and the email. Invoices named before they're filed get marked when they land. Private and Accounting mail are never read for this. Back-check: 12 months of shared vendor mail about payments.
+- Rule: vendor tick **Paperwork only**: their confirmations and invoices are filed with no order check. Rossignol is ticked; its three open "Which order?" checks were closed.

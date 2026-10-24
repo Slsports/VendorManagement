@@ -12,11 +12,13 @@
 // makes a Review card (Make active again / Keep inactive).
 // Also (Dana, Oct 24): the vendor's answer to "please use our PO" (po_asks) is read and logged on the order with the email
 // (po_ask_answer): yes → wait for the updated confirmation; too late → their PO on the order and a thank-you in Drafts.
+// Also (Dana, Oct 24, Rossignol): shared vendor mail that may say invoices were paid is read once; the invoices it names, or
+// the ones attached, show Paid with the date, how and the email (payment_notice_read).
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, errorResponse, json, serviceClient } from '../_shared/caller.ts'
 import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
 import { buildMime, formatAddress } from '../_shared/mime.ts'
-import { aiEnabled, readBackorderAnswer, readInactiveVendorMail, readPoAnswer, readVmsNote } from '../_shared/ai.ts'
+import { aiEnabled, readBackorderAnswer, readInactiveVendorMail, readPaymentEmails, readPoAnswer, readVmsNote } from '../_shared/ai.ts'
 import { cleanDates, longDay, pacificIso, pacificToday, splitVmsNote } from '../_shared/vmsNote.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://vms.shaverlakesports.com'
@@ -67,7 +69,8 @@ Deno.serve(async (req) => {
       if (Date.now() - started < TIME_BUDGET_MS) closed = await watchAnswers(db, org, mailer)
       const inactive = Date.now() - started < TIME_BUDGET_MS ? await inactiveVendorMail(db, org) : null
       const poAnswers = Date.now() - started < TIME_BUDGET_MS ? await poAsks(db, org) : null
-      out.push({ org, found, made, asked, failed, closed, inactive, poAnswers })
+      const paid = Date.now() - started < TIME_BUDGET_MS ? await paymentEmails(db, org) : null
+      out.push({ org, found, made, asked, failed, closed, inactive, poAnswers, paid })
     }
     return json(out)
   } catch (e) {
@@ -203,6 +206,33 @@ async function poAsks(db: SupabaseClient, org: string) {
     if (r) seen[r] = (seen[r] ?? 0) + 1
   }
   return seen
+}
+
+/** Mail that may say invoices were paid, read 8 at a time: the invoices named or attached are marked paid. */
+async function paymentEmails(db: SupabaseClient, org: string) {
+  const queued = await ok(db.rpc('payment_notices_find', { p_org: org }))
+  const { data: waiting } = await db.from('payment_notices').select('email_id, vendor:vendors!payment_notices_vendor_id_fkey(name)').eq('organization_id', org).is('read_at', null).order('created_at').limit(8)
+  const list = (waiting ?? []) as unknown as { email_id: string; vendor: { name: string } | null }[]
+  if (!list.length) return { queued, read: 0, marked: 0 }
+  const ids = list.map((w) => w.email_id)
+  const { data: mails } = await db.from('emails').select('id, direction, from_email, subject, body_text, snippet').in('id', ids)
+  const { data: atts } = await db.from('email_attachments').select('email_id, file_name').in('email_id', ids)
+  const byId = new Map((mails ?? []).map((m) => [m.id as string, m]))
+  const answers = await readPaymentEmails(db, org, list.map((w) => {
+    const m = byId.get(w.email_id)
+    return { id: w.email_id, vendor: w.vendor?.name ?? '', direction: String(m?.direction ?? ''), from: (m?.from_email as string | null) ?? null, subject: (m?.subject as string | null) ?? null,
+      attachments: (atts ?? []).filter((a) => a.email_id === w.email_id).map((a) => String(a.file_name)), text: String(m?.body_text ?? m?.snippet ?? '') }
+  }))
+  let marked = 0
+  for (const w of list) {
+    const a = answers.get(w.email_id)
+    const n = (await ok(db.rpc('payment_notice_read', {
+      p_email: w.email_id, p_is_payment: a?.is_payment ?? false, p_paid_on: /^\d{4}-\d{2}-\d{2}$/.test(a?.paid_on ?? '') ? a!.paid_on : null,
+      p_how: a?.how ?? '', p_numbers: a?.invoice_numbers ?? [], p_attached: a?.attached_are_paid ?? false, p_note: a?.note ?? 'Claude gave no answer',
+    }))) as number
+    marked += n ?? 0
+  }
+  return { queued, read: list.length, marked }
 }
 
 /** Plain emails to our own people, from orders@ (marked X-VMS-Notice, so they are never filed as mail). */
