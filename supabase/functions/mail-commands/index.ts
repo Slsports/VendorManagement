@@ -8,11 +8,13 @@
 //   4. tell    — an email to the person: what was made with a link to each task, or the one question when it can't tell
 //   5. watch   — once a task's email is sent, the vendor's answer in that conversation is read: when everything is settled
 //                the remaining tasks close (Closed by VMS, with why) and the person is told
+// Also (Dana, Oct 24): orders@ mail that involves an inactive vendor is read once; ordering or looking into ordering again
+// makes a Review card (Make active again / Keep inactive).
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, errorResponse, json, serviceClient } from '../_shared/caller.ts'
 import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
 import { buildMime, formatAddress } from '../_shared/mime.ts'
-import { aiEnabled, readBackorderAnswer, readVmsNote } from '../_shared/ai.ts'
+import { aiEnabled, readBackorderAnswer, readInactiveVendorMail, readVmsNote } from '../_shared/ai.ts'
 import { cleanDates, longDay, pacificIso, pacificToday, splitVmsNote } from '../_shared/vmsNote.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://vms.shaverlakesports.com'
@@ -61,7 +63,8 @@ Deno.serve(async (req) => {
         }
       }
       if (Date.now() - started < TIME_BUDGET_MS) closed = await watchAnswers(db, org, mailer)
-      out.push({ org, found, made, asked, failed, closed })
+      const inactive = Date.now() - started < TIME_BUDGET_MS ? await inactiveVendorMail(db, org) : null
+      out.push({ org, found, made, asked, failed, closed, inactive })
     }
     return json(out)
   } catch (e) {
@@ -159,6 +162,27 @@ async function watchAnswers(db: SupabaseClient, org: string, mailer: Mailer): Pr
     }
   }
   return closed
+}
+
+/** Mail that may involve an inactive vendor, read 10 at a time: ordering again makes the vendor's Review card. */
+async function inactiveVendorMail(db: SupabaseClient, org: string) {
+  const queued = await ok(db.rpc('inactive_vendor_mail_find', { p_org: org }))
+  const { data: waiting } = await db.from('inactive_vendor_mail').select('email_id, vendor:vendors!inactive_vendor_mail_vendor_id_fkey(name)').eq('organization_id', org).is('read_at', null).order('created_at').limit(10)
+  const list = (waiting ?? []) as unknown as { email_id: string; vendor: { name: string } | null }[]
+  if (!list.length) return { queued, read: 0, cards: 0 }
+  const { data: mails } = await db.from('emails').select('id, direction, from_email, subject, body_text, snippet').in('id', list.map((w) => w.email_id))
+  const byId = new Map((mails ?? []).map((m) => [m.id as string, m]))
+  const answers = await readInactiveVendorMail(db, org, list.map((w) => {
+    const m = byId.get(w.email_id)
+    return { id: w.email_id, vendor: w.vendor?.name ?? '', direction: String(m?.direction ?? ''), from: (m?.from_email as string | null) ?? null, subject: (m?.subject as string | null) ?? null, text: String(m?.body_text ?? m?.snippet ?? '') }
+  }))
+  let cards = 0
+  for (const w of list) {
+    const a = answers.get(w.email_id) ?? { ordering: false, why: 'Claude gave no answer' }
+    const card = await ok(db.rpc('inactive_vendor_mail_read', { p_email: w.email_id, p_ordering: a.ordering, p_why: a.why }))
+    if (card) cards++
+  }
+  return { queued, read: list.length, cards }
 }
 
 /** Plain emails to our own people, from orders@ (marked X-VMS-Notice, so they are never filed as mail). */

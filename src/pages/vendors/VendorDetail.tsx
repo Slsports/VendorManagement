@@ -100,6 +100,7 @@ export default function VendorDetailPage() {
     : (orderersQ.data ?? []).find((p) => p.id === v.assigned_buyer_id)?.full_name ?? null
   const wwdLink: ReactNode = v.vendor_billing_routes.some((r) => r.route === 'worldwide') ? <Link to={ROUTES.wwdContacts} className="text-brand hover:underline">Worldwide people and phone numbers</Link> : null
   const facts: [string, ReactNode][] = [
+    ['Inactive because', !v.is_active && v.inactive_reason ? `${v.inactive_reason}${v.inactive_at ? ` (${new Date(v.inactive_at).toLocaleDateString()})` : ''}` : null],
     ['Lightspeed name', v.lightspeed_name],
     ['Items in Lightspeed', v.ls_status ? `${lsItemsText(v)} (checked ${new Date(v.ls_items_checked_at!).toLocaleDateString()})` : null],
     ['Assigned to', assignedTo],
@@ -166,6 +167,7 @@ export default function VendorDetailPage() {
             {v.billcom_send ? <Badge tone="success">Invoices to Bill.com</Badge> : null}
             {v.web_orders ? <Badge tone="info">Web orders, no confirmation</Badge> : null}
             {v.is_retail_store ? <Badge tone="info">Retail store</Badge> : null}
+            {v.is_slh_vendor ? <Badge tone="info">Bought for SLH</Badge> : null}
             {v.ask_before_pictures ? <Badge tone="neutral">Pictures saved by hand</Badge> : null}
             {v.is_delivery_vendor ? <Badge tone="neutral">Delivery vendor</Badge> : null}
             {v.wwd_active === false ? <Badge tone="warning">No longer with WWD{v.wwd_active_as_of ? ` (Edenred, ${shortDate(v.wwd_active_as_of)})` : ''}</Badge> : null}

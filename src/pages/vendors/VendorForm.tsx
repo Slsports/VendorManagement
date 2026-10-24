@@ -60,6 +60,7 @@ interface FormState {
   billcom_send: boolean
   web_orders: boolean
   is_retail_store: boolean
+  is_slh_vendor: boolean
   ask_before_pictures: boolean
   order_set_at_show: boolean
   usual_charges: { what: string; price: string; per: string }[]
@@ -93,7 +94,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   name: '', aliases: '', routes: [], defaultRoute: '', payMethod: '', rep_group_id: '', assigned_buyer_id: '', payment_terms_id: '', ordering_frequency: '',
-  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, freight_allowance_on_time: false, vid_in_description: false, item_name_vendor: '', is_fishing: false, billcom_send: false, web_orders: false, is_retail_store: false, ask_before_pictures: false, order_set_at_show: false, usual_charges: [], invoice_store_aliases: [],
+  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, freight_allowance_on_time: false, vid_in_description: false, item_name_vendor: '', is_fishing: false, billcom_send: false, web_orders: false, is_retail_store: false, is_slh_vendor: false, ask_before_pictures: false, order_set_at_show: false, usual_charges: [], invoice_store_aliases: [],
   website: '', phone: '', email: '', fax: '', account_number: '', catalog: '', address: '', city: '', state: '', postal_code: '',
   pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', shipping_contact_email: '', minimum_order: '', po_code: '', freight_program: '', free_shipping_policy: '', free_shipping_threshold: '', freight_routing: '', product_types: '',
   notes: '', return_notes: '', windows: [],
@@ -127,6 +128,7 @@ function formFromVendor(v: VendorDetail): FormState {
     billcom_send: v.billcom_send,
     web_orders: v.web_orders,
     is_retail_store: v.is_retail_store,
+    is_slh_vendor: v.is_slh_vendor,
     ask_before_pictures: v.ask_before_pictures,
     order_set_at_show: v.order_set_at_show,
     invoice_store_aliases: Object.entries((v.invoice_store_aliases ?? {}) as Record<string, string>).map(([name, store]) => ({ name, store })),
@@ -221,6 +223,7 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
       billcom_send: form.billcom_send,
       web_orders: form.web_orders,
       is_retail_store: form.is_retail_store,
+      is_slh_vendor: form.is_slh_vendor,
       ask_before_pictures: form.ask_before_pictures,
       order_set_at_show: form.order_set_at_show,
       invoice_store_aliases: Object.fromEntries(form.invoice_store_aliases.filter((a) => a.name.trim() && a.store).map((a) => [a.name.trim(), a.store])),
@@ -357,6 +360,7 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.vid_in_description} onChange={(e) => set('vid_in_description', e.target.checked)} /> Add Vendor ID to item names, last after one space (LAZY ONE MENS PAJAMA SET BLUE 2XL PJ5512); each order can change it</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_fishing} onChange={(e) => set('is_fishing', e.target.checked)} /> Fishing vendor (Jarrett runs these reports)</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.billcom_send} onChange={(e) => set('billcom_send', e.target.checked)} /> Send invoices to Bill.com (each invoice email is forwarded to Bill.com's inbox; off = nothing is sent)</label>
+            <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_slh_vendor} onChange={(e) => set('is_slh_vendor', e.target.checked)} /> Bought for SLH (the hardware store): never made inactive for having nothing new in LS</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_retail_store} onChange={(e) => set('is_retail_store', e.target.checked)} /> Retail store (Costco, Walmart, Amazon…): no contact update email, no contact checks, never made inactive</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.web_orders} onChange={(e) => set('web_orders', e.target.checked)} /> Web orders, no confirmation needed (their order email confirms it; items they can't ship just aren't billed)</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.ask_before_pictures} onChange={(e) => set('ask_before_pictures', e.target.checked)} /> Ask before saving pictures (their advertising waits for Save pictures in the email; proofs, invoices and confirmations still save)</label>
