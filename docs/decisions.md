@@ -3104,3 +3104,4 @@ Oct 23, later: Dana added the three Twilio secrets; her "Testing text" task's re
 ## Oct 24, 2026 — Planet Cotton: the design goes with the garments above it
 - Dana (invoice 164402): "Even if there are several groups of different shirts, they always go with the design below them. So both pt100 and pt100v are design R5388-2-L, the same as PS 100H. This is very common so make a rule. We also do not use vendor id in the description for planet orders."
 - Rule: every PC garment line takes the first DESIGN line below it. PC item names in LS never carry the Vendor ID (vid_in_description stays off).
+- Dana: "Attach the youth closeout sheet to the kids order" (done: its three versions are on PO planet101926). "the ps 317 bl probably has something else after it but we dont know what it is lol, that one, or anything like it will have to stop after the bl." Rule: an Item Code cut off on a paper stops where the print stops (PS 317 BL); VMS trims the dots for every vendor.

@@ -6,6 +6,7 @@ import { zodOutputFormat } from 'npm:@anthropic-ai/sdk/helpers/zod'
 import { z } from 'npm:zod'
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { cutAnswer, wholeObjects } from './partialJson.ts'
+import { cutOffVids } from './vendorIds.ts'
 import { claudeClient, logUsage, sys } from './claudeClient.ts'
 
 /** Dana chose the cheapest model for sorting (Oct 8). Override per job with AI_MODEL_MAIL. */
@@ -735,10 +736,10 @@ export async function readPaperwork(db: SupabaseClient, org: string, file: Paper
   const res = await copyCall({ max_tokens: 32000, output_config: { format: zodOutputFormat(PaperAnswer) }, system: sys(READ_SYSTEM), messages: [{ role: 'user', content }] })
   await logUsage(db, org, 'order_paper_read', SCAN_MODEL, res, 1)
   const text = answerText(res)
-  if (res.stop_reason !== 'max_tokens') return parseOrExplain(res, PaperAnswer)
+  if (res.stop_reason !== 'max_tokens') return cutOffVids(parseOrExplain(res, PaperAnswer))
   // too long for one answer: keep the header and every whole line, then read on from the last one
   const cut = cutAnswer(text)
-  if (!cut) return parseOrExplain(res, PaperAnswer)
+  if (!cut) return cutOffVids(parseOrExplain(res, PaperAnswer))
   const reading = { ...cut.head, lines: cut.lines } as PaperReading
   for (let part = 2; part <= PAPER_PARTS; part++) {
     const last = reading.lines[reading.lines.length - 1]
@@ -750,7 +751,7 @@ export async function readPaperwork(db: SupabaseClient, org: string, file: Paper
     if (more.stop_reason !== 'max_tokens') {
       const got = parseOrExplain(more, MoreLines)
       reading.lines.push(...got.lines)
-      if (got.finished || !got.lines.length) return reading
+      if (got.finished || !got.lines.length) return cutOffVids(reading)
       continue
     }
     const lines = wholeObjects(answerText(more), '"lines":[')
@@ -759,7 +760,7 @@ export async function readPaperwork(db: SupabaseClient, org: string, file: Paper
   }
   reading.sure = false
   reading.note = `${reading.note ? `${reading.note} ` : ''}Very long document: read the first ${reading.lines.length} item lines; check the rest by eye.`.trim()
-  return reading
+  return cutOffVids(reading)
 }
 
 /** One Claude call that copies from a document: Sonnet with thinking off ("between_tools" turns it off on Sonnet 5.5), streamed so a long answer never times out. */
