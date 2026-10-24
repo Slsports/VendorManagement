@@ -131,7 +131,7 @@ export const snoozeTask = (id: string, until: Date) => updateTask(id, { remind_a
 export const reminderSeen = (id: string) => updateTask(id, { reminder_seen_at: new Date().toISOString() })
 export const finishedSeen = (id: string) => updateTask(id, { done_seen_at: new Date().toISOString() })
 
-export interface ReminderSettings { remind_dashboard: boolean; remind_email: boolean; remind_text: boolean; mobile_phone: string | null }
+export interface ReminderSettings { remind_dashboard: boolean; remind_email: boolean; remind_text: boolean; mobile_phone: string | null; text_from: string; text_until: string }
 
 export async function saveReminderSettings(profileId: string, s: ReminderSettings): Promise<void> {
   const { error } = await supabase.from('profiles').update(s).eq('id', profileId)

@@ -4,18 +4,21 @@
 // (Twilio, once TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_FROM are set).
 //   reminders: open tasks whose remind time has come, to the person it is assigned to
 //   done:      tasks someone finished that another person gave them, to the giver
+// Texts go only in the person's texting hours (Dana, Oct 24: 8 am to 6 pm unless they set their own): outside them the
+// email goes now and the text waits (text_wait_until), and is dropped if the task is done by then.
 //   drafts:    emails Claude prepared (Mail › Drafts) that also go in the mailbox's Gmail Drafts (gmail_copy), Dana Oct 12
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, errorResponse, json, serviceClient } from '../_shared/caller.ts'
 import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
 import { buildMime, formatAddress } from '../_shared/mime.ts'
+import { nextTextTime } from '../_shared/textHours.ts'
 import { fillSignature, htmlEmail, textEmail } from '../_shared/signature.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://vms.shaverlakesports.com'
 const TZ = 'America/Los_Angeles'
 const BATCH = 40
 
-interface Person { id: string; full_name: string | null; email: string; remind_email: boolean; remind_text: boolean; mobile_phone: string | null }
+interface Person { id: string; full_name: string | null; email: string; remind_email: boolean; remind_text: boolean; mobile_phone: string | null; text_from: string | null; text_until: string | null }
 interface TaskRow {
   id: string; organization_id: string; title: string; notes: string | null; due_date: string | null; assigned_to: string; created_by: string | null
   done_by: string | null; done_note: string | null; tag_other: string | null; auto_key: string | null; thread_id: string | null
@@ -40,7 +43,15 @@ Deno.serve(async (req) => {
     const { data: due } = await db.from('tasks').select('id').is('done_at', null).is('reminded_at', null).lte('remind_at', now).limit(BATCH)
     const reminded = await claim(db, (due ?? []).map((r) => r.id), 'reminded_at')
     for (const t of reminded) {
-      const errors = await sender.notify(t.organization_id, t.assigned_to, `Reminder: ${t.title}`, reminderText(t), `VMS reminder: ${t.title}${t.due_date ? ` (due ${day(t.due_date)})` : ''}`)
+      const { errors, textAt } = await sender.notify(t.organization_id, t.assigned_to, `Reminder: ${t.title}`, reminderText(t), reminderSms(t))
+      if (errors.length || textAt) await db.from('tasks').update({ ...(errors.length ? { remind_error: errors.join('; ').slice(0, 500) } : {}), ...(textAt ? { text_wait_until: textAt } : {}) }).eq('id', t.id)
+    }
+    // Texts that waited for the person's hours (claimed first); a task done meanwhile gets none.
+    const { data: waited } = await db.from('tasks').update({ text_wait_until: null }).lte('text_wait_until', now).select(SELECT)
+    for (const t of (waited ?? []) as unknown as TaskRow[]) {
+      const { data: still } = await db.from('tasks').select('done_at').eq('id', t.id).maybeSingle()
+      if (still?.done_at) continue
+      const errors = await sender.text(t.assigned_to, reminderSms(t))
       if (errors.length) await db.from('tasks').update({ remind_error: errors.join('; ').slice(0, 500) }).eq('id', t.id)
     }
 
@@ -50,7 +61,14 @@ Deno.serve(async (req) => {
     for (const t of finished) {
       if (!t.created_by || t.created_by === t.done_by) continue
       const who = (await sender.person(t.done_by ?? t.assigned_to))?.full_name?.split(' ')[0] ?? 'Someone'
-      await sender.notify(t.organization_id, t.created_by, `Done: ${t.title}`, doneText(t, who), `VMS: ${who} finished "${t.title}"${t.done_note ? ` — ${t.done_note}` : ''}`)
+      const { textAt } = await sender.notify(t.organization_id, t.created_by, `Done: ${t.title}`, doneText(t, who), doneSms(t, who))
+      if (textAt) await db.from('tasks').update({ done_text_wait_until: textAt }).eq('id', t.id)
+    }
+    const { data: doneWaited } = await db.from('tasks').update({ done_text_wait_until: null }).lte('done_text_wait_until', now).select(SELECT)
+    for (const t of (doneWaited ?? []) as unknown as TaskRow[]) {
+      if (!t.created_by) continue
+      const who = (await sender.person(t.done_by ?? t.assigned_to))?.full_name?.split(' ')[0] ?? 'Someone'
+      await sender.text(t.created_by, doneSms(t, who))
     }
     const drafts = await copyDrafts(db)
     const routing = await routingReminders(db)
@@ -77,6 +95,9 @@ function about(t: TaskRow): string | null {
   const parts = [t.vendor?.name, t.carrier?.name, t.rep_group?.name, order, thread, t.tag_other].filter(Boolean)
   return parts.length ? parts.join(' · ') : null
 }
+
+const reminderSms = (t: TaskRow) => `VMS reminder: ${t.title}${t.due_date ? ` (due ${day(t.due_date)})` : ''}`
+const doneSms = (t: TaskRow, who: string) => `VMS: ${who} finished "${t.title}"${t.done_note ? ` — ${t.done_note}` : ''}`
 
 function reminderText(t: TaskRow): string {
   return [
@@ -115,7 +136,7 @@ class Sender {
 
   async person(id: string): Promise<Person | null> {
     if (!this.people.has(id)) {
-      const { data } = await this.db.from('profiles').select('id, full_name, email, remind_email, remind_text, mobile_phone').eq('id', id).maybeSingle()
+      const { data } = await this.db.from('profiles').select('id, full_name, email, remind_email, remind_text, mobile_phone, text_from, text_until').eq('id', id).maybeSingle()
       this.people.set(id, (data as Person | null) ?? null)
     }
     return this.people.get(id) ?? null
@@ -129,10 +150,13 @@ class Sender {
     return this.mail.get(org) ?? null
   }
 
-  /** Email and/or text the person, as they chose; returns what went wrong. */
-  async notify(org: string, personId: string, subject: string, body: string, sms: string): Promise<string[]> {
+  /**
+   * Email and/or text the person, as they chose. Outside their texting hours the text is not sent: textAt says when it
+   * may go (the caller keeps it waiting). Returns what went wrong.
+   */
+  async notify(org: string, personId: string, subject: string, body: string, sms: string): Promise<{ errors: string[]; textAt: string | null }> {
     const p = await this.person(personId)
-    if (!p) return ['person not found']
+    if (!p) return { errors: ['person not found'], textAt: null }
     const errors: string[] = []
     if (p.remind_email && p.email) {
       try {
@@ -143,21 +167,30 @@ class Sender {
         errors.push(`email: ${e instanceof Error ? e.message : String(e)}`)
       }
     }
+    let textAt: string | null = null
     if (p.remind_text) {
-      const to = phoneE164(p.mobile_phone)
-      const sid = Deno.env.get('TWILIO_ACCOUNT_SID'), token = Deno.env.get('TWILIO_AUTH_TOKEN'), from = Deno.env.get('TWILIO_FROM')
-      if (!to) errors.push('text: no mobile number')
-      else if (!sid || !token || !from) errors.push('text: texting is not set up yet')
-      else {
-        const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
-          method: 'POST',
-          headers: { Authorization: `Basic ${btoa(`${sid}:${token}`)}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({ To: to, From: from, Body: `${sms.slice(0, 280)} Reply STOP to stop.` }),
-        })
-        if (!res.ok) errors.push(`text: ${res.status} ${(await res.text()).slice(0, 200)}`)
-      }
+      const now = new Date()
+      const when = nextTextTime(now, p.text_from, p.text_until)
+      if (when.getTime() > now.getTime()) textAt = when.toISOString()
+      else errors.push(...(await this.text(personId, sms)))
     }
-    return errors
+    return { errors, textAt }
+  }
+
+  /** The text alone (Twilio), when the person takes texts; returns what went wrong. */
+  async text(personId: string, sms: string): Promise<string[]> {
+    const p = await this.person(personId)
+    if (!p?.remind_text) return []
+    const to = phoneE164(p.mobile_phone)
+    const sid = Deno.env.get('TWILIO_ACCOUNT_SID'), token = Deno.env.get('TWILIO_AUTH_TOKEN'), from = Deno.env.get('TWILIO_FROM')
+    if (!to) return ['text: no mobile number']
+    if (!sid || !token || !from) return ['text: texting is not set up yet']
+    const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: 'POST',
+      headers: { Authorization: `Basic ${btoa(`${sid}:${token}`)}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ To: to, From: from, Body: `${sms.slice(0, 280)} Reply STOP to stop.` }),
+    })
+    return res.ok ? [] : [`text: ${res.status} ${(await res.text()).slice(0, 200)}`]
   }
 }
 

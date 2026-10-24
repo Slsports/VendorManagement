@@ -17,7 +17,7 @@ export function withAuth(role: UserRole, ui: ReactNode, initialEntries: string[]
       dashboard_layout: null,
       remind_dashboard: true,
       remind_email: true,
-      remind_text: false,
+      remind_text: false, text_from: '08:00:00', text_until: '18:00:00',
       mobile_phone: null,
       reviews_ls_pos: false, can_dnr: false, handles_logistics: false, note_initials: null, can_see: [],
       places_orders: false,
