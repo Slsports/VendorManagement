@@ -6,7 +6,8 @@
 //   comparing → Claude compares it with what we ordered (confirmation) or with the final confirmation (invoice); with no
 //               order, or an order with no item list, a confirmation is compared with the sales report we ordered from
 //               (Dana, Oct 13). It writes the summary and, with issues, the draft email; then it waits on a person.
-// Nothing is ever sent from here.
+// Nothing is ever sent from here. { preview_document_id } (cron secret only) reads a document and returns the reading,
+// saving nothing.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, caller, errorResponse, json, serviceClient } from '../_shared/caller.ts'
 import { checkName, fixName, fixVendorId, lsContext, splitMarker } from '../_shared/itemNameSop.ts'
@@ -34,7 +35,13 @@ Deno.serve(async (req) => {
     let org: string | null = null
     if (!(cronSecret && req.headers.get('x-cron-secret') === cronSecret)) org = (await caller(req, db, true)).organization_id
     if (!aiEnabled()) return json({ skipped: 'Claude is not set up' })
-    const body = await req.json().catch(() => ({})) as { check_id?: string }
+    const body = await req.json().catch(() => ({})) as { check_id?: string; preview_document_id?: string }
+    // read only (pg_cron secret): how Claude reads a document now, saving nothing (Dana, Oct 24: show the Vendor IDs
+    // before anything goes to LS)
+    if (body.preview_document_id) {
+      if (org) return json({ error: 'Not allowed' }, 403)
+      return json(await previewRead(db, body.preview_document_id))
+    }
     const started = Date.now()
     const done: unknown[] = []
     while (Date.now() - started < TIME_BUDGET_MS / 2) {
@@ -74,6 +81,17 @@ async function nextCheck(db: SupabaseClient, org: string | null, id: string | nu
   if (!c) return null
   const { data: claimed } = await db.from('order_checks').update({ working_at: new Date().toISOString() }).eq('id', c.id).eq('status', c.status).select('id')
   return claimed?.length ? c : null
+}
+
+async function previewRead(db: SupabaseClient, documentId: string) {
+  const { data: l } = await db.from('vendor_links').select('id, organization_id, vendor_id, email_id').eq('id', documentId).maybeSingle()
+  if (!l) return { error: 'Document not found' }
+  const doc = await loadLink(db, l.id)
+  if (!doc) return { error: 'The document file is missing' }
+  const email = l.email_id ? (await db.from('emails').select('subject, body_text').eq('id', l.email_id).maybeSingle()).data : null
+  const v = l.vendor_id ? (await db.from('vendors').select('name, vendor_id_rule').eq('id', l.vendor_id).maybeSingle()).data : null
+  const reading = await readPaperwork(db, l.organization_id, doc, { vendor: v?.name ?? null, subject: email?.subject ?? null, email_text: email?.body_text ?? null, vendor_id_rule: v?.vendor_id_rule ?? null })
+  return { document_id: l.id, reading }
 }
 
 async function work(db: SupabaseClient, c: Check) {
