@@ -187,6 +187,8 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
           {l.kind === 'sales_report' && l.report_used_at ? <Badge tone="success" className="mr-1">Used to place the order</Badge> : null}
           {l.kind === 'approved_proof' ? <Badge tone="warning" className="mr-1"><Star className="mr-0.5 inline size-3 fill-amber-400 text-amber-500" aria-hidden="true" />Approved{l.approved_at ? ` ${new Date(l.approved_at).toLocaleDateString()}` : ''}</Badge> : null}
           {l.kind === 'proof' ? <Badge tone="neutral" className="mr-1">{l.superseded_at ? 'Earlier version, not used' : 'Not approved yet'}</Badge> : null}
+          {l.kind === 'confirmation' && l.replaced_po ? <Badge tone="success" className="mr-1">Final (replaced PO {l.replaced_po})</Badge> : null}
+          {l.kind === 'confirmation' && l.superseded_at ? <Badge tone="neutral" className="mr-1">Old: replaced by an updated confirmation</Badge> : null}
           {folder && folder.kinds.length > 1 && folder.id !== 'proofs' ? <Badge tone="neutral" className="mr-1">{LINK_KIND_LABELS[l.kind]}</Badge> : null}
           {l.store_code ? <Badge tone="info" className="mr-1">{l.store_code}</Badge> : null}
           {l.doc_number || l.doc_total != null ? <span className="mr-1 font-medium text-stone-700">{[l.doc_number ? `#${l.doc_number}` : null, l.doc_date ? new Date(`${l.doc_date}T12:00:00`).toLocaleDateString() : null, l.doc_total != null ? `$${Number(l.doc_total).toFixed(2)}` : null].filter(Boolean).join(' · ')} ·</span> : null}
@@ -281,7 +283,16 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
                 </summary>
                 {folder.id === 'images' || folder.id === 'damaged' || folder.id === 'proofs'
                   ? <ul className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{rows.map((l) => row(l, true))}</ul>
-                  : <ul className="ml-1 divide-y divide-stone-100 border-l border-stone-100 pl-3">{rows.map((l) => row(l))}</ul>}
+                  : folder.id === 'confirmations' && rows.some((l) => l.superseded_at) ? (
+                    // a confirmation replaced by an updated one (Dana, Oct 24) goes to Old inside its year, kept
+                    <>
+                      <ul className="ml-1 divide-y divide-stone-100 border-l border-stone-100 pl-3">{rows.filter((l) => !l.superseded_at).map((l) => row(l))}</ul>
+                      <details className="ml-4 mt-1">
+                        <summary className="cursor-pointer text-sm font-medium text-stone-700"><Folder className="mr-1 inline size-4 text-stone-400" aria-hidden="true" />Old <span className="font-normal text-stone-500">({rows.filter((l) => l.superseded_at).length})</span></summary>
+                        <ul className="ml-1 divide-y divide-stone-100 border-l border-stone-100 pl-3">{rows.filter((l) => l.superseded_at).map((l) => row(l))}</ul>
+                      </details>
+                    </>
+                  ) : <ul className="ml-1 divide-y divide-stone-100 border-l border-stone-100 pl-3">{rows.map((l) => row(l))}</ul>}
               </details>
             ))}
             {folder.id === 'credits' ? <WwdCreditsInFolder vendorId={vendorId} /> : null}

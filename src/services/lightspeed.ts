@@ -73,3 +73,6 @@ export function lsReasonLabel(reason: string | null): string {
     default: return reason ?? 'Changed'
   }
 }
+
+/** Dana's OK on a "Change the Reference #" card (the vendor said too late to use our PO): their PO onto the LS PO. */
+export const setLsPoReference = (itemId: string) => call<{ status: string; reference?: string }>({ action: 'po_reference', item_id: itemId })

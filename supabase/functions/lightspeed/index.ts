@@ -8,6 +8,7 @@
 // Editors (admin, manager, buyer), once connected (Dana, Oct 13: one PO number, [VENDOR][MMDDYY] in LS's Reference #):
 //   { action: 'sync_vendors' }                   → LS's vendors into VMS, matched to ours by name
 //   { action: 'send_items', ls_po_id }           → the approved LS PO draft: the PO in LS (made then, once) with its items
+//   { action: 'po_reference', item_id }          → admin: a Review card's new Reference # onto the PO in LS (vendor said too late)
 //   { action: 'scan_items' }                     → read every LS item again now (counts per vendor; Dana, Oct 16)
 //   { action: 'item_change_write', change_id }   → a Review decision on an unavailable item into LS: * or ** and a dated note line
 //   { action: 'scan_status' }                    → the running or last reading
@@ -55,6 +56,10 @@ Deno.serve(async (req) => {
       if (!['admin', 'manager', 'buyer'].includes(me.role)) throw new HttpError(403, 'Only admins, managers and buyers do this')
       const b = body as { item_ids?: string[]; from?: string; to?: string }
       return json(await receivingHistory(db, org, (b.item_ids ?? []).map(String), String(b.from ?? ''), b.to ?? null))
+    }
+    if (body.action === 'po_reference') {
+      if (me.role !== 'admin') throw new HttpError(403, 'Only Dana changes this')
+      return json(await setPoReference(db, me, String(body.item_id ?? '')))
     }
     if (body.action === 'sync_vendors' || body.action === 'send_items' || body.action === 'scan_items' || body.action === 'item_change_write' || body.action === 'rename_now') {
       if (!['admin', 'manager', 'buyer'].includes(me.role)) throw new HttpError(403, 'Only admins, managers and buyers do this')
@@ -484,6 +489,26 @@ async function createPo(db: SupabaseClient, me: Caller, orderId: string, shopId:
   const { error } = await db.from('orders').update({ po_number: po, ls_order_id: String(lsId), ls_shop_id: shop }).eq('id', o.id)
   if (error) throw new Error(`The PO was made in LS (${po}) but not saved on the order: ${error.message}`)
   return { po_number: po, ls_order_id: String(lsId), shop_id: shop }
+}
+
+/**
+ * The vendor said it was too late to use our PO (Dana, Oct 24): on Dana's OK, the PO already in LS gets their PO in
+ * Reference #, and the Review card closes.
+ */
+async function setPoReference(db: SupabaseClient, me: Caller, itemId: string) {
+  const org = me.organization_id
+  const { data: r } = await db.from('review_items').select('id, organization_id, kind, status, details').eq('id', itemId).maybeSingle()
+  if (!r || r.organization_id !== org || r.kind !== 'ls_po_reference') throw new HttpError(404, 'Card not found')
+  if (r.status !== 'pending') return { status: r.status }
+  const d = (r.details ?? {}) as { ls_order_id?: string; to?: string; order_id?: string }
+  if (!d.ls_order_id || !d.to) throw new HttpError(400, 'The card has no LS PO or new number')
+  const { data: conn } = await db.from('lightspeed_connections').select('scope').eq('organization_id', org).maybeSingle()
+  if (!String(conn?.scope ?? '').split(/\s+/).includes('employee:all')) throw new HttpError(400, NO_FULL_ACCESS)
+  const { token } = await lsAccessToken(db, org)
+  const acct = await accountId(db, org)
+  await lsPut(token, `/Account/${acct}/Order/${d.ls_order_id}.json`, { refNum: d.to })
+  await db.from('review_items').update({ status: 'accepted', resolved_by: me.id, resolved_at: new Date().toISOString(), resolution_note: `Reference # changed in Lightspeed to ${d.to}` }).eq('id', r.id)
+  return { status: 'accepted', reference: d.to }
 }
 
 interface DraftLine { vid: string | null; upc: string | null; desc: string; qty: number; cost: number | null; system_id: string | null; name: string; category?: string; is_new: boolean; ls_item_id?: string | null; ls_line_id?: string | null; rename?: string | null; rename_ok?: boolean; renamed?: boolean; flags?: string[]; created_note?: string | null }

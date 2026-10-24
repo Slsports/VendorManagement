@@ -10,11 +10,13 @@
 //                the remaining tasks close (Closed by VMS, with why) and the person is told
 // Also (Dana, Oct 24): orders@ mail that involves an inactive vendor is read once; ordering or looking into ordering again
 // makes a Review card (Make active again / Keep inactive).
+// Also (Dana, Oct 24): the vendor's answer to "please use our PO" (po_asks) is read and logged on the order with the email
+// (po_ask_answer): yes → wait for the updated confirmation; too late → their PO on the order and a thank-you in Drafts.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, errorResponse, json, serviceClient } from '../_shared/caller.ts'
 import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
 import { buildMime, formatAddress } from '../_shared/mime.ts'
-import { aiEnabled, readBackorderAnswer, readInactiveVendorMail, readVmsNote } from '../_shared/ai.ts'
+import { aiEnabled, readBackorderAnswer, readInactiveVendorMail, readPoAnswer, readVmsNote } from '../_shared/ai.ts'
 import { cleanDates, longDay, pacificIso, pacificToday, splitVmsNote } from '../_shared/vmsNote.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://vms.shaverlakesports.com'
@@ -64,7 +66,8 @@ Deno.serve(async (req) => {
       }
       if (Date.now() - started < TIME_BUDGET_MS) closed = await watchAnswers(db, org, mailer)
       const inactive = Date.now() - started < TIME_BUDGET_MS ? await inactiveVendorMail(db, org) : null
-      out.push({ org, found, made, asked, failed, closed, inactive })
+      const poAnswers = Date.now() - started < TIME_BUDGET_MS ? await poAsks(db, org) : null
+      out.push({ org, found, made, asked, failed, closed, inactive, poAnswers })
     }
     return json(out)
   } catch (e) {
@@ -183,6 +186,23 @@ async function inactiveVendorMail(db: SupabaseClient, org: string) {
     if (card) cards++
   }
   return { queued, read: list.length, cards }
+}
+
+/** Replies to "please use (or add) our PO": Claude reads them; the answer is logged on the order (po_ask_answer). */
+async function poAsks(db: SupabaseClient, org: string) {
+  const rows = (await ok(db.rpc('po_ask_replies', { p_org: org }))) as { ask_id: string; kind: string; their_po: string | null; our_po: string; vendor_name: string | null; email_ids: string[] | null }[] | null
+  const seen: Record<string, number> = {}
+  for (const w of rows ?? []) {
+    const ids = w.email_ids ?? []
+    if (!ids.length) continue
+    const { data: mails } = await db.from('emails').select('id, from_email, received_at, body_text, snippet').in('id', ids).order('received_at')
+    const list = (mails ?? []) as { id: string; from_email: string | null; received_at: string; body_text: string | null; snippet: string | null }[]
+    const a = await readPoAnswer(db, org, { kind: w.kind, their_po: w.their_po, our_po: w.our_po, vendor: w.vendor_name },
+      list.map((m) => ({ from: m.from_email, date: String(m.received_at).slice(0, 10), text: String(m.body_text ?? m.snippet ?? '') })))
+    const r = (await ok(db.rpc('po_ask_answer', { p_ask: w.ask_id, p_email: list[list.length - 1]!.id, p_outcome: a.outcome, p_note: a.note }))) as string | null
+    if (r) seen[r] = (seen[r] ?? 0) + 1
+  }
+  return seen
 }
 
 /** Plain emails to our own people, from orders@ (marked X-VMS-Notice, so they are never filed as mail). */

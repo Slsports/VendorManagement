@@ -16,7 +16,8 @@ Every confirmation review shows the vendor's PO at the top, checked against the 
 1. VMS writes the email for you, kept in **Mail › Drafts**. Nothing is sent on its own.
    - No PO: it asks them to add our PO to their order.
    - A different PO: it asks them, nicely, to change the order to our PO and send an updated confirmation.
-2. On the review, click **Open the email asking them to use our PO**. It opens right there: check it and click **Send**.
+2. On the review, click **Open the email asking them to add our PO** (or **…to use our PO**). It opens right there: check it and click **Send**.
+3. After it's sent, the line shows when you asked and what they answered (see "When a vendor didn't use our PO").
 
 ## Good to know
 - Claude's comparison doesn't list the PO as an issue, so the vendor doesn't get asked twice.

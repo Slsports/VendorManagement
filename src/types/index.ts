@@ -54,6 +54,7 @@ export type ShowAppearance = Tables<'show_appearances'>
 export type VendorLink = Tables<'vendor_links'>
 export type VendorLinkKind = VendorLink['kind']
 export type Order = Tables<'orders'>
+export type PoAsk = Tables<'po_asks'>
 export type WwdInvoice = Tables<'wwd_invoices'>
 export type WwdPayment = Tables<'wwd_payments'>
 export type OrderStatusHistory = Tables<'order_status_history'>

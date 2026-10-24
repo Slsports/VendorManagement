@@ -5,6 +5,9 @@ import { CircleCheck, Mail } from 'lucide-react'
 import { getDraft, type DraftRow } from '@/services/mail'
 import type { OrderCheckRow } from '@/services/orderChecks'
 import { poNorm, poState } from '@/lib/poCheck'
+import { matchLink } from '@/lib/mailSearch'
+import { poAskForCheck, poAskLine } from '@/services/poAsks'
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { ROUTES } from '@/lib/constants'
 import { errorMessage } from '@/lib/utils'
 import { Alert, Button } from '@/components/ui'
@@ -17,6 +20,8 @@ import { ComposeDialog } from '@/components/mail/ComposeDialog'
 export function ConfirmationPoLine({ c, onChanged }: { c: OrderCheckRow; onChanged: () => void }) {
   const [draft, setDraft] = useState<DraftRow | null>(null)
   const [loading, setLoading] = useState(false)
+  // what we asked them and what they answered (Dana, Oct 24)
+  const ask = useSupabaseQuery(() => poAskForCheck(c.id), [c.id])
   if (c.kind !== 'confirmation') return null
   const theirs = c.po_number ?? (c.reading as { po_number?: string | null } | null)?.po_number ?? null
   const ours = c.order?.po_number ?? null
@@ -52,8 +57,17 @@ export function ConfirmationPoLine({ c, onChanged }: { c: OrderCheckRow; onChang
       <Alert variant="warning" className="mb-4">
         <p>{problem}</p>
         <div className="mt-2 text-sm">
-          {c.po_draft_id ? (
-            <Button size="sm" loading={loading} onClick={() => void openDraft()} leftIcon={<Mail className="size-4" aria-hidden="true" />}>Open the email asking them to use our PO</Button>
+          {ask.data && ask.data.status !== 'drafted' ? (
+            <>
+              <p>{poAskLine(ask.data)}</p>
+              <p className="mt-1 flex flex-wrap gap-x-3">
+                {ask.data.ask_email ? <Link to={matchLink(ask.data.ask_email.thread_id, { email_id: ask.data.ask_email_id! })} className="font-medium underline">Our email</Link> : null}
+                {ask.data.answer_email ? <Link to={matchLink(ask.data.answer_email.thread_id, { email_id: ask.data.answer_email_id! })} className="font-medium underline">Their answer</Link> : null}
+                {ask.data.thanks_draft_id ? <Link to={`${ROUTES.mail}?view=drafts&draft=${ask.data.thanks_draft_id}`} className="font-medium underline">The thank-you (Drafts)</Link> : null}
+              </p>
+            </>
+          ) : c.po_draft_id ? (
+            <Button size="sm" loading={loading} onClick={() => void openDraft()} leftIcon={<Mail className="size-4" aria-hidden="true" />}>{state === 'missing' ? 'Open the email asking them to add our PO' : 'Open the email asking them to use our PO'}</Button>
           ) : c.order && !ours ? (
             <>The order has no PO. Type ours on <Link to={`${ROUTES.orders}/${c.order.id}`} className="font-medium underline">the order</Link>; the email asking them to use it is then ready here.</>
           ) : !c.order ? (
