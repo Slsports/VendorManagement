@@ -63,6 +63,9 @@ interface FormState {
   is_slh_vendor: boolean
   ask_before_pictures: boolean
   order_set_at_show: boolean
+  ask_freight_quote: boolean
+  order_sheet_senders: string
+  vendor_id_rule: string
   usual_charges: { what: string; price: string; per: string }[]
   invoice_store_aliases: { name: string; store: string }[]
   website: string
@@ -94,7 +97,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   name: '', aliases: '', routes: [], defaultRoute: '', payMethod: '', rep_group_id: '', assigned_buyer_id: '', payment_terms_id: '', ordering_frequency: '',
-  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, freight_allowance_on_time: false, vid_in_description: false, item_name_vendor: '', is_fishing: false, billcom_send: false, web_orders: false, is_retail_store: false, is_slh_vendor: false, ask_before_pictures: false, order_set_at_show: false, usual_charges: [], invoice_store_aliases: [],
+  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, freight_allowance_on_time: false, vid_in_description: false, item_name_vendor: '', is_fishing: false, billcom_send: false, web_orders: false, is_retail_store: false, is_slh_vendor: false, ask_before_pictures: false, order_set_at_show: false, ask_freight_quote: false, order_sheet_senders: '', vendor_id_rule: '', usual_charges: [], invoice_store_aliases: [],
   website: '', phone: '', email: '', fax: '', account_number: '', catalog: '', address: '', city: '', state: '', postal_code: '',
   pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', shipping_contact_email: '', minimum_order: '', po_code: '', freight_program: '', free_shipping_policy: '', free_shipping_threshold: '', freight_routing: '', product_types: '',
   notes: '', return_notes: '', windows: [],
@@ -131,6 +134,9 @@ function formFromVendor(v: VendorDetail): FormState {
     is_slh_vendor: v.is_slh_vendor,
     ask_before_pictures: v.ask_before_pictures,
     order_set_at_show: v.order_set_at_show,
+    ask_freight_quote: v.ask_freight_quote,
+    order_sheet_senders: (v.order_sheet_senders ?? []).join(', '),
+    vendor_id_rule: v.vendor_id_rule ?? '',
     invoice_store_aliases: Object.entries((v.invoice_store_aliases ?? {}) as Record<string, string>).map(([name, store]) => ({ name, store })),
     usual_charges: (v.usual_charges ?? []).map((c) => ({ what: c.what, price: c.price != null ? String(c.price) : '', per: c.per ?? 'each' })),
     do_not_order_reason: v.do_not_order_reason ?? '',
@@ -226,6 +232,9 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
       is_slh_vendor: form.is_slh_vendor,
       ask_before_pictures: form.ask_before_pictures,
       order_set_at_show: form.order_set_at_show,
+      ask_freight_quote: form.ask_freight_quote,
+      order_sheet_senders: form.order_sheet_senders.split(/[\s,;]+/).map((x) => x.trim().toLowerCase()).filter((x) => x.includes('@')),
+      vendor_id_rule: nz(form.vendor_id_rule),
       invoice_store_aliases: Object.fromEntries(form.invoice_store_aliases.filter((a) => a.name.trim() && a.store).map((a) => [a.name.trim(), a.store])),
       usual_charges: form.usual_charges.filter((c) => c.what.trim()).map((c) => ({ what: c.what.trim(), price: c.price.trim() ? Number(c.price.replace(/[^0-9.]/g, '')) : null, per: c.per.trim() || 'each' })),
       do_not_order_reason: form.standing !== 'ok' ? nz(form.do_not_order_reason) : null,
@@ -365,6 +374,14 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.web_orders} onChange={(e) => set('web_orders', e.target.checked)} /> Web orders, no confirmation needed (their order email confirms it; items they can't ship just aren't billed)</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.ask_before_pictures} onChange={(e) => set('ask_before_pictures', e.target.checked)} /> Ask before saving pictures (their advertising waits for Save pictures in the email; proofs, invoices and confirmations still save)</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.order_set_at_show} onChange={(e) => set('order_set_at_show', e.target.checked)} /> Order is finalized at the show (new items on their confirmation are listed to double check, not flagged; quantities and prices still are)</label>
+            {/* the Planet Cotton way (Dana, Oct 24): their freight quote after we approve, the rep's sheet is our order, their own Vendor IDs */}
+            <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.ask_freight_quote} onChange={(e) => set('ask_freight_quote', e.target.checked)} /> Ask for their freight quote once we approve the order (VMS writes the email)</label>
+            <FormField label="Their order sheets are our order: spreadsheets from" htmlFor="order_sheet_senders" hint="Email addresses, like the rep who sends the sheet we agree to. Those spreadsheets file to Our orders.">
+              <Input id="order_sheet_senders" value={form.order_sheet_senders} onChange={(e) => set('order_sheet_senders', e.target.value)} placeholder="rep@example.com" />
+            </FormField>
+            <FormField label="How their Vendor IDs are built" htmlFor="vendor_id_rule" hint="In plain words. Claude reads their confirmations and invoices this way.">
+              <Textarea id="vendor_id_rule" rows={2} value={form.vendor_id_rule} onChange={(e) => set('vendor_id_rule', e.target.value)} placeholder="e.g. garment # / design #, like PT 6934/R6886" />
+            </FormField>
             <UsualChargesEditor value={form.usual_charges} onChange={(v) => set('usual_charges', v)} />
             <InvoiceAliasEditor value={form.invoice_store_aliases} onChange={(v) => set('invoice_store_aliases', v)} />
             {isEdit ? <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.is_active} onChange={(e) => set('is_active', e.target.checked)} /> Active</label> : null}

@@ -82,8 +82,9 @@ async function work(db: SupabaseClient, c: Check) {
     if (!doc) throw new Error('The document file is missing')
     if (c.status === 'reading') {
       const email = c.email_id ? (await db.from('emails').select('subject, body_text').eq('id', c.email_id).maybeSingle()).data : null
-      const vendor = c.vendor_id ? (await db.from('vendors').select('name').eq('id', c.vendor_id).maybeSingle()).data?.name ?? null : null
-      const reading = await readPaperwork(db, c.organization_id, doc, { vendor, subject: email?.subject ?? null, email_text: email?.body_text ?? null })
+      const v = c.vendor_id ? (await db.from('vendors').select('name, vendor_id_rule').eq('id', c.vendor_id).maybeSingle()).data : null
+      // the vendor's own Vendor ID convention (Dana, Oct 24: Planet Cotton's <garment #>/<design #>)
+      const reading = await readPaperwork(db, c.organization_id, doc, { vendor: v?.name ?? null, subject: email?.subject ?? null, email_text: email?.body_text ?? null, vendor_id_rule: v?.vendor_id_rule ?? null })
       const found = c.order_id ? { id: null, how: null } : await findOrder(db, c, reading)
       const { data: next, error } = await db.rpc('order_check_apply_read', { p_check: c.id, p_reading: reading, p_order: found.id, p_how: found.how })
       // not sure enough to match: Claude's best guess is picked in advance on the check page (Dana, Oct 14)
@@ -138,6 +139,10 @@ async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
     .eq('id', c.order_id!).single()
   if (!o) throw new Error('The order is gone')
   const { data: lines } = await db.from('order_lines').select('vendor_item_id, description, quantity, unit_cost, extended').eq('order_id', o.id).order('sort_order')
+  // the freight quote we accepted (Dana, Oct 24: the invoice freight is checked against it)
+  const { data: fq } = c.kind === 'invoice'
+    ? await db.from('freight_quotes').select('vendor_cost, approved_choice, approved_cost, approved_at').eq('order_id', o.id).eq('status', 'approved').order('approved_at', { ascending: false }).limit(1).maybeSingle()
+    : { data: null }
   const against: PaperFile[] = []
   const againstIds: string[] = []
   const readings: Record<string, unknown>[] = []
@@ -182,9 +187,9 @@ async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
 
   const conversation = await conversationFor(db, c, o.id)
   const r = await comparePaperwork(db, c.organization_id, {
-    kind: c.kind, vendor: vendor?.name ?? null, order: { ...o, vendor: undefined }, order_lines: lines ?? [], doc, doc_reading: c.reading,
+    kind: c.kind, vendor: vendor?.name ?? null, order: { ...o, vendor: undefined, ...(fq ? { accepted_freight_quote: fq } : {}) }, order_lines: lines ?? [], doc, doc_reading: c.reading,
     against, against_readings: readings, contact, others, conversation, web_order: !!vendor?.web_orders, po_handled: c.kind === 'confirmation' && await poHandled(db, c.id, c.reading?.po_number),
-    usual_charges: vendor?.usual_charges ?? [], show_order: !!vendor?.order_set_at_show,
+    usual_charges: vendor?.usual_charges ?? [], show_order: !!vendor?.order_set_at_show, freight_quote: !!fq,
   })
   const issues = r.issues.filter((x) => x.trim())
   const { error } = await db.rpc('order_check_apply_compare', { p_check: c.id, p_result: {
@@ -406,7 +411,7 @@ async function draftLsPo(db: SupabaseClient, p: Draft) {
       await db.from('ls_pos').update({ status: 'to_approve', lines: [], draft_note: 'No item list yet: the confirmation could not be read and the order has no items. Add the items, or click Redraft once the confirmation is in.', working_at: null }).eq('id', p.id)
       return { id: p.id, lines: 0 }
     }
-    const { data: vendor } = p.vendor_id ? await db.from('vendors').select('name, lightspeed_vendor_id, vid_in_description, item_name_vendor').eq('id', p.vendor_id).maybeSingle() : { data: null }
+    const { data: vendor } = p.vendor_id ? await db.from('vendors').select('name, lightspeed_vendor_id, vid_in_description, item_name_vendor, vendor_id_rule').eq('id', p.vendor_id).maybeSingle() : { data: null }
     // what the vendor has in LS: VMS's copy of LS (ls_items; the Vendor ID is the vendor's item number there), else its
     // latest sales report
     type LsHit = { item_id: string; system_sku: string; description: string; vendor_item_id: string; upc: string; category_path: string; archived: boolean }
@@ -479,6 +484,14 @@ async function draftLsPo(db: SupabaseClient, p: Draft) {
         const { data: taken } = await db.from('ls_items').select('description').eq('organization_id', p.organization_id).in('description', names)
         const used = new Set((taken ?? []).map((t) => t.description))
         for (const x of fresh) if (used.has(x.l.name)) (x.l.flags ??= []).unshift('Another LS item already has this name: add what tells them apart')
+      }
+    }
+    // a Vendor ID in the vendor's own convention (garment/design, Oct 24) that LS has only under the old one (the garment
+    // alone): a person picks the LS item or keeps it new; existing LS items keep their Vendor IDs
+    if (vendor?.vendor_id_rule) {
+      for (const l of lines) {
+        const garment = l.is_new && l.vid?.includes('/') ? l.vid.split('/')[0]!.trim() : ''
+        if (garment && byVid.has(itemKey(garment))) (l.flags ??= []).unshift(`LS has ${garment} under the old Vendor ID (garment only): pick that item if it's the same design, or keep it as a new item`)
       }
     }
     const newCount = lines.filter((l) => l.is_new).length

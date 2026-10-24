@@ -75,6 +75,7 @@ describe('VMS: note reminders', () => {
   it('open the email ready to send, then the conversation once it is sent', async () => {
     const { taskTarget } = await import('./tasks')
     expect(taskTarget({ ...base, auto_key: 'vmscmd:c1:2', draft_id: 'd1' })).toEqual({ kind: 'page', to: '/mail?view=drafts&draft=d1', label: 'Open the email to send' })
+    expect(taskTarget({ ...base, auto_key: 'fqask:o1', draft_id: 'd2' })).toEqual({ kind: 'page', to: '/mail?view=drafts&draft=d2', label: 'Open the email to send' })
     expect(taskTarget({ ...base, auto_key: 'vmscmd:c1:2', draft_id: null })).toEqual({ kind: 'page', to: '/mail/t1', label: 'Open the email' })
   })
 })

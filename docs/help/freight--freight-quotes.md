@@ -20,3 +20,4 @@ No order ships until its freight quote is approved. When a vendor emails a freig
 - The order page shows **Waiting on freight quote** until one is approved.
 - Orders that shipped without an approved quote are listed in red at the bottom of the Freight quotes page.
 - Free-freight orders and web orders (like Kelli's) don't need a quote.
+- When an invoice comes for an order with an approved quote, Claude checks the invoice's freight against it.

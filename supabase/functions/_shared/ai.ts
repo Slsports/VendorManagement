@@ -724,12 +724,13 @@ const PAPER_PARTS = 6
  * (10-page Planet Cotton and World Famous orders) is read in parts: the lines read so far are kept and Claude goes on
  * from the last one.
  */
-export async function readPaperwork(db: SupabaseClient, org: string, file: PaperFile, ctx: { vendor: string | null; subject: string | null; email_text: string | null }): Promise<PaperReading> {
+export async function readPaperwork(db: SupabaseClient, org: string, file: PaperFile, ctx: { vendor: string | null; subject: string | null; email_text: string | null; vendor_id_rule?: string | null }): Promise<PaperReading> {
   const block = fileBlock(file)
   if (!block) throw new Error(`${file.name}: only PDFs, pictures and spreadsheets can be read`)
   const content: Anthropic.ContentBlockParam[] = [
     block,
     { type: 'text', text: JSON.stringify({ file: file.name, vendor_on_file: ctx.vendor, email_subject: ctx.subject, email_text: (ctx.email_text ?? '').slice(0, 1500) }) },
+    ...(ctx.vendor_id_rule ? [{ type: 'text' as const, text: `THIS VENDOR'S VENDOR IDS (the store's rule): ${ctx.vendor_id_rule}\nBuild each item line's vendor_item_id this way. Where you cannot tell which design goes with a line, give the garment # alone for that line and say which lines in note.` }] : []),
   ]
   const res = await copyCall({ max_tokens: 32000, output_config: { format: zodOutputFormat(PaperAnswer) }, system: sys(READ_SYSTEM), messages: [{ role: 'user', content }] })
   await logUsage(db, org, 'order_paper_read', SCAN_MODEL, res, 1)
@@ -830,6 +831,8 @@ export async function comparePaperwork(db: SupabaseClient, org: string, input: {
   usual_charges?: { what: string; price: number | null; per: string | null }[]
   /** The order is settled at the show (Dana, Oct 15: WFS): new items on the confirmation are not issues. */
   show_order?: boolean
+  /** We accepted a freight quote (Dana, Oct 24): the invoice's freight is checked against it. */
+  freight_quote?: boolean
 }): Promise<CompareReading> {
   const docBlock = fileBlock(input.doc)
   const againstBlocks = input.against.map(fileBlock).filter((b): b is Anthropic.ContentBlockParam => !!b)
@@ -851,6 +854,7 @@ List each real problem as an issue, and end each with where it came from in brac
       input.po_handled ? 'The PO number on the document is missing or is not ours. That is handled by a separate email, so do not list the PO as an issue or ask about it.' : '',
       input.show_order && input.kind === 'confirmation' ? 'The order with this vendor is settled with the rep at the trade show (show_order): items on the confirmation that are not on our order or sales report at all are new items picked at the show. List them in new_items only: not as rows with ok=false, not as issues, not in the email. Quantity differences on items that are on both, items we ordered that are missing, and price differences ARE issues as usual.' : '',
       input.usual_charges?.length ? `This vendor always adds these charges (usual_charges): one on the document at its usual price is expected, so mark its row ok with the note "usual charge" and leave it out of the issues and the email; at a different price it is an issue. usual_charges: ${JSON.stringify(input.usual_charges)}` : '',
+      input.freight_quote && input.kind === 'invoice' ? 'We accepted a freight quote for this order (order_record.accepted_freight_quote: vendor_cost is what the vendor quoted; approved_choice is the one we picked, vendor or our own carrier). With vendor picked, invoice freight above vendor_cost is an issue. With our own carrier picked, we pay that carrier, so any freight the vendor bills is an issue to ask about.' : '',
       input.web_order ? 'This vendor takes web orders: anything they could not ship is simply left off the invoice and not paid. An item ordered but not billed is NOT an issue (note it in the row as "not shipped, not billed"). Only these are issues: a higher price than ordered, more billed than ordered, items billed that were not ordered, unexpected fees or freight.' : '',
     ].filter(Boolean).map((line) => `About this order: ${line}`).join('\n') || undefined),
     messages: [{ role: 'user', content: [

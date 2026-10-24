@@ -10,6 +10,7 @@ import { CLOSED_VIEWS, deleteTask, getTask, listTasks, type TaskRow, type TaskVi
 import { aboutText, dateText, dueState, dueText, remindText, repeatLabel, todayLocal } from '@/lib/tasks'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
+import { matchLink } from '@/lib/mailSearch'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { SortHeader } from '@/components/shared/SortHeader'
 import { Alert, Button, Spinner } from '@/components/ui'
@@ -123,7 +124,7 @@ export default function TasksPage() {
                         <button type="button" onClick={() => (t.done_at ? setOpen(t) : go(t, setOpen))} className={cn('text-left font-medium hover:text-brand', t.done_at ? 'text-stone-500 line-through' : 'text-stone-900')}>{t.title}</button>
                         <button type="button" onClick={() => setOpen(t)} className="ml-2 rounded px-1 text-xs text-stone-500 hover:bg-stone-100 hover:text-stone-900" aria-label={`Edit ${t.title}`}>Edit</button>
                         {rep ? <span className="mt-0.5 flex items-center gap-1 text-xs text-stone-500"><Repeat className="size-3" aria-hidden="true" />{rep}</span> : null}
-                        {t.done_note ? <span className="mt-0.5 block text-xs text-stone-500">{t.closed_how === 'vms' ? 'Why VMS closed it' : 'Note'}: {t.done_note}</span> : null}
+                        {t.done_note ? <span className="mt-0.5 block text-xs text-stone-500">{t.closed_how === 'vms' ? 'Why VMS closed it' : 'Note'}: {t.done_note}{t.done_email ? <> · <Link to={matchLink(t.done_email.thread_id, { email_id: t.done_email.id })} className="text-brand hover:underline">Open the email</Link></> : null}</span> : null}
                       </td>
                       <td className={cn('whitespace-nowrap px-3 py-2', !t.done_at && state === 'late' ? 'font-semibold text-red-700' : !t.done_at && state === 'today' ? 'font-semibold text-amber-700' : 'text-stone-600')}>
                         {t.done_at ? `${dateText(t.done_at.slice(0, 10))}${t.finisher ? ` · ${first(t.finisher.full_name)}` : ''}` : dueText(t.due_date, today)}

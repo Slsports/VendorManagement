@@ -16,12 +16,14 @@ export interface TaskRow extends Task {
   assignee: { id: string; full_name: string } | null
   giver: { id: string; full_name: string } | null
   finisher: { id: string; full_name: string } | null
+  /** the email that finished it (a proof approved by our reply), one click away */
+  done_email?: { id: string; thread_id: string } | null
 }
 
 const TASK_SELECT = `*,
   vendor:vendors!tasks_vendor_id_fkey(id, name), carrier:carriers!tasks_carrier_id_fkey(id, name), rep_group:rep_groups!tasks_rep_group_id_fkey(id, name),
   order:orders!tasks_order_id_fkey(id, po_number, description), thread:email_threads!tasks_thread_id_fkey(id, subject),
-  assignee:profiles!tasks_assigned_to_fkey(id, full_name), giver:profiles!tasks_created_by_fkey(id, full_name), finisher:profiles!tasks_done_by_fkey(id, full_name),
+  assignee:profiles!tasks_assigned_to_fkey(id, full_name), giver:profiles!tasks_created_by_fkey(id, full_name), finisher:profiles!tasks_done_by_fkey(id, full_name), done_email:emails!tasks_done_email_id_fkey(id, thread_id),
   procedure:accounting_procedures!tasks_procedure_id_fkey(id, title), policy:accounting_policies!tasks_policy_id_fkey(id, label), recipient:accounting_policy_recipients!tasks_recipient_id_fkey(id, company, person), contract:accounting_contracts!tasks_contract_id_fkey(id, label)`
 
 /**

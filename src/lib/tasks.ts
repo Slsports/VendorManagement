@@ -114,6 +114,8 @@ export type TaskTarget = { kind: 'page'; to: string; label: string } | { kind: '
 export function taskTarget(t: { auto_key: string | null; order_id: string | null; thread_id: string | null; vendor_id: string | null; carrier_id: string | null; rep_group_id: string | null; policy_id?: string | null; recipient_id?: string | null; procedure_id?: string | null; contract_id?: string | null; draft_id?: string | null }): TaskTarget | null {
   const [kind, id] = (t.auto_key ?? '').split(':')
   // a VMS: note's reminder (Dana, Oct 23): its email to the vendor, ready to send; once sent, the conversation
+  // the freight quote request (Dana, Oct 24): the email waiting in Drafts
+  if (kind === 'fqask' && t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the email to send' }
   if (kind === 'vmscmd' && t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the email to send' }
   // Accounting (Dana, Oct 16): renewals open the policy, proof sends open the recipient with the email ready
   if (kind === 'policy_renewal' && id) return { kind: 'page', to: `/accounting/insurance/${id}`, label: 'Open the policy' }

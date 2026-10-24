@@ -34,3 +34,4 @@ At the bottom of the LS PO, **What LS received** › **Check LS** reads LS's sto
 - A confirmed order from before this started shows "confirmed, no LS PO yet" with **Draft it**.
 - Items already sent show **On the PO in LS**, so nothing is ever added twice.
 - To do it by hand instead: **Download for LS** or **Print**, enter it in LS, type the PO number and click **Done**.
+- Vendors with their own Vendor ID rule (Planet Cotton: garment # / design #): when LS has the garment only under its old Vendor ID (like 18500), the line asks you to pick that item or keep it as a new one. Existing LS items keep their Vendor IDs.
