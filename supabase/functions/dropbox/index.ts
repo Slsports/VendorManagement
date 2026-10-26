@@ -20,7 +20,7 @@
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, caller, errorResponse, HttpError, json, serviceClient } from '../_shared/caller.ts'
 import { aiEnabled, readAccountingPapers, sortDropboxPaper, type AccountingFileCtx, type DropboxSortReading } from '../_shared/ai.ts'
-import { ACCOUNTING_BUCKET, DOC, JUNK, MAX_KEEP_BYTES, PICTURE, SHEET, cleanReading, extOf, knownContext, paperFile, rowFromReading, sha256 } from '../_shared/accountingFiling.ts'
+import { ACCOUNTING_BUCKET, DOC, JUNK, MAX_KEEP_BYTES, MAX_READ_BYTES, PICTURE, SHEET, cleanReading, extOf, knownContext, paperFile, rowFromReading, sha256 } from '../_shared/accountingFiling.ts'
 import { buildVendorIndex, mentionedVendors, type VendorIndex } from '../_shared/mailMatch.ts'
 import { docxText } from '../_shared/docxText.ts'
 import { readStoredBill } from '../_shared/freight.ts'
@@ -35,6 +35,9 @@ const TIME_BUDGET_MS = 45_000
 const READ_PER_RUN = 25
 const APPLY_PER_RUN = 15
 const VENDOR_BUCKET = 'vendor-files'
+// The edge worker has little memory (every run died with WORKER_RESOURCE_LIMIT on a big file, Oct 26): a spreadsheet over
+// 2 MB or any file over 5 MB is not opened; Claude sorts it by its name and folder, and it is saved as it is when approved.
+const MAX_SHEET_BYTES = 2 * 1024 * 1024
 
 interface Conn {
   organization_id: string; app_key: string | null; refresh_token: string | null; access_token: string | null; access_token_at: string | null
@@ -325,32 +328,37 @@ async function readFiles(db: SupabaseClient, c: Conn, started: number): Promise<
   let known: Awaited<ReturnType<typeof knownContext>> | null = null
   for (const f of queue as FileRow[]) {
     if (Date.now() - started > TIME_BUDGET_MS) break
-    const stamp = { read_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+    const stamp = { read_at: new Date().toISOString(), updated_at: new Date().toISOString(), error: null as string | null }
+    // claimed first: if the worker dies on this file (out of memory), the row says so instead of being tried every minute
+    await db.from('dropbox_files').update({ status: 'error', error: 'The reader stopped on this file (it may be too big to open); it is tried again later', updated_at: stamp.updated_at }).eq('id', f.id)
     try {
-      const bytes = await download(db, c, f.dropbox_id)
-      const sha = await sha256(bytes)
-      // the same bytes already on file (Dana, Oct 14: never a second copy): link, never read again
-      const { data: sameAcc } = await db.from('accounting_documents').select('id').eq('organization_id', org).eq('sha256', sha).maybeSingle()
-      if (sameAcc) { await db.from('dropbox_files').update({ ...stamp, status: 'linked', sha256: sha, accounting_document_id: sameAcc.id, target: 'accounting', note: 'Already in Accounting Documents' }).eq('id', f.id); out.linked++; continue }
-      const { data: sameVen } = await db.from('vendor_links').select('id, vendor_id').eq('organization_id', org).ilike('file_name', f.name.replace(/[%_\\]/g, (ch) => `\\${ch}`)).eq('file_size', bytes.length).not('storage_path', 'is', null).limit(1)
-      if (sameVen?.[0]) { await db.from('dropbox_files').update({ ...stamp, status: 'linked', sha256: sha, vendor_link_id: sameVen[0].id, vendor_id: sameVen[0].vendor_id, target: 'vendor', note: 'Already in the vendor\'s Documents' }).eq('id', f.id); out.linked++; continue }
-
       const mime = mimeOf(f.name)
+      // the same name and size already under a vendor (Dana, Oct 14: never a second copy): link, never read
+      const { data: sameVen } = await db.from('vendor_links').select('id, vendor_id').eq('organization_id', org).ilike('file_name', f.name.replace(/[%_\\]/g, (ch) => `\\${ch}`)).eq('file_size', f.size ?? -1).not('storage_path', 'is', null).limit(1)
+      if (sameVen?.[0]) { await db.from('dropbox_files').update({ ...stamp, status: 'linked', error: null, vendor_link_id: sameVen[0].id, vendor_id: sameVen[0].vendor_id, target: 'vendor', note: 'Already in the vendor\'s Documents' }).eq('id', f.id); out.linked++; continue }
+      const tooBig = (f.size ?? 0) > MAX_READ_BYTES || (SHEET.test(f.name) && (f.size ?? 0) > MAX_SHEET_BYTES)
+      const bytes = tooBig ? new Uint8Array() : await download(db, c, f.dropbox_id)
+      const sha = tooBig ? null : await sha256(bytes)
+      if (sha) {
+        const { data: sameAcc } = await db.from('accounting_documents').select('id').eq('organization_id', org).eq('sha256', sha).maybeSingle()
+        if (sameAcc) { await db.from('dropbox_files').update({ ...stamp, status: 'linked', error: null, sha256: sha, accounting_document_id: sameAcc.id, target: 'accounting', note: 'Already in Accounting Documents' }).eq('id', f.id); out.linked++; continue }
+      }
       // a .docx goes in as its words (Claude reads PDFs, pictures and text); one with no words is nothing to file
-      const docx = /\.docx$/i.test(f.name) ? await docxText(bytes) : null
-      if (/\.docx$/i.test(f.name) && !docx) { await db.from('dropbox_files').update({ ...stamp, status: 'skipped', sha256: sha, target: 'skip', skip_reason: 'Word file with no readable text' }).eq('id', f.id); out.skipped++; continue }
-      const file = docx ? { name: f.name, mime, bytes: new Uint8Array(), text: docx } : await paperFile(f.name, mime, bytes)
+      const docx = !tooBig && /\.docx$/i.test(f.name) ? await docxText(bytes) : null
+      if (!tooBig && /\.docx$/i.test(f.name) && !docx) { await db.from('dropbox_files').update({ ...stamp, status: 'skipped', error: null, sha256: sha, target: 'skip', skip_reason: 'Word file with no readable text' }).eq('id', f.id); out.skipped++; continue }
+      const file = docx ? { name: f.name, mime, bytes: new Uint8Array(), text: docx } : tooBig ? { name: f.name, mime, bytes: new Uint8Array() } : await paperFile(f.name, mime, bytes)
+      const bigNote = tooBig ? 'Too big to open here: sorted by its name and folder only.' : ''
       const sorted = await sortDropboxPaper(db, org, vendors.names, file, { folder: f.folder, path: f.path_display })
       out.read++
       if (sorted.about === 'skip') {
-        await db.from('dropbox_files').update({ ...stamp, status: 'skipped', sha256: sha, target: 'skip', skip_reason: (sorted.skip_reason || 'not a paper to keep').slice(0, 120), note: sorted.note.slice(0, 400) }).eq('id', f.id); out.skipped++; continue
+        await db.from('dropbox_files').update({ ...stamp, status: 'skipped', sha256: sha, target: 'skip', skip_reason: (sorted.skip_reason || 'not a paper to keep').slice(0, 120), note: [bigNote, sorted.note].filter(Boolean).join(' ').slice(0, 400) }).eq('id', f.id); out.skipped++; continue
       }
       const year = yearOf(sorted.doc_date) ?? yearOf(f.modified_at) ?? new Date().getFullYear()
       const paper = { sha256: sha, vendor_said: (sorted.vendor ?? '').slice(0, 120) || null, kind: KIND_OF[sorted.doc_type] ?? 'other', doc_year: year, doc_number: sorted.doc_number?.slice(0, 60) ?? null, doc_date: dateOf(sorted.doc_date), doc_total: sorted.total, po_number: sorted.po_number?.slice(0, 60) ?? null }
       if (sorted.about === 'freight') {
         // a carrier's bill: fill the bill in VMS waiting for this PDF (same invoice number), else Dana decides
         const bill = await waitingFreightBill(db, org, sorted.doc_number)
-        const note = [bill ? `Freight bill: fills the ${bill.carrier} bill ${bill.invoice_number} waiting for its PDF.` : `Freight bill from ${sorted.vendor ?? 'a carrier'}: no bill in VMS is waiting for it.`, sorted.note].filter(Boolean).join(' ').slice(0, 400)
+        const note = [bigNote, bill ? `Freight bill: fills the ${bill.carrier} bill ${bill.invoice_number} waiting for its PDF.` : `Freight bill from ${sorted.vendor ?? 'a carrier'}: no bill in VMS is waiting for it.`, sorted.note].filter(Boolean).join(' ').slice(0, 400)
         await db.from('dropbox_files').update({ ...stamp, ...paper, target: 'freight', freight_bill_id: bill?.id ?? null, sure: !!bill, status: bill ? 'proposed' : 'leftover', note }).eq('id', f.id)
         if (bill) out.proposed++; else out.leftover++
         continue
@@ -364,8 +372,8 @@ async function readFiles(db: SupabaseClient, c: Conn, started: number): Promise<
         }
         const line = vendorId ? null : await matchLine(db, org, sorted.vendor)
         const target = vendorId ? 'vendor' : line ? 'line' : 'vendor'
-        const base = { ...stamp, ...paper, target, vendor_id: vendorId, line_id: line?.id ?? null, sure: sorted.sure && !!(vendorId || line) }
-        const note = [sorted.doc_type === 'statement' ? 'A statement: goes to Invoices.' : '', sorted.doc_type === 'tax_form' ? 'The vendor\'s tax form: goes to Other.' : '', line ? `"${line.name}" is a line (a catalog name), not a vendor yet: goes under the line.` : '', !vendorId && !line ? `Vendor not found in VMS: "${sorted.vendor ?? '?'}".` : '', sorted.note].filter(Boolean).join(' ').slice(0, 400)
+        const base = { ...stamp, ...paper, target, vendor_id: vendorId, line_id: line?.id ?? null, sure: sorted.sure && !tooBig && !!(vendorId || line) }
+        const note = [bigNote, sorted.doc_type === 'statement' ? 'A statement: goes to Invoices.' : '', sorted.doc_type === 'tax_form' ? 'The vendor\'s tax form: goes to Other.' : '', line ? `"${line.name}" is a line (a catalog name), not a vendor yet: goes under the line.` : '', !vendorId && !line ? `Vendor not found in VMS: "${sorted.vendor ?? '?'}".` : '', sorted.note].filter(Boolean).join(' ').slice(0, 400)
         if (!vendorId && !line) { await db.from('dropbox_files').update({ ...base, status: 'leftover', note }).eq('id', f.id); out.leftover++ } else { await db.from('dropbox_files').update({ ...base, status: 'proposed', note }).eq('id', f.id); out.proposed++ }
         continue
       }
@@ -375,12 +383,12 @@ async function readFiles(db: SupabaseClient, c: Conn, started: number): Promise<
       const [raw] = await readAccountingPapers(db, org, ctx, [file])
       if (!raw) throw new Error('Claude gave no answer for this file')
       const r = cleanReading({ ...raw, keep: true }, known, Number(ctx.received_on.slice(0, 4)))
-      const sure = r.sure && !!r.party
-      await db.from('dropbox_files').update({ ...stamp, sha256: sha, target: 'accounting', accounting: r as unknown as Record<string, unknown>, doc_year: r.doc_year, doc_number: r.number || null, doc_date: dateOf(r.doc_date), doc_total: r.amount, sure, status: sure ? 'proposed' : 'leftover', note: [sorted.note, r.note].filter(Boolean).join(' ').slice(0, 400) }).eq('id', f.id)
+      const sure = r.sure && !!r.party && !tooBig
+      await db.from('dropbox_files').update({ ...stamp, sha256: sha, target: 'accounting', accounting: r as unknown as Record<string, unknown>, doc_year: r.doc_year, doc_number: r.number || null, doc_date: dateOf(r.doc_date), doc_total: r.amount, sure, status: sure ? 'proposed' : 'leftover', note: [bigNote, sorted.note, r.note].filter(Boolean).join(' ').slice(0, 400) }).eq('id', f.id)
       if (sure) out.proposed++; else out.leftover++
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
-      await db.from('dropbox_files').update({ ...stamp, status: 'error', error: msg.slice(0, 300) }).eq('id', f.id)
+      await db.from('dropbox_files').update({ read_at: stamp.read_at, updated_at: stamp.updated_at, status: 'error', error: msg.slice(0, 300) }).eq('id', f.id)
       out.errors++
     }
   }
@@ -395,17 +403,25 @@ function matchVendor(v: Awaited<ReturnType<typeof vendorIndex>>, sorted: Dropbox
   const said = (sorted.vendor ?? '').trim()
   if (!said) return null
   const hits = mentionedVendors(v.index, { strong: said, body: `${f.name} ${f.folder}` })
-  return hits.length === 1 ? hits[0]! : null
+  if (hits.length === 1) return hits[0]!
+  if (hits.length) return null
+  // "Mountain Milk" for MOUNTAIN MILK & CREAM: the printed name is the start of exactly one vendor's name (or the other way round)
+  const key = squeeze(said)
+  if (key.length < 5) return null
+  const starts = [...v.byName.entries()].filter(([name]) => { const k = squeeze(name); return k.startsWith(key) || key.startsWith(k) }).map(([, id]) => id)
+  return new Set(starts).size === 1 ? starts[0]! : null
 }
 
 /** The one line (catalog name in vendor_directory) with this name, Inc/LLC and punctuation aside; null when none or several. */
 async function matchLine(db: SupabaseClient, org: string, said: string | null): Promise<{ id: string; name: string } | null> {
   const key = squeeze(said ?? '')
   if (key.length < 3) return null
-  const { data } = await db.from('vendor_directory').select('id, name').eq('organization_id', org).ilike('name', `%${(said ?? '').trim().split(/\s+/)[0]!.replace(/[%_\\]/g, (ch) => `\\${ch}`)}%`).limit(50)
-  const hits = (data ?? []).filter((l) => squeeze(l.name) === key)
-  const ids = new Set(hits.map((h) => h.id))
-  return ids.size === 1 ? hits[0]! : null
+  const first = (said ?? '').trim().split(/\s+/)[0]!.replace(/[^A-Za-z0-9]/g, '')
+  if (first.length < 2) return null
+  const { data } = await db.from('vendor_directory').select('id, name').eq('organization_id', org).ilike('name', `%${first}%`).limit(80)
+  // the same name listed twice ("Top Trenz" and "Top Trenz Inc") is one line: the shortest name wins
+  const hits = (data ?? []).filter((l) => squeeze(l.name) === key).sort((a, b) => a.name.length - b.name.length)
+  return hits[0] ?? null
 }
 const squeeze = (name: string) => name.toLowerCase().replace(/\b(inc|llc|ltd|co|corp|company|press|group)\b\.?/g, '').replace(/[^a-z0-9]+/g, '')
 
