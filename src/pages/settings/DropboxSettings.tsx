@@ -7,7 +7,7 @@ import { useLiveTable } from '@/hooks/useLiveTable'
 import { useAuth } from '@/hooks/useAuth'
 import {
   applyDropboxNow, approveDropbox, decideDropboxFile, disconnectDropbox, dropboxFolderSummary, dropboxSignInUrl, dropboxStatus, listDropboxFiles, listDropboxFolders,
-  readDropboxNow, rescanDropbox, saveDropboxAppKey, scanDropbox, setDropboxFolder, setDropboxReading, type DropboxFile, type DropboxFileStatus, type DropboxFolderSummary, type DropboxStatus,
+  readDropboxNow, rescanDropbox, saveDropboxAppKey, scanDropbox, setDropboxFolder, setDropboxReading, skipDropboxFolder, type DropboxFile, type DropboxFileStatus, type DropboxFolderSummary, type DropboxStatus,
 } from '@/services/dropbox'
 import { ROUTES } from '@/lib/constants'
 import { DOC_FOLDERS, folderLabel, folderOf } from '@/lib/documents'
@@ -171,17 +171,24 @@ function DryRun({ s, busy, run }: { s: DropboxStatus; busy: string | null; run: 
       {rows.length ? (
         <div className="mt-3 overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="text-left text-xs uppercase tracking-wide text-stone-500"><th className="py-1 pr-3">Subfolder</th><th className="py-1 pr-3 text-right">Files</th><th className="py-1 pr-3 text-right">To read</th><th className="py-1 pr-3 text-right">Proposed</th><th className="py-1 pr-3 text-right">For you</th><th className="py-1 pr-3 text-right">Filed</th><th className="py-1 pr-3 text-right">In VMS already</th><th className="py-1 pr-3 text-right">Skipped</th><th className="py-1"></th></tr></thead>
+            <thead><tr className="text-left text-xs uppercase tracking-wide text-stone-500"><th className="py-1 pr-3">Folder</th><th className="py-1 pr-3 text-right">Files</th><th className="py-1 pr-3 text-right">To read</th><th className="py-1 pr-3 text-right">Proposed</th><th className="py-1 pr-3 text-right">For you</th><th className="py-1 pr-3 text-right">Filed</th><th className="py-1 pr-3 text-right">In VMS already</th><th className="py-1 pr-3 text-right">Skipped</th><th className="py-1"></th></tr></thead>
             <tbody>
-              {rows.map((r) => (
-                <tr key={r.folder} className="border-t border-stone-100">
-                  <td className="py-1.5 pr-3"><button type="button" className="text-left text-brand hover:underline" onClick={() => setOpenFolder(openFolder === r.folder ? null : r.folder)}>{r.folder || '(top of the folder)'}</button></td>
+              {rows.map((r) => {
+                const folderOff = r.folder_skipped > 0 && r.new_count === 0 && r.proposed === 0 && r.leftover === 0
+                return (
+                <tr key={r.folder} className={`border-t border-stone-100 ${folderOff ? 'text-stone-400' : ''}`}>
+                  <td className="py-1.5 pr-3"><button type="button" className="text-left text-brand hover:underline" onClick={() => setOpenFolder(openFolder === r.folder ? null : r.folder)}>{r.folder || '(top of the folder)'}</button>{folderOff ? <span className="ml-2 text-xs">skipped</span> : null}</td>
                   <td className="py-1.5 pr-3 text-right">{r.total}</td><td className="py-1.5 pr-3 text-right">{r.new_count}</td>
                   <td className="py-1.5 pr-3 text-right">{r.proposed}{r.sure_proposed ? <span className="text-stone-500"> ({r.sure_proposed} sure)</span> : null}</td>
                   <td className="py-1.5 pr-3 text-right">{r.leftover}</td><td className="py-1.5 pr-3 text-right">{r.filed + r.approved}</td><td className="py-1.5 pr-3 text-right">{r.linked}</td><td className="py-1.5 pr-3 text-right">{r.skipped}{r.errors ? <span className="text-red-700"> +{r.errors} err</span> : null}</td>
-                  <td className="py-1.5 text-right">{r.sure_proposed > 0 ? <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => void run(`approve:${r.folder}`, async () => { const n = await approveDropbox(orgId, { folder: r.folder, sureOnly: true }); toast.success(`${n} approved`) })}>Approve sure</Button> : null}</td>
+                  <td className="whitespace-nowrap py-1.5 text-right">
+                    {r.sure_proposed > 0 ? <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => void run(`approve:${r.folder}`, async () => { const n = await approveDropbox(orgId, { folder: r.folder, sureOnly: true }); toast.success(`${n} approved`) })}>Approve sure</Button> : null}
+                    {folderOff
+                      ? <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => void run(`unskip:${r.folder}`, async () => { const n = await skipDropboxFolder(orgId, r.folder, false); toast.success(`${n} files back to read`) })}>Read this folder</Button>
+                      : r.new_count + r.proposed + r.leftover > 0 ? <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => { if (window.confirm(`Skip the whole folder "${r.folder || '(top)'}"? Nothing in it is read or filed. You can put it back later.`)) void run(`skip:${r.folder}`, async () => { const n = await skipDropboxFolder(orgId, r.folder, true); toast.success(`${n} files skipped`) }) }}>Skip folder</Button> : null}
+                  </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>
@@ -197,7 +204,7 @@ const STATUS_LABEL: Record<string, { text: string; tone: 'neutral' | 'brand' | '
 }
 const VENDOR_KINDS: VendorLinkKind[] = ['invoice', 'confirmation', 'credit', 'order', 'packing_slip', 'price_list', 'catalog', 'order_form', 'specials', 'proof', 'other']
 
-/** One subfolder's files with where each would go; approve, skip, or change the vendor and folder yourself. */
+/** One top folder's files (subfolders shown on each) with where each would go; approve, skip, or change the vendor and folder yourself. */
 function FolderFiles({ orgId, folder, summary, onClose }: { orgId: string; folder: string; summary?: DropboxFolderSummary; onClose: () => void }) {
   const { profile } = useAuth()
   const [show, setShow] = useState<'open' | 'all'>('open')
@@ -232,6 +239,7 @@ function FolderFiles({ orgId, folder, summary, onClose }: { orgId: string; folde
             <li key={f.id} className="py-2 text-sm">
               <div className="flex flex-wrap items-start gap-2">
                 <span className="min-w-0 flex-1">
+                  {f.folder !== folder ? <span className="block text-xs text-stone-500">{f.folder}</span> : null}
                   <span className="font-medium text-stone-900">{f.name}</span>
                   <Badge tone={STATUS_LABEL[f.status]?.tone ?? 'neutral'} className="ml-2">{STATUS_LABEL[f.status]?.text ?? f.status}</Badge>
                   {f.status === 'proposed' && f.sure === false ? <Badge tone="warning" className="ml-1">unsure</Badge> : null}

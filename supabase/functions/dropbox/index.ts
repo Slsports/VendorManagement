@@ -22,6 +22,7 @@ import { CORS, caller, errorResponse, HttpError, json, serviceClient } from '../
 import { aiEnabled, readAccountingPapers, sortDropboxPaper, type AccountingFileCtx, type DropboxSortReading } from '../_shared/ai.ts'
 import { ACCOUNTING_BUCKET, DOC, JUNK, MAX_KEEP_BYTES, PICTURE, SHEET, cleanReading, extOf, knownContext, paperFile, rowFromReading, sha256 } from '../_shared/accountingFiling.ts'
 import { buildVendorIndex, mentionedVendors, type VendorIndex } from '../_shared/mailMatch.ts'
+import { docxText } from '../_shared/docxText.ts'
 
 const DBX_AUTHORIZE = 'https://www.dropbox.com/oauth2/authorize'
 const DBX_TOKEN = 'https://api.dropboxapi.com/oauth2/token'
@@ -30,7 +31,7 @@ const DBX_CONTENT = 'https://content.dropboxapi.com/2'
 const REDIRECT = 'https://vms.shaverlakesports.com/integrations/dropbox/callback'
 const SCOPES = 'account_info.read files.metadata.read files.content.read files.content.write'
 const TIME_BUDGET_MS = 45_000
-const READ_PER_RUN = 8
+const READ_PER_RUN = 25
 const APPLY_PER_RUN = 15
 const VENDOR_BUCKET = 'vendor-files'
 
@@ -295,6 +296,7 @@ function preSkip(name: string, size: number): string | null {
   if (size > MAX_KEEP_BYTES) return 'too big to keep (over 15 MB)'
   if (size === 0) return 'empty file'
   if (JUNK.test(name) || /\.(ds_store|ini|lnk|url|exe|dmg|app|mov|mp4|mp3|wav|pptx?|key|numbers|pages)$/i.test(name) || name.startsWith('.') || name.startsWith('~$')) return 'not a document'
+  if (/\.doc$/i.test(name)) return 'old Word .doc file: save it as .docx or PDF to read it'
   if (!PICTURE.test(name) && !SHEET.test(name) && !DOC.test(name)) return 'not a document'
   return null
 }
@@ -332,7 +334,10 @@ async function readFiles(db: SupabaseClient, c: Conn, started: number): Promise<
       if (sameVen?.[0]) { await db.from('dropbox_files').update({ ...stamp, status: 'linked', sha256: sha, vendor_link_id: sameVen[0].id, vendor_id: sameVen[0].vendor_id, target: 'vendor', note: 'Already in the vendor\'s Documents' }).eq('id', f.id); out.linked++; continue }
 
       const mime = mimeOf(f.name)
-      const file = await paperFile(f.name, mime, bytes)
+      // a .docx goes in as its words (Claude reads PDFs, pictures and text); one with no words is nothing to file
+      const docx = /\.docx$/i.test(f.name) ? await docxText(bytes) : null
+      if (/\.docx$/i.test(f.name) && !docx) { await db.from('dropbox_files').update({ ...stamp, status: 'skipped', sha256: sha, target: 'skip', skip_reason: 'Word file with no readable text' }).eq('id', f.id); out.skipped++; continue }
+      const file = docx ? { name: f.name, mime, bytes: new Uint8Array(), text: docx } : await paperFile(f.name, mime, bytes)
       const sorted = await sortDropboxPaper(db, org, vendors.names, file, { folder: f.folder, path: f.path_display })
       out.read++
       if (sorted.about === 'skip') {

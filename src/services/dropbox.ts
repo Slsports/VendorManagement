@@ -32,23 +32,31 @@ export const applyDropboxNow = () => call<DropboxStatus>({ action: 'apply' })
 
 export type DropboxFile = Tables<'dropbox_files'> & { vendor: { name: string } | null }
 export type DropboxFileStatus = Tables<'dropbox_files'>['status']
-export type DropboxFolderSummary = { folder: string; total: number; new_count: number; proposed: number; leftover: number; approved: number; filed: number; linked: number; skipped: number; errors: number; sure_proposed: number }
+export type DropboxFolderSummary = { folder: string; total: number; new_count: number; proposed: number; leftover: number; approved: number; filed: number; linked: number; skipped: number; errors: number; sure_proposed: number; folder_skipped: number }
 
+/** Each top folder under the one VMS reads, with its counts. */
 export async function dropboxFolderSummary(organizationId: string): Promise<DropboxFolderSummary[]> {
-  const { data, error } = await supabase.rpc('dropbox_folder_summary', { p_org: organizationId })
+  const { data, error } = await supabase.rpc('dropbox_top_summary', { p_org: organizationId })
   if (error) throw error
   return (data ?? []) as DropboxFolderSummary[]
 }
 
-export async function listDropboxFiles(organizationId: string, folder: string, statuses: DropboxFileStatus[], limit = 300): Promise<DropboxFile[]> {
-  const { data, error } = await supabase.from('dropbox_files').select('*, vendor:vendors(name)').eq('organization_id', organizationId).eq('folder', folder).in('status', statuses).order('name').limit(limit)
+export async function listDropboxFiles(organizationId: string, topFolder: string, statuses: DropboxFileStatus[], limit = 300): Promise<DropboxFile[]> {
+  const { data, error } = await supabase.from('dropbox_files').select('*, vendor:vendors(name)').eq('organization_id', organizationId).eq('top_folder', topFolder).in('status', statuses).order('folder').order('name').limit(limit)
   if (error) throw error
   return (data ?? []) as DropboxFile[]
 }
 
-/** Approve a folder's proposals (the sure ones, or all) or named files. Returns how many. */
+/** Approve a top folder's proposals (the sure ones, or all) or named files. Returns how many. */
 export async function approveDropbox(organizationId: string, opts: { folder?: string | null; ids?: string[]; sureOnly: boolean }): Promise<number> {
-  const { data, error } = await supabase.rpc('dropbox_approve', { p_org: organizationId, p_folder: opts.folder ?? null, p_ids: opts.ids ?? null, p_sure_only: opts.sureOnly })
+  const { data, error } = await supabase.rpc('dropbox_approve', { p_org: organizationId, p_top: opts.folder ?? null, p_ids: opts.ids ?? null, p_sure_only: opts.sureOnly })
+  if (error) throw error
+  return Number(data ?? 0)
+}
+
+/** Skip a whole top folder (nothing in it is read or filed), or put it back. Returns how many files. */
+export async function skipDropboxFolder(organizationId: string, topFolder: string, skip: boolean): Promise<number> {
+  const { data, error } = await supabase.rpc('dropbox_skip_folder', { p_org: organizationId, p_top: topFolder, p_skip: skip })
   if (error) throw error
   return Number(data ?? 0)
 }
