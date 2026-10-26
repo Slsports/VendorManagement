@@ -3158,3 +3158,10 @@ Help: settings--connect-dropbox, documents--from-dropbox.
   pictures and text, so .docx files now go in as their words (`_shared/docxText.ts`); old .doc files (353) are set aside
   with a note to save them as .docx or PDF. Settings › Dropbox groups by top folder with **Skip folder** / **Read this
   folder** (migration 0245); the scheduler reads every minute, about 25 files a run.
+
+## Oct 26 — Freight seen from both sides (Dana)
+Dana kept each freight bill in two Dropbox folders (the carrier's and the vendor's) so she could find it either way.
+"I need to be able to see them in both views, vendor or freight, but it can link back to one file location." Built: a
+**Freight** box on the vendor page listing the carrier bills whose shipments came from that vendor (date, carrier,
+invoice number, PO, paid, that vendor's amount), each opening the one bill on the Freight page. The Dropbox read files
+such a bill once and marks the second copy as the same file.

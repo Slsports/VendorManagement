@@ -28,6 +28,7 @@ import { VendorShowsSection } from '@/components/vendors/VendorShowsSection'
 import { VendorOrdersSection } from '@/components/vendors/VendorOrdersSection'
 import { VendorMailSection } from '@/components/vendors/VendorMailSection'
 import { VendorPaymentsSection } from '@/components/vendors/VendorPaymentsSection'
+import { VendorFreightSection } from '@/components/vendors/VendorFreightSection'
 import { WwdInvoiceList } from '@/components/payments/WwdInvoiceList'
 import { ComposeDialog, type ComposeDraft } from '@/components/mail/ComposeDialog'
 import { VendorScorecard } from '@/components/scores/VendorScorecard'
@@ -280,6 +281,7 @@ export default function VendorDetailPage() {
         <VendorItemRulesSection organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorOrdersSection vendorId={v.id} vendorName={v.name} canAdd={canEdit} />
         <VendorPaymentsSection vendorId={v.id} />
+        <VendorFreightSection vendorId={v.id} />
         <WwdInvoiceList fold vendorId={v.id} />
 
         <FoldSection title="Notes" summary={notesQ.isLoading ? null : notesQ.data?.length ? `${notesQ.data.length} note${notesQ.data.length === 1 ? '' : 's'}` : 'None'} className="lg:col-span-1">

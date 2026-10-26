@@ -271,3 +271,20 @@ export async function wwdInvoiceFiles(invoiceIds: string[]): Promise<Map<string,
   }
   return new Map((data ?? []).map((i) => [i.id, { id: i.id, seq: i.seq, file: (i.document_id && docs.get(i.document_id)) || null }]))
 }
+
+export type VendorFreightRow = { line_id: string; bill_id: string; carrier: string | null; invoice_number: string | null; invoice_date: string | null; ship_date: string | null; amount: number; status: string; paid_date: string | null; order_id: string | null; po_number: string | null }
+
+/**
+ * The carrier bills that carried this vendor's shipments (Dana, Oct 26: "I need to be able to see them in both views,
+ * vendor or freight, but it can link back to one file location"). One file on the bill; this is the vendor's view of it.
+ */
+export async function listVendorFreight(vendorId: string, limit = 100): Promise<VendorFreightRow[]> {
+  const { data, error } = await supabase.from('freight_bill_lines')
+    .select('id, bill_id, ship_date, amount, fee_amount, order_id, orders(po_number), freight_bills!inner(invoice_number, invoice_date, status, paid_date, carriers(name))')
+    .eq('vendor_id', vendorId).order('ship_date', { ascending: false, nullsFirst: false }).limit(limit)
+  if (error) throw error
+  return (data ?? []).map((l) => {
+    const b = l.freight_bills as unknown as { invoice_number: string | null; invoice_date: string | null; status: string; paid_date: string | null; carriers: { name: string } | null }
+    return { line_id: l.id, bill_id: l.bill_id, carrier: b.carriers?.name ?? null, invoice_number: b.invoice_number, invoice_date: b.invoice_date, ship_date: l.ship_date, amount: Number(l.amount ?? 0) + Number(l.fee_amount ?? 0), status: b.status, paid_date: b.paid_date, order_id: l.order_id, po_number: (l.orders as unknown as { po_number: string | null } | null)?.po_number ?? null }
+  })
+}
