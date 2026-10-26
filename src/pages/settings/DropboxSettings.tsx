@@ -219,7 +219,10 @@ function FolderFiles({ orgId, folder, summary, onClose }: { orgId: string; folde
     try { await decideDropboxFile(f.id, profile.id, change); toast.success(done); setChanging(null); await q.refetch() } catch (err) { toast.error(errorMessage(err)) } finally { setBusy(null) }
   }
   const where = (f: DropboxFile) => {
-    if (f.target === 'vendor') return <>{f.vendor?.name ?? <span className="text-amber-700">vendor not found{f.vendor_said ? ` ("${f.vendor_said}")` : ''}</span>} › {folderLabel(folderOf((f.kind ?? 'other') as VendorLinkKind))}{f.doc_year ? ` › ${f.doc_year}` : ''}{f.doc_number ? ` · ${f.doc_number}` : ''}{f.doc_total != null ? ` · $${Number(f.doc_total).toFixed(2)}` : ''}</>
+    const tail = <>{folderLabel(folderOf((f.kind ?? 'other') as VendorLinkKind))}{f.doc_year ? ` › ${f.doc_year}` : ''}{f.doc_number ? ` · ${f.doc_number}` : ''}{f.doc_total != null ? ` · $${Number(f.doc_total).toFixed(2)}` : ''}</>
+    if (f.target === 'vendor') return <>{f.vendor?.name ?? <span className="text-amber-700">vendor not found{f.vendor_said ? ` ("${f.vendor_said}")` : ''}</span>} › {tail}</>
+    if (f.target === 'line') return <>Line {f.line?.name ?? '?'} › {tail}</>
+    if (f.target === 'freight') return <>Freight{f.freight_bill_id ? ' › the bill waiting for this PDF' : <span className="text-amber-700"> › no bill waiting for it</span>}{f.doc_number ? ` · ${f.doc_number}` : ''}{f.doc_total != null ? ` · $${Number(f.doc_total).toFixed(2)}` : ''}</>
     if (f.target === 'accounting') { const a = (f.accounting ?? {}) as { category?: string; party?: string; doc_year?: number; what?: string }; return <>Accounting › {a.category ?? '?'} › {a.party || 'Unsorted'} › {a.doc_year ?? ''}{a.what ? ` · ${a.what}` : ''}</> }
     if (f.target === 'skip' || f.status === 'skipped') return <span className="text-stone-500">Not filed: {f.skip_reason}</span>
     return <span className="text-stone-500">Not read yet</span>
@@ -255,7 +258,7 @@ function FolderFiles({ orgId, folder, summary, onClose }: { orgId: string; folde
                   </span>
                 ) : f.status === 'skipped' && f.skip_reason === 'skipped by Dana' ? <Button size="sm" variant="ghost" onClick={() => void decide(f, { status: 'proposed', target: f.vendor_id ? 'vendor' : 'accounting' }, 'Back on the list')}>Undo</Button> : null}
               </div>
-              {changing === f.id ? <ChangeVendor f={f} busy={busy === f.id} onPick={(vendorId, kind) => void decide(f, { status: 'approved', target: 'vendor', vendor_id: vendorId, kind }, 'Approved under the vendor')} onCancel={() => setChanging(null)} /> : null}
+              {changing === f.id ? <ChangeVendor f={f} busy={busy === f.id} onPick={(vendorId, kind) => void decide(f, { status: 'approved', target: 'vendor', vendor_id: vendorId, line_id: null, kind }, 'Approved under the vendor')} onCancel={() => setChanging(null)} /> : null}
             </li>
           ))}
           {(q.data ?? []).length === 0 ? <li className="py-2 text-sm text-stone-500">Nothing here needs a look.</li> : null}

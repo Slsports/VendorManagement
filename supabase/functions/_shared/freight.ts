@@ -98,7 +98,7 @@ export async function readStoredBill(db: SupabaseClient, billId: string, index?:
   try {
     const { data: file, error } = await db.storage.from('vendor-files').download(b.storage_path)
     if (error || !file) throw new Error(error?.message ?? 'PDF not found')
-    const reading = await readFreightPdf(db, b.organization_id, new Uint8Array(await file.arrayBuffer()), (b.carriers as { name: string } | null)?.name ?? null)
+    const reading = await readFreightPdf(db, b.organization_id, new Uint8Array(await file.arrayBuffer()), (b.carriers as unknown as { name: string } | null)?.name ?? null)
     await applyFreightReading(db, billId, b.organization_id, reading, index ?? await freightIndex(db, b.organization_id))
     // Uploaded bills: which billing company (our UPS number, else its name), and fill a waiting bill or skip a copy.
     const { data: settled, error: e3 } = await db.rpc('freight_bill_settle', { p_bill: billId, p_ups: reading.our_ups_account, p_company: reading.billing_company, p_account: reading.our_account_number })

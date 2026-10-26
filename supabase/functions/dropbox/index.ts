@@ -23,6 +23,7 @@ import { aiEnabled, readAccountingPapers, sortDropboxPaper, type AccountingFileC
 import { ACCOUNTING_BUCKET, DOC, JUNK, MAX_KEEP_BYTES, PICTURE, SHEET, cleanReading, extOf, knownContext, paperFile, rowFromReading, sha256 } from '../_shared/accountingFiling.ts'
 import { buildVendorIndex, mentionedVendors, type VendorIndex } from '../_shared/mailMatch.ts'
 import { docxText } from '../_shared/docxText.ts'
+import { readStoredBill } from '../_shared/freight.ts'
 
 const DBX_AUTHORIZE = 'https://www.dropbox.com/oauth2/authorize'
 const DBX_TOKEN = 'https://api.dropboxapi.com/oauth2/token'
@@ -44,7 +45,7 @@ interface Conn {
 interface DbxEntry { '.tag': 'file' | 'folder' | 'deleted'; id?: string; name: string; path_lower?: string; path_display?: string; size?: number; content_hash?: string; client_modified?: string; server_modified?: string }
 interface FileRow {
   id: string; organization_id: string; dropbox_id: string; path_lower: string; path_display: string; name: string; folder: string; size: number | null; content_hash: string | null; modified_at: string | null
-  status: string; target: 'vendor' | 'accounting' | 'skip' | null; vendor_id: string | null; kind: string | null; doc_year: number | null; doc_number: string | null; doc_date: string | null; doc_total: number | null; po_number: string | null
+  status: string; target: 'vendor' | 'line' | 'freight' | 'accounting' | 'skip' | null; vendor_id: string | null; line_id: string | null; freight_bill_id: string | null; kind: string | null; doc_year: number | null; doc_number: string | null; doc_date: string | null; doc_total: number | null; po_number: string | null
   accounting: Record<string, unknown> | null; vendor_said: string | null; sure: boolean | null; note: string | null; sha256: string | null
 }
 
@@ -303,13 +304,14 @@ function preSkip(name: string, size: number): string | null {
 
 // ---- reading: what each file is and where it would go ---------------------------------------------------------------------
 const KIND_OF: Record<DropboxSortReading['doc_type'], string> = {
-  invoice: 'invoice', statement: 'invoice', credit: 'credit', confirmation: 'confirmation', packing_slip: 'packing_slip', order: 'order', price_list: 'price_list', catalog: 'catalog', order_form: 'order_form', specials: 'specials', proof: 'proof', tax_form: 'other', other: 'other',
+  invoice: 'invoice', statement: 'invoice', payment: 'payment', credit: 'credit', confirmation: 'confirmation', packing_slip: 'packing_slip', order: 'order', price_list: 'price_list', catalog: 'catalog', order_form: 'order_form', specials: 'specials', proof: 'proof', tax_form: 'other', other: 'other',
 }
 
-async function vendorIndex(db: SupabaseClient, org: string): Promise<{ index: VendorIndex; names: string[]; byName: Map<string, string> }> {
+async function vendorIndex(db: SupabaseClient, org: string): Promise<{ index: VendorIndex; names: string[]; byName: Map<string, string>; wwd: Set<string> }> {
   const { data } = await db.from('vendors').select('id, name, aliases').eq('organization_id', org).eq('is_active', true).is('merged_into_id', null).order('name').limit(5000)
   const vendors = (data ?? []) as { id: string; name: string; aliases: string[] | null }[]
-  return { index: buildVendorIndex(vendors.map((v) => ({ id: v.id, name: v.name, aliases: v.aliases ?? [] }))), names: vendors.map((v) => v.name), byName: new Map(vendors.map((v) => [v.name.toLowerCase(), v.id])) }
+  const wwd = new Set(vendors.filter((v) => /^worldwide( distributors)?$/i.test(v.name.trim())).map((v) => v.id))
+  return { index: buildVendorIndex(vendors.map((v) => ({ id: v.id, name: v.name, aliases: v.aliases ?? [] }))), names: vendors.map((v) => v.name), byName: new Map(vendors.map((v) => [v.name.toLowerCase(), v.id])), wwd }
 }
 
 /** Read a few listed files: each becomes linked (already on file), proposed (Claude is sure where it goes), leftover (unsure) or skipped. */
@@ -343,12 +345,28 @@ async function readFiles(db: SupabaseClient, c: Conn, started: number): Promise<
       if (sorted.about === 'skip') {
         await db.from('dropbox_files').update({ ...stamp, status: 'skipped', sha256: sha, target: 'skip', skip_reason: (sorted.skip_reason || 'not a paper to keep').slice(0, 120), note: sorted.note.slice(0, 400) }).eq('id', f.id); out.skipped++; continue
       }
+      const year = yearOf(sorted.doc_date) ?? yearOf(f.modified_at) ?? new Date().getFullYear()
+      const paper = { sha256: sha, vendor_said: (sorted.vendor ?? '').slice(0, 120) || null, kind: KIND_OF[sorted.doc_type] ?? 'other', doc_year: year, doc_number: sorted.doc_number?.slice(0, 60) ?? null, doc_date: dateOf(sorted.doc_date), doc_total: sorted.total, po_number: sorted.po_number?.slice(0, 60) ?? null }
+      if (sorted.about === 'freight') {
+        // a carrier's bill: fill the bill in VMS waiting for this PDF (same invoice number), else Dana decides
+        const bill = await waitingFreightBill(db, org, sorted.doc_number)
+        const note = [bill ? `Freight bill: fills the ${bill.carrier} bill ${bill.invoice_number} waiting for its PDF.` : `Freight bill from ${sorted.vendor ?? 'a carrier'}: no bill in VMS is waiting for it.`, sorted.note].filter(Boolean).join(' ').slice(0, 400)
+        await db.from('dropbox_files').update({ ...stamp, ...paper, target: 'freight', freight_bill_id: bill?.id ?? null, sure: !!bill, status: bill ? 'proposed' : 'leftover', note }).eq('id', f.id)
+        if (bill) out.proposed++; else out.leftover++
+        continue
+      }
       if (sorted.about === 'vendor') {
         const vendorId = matchVendor(vendors, sorted, f)
-        const year = yearOf(sorted.doc_date) ?? yearOf(f.modified_at) ?? new Date().getFullYear()
-        const base = { ...stamp, sha256: sha, target: 'vendor' as const, vendor_id: vendorId, vendor_said: (sorted.vendor ?? '').slice(0, 120) || null, kind: KIND_OF[sorted.doc_type] ?? 'other', doc_year: year, doc_number: sorted.doc_number?.slice(0, 60) ?? null, doc_date: dateOf(sorted.doc_date), doc_total: sorted.total, po_number: sorted.po_number?.slice(0, 60) ?? null, sure: sorted.sure && !!vendorId }
-        const note = [sorted.doc_type === 'statement' ? 'A statement: goes to Invoices.' : '', sorted.doc_type === 'tax_form' ? 'The vendor\'s tax form: goes to Other.' : '', !vendorId ? `Vendor not found in VMS: "${sorted.vendor ?? '?'}".` : '', sorted.note].filter(Boolean).join(' ').slice(0, 400)
-        if (!vendorId) { await db.from('dropbox_files').update({ ...base, status: 'leftover', note }).eq('id', f.id); out.leftover++ } else { await db.from('dropbox_files').update({ ...base, status: 'proposed', note }).eq('id', f.id); out.proposed++ }
+        if (vendorId && vendors.wwd.has(vendorId)) {
+          // Worldwide's own paperwork (payment sheets, exports, portal guides) is handled on the Payments page, never filed under a vendor (Dana, Oct 19)
+          await db.from('dropbox_files').update({ ...stamp, ...paper, target: 'vendor', vendor_id: vendorId, sure: false, status: 'leftover', note: `Worldwide's own paperwork: handled on the Payments page, not filed under a vendor. ${sorted.note}`.slice(0, 400) }).eq('id', f.id)
+          out.leftover++; continue
+        }
+        const line = vendorId ? null : await matchLine(db, org, sorted.vendor)
+        const target = vendorId ? 'vendor' : line ? 'line' : 'vendor'
+        const base = { ...stamp, ...paper, target, vendor_id: vendorId, line_id: line?.id ?? null, sure: sorted.sure && !!(vendorId || line) }
+        const note = [sorted.doc_type === 'statement' ? 'A statement: goes to Invoices.' : '', sorted.doc_type === 'tax_form' ? 'The vendor\'s tax form: goes to Other.' : '', line ? `"${line.name}" is a line (a catalog name), not a vendor yet: goes under the line.` : '', !vendorId && !line ? `Vendor not found in VMS: "${sorted.vendor ?? '?'}".` : '', sorted.note].filter(Boolean).join(' ').slice(0, 400)
+        if (!vendorId && !line) { await db.from('dropbox_files').update({ ...base, status: 'leftover', note }).eq('id', f.id); out.leftover++ } else { await db.from('dropbox_files').update({ ...base, status: 'proposed', note }).eq('id', f.id); out.proposed++ }
         continue
       }
       // a bookkeeping paper: the accounting reader gives the folder and the name pieces
@@ -380,6 +398,26 @@ function matchVendor(v: Awaited<ReturnType<typeof vendorIndex>>, sorted: Dropbox
   return hits.length === 1 ? hits[0]! : null
 }
 
+/** The one line (catalog name in vendor_directory) with this name, Inc/LLC and punctuation aside; null when none or several. */
+async function matchLine(db: SupabaseClient, org: string, said: string | null): Promise<{ id: string; name: string } | null> {
+  const key = squeeze(said ?? '')
+  if (key.length < 3) return null
+  const { data } = await db.from('vendor_directory').select('id, name').eq('organization_id', org).ilike('name', `%${(said ?? '').trim().split(/\s+/)[0]!.replace(/[%_\\]/g, (ch) => `\\${ch}`)}%`).limit(50)
+  const hits = (data ?? []).filter((l) => squeeze(l.name) === key)
+  const ids = new Set(hits.map((h) => h.id))
+  return ids.size === 1 ? hits[0]! : null
+}
+const squeeze = (name: string) => name.toLowerCase().replace(/\b(inc|llc|ltd|co|corp|company|press|group)\b\.?/g, '').replace(/[^a-z0-9]+/g, '')
+
+/** A freight bill in VMS still waiting for its PDF, by the invoice number printed on the paper. */
+async function waitingFreightBill(db: SupabaseClient, org: string, invoice: string | null): Promise<{ id: string; invoice_number: string; carrier: string } | null> {
+  const n = (invoice ?? '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+  if (n.length < 4) return null
+  const { data } = await db.from('freight_bills').select('id, invoice_number, carriers(name)').eq('organization_id', org).eq('status', 'needs_pdf').not('invoice_number', 'is', null).limit(500)
+  const hit = (data ?? []).find((b) => (b.invoice_number ?? '').replace(/[^A-Za-z0-9]/g, '').toUpperCase() === n)
+  return hit ? { id: hit.id, invoice_number: hit.invoice_number!, carrier: (hit.carriers as unknown as { name: string } | null)?.name ?? 'carrier' } : null
+}
+
 const yearOf = (d: string | null | undefined) => { const y = Number((d ?? '').slice(0, 4)); return y >= 1990 && y <= 2100 ? y : null }
 const dateOf = (d: string | null | undefined) => (/^\d{4}-\d{2}-\d{2}$/.test(d ?? '') ? d! : null)
 function mimeOf(name: string): string {
@@ -399,17 +437,31 @@ async function applyApproved(db: SupabaseClient, c: Conn, started: number): Prom
       const bytes = await download(db, c, f.dropbox_id)
       const mime = mimeOf(f.name)
       const safeName = f.name.replace(/[^A-Za-z0-9._-]+/g, '_')
-      if (f.target === 'vendor' && f.vendor_id) {
-        const path = `${org}/${f.vendor_id}/${crypto.randomUUID()}-${safeName}`
+      if ((f.target === 'vendor' && f.vendor_id) || (f.target === 'line' && f.line_id)) {
+        const owner = f.target === 'vendor' ? f.vendor_id! : `line-${f.line_id!}`
+        const path = `${org}/${owner}/${crypto.randomUUID()}-${safeName}`
         const { error: upErr } = await db.storage.from(VENDOR_BUCKET).upload(path, bytes, { contentType: mime, upsert: false })
         if (upErr) throw new Error(`Saving ${f.name}: ${upErr.message}`)
         const { data: link, error } = await db.from('vendor_links').insert({
-          organization_id: org, vendor_id: f.vendor_id, kind: f.kind ?? 'other', label: f.name.replace(/\.[a-z0-9]{2,5}$/i, ''), storage_path: path, file_name: f.name, file_size: bytes.length, mime_type: mime,
+          organization_id: org, vendor_id: f.target === 'vendor' ? f.vendor_id : null, line_id: f.target === 'line' ? f.line_id : null, kind: f.kind ?? 'other', label: f.name.replace(/\.[a-z0-9]{2,5}$/i, ''), storage_path: path, file_name: f.name, file_size: bytes.length, mime_type: mime,
           received_at: f.doc_date ?? (f.modified_at ?? new Date().toISOString()).slice(0, 10), doc_year: f.doc_year, doc_number: f.doc_number, doc_date: f.doc_date, doc_total: f.doc_total,
           source: 'dropbox', dropbox_path: f.path_display, notes: `From Dropbox: ${f.path_display}${f.po_number ? ` · PO ${f.po_number}` : ''}`.slice(0, 300),
         }).select('id').single()
         if (error) { await db.storage.from(VENDOR_BUCKET).remove([path]); throw new Error(error.message) }
         await db.from('dropbox_files').update({ status: 'filed', vendor_link_id: link.id, filed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', f.id)
+      } else if (f.target === 'freight' && f.freight_bill_id) {
+        // the PDF a freight bill was waiting for: onto the bill, then read the way a dropped PDF is (Freight page)
+        const { data: bill } = await db.from('freight_bills').select('id, status, storage_path').eq('id', f.freight_bill_id).maybeSingle()
+        if (!bill) throw new Error('The freight bill is gone')
+        if (bill.storage_path) throw new Error('The freight bill already has a PDF')
+        const path = `${org}/freight/${crypto.randomUUID()}-${safeName}`
+        const { error: upErr } = await db.storage.from(VENDOR_BUCKET).upload(path, bytes, { contentType: mime, upsert: false })
+        if (upErr) throw new Error(`Saving ${f.name}: ${upErr.message}`)
+        const { error } = await db.from('freight_bills').update({ storage_path: path, file_name: f.name, status: 'reading', read_note: null }).eq('id', bill.id)
+        if (error) throw new Error(error.message)
+        await db.from('dropbox_files').update({ status: 'filed', filed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', f.id)
+        const r = await readStoredBill(db, bill.id).catch((e) => ({ ok: false, note: e instanceof Error ? e.message : String(e) }))
+        if (!r.ok) await db.from('dropbox_files').update({ note: `Filed on the freight bill; reading it said: ${r.note ?? 'not read'}`.slice(0, 400) }).eq('id', f.id)
       } else if (f.target === 'accounting' && f.accounting) {
         const r = f.accounting as unknown as Parameters<typeof rowFromReading>[0]
         const ext = extOf(f.name, mime)
