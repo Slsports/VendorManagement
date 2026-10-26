@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Link } from 'react-router-dom'
 import { CheckCircle2, FolderOpen, RefreshCw } from 'lucide-react'
@@ -176,7 +176,8 @@ function DryRun({ s, busy, run }: { s: DropboxStatus; busy: string | null; run: 
               {rows.map((r) => {
                 const folderOff = r.folder_skipped > 0 && r.new_count === 0 && r.proposed === 0 && r.leftover === 0
                 return (
-                <tr key={r.folder} className={`border-t border-stone-100 ${folderOff ? 'text-stone-400' : ''}`}>
+                <Fragment key={r.folder}>
+                <tr className={`border-t border-stone-100 ${folderOff ? 'text-stone-400' : ''}`}>
                   <td className="py-1.5 pr-3"><button type="button" className="text-left text-brand hover:underline" onClick={() => setOpenFolder(openFolder === r.folder ? null : r.folder)}>{r.folder || '(top of the folder)'}</button>{folderOff ? <span className="ml-2 text-xs">skipped</span> : null}</td>
                   <td className="py-1.5 pr-3 text-right">{r.total}</td><td className="py-1.5 pr-3 text-right">{r.new_count}</td>
                   <td className="py-1.5 pr-3 text-right">{r.proposed}{r.sure_proposed ? <span className="text-stone-500"> ({r.sure_proposed} sure)</span> : null}</td>
@@ -188,12 +189,13 @@ function DryRun({ s, busy, run }: { s: DropboxStatus; busy: string | null; run: 
                       : r.new_count + r.proposed + r.leftover > 0 ? <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => { if (window.confirm(`Skip the whole folder "${r.folder || '(top)'}"? Nothing in it is read or filed. You can put it back later.`)) void run(`skip:${r.folder}`, async () => { const n = await skipDropboxFolder(orgId, r.folder, true); toast.success(`${n} files skipped`) }) }}>Skip folder</Button> : null}
                   </td>
                 </tr>
+                {openFolder === r.folder ? <tr><td colSpan={9} className="p-0"><FolderFiles orgId={orgId} folder={r.folder} summary={r} onClose={() => setOpenFolder(null)} /></td></tr> : null}
+                </>
               )})}
             </tbody>
           </table>
         </div>
       ) : null}
-      {openFolder !== null ? <FolderFiles orgId={orgId} folder={openFolder} summary={rows.find((r) => r.folder === openFolder)} onClose={() => setOpenFolder(null)} /> : null}
     </section>
   )
 }
@@ -228,7 +230,7 @@ function FolderFiles({ orgId, folder, summary, onClose }: { orgId: string; folde
     return <span className="text-stone-500">Not read yet</span>
   }
   return (
-    <div className="mt-4 rounded-xl border border-stone-200 bg-stone-50 p-3">
+    <div className="my-2 rounded-xl border border-stone-200 bg-stone-50 p-3">
       <div className="flex flex-wrap items-center gap-2">
         <h4 className="font-medium text-stone-900">{folder || '(top of the folder)'}</h4>
         <span className="text-xs text-stone-500">{summary ? `${summary.total} files` : ''}</span>
