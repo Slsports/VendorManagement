@@ -310,11 +310,14 @@ const KIND_OF: Record<DropboxSortReading['doc_type'], string> = {
   invoice: 'invoice', statement: 'invoice', payment: 'payment', credit: 'credit', confirmation: 'confirmation', packing_slip: 'packing_slip', order: 'order', price_list: 'price_list', catalog: 'catalog', order_form: 'order_form', specials: 'specials', proof: 'proof', report: 'sales_report', tax_form: 'other', other: 'other',
 }
 
-async function vendorIndex(db: SupabaseClient, org: string): Promise<{ index: VendorIndex; names: string[]; byName: Map<string, string>; wwd: Set<string> }> {
+async function vendorIndex(db: SupabaseClient, org: string): Promise<{ index: VendorIndex; names: string[]; byName: Map<string, string>; wwd: Set<string>; repKeys: Set<string> }> {
   const { data } = await db.from('vendors').select('id, name, aliases').eq('organization_id', org).eq('is_active', true).is('merged_into_id', null).order('name').limit(5000)
   const vendors = (data ?? []) as { id: string; name: string; aliases: string[] | null }[]
   const wwd = new Set(vendors.filter((v) => /^worldwide( distributors)?$/i.test(v.name.trim())).map((v) => v.id))
-  return { index: buildVendorIndex(vendors.map((v) => ({ id: v.id, name: v.name, aliases: v.aliases ?? [] }))), names: vendors.map((v) => v.name), byName: new Map(vendors.map((v) => [v.name.toLowerCase(), v.id])), wwd }
+  // rep groups and rep agencies are never the vendor (an email to Donna is not Esco Trading's paper, Oct 26)
+  const { data: reps } = await db.from('rep_groups').select('name').eq('organization_id', org).limit(500)
+  const repKeys = new Set((reps ?? []).flatMap((r) => r.name.split(/\s*[\/,&]\s*/).map(squeeze)).filter((k) => k.length >= 4))
+  return { index: buildVendorIndex(vendors.map((v) => ({ id: v.id, name: v.name, aliases: v.aliases ?? [] }))), names: vendors.map((v) => v.name), byName: new Map(vendors.map((v) => [v.name.toLowerCase(), v.id])), wwd, repKeys }
 }
 
 /** Read a few listed files: each becomes linked (already on file), proposed (Claude is sure where it goes), leftover (unsure) or skipped. */
@@ -372,6 +375,11 @@ async function readFiles(db: SupabaseClient, c: Conn, started: number): Promise<
         if (bill) out.proposed++; else out.leftover++
         continue
       }
+      if (sorted.about === 'vendor' && isRep(vendors, sorted.vendor)) {
+        // a paper about the rep (an email to Donna, a rep's line list): VMS files papers under vendors and lines, never under a rep
+        await db.from('dropbox_files').update({ ...stamp, ...paper, target: 'vendor', vendor_id: null, sure: false, status: 'leftover', note: `About the rep (${sorted.vendor}): VMS keeps papers under vendors and lines, not reps. Skip it, or pick the vendor it concerns. ${sorted.note}`.slice(0, 400) }).eq('id', f.id)
+        out.leftover++; continue
+      }
       if (sorted.about === 'vendor') {
         const vendorId = matchVendor(vendors, sorted, f)
         if (vendorId && vendors.wwd.has(vendorId)) {
@@ -410,6 +418,15 @@ async function readFiles(db: SupabaseClient, c: Conn, started: number): Promise<
   }
   await db.from('dropbox_connections').update({ last_read_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('organization_id', org)
   return out
+}
+
+/** The printed name is a rep group or rep agency (Dandylines, Diverse Marketing, a rep's name), not a vendor. */
+function isRep(v: Awaited<ReturnType<typeof vendorIndex>>, said: string | null): boolean {
+  const key = squeeze(said ?? '')
+  if (!key) return false
+  if (/dandylines|diversemarketing|diversemktg|repgroup|salesrep/.test(key)) return true
+  for (const r of v.repKeys) if (key === r || key.startsWith(r) || r.startsWith(key)) return true
+  return false
 }
 
 /** The one vendor the paper is about: Claude's pick from the known list, else the names VMS knows found in what it printed. */
