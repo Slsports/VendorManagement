@@ -1,12 +1,13 @@
 // supplies: store supply requests (Dana, Oct 12). Runs every minute from pg_cron (header x-cron-secret).
 //   0. amazon        — Claude reads Amazon order emails: order #, PO (initials + store, Dana Oct 12), total, items, dates
 //                      (Supplies › Amazon). Tyler's and Greg's orders stop there; Dana's (DP) go on to step 2.
-//   1. requests      — Claude reads staff emails to orders@ (senders marked Ours, or a login's email): a supply request
-//                      becomes a Supplies request and, when new, a task for Dana due in 2 days.
+//   1. requests      — Claude reads staff emails to orders@ (senders marked Ours, a login's email, or our own work
+//                      addresses like annette@, Oct 26): a supply request becomes a Supplies request and, when new, a task
+//                      for Dana due in 2 days.
 //   2. orders        — Claude reads order, shipping and delivery emails (orders@ and Dana's own inboxes) against the open
 //                      requests: where it was ordered, the order number, the expected arrival; delivered = arrived.
 //   3. tell them     — when a new request's confirmation comes in, the person who asked gets an email from orders@
-//                      (marked X-VMS-Notice so the sync never files it). Requests from before today get none.
+//                      (marked X-VMS-Notice so the sync never files it). Old requests, and confirmations more than 3 days old, get none.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, errorResponse, json, serviceClient } from '../_shared/caller.ts'
 import { aiEnabled, readAmazonOrders, readSupplyOrders, readSupplyRequests, type AmazonEmail, type OpenSupply, type SupplyOrderEmail, type SupplyRequestEmail } from '../_shared/ai.ts'
@@ -14,8 +15,9 @@ import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
 import { buildMime, formatAddress } from '../_shared/mime.ts'
 
 const TIME_BUDGET_MS = 90_000
-// Requests asked for before Supplies started are loaded as old: no task, no email to the requester.
-const SUPPLIES_START = '2026-10-12T20:00:00Z'
+// Requests asked for more than 30 days ago are loaded as old: no task, no email to the requester (Supplies started
+// Oct 12; work-address requests were read from Oct 26, so Annette's Oct 5 one still gets its task).
+const OLD_AFTER_DAYS = 30
 const TZ = 'America/Los_Angeles'
 
 const check = async <T>(p: PromiseLike<{ data: T; error: { message: string } | null }>): Promise<T> => {
@@ -79,7 +81,7 @@ async function requestStep(db: SupabaseClient, org: string, started: number) {
       const r = readings.get(e.email_id)
       const id = await check(db.rpc('supply_from_email', {
         p_email: e.email_id, p_is_request: !!r?.is_request, p_summary: r?.summary ?? null, p_items: r?.items ?? [],
-        p_requester: r?.requester ?? null, p_store: r?.store ?? null, p_old: new Date(e.sent_at) < new Date(SUPPLIES_START),
+        p_requester: r?.requester ?? null, p_store: r?.store ?? null, p_old: Date.now() - new Date(e.sent_at).getTime() > OLD_AFTER_DAYS * 86_400_000,
       }))
       if (id) made++
     }

@@ -1,10 +1,10 @@
 ---
 title: Supplies the staff ask for
 section: Tasks
-keywords: supplies, amazon, amazon spending, PO, TP, GP, DP, monthly spending, supply request, office supplies, bubble wrap, register tape, label tape, bags, requisition, Annette, ordered, arrived, Amazon, Uline
+keywords: supplies, work email, annette@, staff email, amazon, amazon spending, PO, TP, GP, DP, monthly spending, supply request, office supplies, bubble wrap, register tape, label tape, bags, requisition, Annette, ordered, arrived, Amazon, Uline
 who: Admin, managers and buyers
 ---
-When someone on the staff emails orders@ asking for supplies, Claude turns it into a supply request on the **Supplies** page and puts "Order supplies: …" on Dana's tasks, due in 2 days.
+When someone on the staff emails orders@ asking for supplies, from their work email (like annette@shaverlakesports.com) or a personal email marked as staff, Claude turns it into a supply request on the **Supplies** page and puts "Order supplies: …" on Dana's tasks, due in 2 days.
 
 ## How to
 1. Click **Supplies** in the menu (under Operations).
@@ -16,8 +16,10 @@ When someone on the staff emails orders@ asking for supplies, Claude turns it in
 ## Good to know
 - Did someone ask in person? Click **New request**, type what is needed and who asked. It goes on your tasks too.
 - No confirmation email (bought in town, ordered by phone)? Click **Ordered** on the row and fill it in, then **Arrived** when it comes. **Close** takes it off the list.
-- Requests from before Supplies started were loaded too. They are matched to confirmation emails where VMS has them, and nobody was emailed about them.
-- Staff writing from their own email (like Annette's Yahoo address) need to be marked as staff: on their "Who is this?" card click **Our staff**.
+- Requests more than 30 days old were loaded too, with no task. They are matched to confirmation emails where VMS has them, and nobody was emailed about them.
+- Staff writing from a personal email (like Annette's Yahoo address) need to be marked as staff: on their "Who is this?" card click **Our staff**. Work emails (@shaverlakesports.com) are read on their own.
+- Not read as requests: mail from orders@ itself, your own forwards, and people who no longer work here (Jane).
+- A request found late is still matched to an order confirmation that already came in. The person who asked is only emailed about a confirmation from the last 3 days.
 - Confirmations from your own private inbox show only to you.
 
 ## Amazon
