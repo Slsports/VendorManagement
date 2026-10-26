@@ -10,20 +10,13 @@
 //   { backcheck: true }               → trusted only: look again at every email whose files were skipped (a rule changed)
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { Gmail, GMAIL_SCOPES, googleAccessToken } from '../_shared/gmail.ts'
-import { sheetFileText } from '../_shared/sheetFile.ts'
-import { ACCOUNTING_CATEGORIES, ACCOUNTING_KINDS, aiEnabled, imageType, readAccountingPapers, type AccountingFileCtx, type AccountingPaperReading, type PaperFile } from '../_shared/ai.ts'
+import { aiEnabled, readAccountingPapers, type AccountingFileCtx, type AccountingPaperReading, type PaperFile } from '../_shared/ai.ts'
+import { ACCOUNTING_BUCKET as BUCKET, DOC, JUNK, MAX_CALL_BYTES, MAX_KEEP_BYTES, PICTURE, SHEET, cleanReading, extOf, knownContext, paperFile, rowFromReading, sha256 } from '../_shared/accountingFiling.ts'
 
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-cron-secret', 'Access-Control-Allow-Methods': 'POST, OPTIONS' }
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', ...CORS } })
 const TIME_BUDGET_MS = 40_000
 const EMAILS_PER_RUN = 12
-// The edge worker has little memory (a run died with WORKER_RESOURCE_LIMIT on Oct 16): a file over 5 MB is read by its
-// name and the email, and one Claude call carries at most 12 MB of files.
-const MAX_READ_BYTES = 5 * 1024 * 1024
-const MAX_CALL_BYTES = 12 * 1024 * 1024
-const MAX_KEEP_BYTES = 15 * 1024 * 1024
-const BUCKET = 'accounting-files'
-
 type Att = { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; accounting_document_id: string | null; accounting_skip: string | null }
 type Mail = { id: string; organization_id: string; gmail_id: string; gmail_box: string | null; mailbox_id: string | null; thread_id: string; direction: 'in' | 'out' | 'internal'; from_email: string | null; from_name: string | null; subject: string | null; body_text: string | null; received_at: string; is_bulk: boolean | null; attachments: Att[] }
 
@@ -135,31 +128,6 @@ async function loadMail(db: SupabaseClient, id: string): Promise<Mail | null> {
   return (data as unknown as Mail) ?? null
 }
 
-/** What Claude is told about the business's own records, so parties, policies and contracts come out consistent. */
-async function knownContext(db: SupabaseClient, org: string): Promise<Pick<AccountingFileCtx, 'known_parties' | 'policies' | 'contracts'>> {
-  const [{ data: contacts }, { data: policies }, { data: contracts }, { data: parties }] = await Promise.all([
-    db.from('accounting_contacts').select('company').eq('organization_id', org).eq('status', 'confirmed').neq('company', ''),
-    db.from('accounting_policies').select('id, label, policy_number, carrier').eq('organization_id', org).eq('is_active', true),
-    db.from('accounting_contracts').select('id, label, contract_number, other_party').eq('organization_id', org).in('status', ['pending', 'active']),
-    db.from('accounting_documents').select('party').eq('organization_id', org).neq('party', '').limit(2000),
-  ])
-  const known = new Set<string>()
-  for (const c of contacts ?? []) known.add(c.company)
-  for (const p of parties ?? []) known.add(p.party)
-  for (const p of policies ?? []) if (p.carrier) known.add(p.carrier)
-  for (const c of contracts ?? []) if (c.other_party) known.add(c.other_party)
-  return {
-    known_parties: [...known].sort().slice(0, 300),
-    policies: (policies ?? []).map((p) => ({ id: p.id, label: p.label, number: p.policy_number, carrier: p.carrier })),
-    contracts: (contracts ?? []).map((c) => ({ id: c.id, label: c.label, number: c.contract_number, party: c.other_party })),
-  }
-}
-
-const PICTURE = /\.(png|jpe?g|gif|webp|bmp|tiff?|heic)$/i
-const JUNK = /\.(ics|vcf|p7s|zip|html?|eml|txt|rtf|json|xml|asc|sig|gz|rar)$/i
-const SHEET = /\.(xlsx?|xlsm|csv)$/i
-const DOC = /\.(pdf|docx?)$/i
-
 /** Why an attachment is left in the email before any reading; null when Claude should look at it. */
 function preSkip(a: Att, mail: Mail, force: boolean): string | null {
   if (force) return null
@@ -171,53 +139,6 @@ function preSkip(a: Att, mail: Mail, force: boolean): string | null {
   if (JUNK.test(name) || /^text\/calendar|^application\/pkcs7|^application\/zip|^message\//i.test(a.mime_type ?? '')) return 'not a document'
   if (!pic && !SHEET.test(name) && !DOC.test(name) && !/pdf|spreadsheet|excel|csv|msword|officedocument/i.test(a.mime_type ?? '')) return 'not a document'
   return null
-}
-
-async function sha256(bytes: Uint8Array): Promise<string> {
-  const h = await crypto.subtle.digest('SHA-256', bytes as BufferSource)
-  return [...new Uint8Array(h)].map((b) => b.toString(16).padStart(2, '0')).join('')
-}
-
-function extOf(name: string, mime: string | null): string {
-  const m = /\.([A-Za-z0-9]{1,5})$/.exec(name)
-  if (m) return m[1].toLowerCase()
-  if (/pdf/i.test(mime ?? '')) return 'pdf'
-  const img = /image\/(png|jpeg|gif|webp)/i.exec(mime ?? '')
-  return img ? img[1].toLowerCase().replace('jpeg', 'jpg') : 'bin'
-}
-
-/** The file as Claude can see it: a PDF or picture as itself, a spreadsheet as its text, anything else by name only. */
-async function paperFile(name: string, mime: string | null, bytes: Uint8Array): Promise<PaperFile> {
-  const kind = mime ?? ''
-  if (SHEET.test(name) || /spreadsheet|excel|csv/i.test(kind)) {
-    const text = await sheetFileText(bytes)
-    return { name, mime: kind, bytes: text ? bytes : new Uint8Array(), text: text?.slice(0, 20_000) ?? undefined }
-  }
-  const isPdf = /pdf/i.test(kind) || /\.pdf$/i.test(name)
-  const img = !isPdf && imageType(bytes)
-  if ((isPdf || img) && bytes.length <= MAX_READ_BYTES) return { name, mime: isPdf ? 'application/pdf' : img || kind, bytes }
-  return { name, mime: kind, bytes: new Uint8Array() }
-}
-
-const money = (n: number | null) => n == null ? null : n === Math.trunc(n) ? `$${Math.trunc(n)}` : `$${n.toFixed(2)}`
-
-/** "<date> <whose> <party> <number> <what> $<amount> <status>.<ext>" (decisions, Oct 16), every piece optional but the date. */
-function documentName(r: AccountingPaperReading, fallbackDate: string, ext: string): string {
-  const date = /^\d{4}-\d{2}-\d{2}$/.test(r.doc_date ?? '') ? r.doc_date! : fallbackDate
-  const parts = [date, r.whose, r.party, r.number, r.what, money(r.amount), r.status_word].map((p) => (p ?? '').trim()).filter(Boolean)
-  return `${parts.join(' ').replace(/[/\\:*?"<>|\r\n]+/g, ' ').replace(/\s+/g, ' ').trim()}.${ext}`
-}
-
-function cleanReading(r: AccountingPaperReading, ctx: Pick<AccountingFileCtx, 'policies' | 'contracts'>, year: number): AccountingPaperReading {
-  const policy = r.policy_id && ctx.policies.some((p) => p.id === r.policy_id) ? r.policy_id : null
-  const contract = r.contract_id && ctx.contracts.some((c) => c.id === r.contract_id) ? r.contract_id : null
-  const doc_year = Number.isInteger(r.doc_year) && r.doc_year >= 1990 && r.doc_year <= 2100 ? r.doc_year : year
-  // Claude's words brought back to the lists the table accepts (an answer outside them is "other", never an error)
-  const category = (ACCOUNTING_CATEGORIES as readonly string[]).includes(r.category) ? r.category : r.category === 'accounting' || r.category === 'cpa' ? 'accounting_firm' : 'other'
-  const kindWord = r.kind.trim().toLowerCase().replace(/\s+/g, '_')
-  const kind = (ACCOUNTING_KINDS as readonly string[]).includes(kindWord) ? kindWord : /quot|proposal/.test(kindWord) ? 'quote' : /invoice|bill/.test(kindWord) ? 'invoice' : /receipt/.test(kindWord) ? 'receipt' : /cert|coi/.test(kindWord) ? 'certificate' : /agree|contract|lease/.test(kindWord) ? 'contract' : /letter|memo/.test(kindWord) ? 'letter' : /form|w-?9|1099/.test(kindWord) ? 'form' : 'other'
-  const whose = ['SLS', 'P&S', 'SLM', 'GS'].includes(r.whose.trim().toUpperCase()) ? r.whose.trim().toUpperCase() : /p\s*&\s*s|powell/i.test(r.whose) ? 'P&S' : ''
-  return { ...r, category, kind, whose, policy_id: policy, contract_id: contract, doc_year, party: r.party.replace(/[/\\]+/g, '-').replace(/\s+/g, ' ').trim().slice(0, 80), number: r.number.trim().slice(0, 60), what: r.what.trim().slice(0, 80), status_word: r.status_word.trim().toLowerCase().slice(0, 20), note: r.note.slice(0, 400) }
 }
 
 /** The contact the conversation is filed to, for Claude's context and the document's link. */
@@ -338,15 +259,6 @@ async function storeDocument(db: SupabaseClient, org: string, bytes: Uint8Array,
     throw new Error(error.message)
   }
   return data.id
-}
-
-function rowFromReading(r: AccountingPaperReading, fallbackDate: string, ext: string) {
-  const date = /^\d{4}-\d{2}-\d{2}$/.test(r.doc_date ?? '') ? r.doc_date : null
-  return {
-    category: r.category, party: r.party || 'Unsorted', doc_year: r.doc_year, file_name: documentName(r, fallbackDate, ext), kind: r.kind, whose: r.whose, doc_date: date,
-    number: r.number, what: r.what, amount: r.amount, status_word: r.status_word, policy_id: r.policy_id, contract_id: r.contract_id,
-    status: r.sure && r.party ? 'filed' : 'review', sure: r.sure, claude_note: r.note,
-  }
 }
 
 /** A file dropped on the Documents page (already in the bucket, row status "new"): read it, name it, file it. */

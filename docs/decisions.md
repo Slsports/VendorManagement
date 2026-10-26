@@ -3134,3 +3134,20 @@ Oct 23, later: Dana added the three Twilio secrets; her "Testing text" task's re
   action, an accounting flag (task or bill) points at that same file; never a copy. Only papers that are not about a
   vendor go to Accounting Documents alone (the store's taxes, insurance, banking, payroll, licenses, utilities and
   services that are not merchandise vendors).
+
+## Oct 26 — Dropbox read built (Dana: "go")
+Settings › Dropbox (admin): the App key from a Dropbox app Dana makes once (Scoped access, Full Dropbox, four permissions,
+redirect https://vms.shaverlakesports.com/integrations/dropbox/callback), **Connect to Dropbox** (PKCE sign-in; the
+refresh token stays in `dropbox_connections`, service role only), a folder picker, and the dry run: **List the folder**
+(every file into `dropbox_files`, non-documents skipped before any reading), **Read the files (Claude)** (background, a
+few files every 2 minutes: the same bytes or the same name and size already in VMS → "Already in VMS"; else Claude's
+`sortDropboxPaper` on the cheapest model says vendor paper / bookkeeping paper / skip, with the vendor and numbers;
+vendor papers match a vendor VMS knows or go to "For you"; bookkeeping papers go through the accounting reader for
+Category / Party / Year and the name). The table shows each subfolder with counts; a subfolder opens its files with where
+each would go; **Approve**, **Skip**, **Vendor…** (pick the vendor and folder yourself), **Approve sure** per folder,
+**Approve all sure ones**. Approved files are filed by the scheduler (or **File the approved now**): the bytes into VMS,
+a vendor_links row (source dropbox, with the Dropbox path) or an accounting_documents row (source dropbox); the landing
+triggers (tie to the order, proof/credit tasks) apply as for email. Mode **Scan inbox** (for after the history): new
+files are filed on their own when Claude is sure, moved to a Filed subfolder if ticked, and leftovers become a task for
+Dana. Migration 0244; functions dropbox (new) and accounting-file (its filing helpers moved to `_shared/accountingFiling.ts`).
+Help: settings--connect-dropbox, documents--from-dropbox.

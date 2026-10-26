@@ -82,6 +82,8 @@ const MailSettings = lazy(() => import('@/pages/settings/MailSettings'))
 const LightspeedSettings = lazy(() => import('@/pages/settings/LightspeedSettings'))
 const LightspeedCallback = lazy(() => import('@/pages/settings/LightspeedCallback'))
 const BillcomSettings = lazy(() => import('@/pages/settings/BillcomSettings'))
+const DropboxSettings = lazy(() => import('@/pages/settings/DropboxSettings'))
+const DropboxCallback = lazy(() => import('@/pages/settings/DropboxCallback'))
 const MailPage = lazy(() => import('@/pages/mail/MailPage'))
 const ThreadPage = lazy(() => import('@/pages/mail/ThreadPage'))
 const MailWithPage = lazy(() => import('@/pages/mail/MailWithPage'))
@@ -215,9 +217,11 @@ export default function App() {
                   <Route path="mail" element={<MailSettings />} />
                   <Route path="lightspeed" element={<LightspeedSettings />} />
                   <Route path="billcom" element={<BillcomSettings />} />
+                  <Route path="dropbox" element={<DropboxSettings />} />
                   <Route path=":tab" element={<PlaceholderSettings />} />
                 </Route>
                 <Route path={ROUTES.lightspeedCallback} element={<LightspeedCallback />} />
+                <Route path={ROUTES.dropboxCallback} element={<DropboxCallback />} />
               </Route>
 
               <Route element={<RequireRole roles={['uploader', 'admin', 'manager', 'buyer']} />}>
