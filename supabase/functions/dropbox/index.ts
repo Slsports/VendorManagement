@@ -356,7 +356,8 @@ async function readFiles(db: SupabaseClient, c: Conn, started: number): Promise<
       if (!tooBig && /\.docx$/i.test(f.name) && !docx) { await db.from('dropbox_files').update({ ...stamp, status: 'skipped', error: null, sha256: sha, target: 'skip', skip_reason: 'Word file with no readable text' }).eq('id', f.id); out.skipped++; continue }
       const file = docx ? { name: f.name, mime, bytes: new Uint8Array(), text: docx } : tooBig ? { name: f.name, mime, bytes: new Uint8Array() } : await paperFile(f.name, mime, bytes)
       const bigNote = tooBig ? 'Too big to open here: sorted by its name and folder only.' : ''
-      const sorted = await sortDropboxPaper(db, org, vendors.names, file, { folder: f.folder, path: f.path_display })
+      const answer = await sortDropboxPaper(db, org, vendors.names, file, { folder: f.folder, path: f.path_display })
+      const sorted: typeof answer = answer.about === 'report' ? { ...answer, about: 'vendor', doc_type: 'report' } : answer
       out.read++
       if (sorted.about === 'skip') {
         await db.from('dropbox_files').update({ ...stamp, status: 'skipped', sha256: sha, target: 'skip', skip_reason: (sorted.skip_reason || 'not a paper to keep').slice(0, 120), note: [bigNote, sorted.note].filter(Boolean).join(' ').slice(0, 400) }).eq('id', f.id); out.skipped++; continue
