@@ -190,7 +190,7 @@ function DryRun({ s, busy, run }: { s: DropboxStatus; busy: string | null; run: 
                   </td>
                 </tr>
                 {openFolder === r.folder ? <tr><td colSpan={9} className="p-0"><FolderFiles orgId={orgId} folder={r.folder} summary={r} onClose={() => setOpenFolder(null)} /></td></tr> : null}
-                </>
+                </Fragment>
               )})}
             </tbody>
           </table>
