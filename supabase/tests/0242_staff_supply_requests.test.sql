@@ -34,3 +34,17 @@ delete from public.supply_requests where id = :'req';
 delete from public.emails where thread_id = :'t';
 delete from public.email_threads where id = :'t';
 delete from public.email_senders where sender_key = 'gone242@ourshop.example';
+
+\echo '>>> 0243: an order email from before the request cannot fill it'
+insert into public.email_threads (organization_id, gmail_thread_id) values ('00000000-0000-0000-0000-000000000001', 'sup243') returning id as t3 \gset
+insert into public.emails (organization_id, gmail_id, thread_id, direction, from_email, from_name, subject, body_text, received_at) values
+  ('00000000-0000-0000-0000-000000000001', 'sup243-1', :'t3', 'internal', 'annie242@ourshop.example', 'Annie', 'New order', 'Need note pads', now() - interval '2 days') returning id as e3 \gset
+insert into public.emails (organization_id, gmail_id, thread_id, direction, from_email, subject, body_text, received_at)
+values ('00000000-0000-0000-0000-000000000001', 'sup243-2', :'t3', 'in', 'auto@shop243.example', 'Arrived: your order', 'Nail gel', now() - interval '10 days') returning id as d3 \gset
+select public.supply_from_email(:'e3', true, 'Note pads', null, 'Annie', null, false) as req3 \gset
+select public.supply_from_confirmation(:'d3', 'delivered', array[:'req3']::uuid[], 'Shop', '1', null, null, null) = 0 as older_email_ignored;
+select status = 'requested' as still_requested from public.supply_requests where id = :'req3';
+delete from public.tasks where auto_key = 'supply:' || :'req3';
+delete from public.supply_requests where id = :'req3';
+delete from public.emails where thread_id = :'t3';
+delete from public.email_threads where id = :'t3';
