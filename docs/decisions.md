@@ -3151,3 +3151,10 @@ triggers (tie to the order, proof/credit tasks) apply as for email. Mode **Scan 
 files are filed on their own when Claude is sure, moved to a Filed subfolder if ticked, and leftovers become a task for
 Dana. Migration 0244; functions dropbox (new) and accounting-file (its filing helpers moved to `_shared/accountingFiling.ts`).
 Help: settings--connect-dropbox, documents--from-dropbox.
+- Oct 26, later: the folder is /Documents/1-A Shaver Lake Sports (19,187 files; 15,400 readable). Dana: skip PPP (a
+  forgiven COVID loan), Inventory Reports and Lightspeed (VMS reads LS itself), Monday Sales Reports and Summary
+  Spreadsheets (VMS runs those reports), plus Claude's list of non-paper folders (Debby Files, Websites, Employees, logos,
+  ads, people folders …). 8,942 files left to read. Dana asked why Word files were not readable: Claude reads PDFs,
+  pictures and text, so .docx files now go in as their words (`_shared/docxText.ts`); old .doc files (353) are set aside
+  with a note to save them as .docx or PDF. Settings › Dropbox groups by top folder with **Skip folder** / **Read this
+  folder** (migration 0245); the scheduler reads every minute, about 25 files a run.
