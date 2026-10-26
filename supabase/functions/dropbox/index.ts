@@ -16,6 +16,7 @@
 //   { action: 'apply' }                                         → file what is approved, now
 //   { action: 'disconnect' }
 //   { action: 'sync' } with the scheduler's secret              → every organization: scan, read, apply, inbox filing
+//   { action: 'peek' } with the scheduler's secret              → what the folder holds at the top and how the listing pages out (for a cloud session)
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, caller, errorResponse, HttpError, json, serviceClient } from '../_shared/caller.ts'
 import { aiEnabled, readAccountingPapers, sortDropboxPaper, type AccountingFileCtx, type DropboxSortReading } from '../_shared/ai.ts'
@@ -54,6 +55,24 @@ Deno.serve(async (req) => {
     const cronSecret = Deno.env.get('MAIL_CRON_SECRET')
     const trusted = !!cronSecret && req.headers.get('x-cron-secret') === cronSecret
     if (trusted) {
+      // a look at the folder from a cloud session (which cannot reach Dropbox itself): what is at the top, and how the recursive listing pages out
+      if (body.action === 'peek') {
+        const { data: cs } = await db.from('dropbox_connections').select('*').not('refresh_token', 'is', null).limit(1)
+        const c = (cs ?? [])[0] as Conn | undefined
+        if (!c?.folder_path_lower) throw new HttpError(400, 'No folder')
+        const top = await api<{ entries: DbxEntry[]; has_more: boolean }>(db, c, 'files/list_folder', { path: c.folder_path_lower, recursive: false, limit: 2000 })
+        const pages: { entries: number; files: number; folders: number; has_more: boolean }[] = []
+        let cursor: string | null = null
+        for (let i = 0; i < 12; i++) {
+          const page: { entries: DbxEntry[]; cursor: string; has_more: boolean } = cursor
+            ? await api(db, c, 'files/list_folder/continue', { cursor })
+            : await api(db, c, 'files/list_folder', { path: c.folder_path_lower, recursive: true, include_deleted: false, include_non_downloadable_files: false, limit: 1000 })
+          pages.push({ entries: page.entries.length, files: page.entries.filter((e) => e['.tag'] === 'file').length, folders: page.entries.filter((e) => e['.tag'] === 'folder').length, has_more: page.has_more })
+          cursor = page.cursor
+          if (!page.has_more) break
+        }
+        return json({ folder: c.folder_path, top: top.entries.map((e) => `${e['.tag']}: ${e.name}`), top_has_more: top.has_more, pages })
+      }
       if (body.action !== 'sync') throw new HttpError(400, 'Unknown action')
       const { data: conns } = await db.from('dropbox_connections').select('*').not('refresh_token', 'is', null).not('folder_path', 'is', null)
       const out: unknown[] = []
@@ -114,6 +133,8 @@ Deno.serve(async (req) => {
       const meta = await api<DbxEntry>(db, c, 'files/get_metadata', { path })
       if (meta['.tag'] !== 'folder') throw new HttpError(400, 'That is not a folder')
       const mode = body.mode === 'inbox' ? 'inbox' : 'history'
+      // a different folder: the old folder's unfiled list goes (what was filed or linked stays as the record of where it came from)
+      if (c.folder_path_lower && c.folder_path_lower !== (meta.path_lower ?? path.toLowerCase())) await db.from('dropbox_files').delete().eq('organization_id', org).in('status', ['new', 'skipped', 'proposed', 'leftover', 'error'])
       await db.from('dropbox_connections').update({ folder_path: meta.path_display ?? path, folder_path_lower: meta.path_lower ?? path.toLowerCase(), mode, move_filed: mode === 'inbox' && !!body.move_filed, cursor: null, scan_done: false, last_error: null, updated_at: new Date().toISOString() }).eq('organization_id', org)
       return json(await status(db, org))
     }
