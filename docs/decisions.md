@@ -3121,3 +3121,16 @@ Oct 23, later: Dana added the three Twilio secrets; her "Testing text" task's re
 - Dana: "Jane is no longer with us, Trevor replaced her." "Jane hasn't been with us since Mother's Day, but I was forwarding some of her emails myself after that." jane@ is marked as no longer with us and skipped.
 - Rule: a request found late (back-check) is still matched to a confirmation that already came in; the person who asked is emailed only about a confirmation from the last 3 days. Requests more than 30 days old load with no task.
 - Back-check: the last 13 months of staff work mail read for requests; counts reported to Dana.
+
+## Oct 26 — Dropbox read and the one-place rule for vendor papers (Dana)
+- Dana's Dropbox has one "Shaver Lake Sports" folder with every SLS paper in many subfolders, not well sorted. Plan agreed
+  (not yet built, waiting for go): connect Dropbox on Settings (full-Dropbox permission, VMS reads only the folder named,
+  never moves or deletes during the historical pass); a dry run lists each subfolder, file counts and where each would
+  go in VMS; Dana approves; then VMS files by content under VMS's own rules, never by the Dropbox folder name; leftovers
+  go on one grouped list. Afterwards the same connection watches one scan inbox folder (Bookkeeping / Vendors) and moves
+  filed files to a Filed subfolder.
+- **Vendor papers live in one place (Dana):** anything about a vendor is always in that vendor's Documents, whatever
+  folder or mailbox it came from (invoices, statements, credits, W-9s, the vendor's tax forms). When it needs accounting
+  action, an accounting flag (task or bill) points at that same file; never a copy. Only papers that are not about a
+  vendor go to Accounting Documents alone (the store's taxes, insurance, banking, payroll, licenses, utilities and
+  services that are not merchandise vendors).
