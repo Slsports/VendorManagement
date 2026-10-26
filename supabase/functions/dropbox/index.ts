@@ -14,6 +14,7 @@
 //   { action: 'reading', on }                                   → start or stop Claude reading the listed files
 //   { action: 'read' }                                          → read a few files now
 //   { action: 'apply' }                                         → file what is approved, now
+//   { action: 'preview', id }                                   → a link (good for 4 hours) to look at one listed file
 //   { action: 'disconnect' }
 //   { action: 'sync' } with the scheduler's secret              → every organization: scan, read, apply, inbox filing
 //   { action: 'peek' } with the scheduler's secret              → what the folder holds at the top and how the listing pages out (for a cloud session)
@@ -162,6 +163,13 @@ Deno.serve(async (req) => {
       const c = await conn(db, org)
       const r = await readFiles(db, c, started)
       return json({ ...(await status(db, org)), read: r })
+    }
+    if (body.action === 'preview') {
+      const c = await conn(db, org)
+      const { data: f } = await db.from('dropbox_files').select('dropbox_id, name').eq('organization_id', org).eq('id', String((body as { id?: string }).id ?? '')).maybeSingle()
+      if (!f) throw new HttpError(404, 'File not found')
+      const r = await api<{ link: string }>(db, c, 'files/get_temporary_link', { path: f.dropbox_id })
+      return json({ url: r.link, name: f.name })
     }
     if (body.action === 'apply') {
       const c = await conn(db, org)
@@ -316,7 +324,7 @@ async function vendorIndex(db: SupabaseClient, org: string): Promise<{ index: Ve
   const wwd = new Set(vendors.filter((v) => /^worldwide( distributors)?$/i.test(v.name.trim())).map((v) => v.id))
   // rep groups and rep agencies are never the vendor (an email to Donna is not Esco Trading's paper, Oct 26)
   const { data: reps } = await db.from('rep_groups').select('name').eq('organization_id', org).limit(500)
-  const repKeys = new Set((reps ?? []).flatMap((r) => r.name.split(/\s*[\/,&]\s*/).map(squeeze)).filter((k) => k.length >= 4))
+  const repKeys = new Set((reps ?? []).flatMap((r) => r.name.split(/\s*[/,&]\s*/).map(squeeze)).filter((k) => k.length >= 4))
   return { index: buildVendorIndex(vendors.map((v) => ({ id: v.id, name: v.name, aliases: v.aliases ?? [] }))), names: vendors.map((v) => v.name), byName: new Map(vendors.map((v) => [v.name.toLowerCase(), v.id])), wwd, repKeys }
 }
 

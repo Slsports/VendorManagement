@@ -7,7 +7,7 @@ import { useLiveTable } from '@/hooks/useLiveTable'
 import { useAuth } from '@/hooks/useAuth'
 import {
   applyDropboxNow, approveDropbox, decideDropboxFile, disconnectDropbox, dropboxFolderSummary, dropboxSignInUrl, dropboxStatus, listDropboxFiles, listDropboxFolders,
-  readDropboxNow, rescanDropbox, saveDropboxAppKey, scanDropbox, setDropboxFolder, setDropboxReading, skipDropboxFolder, type DropboxFile, type DropboxFileStatus, type DropboxFolderSummary, type DropboxStatus,
+  dropboxPreviewUrl, readDropboxNow, rescanDropbox, saveDropboxAppKey, scanDropbox, setDropboxFolder, setDropboxReading, skipDropboxFolder, type DropboxFile, type DropboxFileStatus, type DropboxFolderSummary, type DropboxStatus,
 } from '@/services/dropbox'
 import { ROUTES } from '@/lib/constants'
 import { DOC_FOLDERS, folderLabel, folderOf } from '@/lib/documents'
@@ -215,6 +215,17 @@ function FolderFiles({ orgId, folder, summary, onClose }: { orgId: string; folde
   useLiveTable('dropbox_files', `organization_id=eq.${orgId}`, () => { void q.refetch() })
   const [changing, setChanging] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
+  /** The file itself, from Dropbox, in a new tab (Dana, Oct 26: "I can't click on anything to read what you are wanting me to approve"). */
+  async function openFile(f: DropboxFile) {
+    const tab = window.open('', '_blank')
+    try {
+      const url = await dropboxPreviewUrl(f.id)
+      if (tab) tab.location.href = url; else window.open(url, '_blank')
+    } catch (err) {
+      tab?.close()
+      toast.error(errorMessage(err))
+    }
+  }
   async function decide(f: DropboxFile, change: Parameters<typeof decideDropboxFile>[2], done: string) {
     if (!profile) return
     setBusy(f.id)
@@ -246,6 +257,7 @@ function FolderFiles({ orgId, folder, summary, onClose }: { orgId: string; folde
                 <span className="min-w-0 flex-1">
                   {f.folder !== folder ? <span className="block text-xs text-stone-500">{f.folder}</span> : null}
                   <span className="font-medium text-stone-900">{f.name}</span>
+                  <button type="button" className="ml-2 text-xs text-brand hover:underline" onClick={() => void openFile(f)}>Open</button>
                   <Badge tone={STATUS_LABEL[f.status]?.tone ?? 'neutral'} className="ml-2">{STATUS_LABEL[f.status]?.text ?? f.status}</Badge>
                   {f.status === 'proposed' && f.sure === false ? <Badge tone="warning" className="ml-1">unsure</Badge> : null}
                   <span className="block text-stone-700">{where(f)}</span>
