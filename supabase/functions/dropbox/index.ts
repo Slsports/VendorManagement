@@ -31,7 +31,7 @@ const DBX_API = 'https://api.dropboxapi.com/2'
 const DBX_CONTENT = 'https://content.dropboxapi.com/2'
 const REDIRECT = 'https://vms.shaverlakesports.com/integrations/dropbox/callback'
 const SCOPES = 'account_info.read files.metadata.read files.content.read files.content.write'
-const TIME_BUDGET_MS = 45_000
+const TIME_BUDGET_MS = 40_000
 const READ_PER_RUN = 25
 const APPLY_PER_RUN = 15
 const VENDOR_BUCKET = 'vendor-files'
@@ -42,7 +42,7 @@ const MAX_SHEET_BYTES = 2 * 1024 * 1024
 interface Conn {
   organization_id: string; app_key: string | null; refresh_token: string | null; access_token: string | null; access_token_at: string | null
   account_name: string | null; account_email: string | null; folder_path: string | null; folder_path_lower: string | null; mode: 'history' | 'inbox'; move_filed: boolean
-  cursor: string | null; scan_done: boolean; reading: boolean; oauth_state: string | null; oauth_state_at: string | null; code_verifier: string | null
+  cursor: string | null; scan_done: boolean; reading: boolean; run_lock_at: string | null; oauth_state: string | null; oauth_state_at: string | null; code_verifier: string | null
   connected_at: string | null; connected_by: string | null; last_scan_at: string | null; last_read_at: string | null; last_error: string | null
 }
 interface DbxEntry { '.tag': 'file' | 'folder' | 'deleted'; id?: string; name: string; path_lower?: string; path_display?: string; size?: number; content_hash?: string; client_modified?: string; server_modified?: string }
@@ -307,7 +307,7 @@ function preSkip(name: string, size: number): string | null {
 
 // ---- reading: what each file is and where it would go ---------------------------------------------------------------------
 const KIND_OF: Record<DropboxSortReading['doc_type'], string> = {
-  invoice: 'invoice', statement: 'invoice', payment: 'payment', credit: 'credit', confirmation: 'confirmation', packing_slip: 'packing_slip', order: 'order', price_list: 'price_list', catalog: 'catalog', order_form: 'order_form', specials: 'specials', proof: 'proof', tax_form: 'other', other: 'other',
+  invoice: 'invoice', statement: 'invoice', payment: 'payment', credit: 'credit', confirmation: 'confirmation', packing_slip: 'packing_slip', order: 'order', price_list: 'price_list', catalog: 'catalog', order_form: 'order_form', specials: 'specials', proof: 'proof', report: 'sales_report', tax_form: 'other', other: 'other',
 }
 
 async function vendorIndex(db: SupabaseClient, org: string): Promise<{ index: VendorIndex; names: string[]; byName: Map<string, string>; wwd: Set<string> }> {
@@ -329,13 +329,21 @@ async function readFiles(db: SupabaseClient, c: Conn, started: number): Promise<
   for (const f of queue as FileRow[]) {
     if (Date.now() - started > TIME_BUDGET_MS) break
     const stamp = { read_at: new Date().toISOString(), updated_at: new Date().toISOString(), error: null as string | null }
-    // claimed first: if the worker dies on this file (out of memory), the row says so instead of being tried every minute
-    await db.from('dropbox_files').update({ status: 'error', error: 'The reader stopped on this file (it may be too big to open); it is tried again later', updated_at: stamp.updated_at }).eq('id', f.id)
+    // claimed first (only if still new, so two runs never read the same file): if the worker dies on this file, the row says so instead of being tried every minute
+    const { data: claimed } = await db.from('dropbox_files').update({ status: 'error', error: 'The reader stopped on this file (it may be too big to open); it is tried again later', updated_at: stamp.updated_at }).eq('id', f.id).eq('status', 'new').select('id')
+    if (!claimed?.length) continue
     try {
+      // a stub of a file (68-byte "PDFs" from a sync that never finished) is nothing to read
+      if ((f.size ?? 0) < 300) { await db.from('dropbox_files').update({ ...stamp, status: 'skipped', target: 'skip', skip_reason: 'empty or unfinished file (under 300 bytes)' }).eq('id', f.id); out.skipped++; continue }
       const mime = mimeOf(f.name)
       // the same name and size already under a vendor (Dana, Oct 14: never a second copy): link, never read
       const { data: sameVen } = await db.from('vendor_links').select('id, vendor_id').eq('organization_id', org).ilike('file_name', f.name.replace(/[%_\\]/g, (ch) => `\\${ch}`)).eq('file_size', f.size ?? -1).not('storage_path', 'is', null).limit(1)
       if (sameVen?.[0]) { await db.from('dropbox_files').update({ ...stamp, status: 'linked', error: null, vendor_link_id: sameVen[0].id, vendor_id: sameVen[0].vendor_id, target: 'vendor', note: 'Already in the vendor\'s Documents' }).eq('id', f.id); out.linked++; continue }
+      // the same file in two Dropbox folders (Dropbox's own content hash): one copy is enough
+      if (f.content_hash) {
+        const { data: twin } = await db.from('dropbox_files').select('id, path_display, status').eq('organization_id', org).eq('content_hash', f.content_hash).neq('id', f.id).in('status', ['proposed', 'approved', 'filed', 'linked', 'leftover']).limit(1)
+        if (twin?.[0]) { await db.from('dropbox_files').update({ ...stamp, status: 'linked', target: 'skip', note: `The same file as ${twin[0].path_display}; that copy is the one filed` }).eq('id', f.id); out.linked++; continue }
+      }
       const tooBig = (f.size ?? 0) > MAX_READ_BYTES || (SHEET.test(f.name) && (f.size ?? 0) > MAX_SHEET_BYTES)
       const bytes = tooBig ? new Uint8Array() : await download(db, c, f.dropbox_id)
       const sha = tooBig ? null : await sha256(bytes)
@@ -376,6 +384,13 @@ async function readFiles(db: SupabaseClient, c: Conn, started: number): Promise<
         const note = [bigNote, sorted.doc_type === 'statement' ? 'A statement: goes to Invoices.' : '', sorted.doc_type === 'tax_form' ? 'The vendor\'s tax form: goes to Other.' : '', line ? `"${line.name}" is a line (a catalog name), not a vendor yet: goes under the line.` : '', !vendorId && !line ? `Vendor not found in VMS: "${sorted.vendor ?? '?'}".` : '', sorted.note].filter(Boolean).join(' ').slice(0, 400)
         if (!vendorId && !line) { await db.from('dropbox_files').update({ ...base, status: 'leftover', note }).eq('id', f.id); out.leftover++ } else { await db.from('dropbox_files').update({ ...base, status: 'proposed', note }).eq('id', f.id); out.proposed++ }
         continue
+      }
+      // a service company that is a vendor in VMS (Terminix, Verizon …): its papers live under the vendor (Dana, Oct 26: one place)
+      const serviceVendor = sorted.vendor ? matchVendor(vendors, { ...sorted, vendor_match: null }, f) : null
+      if (serviceVendor && !vendors.wwd.has(serviceVendor)) {
+        const kind = sorted.doc_type === 'other' ? 'invoice' : (KIND_OF[sorted.doc_type] ?? 'invoice')
+        await db.from('dropbox_files').update({ ...stamp, ...paper, target: 'vendor', vendor_id: serviceVendor, kind, sure: sorted.sure, status: 'proposed', note: [bigNote, 'A service company that is a vendor in VMS: goes under the vendor.', sorted.note].filter(Boolean).join(' ').slice(0, 400) }).eq('id', f.id)
+        out.proposed++; continue
       }
       // a bookkeeping paper: the accounting reader gives the folder and the name pieces
       known ??= await knownContext(db, org)
@@ -513,6 +528,10 @@ async function moveToFiled(db: SupabaseClient, c: Conn, f: FileRow) {
 async function syncOrg(db: SupabaseClient, c: Conn) {
   const started = Date.now()
   const r: Record<string, unknown> = { organization_id: c.organization_id, mode: c.mode }
+  // one run at a time: a slice that runs long must not overlap the next minute's run (two workers, one memory limit)
+  const { data: lock } = await db.from('dropbox_connections').update({ run_lock_at: new Date().toISOString() }).eq('organization_id', c.organization_id)
+    .or(`run_lock_at.is.null,run_lock_at.lt.${new Date(Date.now() - 55_000).toISOString()}`).select('organization_id')
+  if (!lock?.length) return { ...r, skipped: 'another run is going' }
   // inbox mode re-lists on every run (the cursor carries on from last time); history mode lists until it is done
   if (c.mode === 'inbox' || !c.scan_done) r.scan = await scan(db, c, started)
   if (c.mode === 'inbox' || c.reading) r.read = await readFiles(db, c, started)
