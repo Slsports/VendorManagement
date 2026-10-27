@@ -336,7 +336,7 @@ async function vendorIndex(db: SupabaseClient, org: string): Promise<{ index: Ve
 async function readFiles(db: SupabaseClient, c: Conn, started: number): Promise<{ read: number; proposed: number; leftover: number; linked: number; skipped: number; errors: number }> {
   if (!aiEnabled()) throw new HttpError(503, 'Claude is not set up')
   const org = c.organization_id
-  const out = { read: 0, proposed: 0, leftover: 0, linked: 0, skipped: 0, errors: 0 }
+  const out = { read: 0, proposed: 0, leftover: 0, linked: 0, skipped: 0, errors: 0, paused: null as string | null }
   // a file the worker died on (claimed, never finished) goes to Dana's list after ten minutes rather than staying an error
   await db.from('dropbox_files').update({ status: 'leftover', target: 'skip', sure: false, error: null, note: 'VMS could not open this file (the reader stopped on it). Open it yourself: if it matters, save it as PDF and drop it on the vendor\'s Documents.', updated_at: new Date().toISOString() })
     .eq('organization_id', org).eq('status', 'error').like('error', 'The reader stopped%').lt('updated_at', new Date(Date.now() - 10 * 60_000).toISOString())
@@ -433,6 +433,11 @@ async function readFiles(db: SupabaseClient, c: Conn, started: number): Promise<
       if (sure) out.proposed++; else out.leftover++
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
+      // Claude itself is unavailable (spend limit, rate limit, overloaded): the file goes back in line and this run stops
+      if (/usage limits|rate_limit_error|overloaded_error|credit balance|api_error/i.test(msg)) {
+        await db.from('dropbox_files').update({ status: 'new', read_at: null, error: null, updated_at: stamp.updated_at }).eq('id', f.id)
+        out.paused = msg.slice(0, 200); break
+      }
       // a file Claude cannot open (a locked or odd PDF): Dana's list, not an error to retry
       // only a complaint about this one file counts; an account or rate problem stays an error with its message kept
       if (/could not process|PDF specified was not valid|not a valid PDF|cannot be empty|Could not parse|too many pages|image exceeds/i.test(msg)) {
