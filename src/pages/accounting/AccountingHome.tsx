@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BookOpen, CalendarDays, Contact, FileSignature, FolderOpen, ListTodo, Mail, ShieldCheck } from 'lucide-react'
+import { BookOpen, CalendarDays, ChevronDown, ChevronRight, Contact, FileSignature, FolderOpen, ListTodo, Mail, ShieldCheck } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useTasksQuery } from '@/hooks/useTasksQuery'
@@ -46,6 +46,14 @@ export default function AccountingHome() {
   const toConfirm = (recipients.data ?? []).filter((r) => r.status === 'proposed').length
   const renewing = (policies.data ?? []).filter((p) => { const d = daysUntil(p.renewal_date); return d != null && d <= 45 })
   const quiet = !overdue.length && !thisWeek.length && !(needs.data?.length) && !(noAnswer.data?.length) && !asked.length
+  // closed when the page opens (Dana, Oct 27): the header line says how much is waiting; a click opens the lists
+  const [showMissing, setShowMissing] = useState(false)
+  const headline = tasks.isLoading || needs.isLoading ? 'Looking…' : quiet ? 'Nothing waiting on you.' : [
+    overdue.length ? `${overdue.length} overdue` : '',
+    thisWeek.length ? `${thisWeek.length} due this week` : '',
+    (needs.data?.length ?? 0) + (noAnswer.data?.length ?? 0) ? `${(needs.data?.length ?? 0) + (noAnswer.data?.length ?? 0)} mail` : '',
+    asked.length ? `${asked.length} waiting for proof of insurance` : '',
+  ].filter(Boolean).join(', ')
 
   return (
     <div>
@@ -54,8 +62,12 @@ export default function AccountingHome() {
       {!boxes.isLoading && !box ? <Alert variant="warning">The billing@ mailbox is not connected to VMS yet.</Alert> : null}
 
       <section className="rounded-2xl border border-stone-200 bg-white p-4 sm:p-5">
-        <h2 className="text-base font-semibold text-stone-900">What am I missing?</h2>
-        {tasks.isLoading || needs.isLoading ? <div className="py-6"><Spinner label="Looking…" className="text-brand" /></div> : quiet ? (
+        <button type="button" onClick={() => setShowMissing((v) => !v)} aria-expanded={showMissing} className="flex w-full items-center gap-2 text-left">
+          {showMissing ? <ChevronDown className="size-4 shrink-0 text-stone-500" aria-hidden="true" /> : <ChevronRight className="size-4 shrink-0 text-stone-500" aria-hidden="true" />}
+          <h2 className="text-base font-semibold text-stone-900">What am I missing?</h2>
+          <span className={`ml-auto text-sm ${quiet ? 'text-stone-500' : 'font-medium text-amber-700'}`}>{headline}</span>
+        </button>
+        {!showMissing ? null : tasks.isLoading || needs.isLoading ? <div className="py-6"><Spinner label="Looking…" className="text-brand" /></div> : quiet ? (
           <p className="mt-2 text-sm text-stone-600">Nothing overdue, nothing due this week, no mail waiting on you, nobody waiting for proof of insurance.</p>
         ) : (
           <div className="mt-3 grid gap-4 lg:grid-cols-2">
