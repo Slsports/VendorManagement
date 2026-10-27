@@ -3225,3 +3225,9 @@ complaint about the file itself sends it to Dana's list.
 - Rule: a credit lands in the vendor's Credits folder marked **Received** (the day it came in); no task. Done (migration 0254): 31 old tasks closed at Dana's request, SAA application moved to Other, every credit on file marked Received.
 - Dana: "assign the 5 recent ones to Trevor. He is the one that receives inventory, emails vendors when there is damage or shortages and he will track the credits too." Done: World Famous C2600409, Daisy 100226, Emery Jensen 30333, Stansport 84731, Luhr Jensen/Pautzke 5251, out of Accounting.
 - Next (Fable's build): when Trevor asks a vendor for a credit, remind him after 7 days with no reply carrying a credit; once received, for a WWD vendor VMS confirms it on Edenred from Trevor's weekly or biweekly uploads, closes his task and marks the credit "On Edenred".
+
+## Oct 27, 2026 — Emery Jensen: hardware store, file only
+- Dana: "Trevor should not be given anything with Emery Jensen, that is the hardware store. I just want you to file anything that comes in from emery jenson in their vendor documents."
+- Done (migration 0255): Trevor's EJ credit task closed at Dana's request; EJ ticked Bought for SLH and paperwork-only (no order checks); its 153 open order checks dismissed (105 "needs an order", 6 to review, 42 failed reads).
+- Rule for the credit-request build: hardware store (Bought for SLH) vendors are never Trevor's.
+- Bill.com (checked Oct 27): EJ's "Send invoices to Bill.com" switch in VMS is off and VMS has never forwarded an EJ email, yet Bill.com shows 60 EJ bills, the latest dated Oct 19. They reach Bill.com some other way, not through VMS (not confirmed how).
