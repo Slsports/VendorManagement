@@ -434,7 +434,8 @@ async function readFiles(db: SupabaseClient, c: Conn, started: number): Promise<
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
       // a file Claude cannot open (a locked or odd PDF): Dana's list, not an error to retry
-      if (/invalid_request_error|could not process|PDF specified was not valid|cannot be empty|Could not parse/i.test(msg)) {
+      // only a complaint about this one file counts; an account or rate problem stays an error with its message kept
+      if (/could not process|PDF specified was not valid|not a valid PDF|cannot be empty|Could not parse|too many pages|image exceeds/i.test(msg)) {
         await db.from('dropbox_files').update({ read_at: stamp.read_at, updated_at: stamp.updated_at, status: 'leftover', target: 'skip', sure: false, error: null, note: 'VMS could not open this file (Claude could not read it). Open it yourself: if it matters, save it as a plain PDF and drop it on the vendor\'s Documents.' }).eq('id', f.id)
         out.leftover++; continue
       }
