@@ -9,6 +9,7 @@ import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { saveBlob } from '@/lib/viewer'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useLiveTable } from '@/hooks/useLiveTable'
+import { useAuth } from '@/hooks/useAuth'
 import { DOC_FOLDERS, byYear, folderLabel, folderOf, isPictureFile, kindFor, thisYear, todayIso, yearChoices, type DocFolder } from '@/lib/documents'
 import { LINK_KIND_LABELS } from '@/lib/vendors'
 import { matchLink } from '@/lib/mailSearch'
@@ -31,6 +32,8 @@ const MAX_MB = MAX_UPLOAD_MB
  * right folder on their own. Move puts a file in another folder or year.
  */
 export function VendorDocumentsSection({ vendorId, vendorName, organizationId, userId, canEdit }: { vendorId: string; vendorName: string; organizationId: string; userId: string | null; canEdit: boolean }) {
+  // Paid and In Bill.com show only to people with the Accounting tick (Dana: Trevor and Jarrett never see paid tags)
+  const seesAccounting = !!useAuth().profile?.sees_accounting
   const q = useSupabaseQuery(() => listVendorLinks(vendorId), [vendorId])
   // a sales report filed from the Ordering box (Run report, Upload) shows up here without a reload (Dana, Oct 18)
   const { refetch } = q
@@ -191,8 +194,10 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
           {l.kind === 'proof' ? <Badge tone="neutral" className="mr-1">{l.superseded_at ? 'Earlier version, not used' : 'Not approved yet'}</Badge> : null}
           {l.kind === 'credit' && l.credit_received_on ? <Badge tone="success" className="mr-1">Received {new Date(`${l.credit_received_on}T12:00:00`).toLocaleDateString()}</Badge> : null}
           {l.kind === 'credit' && l.on_edenred_on ? <Badge tone="info" className="mr-1">On Edenred {new Date(`${l.on_edenred_on}T12:00:00`).toLocaleDateString()}</Badge> : null}
-          {l.kind === 'invoice' && l.paid_at ? <Badge tone="success" className="mr-1">Paid {new Date(`${l.paid_at}T12:00:00`).toLocaleDateString()}{l.paid_how ? ` · ${l.paid_how}` : ''}</Badge> : null}
-          {l.kind === 'invoice' && l.paid_at && l.paid_thread_id ? <Link to={l.paid_email_id ? matchLink(l.paid_thread_id, { email_id: l.paid_email_id }) : `${ROUTES.mail}/${l.paid_thread_id}`} className="mr-1 text-brand hover:underline">payment email</Link> : null}
+          {(l.kind === 'invoice' || l.kind === 'credit') && l.billed_as ? <Badge tone="neutral" className="mr-1">{l.billed_as}</Badge> : null}
+          {seesAccounting && l.kind === 'invoice' && l.billcom_bill_id && !l.paid_at ? <Badge tone="info" className="mr-1">In Bill.com</Badge> : null}
+          {seesAccounting && l.kind === 'invoice' && l.paid_at ? <Badge tone="success" className="mr-1">Paid {new Date(`${l.paid_at}T12:00:00`).toLocaleDateString()}{l.paid_how ? ` · ${l.paid_how}` : ''}</Badge> : null}
+          {seesAccounting && l.kind === 'invoice' && l.paid_at && l.paid_thread_id ? <Link to={l.paid_email_id ? matchLink(l.paid_thread_id, { email_id: l.paid_email_id }) : `${ROUTES.mail}/${l.paid_thread_id}`} className="mr-1 text-brand hover:underline">payment email</Link> : null}
           {l.kind === 'confirmation' && l.replaced_po ? <Badge tone="success" className="mr-1">Final (replaced PO {l.replaced_po})</Badge> : null}
           {l.kind === 'confirmation' && l.superseded_at ? <Badge tone="neutral" className="mr-1">Old: replaced by an updated confirmation</Badge> : null}
           {folder && folder.kinds.length > 1 && folder.id !== 'proofs' ? <Badge tone="neutral" className="mr-1">{LINK_KIND_LABELS[l.kind]}</Badge> : null}

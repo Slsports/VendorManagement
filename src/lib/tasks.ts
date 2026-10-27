@@ -143,6 +143,8 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   // a proof or credit that landed (Dana, Oct 19; Oct 20: "the exact file"): the vendor's folder open, the file itself open
   if (kind === 'proof' && t.vendor_id) return { kind: 'page', to: `/vendors/${t.vendor_id}?folder=proofs${id ? `&doc=${id}` : ''}`, label: 'Open the proof' }
   if (kind === 'credit' && t.vendor_id) return { kind: 'page', to: `/vendors/${t.vendor_id}?folder=credits${id ? `&doc=${id}` : ''}`, label: 'Open the credit' }
+  // an invoice not in Bill.com yet (Dana, Oct 27, Emery Jensen): the invoice itself, to enter it
+  if (kind === 'billcom_enter' && t.vendor_id) return { kind: 'page', to: `/vendors/${t.vendor_id}?folder=invoices${id ? `&doc=${id}` : ''}`, label: 'Open the invoice' }
   if (kind === 'supply') return { kind: 'page', to: t.thread_id ? `/mail/${t.thread_id}` : '/supplies', label: t.thread_id ? 'Open the request' : 'Open Supplies' }
   if ((kind === 'wwd' || kind === 'order' || kind === 'billcom') && id) return { kind: 'pay', label: 'Pay it', bill: kind, id }
   // tasks people make: whatever they are tagged to
