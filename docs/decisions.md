@@ -3192,3 +3192,17 @@ Esco Trading through its Dandylines alias).
   A carrier's bill with no bill waiting in VMS becomes a new freight bill for that carrier (matched by name, an exact name
   winning) and is read like a dropped PDF, so its shipments land on the vendors that shipped them: the Freight page and
   the vendor's Freight box (migration 0250). Dropbox previews are sent as a byte stream so PDFs and Word files open intact.
+
+## Oct 27 — Paperwork asks and the CDTFA rhythm (Dana: "go")
+Dana, on the Sno-Park registration email: VMS had only marked it "waiting on us" and filed the forms; the accounting plan's
+"an email that needs an answer → task" was never built (8 billing@ asks in 30 days, none with a task). Built (migration
+0252): an email that asks us to fill out, sign or return paperwork becomes a task at once (`task_from_ask`, Claude's
+`readPaperworkAsks` on every "needs an answer" email, plus a 90-day back-check), with the deadline read from the email,
+**Go to it** opening the email. Dana's reminder rhythm for these: "immediately notifies me and if it's not done, it reminds
+every week, then 3 days prior to due date, then again on the due date" (`task_next_remind`, `remind_rule`; the reminder
+function re-arms after each send). The task closes itself when a reply with attachments goes out on the conversation.
+CDTFA (Dana): prepayments for months 1 and 2 of each quarter are due the **24th** of the following month (Dana corrected
+23rd to 24th with CDTFA's own table), month 3's payment and the quarterly return by the end of the following month;
+"I file online so the day doesn't matter, keep the date." A task per due month, made on the 1st (`cdtfa_make_tasks`, daily
+cron), same reminder rhythm; CDTFA's "Payment Confirmation" email closes a prepayment task, the quarter task closes only
+on both the Payment Confirmation and the Filing Confirmation for the period (`cdtfa_apply_email`, trigger on billing@ mail).

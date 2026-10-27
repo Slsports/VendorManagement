@@ -10,7 +10,7 @@ import { forwardedBody, forwardedSender } from '../_shared/forwarded.ts'
 import { extractLinks, itemPicture, maybePaperwork, maybeSheetPaperwork, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
 import { sheetFileText } from '../_shared/sheetFile.ts'
 import { runNameChecks } from '../_shared/nameCheck.ts'
-import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type PictureKind, readActivity, readArtwork, readEdenredPdf, readEmailVendors, readExpectsReply, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ActivityEmail, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type SentEmailToCheck, type UnsureEmail } from '../_shared/ai.ts'
+import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type PictureKind, readActivity, readArtwork, readEdenredPdf, readEmailVendors, readExpectsReply, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ActivityEmail, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type SentEmailToCheck, type UnsureEmail, readPaperworkAsks } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
   }
 
   // the picture back-check (Dana, Oct 15), run by hand from the scheduler's secret
-  const body = await req.clone().json().catch(() => ({})) as { pictures_backcheck?: boolean; proofs_backcheck?: boolean; forwards_backcheck?: boolean; diagnose?: string; message?: string; attachment?: string }
+  const body = await req.clone().json().catch(() => ({})) as { pictures_backcheck?: boolean; proofs_backcheck?: boolean; forwards_backcheck?: boolean; asks_backcheck?: boolean; diagnose?: string; message?: string; attachment?: string }
   // Read-only look at one mailbox's Gmail changes since its stored cursor (Oct 19, billing@ stuck since Oct 16): pages,
   // added and relabeled counts, time taken, and one message fetched three ways. Scheduler secret only; changes nothing.
   // Read-only: one stored attachment's bytes (base64), to look at a new kind of paperwork before building for it.
@@ -99,6 +99,21 @@ Deno.serve(async (req) => {
         catch (e) { tries[f] = e instanceof Error ? e.message.slice(0, 200) : String(e) }
       }
       out.message = tries
+    }
+    return json(out)
+  }
+  if (trusted && body.asks_backcheck) {
+    // the last 90 days of mail marked "needs an answer" with no paperwork task yet (Dana, Oct 27: Sno-Park, RMD paperwork)
+    const { data: orgs } = await db.from('organizations').select('id')
+    const out: Record<string, unknown>[] = []
+    for (const o of orgs ?? []) {
+      const { data: rows } = await db.from('emails').select('id').eq('organization_id', o.id).eq('reply_needed', 'yes').eq('direction', 'in').gte('received_at', new Date(Date.now() - 90 * 86_400_000).toISOString()).order('received_at', { ascending: false }).limit(300)
+      const ids = (rows ?? []).map((r) => r.id)
+      const { data: have } = await db.from('tasks').select('auto_key').eq('organization_id', o.id).like('auto_key', 'ask:%')
+      const done = new Set((have ?? []).map((t) => t.auto_key!.slice(4)))
+      const todo = ids.filter((id) => !done.has(id))
+      const r = await paperworkAsks(db, o.id, todo)
+      out.push({ organization_id: o.id, looked_at: todo.length, ...r })
     }
     return json(out)
   }
@@ -1082,6 +1097,26 @@ async function removePictureLink(db: SupabaseClient, linkId: string, path: strin
  * Claude, on the cheapest model: sort emails the rules left unsure, and read "Who is this mail from?"
  * senders with no guess. A failure here never stops the sync; the work is picked up next run.
  */
+/** Emails that ask us for paperwork (by id) become tasks, ten at a time. Returns how many asked. */
+async function paperworkAsks(db: SupabaseClient, org: string, emailIds: string[]): Promise<{ read: number; tasks: number }> {
+  let read = 0, tasks = 0
+  for (let i = 0; i < emailIds.length; i += 10) {
+    const { data: rows } = await db.from('emails').select('id, subject, from_name, from_email, body_text, received_at').in('id', emailIds.slice(i, i + 10))
+    const batch = (rows ?? []).map((e) => ({ email_id: e.id, subject: e.subject, from: [e.from_name, e.from_email].filter(Boolean).join(' '), body_text: e.body_text, received_on: String(e.received_at).slice(0, 10) }))
+    if (!batch.length) continue
+    const readings = await readPaperworkAsks(db, org, batch)
+    read += batch.length
+    for (const e of batch) {
+      const r = readings.get(e.email_id)
+      if (!r?.asks) continue
+      const deadline = /^\d{4}-\d{2}-\d{2}$/.test(r.deadline ?? '') ? r.deadline : null
+      const { data: id } = await db.rpc('task_from_ask', { p_email: e.email_id, p_what: r.what.slice(0, 160), p_deadline: deadline })
+      if (id) tasks++
+    }
+  }
+  return { read, tasks }
+}
+
 async function aiSteps(db: SupabaseClient, org: string, started: number) {
   try {
     // Does the newest email of each conversation waiting on us need an answer? (Dana, Oct 8.) Ads go to
@@ -1093,12 +1128,14 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
       await check(db.rpc('mail_apply_reply', { p_email: e.email_id, p_reply: 'no', p_note: 'Marketing', p_ship: null, p_shipper: null }))
     }
     const toRead = replyList.filter((x) => x.sender_kind !== 'marketing')
+    const askCandidates: ReplyEmail[] = []
     for (let i = 0; i < toRead.length && Date.now() - started < TIME_BUDGET_MS; i += 10) {
       const batch = toRead.slice(i, i + 10)
       const readings = await readReplyNeeded(db, org, batch)
       for (const e of batch) {
         const r = readings.get(e.email_id)
         if (!r) continue
+        if (r.reply === 'yes') askCandidates.push(e)
         let shipper: string | null = null
         if (r.shipper && e.sender_kind === 'carrier') {
           rIndex ??= await freightIndex(db, org)
@@ -1110,6 +1147,10 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
         if (r.greets) await check(db.rpc('mail_apply_greeting', { p_email: e.email_id, p_name: r.greets }))
       }
     }
+
+    // Paperwork asked of us (Dana, Oct 27): an email that needs an answer and asks for a form, registration or agreement
+    // becomes a task at once, reminded weekly, 3 days before and on the day, until a reply with attachments goes out.
+    if (askCandidates.length) await paperworkAsks(db, org, askCandidates.map((e) => e.email_id))
 
     // Artwork approvals (Dana, Oct 10): vendor mail waiting on us to approve a proof or design goes to the art
     // approver's dashboard card; our own "approved" closes it. Last 60 days, a batch a run.

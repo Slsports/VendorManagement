@@ -21,12 +21,12 @@ const BATCH = 40
 interface Person { id: string; full_name: string | null; email: string; remind_email: boolean; remind_text: boolean; mobile_phone: string | null; text_from: string | null; text_until: string | null }
 interface TaskRow {
   id: string; organization_id: string; title: string; notes: string | null; due_date: string | null; assigned_to: string; created_by: string | null
-  done_by: string | null; done_note: string | null; tag_other: string | null; auto_key: string | null; thread_id: string | null
+  done_by: string | null; done_note: string | null; tag_other: string | null; auto_key: string | null; thread_id: string | null; remind_rule: string | null
   vendor: { name: string } | null; carrier: { name: string } | null; rep_group: { name: string } | null
   order: { po_number: string | null; description: string | null } | null
   thread: { subject: string | null; mailbox_id: string | null; shared_at: string | null } | null
 }
-const SELECT = `id, organization_id, title, notes, due_date, assigned_to, created_by, done_by, done_note, tag_other, auto_key, thread_id,
+const SELECT = `id, organization_id, title, notes, due_date, assigned_to, created_by, done_by, done_note, tag_other, auto_key, thread_id, remind_rule,
   vendor:vendors!tasks_vendor_id_fkey(name), carrier:carriers!tasks_carrier_id_fkey(name), rep_group:rep_groups!tasks_rep_group_id_fkey(name),
   order:orders!tasks_order_id_fkey(po_number, description), thread:email_threads!tasks_thread_id_fkey(subject, mailbox_id, shared_at)`
 
@@ -45,6 +45,11 @@ Deno.serve(async (req) => {
     for (const t of reminded) {
       const { errors, textAt } = await sender.notify(t.organization_id, t.assigned_to, `Reminder: ${t.title}`, reminderText(t), reminderSms(t))
       if (errors.length || textAt) await db.from('tasks').update({ ...(errors.length ? { remind_error: errors.join('; ').slice(0, 500) } : {}), ...(textAt ? { text_wait_until: textAt } : {}) }).eq('id', t.id)
+      // paperwork asks and CDTFA (Dana, Oct 27): after each reminder the next one is set: weekly, 3 days before, on the day
+      if (t.remind_rule) {
+        const { data: next } = await db.rpc('task_next_remind', { p_due: t.due_date, p_from: new Date().toISOString() })
+        if (next) await db.from('tasks').update({ remind_at: next as string, reminded_at: null, reminder_seen_at: null }).eq('id', t.id).is('done_at', null)
+      }
     }
     // Texts that waited for the person's hours (claimed first); a task done meanwhile gets none.
     const { data: waited } = await db.from('tasks').update({ text_wait_until: null }).lte('text_wait_until', now).select(SELECT)
