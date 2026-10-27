@@ -14,7 +14,7 @@
 //   { action: 'reading', on }                                   → start or stop Claude reading the listed files
 //   { action: 'read' }                                          → read a few files now
 //   { action: 'apply' }                                         → file what is approved, now
-//   { action: 'preview', id }                                   → a link (good for 4 hours) to look at one listed file
+//   { action: 'preview', id }                                   → the file's bytes, to look at it inside VMS
 //   { action: 'disconnect' }
 //   { action: 'sync' } with the scheduler's secret              → every organization: scan, read, apply, inbox filing
 //   { action: 'peek' } with the scheduler's secret              → what the folder holds at the top and how the listing pages out (for a cloud session)
@@ -165,11 +165,13 @@ Deno.serve(async (req) => {
       return json({ ...(await status(db, org)), read: r })
     }
     if (body.action === 'preview') {
+      // the file itself, shown inside VMS (Dana, Oct 27: "I want to view them, not download them"; Dropbox's own links download)
       const c = await conn(db, org)
-      const { data: f } = await db.from('dropbox_files').select('dropbox_id, name').eq('organization_id', org).eq('id', String((body as { id?: string }).id ?? '')).maybeSingle()
+      const { data: f } = await db.from('dropbox_files').select('dropbox_id, name, size').eq('organization_id', org).eq('id', String((body as { id?: string }).id ?? '')).maybeSingle()
       if (!f) throw new HttpError(404, 'File not found')
-      const r = await api<{ link: string }>(db, c, 'files/get_temporary_link', { path: f.dropbox_id })
-      return json({ url: r.link, name: f.name })
+      if ((f.size ?? 0) > MAX_KEEP_BYTES) throw new HttpError(413, 'This file is over 15 MB; open it in Dropbox')
+      const bytes = await download(db, c, f.dropbox_id)
+      return new Response(bytes, { headers: { ...CORS, 'Content-Type': mimeOf(f.name), 'Content-Disposition': `inline; filename="${f.name.replace(/[^\x20-\x7e]/g, '_').replace(/"/g, '')}"` } })
     }
     if (body.action === 'apply') {
       const c = await conn(db, org)

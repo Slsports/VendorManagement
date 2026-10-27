@@ -29,8 +29,14 @@ export const rescanDropbox = () => call<DropboxStatus>({ action: 'rescan' })
 export const setDropboxReading = (on: boolean) => call<DropboxStatus>({ action: 'reading', on })
 export const readDropboxNow = () => call<DropboxStatus>({ action: 'read' })
 export const applyDropboxNow = () => call<DropboxStatus>({ action: 'apply' })
-/** A link to look at one listed file in Dropbox (good for a few hours). */
-export const dropboxPreviewUrl = (id: string) => call<{ url: string; name: string }>({ action: 'preview', id }).then((r) => r.url)
+/** One listed file's bytes from Dropbox, to show inside VMS. */
+export async function loadDropboxFile(id: string): Promise<Blob> {
+  const { data, error } = await supabase.functions.invoke('dropbox', { body: { action: 'preview', id } })
+  if (error) throw await functionError(error)
+  if (data instanceof Blob) return data
+  if (typeof data === 'string') return new Blob([data])
+  throw new Error('The file could not be loaded')
+}
 
 export type DropboxFile = Tables<'dropbox_files'> & { vendor: { name: string } | null; line: { name: string } | null }
 export type DropboxFileStatus = Tables<'dropbox_files'>['status']
