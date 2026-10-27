@@ -3210,8 +3210,8 @@ on both the Payment Confirmation and the Filing Confirmation for the period (`cd
 ## Oct 27, 2026 — Batch processing for the paper vendor files (Dana)
 The Dropbox history read Claude live, one file per call. Dana: the next big load, the paper vendor files scanned at
 the store, goes through Claude's Batch processing (half price, hours not minutes, nobody waiting on it). Build it then
-as one shared "send as a batch" option for any bulk read (rep mail backlog, folder scans). The remaining Dropbox files
-finish live.
+as one shared "send as a batch" option for any bulk read (rep mail backlog, folder scans). The paper accounting files
+scanned at the store go the same way (Batch, filed by the Accounting rules). The remaining Dropbox files finish live.
 
 ## Oct 27, 2026 — Anthropic spend limit (Dana)
 At 09:00 UTC every Claude call failed with "You have reached your specified API usage limits" (the monthly spend limit
