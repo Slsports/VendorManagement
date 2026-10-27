@@ -43,6 +43,8 @@ Deno.serve(async (req) => {
     const { data: due } = await db.from('tasks').select('id').is('done_at', null).is('reminded_at', null).lte('remind_at', now).limit(BATCH)
     const reminded = await claim(db, (due ?? []).map((r) => r.id), 'reminded_at')
     for (const t of reminded) {
+      // a credit we asked for (Dana, Oct 27): the follow-up email is in the person's Drafts when the reminder goes
+      if (t.auto_key?.startsWith('credit_req:')) await db.rpc('credit_request_followup', { p_task: t.id })
       const { errors, textAt } = await sender.notify(t.organization_id, t.assigned_to, `Reminder: ${t.title}`, reminderText(t), reminderSms(t))
       if (errors.length || textAt) await db.from('tasks').update({ ...(errors.length ? { remind_error: errors.join('; ').slice(0, 500) } : {}), ...(textAt ? { text_wait_until: textAt } : {}) }).eq('id', t.id)
       // paperwork asks and CDTFA (Dana, Oct 27): after each reminder the next one is set: weekly, 3 days before, on the day

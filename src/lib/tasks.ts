@@ -126,6 +126,9 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   if (t.recipient_id) return { kind: 'page', to: `/accounting/insurance/who/${t.recipient_id}`, label: 'Open the recipient' }
   if (t.procedure_id) return { kind: 'page', to: `/accounting/procedures/${t.procedure_id}`, label: 'Open the procedure' }
   if (kind === 'create_po' && id) return t.order_id ? { kind: 'page', to: `/orders/${t.order_id}?do=create-po`, label: 'Open the order' } : { kind: 'page', to: `/orders/paperwork/${id}`, label: 'Pick the order' }
+  // a credit we asked for (Dana, Oct 27): the follow-up email once it is drafted, else the conversation
+  if (kind === 'credit_req' && t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the follow-up email' }
+  if (kind === 'credit_req' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open the conversation' }
   // Tell me when they reply (Dana, Oct 19): straight to their reply
   if (kind === 'reply' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open their reply' }
   if (kind === 'promise' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}?do=reply`, label: 'Reply' }

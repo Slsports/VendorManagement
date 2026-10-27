@@ -10,7 +10,7 @@ import { forwardedBody, forwardedSender } from '../_shared/forwarded.ts'
 import { extractLinks, itemPicture, maybePaperwork, maybeSheetPaperwork, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
 import { sheetFileText } from '../_shared/sheetFile.ts'
 import { runNameChecks } from '../_shared/nameCheck.ts'
-import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type PictureKind, readActivity, readArtwork, readEdenredPdf, readEmailVendors, readExpectsReply, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ActivityEmail, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type SentEmailToCheck, type UnsureEmail, readPaperworkAsks } from '../_shared/ai.ts'
+import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type PictureKind, readActivity, readArtwork, readEdenredPdf, readEmailVendors, readExpectsReply, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ActivityEmail, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type SentEmailToCheck, type UnsureEmail, readPaperworkAsks, readCreditRequests, type CreditAskEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
@@ -1225,6 +1225,21 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
           const r = readings.get(e.email_id)
           const due = r?.due && /^\d{4}-\d{2}-\d{2}$/.test(r.due) ? r.due : null
           await check(db.rpc('mail_apply_promise', { p_email: e.email_id, p_promise: !!r?.promise, p_task: r?.task ?? null, p_due: due, p_quote: r?.quote ?? null, p_writer: r?.writer ?? null }))
+        }
+      }
+    }
+
+    // Credits we ask vendors for (Dana, Oct 27): Trevor's damage, shortage and missing-item emails become a request
+    // with a task that reminds after 7 days and a follow-up draft; the credit paper and the Edenred upload close it.
+    if (Date.now() - started < TIME_BUDGET_MS) {
+      const { data: outs } = await db.rpc('mail_credit_queue', { p_org: org, p_limit: 10 })
+      const outList = (outs ?? []) as CreditAskEmail[]
+      if (outList.length) {
+        const readings = await readCreditRequests(db, org, outList)
+        for (const e of outList) {
+          const r = readings.get(e.email_id)
+          if (r?.asks_credit) await check(db.rpc('credit_request_make', { p_email: e.email_id, p_what: r.what.slice(0, 160), p_invoice: r.invoice_number, p_amount: r.amount, p_signer: r.signed_by }))
+          await check(db.from('emails').update({ credit_read_at: new Date().toISOString() }).eq('id', e.email_id))
         }
       }
     }
