@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 /**
  * Lightspeed vendor names often carry a tag after " - " or "(": a rep's name (Maryellen, Donna,
- * DandyLines) or the parent/billing company (Newell Brands, Normark). Dana wants to approve each
- * clean-up, so this proposes them as review items (kind vendor_rename) instead of applying them.
+ * DandyLines) or the parent/billing company (Newell Brands, Normark).
+ *   - A rep's name is taken out right away, also after a dash with no spaces or with no dash at all
+ *     ("EXTENDED EXPOSURE-DONNA HOFFMAN", "OEELINN DONNA DIVERSE MARKETING"): Dana, Oct 27, "I don't
+ *     want clean up cards LOL, just change them." The old name stays an alias; the vendor goes under
+ *     the rep's group.
+ *   - Any other tag (a parent company) is still proposed as a review item (kind vendor_rename).
  *
  *   node scripts/propose-vendor-renames.mjs [--dry]
  */
@@ -18,10 +22,36 @@ const REP_RULES = [
 const groups = await query(`select id, name from public.rep_groups where organization_id = ${lit(ORG)}`)
 const groupId = (name) => groups.find((g) => g.name.toLowerCase() === name.toLowerCase())?.id ?? null
 
+// a rep's name at the end, after any dash or none: "-DONNA HOFFMAN", " DONNA DIVERSE MARKETING"
+const REP_TAIL = /^(.*?[A-Za-z0-9.)])\s*[-–]?\s*((?:maryellen|donna|dandylines|diverse marketing)\b.*)$/i
+const all = await query(`select id, name, aliases, rep_group_id from public.vendors where organization_id = ${lit(ORG)} and is_active`)
+const repFixes = []
+for (const v of all) {
+  const m = v.name.match(REP_TAIL)
+  if (!m || !m[1].trim()) continue
+  const rule = REP_RULES.find((r) => r.re.test(m[2]))
+  repFixes.push({ vendor: v, new_name: m[1].replace(/[\s&(-]+$/, '').trim(), rep_group_id: groupId(rule.group), rep_group_name: rule.group })
+}
+console.log(`${repFixes.length} rep names to take out`)
+for (const f of repFixes) console.log(`  ${f.vendor.name}  =>  ${f.new_name}   rep group: ${f.rep_group_name}`)
+if (!args.dry) {
+  for (const f of repFixes) {
+    const taken = await query(`select 1 from public.vendors where organization_id = ${lit(ORG)} and lower(name) = lower(${lit(f.new_name)}) and id <> ${lit(f.vendor.id)}`)
+    if (taken.length) { console.log(`  skipped ${f.vendor.name}: a vendor named ${f.new_name} already exists`); continue }
+    await query(`update public.vendors set name = ${lit(f.new_name)},
+        aliases = (select array(select distinct x from unnest(aliases || array[${lit(f.vendor.name)}]) x where x is not null and x <> ${lit(f.new_name)})),
+        rep_group_id = coalesce(rep_group_id, ${lit(f.rep_group_id)}::uuid) where id = ${lit(f.vendor.id)}`)
+    await query(`insert into public.activity_log (organization_id, entity_type, entity_id, action, details) values (${lit(ORG)}, 'vendor', ${lit(f.vendor.id)}, 'renamed',
+        ${lit(JSON.stringify({ from: f.vendor.name, to: f.new_name, rep_group_id: f.rep_group_id, note: "Rep's name taken out of the vendor name" }))}::jsonb)`)
+  }
+}
+const repIds = new Set(repFixes.map((f) => f.vendor.id))
+
 const vendors = await query(`select id, name, lightspeed_name, rep_group_id from public.vendors where organization_id = ${lit(ORG)} and is_active and name ~ '\\(|\\s[-–]\\s'
   and not exists (select 1 from public.review_items r where r.kind = 'vendor_rename' and r.entity_id = vendors.id)`)
 const proposals = []
 for (const v of vendors) {
+  if (repIds.has(v.id)) continue
   const m = v.name.match(/^(.*?)\s*(?:\s[-–]\s|\()\s*(.*)$/)
   if (!m) continue
   const base = m[1].replace(/[\s&(-]+$/, '').trim()
