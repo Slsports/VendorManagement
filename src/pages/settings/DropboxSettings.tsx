@@ -228,7 +228,7 @@ function FolderFiles({ orgId, folder, summary, onClose }: { orgId: string; folde
     const tail = <>{folderLabel(folderOf((f.kind ?? 'other') as VendorLinkKind))}{f.doc_year ? ` › ${f.doc_year}` : ''}{f.doc_number ? ` · ${f.doc_number}` : ''}{f.doc_total != null ? ` · $${Number(f.doc_total).toFixed(2)}` : ''}</>
     if (f.target === 'vendor') return <>{f.vendor?.name ?? <span className="text-amber-700">vendor not found{f.vendor_said ? ` ("${f.vendor_said}")` : ''}</span>} › {tail}</>
     if (f.target === 'line') return <>Line {f.line?.name ?? '?'} › {tail}</>
-    if (f.target === 'freight') return <>Freight{f.freight_bill_id ? ' › the bill waiting for this PDF' : <span className="text-amber-700"> › no bill waiting for it</span>}{f.doc_number ? ` · ${f.doc_number}` : ''}{f.doc_total != null ? ` · $${Number(f.doc_total).toFixed(2)}` : ''}</>
+    if (f.target === 'freight') return <>Freight{f.freight_bill_id ? ' › the bill waiting for this PDF' : f.carrier_id ? ' › a new carrier bill' : <span className="text-amber-700"> › carrier not in VMS</span>}{f.doc_number ? ` · ${f.doc_number}` : ''}{f.doc_total != null ? ` · $${Number(f.doc_total).toFixed(2)}` : ''}</>
     if (f.target === 'accounting') { const a = (f.accounting ?? {}) as { category?: string; party?: string; doc_year?: number; what?: string }; return <>Accounting › {a.category ?? '?'} › {a.party || 'Unsorted'} › {a.doc_year ?? ''}{a.what ? ` · ${a.what}` : ''}</> }
     if (f.target === 'skip' || f.status === 'skipped') return <span className="text-stone-500">Not filed: {f.skip_reason}</span>
     return <span className="text-stone-500">Not read yet</span>

@@ -49,7 +49,7 @@ interface Conn {
 interface DbxEntry { '.tag': 'file' | 'folder' | 'deleted'; id?: string; name: string; path_lower?: string; path_display?: string; size?: number; content_hash?: string; client_modified?: string; server_modified?: string }
 interface FileRow {
   id: string; organization_id: string; dropbox_id: string; path_lower: string; path_display: string; name: string; folder: string; size: number | null; content_hash: string | null; modified_at: string | null
-  status: string; target: 'vendor' | 'line' | 'freight' | 'accounting' | 'skip' | null; vendor_id: string | null; line_id: string | null; freight_bill_id: string | null; kind: string | null; doc_year: number | null; doc_number: string | null; doc_date: string | null; doc_total: number | null; po_number: string | null
+  status: string; target: 'vendor' | 'line' | 'freight' | 'accounting' | 'skip' | null; vendor_id: string | null; line_id: string | null; freight_bill_id: string | null; carrier_id: string | null; kind: string | null; doc_year: number | null; doc_number: string | null; doc_date: string | null; doc_total: number | null; po_number: string | null
   accounting: Record<string, unknown> | null; vendor_said: string | null; sure: boolean | null; note: string | null; sha256: string | null
 }
 
@@ -378,11 +378,14 @@ async function readFiles(db: SupabaseClient, c: Conn, started: number): Promise<
       const year = yearOf(sorted.doc_date) ?? yearOf(f.modified_at) ?? new Date().getFullYear()
       const paper = { sha256: sha, vendor_said: (sorted.vendor ?? '').slice(0, 120) || null, kind: KIND_OF[sorted.doc_type] ?? 'other', doc_year: year, doc_number: sorted.doc_number?.slice(0, 60) ?? null, doc_date: dateOf(sorted.doc_date), doc_total: sorted.total, po_number: sorted.po_number?.slice(0, 60) ?? null }
       if (sorted.about === 'freight') {
-        // a carrier's bill: fill the bill in VMS waiting for this PDF (same invoice number), else Dana decides
+        // a carrier's bill: fill the bill in VMS waiting for this PDF (same invoice number); else a new bill for that
+        // carrier, read like a dropped PDF so its shipments land on their vendors (Dana, Oct 27); unknown carrier: Dana decides
         const bill = await waitingFreightBill(db, org, sorted.doc_number)
-        const note = [bigNote, bill ? `Freight bill: fills the ${bill.carrier} bill ${bill.invoice_number} waiting for its PDF.` : `Freight bill from ${sorted.vendor ?? 'a carrier'}: no bill in VMS is waiting for it.`, sorted.note].filter(Boolean).join(' ').slice(0, 400)
-        await db.from('dropbox_files').update({ ...stamp, ...paper, target: 'freight', freight_bill_id: bill?.id ?? null, sure: !!bill, status: bill ? 'proposed' : 'leftover', note }).eq('id', f.id)
-        if (bill) out.proposed++; else out.leftover++
+        const carrier = bill ? null : await matchCarrier(db, org, sorted.vendor)
+        const note = [bigNote, bill ? `Freight bill: fills the ${bill.carrier} bill ${bill.invoice_number} waiting for its PDF.` : carrier ? `Freight bill from ${carrier.name}: becomes a new bill on the Freight page, read for which vendor shipped.` : `Freight bill from ${sorted.vendor ?? 'a carrier'}: that carrier is not in VMS yet (Freight › Carriers).`, sorted.note].filter(Boolean).join(' ').slice(0, 400)
+        const ok = !!bill || !!carrier
+        await db.from('dropbox_files').update({ ...stamp, ...paper, target: 'freight', freight_bill_id: bill?.id ?? null, carrier_id: carrier?.id ?? null, sure: ok && (!!bill || sorted.sure), status: ok ? 'proposed' : 'leftover', note }).eq('id', f.id)
+        if (ok) out.proposed++; else out.leftover++
         continue
       }
       if (sorted.about === 'vendor' && isRep(vendors, sorted.vendor)) {
@@ -477,6 +480,15 @@ async function waitingFreightBill(db: SupabaseClient, org: string, invoice: stri
   return hit ? { id: hit.id, invoice_number: hit.invoice_number!, carrier: (hit.carriers as unknown as { name: string } | null)?.name ?? 'carrier' } : null
 }
 
+/** The carrier a bill is from, by the name printed (UPS, FedEx, PartnerShip …) against the carriers VMS knows and their aliases. */
+async function matchCarrier(db: SupabaseClient, org: string, said: string | null): Promise<{ id: string; name: string } | null> {
+  const key = squeeze(said ?? '')
+  if (key.length < 2) return null
+  const { data } = await db.from('carriers').select('id, name, aliases').eq('organization_id', org).eq('is_active', true).limit(200)
+  const hits = (data ?? []).filter((c) => [c.name, ...((c.aliases as string[] | null) ?? [])].some((n) => { const k = squeeze(n); return k === key || (k.length >= 3 && (key.startsWith(k) || k.startsWith(key))) }))
+  return hits.length === 1 ? { id: hits[0]!.id, name: hits[0]!.name } : null
+}
+
 const yearOf = (d: string | null | undefined) => { const y = Number((d ?? '').slice(0, 4)); return y >= 1990 && y <= 2100 ? y : null }
 const dateOf = (d: string | null | undefined) => (/^\d{4}-\d{2}-\d{2}$/.test(d ?? '') ? d! : null)
 function mimeOf(name: string): string {
@@ -508,18 +520,27 @@ async function applyApproved(db: SupabaseClient, c: Conn, started: number): Prom
         }).select('id').single()
         if (error) { await db.storage.from(VENDOR_BUCKET).remove([path]); throw new Error(error.message) }
         await db.from('dropbox_files').update({ status: 'filed', vendor_link_id: link.id, filed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', f.id)
-      } else if (f.target === 'freight' && f.freight_bill_id) {
-        // the PDF a freight bill was waiting for: onto the bill, then read the way a dropped PDF is (Freight page)
-        const { data: bill } = await db.from('freight_bills').select('id, status, storage_path').eq('id', f.freight_bill_id).maybeSingle()
-        if (!bill) throw new Error('The freight bill is gone')
-        if (bill.storage_path) throw new Error('The freight bill already has a PDF')
+      } else if (f.target === 'freight' && (f.freight_bill_id || f.carrier_id)) {
+        // the PDF a freight bill was waiting for goes onto that bill; otherwise a new bill for the carrier; then it is
+        // read the way a dropped PDF is (its shipments onto the vendors that shipped them, a copy of a known bill dropped)
         const path = `${org}/freight/${crypto.randomUUID()}-${safeName}`
         const { error: upErr } = await db.storage.from(VENDOR_BUCKET).upload(path, bytes, { contentType: mime, upsert: false })
         if (upErr) throw new Error(`Saving ${f.name}: ${upErr.message}`)
-        const { error } = await db.from('freight_bills').update({ storage_path: path, file_name: f.name, status: 'reading', read_note: null }).eq('id', bill.id)
-        if (error) throw new Error(error.message)
-        await db.from('dropbox_files').update({ status: 'filed', filed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', f.id)
-        const r = await readStoredBill(db, bill.id).catch((e) => ({ ok: false, note: e instanceof Error ? e.message : String(e) }))
+        let billId = f.freight_bill_id
+        if (billId) {
+          const { data: bill } = await db.from('freight_bills').select('id, storage_path').eq('id', billId).maybeSingle()
+          if (!bill) throw new Error('The freight bill is gone')
+          if (bill.storage_path) throw new Error('The freight bill already has a PDF')
+          const { error } = await db.from('freight_bills').update({ storage_path: path, file_name: f.name, status: 'reading', read_note: null }).eq('id', billId)
+          if (error) throw new Error(error.message)
+        } else {
+          const { data: made, error } = await db.from('freight_bills').insert({ organization_id: org, carrier_id: f.carrier_id, invoice_number: f.doc_number, invoice_date: f.doc_date, total: f.doc_total, storage_path: path, file_name: f.name, status: 'reading' }).select('id').single()
+          if (error) { await db.storage.from(VENDOR_BUCKET).remove([path]); throw new Error(error.message) }
+          billId = made.id
+        }
+        const theBill: string = billId!
+        await db.from('dropbox_files').update({ status: 'filed', freight_bill_id: theBill, filed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', f.id)
+        const r = await readStoredBill(db, theBill).catch((e) => ({ ok: false, note: e instanceof Error ? e.message : String(e) }))
         if (!r.ok) await db.from('dropbox_files').update({ note: `Filed on the freight bill; reading it said: ${r.note ?? 'not read'}`.slice(0, 400) }).eq('id', f.id)
       } else if (f.target === 'accounting' && f.accounting) {
         const r = f.accounting as unknown as Parameters<typeof rowFromReading>[0]
