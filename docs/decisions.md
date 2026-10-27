@@ -3176,3 +3176,9 @@ limit on reading rep mail for vendor names is lifted (`mail_rep_queue`: all hist
 conversation we start is filed before the rep answers. Also today: Dropbox files open in VMS's own viewer (Dana: "I want
 to view them, not download them"); a paper about a rep is never filed under a vendor (an email to Donna had matched
 Esco Trading through its Dandylines alias).
+
+## Oct 27, 2026 — Rep names out of vendor names, changed directly
+- Dana: "Why did vms leave the Donna Hoffman on the name of this Vendor: Extended Exposure - it was supposed to drop the 'Donna Hoffman', who is the rep." The Oct 6 clean-up only caught a rep's name after " - " or "(", so EXTENDED EXPOSURE-DONNA HOFFMAN, KURT S. ADLER-DONNA and OEELINN DONNA DIVERSE MARKETING kept it.
+- Dana: "I don't want clean up cards LOL, just change them - you have the correct names - go on everything."
+- Rule: a rep's name in a vendor name is taken out directly (no Review card), after any dash or none. The old name stays an alias and the Lightspeed name is kept, so sales reports and POs still match; the vendor goes under the rep's group. Nothing changes in Lightspeed. (This replaces the review step for rep-name clean-ups only.)
+- Done: EXTENDED EXPOSURE, KURT S. ADLER, OEELINN (now under DandyLines / Diverse Marketing).
