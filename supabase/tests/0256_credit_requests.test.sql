@@ -1,4 +1,4 @@
--- 0255: a credit request from our email → a task for the signer with a 7-day reminder; the follow-up draft; the credit paper
+-- 0256: a credit request from our email → a task for the signer with a 7-day reminder; the follow-up draft; the credit paper
 -- marks it Received; the Edenred credit tags the paper On Edenred and closes the task; a credit with no request gets the tag.
 do $$
 declare v_org uuid := '00000000-0000-0000-0000-000000000001'; v_vendor uuid; v_thread uuid; v_email uuid; v_req uuid; v_task uuid; v_draft uuid; v_link uuid; v_wwd uuid; v_trevor uuid; v_other uuid; v_link2 uuid; v_n int;

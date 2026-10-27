@@ -16,4 +16,5 @@ When you email a vendor from orders@ asking for a credit (damaged goods, a short
 ## Good to know
 - The vendor's **Credits** folder shows **Credits we asked for**: who asked, when, for what, and whether each is waiting on the vendor, Received or On Edenred, with the email one click away.
 - A credit that comes in with no request is filed and marked Received, and gets **On Edenred** when the upload shows it. No task.
+- Hardware store suppliers (vendors ticked **Bought for SLH**, like Emery Jensen) are filed only: no request, no task.
 - VMS reads outgoing orders@ vendor mail from the last 60 days, so requests sent before this was built are tracked too.

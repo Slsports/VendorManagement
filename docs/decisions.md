@@ -3226,13 +3226,19 @@ complaint about the file itself sends it to Dana's list.
 - Dana: "assign the 5 recent ones to Trevor. He is the one that receives inventory, emails vendors when there is damage or shortages and he will track the credits too." Done: World Famous C2600409, Daisy 100226, Emery Jensen 30333, Stansport 84731, Luhr Jensen/Pautzke 5251, out of Accounting.
 - Next (Fable's build): when Trevor asks a vendor for a credit, remind him after 7 days with no reply carrying a credit; once received, for a WWD vendor VMS confirms it on Edenred from Trevor's weekly or biweekly uploads, closes his task and marks the credit "On Edenred".
 
+## Oct 27, 2026 — Emery Jensen: hardware store, file only
+- Dana: "Trevor should not be given anything with Emery Jensen, that is the hardware store. I just want you to file anything that comes in from emery jenson in their vendor documents."
+- Done (migration 0255): Trevor's EJ credit task closed at Dana's request; EJ ticked Bought for SLH and paperwork-only (no order checks); its 153 open order checks dismissed (105 "needs an order", 6 to review, 42 failed reads).
+- Rule for the credit-request build: hardware store (Bought for SLH) vendors are never Trevor's.
+- Bill.com (checked Oct 27): EJ's "Send invoices to Bill.com" switch in VMS is off and VMS has never forwarded an EJ email, yet Bill.com shows 60 EJ bills, the latest dated Oct 19. They reach Bill.com some other way, not through VMS (not confirmed how).
+
 ## Oct 27 — Credit tracking for Trevor (Dana: build)
 Dana: "when he, or anyone else on our team, asks for a credit from a vendor, it should notify him (or whoever requested the
 credit) if 7 days goes by and there is no email reply with a credit doc attached. Create a follow up email draft with the
 task reminder … Once the credit is received, the next check (IF they are a WWD vendor) is that VMS confirms the credit
 made it to Edenred through the weekly or biweekly uploads Trevor will be uploading … then VMS will mark as completed on
 Trevor's tasks and mark 'received on Edenred' on the document itself."
-Built (migration 0255): Claude reads every outgoing orders@ vendor email (last 60 days, then as they go out) for a credit
+Built (migration 0256): Claude reads every outgoing orders@ vendor email (last 60 days, then as they go out) for a credit
 request (`readCreditRequests`: what for, invoice number, amount, who signed). Each becomes a `credit_requests` row and a
 task **Credit from [vendor]: [what]** for the signer (Trevor when unsure), first reminder 7 days after the email, then
 weekly (`remind_rule` 'credit'); the reminder puts a follow-up email in the person's Drafts (`credit_request_followup`,
@@ -3241,6 +3247,6 @@ same invoice number or amount, after the request) marks the request Received and
 task waits until an Edenred credit for that paper, number or amount arrives in `wwd_invoices` (Trevor's uploads); then
 the paper is tagged **On Edenred <posted date>** (`vendor_links.on_edenred_on`) and the task closes itself (closed_how
 vms, a plain done_note). Credits with no request get the tag too, no task. The vendor's Credits folder shows Received,
-On Edenred and **Credits we asked for**. Help: tasks--credits-you-ask-vendors-for.
+On Edenred and **Credits we asked for**. Hardware store (Bought for SLH) vendors such as Emery Jensen never make a request or a task (their credits are filed only, per the Emery Jensen rule above). Help: tasks--credits-you-ask-vendors-for.
 - **Open for Dana:** a credit from a vendor that is not WWD. Built for now as: the task says the credit is in and waits for
   the person to check it and mark it done (not closed by VMS). Dana to decide whether VMS should close those too.

@@ -1,4 +1,4 @@
--- 0255 — Credit tracking for Trevor (Dana, Oct 27): "when he, or anyone else on our team, asks for a credit from a
+-- 0256 — Credit tracking for Trevor (Dana, Oct 27): "when he, or anyone else on our team, asks for a credit from a
 -- vendor, it should notify him (or whoever requested the credit) if 7 days goes by and there is no email reply with a
 -- credit doc attached. Create a follow up email draft with the task reminder … Once the credit is received, the next
 -- check (IF they are a WWD vendor) is that VMS confirms the credit made it to Edenred … then VMS will mark as completed
@@ -80,6 +80,8 @@ begin
   select m.id, m.organization_id, m.thread_id, m.received_at, coalesce(m.vendor_id, t.vendor_id) as vendor_id
     into e from public.emails m left join public.email_threads t on t.id = m.thread_id where m.id = p_email and m.direction = 'out' and m.mailbox_id is null;
   if e.id is null or e.vendor_id is null then return null; end if;
+  -- the hardware store's suppliers (Bought for SLH) are never Trevor's: filed only (Dana, Oct 27, Emery Jensen)
+  if exists (select 1 from public.vendors v where v.id = e.vendor_id and coalesce(v.is_slh_vendor, false)) then return null; end if;
   select id into v_req from public.credit_requests where email_id = p_email;
   if v_req is not null then return v_req; end if;
   v_who := public.credit_request_who(e.organization_id, p_signer);
