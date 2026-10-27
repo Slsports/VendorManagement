@@ -171,7 +171,8 @@ Deno.serve(async (req) => {
       if (!f) throw new HttpError(404, 'File not found')
       if ((f.size ?? 0) > MAX_KEEP_BYTES) throw new HttpError(413, 'This file is over 15 MB; open it in Dropbox')
       const bytes = await download(db, c, f.dropbox_id)
-      return new Response(bytes as unknown as BodyInit, { headers: { ...CORS, 'Content-Type': mimeOf(f.name), 'Content-Disposition': `inline; filename="${f.name.replace(/[^\x20-\x7e]/g, '_').replace(/"/g, '')}"` } })
+      // as a plain byte stream: the app's function client hands any other type back as text, which scrambles PDFs and Word files (Oct 27)
+      return new Response(bytes as unknown as BodyInit, { headers: { ...CORS, 'Content-Type': 'application/octet-stream', 'Content-Disposition': `inline; filename="${f.name.replace(/[^\x20-\x7e]/g, '_').replace(/"/g, '')}"` } })
     }
     if (body.action === 'apply') {
       const c = await conn(db, org)

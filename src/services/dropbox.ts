@@ -34,7 +34,6 @@ export async function loadDropboxFile(id: string): Promise<Blob> {
   const { data, error } = await supabase.functions.invoke('dropbox', { body: { action: 'preview', id } })
   if (error) throw await functionError(error)
   if (data instanceof Blob) return data
-  if (typeof data === 'string') return new Blob([data])
   throw new Error('The file could not be loaded')
 }
 
