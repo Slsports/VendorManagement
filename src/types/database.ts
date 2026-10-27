@@ -1066,6 +1066,8 @@ export type Database = {
       rep_group_thread_ids: { Args: { p_org: string; p_rep: string }; Returns: string[] }
       task_next_remind: { Args: { p_due: string | null; p_from: string }; Returns: string | null }
       task_from_ask: { Args: { p_email: string; p_what: string; p_deadline: string | null }; Returns: string | null }
+      dropbox_same_vendor_count: { Args: { p_file: string }; Returns: number }
+      dropbox_apply_vendor: { Args: { p_file: string; p_vendor: string; p_kind: string; p_apply_same?: boolean }; Returns: number }
       credit_request_make: { Args: { p_email: string; p_what: string; p_invoice: string | null; p_amount: number | null; p_signer: string | null }; Returns: string | null }
       credit_request_followup: { Args: { p_task: string }; Returns: string | null }
       mail_credit_queue: { Args: { p_org: string; p_limit?: number }; Returns: { email_id: string; subject: string | null; body_text: string | null; sent_at: string; vendor: string | null; to_emails: string[] }[] }

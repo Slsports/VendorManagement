@@ -8,7 +8,7 @@ import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { useAuth } from '@/hooks/useAuth'
 import {
   applyDropboxNow, approveDropbox, decideDropboxFile, disconnectDropbox, dropboxFolderSummary, dropboxSignInUrl, dropboxStatus, listDropboxFiles, listDropboxFolders,
-  loadDropboxFile, readDropboxNow, rescanDropbox, saveDropboxAppKey, scanDropbox, setDropboxFolder, setDropboxReading, skipDropboxFolder, type DropboxFile, type DropboxFileStatus, type DropboxFolderSummary, type DropboxStatus,
+  applyDropboxVendor, countSameReadVendor, loadDropboxFile, readDropboxNow, rescanDropbox, saveDropboxAppKey, scanDropbox, setDropboxFolder, setDropboxReading, skipDropboxFolder, type DropboxFile, type DropboxFileStatus, type DropboxFolderSummary, type DropboxStatus,
 } from '@/services/dropbox'
 import { ROUTES } from '@/lib/constants'
 import { DOC_FOLDERS, folderLabel, folderOf } from '@/lib/documents'
@@ -225,6 +225,15 @@ function FolderFiles({ orgId, folder, summary, onClose }: { orgId: string; folde
     setBusy(f.id)
     try { await decideDropboxFile(f.id, profile.id, change); toast.success(done); setChanging(null); await q.refetch() } catch (err) { toast.error(errorMessage(err)) } finally { setBusy(null) }
   }
+  // Vendor… (Dana, Oct 27): the pick can cover every other file read as the same name, and the name becomes the vendor's alias
+  async function pickVendor(f: DropboxFile, vendorId: string, kind: VendorLinkKind, applySame: boolean) {
+    setBusy(f.id)
+    try {
+      const n = await applyDropboxVendor(f.id, vendorId, kind, applySame)
+      toast.success(n > 1 ? `Approved ${n} files under the vendor; "${f.vendor_said}" is now its alias` : 'Approved under the vendor')
+      setChanging(null); await q.refetch()
+    } catch (err) { toast.error(errorMessage(err)) } finally { setBusy(null) }
+  }
   const where = (f: DropboxFile) => {
     const tail = <>{folderLabel(folderOf((f.kind ?? 'other') as VendorLinkKind))}{f.doc_year ? ` › ${f.doc_year}` : ''}{f.doc_number ? ` · ${f.doc_number}` : ''}{f.doc_total != null ? ` · $${Number(f.doc_total).toFixed(2)}` : ''}</>
     if (f.target === 'vendor') return <>{f.vendor?.name ?? <span className="text-amber-700">vendor not found{f.vendor_said ? ` ("${f.vendor_said}")` : ''}</span>} › {tail}</>
@@ -268,7 +277,7 @@ function FolderFiles({ orgId, folder, summary, onClose }: { orgId: string; folde
                   </span>
                 ) : f.status === 'skipped' && f.skip_reason === 'skipped by Dana' ? <Button size="sm" variant="ghost" onClick={() => void decide(f, { status: 'proposed', target: f.vendor_id ? 'vendor' : 'accounting' }, 'Back on the list')}>Undo</Button> : null}
               </div>
-              {changing === f.id ? <ChangeVendor f={f} busy={busy === f.id} onPick={(vendorId, kind) => void decide(f, { status: 'approved', target: 'vendor', vendor_id: vendorId, line_id: null, rep_group_id: null, kind }, 'Approved under the vendor')} onCancel={() => setChanging(null)} /> : null}
+              {changing === f.id ? <ChangeVendor f={f} busy={busy === f.id} onPick={(vendorId, kind, applySame) => void pickVendor(f, vendorId, kind, applySame)} onCancel={() => setChanging(null)} /> : null}
               {changing === `rep:${f.id}` ? <ChangeRepGroup orgId={orgId} f={f} busy={busy === f.id} onPick={(repGroupId, kind) => void decide(f, { status: 'approved', target: 'rep', rep_group_id: repGroupId, vendor_id: null, line_id: null, kind }, 'Approved under the rep group')} onCancel={() => setChanging(null)} /> : null}
             </li>
           ))}
@@ -298,15 +307,25 @@ function ChangeRepGroup({ orgId, f, busy, onPick, onCancel }: { orgId: string; f
 }
 
 /** Dana's own answer: this file is this vendor's, in this folder. */
-function ChangeVendor({ f, busy, onPick, onCancel }: { f: DropboxFile; busy: boolean; onPick: (vendorId: string, kind: VendorLinkKind) => void; onCancel: () => void }) {
+function ChangeVendor({ f, busy, onPick, onCancel }: { f: DropboxFile; busy: boolean; onPick: (vendorId: string, kind: VendorLinkKind, applySame: boolean) => void; onCancel: () => void }) {
   const [vendor, setVendor] = useState<{ id: string; name: string } | null>(f.vendor_id && f.vendor ? { id: f.vendor_id, name: f.vendor.name } : null)
   const [kind, setKind] = useState<VendorLinkKind>((f.kind as VendorLinkKind) || 'invoice')
+  const [applySame, setApplySame] = useState(true)
+  // the other files read as the same printed name (Dana, Oct 27)
+  const same = useSupabaseQuery(async () => (f.vendor_said ? countSameReadVendor(f.id) : 0), [f.id, f.vendor_said])
+  const others = same.data ?? 0
   return (
     <div className="mt-2 grid gap-2 rounded-lg border border-stone-200 bg-white p-3 sm:grid-cols-[1fr_auto_auto_auto] sm:items-end">
       <FormField label="Vendor" htmlFor={`dbx-v-${f.id}`}>{vendor ? <div className="flex items-center gap-2 text-sm"><span className="font-medium">{vendor.name}</span><Button size="sm" variant="ghost" onClick={() => setVendor(null)}>Change</Button></div> : <VendorPicker onPick={(v) => setVendor({ id: v.id, name: v.name })} />}</FormField>
       <FormField label="Folder" htmlFor={`dbx-k-${f.id}`}><Select id={`dbx-k-${f.id}`} value={kind} onChange={(e) => setKind(e.target.value as VendorLinkKind)}>{VENDOR_KINDS.map((k) => <option key={k} value={k}>{DOC_FOLDERS.find((d) => d.kinds.includes(k))?.label ?? k}</option>)}</Select></FormField>
-      <Button loading={busy} disabled={!vendor} onClick={() => vendor && onPick(vendor.id, kind)}>Approve</Button>
+      <Button loading={busy} disabled={!vendor} onClick={() => vendor && onPick(vendor.id, kind, applySame && others > 0)}>Approve{applySame && others > 0 ? ` ${others + 1} files` : ''}</Button>
       <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+      {f.vendor_said && others > 0 ? (
+        <label className="flex items-start gap-2 text-sm text-stone-700 sm:col-span-4">
+          <input type="checkbox" className="mt-0.5 size-4 accent-brand" checked={applySame} onChange={(e) => setApplySame(e.target.checked)} />
+          <span>Also file the other {others} file{others === 1 ? '' : 's'} read as "{f.vendor_said}" under this vendor (each keeps its own folder), and remember "{f.vendor_said}" as this vendor's name so VMS matches it on its own from now on.</span>
+        </label>
+      ) : null}
     </div>
   )
 }

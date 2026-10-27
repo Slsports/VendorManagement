@@ -3257,3 +3257,9 @@ On Edenred and **Credits we asked for**. Hardware store (Bought for SLH) vendors
 2 approved and filed so far. Claude cost $33.33. Biggest reasons on Dana's list: a vendor VMS does not know (421),
 Worldwide's own paperwork (125), statements (28), files too big to open (27), files the reader could not open (35).
 Everything proposed waits for Dana under Settings › Dropbox (Approve sure / Approve all sure ones).
+
+## Oct 27 — Dropbox: one pick files the rest (Dana: "go")
+Dana: "once I file something to a vendor not known, it will automatically file the rest to that vendor too?" Built
+(migration 0258): **Vendor…** on a Dropbox file offers "Also file the other N files read as '<name>' under this vendor"
+(ticked by default; each keeps its own folder) and the printed name becomes the vendor's alias, so later reads (Dropbox,
+mail, the paper scans) match on their own. Skipped and already-decided files are never touched.

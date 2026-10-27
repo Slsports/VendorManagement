@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { functionError } from '@/services/mail'
+import type { VendorLinkKind } from '@/types'
 import type { Tables } from '@/types/database'
 
 // Dana's Dropbox (Oct 26): the admin connects once, names one folder, VMS lists it, Claude proposes where each file goes,
@@ -72,4 +73,18 @@ export async function skipDropboxFolder(organizationId: string, topFolder: strin
 export async function decideDropboxFile(id: string, userId: string, change: { status: 'approved' | 'skipped' | 'proposed'; vendor_id?: string | null; line_id?: string | null; rep_group_id?: string | null; kind?: string | null; target?: 'vendor' | 'line' | 'rep' | 'freight' | 'accounting' | 'skip'; skip_reason?: string | null }) {
   const { error } = await supabase.from('dropbox_files').update({ ...change, decided_by: userId, decided_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', id)
   if (error) throw error
+}
+
+/** The other files on the list read as the same printed vendor name (Dana, Oct 27: "file the rest to that vendor too"). */
+export async function countSameReadVendor(fileId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('dropbox_same_vendor_count', { p_file: fileId })
+  if (error) throw error
+  return Number(data ?? 0)
+}
+
+/** Approve the file under the vendor; with applySame, every other file read as the same name too, and the name becomes the vendor's alias. */
+export async function applyDropboxVendor(fileId: string, vendorId: string, kind: VendorLinkKind, applySame: boolean): Promise<number> {
+  const { data, error } = await supabase.rpc('dropbox_apply_vendor', { p_file: fileId, p_vendor: vendorId, p_kind: kind, p_apply_same: applySame })
+  if (error) throw error
+  return Number(data ?? 0)
 }

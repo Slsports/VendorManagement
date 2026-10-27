@@ -24,7 +24,7 @@ VMS can read one folder of your Dropbox and file what is in it by VMS's own rule
 
 ## Good to know
 - A file already in VMS (the same bytes, or the same name and size under the vendor) is marked **Already in VMS** and never saved twice.
-- **For you** means Claude could not place it with confidence, most often because the vendor is not in VMS under that name. Click **Vendor…** to say who it is.
+- **For you** means Claude could not place it with confidence, most often because the vendor is not in VMS under that name. Click **Vendor…** to say who it is. When other files on the list were read as the same name (say 23 more "Pacific STIHL"), the box offers to file them all under that vendor in one go, each keeping its own folder, and to remember the name as the vendor's, so VMS matches it on its own from then on (Dropbox, mail and scans alike). Untick it to change just the one file.
 - A paper about a **line** (a catalog name on the Lines page that is not a vendor yet, like a rep's show order form) goes under that line, and the proposal says so.
 - A paper from or about a **rep group** itself (show info, a buyer letter, a rep's line list) goes under the rep group's Documents. **Rep group…** on a file lets you send it there yourself.
 - A **freight** carrier's bill fills the bill in VMS that is waiting for its PDF (same invoice number), or becomes a new bill for that carrier, and is read right away so its shipments land on the vendors that shipped them. One from a carrier VMS does not know stays **For you** (add the carrier under Freight › Carriers).
