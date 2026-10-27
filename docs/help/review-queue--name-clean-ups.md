@@ -4,7 +4,7 @@ section: Review queue
 keywords: rename, Donna, rep name in vendor name, name clean-up, vendor name, alias, rep tag, apply all, use this name
 who: Admin, managers and buyers
 ---
-Some LS vendor names carry a rep or parent-company tag. A rep's name (like Donna or Maryellen) is taken out of the name by VMS on its own, with no card. For a parent-company tag VMS proposes a cleaner name here.
+Some LS vendor names carry a rep or parent-company tag. A rep's name (like Donna or Maryellen) is taken out of the name when VMS cleans up the LS names, with no card. For a parent-company tag VMS proposes a cleaner name here.
 
 ## How to
 1. Open **Review queue** and find **Name clean-ups**.
