@@ -3250,3 +3250,10 @@ vms, a plain done_note). Credits with no request get the tag too, no task. The v
 On Edenred and **Credits we asked for**. Hardware store (Bought for SLH) vendors such as Emery Jensen never make a request or a task (their credits are filed only, per the Emery Jensen rule above). Help: tasks--credits-you-ask-vendors-for.
 - **Open for Dana:** a credit from a vendor that is not WWD. Built for now as: the task says the credit is in and waits for
   the person to check it and mark it done (not closed by VMS). Dana to decide whether VMS should close those too.
+
+## Oct 27 — Dropbox history read finished
+19,187 files: 11,511 skipped (Dana's skipped folders, pictures, non-papers), 1,083 linked to a copy already in VMS,
+4,390 proposed (3,805 sure: 2,619 vendor, 1,564 accounting, 101 freight, 71 line, 35 rep group), 2,201 on Dana's list,
+2 approved and filed so far. Claude cost $33.33. Biggest reasons on Dana's list: a vendor VMS does not know (421),
+Worldwide's own paperwork (125), statements (28), files too big to open (27), files the reader could not open (35).
+Everything proposed waits for Dana under Settings › Dropbox (Approve sure / Approve all sure ones).
