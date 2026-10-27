@@ -337,6 +337,9 @@ async function readFiles(db: SupabaseClient, c: Conn, started: number): Promise<
   if (!aiEnabled()) throw new HttpError(503, 'Claude is not set up')
   const org = c.organization_id
   const out = { read: 0, proposed: 0, leftover: 0, linked: 0, skipped: 0, errors: 0 }
+  // a file the worker died on (claimed, never finished) goes to Dana's list after ten minutes rather than staying an error
+  await db.from('dropbox_files').update({ status: 'leftover', target: 'skip', sure: false, error: null, note: 'VMS could not open this file (the reader stopped on it). Open it yourself: if it matters, save it as PDF and drop it on the vendor\'s Documents.', updated_at: new Date().toISOString() })
+    .eq('organization_id', org).eq('status', 'error').like('error', 'The reader stopped%').lt('updated_at', new Date(Date.now() - 10 * 60_000).toISOString())
   const { data: queue } = await db.from('dropbox_files').select('*').eq('organization_id', org).eq('status', 'new').order('modified_at', { ascending: false, nullsFirst: false }).limit(READ_PER_RUN)
   if (!queue?.length) return out
   const vendors = await vendorIndex(db, org)
@@ -430,6 +433,11 @@ async function readFiles(db: SupabaseClient, c: Conn, started: number): Promise<
       if (sure) out.proposed++; else out.leftover++
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
+      // a file Claude cannot open (a locked or odd PDF): Dana's list, not an error to retry
+      if (/invalid_request_error|could not process|PDF specified was not valid|cannot be empty|Could not parse/i.test(msg)) {
+        await db.from('dropbox_files').update({ read_at: stamp.read_at, updated_at: stamp.updated_at, status: 'leftover', target: 'skip', sure: false, error: null, note: 'VMS could not open this file (Claude could not read it). Open it yourself: if it matters, save it as a plain PDF and drop it on the vendor\'s Documents.' }).eq('id', f.id)
+        out.leftover++; continue
+      }
       await db.from('dropbox_files').update({ read_at: stamp.read_at, updated_at: stamp.updated_at, status: 'error', error: msg.slice(0, 300) }).eq('id', f.id)
       out.errors++
     }
