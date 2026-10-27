@@ -11,7 +11,7 @@ insert into public.vendor_links (organization_id, vendor_id, kind, label, url) v
 select exists (select 1 from public.tasks where auto_key = 'proof:' || :'l_new') as new_proof_task;
 select not exists (select 1 from public.tasks where auto_key = 'proof:' || :'l_old') as old_proof_no_task;
 select not exists (select 1 from public.tasks where auto_key = 'credit:' || :'l_oc') as old_credit_no_task;
-select exists (select 1 from public.tasks where auto_key = 'credit:' || :'l_un') as undated_credit_task;
+select not exists (select 1 from public.tasks where auto_key = 'credit:' || :'l_un') as no_credit_task_since_0254;
 -- an old picture re-sorted as a proof makes no task either
 insert into public.vendor_links (organization_id, vendor_id, kind, label, url, received_at) values ('00000000-0000-0000-0000-000000000001', :'v', 'image', 'Pic', 'https://example.com/p.png', current_date - 200) returning id as l_pic \gset
 update public.vendor_links set kind = 'proof' where id = :'l_pic';

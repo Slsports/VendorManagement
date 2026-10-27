@@ -17,7 +17,7 @@ insert into public.vendor_links (organization_id, vendor_id, kind, label, url, e
 
 select thread_id = :'t_orders' and notes like 'Click Go to it%' as proof_has_email from public.tasks where auto_key = 'proof:' || :'l1';
 select thread_id is null as private_stays_private from public.tasks where auto_key = 'proof:' || :'l2';
-select thread_id = :'t_orders' as credit_has_email from public.tasks where auto_key = 'credit:' || :'l3';
+select count(*) = 0 as no_credit_task_since_0254 from public.tasks where auto_key = 'credit:' || :'l3';
 
 delete from public.vendor_links where id in (:'l1', :'l2', :'l3');
 select count(*) = 0 as tasks_gone from public.tasks where auto_key in ('proof:' || :'l1', 'proof:' || :'l2', 'credit:' || :'l3');

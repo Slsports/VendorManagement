@@ -12,9 +12,9 @@ select title, due_date = current_date + 3 as three_days, assigned_to::text = '11
 -- approving it finishes the task
 update public.vendor_links set kind = 'approved_proof', approved_at = now() where id = :'p';
 select done_at is not null as done, done_note from public.tasks where auto_key = 'proof:' || :'p';
--- a credit lands: a task for Accounting (the admin)
+-- a credit lands: filed and Received, no task (0254)
 insert into public.vendor_links (organization_id, vendor_id, kind, label, file_name, storage_path, source) values ('00000000-0000-0000-0000-000000000001', :'v', 'credit', 'CM 4411', 'cm4411.pdf', 'x/cm.pdf', 'email') returning id as c \gset
-select title, area, assigned_to = public.org_admin('00000000-0000-0000-0000-000000000001') as to_admin from public.tasks where auto_key = 'credit:' || :'c';
+select count(*) = 0 as no_credit_task from public.tasks where auto_key = 'credit:' || :'c';
 -- removing the credit drops the task
 delete from public.vendor_links where id = :'c';
 select count(*) as credit_tasks_left from public.tasks where auto_key = 'credit:' || :'c';

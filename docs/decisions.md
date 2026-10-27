@@ -3218,3 +3218,10 @@ At 09:00 UTC every Claude call failed with "You have reached your specified API 
 on the Anthropic account, $142 spent this month). Dana raised the limit at 15:45 UTC. The Dropbox reader now puts the
 file back in line and stops the run when Claude itself is unavailable (spend limit, rate limit, overloaded), and only a
 complaint about the file itself sends it to Dana's list.
+
+## Oct 27, 2026 — Credits are filed and Received, not tasks; Trevor tracks credits
+- Dana: "I assume these all just need to be filed under the vendor name … Most of them are old. The system should just mark the credit as received and filed it. Then if we have a question about it we go to the vendor and we can see if we got the credit."
+- Found: 31 of the 37 open "Credit from …" tasks came from Edenred's "Emailed invoices" mail of Oct 19-21; the credits are dated Sep 2025 – Aug 2026, but the 30-day rule went by the email's date. "SAA Credit Card Application" was an application form read as a credit.
+- Rule: a credit lands in the vendor's Credits folder marked **Received** (the day it came in); no task. Done (migration 0254): 31 old tasks closed at Dana's request, SAA application moved to Other, every credit on file marked Received.
+- Dana: "assign the 5 recent ones to Trevor. He is the one that receives inventory, emails vendors when there is damage or shortages and he will track the credits too." Done: World Famous C2600409, Daisy 100226, Emery Jensen 30333, Stansport 84731, Luhr Jensen/Pautzke 5251, out of Accounting.
+- Next (Fable's build): when Trevor asks a vendor for a credit, remind him after 7 days with no reply carrying a credit; once received, for a WWD vendor VMS confirms it on Edenred from Trevor's weekly or biweekly uploads, closes his task and marks the credit "On Edenred".

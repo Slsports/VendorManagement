@@ -188,6 +188,7 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
           {l.kind === 'sales_report' && l.report_used_at ? <Badge tone="success" className="mr-1">Used to place the order</Badge> : null}
           {l.kind === 'approved_proof' ? <Badge tone="warning" className="mr-1"><Star className="mr-0.5 inline size-3 fill-amber-400 text-amber-500" aria-hidden="true" />Approved{l.approved_at ? ` ${new Date(l.approved_at).toLocaleDateString()}` : ''}</Badge> : null}
           {l.kind === 'proof' ? <Badge tone="neutral" className="mr-1">{l.superseded_at ? 'Earlier version, not used' : 'Not approved yet'}</Badge> : null}
+          {l.kind === 'credit' && l.credit_received_on ? <Badge tone="success" className="mr-1">Received {new Date(`${l.credit_received_on}T12:00:00`).toLocaleDateString()}</Badge> : null}
           {l.kind === 'invoice' && l.paid_at ? <Badge tone="success" className="mr-1">Paid {new Date(`${l.paid_at}T12:00:00`).toLocaleDateString()}{l.paid_how ? ` · ${l.paid_how}` : ''}</Badge> : null}
           {l.kind === 'invoice' && l.paid_at && l.paid_thread_id ? <Link to={l.paid_email_id ? matchLink(l.paid_thread_id, { email_id: l.paid_email_id }) : `${ROUTES.mail}/${l.paid_thread_id}`} className="mr-1 text-brand hover:underline">payment email</Link> : null}
           {l.kind === 'confirmation' && l.replaced_po ? <Badge tone="success" className="mr-1">Final (replaced PO {l.replaced_po})</Badge> : null}
