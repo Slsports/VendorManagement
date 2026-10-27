@@ -49,7 +49,7 @@ interface Conn {
 interface DbxEntry { '.tag': 'file' | 'folder' | 'deleted'; id?: string; name: string; path_lower?: string; path_display?: string; size?: number; content_hash?: string; client_modified?: string; server_modified?: string }
 interface FileRow {
   id: string; organization_id: string; dropbox_id: string; path_lower: string; path_display: string; name: string; folder: string; size: number | null; content_hash: string | null; modified_at: string | null
-  status: string; target: 'vendor' | 'line' | 'freight' | 'accounting' | 'skip' | null; vendor_id: string | null; line_id: string | null; freight_bill_id: string | null; carrier_id: string | null; kind: string | null; doc_year: number | null; doc_number: string | null; doc_date: string | null; doc_total: number | null; po_number: string | null
+  status: string; target: 'vendor' | 'line' | 'rep' | 'freight' | 'accounting' | 'skip' | null; vendor_id: string | null; line_id: string | null; rep_group_id: string | null; freight_bill_id: string | null; carrier_id: string | null; kind: string | null; doc_year: number | null; doc_number: string | null; doc_date: string | null; doc_total: number | null; po_number: string | null
   accounting: Record<string, unknown> | null; vendor_said: string | null; sure: boolean | null; note: string | null; sha256: string | null
 }
 
@@ -321,14 +321,15 @@ const KIND_OF: Record<DropboxSortReading['doc_type'], string> = {
   invoice: 'invoice', statement: 'invoice', payment: 'payment', credit: 'credit', confirmation: 'confirmation', packing_slip: 'packing_slip', order: 'order', price_list: 'price_list', catalog: 'catalog', order_form: 'order_form', specials: 'specials', proof: 'proof', report: 'sales_report', tax_form: 'other', other: 'other',
 }
 
-async function vendorIndex(db: SupabaseClient, org: string): Promise<{ index: VendorIndex; names: string[]; byName: Map<string, string>; wwd: Set<string>; repKeys: Set<string> }> {
+async function vendorIndex(db: SupabaseClient, org: string): Promise<{ index: VendorIndex; names: string[]; byName: Map<string, string>; wwd: Set<string>; repKeys: Set<string>; repGroups: { id: string; name: string; keys: string[] }[] }> {
   const { data } = await db.from('vendors').select('id, name, aliases').eq('organization_id', org).eq('is_active', true).is('merged_into_id', null).order('name').limit(5000)
   const vendors = (data ?? []) as { id: string; name: string; aliases: string[] | null }[]
   const wwd = new Set(vendors.filter((v) => /^worldwide( distributors)?$/i.test(v.name.trim())).map((v) => v.id))
   // rep groups and rep agencies are never the vendor (an email to Donna is not Esco Trading's paper, Oct 26)
-  const { data: reps } = await db.from('rep_groups').select('name').eq('organization_id', org).limit(500)
-  const repKeys = new Set((reps ?? []).flatMap((r) => r.name.split(/\s*[/,&]\s*/).map(squeeze)).filter((k) => k.length >= 4))
-  return { index: buildVendorIndex(vendors.map((v) => ({ id: v.id, name: v.name, aliases: v.aliases ?? [] }))), names: vendors.map((v) => v.name), byName: new Map(vendors.map((v) => [v.name.toLowerCase(), v.id])), wwd, repKeys }
+  const { data: reps } = await db.from('rep_groups').select('id, name').eq('organization_id', org).eq('is_active', true).limit(500)
+  const repGroups = (reps ?? []).map((r) => ({ id: r.id, name: r.name, keys: r.name.split(/\s*[/,&]\s*/).map(squeeze).filter((k: string) => k.length >= 4) }))
+  const repKeys = new Set(repGroups.flatMap((r) => r.keys))
+  return { index: buildVendorIndex(vendors.map((v) => ({ id: v.id, name: v.name, aliases: v.aliases ?? [] }))), names: vendors.map((v) => v.name), byName: new Map(vendors.map((v) => [v.name.toLowerCase(), v.id])), wwd, repKeys, repGroups }
 }
 
 /** Read a few listed files: each becomes linked (already on file), proposed (Claude is sure where it goes), leftover (unsure) or skipped. */
@@ -390,9 +391,12 @@ async function readFiles(db: SupabaseClient, c: Conn, started: number): Promise<
         continue
       }
       if (sorted.about === 'vendor' && isRep(vendors, sorted.vendor)) {
-        // a paper about the rep (an email to Donna, a rep's line list): VMS files papers under vendors and lines, never under a rep
-        await db.from('dropbox_files').update({ ...stamp, ...paper, target: 'vendor', vendor_id: null, sure: false, status: 'leftover', note: `About the rep (${sorted.vendor}): VMS keeps papers under vendors and lines, not reps. Skip it, or pick the vendor it concerns. ${sorted.note}`.slice(0, 400) }).eq('id', f.id)
-        out.leftover++; continue
+        // a paper about the rep (show info, a buyer letter, a line list): under the rep group (Dana, Oct 27)
+        const rep = matchRepGroup(vendors, sorted.vendor)
+        const kind = ['invoice', 'confirmation', 'order', 'packing_slip', 'credit', 'payment', 'proof'].includes(KIND_OF[sorted.doc_type] ?? '') ? 'other' : (KIND_OF[sorted.doc_type] ?? 'other')
+        await db.from('dropbox_files').update({ ...stamp, ...paper, target: 'rep', vendor_id: null, rep_group_id: rep?.id ?? null, kind, sure: !!rep && sorted.sure, status: rep ? 'proposed' : 'leftover', note: [bigNote, rep ? `About the rep: goes under the rep group ${rep.name}.` : `About a rep (${sorted.vendor}) VMS has no rep group for: pick one, or the vendor it concerns.`, sorted.note].filter(Boolean).join(' ').slice(0, 400) }).eq('id', f.id)
+        if (rep) out.proposed++; else out.leftover++
+        continue
       }
       if (sorted.about === 'vendor') {
         const vendorId = matchVendor(vendors, sorted, f)
@@ -441,6 +445,14 @@ function isRep(v: Awaited<ReturnType<typeof vendorIndex>>, said: string | null):
   if (/dandylines|diversemarketing|diversemktg|repgroup|salesrep/.test(key)) return true
   for (const r of v.repKeys) if (key === r || key.startsWith(r) || r.startsWith(key)) return true
   return false
+}
+
+/** The rep group a rep's paper belongs to, by any part of its name (Dandylines, Diverse Marketing). */
+function matchRepGroup(v: Awaited<ReturnType<typeof vendorIndex>>, said: string | null): { id: string; name: string } | null {
+  const key = squeeze(said ?? '')
+  if (key.length < 4) return null
+  const hits = v.repGroups.filter((r) => r.keys.some((k) => key === k || key.startsWith(k) || k.startsWith(key) || key.includes(k)))
+  return hits.length === 1 ? { id: hits[0]!.id, name: hits[0]!.name } : null
 }
 
 /** The one vendor the paper is about: Claude's pick from the known list, else the names VMS knows found in what it printed. */
@@ -513,13 +525,13 @@ async function applyApproved(db: SupabaseClient, c: Conn, started: number): Prom
       const bytes = await download(db, c, f.dropbox_id)
       const mime = mimeOf(f.name)
       const safeName = f.name.replace(/[^A-Za-z0-9._-]+/g, '_')
-      if ((f.target === 'vendor' && f.vendor_id) || (f.target === 'line' && f.line_id)) {
-        const owner = f.target === 'vendor' ? f.vendor_id! : `line-${f.line_id!}`
+      if ((f.target === 'vendor' && f.vendor_id) || (f.target === 'line' && f.line_id) || (f.target === 'rep' && f.rep_group_id)) {
+        const owner = f.target === 'vendor' ? f.vendor_id! : f.target === 'line' ? `line-${f.line_id!}` : `rep-${f.rep_group_id!}`
         const path = `${org}/${owner}/${crypto.randomUUID()}-${safeName}`
         const { error: upErr } = await db.storage.from(VENDOR_BUCKET).upload(path, bytes, { contentType: mime, upsert: false })
         if (upErr) throw new Error(`Saving ${f.name}: ${upErr.message}`)
         const { data: link, error } = await db.from('vendor_links').insert({
-          organization_id: org, vendor_id: f.target === 'vendor' ? f.vendor_id : null, line_id: f.target === 'line' ? f.line_id : null, kind: f.kind ?? 'other', label: f.name.replace(/\.[a-z0-9]{2,5}$/i, ''), storage_path: path, file_name: f.name, file_size: bytes.length, mime_type: mime,
+          organization_id: org, vendor_id: f.target === 'vendor' ? f.vendor_id : null, line_id: f.target === 'line' ? f.line_id : null, rep_group_id: f.target === 'rep' ? f.rep_group_id : null, kind: f.kind ?? 'other', label: f.name.replace(/\.[a-z0-9]{2,5}$/i, ''), storage_path: path, file_name: f.name, file_size: bytes.length, mime_type: mime,
           received_at: f.doc_date ?? (f.modified_at ?? new Date().toISOString()).slice(0, 10), doc_year: f.doc_year, doc_number: f.doc_number, doc_date: f.doc_date, doc_total: f.doc_total,
           source: 'dropbox', dropbox_path: f.path_display, notes: `From Dropbox: ${f.path_display}${f.po_number ? ` · PO ${f.po_number}` : ''}`.slice(0, 300),
         }).select('id').single()

@@ -3182,3 +3182,13 @@ Esco Trading through its Dandylines alias).
 - Dana: "I don't want clean up cards LOL, just change them - you have the correct names - go on everything."
 - Rule: a rep's name in a vendor name is taken out directly (no Review card), after any dash or none. The old name stays an alias and the Lightspeed name is kept, so sales reports and POs still match; the vendor goes under the rep's group. Nothing changes in Lightspeed. (This replaces the review step for rep-name clean-ups only.)
 - Done: EXTENDED EXPOSURE, KURT S. ADLER, OEELINN (now under DandyLines / Diverse Marketing).
+
+## Oct 27 — Rep group documents; freight bills from Dropbox become bills (Dana)
+- Dana, on a show-info PDF from Donna: "it clearly says Dandylines and Diverse Marketing and it's not an order, it is info
+  from the last show, it goes with the rep group." Files can now belong to a rep group (`vendor_links.rep_group_id`,
+  migration 0251): a **Documents** box on the rep group page, the Dropbox read proposes "Rep group" for a rep's own
+  papers, and **Rep group…** on the Dropbox list lets Dana send a file there. Papers about a vendor still go under the vendor.
+- Dana, on a UPS bill for American Dream Home Goods on her list: "it should be filed under UPS and American Dream Home."
+  A carrier's bill with no bill waiting in VMS becomes a new freight bill for that carrier (matched by name, an exact name
+  winning) and is read like a dropped PDF, so its shipments land on the vendors that shipped them: the Freight page and
+  the vendor's Freight box (migration 0250). Dropbox previews are sent as a byte stream so PDFs and Word files open intact.

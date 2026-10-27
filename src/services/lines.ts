@@ -251,3 +251,18 @@ export async function zipVendorDocuments(rows: VendorLink[], vendorName: string,
   if (links.length) zip.file(`${clean(vendorName)}/links.txt`, links.join('\n'))
   return zip.generateAsync({ type: 'blob' })
 }
+
+/** A rep group's own files (show info, buyer letters, line lists), newest first (Dana, Oct 27). */
+export async function listRepGroupLinks(repGroupId: string): Promise<VendorLinkRow[]> {
+  const { data, error } = await supabase.from('vendor_links').select('*, email:emails(thread_id)').eq('rep_group_id', repGroupId)
+    .order('received_at', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false })
+  if (error) throw error
+  return (data ?? []) as unknown as VendorLinkRow[]
+}
+
+/** Rep groups by name, for pickers. */
+export async function listRepGroupNames(organizationId: string): Promise<{ id: string; name: string }[]> {
+  const { data, error } = await supabase.from('rep_groups').select('id, name').eq('organization_id', organizationId).eq('is_active', true).order('name')
+  if (error) throw error
+  return data ?? []
+}

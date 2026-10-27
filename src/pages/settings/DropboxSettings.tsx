@@ -16,6 +16,7 @@ import { errorMessage } from '@/lib/utils'
 import type { VendorLinkKind } from '@/types'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner } from '@/components/ui'
 import { VendorPicker } from '@/components/vendors/VendorPicker'
+import { listRepGroupNames } from '@/services/lines'
 
 const when = (d: string) => new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 const section = 'rounded-2xl border border-stone-200 bg-white p-5'
@@ -228,6 +229,7 @@ function FolderFiles({ orgId, folder, summary, onClose }: { orgId: string; folde
     const tail = <>{folderLabel(folderOf((f.kind ?? 'other') as VendorLinkKind))}{f.doc_year ? ` › ${f.doc_year}` : ''}{f.doc_number ? ` · ${f.doc_number}` : ''}{f.doc_total != null ? ` · $${Number(f.doc_total).toFixed(2)}` : ''}</>
     if (f.target === 'vendor') return <>{f.vendor?.name ?? <span className="text-amber-700">vendor not found{f.vendor_said ? ` ("${f.vendor_said}")` : ''}</span>} › {tail}</>
     if (f.target === 'line') return <>Line {f.line?.name ?? '?'} › {tail}</>
+    if (f.target === 'rep') return <>Rep group {f.rep_group?.name ?? <span className="text-amber-700">not found{f.vendor_said ? ` ("${f.vendor_said}")` : ''}</span>} › {tail}</>
     if (f.target === 'freight') return <>Freight{f.freight_bill_id ? ' › the bill waiting for this PDF' : f.carrier_id ? ' › a new carrier bill' : <span className="text-amber-700"> › carrier not in VMS</span>}{f.doc_number ? ` · ${f.doc_number}` : ''}{f.doc_total != null ? ` · $${Number(f.doc_total).toFixed(2)}` : ''}</>
     if (f.target === 'accounting') { const a = (f.accounting ?? {}) as { category?: string; party?: string; doc_year?: number; what?: string }; return <>Accounting › {a.category ?? '?'} › {a.party || 'Unsorted'} › {a.doc_year ?? ''}{a.what ? ` · ${a.what}` : ''}</> }
     if (f.target === 'skip' || f.status === 'skipped') return <span className="text-stone-500">Not filed: {f.skip_reason}</span>
@@ -261,17 +263,36 @@ function FolderFiles({ orgId, folder, summary, onClose }: { orgId: string; folde
                   <span className="flex flex-wrap gap-1">
                     {f.status === 'proposed' || (f.status === 'leftover' && f.target === 'accounting') ? <Button size="sm" loading={busy === f.id} onClick={() => void decide(f, { status: 'approved' }, 'Approved')}>Approve</Button> : null}
                     <Button size="sm" variant="secondary" disabled={busy === f.id} onClick={() => setChanging(changing === f.id ? null : f.id)}>Vendor…</Button>
+                    <Button size="sm" variant="secondary" disabled={busy === f.id} onClick={() => setChanging(changing === `rep:${f.id}` ? null : `rep:${f.id}`)}>Rep group…</Button>
                     <Button size="sm" variant="ghost" disabled={busy === f.id} onClick={() => void decide(f, { status: 'skipped', target: 'skip', skip_reason: 'skipped by Dana' }, 'Skipped')}>Skip</Button>
                   </span>
                 ) : f.status === 'skipped' && f.skip_reason === 'skipped by Dana' ? <Button size="sm" variant="ghost" onClick={() => void decide(f, { status: 'proposed', target: f.vendor_id ? 'vendor' : 'accounting' }, 'Back on the list')}>Undo</Button> : null}
               </div>
-              {changing === f.id ? <ChangeVendor f={f} busy={busy === f.id} onPick={(vendorId, kind) => void decide(f, { status: 'approved', target: 'vendor', vendor_id: vendorId, line_id: null, kind }, 'Approved under the vendor')} onCancel={() => setChanging(null)} /> : null}
+              {changing === f.id ? <ChangeVendor f={f} busy={busy === f.id} onPick={(vendorId, kind) => void decide(f, { status: 'approved', target: 'vendor', vendor_id: vendorId, line_id: null, rep_group_id: null, kind }, 'Approved under the vendor')} onCancel={() => setChanging(null)} /> : null}
+              {changing === `rep:${f.id}` ? <ChangeRepGroup orgId={orgId} f={f} busy={busy === f.id} onPick={(repGroupId, kind) => void decide(f, { status: 'approved', target: 'rep', rep_group_id: repGroupId, vendor_id: null, line_id: null, kind }, 'Approved under the rep group')} onCancel={() => setChanging(null)} /> : null}
             </li>
           ))}
           {(q.data ?? []).length === 0 ? <li className="py-2 text-sm text-stone-500">Nothing here needs a look.</li> : null}
         </ul>
       )}
       {viewer}
+    </div>
+  )
+}
+
+const REP_KINDS: VendorLinkKind[] = ['other', 'specials', 'price_list', 'order_form', 'catalog']
+
+/** Dana's own answer: this file is the rep group's (show info, a buyer letter, a line list). */
+function ChangeRepGroup({ orgId, f, busy, onPick, onCancel }: { orgId: string; f: DropboxFile; busy: boolean; onPick: (repGroupId: string, kind: VendorLinkKind) => void; onCancel: () => void }) {
+  const groups = useSupabaseQuery(() => listRepGroupNames(orgId), [orgId])
+  const [rep, setRep] = useState(f.rep_group_id ?? '')
+  const [kind, setKind] = useState<VendorLinkKind>(REP_KINDS.includes(f.kind as VendorLinkKind) ? (f.kind as VendorLinkKind) : 'other')
+  return (
+    <div className="mt-2 grid gap-2 rounded-lg border border-stone-200 bg-white p-3 sm:grid-cols-[1fr_auto_auto_auto] sm:items-end">
+      <FormField label="Rep group" htmlFor={`dbx-r-${f.id}`}><Select id={`dbx-r-${f.id}`} value={rep} onChange={(e) => setRep(e.target.value)}><option value="">Pick a rep group</option>{(groups.data ?? []).map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</Select></FormField>
+      <FormField label="Folder" htmlFor={`dbx-rk-${f.id}`}><Select id={`dbx-rk-${f.id}`} value={kind} onChange={(e) => setKind(e.target.value as VendorLinkKind)}>{REP_KINDS.map((k) => <option key={k} value={k}>{DOC_FOLDERS.find((d) => d.kinds.includes(k))?.label ?? k}</option>)}</Select></FormField>
+      <Button loading={busy} disabled={!rep} onClick={() => rep && onPick(rep, kind)}>Approve</Button>
+      <Button variant="ghost" onClick={onCancel}>Cancel</Button>
     </div>
   )
 }

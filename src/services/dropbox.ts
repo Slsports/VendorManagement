@@ -37,7 +37,7 @@ export async function loadDropboxFile(id: string): Promise<Blob> {
   throw new Error('The file could not be loaded')
 }
 
-export type DropboxFile = Tables<'dropbox_files'> & { vendor: { name: string } | null; line: { name: string } | null }
+export type DropboxFile = Tables<'dropbox_files'> & { vendor: { name: string } | null; line: { name: string } | null; rep_group: { name: string } | null }
 export type DropboxFileStatus = Tables<'dropbox_files'>['status']
 export type DropboxFolderSummary = { folder: string; total: number; new_count: number; proposed: number; leftover: number; approved: number; filed: number; linked: number; skipped: number; errors: number; sure_proposed: number; folder_skipped: number }
 
@@ -49,7 +49,7 @@ export async function dropboxFolderSummary(organizationId: string): Promise<Drop
 }
 
 export async function listDropboxFiles(organizationId: string, topFolder: string, statuses: DropboxFileStatus[], limit = 300): Promise<DropboxFile[]> {
-  const { data, error } = await supabase.from('dropbox_files').select('*, vendor:vendors(name), line:vendor_directory(name)').eq('organization_id', organizationId).eq('top_folder', topFolder).in('status', statuses).order('folder').order('name').limit(limit)
+  const { data, error } = await supabase.from('dropbox_files').select('*, vendor:vendors(name), line:vendor_directory(name), rep_group:rep_groups(name)').eq('organization_id', organizationId).eq('top_folder', topFolder).in('status', statuses).order('folder').order('name').limit(limit)
   if (error) throw error
   return (data ?? []) as DropboxFile[]
 }
@@ -69,7 +69,7 @@ export async function skipDropboxFolder(organizationId: string, topFolder: strin
 }
 
 /** Dana's own answer for one file: which vendor and kind (vendor paper), or skip it, or put it back to proposed. */
-export async function decideDropboxFile(id: string, userId: string, change: { status: 'approved' | 'skipped' | 'proposed'; vendor_id?: string | null; line_id?: string | null; kind?: string | null; target?: 'vendor' | 'line' | 'freight' | 'accounting' | 'skip'; skip_reason?: string | null }) {
+export async function decideDropboxFile(id: string, userId: string, change: { status: 'approved' | 'skipped' | 'proposed'; vendor_id?: string | null; line_id?: string | null; rep_group_id?: string | null; kind?: string | null; target?: 'vendor' | 'line' | 'rep' | 'freight' | 'accounting' | 'skip'; skip_reason?: string | null }) {
   const { error } = await supabase.from('dropbox_files').update({ ...change, decided_by: userId, decided_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', id)
   if (error) throw error
 }
