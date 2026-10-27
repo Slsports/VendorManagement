@@ -485,7 +485,11 @@ async function matchCarrier(db: SupabaseClient, org: string, said: string | null
   const key = squeeze(said ?? '')
   if (key.length < 2) return null
   const { data } = await db.from('carriers').select('id, name, aliases').eq('organization_id', org).eq('is_active', true).limit(200)
-  const hits = (data ?? []).filter((c) => [c.name, ...((c.aliases as string[] | null) ?? [])].some((n) => { const k = squeeze(n); return k === key || (k.length >= 3 && (key.startsWith(k) || k.startsWith(key))) }))
+  const names = (c: { name: string; aliases: string[] | null }) => [c.name, ...(c.aliases ?? [])].map(squeeze)
+  // "UPS" is UPS, not UPS DIRECT: an exact name wins; otherwise the one carrier whose name starts the printed one (or the other way round)
+  const exact = (data ?? []).filter((c) => names(c).includes(key))
+  if (exact.length === 1) return { id: exact[0]!.id, name: exact[0]!.name }
+  const hits = (data ?? []).filter((c) => names(c).some((k) => k.length >= 3 && (key.startsWith(k) || k.startsWith(key))))
   return hits.length === 1 ? { id: hits[0]!.id, name: hits[0]!.name } : null
 }
 
