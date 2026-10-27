@@ -26,7 +26,7 @@ export function BillcomCard() {
   const url = organization?.billcom_url || 'https://app.bill.com'
   const [today] = useState(() => new Date().toISOString().slice(0, 10))
   return (
-    <CountCard title="Bill.com" count={due.data ? bills.length : null} loading={due.isLoading} error={due.error ?? waiting.error ?? undefined}>
+    <CountCard id="billcom" title="Bill.com" count={due.data ? bills.length : null} loading={due.isLoading} error={due.error ?? waiting.error ?? undefined}>
       <p className="text-sm text-stone-600">{bills.length ? `${bills.length} bill${bills.length === 1 ? '' : 's'} due within 7 days, ${money(total)}.` : 'Nothing due within 7 days.'}</p>
       {bills.length ? (
         <ul className="mt-2 divide-y divide-stone-100 text-sm">

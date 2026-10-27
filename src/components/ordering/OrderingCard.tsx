@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { ShoppingCart } from 'lucide-react'
+import { ShoppingCart, ChevronDown } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useLiveTable } from '@/hooks/useLiveTable'
@@ -13,6 +13,7 @@ import { senderLabel, workingStatus } from '@/lib/mail'
 import { ROUTES } from '@/lib/constants'
 import { money } from '@/lib/freight'
 import { cn, errorMessage } from '@/lib/utils'
+import { useCardOpen } from '@/hooks/useCardOpen'
 import { AddOrderDialog } from '@/components/orders/AddOrderDialog'
 import { Button } from '@/components/ui'
 import { RunReportButtons } from './RunReportButtons'
@@ -51,6 +52,8 @@ export function OrderingCard() {
   useLiveTable('ordering_items', null, () => { void rf() })
   useLiveTable('sales_reports', null, () => { void rf() })
   const [open, setOpen] = useState<Row | null>(null)
+  // the box itself starts closed and stays how the person left it (Dana, Oct 27)
+  const [shown, setShown] = useCardOpen('ordering')
 
   // flags: the person's own when the admin shows one person; orders are everyone's
   const myFlags = (flags.data ?? []).filter((f) => !personId || !f.assigned_to || f.assigned_to === personId)
@@ -75,10 +78,14 @@ export function OrderingCard() {
   return (
     // always the full width of the dashboard, so the seven counts sit side by side (Dana, Oct 12: squeezed on the iPad)
     <div className={cn('col-span-full rounded-2xl border bg-white shadow-sm', open ? 'border-brand/40' : 'border-stone-200')}>
-      <div className="px-5 pt-4">
+      <button type="button" onClick={() => setShown((v) => !v)} aria-expanded={shown} className="flex w-full items-center justify-between gap-3 rounded-2xl px-5 py-4 text-left hover:bg-stone-50">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-stone-900"><ShoppingCart className="size-4 text-brand" aria-hidden="true" /> Ordering</h3>
-      </div>
-      <div className="grid grid-cols-4 items-start gap-1 p-3 md:grid-cols-7">
+        <span className="flex shrink-0 items-center gap-2">
+          <span className={cn('text-2xl font-semibold tracking-tight', loading ? 'text-stone-300' : lists.overdue.length ? 'text-red-700' : 'text-stone-900')}>{loading ? '…' : ROWS.reduce((n, r) => n + lists[r.id].length, 0) + noDraft.length}</span>
+          <ChevronDown className={cn('size-4 text-stone-400 transition-transform', shown && 'rotate-180')} aria-hidden="true" />
+        </span>
+      </button>
+      {shown ? <div className="grid grid-cols-4 items-start gap-1 border-t border-stone-100 p-3 md:grid-cols-7">
         {ROWS.map((r) => {
           const n = lists[r.id].length + (r.id === 'ls_po' ? noDraft.length : 0)
           return (
@@ -91,8 +98,8 @@ export function OrderingCard() {
             </button>
           )
         })}
-      </div>
-      {open ? (
+      </div> : null}
+      {shown && open ? (
         <div className="border-t border-stone-100 px-5 pb-5 pt-3">
           <p className="text-xs text-stone-500">{ROWS.find((r) => r.id === open)!.help}</p>
           {open === 'check' || open === 'to_order' ? <FlagList rows={lists[open] as OrderingRow[]} /> : open === 'working' ? <WorkingList rows={lists.working as WorkingRow[]} /> : open === 'ls_po' ? <LsPoList rows={lists.ls_po as LsPoRow[]} noDraft={noDraft} /> : <OrderList rows={lists[open] as OrderingOrderRow[]} showLsPo={open !== 'placed'} />}

@@ -8,7 +8,7 @@ One card across the dashboard counts everything waiting on a decision, by kind. 
 
 ## How to
 1. On the dashboard, find **Review**.
-2. Read the counts:
+2. The card starts closed with one number (everything waiting). Click it to open; it stays open until you close it. Read the counts:
    - **Confirmations**: vendor confirmations Claude checked against our order.
    - **Invoices**: invoices Claude checked against the confirmation.
    - **Needs a hand**: paperwork Claude could not read or could not match to an order.

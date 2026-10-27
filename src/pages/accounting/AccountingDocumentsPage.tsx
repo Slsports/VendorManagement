@@ -92,7 +92,7 @@ export default function AccountingDocumentsPage() {
 
       {tab === 'review' ? (
         <section className="rounded-2xl border border-stone-200 bg-white">
-          <div className="border-b border-stone-100 px-4 py-3 text-sm text-stone-600">Papers Claude filed but was not sure about. Open each, then <strong>Looks right</strong> or move it with the pencil.</div>
+          <div className="border-b border-stone-100 px-4 py-3 text-sm text-stone-600">Papers VMS filed but was not sure about. Each shows its doubt; where it is a choice, the question and its answers are buttons: click the answer and it is filed that way. <strong>Keep as filed</strong> keeps the folder and name as they are; the pencil moves or renames.</div>
           {docs.isLoading ? <Spinner label="Loading…" className="m-4 text-brand" /> : <DocumentRows docs={docs.data ?? []} parties={parties} onChanged={refresh} empty="Nothing waiting. Everything filed looked sure." />}
         </section>
       ) : q ? (

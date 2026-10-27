@@ -12,7 +12,7 @@ export function OrderCountCard({ view }: { view: OrderView }) {
   const { organization } = useAuth()
   const q = useSupabaseQuery(async () => (organization ? countOrderView(organization.id, view) : 0), [organization?.id, view])
   return (
-    <CountCard tile title={ORDER_VIEW_LABELS[view].title} count={q.data ?? 0} loading={q.isLoading} error={q.error} alert={view === 'overdue'}>
+    <CountCard id={`kpi_${view}`} tile title={ORDER_VIEW_LABELS[view].title} count={q.data ?? 0} loading={q.isLoading} error={q.error} alert={view === 'overdue'}>
       <OrderViewList view={view} />
     </CountCard>
   )

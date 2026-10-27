@@ -10,8 +10,8 @@
 //   { backcheck: true }               → trusted only: look again at every email whose files were skipped (a rule changed)
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { Gmail, GMAIL_SCOPES, googleAccessToken } from '../_shared/gmail.ts'
-import { aiEnabled, readAccountingPapers, type AccountingFileCtx, type AccountingPaperReading, type PaperFile } from '../_shared/ai.ts'
-import { ACCOUNTING_BUCKET as BUCKET, DOC, JUNK, MAX_CALL_BYTES, MAX_KEEP_BYTES, PICTURE, SHEET, cleanReading, extOf, knownContext, paperFile, rowFromReading, sha256 } from '../_shared/accountingFiling.ts'
+import { aiEnabled, askAccountingQuestions, readAccountingPapers, type AccountingFileCtx, type AccountingPaperReading, type PaperFile } from '../_shared/ai.ts'
+import { ACCOUNTING_BUCKET as BUCKET, DOC, JUNK, MAX_CALL_BYTES, MAX_KEEP_BYTES, PICTURE, SHEET, cleanChoices, cleanReading, extOf, knownContext, paperFile, rowFromReading, sha256 } from '../_shared/accountingFiling.ts'
 
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-cron-secret', 'Access-Control-Allow-Methods': 'POST, OPTIONS' }
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', ...CORS } })
@@ -37,8 +37,36 @@ Deno.serve(async (req) => {
       me = { id: p.id, organization_id: p.organization_id }
     }
     if (!aiEnabled()) return json({ error: 'Claude is not set up for this organization' }, 503)
-    const body = await req.json().catch(() => ({})) as { email_id?: string; attachment_id?: string; force?: boolean; document_id?: string; hint?: string; backcheck?: boolean; gmail_filters?: boolean; apply_contact_filing?: string }
+    const body = await req.json().catch(() => ({})) as { email_id?: string; attachment_id?: string; force?: boolean; document_id?: string; hint?: string; backcheck?: boolean; gmail_filters?: boolean; apply_contact_filing?: string; questions?: boolean }
     const started = Date.now()
+
+    // Trusted only (Dana, Oct 27): papers flagged before the question buttons get their question from the note.
+    if (body.questions && trusted) {
+      let asked = 0, withQuestion = 0, errors = 0
+      for (;;) {
+        if (Date.now() - started > TIME_BUDGET_MS) break
+        const { data: rows } = await db.from('accounting_documents').select('id, organization_id, file_name, category, party, whose, what, claude_note').eq('status', 'review').eq('question', '').neq('claude_note', '').is('question_asked_at', null).order('created_at', { ascending: false }).limit(20)
+        if (!rows?.length) break
+        const org = rows[0].organization_id
+        const stamp = new Date().toISOString()
+        try {
+          const answers = await askAccountingQuestions(db, org, rows.map((r) => ({ id: r.id, file_name: r.file_name, category: r.category, party: r.party, whose: r.whose, what: r.what, note: r.claude_note })))
+          for (const r of rows) {
+            const a = answers.find((x) => x.id === r.id)
+            const c = cleanChoices(a?.question ?? '', a?.choices, false)
+            await db.from('accounting_documents').update({ question_asked_at: stamp, ...c }).eq('id', r.id)
+            asked++; if (c.question) withQuestion++
+          }
+        } catch (e) {
+          console.error('questions:', e instanceof Error ? e.message : e)
+          errors++
+          if (errors >= 3) break
+          await db.from('accounting_documents').update({ question_asked_at: stamp }).in('id', rows.map((r) => r.id))
+        }
+      }
+      const { count: left } = await db.from('accounting_documents').select('id', { count: 'exact', head: true }).eq('status', 'review').eq('question', '').neq('claude_note', '').is('question_asked_at', null)
+      return json({ asked, with_question: withQuestion, errors, left: left ?? 0 })
+    }
 
     // A contact's "their papers" rule applied to the old (from a cloud session, where the Storage API needs this function).
     if (body.apply_contact_filing && trusted) {

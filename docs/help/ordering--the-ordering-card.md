@@ -7,6 +7,7 @@ who: Everyone
 The **Ordering** card on the dashboard follows a vendor from "do we need anything?" to a confirmed order. It shows seven counts; click one to see its list.
 
 ## The counts
+The card starts closed with one number (everything on it, red when an order is overdue). Click it to open the seven counts; it stays open until you close it.
 - **Check stock**: vendors flagged **Check if we need it**. Click **Run order** on the vendor's line: VMS runs its sales report straight from Lightspeed (last 12 months, all stores together) and opens the suggested order. **Run report** only files the report.
 - **To order**: vendors flagged **Remind me to order**, or ones where the stock check said we need something.
 - **Working on**: emails flagged **Working on order** while an order goes back and forth with the rep. It also says how many need an answer; **Open the full list** opens the Orders I'm working on page.

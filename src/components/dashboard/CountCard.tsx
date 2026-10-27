@@ -1,12 +1,16 @@
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { ChevronDown } from 'lucide-react'
+import { useCardOpen } from '@/hooks/useCardOpen'
 import { cn } from '@/lib/utils'
 
 /**
  * A dashboard card (Dana, Oct 11: "the cards should not show any data except for the number of items in it. When
- * you click it, the list appears"). Closed: its name and the count. Open: the list, across the whole row.
+ * you click it, the list appears"). Closed: its name and the count. Open: the list, across the whole row. A box with
+ * an id stays open or closed the way the person left it (Dana, Oct 27).
  */
-export function CountCard({ title, count, loading, error, alert, tile, action, children }: {
+export function CountCard({ id, title, count, loading, error, alert, tile, action, children }: {
+  /** remembers open/closed per person when given */
+  id?: string
   title: ReactNode
   /** null = nothing to count yet */
   count: number | null
@@ -20,7 +24,7 @@ export function CountCard({ title, count, loading, error, alert, tile, action, c
   action?: ReactNode
   children: ReactNode
 }) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useCardOpen(id)
   return (
     <div className={cn('rounded-2xl border bg-white shadow-sm', open ? 'col-span-full border-brand/40' : 'border-stone-200')}>
       <div className="flex items-center">

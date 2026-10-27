@@ -2,7 +2,7 @@
 // becomes an Accounting document (Category / Party / Year, named by the convention). Deno only.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { sheetFileText } from './sheetFile.ts'
-import { ACCOUNTING_CATEGORIES, ACCOUNTING_KINDS, imageType, type AccountingFileCtx, type AccountingPaperReading, type PaperFile } from './ai.ts'
+import { ACCOUNTING_CATEGORIES, ACCOUNTING_KINDS, imageType, type AccountingChoiceReading, type AccountingFileCtx, type AccountingPaperReading, type PaperFile } from './ai.ts'
 
 export const ACCOUNTING_BUCKET = 'accounting-files'
 // The edge worker has little memory (a run died with WORKER_RESOURCE_LIMIT on Oct 16): a file over 5 MB is read by its
@@ -83,11 +83,25 @@ export function cleanReading(r: AccountingPaperReading, ctx: Pick<AccountingFile
   return { ...r, category, kind, whose, policy_id: policy, contract_id: contract, doc_year, party: r.party.replace(/[/\\]+/g, '-').replace(/\s+/g, ' ').trim().slice(0, 80), number: r.number.trim().slice(0, 60), what: r.what.trim().slice(0, 80), status_word: r.status_word.trim().toLowerCase().slice(0, 20), note: r.note.slice(0, 400) }
 }
 
+/** Claude's answers brought to what the buttons accept: a label, fields only from the lists, at most four, none when sure. */
+export function cleanChoices(question: string, choices: AccountingChoiceReading[] | undefined, sure: boolean): { question: string; choices: AccountingChoiceReading[] } {
+  if (sure || !question.trim() || !choices?.length) return { question: '', choices: [] }
+  const out = choices.slice(0, 4).map((c) => ({
+    label: c.label.trim().slice(0, 40),
+    whose: ['SLS', 'P&S', 'SLM', 'GS'].includes(c.whose.trim().toUpperCase()) ? c.whose.trim().toUpperCase() : '',
+    party: c.party.replace(/[/\\]+/g, '-').replace(/\s+/g, ' ').trim().slice(0, 80),
+    category: (ACCOUNTING_CATEGORIES as readonly string[]).includes(c.category) ? c.category : '',
+    what: c.what.trim().slice(0, 80),
+  })).filter((c) => c.label)
+  return out.length >= 2 ? { question: question.trim().slice(0, 200), choices: out } : { question: '', choices: [] }
+}
+
 export function rowFromReading(r: AccountingPaperReading, fallbackDate: string, ext: string) {
   const date = /^\d{4}-\d{2}-\d{2}$/.test(r.doc_date ?? '') ? r.doc_date : null
   return {
     category: r.category, party: r.party || 'Unsorted', doc_year: r.doc_year, file_name: documentName(r, fallbackDate, ext), kind: r.kind, whose: r.whose, doc_date: date,
     number: r.number, what: r.what, amount: r.amount, status_word: r.status_word, policy_id: r.policy_id, contract_id: r.contract_id,
     status: r.sure && r.party ? 'filed' : 'review', sure: r.sure, claude_note: r.note,
+    ...cleanChoices(r.question ?? '', r.choices, r.sure),
   }
 }

@@ -20,7 +20,7 @@ export function ArtApprovalsPanel() {
   const todo = rows.filter((t) => t.art_status !== 'changes_sent').length
   if (!rows.length) return null
   return (
-    <CountCard title={<span className="flex items-center gap-2"><Palette className="size-4 text-fuchsia-600" aria-hidden="true" /> Artwork approvals{rows.length > todo ? <span className="font-normal text-stone-500">+ {rows.length - todo} waiting on vendor</span> : null}</span>} count={todo}
+    <CountCard id="art" title={<span className="flex items-center gap-2"><Palette className="size-4 text-fuchsia-600" aria-hidden="true" /> Artwork approvals{rows.length > todo ? <span className="font-normal text-stone-500">+ {rows.length - todo} waiting on vendor</span> : null}</span>} count={todo}
       alert={rows.some((t) => t.art_status !== 'changes_sent' && artWaitDays(t.art_since) >= 2)}>
       <ul className="divide-y divide-stone-100 text-sm">
         {rows.slice(0, 8).map((t) => {

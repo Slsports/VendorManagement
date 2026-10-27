@@ -24,7 +24,7 @@ export function TasksCard() {
   const title = isMe ? 'My tasks' : who ? `${personName?.split(' ')[0] ?? 'Their'}'s tasks` : 'Everyone’s tasks'
   return (
     <>
-      <CountCard title={<span className="flex items-center gap-2"><ListTodo className="size-4 text-brand" aria-hidden="true" /> {title}{late ? <span className="font-normal text-red-700">{late} late</span> : null}</span>}
+      <CountCard id="tasks" title={<span className="flex items-center gap-2"><ListTodo className="size-4 text-brand" aria-hidden="true" /> {title}{late ? <span className="font-normal text-red-700">{late} late</span> : null}</span>}
         count={rows.length} loading={q.isLoading} error={q.error} alert={late > 0}
         action={<button type="button" onClick={() => setAdding(true)} aria-label="Add a task" title="Add a task" className="rounded-full p-1.5 text-brand hover:bg-brand/10"><Plus className="size-5" aria-hidden="true" /></button>}>
         <TaskList tasks={rows.slice(0, 15)} showWho={!isMe || !who} empty="Nothing on the list. Use + to add a task." />

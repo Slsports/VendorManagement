@@ -30,3 +30,15 @@ export function docMoney(n: number | null | undefined): string {
   const v = Number(n)
   return v === Math.trunc(v) ? `$${Math.trunc(v).toLocaleString()}` : `$${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
+
+/** An answer button: the fields that change when it is picked ('' = unchanged). */
+export interface DocumentChoice { label: string; whose: string; party: string; category: string; what: string }
+export function choicesOf(d: Pick<AccountingDocument, 'choices'>): DocumentChoice[] {
+  if (!Array.isArray(d.choices)) return []
+  return d.choices.flatMap((c) => {
+    if (!c || typeof c !== 'object' || Array.isArray(c)) return []
+    const o = c as Record<string, unknown>
+    const str = (k: string) => (typeof o[k] === 'string' ? (o[k] as string) : '')
+    return str('label') ? [{ label: str('label'), whose: str('whose'), party: str('party'), category: str('category'), what: str('what') }] : []
+  })
+}

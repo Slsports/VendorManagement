@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { ClipboardCheck } from 'lucide-react'
+import { ClipboardCheck, ChevronDown } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useViewAs } from '@/hooks/useViewAs'
@@ -10,6 +10,7 @@ import { REVIEW_TABS, reviewTabOfCheck, reviewTabOfKind, type ReviewTab } from '
 import { daysWaitingNow } from '@/lib/orderChecks'
 import { ROUTES } from '@/lib/constants'
 import { cn } from '@/lib/utils'
+import { useCardOpen } from '@/hooks/useCardOpen'
 
 const CARD_TABS = REVIEW_TABS.filter((t) => t.id !== 'never')
 
@@ -43,15 +44,23 @@ export function ReviewCard() {
     if (daysWaitingNow(k.created_at) >= 2) c.late = true
   }
   const withWho = isMe ? 'you' : personName?.split(' ')[0] ?? 'them'
+  // the box itself starts closed and stays how the person left it (Dana, Oct 27)
+  const [shown, setShown] = useCardOpen('review')
 
   return (
     <div className="col-span-full rounded-2xl border border-stone-200 bg-white shadow-sm">
-      <div className="flex items-baseline justify-between gap-2 px-5 pt-4">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-stone-900"><ClipboardCheck className="size-4 text-brand" aria-hidden="true" /> Review</h3>
-        {canReview ? <button type="button" onClick={() => navigate(ROUTES.review)} className="text-xs font-medium text-brand hover:underline">Open the review queue</button> : null}
+      <div className="flex items-center">
+        <button type="button" onClick={() => setShown((v) => !v)} aria-expanded={shown} className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-2xl px-5 py-4 text-left hover:bg-stone-50">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-stone-900"><ClipboardCheck className="size-4 text-brand" aria-hidden="true" /> Review</h3>
+          <span className="flex shrink-0 items-center gap-2">
+            <span className={cn('text-2xl font-semibold tracking-tight', q.isLoading ? 'text-stone-300' : [...counts.values()].some((c) => c.late) ? 'text-red-700' : 'text-stone-900')}>{q.isLoading ? '…' : [...counts.values()].reduce((n, c) => n + c.all, 0)}</span>
+            <ChevronDown className={cn('size-4 text-stone-400 transition-transform', shown && 'rotate-180')} aria-hidden="true" />
+          </span>
+        </button>
+        {canReview && shown ? <button type="button" onClick={() => navigate(ROUTES.review)} className="shrink-0 pr-5 text-xs font-medium text-brand hover:underline">Open the review queue</button> : null}
       </div>
-      {!canReview ? <p className="px-5 pb-4 pt-2 text-sm text-stone-600">Admins, managers and buyers settle the review queue.</p> : (
-        <div className="grid grid-cols-4 items-start gap-1 p-3 md:grid-cols-7">
+      {!shown ? null : !canReview ? <p className="border-t border-stone-100 px-5 pb-4 pt-2 text-sm text-stone-600">Admins, managers and buyers settle the review queue.</p> : (
+        <div className="grid grid-cols-4 items-start gap-1 border-t border-stone-100 p-3 md:grid-cols-7">
           {CARD_TABS.map((t) => {
             const c = counts.get(t.id)!
             return (

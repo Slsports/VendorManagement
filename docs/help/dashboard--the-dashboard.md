@@ -9,10 +9,11 @@ The dashboard is the first page after you sign in. Each box shows only its name 
 ## How to
 1. Click **Dashboard** in the menu (or sign in).
 2. Look at the number on each box. A red number means something is late or has waited too long.
-3. Click a box to open its list across the whole row. Click it again to close it.
+3. Click a box to open its list across the whole row. Click it again to close it. Every box starts closed the first time; after that it stays open or closed the way you left it, on that computer or phone.
 4. Click any line in the list to open that order, email, bill or check.
 
 ## Good to know
+- **Ordering** and **Review** close the same way: closed, each shows one number (everything on it, red when something is late or overdue); open, the seven counts.
 - The **Ordering** card follows orders from "do we need it?" to confirmed (see "The Ordering card"). Two number boxes count **Payments due** and **Future-dated orders**.
 - The cards are: Ordering, Review, My tasks, Mail for you, Artwork approvals and Freight bills.
 - Some cards only show when they have something in them (confirmations and invoices, artwork, freight allowances), and Freight bills only shows for people who handle freight.

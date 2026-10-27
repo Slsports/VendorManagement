@@ -119,4 +119,6 @@ export const ROUTES = {
 export const STORAGE_KEYS = {
   sidebarCollapsed: 'vms.sidebar.collapsed',
   viewAs: 'vms.viewAs',
+  /** which dashboard boxes a person left open */
+  cardOpen: 'vms.card.open',
 } as const

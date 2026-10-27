@@ -20,7 +20,7 @@ export function MailForYouPanel() {
   const noAnswer = q.data?.noAnswer ?? []
   const total = needs.length + noAnswer.length
   return (
-    <CountCard title={title} count={total} loading={q.isLoading} error={q.error} alert={noAnswer.length > 0}>
+    <CountCard id="mail" title={title} count={total} loading={q.isLoading} error={q.error} alert={noAnswer.length > 0}>
       <Link to={ROUTES.mail} className="text-sm font-medium text-brand hover:underline">Open Mail</Link>
       {total === 0 ? (
           <div className="mt-4 flex items-start gap-3 rounded-xl bg-stone-50 p-4">

@@ -10,7 +10,8 @@ import { deleteDocument, downloadDocument, updateDocument } from '@/services/acc
 import { threadsOfEmails } from '@/services/insurance'
 import { listPolicies } from '@/services/insurance'
 import { listContracts } from '@/services/contracts'
-import { docMoney, folderLabel, folderSearch, kindLabel } from '@/lib/accountingDocuments'
+import { choicesOf, docMoney, folderLabel, folderSearch, kindLabel, type DocumentChoice } from '@/lib/accountingDocuments'
+import { categoryLabel } from '@/lib/accounting'
 import { ROUTES } from '@/lib/constants'
 import { errorMessage } from '@/lib/utils'
 import type { AccountingDocument } from '@/types'
@@ -22,6 +23,11 @@ import { DocumentEditDialog } from './DocumentEditDialog'
  * A table of filed papers: click the name to open it, the folder to go there, the envelope to land on the email it
  * came from (Dana, Oct 16: no extra clicking). Edit moves or renames; "Looks right" clears a paper Claude was unsure of.
  */
+function choiceTitle(c: DocumentChoice): string {
+  const parts = [c.whose && `for ${c.whose}`, c.category && `under ${categoryLabel(c.category)}`, c.party && `folder ${c.party}`, c.what && `"${c.what}"`].filter(Boolean)
+  return parts.length ? `Files it ${parts.join(', ')}` : 'Keeps it as filed'
+}
+
 export function DocumentRows({ docs, parties, showFolder = true, onChanged, empty = 'Nothing here yet.' }: {
   docs: AccountingDocument[]
   parties?: string[]
@@ -48,7 +54,20 @@ export function DocumentRows({ docs, parties, showFolder = true, onChanged, empt
   const open = (d: AccountingDocument) => view({ name: d.file_name, mime: d.mime_type, load: () => downloadDocument(d.storage_path) })
   async function looksRight(d: AccountingDocument) {
     setBusyId(d.id)
-    try { await updateDocument(d.id, { status: 'filed', sure: true }); onChanged() } catch (e) { toast.error(errorMessage(e)) } finally { setBusyId(null) }
+    try { await updateDocument(d.id, { status: 'filed', sure: true, question: '', choices: [] }); onChanged() } catch (e) { toast.error(errorMessage(e)) } finally { setBusyId(null) }
+  }
+  // one click settles Claude's doubt (Dana, Oct 27): the answer's fields are applied, the name follows the rule
+  async function answer(d: AccountingDocument, c: DocumentChoice) {
+    setBusyId(d.id)
+    try {
+      await updateDocument(d.id, {
+        ...(c.whose ? { whose: c.whose as AccountingDocument['whose'] } : {}), ...(c.party ? { party: c.party } : {}),
+        ...(c.category ? { category: c.category as AccountingDocument['category'] } : {}), ...(c.what ? { what: c.what } : {}),
+        status: 'filed', sure: true, question: '', choices: [],
+      })
+      toast.success(c.label)
+      onChanged()
+    } catch (e) { toast.error(errorMessage(e)) } finally { setBusyId(null) }
   }
   async function remove(d: AccountingDocument) {
     if (!window.confirm(`Delete "${d.file_name}" from the Accounting files? The email it came from keeps its attachment.`)) return
@@ -80,6 +99,15 @@ export function DocumentRows({ docs, parties, showFolder = true, onChanged, empt
                     <FileText className="mt-0.5 size-4 shrink-0 text-stone-400" aria-hidden="true" /><span className="break-words">{d.file_name}</span>
                   </button>
                   {d.status === 'review' ? <span className="mt-0.5 block text-xs text-amber-800"><Badge tone="warning" className="mr-1">Needs a look</Badge>{d.claude_note}</span> : d.claude_note ? <span className="mt-0.5 block text-xs text-stone-500">{d.claude_note}</span> : null}
+                  {d.status === 'review' && d.question && choicesOf(d).length ? (
+                    <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                      <span className="text-sm font-medium text-stone-900">{d.question}</span>
+                      {choicesOf(d).map((c) => (
+                        <button key={c.label} type="button" onClick={() => answer(d, c)} disabled={busyId === d.id} title={choiceTitle(c)}
+                          className="rounded-md border border-stone-300 bg-white px-2.5 py-1 text-xs font-medium text-stone-800 hover:border-brand hover:text-brand disabled:opacity-50">{c.label}</button>
+                      ))}
+                    </span>
+                  ) : null}
                   {d.original_name && d.original_name !== d.file_name ? <span className="block text-xs text-stone-400">was {d.original_name}</span> : null}
                 </td>
                 <td className="hidden whitespace-nowrap px-3 py-2 text-stone-600 md:table-cell">{d.doc_date ? new Date(`${d.doc_date}T00:00:00`).toLocaleDateString() : '—'}</td>
@@ -88,7 +116,7 @@ export function DocumentRows({ docs, parties, showFolder = true, onChanged, empt
                 {showFolder ? <td className="hidden px-3 py-2 lg:table-cell"><Link to={`${ROUTES.accountingDocuments}${folderSearch(d)}`} className="text-stone-600 hover:text-brand hover:underline">{folderLabel(d)}</Link></td> : null}
                 <td className="whitespace-nowrap px-3 py-2 text-right">
                   <span className="inline-flex items-center gap-1">
-                    {d.status === 'review' ? <button type="button" onClick={() => looksRight(d)} disabled={busyId === d.id} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50" title="The folder and name are right"><Check className="size-3.5" aria-hidden="true" />Looks right</button> : null}
+                    {d.status === 'review' ? <button type="button" onClick={() => looksRight(d)} disabled={busyId === d.id} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50" title="Keep it exactly as filed: this folder and this name"><Check className="size-3.5" aria-hidden="true" />Keep as filed</button> : null}
                     {thread ? <Link to={`${ROUTES.mail}/${thread}`} className="rounded-md p-1.5 text-stone-500 hover:bg-stone-100 hover:text-stone-900" title="Open the email it came from" aria-label="Open the email it came from"><Mail className="size-4" aria-hidden="true" /></Link> : null}
                     <button type="button" onClick={() => setEditing(d)} className="rounded-md p-1.5 text-stone-500 hover:bg-stone-100 hover:text-stone-900" title="Move or rename" aria-label="Move or rename"><Pencil className="size-4" aria-hidden="true" /></button>
                     <button type="button" onClick={() => remove(d)} disabled={busyId === d.id} className="rounded-md p-1.5 text-stone-400 hover:bg-red-50 hover:text-red-700" title="Delete" aria-label="Delete"><Trash2 className="size-4" aria-hidden="true" /></button>
