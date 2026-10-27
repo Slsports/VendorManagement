@@ -438,6 +438,11 @@ async function readFiles(db: SupabaseClient, c: Conn, started: number): Promise<
         await db.from('dropbox_files').update({ read_at: stamp.read_at, updated_at: stamp.updated_at, status: 'leftover', target: 'skip', sure: false, error: null, note: 'VMS could not open this file (Claude could not read it). Open it yourself: if it matters, save it as a plain PDF and drop it on the vendor\'s Documents.' }).eq('id', f.id)
         out.leftover++; continue
       }
+      // Claude's answer did not fit the form (an answer outside the choices): Dana decides, not an error to retry
+      if (/Failed to parse structured output/i.test(msg)) {
+        await db.from('dropbox_files').update({ read_at: stamp.read_at, updated_at: stamp.updated_at, status: 'leftover', target: 'skip', sure: false, error: null, note: 'VMS could not tell what kind of paper this is. Open it and pick the vendor, rep group or Skip.' }).eq('id', f.id)
+        out.leftover++; continue
+      }
       await db.from('dropbox_files').update({ read_at: stamp.read_at, updated_at: stamp.updated_at, status: 'error', error: msg.slice(0, 300) }).eq('id', f.id)
       out.errors++
     }
