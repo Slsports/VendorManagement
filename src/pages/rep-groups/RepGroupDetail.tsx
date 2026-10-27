@@ -12,6 +12,7 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { BackLink } from '@/components/shared/BackLink'
 import { StickySaveBar } from '@/components/shared/StickySaveBar'
 import { RouteBadges } from '@/components/vendors/RouteBadges'
+import { RepGroupMailSection } from '@/components/repGroups/RepGroupMailSection'
 import { LineCard } from '@/components/lines/LineCard'
 import { RepGroupPeople } from '@/components/rep-groups/RepGroupPeople'
 import { Alert, Badge, Button, FormField, Input, Spinner, Textarea } from '@/components/ui'
@@ -68,6 +69,8 @@ export default function RepGroupDetailPage() {
       )}
 
       <RepGroupPeople repGroupId={g.id} people={g.rep_group_contacts} canEdit={canEdit} onChange={q.refetch} />
+
+      <RepGroupMailSection organizationId={g.organization_id} repGroupId={g.id} />
 
       <section className="mb-6">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Vendors we buy from <span className="font-normal text-stone-400">({g.vendors.length})</span></h2>

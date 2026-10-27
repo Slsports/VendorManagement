@@ -3165,3 +3165,14 @@ Dana kept each freight bill in two Dropbox folders (the carrier's and the vendor
 **Freight** box on the vendor page listing the carrier bills whose shipments came from that vendor (date, carrier,
 invoice number, PO, paid, that vendor's amount), each opening the one bill on the Freight page. The Dropbox read files
 such a bill once and marks the second copy as the same file.
+
+## Oct 27 — Rep mail: one place on the rep group, filed to the vendors it is about (Dana: "build all 3")
+Dana: "emails between us and reps that rep for more than one company have their correspondence filed with the vendor
+that the communication is talking about, along with an area in the rep group that lists all the emails we have received
+from them all in one place." Built: a **Mail** box on the rep group page (every conversation with its people, theirs in
+and ours out, each with "filed to" the vendors Claude read in it, migration 0248 `rep_group_thread_ids`); the 90-day
+limit on reading rep mail for vendor names is lifted (`mail_rep_queue`: all history, newest first, 8 a minute; about
+1,850 older rep emails and 820 of our own to reps queued); our own emails to a rep's people are read the same way, so a
+conversation we start is filed before the rep answers. Also today: Dropbox files open in VMS's own viewer (Dana: "I want
+to view them, not download them"); a paper about a rep is never filed under a vendor (an email to Donna had matched
+Esco Trading through its Dandylines alias).

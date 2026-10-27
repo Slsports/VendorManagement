@@ -656,3 +656,21 @@ export async function deleteDraft(id: string): Promise<void> {
   const { error } = await supabase.from('email_drafts').delete().eq('id', id)
   if (error) throw error
 }
+
+/** Every conversation with a rep group's people (their mail in, ours out to them), newest first, with the vendors each was filed to (Dana, Oct 27). */
+export async function listRepGroupThreads(organizationId: string, repGroupId: string, limit = 200): Promise<(ThreadRow & { tagged_vendor_ids: string[]; tagged: { id: string; name: string }[] })[]> {
+  const { data: ids, error: e1 } = await supabase.rpc('rep_group_thread_ids', { p_org: organizationId, p_rep: repGroupId })
+  if (e1) throw e1
+  const list = (ids ?? []) as string[]
+  if (!list.length) return []
+  const { data, error } = await supabase.from('email_threads').select(`${THREAD_SELECT}, tagged_vendor_ids`).eq('organization_id', organizationId).is('deleted_at', null).in('id', list.slice(0, 1000)).order('last_message_at', { ascending: false }).limit(limit)
+  if (error) throw error
+  const rows = (data ?? []) as unknown as (ThreadRow & { tagged_vendor_ids: string[] })[]
+  const vendorIds = [...new Set(rows.flatMap((r) => [r.vendor_id, ...(r.tagged_vendor_ids ?? [])]).filter((x): x is string => !!x))]
+  const names = new Map<string, string>()
+  if (vendorIds.length) {
+    const { data: vs } = await supabase.from('vendors').select('id, name').in('id', vendorIds)
+    for (const v of vs ?? []) names.set(v.id, v.name)
+  }
+  return rows.map((r) => ({ ...r, tagged: [...new Set([r.vendor_id, ...(r.tagged_vendor_ids ?? [])].filter((x): x is string => !!x))].map((id) => ({ id, name: names.get(id) ?? 'Vendor' })) }))
+}

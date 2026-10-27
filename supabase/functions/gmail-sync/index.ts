@@ -1152,16 +1152,19 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
     }
 
 
-    // Mail from Worldwide, carriers, services and rep groups: every vendor it names gets the email too, and a
-    // quoted freight rate (Worldwide's pallet rate) is kept for check-in. Last 90 days, a few a run.
+    // Mail from Worldwide, carriers and services: every vendor it names gets the email too, and a quoted freight
+    // rate (Worldwide's pallet rate) is kept for check-in. Last 90 days, a few a run.
     const { data: multi } = await db.from('emails')
       .select('id, subject, body_text, sender:email_senders!inner(kind)')
       .eq('organization_id', org).eq('direction', 'in').is('vendors_read_at', null).not('is_bulk', 'is', true)
-      .in('sender.kind', ['platform', 'carrier', 'rep_group'])
+      .in('sender.kind', ['platform', 'carrier'])
       .gte('received_at', new Date(Date.now() - 90 * 86_400_000).toISOString())
       .order('received_at', { ascending: false }).limit(8)
+    // Rep mail (Dana, Oct 27): a rep who reps several companies writes about one or two of them; the conversation is
+    // filed to those vendors. All history, theirs and ours (a conversation we start counts), newest first, a few a run.
+    const { data: repMail } = await db.rpc('mail_rep_queue', { p_org: org, p_limit: 8 })
     let vIndex: Awaited<ReturnType<typeof freightIndex>> | null = null
-    for (const e of multi ?? []) {
+    for (const e of [...(multi ?? []), ...((repMail ?? []) as { id: string; subject: string | null; body_text: string | null }[])]) {
       if (Date.now() - started > TIME_BUDGET_MS) break
       const reading = await readEmailVendors(db, org, e)
       vIndex ??= await freightIndex(db, org)
@@ -1247,7 +1250,7 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
         continue
       }
       const { data: sent } = await db.rpc('mail_sent_to_count', { p_org: org, p_key: s.sender_key, p_is_domain: s.is_domain })
-      const proposed = (s.proposed_vendor as { name: string } | null)?.name
+      const proposed = (s.proposed_vendor as unknown as { name: string } | null)?.name
       toSort.push({
         id: s.id, sender: s.is_domain ? `@${s.sender_key}` : s.sender_key, from_name: s.display_name, emails_from_them: s.message_count, emails_we_sent_them: (sent as number | null) ?? 0,
         hint: proposed ? `Looks like ${proposed}: ${s.proposal_note ?? ''}` : null, earlier_note: s.ai_note,

@@ -1056,6 +1056,8 @@ export type Database = {
       item_changes_from_report: { Args: { p_org: string; p_items: Json }; Returns: { ls_item_id: string; change_id: string; review_item_id: string | null; decision: ItemChangeDecision | null; decided_at: string | null; task_id: string | null; replacement_vendor_item_id: string | null }[] }
       item_changes_set_run: { Args: { p_ids: string[]; p_run: string }; Returns: undefined }
       billcom_waiting: { Args: { p_org: string }; Returns: { email_id: string; thread_id: string | null; vendor_name: string | null; file_name: string | null; doc_number: string | null; doc_total: number | null; sent_at: string }[] }
+      rep_group_thread_ids: { Args: { p_org: string; p_rep: string }; Returns: string[] }
+      mail_rep_queue: { Args: { p_org: string; p_limit?: number }; Returns: { id: string; subject: string | null; body_text: string | null; direction: string; received_at: string }[] }
       dropbox_folder_summary: { Args: { p_org: string }; Returns: { folder: string; total: number; new_count: number; proposed: number; leftover: number; approved: number; filed: number; linked: number; skipped: number; errors: number; sure_proposed: number }[] }
       dropbox_approve: { Args: { p_org: string; p_top?: string | null; p_ids?: string[] | null; p_sure_only?: boolean }; Returns: number }
       dropbox_top_summary: { Args: { p_org: string }; Returns: { folder: string; total: number; new_count: number; proposed: number; leftover: number; approved: number; filed: number; linked: number; skipped: number; errors: number; sure_proposed: number; folder_skipped: number }[] }
