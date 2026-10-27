@@ -600,6 +600,8 @@ async function syncOrg(db: SupabaseClient, c: Conn) {
   if (!lock?.length) return { ...r, skipped: 'another run is going' }
   // inbox mode re-lists on every run (the cursor carries on from last time); history mode lists until it is done
   if (c.mode === 'inbox' || !c.scan_done) r.scan = await scan(db, c, started)
+  // what Dana approved is filed before more is read: reading uses the whole time budget, and approvals sat unfiled (Oct 27)
+  r.apply = await applyApproved(db, c, started)
   if (c.mode === 'inbox' || c.reading) r.read = await readFiles(db, c, started)
   if (c.mode === 'inbox') {
     // new scans: what Claude is sure about is filed on its own; the rest asks Dana with a task that opens this page
@@ -610,6 +612,6 @@ async function syncOrg(db: SupabaseClient, c: Conn) {
       await db.from('dropbox_files').update({ decided_at: new Date().toISOString() }).eq('id', f.id)
     }
   }
-  r.apply = await applyApproved(db, c, started)
+  r.apply_after = await applyApproved(db, c, started)
   return r
 }
