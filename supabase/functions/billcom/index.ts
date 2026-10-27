@@ -12,6 +12,7 @@
 // sessionId headers (Bill.com's v3 API). With a sync token the token name is the username and the token is the password.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, caller, errorResponse, HttpError, json, serviceClient } from '../_shared/caller.ts'
+import { readBillcomPaper, type BillcomPaper } from '../_shared/billcomPapers.ts'
 
 interface Conn {
   organization_id: string; base_url: string; dev_key: string | null; org_bill_id: string | null; username: string | null; password: string | null
@@ -191,13 +192,30 @@ async function syncOrg(db: SupabaseClient, c: Conn) {
     }
     // bills in the window that Bill.com no longer lists are gone (deleted or archived out of the list)
     await db.from('billcom_bills').update({ gone_at: now }).eq('organization_id', org).is('gone_at', null).lt('synced_at', started).gte('due_date', cutoff)
+    const papers = await readPapers(db, org)
     const { data: tasks } = await db.rpc('billcom_bill_tasks', { p_org: org })
     await db.from('billcom_connections').update({ last_sync_at: now, last_error: null, bills_seen: rowsOut.length }).eq('organization_id', org)
-    return { organization_id: org, bills: rowsOut.length, tasks: tasks ?? 0 }
+    return { organization_id: org, bills: rowsOut.length, papers_read: papers, tasks: tasks ?? 0 }
   } catch (e) {
     await db.from('billcom_connections').update({ last_error: (e instanceof Error ? e.message : String(e)).slice(0, 500) }).eq('organization_id', org)
     throw e
   }
+}
+
+/**
+ * Invoices and credits of vendors checked against Bill.com (Dana, Oct 27, Emery Jensen): Claude reads each one's number,
+ * PO, total and how it is billed at the top (Stihl or EJD). A few each run; billcom_bill_tasks then matches them.
+ */
+async function readPapers(db: SupabaseClient, org: string): Promise<number> {
+  const { data } = await db.rpc('billcom_papers_queue', { p_org: org, p_limit: 12 })
+  let n = 0
+  for (const p of (data ?? []) as BillcomPaper[]) {
+    const r = await readBillcomPaper(db, org, p).catch(() => null)
+    const { error } = await db.rpc('billcom_paper_read', { p_link: p.id, p_number: r?.doc_number ?? null, p_po: r?.po_number ?? null, p_total: r?.total ?? null, p_billed_as: r?.billed_as ?? null })
+    if (error) throw new Error(error.message)
+    n++
+  }
+  return n
 }
 
 async function status(db: SupabaseClient, org: string) {
