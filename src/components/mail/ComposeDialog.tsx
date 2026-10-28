@@ -9,6 +9,7 @@ import { listVendorLinks } from '@/services/lines'
 import { errorMessage } from '@/lib/utils'
 import { fillSignature, LOGO_URL } from '@/lib/signature'
 import { Button, FormField, Input, Textarea } from '@/components/ui'
+import { VendorFilePicker } from './VendorFilePicker'
 
 export interface ComposeDraft {
   to: string[]
@@ -19,6 +20,8 @@ export interface ComposeDraft {
   reply_to_email_id?: string | null
   forward_email_id?: string | null
   vendor_id?: string | null
+  /** The order it is about: that order's files come first in Attach from the vendor's files (Dana, Oct 28). */
+  order_id?: string | null
   /** A new email from my own mailbox instead of orders@ (Dana, Oct 11). Replies always go from their conversation's mailbox. */
   mailbox_id?: string | null
   /** Shown as a note above the form, e.g. "Forwarding with 2 attachments". */
@@ -156,7 +159,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
       const id = await saveDraft(organization.id, profile.id, {
         id: draftId, to: splitAddresses(to), cc: splitAddresses(cc), subject, body,
         thread_id: draft.thread_id ?? null, reply_to_email_id: draft.reply_to_email_id ?? null, forward_email_id: draft.forward_email_id ?? null,
-        vendor_id: draft.vendor_id ?? null, mailbox_id: draft.thread_id ? null : fromBox || null, signature,
+        vendor_id: draft.vendor_id ?? null, mailbox_id: draft.thread_id ? null : fromBox || null, signature, vendor_link_ids: linkIds,
       })
       setDraftId(id)
       toast.success(files.length ? 'Saved in Drafts (attach the files again when you send)' : 'Saved in Drafts')
@@ -237,21 +240,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
                 ))}
               </ul>
             ) : null}
-            {(links.data ?? []).length ? (
-              <details className="mt-2">
-                <summary className="cursor-pointer text-xs font-medium text-stone-600">Attach from the vendor's files ({links.data!.length})</summary>
-                <ul className="mt-1 space-y-1">
-                  {links.data!.map((l) => (
-                    <li key={l.id}>
-                      <label className="flex items-center gap-2 text-sm text-stone-700">
-                        <input type="checkbox" checked={linkIds.includes(l.id)} onChange={(e) => setLinkIds((ids) => (e.target.checked ? [...ids, l.id] : ids.filter((x) => x !== l.id)))} className="size-4 rounded border-stone-300" />
-                        {l.label}{l.file_name && l.file_name !== l.label ? <span className="text-xs text-stone-400">{l.file_name}</span> : null}
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            ) : null}
+            <VendorFilePicker links={links.data ?? []} selected={linkIds} onChange={setLinkIds} orderId={draft.order_id} threadId={draft.thread_id} />
           </div>
         </div>
         <div className="flex items-center justify-between gap-2 border-t border-stone-200 px-4 py-3">

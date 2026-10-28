@@ -619,7 +619,7 @@ export interface DraftRow {
   id: string; owner_id: string; created_by: string | null; to_emails: string[]; cc_emails: string[]; subject: string; body: string
   thread_id: string | null; reply_to_email_id: string | null; forward_email_id: string | null; vendor_id: string | null; mailbox_id: string | null
   note: string | null; gmail_draft_id: string | null; signature: string | null; routing_send_id: string | null; confirmation_id: string | null; updated_at: string
-  order_id: string | null; attach_routing_letter: boolean
+  order_id: string | null; attach_routing_letter: boolean; vendor_link_ids: string[]
   vendor: { id: string; name: string } | null; owner: { full_name: string } | null
 }
 
@@ -640,8 +640,8 @@ export async function listDrafts(organizationId: string, ownerId: string | null)
 }
 
 /** Save (or update) a draft from the compose window. Returns its id. */
-export async function saveDraft(organizationId: string, ownerId: string, d: { id?: string | null; to: string[]; cc: string[]; subject: string; body: string; thread_id?: string | null; reply_to_email_id?: string | null; forward_email_id?: string | null; vendor_id?: string | null; mailbox_id?: string | null; signature?: string | null }): Promise<string> {
-  const row = { organization_id: organizationId, owner_id: ownerId, to_emails: d.to, cc_emails: d.cc, subject: d.subject, body: d.body, signature: d.signature ?? null, thread_id: d.thread_id ?? null, reply_to_email_id: d.reply_to_email_id ?? null, forward_email_id: d.forward_email_id ?? null, vendor_id: d.vendor_id ?? null, mailbox_id: d.mailbox_id ?? null }
+export async function saveDraft(organizationId: string, ownerId: string, d: { id?: string | null; to: string[]; cc: string[]; subject: string; body: string; thread_id?: string | null; reply_to_email_id?: string | null; forward_email_id?: string | null; vendor_id?: string | null; mailbox_id?: string | null; signature?: string | null; vendor_link_ids?: string[] }): Promise<string> {
+  const row = { organization_id: organizationId, owner_id: ownerId, to_emails: d.to, cc_emails: d.cc, subject: d.subject, body: d.body, signature: d.signature ?? null, thread_id: d.thread_id ?? null, reply_to_email_id: d.reply_to_email_id ?? null, forward_email_id: d.forward_email_id ?? null, vendor_id: d.vendor_id ?? null, mailbox_id: d.mailbox_id ?? null, ...(d.vendor_link_ids ? { vendor_link_ids: d.vendor_link_ids } : {}) }
   if (d.id) {
     const { error } = await supabase.from('email_drafts').update(row).eq('id', d.id)
     if (error) throw error

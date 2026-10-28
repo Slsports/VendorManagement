@@ -14,6 +14,7 @@ Answer a vendor right from the conversation. The reply goes out from orders@ und
 
 ## Good to know
 - **Reply all** only shows when the email went to more than one person.
+- Drafts VMS writes for you in a conversation always go to everyone on the vendor's email (reply all), except our own addresses.
 - A forward sends the original attachments along; a note at the top says how many.
 - After a reply, VMS takes you back to the list you came from. After a forward you stay on the conversation.
 - Replies always go from the conversation's own mailbox: orders@, or your own mailbox for your private mail.
