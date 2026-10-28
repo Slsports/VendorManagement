@@ -59,6 +59,7 @@ describe('Go to it', () => {
     expect(taskTarget({ ...base, auto_key: 'billcom_enter:l3', vendor_id: 'v1' })).toEqual({ kind: 'page', to: '/vendors/v1?folder=invoices&doc=l3', label: 'Open the invoice' })
     expect(taskTarget({ ...base, auto_key: 'edenred:e9', thread_id: 't1' })).toEqual({ kind: 'page', to: '/mail/t1?email=e9', label: "Open the file's email" })
     expect(taskTarget({ ...base, draft_id: 'd1', order_id: 'o1' })).toEqual({ kind: 'page', to: '/mail?view=drafts&draft=d1', label: 'Open the email to send' })
+    expect(taskTarget({ ...base, auto_key: 'shipupd:e5', thread_id: 't2', order_id: 'o1' })).toEqual({ kind: 'page', to: '/mail/t2?email=e5', label: 'Open their email' })
     expect(taskTarget({ ...base, auto_key: 'promise:e1', thread_id: 't1' })?.kind === 'page' && taskTarget({ ...base, auto_key: 'promise:e1', thread_id: 't1' })).toMatchObject({ to: '/mail/t1?do=reply' })
     expect(taskTarget({ ...base, auto_key: 'reply:w1', thread_id: 't2' })).toMatchObject({ kind: 'page', to: '/mail/t2', label: 'Open their reply' })
     expect(taskTarget({ ...base, auto_key: 'wwd:w1:30' })).toEqual({ kind: 'pay', label: 'Pay it', bill: 'wwd', id: 'w1' })

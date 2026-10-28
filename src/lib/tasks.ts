@@ -129,6 +129,8 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   // a credit we asked for (Dana, Oct 27): the follow-up email once it is drafted, else the conversation
   if (kind === 'credit_req' && t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the follow-up email' }
   if (kind === 'credit_req' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open the conversation' }
+  // a vendor's backorder or delay update (Dana, Oct 28): their email, open
+  if (kind === 'shipupd' && t.thread_id && id) return { kind: 'page', to: `/mail/${t.thread_id}?email=${id}`, label: 'Open their email' }
   // an Edenred file VMS couldn't place (Dana, Oct 28: the button "takes me nowhere"): the one email with the file, opened
   if (kind === 'edenred' && t.thread_id && id) return { kind: 'page', to: `/mail/${t.thread_id}?email=${id}`, label: 'Open the file\'s email' }
   // Tell me when they reply (Dana, Oct 19): straight to their reply
