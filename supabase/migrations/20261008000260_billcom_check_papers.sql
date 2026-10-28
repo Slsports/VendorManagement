@@ -7,7 +7,7 @@
 --   • vendors.billcom_check: its invoices are checked against Bill.com (EJ). vendors.billcom_pay_where: where it is paid
 --     ("the EJD portal"); its pay-by tasks say to pay there, then mark it paid offline in Bill.com.
 --   • Claude reads each such invoice and credit (the billcom function, every 15 minutes): its number, PO, total and the
---     billing heading at the top (vendor_links.billed_as: "Stihl" or "EJD"). Only blanks are filled.
+--     "Vendor:" box (vendor_links.billed_as: "Stihl" or "EJD"; 0261). Only blanks are filled.
 --   • Matched to its Bill.com bill by invoice number (digits only), else PO + amount: vendor_links.billcom_bill_id
 --     (In Bill.com); Paid once Bill.com shows it paid. Both tags show only to people with the Accounting tick.
 --   • An invoice not in Bill.com 3 days after it came in: an Accounting task for Dana "Enter … in Bill.com" that opens it;

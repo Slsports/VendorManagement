@@ -12,7 +12,7 @@ For a vendor you pay on their own website and then mark paid offline in Bill.com
 3. In **Paid on, when not paid in Bill.com**, type where you pay them (for Emery Jensen: the EJD portal). Click **Save**.
 
 ## What VMS does
-- VMS reads each invoice and credit it files for the vendor: the invoice number, the PO, the total, and how it is billed at the top of the paper (**Stihl** or **EJD** for Emery Jensen). That shows as a tag on the paper.
+- VMS reads each invoice and credit it files for the vendor: the invoice number, the PO, the total, and the company in the paper's **Vendor:** box. On an Emery Jensen dropship invoice that box says who it is billed for. Only Stihl is split out ("Vendor: PACIFIC STIHL" shows as **Stihl**); any other Vendor box, like Midwest Fasteners, or no Vendor box shows as **EJD**. Emery Jensen's name at the top of the paper is never used for this, because it is on every paper.
 - Each invoice is matched to its Bill.com bill by invoice number (or by PO and amount). It shows **In Bill.com**, then **Paid** once Bill.com shows it paid. Only people with the Accounting tick see these two tags.
 - An invoice that is not in Bill.com 3 days after it came in gives you an Accounting task **Enter … invoice … in Bill.com**. **Go to it** opens the invoice. The task closes itself once the bill is in Bill.com.
 - The pay-by task says **Pay … on the EJD portal, then mark it paid offline in Bill.com**. A Stihl bill's task lists the Stihl credits on file, and an EJD bill's task lists only EJD credits, so the two are never mixed.

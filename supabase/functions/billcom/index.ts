@@ -206,12 +206,22 @@ async function syncOrg(db: SupabaseClient, c: Conn) {
  * Invoices and credits of vendors checked against Bill.com (Dana, Oct 27, Emery Jensen): Claude reads each one's number,
  * PO, total and how it is billed at the top (Stihl or EJD). A few each run; billcom_bill_tasks then matches them.
  */
+/**
+ * Emery Jensen (Dana, Oct 28): only Stihl is split out ("Vendor:" box says Stihl); every other Vendor box (Midwest
+ * Fasteners) and a paper with no Vendor box stay EJD: "I don't split them out, I let them fly as Emery Jensen."
+ */
+function billedAs(vendor: string, vendorBox: string | null, read: boolean): string | null {
+  if (!read) return null
+  if (/^emery jensen/i.test(vendor)) return vendorBox && /stihl/i.test(vendorBox) ? 'Stihl' : 'EJD'
+  return vendorBox
+}
+
 async function readPapers(db: SupabaseClient, org: string): Promise<number> {
   const { data } = await db.rpc('billcom_papers_queue', { p_org: org, p_limit: 12 })
   let n = 0
   for (const p of (data ?? []) as BillcomPaper[]) {
     const r = await readBillcomPaper(db, org, p).catch(() => null)
-    const { error } = await db.rpc('billcom_paper_read', { p_link: p.id, p_number: r?.doc_number ?? null, p_po: r?.po_number ?? null, p_total: r?.total ?? null, p_billed_as: r?.billed_as ?? null })
+    const { error } = await db.rpc('billcom_paper_read', { p_link: p.id, p_number: r?.doc_number ?? null, p_po: r?.po_number ?? null, p_total: r?.total ?? null, p_billed_as: billedAs(p.vendor_name, r?.billed_as ?? null, !!r) })
     if (error) throw new Error(error.message)
     n++
   }
