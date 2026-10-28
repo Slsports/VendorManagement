@@ -224,7 +224,8 @@ export default function ThreadPage() {
       <ol className="space-y-3">
         {/* Newest first and open; older ones closed to one line (Dana, Oct 8). */}
         {[...emails].reverse().map((e, i) => (
-          <Message key={e.id} email={e} startOpen={i === 0 || e.id === focusEmail} focus={e.id === focusEmail} vendor={t.vendor} carrierId={t.carrier_id ?? null} accounting={box?.kind === 'accounting'}
+          // a link to this email (a task's Go to it) opens it, also when the page is already showing (Dana, Oct 28)
+          <Message key={e.id === focusEmail ? `${e.id}:open` : e.id} email={e} startOpen={i === 0 || e.id === focusEmail} focus={e.id === focusEmail} vendor={t.vendor} carrierId={t.carrier_id ?? null} accounting={box?.kind === 'accounting'}
             onCompose={canEdit && mayAnswer && mailbox.data ? (kind) => setDraft(kind === 'forward' ? forwardDraft(t, e, e.attachments.length) : replyDraft(t, e, mailbox.data!, kind === 'all')) : undefined}
             onEmailAddress={canEdit ? (address) => setDraft({ to: [address], subject: '', body: '', vendor_id: t.vendor?.id ?? null }) : undefined} />
         ))}
