@@ -149,6 +149,8 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   if (kind === 'billcom_enter' && t.vendor_id) return { kind: 'page', to: `/vendors/${t.vendor_id}?folder=invoices${id ? `&doc=${id}` : ''}`, label: 'Open the invoice' }
   if (kind === 'supply') return { kind: 'page', to: t.thread_id ? `/mail/${t.thread_id}` : '/supplies', label: t.thread_id ? 'Open the request' : 'Open Supplies' }
   if ((kind === 'wwd' || kind === 'order' || kind === 'billcom') && id) return { kind: 'pay', label: 'Pay it', bill: kind, id }
+  // any other task with an email written for it (Dana, Oct 28: "remind me to email World Famous"): that email, ready to send
+  if (t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the email to send' }
   // tasks people make: whatever they are tagged to
   if (t.order_id) return { kind: 'page', to: `/orders/${t.order_id}`, label: 'Open the order' }
   if (t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open the email' }
