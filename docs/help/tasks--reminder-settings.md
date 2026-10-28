@@ -21,3 +21,4 @@ Each person picks how they get task reminders: on the dashboard, by email, by te
 - Texts start working once the texting service is set up; until then the Tasks page shows "not all sent" under the reminder time.
 - The public page vms.shaverlakesports.com/sms/ explains the text opt-in (needed by the texting service).
 - **By text** starts unticked for everyone; nobody gets texts until they tick it themselves and enter their own number.
+- Every morning from 8 AM you also get one message listing the orders@ emails waiting on you (the same ones as **Mail for you**), with a link to each. It comes by email, text or both, the same way as your reminders. No message on a morning with nothing waiting.

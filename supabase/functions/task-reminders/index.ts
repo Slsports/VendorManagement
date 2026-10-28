@@ -6,6 +6,7 @@
 //   done:      tasks someone finished that another person gave them, to the giver
 // Texts go only in the person's texting hours (Dana, Oct 24: 8 am to 6 pm unless they set their own): outside them the
 // email goes now and the text waits (text_wait_until), and is dropped if the task is done by then.
+//   mornings:  one message a morning listing the orders@ mail waiting on each person (Dana, Oct 28), sent their way
 //   drafts:    emails Claude prepared (Mail › Drafts) that also go in the mailbox's Gmail Drafts (gmail_copy), Dana Oct 12
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, errorResponse, json, serviceClient } from '../_shared/caller.ts'
@@ -77,14 +78,63 @@ Deno.serve(async (req) => {
       const who = (await sender.person(t.done_by ?? t.assigned_to))?.full_name?.split(' ')[0] ?? 'Someone'
       await sender.text(t.created_by, doneSms(t, who))
     }
+    const mornings = await mailMornings(db, sender)
     const drafts = await copyDrafts(db)
     const routing = await routingReminders(db)
     const confirmations = await confirmReminders(db)
-    return json({ reminded: reminded.length, done: finished.length, drafts, routing, confirmations })
+    return json({ reminded: reminded.length, done: finished.length, mornings, drafts, routing, confirmations })
   } catch (e) {
     return errorResponse(e)
   }
 })
+
+/**
+ * The morning mail email (Dana, Oct 28: "One email each morning"): from 8 AM Pacific, once a day, everyone with orders@
+ * mail waiting on them gets the list, one click to each conversation, by email and/or text as they take reminders.
+ */
+async function mailMornings(db: SupabaseClient, sender: Sender): Promise<number> {
+  const { data: due, error } = await db.rpc('mail_morning_due')
+  if (error) throw new Error(error.message)
+  let sent = 0
+  for (const d of (due ?? []) as { profile_id: string; organization_id: string; waiting: number }[]) {
+    if (!d.waiting) continue
+    const { data: rows } = await db.rpc('mail_morning_list', { p_person: d.profile_id })
+    const list = (rows ?? []) as MorningRow[]
+    if (!list.length) continue
+    const first = (await sender.person(d.profile_id))?.full_name?.split(' ')[0] ?? ''
+    const n = list.length
+    const subject = `${n} orders@ ${n === 1 ? 'email is' : 'emails are'} waiting on you`
+    const { errors } = await sender.notify(d.organization_id, d.profile_id, subject, morningText(first, list), `VMS: ${subject}. Open Mail: ${APP_URL}/mail?who=mine`)
+    if (errors.length) console.error('mail morning', d.profile_id, errors.join('; '))
+    else sent++
+  }
+  return sent
+}
+
+interface MorningRow { thread_id: string; kind: 'needs' | 'no_answer'; vendor_name: string | null; subject: string | null; since: string | null }
+
+const daysAgo = (iso: string | null) => {
+  if (!iso) return null
+  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
+  return d <= 0 ? 'today' : d === 1 ? '1 day' : `${d} days`
+}
+
+function morningText(first: string, list: MorningRow[]): string {
+  const line = (r: MorningRow, what: string) => {
+    const wait = daysAgo(r.since)
+    return `- ${r.vendor_name ?? 'No vendor'}: ${r.subject || '(no subject)'}${wait ? ` (${what} ${wait === 'today' ? 'today' : `${wait} ago`})` : ''}\n  ${APP_URL}/mail/${r.thread_id}`
+  }
+  const needs = list.filter((r) => r.kind === 'needs')
+  const none = list.filter((r) => r.kind === 'no_answer')
+  return [
+    `Good morning${first ? ` ${first}` : ''},`,
+    '',
+    `These orders@ emails are waiting on you. Click one to open it in VMS.`,
+    needs.length ? `\nNeeds an answer (${needs.length}):\n${needs.slice(0, 60).map((r) => line(r, 'came in')).join('\n')}${needs.length > 60 ? `\n…and ${needs.length - 60} more` : ''}` : null,
+    none.length ? `\nNo answer yet from the vendor (${none.length}):\n${none.slice(0, 60).map((r) => line(r, 'we wrote')).join('\n')}${none.length > 60 ? `\n…and ${none.length - 60} more` : ''}` : null,
+    `\nAll of your mail: ${APP_URL}/mail?who=mine`,
+  ].filter((x) => x !== null).join('\n')
+}
 
 async function claim(db: SupabaseClient, ids: string[], column: 'reminded_at' | 'done_notified_at'): Promise<TaskRow[]> {
   if (!ids.length) return []

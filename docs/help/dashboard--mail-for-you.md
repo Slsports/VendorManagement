@@ -17,3 +17,4 @@ who: Everyone
 - The follow-up wait (5 days to start with) is set by Dana in Settings > Mail.
 - If you are ticked to see freight, freight mail is included too.
 - The same number shows next to **Mail** in the side menu.
+- Each morning from 8 AM, VMS sends you this list too, by email or text the way you get reminders (see **How I get reminders**). Click a line in the email to open that conversation.
