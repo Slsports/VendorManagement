@@ -11,9 +11,9 @@ values ('00000000-0000-0000-0000-000000000001', :'t', 'dl263-1', 'in', 'maria@dl
 update public.emails set ship_status = 'exception', reply_note = 'Vendor reports backorders' where id = :'e';
 select assigned_to = '33333333-3333-3333-3333-333333333333' and title like 'DL263 SPORTS: backorders or shipping delays%' and notes like 'Vendor reports backorders%' and remind_at is not null
   as task_for_placer from public.tasks where auto_key = 'shipupd:' || :'e';
--- old mail: nothing
+-- mail older than 30 days: nothing
 insert into public.emails (organization_id, thread_id, gmail_id, direction, from_email, subject, received_at, vendor_id)
-values ('00000000-0000-0000-0000-000000000001', :'t', 'dl263-2', 'in', 'maria@dl263.example.com', 'SO 0', now() - interval '10 days', :'v') returning id as e2 \gset
+values ('00000000-0000-0000-0000-000000000001', :'t', 'dl263-2', 'in', 'maria@dl263.example.com', 'SO 0', now() - interval '40 days', :'v') returning id as e2 \gset
 update public.emails set ship_status = 'exception' where id = :'e2';
 select count(*) = 0 as old_mail_no_task from public.tasks where auto_key = 'shipupd:' || :'e2';
 delete from public.tasks where auto_key in ('shipupd:' || :'e', 'shipupd:' || :'e2');
