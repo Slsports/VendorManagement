@@ -4,14 +4,8 @@ section: Freight
 keywords: freight quote, ask, request, Planet Cotton, before it ships, compare, our carriers, approve, invoice freight
 who: Admin, managers and buyers
 ---
-For vendors with good shipping rates, like Planet Cotton, we still want their freight quote before they ship, so we can see whether our carriers beat it.
-
-## How it works
-1. On the vendor's **Edit** page, tick **Ask for their freight quote once we approve the order**.
-2. Once you approve the order (the proof, or the confirmation when there is no proof), VMS writes the email asking for their quote and gives you a task: **Send the freight quote request: [vendor], PO [number]**.
-3. Click **Go to it**: the email opens. Check it and click **Send**. Sending it finishes the task.
-4. Their answer comes in as a freight quote (see "Approve a freight quote"): their price next to Priority One or WWEX/UPS. Approve the cheaper one.
-5. When their invoice comes, Claude checks its freight against the quote we approved and lists any difference.
+Since Oct 30 this happens for every confirmed order, not just ticked vendors: the moment an order is confirmed, VMS emails the vendor the shipment details form with the freight quote on it. See \"Shipment details and the freight quote from the vendor\" under Freight.
 
 ## Good to know
-- It's asked once per order. Orders that ship free, and orders that already have a quote, are skipped.
+- The vendor's **Ask for their freight quote** tick is no longer needed; it is kept for history.
+- Vendors who pay the full freight, including backorders, just reply to say so and skip the form.

@@ -4,6 +4,7 @@ import { Receipt } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { freightForDashboard, listCarriers } from '@/services/freight'
+import { countWaitingShipmentRequests } from '@/services/shipmentRequests'
 import { ROUTES } from '@/lib/constants'
 import { FREIGHT_STATUS, money, shortDate } from '@/lib/freight'
 import { Badge } from '@/components/ui'
@@ -16,12 +17,15 @@ export function FreightForYouPanel() {
   const shown = !!profile && (profile.sees_freight || (carriers.data ?? []).some((c) => c.owner_id === profile.id))
   const [today] = useState(() => new Date().toISOString().slice(0, 10))
   const q = useSupabaseQuery(async () => (organization && shown ? freightForDashboard(organization.id) : { toMatch: [], toPay: [] }), [organization?.id, shown])
+  // shipment details waiting on vendors (Dana, Oct 30)
+  const ship = useSupabaseQuery(async () => (organization && shown ? countWaitingShipmentRequests(organization.id) : { waiting: 0, overdue: 0 }), [organization?.id, shown])
   if (!shown) return null
   const toMatch = q.data?.toMatch ?? []
   const toPay = q.data?.toPay ?? []
   return (
-    <CountCard id="freight" title="Freight bills" count={toMatch.length + toPay.length} loading={q.isLoading} error={q.error} alert={toPay.some((b) => !!b.due_date && b.due_date < today)}>
+    <CountCard id="freight" title="Freight bills" count={toMatch.length + toPay.length} loading={q.isLoading} error={q.error} alert={toPay.some((b) => !!b.due_date && b.due_date < today) || !!ship.data?.overdue}>
       <Link to={ROUTES.freight} className="text-sm font-medium text-brand hover:underline">Open Freight</Link>
+      {ship.data?.waiting ? <p className="mt-2 text-sm"><Link to={ROUTES.freightShipments} className={ship.data.overdue ? 'font-medium text-red-700 hover:underline' : 'text-stone-800 hover:text-brand'}>Shipment details: {ship.data.waiting} waiting on vendors{ship.data.overdue ? `, ${ship.data.overdue} past 3 business days` : ''}</Link></p> : null}
       {(
         <div className="mt-3 grid gap-6 md:grid-cols-2">
           <div>

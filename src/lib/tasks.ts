@@ -126,6 +126,10 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   if (t.recipient_id) return { kind: 'page', to: `/accounting/insurance/who/${t.recipient_id}`, label: 'Open the recipient' }
   if (t.procedure_id) return { kind: 'page', to: `/accounting/procedures/${t.procedure_id}`, label: 'Open the procedure' }
   if (kind === 'create_po' && id) return t.order_id ? { kind: 'page', to: `/orders/${t.order_id}?do=create-po`, label: 'Open the order' } : { kind: 'page', to: `/orders/paperwork/${id}`, label: 'Pick the order' }
+  // the shipment details email (Dana, Oct 30): the follow-up draft once there is one, else the conversation; a dispute opens the reply
+  if (kind === 'shipreq' && t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the follow-up email' }
+  if ((kind === 'shipreq' || kind === 'shipdispute' || kind === 'shipdispute_cc') && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: kind === 'shipreq' ? 'Open the conversation' : 'Open their reply' }
+  if (kind === 'shipreq_noemail' && t.vendor_id) return { kind: 'page', to: `/vendors/${t.vendor_id}`, label: 'Open the vendor to add an email' }
   // a credit we asked for (Dana, Oct 27): the follow-up email once it is drafted, else the conversation
   if (kind === 'credit_req' && t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the follow-up email' }
   if (kind === 'credit_req' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open the conversation' }

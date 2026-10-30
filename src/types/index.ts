@@ -53,6 +53,7 @@ export type ItemNameChange = Tables<'item_name_changes'>
 export type ShowAppearance = Tables<'show_appearances'>
 export type VendorLink = Tables<'vendor_links'>
 export type CreditRequest = Tables<'credit_requests'>
+export type ShipmentRequest = Tables<'shipment_requests'>
 export type VendorLinkKind = VendorLink['kind']
 export type Order = Tables<'orders'>
 export type PoAsk = Tables<'po_asks'>

@@ -29,6 +29,7 @@ import { VendorOrdersSection } from '@/components/vendors/VendorOrdersSection'
 import { VendorMailSection } from '@/components/vendors/VendorMailSection'
 import { VendorPaymentsSection } from '@/components/vendors/VendorPaymentsSection'
 import { VendorFreightSection } from '@/components/vendors/VendorFreightSection'
+import { VendorShipmentSection } from '@/components/vendors/VendorShipmentSection'
 import { WwdInvoiceList } from '@/components/payments/WwdInvoiceList'
 import { ComposeDialog, type ComposeDraft } from '@/components/mail/ComposeDialog'
 import { VendorScorecard } from '@/components/scores/VendorScorecard'
@@ -281,6 +282,7 @@ export default function VendorDetailPage() {
         <VendorItemRulesSection organizationId={v.organization_id} vendorId={v.id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorOrdersSection vendorId={v.id} vendorName={v.name} canAdd={canEdit} />
         <VendorPaymentsSection vendorId={v.id} />
+        <VendorShipmentSection vendorId={v.id} />
         <VendorFreightSection vendorId={v.id} />
         <WwdInvoiceList fold vendorId={v.id} />
 

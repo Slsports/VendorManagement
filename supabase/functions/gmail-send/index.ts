@@ -10,7 +10,7 @@ import { fillSignature, htmlEmail, textEmail } from '../_shared/signature.ts'
 import { aiEnabled, readVendorBusiness } from '../_shared/ai.ts'
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { parseMessage, type GmailMessage } from '../_shared/mailParse.ts'
-import { CORS, caller, errorResponse, HttpError, json, serviceClient } from '../_shared/caller.ts'
+import { type Caller, CORS, caller, errorResponse, HttpError, json, serviceClient } from '../_shared/caller.ts'
 
 interface SendRequest {
   thread_id?: string | null          // VMS thread to reply in
@@ -31,6 +31,8 @@ interface SendRequest {
   attach_routing_letter?: boolean    // attach the current routing letter to any email
   confirmation_id?: string | null    // a "please confirm your contact info" email (Oct 13): stamped as sent
   availability_ask_id?: string | null // "can we still order these?" to a rep (Oct 21): the reply is read by Claude
+  as_profile?: string | null         // the scheduler only (x-cron-secret): send as this person (the shipment details email goes as Trevor, Dana Oct 30)
+  shipment_request_id?: string | null // the shipment details email (Dana, Oct 30): stamped sent, the follow-up clock starts
 }
 
 const EMAIL = /^[^@\s,;<>]+@[^@\s,;<>]+\.[^@\s,;<>]+$/
@@ -39,8 +41,11 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
   const db = serviceClient()
   try {
-    const me = await caller(req, db, true)
     const r = (await req.json()) as SendRequest
+    // VMS sending on its own (the shipment details email, Dana Oct 30): the scheduler's secret names the person it goes as
+    const cronSecret = Deno.env.get('MAIL_CRON_SECRET')
+    const trusted = !!cronSecret && req.headers.get('x-cron-secret') === cronSecret
+    const me = trusted && r.as_profile ? await personAs(db, r.as_profile) : await caller(req, db, true)
     const to = (r.to ?? []).map((a) => a.trim().toLowerCase()).filter(Boolean)
     const cc = (r.cc ?? []).map((a) => a.trim().toLowerCase()).filter(Boolean)
     if (!to.length) throw new HttpError(400, 'Who is it to?')
@@ -171,6 +176,10 @@ Deno.serve(async (req) => {
       const { data: vc } = await db.from('vendor_confirmations').select('id, organization_id').eq('id', r.confirmation_id).maybeSingle()
       if (vc?.organization_id === me.organization_id) await db.rpc('vendor_confirm_mark_sent', { p_id: vc.id, p_email: email.id, p_by: me.id })
     }
+    if (r.shipment_request_id) {
+      const { data: sr } = await db.from('shipment_requests').select('id, organization_id').eq('id', r.shipment_request_id).maybeSingle()
+      if (sr?.organization_id === me.organization_id) await db.rpc('shipment_request_sent', { p_req: sr.id, p_email: email.id })
+    }
     if (r.availability_ask_id) {
       const { data: ask } = await db.from('availability_asks').select('id, organization_id').eq('id', r.availability_ask_id).maybeSingle()
       if (ask?.organization_id === me.organization_id) await db.rpc('availability_ask_sent', { p_ask: ask.id, p_email: email.id })
@@ -193,6 +202,13 @@ Deno.serve(async (req) => {
     return errorResponse(e)
   }
 })
+
+/** The person VMS sends as when the scheduler asks (an active editor only). */
+async function personAs(db: SupabaseClient, id: string) {
+  const { data: p } = await db.from('profiles').select('id, organization_id, role, full_name, email, email_signature, signature_name, job_title, direct_phone, is_active').eq('id', id).single()
+  if (!p?.is_active || !['admin', 'manager', 'buyer'].includes(p.role)) throw new HttpError(403, 'Not a person VMS can send as')
+  return p as Caller
+}
 
 const KIND_WORDS: Record<string, string> = { order: 'an order', return: 'a vendor return', issue: 'a problem with an order', vendor: 'vendor business' }
 

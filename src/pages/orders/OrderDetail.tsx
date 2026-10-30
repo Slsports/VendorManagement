@@ -23,6 +23,7 @@ import { OrderRepsCard } from '@/components/orders/OrderRepsCard'
 import { CheckInPricing } from '@/components/orders/CheckInPricing'
 import { FreeShippingCard } from '@/components/orders/FreeShippingCard'
 import { FreightQuoteCard } from '@/components/orders/FreightQuoteCard'
+import { ShipmentRequestCard } from '@/components/orders/ShipmentRequestCard'
 import { FreightAllowanceCard } from '@/components/orders/FreightAllowanceCard'
 import { WwdInvoiceList } from '@/components/payments/WwdInvoiceList'
 import { VendorPicker } from '@/components/vendors/VendorPicker'
@@ -129,6 +130,7 @@ export default function OrderDetailPage() {
           <LsPoCard key={o.ls_po_number ?? ''} order={o} vendor={o.vendor} documents={o.documents} canEdit={canEdit} onChange={() => void q.refetch()} focus={focusPo} />
           <RecordTasks className="rounded-2xl border border-stone-200 bg-white p-5" preset={{ order: { id: o.id, name: [o.po_number ? `PO ${o.po_number}` : null, o.description].filter(Boolean).join(' · ') || 'This order' }, vendor: o.vendor ? { id: o.vendor.id, name: o.vendor.name } : null }} />
           {o.vendor ? <OrderRepsCard orderId={o.id} vendorId={o.vendor.id} takenBy={o.taken_by} canEdit={canEdit} onChange={q.refetch} /> : null}
+          <ShipmentRequestCard orderId={o.id} canEdit={canEdit} />
           <FreightQuoteCard orderId={o.id} status={o.status} freeShipping={o.free_shipping} webOrders={!!o.vendor?.web_orders} />
           <FreeShippingCard order={o} vendor={o.vendor} canEdit={canEdit} onChange={q.refetch} />
           <FreightAllowanceCard key={`${o.freight_allowance_offered}-${o.freight_allowance}-${o.freight_allowance_pay_by}-${o.freight_allowance_received}`} order={o} vendorOffers={!!o.vendor?.freight_allowance_on_time} canEdit={canEdit} onChange={q.refetch} />

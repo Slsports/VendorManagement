@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Calculator, ExternalLink, FileText, FileUp, Mail, Pencil, Plus, Truck } from 'lucide-react'
+import { Calculator, ClipboardList, ExternalLink, FileText, FileUp, Mail, Pencil, Plus, Truck } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listCarriers, listFreightBills, type FreightFilter } from '@/services/freight'
 import { countWaitingFreightQuotes } from '@/services/freightQuotes'
+import { countWaitingShipmentRequests } from '@/services/shipmentRequests'
 import { ROUTES } from '@/lib/constants'
 import { FREIGHT_STATUS, money, shortDate } from '@/lib/freight'
 import { cn } from '@/lib/utils'
@@ -37,6 +38,7 @@ export default function FreightBillListPage() {
   const carriers = useSupabaseQuery(async () => (organization ? listCarriers(organization.id, true) : []), [organization?.id])
   const q = useSupabaseQuery(async () => (organization ? listFreightBills(organization.id, filter, carrierId) : []), [organization?.id, filter, carrierId])
   const quotes = useSupabaseQuery(async () => (organization ? countWaitingFreightQuotes(organization.id) : 0), [organization?.id])
+  const shipments = useSupabaseQuery(async () => (organization ? countWaitingShipmentRequests(organization.id) : { waiting: 0, overdue: 0 }), [organization?.id])
 
   return (
     <div>
@@ -44,6 +46,7 @@ export default function FreightBillListPage() {
         actions={<span className="flex flex-wrap gap-2">
           <Link to={ROUTES.routingLetter} className="inline-flex h-10 items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 text-sm font-medium text-stone-800 hover:bg-stone-50"><FileText className="size-4" aria-hidden="true" />Routing letter</Link>
           <Link to={ROUTES.freightQuotes} className="inline-flex h-10 items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 text-sm font-medium text-stone-800 hover:bg-stone-50"><Calculator className="size-4" aria-hidden="true" />Freight quotes{quotes.data ? <Badge tone="warning">{quotes.data}</Badge> : null}</Link>
+          <Link to={ROUTES.freightShipments} className="inline-flex h-10 items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 text-sm font-medium text-stone-800 hover:bg-stone-50"><ClipboardList className="size-4" aria-hidden="true" />Shipment details{shipments.data?.waiting ? <Badge tone={shipments.data.overdue ? 'danger' : 'warning'}>{shipments.data.waiting}</Badge> : null}</Link>
           {canEdit ? <Button variant="secondary" onClick={() => setUploading(true)} leftIcon={<FileUp className="size-4" aria-hidden="true" />}>Upload bills</Button> : null}
         </span>} />
       {uploading ? <BulkBillUpload onClose={() => setUploading(false)} onDone={() => q.refetch()} /> : null}

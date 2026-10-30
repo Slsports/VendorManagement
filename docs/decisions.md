@@ -3324,3 +3324,28 @@ days … I just want it streamlined and simple for our vendors as well as us."
   quote. Please hold the shipment until we have confirmed the freight."
   A reply that disagrees with the terms goes to whoever placed the order, Trevor cc'd. When the quote comes in, Trevor
   sees our share next to the half or the cap and approves against the agreed number.
+
+## Oct 30 — Shipment details form built (Dana: "That matches, go")
+Built (migration 0268, function shipment-requests, gmail-send sends as a named person for the scheduler):
+- **Freight terms** on the order's Shipping box: free (and why), they cover half, capped at a %, or we pay. The
+  confirmation is checked against it (`confirmation_freight` from the confirmation reading): free and shown → nothing
+  goes out, "confirmed on the confirmation"; agreed terms not shown → the check email; we pay → the shipment details email.
+- One `shipment_requests` row per confirmed order (web-order and paperwork-only vendors skipped; orders with an approved
+  quote skipped). VMS sends it within 5 minutes from orders@ as Trevor (his title set to Inventory & Logistics
+  Specialist), to the confirmation's sender, cc the Shipping contact and the rep's people (`shipment_request_recipients`);
+  no email on file → a task for Trevor, and the email goes out on its own once one is added. The routing letter rides
+  along. The Oct 20 placeholder shipping email draft is replaced by this one (the order's "shipping email sent" stamp
+  comes from it).
+- The form at vms.shaverlakesports.com/ship/<token> (no login): Pallet (LTL) or Parcel (UPS/FedEx), pickup location,
+  contact, hours, ready date, pickup services (pallet), one block per pallet or package with Add another, their quote,
+  notes. Answers → `freight_quotes` (email_id now optional) with Trevor's "Get freight quote … – Pallet, P1 / Parcel,
+  WWEX/UPS" task; a new pickup contact becomes the vendor's Shipping contact.
+- Replies by email: Claude's `readShipmentReply` → free / terms ok (terms confirmed on the order) / charged (task for
+  whoever placed the order, FYI task for Trevor, conversation handed to the buyer; the FYI closes with the buyer's task) /
+  details (filled in like the form).
+- 3 business days (`add_business_days`) with nothing back → task **No shipment details yet** for Trevor with the
+  follow-up draft; sending the draft no longer closes a follow-up task (same fix for credit follow-ups); the task closes
+  when the form or a reply with details arrives.
+- Screens: Freight › **Shipment details** (Waiting / Answered / All, red past 3 business days, Send now), the order's
+  Shipment details box, the vendor page box, a line on the dashboard's Freight bills box. Help: freight--shipment-details-form.
+- Orders already confirmed when this shipped got a request **on hold** (not sent): Dana decides whether to send them.
