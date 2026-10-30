@@ -3295,3 +3295,18 @@ days … I just want it streamlined and simple for our vendors as well as us."
 - Skip free-freight orders, web-order vendors (Kelli's), paperwork-only vendors (Rossignol), and orders whose
   confirmation already gave the details. Remember each vendor's usual method; "Same as last order" for repeats; a
   "send freight questions to" answer becomes the vendor's Shipping contact.
+- Oct 30, later (Dana): three cases when the confirmation lands. Order on file as free freight and the confirmation
+  shows it → nothing goes out ("Free freight, confirmed"). Free freight on file but the confirmation doesn't show it →
+  the **free-freight check** email, no form link ("I don't want them to think they can just fill out the form and have
+  us pay shipping"): "Our order was placed with the understanding we would receive free shipping, but we didn't see that
+  noted on the confirmation. Could you reply and confirm that this order, and any backorders that may arrive, will ship
+  free to us?" Not free freight → the shipment details email with the link. The shipment email says: "If you are paying
+  full freight costs including backorders, we do not need the form filled out. Simply hit reply and confirm that this
+  order and any backorders that may arrive will be shipped free to us." No quote-or-free choice on the form itself.
+- A "freight will be charged" reply to the free-freight check is a change to what was agreed: it goes to whoever placed
+  the order, Trevor cc'd, as their task to decide; the form link goes out only when they say so. A "yes, free" reply
+  marks the order free freight including backorders and closes the row.
+- Pallet (LTL) form (Dana): PO (shown), pickup location (company, address, city, state, ZIP), pickup contact (name,
+  email, phone), pickup hours and days, ready date, pickup services (residential, lift gate, limited access), one block
+  per pallet with **Add another pallet** (pieces, weight, L×W×H, class and NMFC if known, stackable, hazmat, what's on
+  it), their freight quote amount, anything else. Parcel (UPS/FedEx) list still to come. Dana: "wait to do form."
