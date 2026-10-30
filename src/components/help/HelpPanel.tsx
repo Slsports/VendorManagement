@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useLocation } from 'react-router-dom'
 import { ChevronLeft, Search, X } from 'lucide-react'
 import { searchHelp, type HelpArticle } from '@/lib/help'
@@ -23,7 +24,9 @@ export function HelpPanel({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener('keydown', esc)
   }, [onClose])
 
-  return (
+  // drawn at the page level: inside the top bar (which blurs what is behind it) a fixed panel gets only the bar's height,
+  // and the search box and the list vanish (Dana, Oct 30: "You cannot enter anything in the search bar")
+  return createPortal(
     <div className="fixed inset-0 z-50 flex justify-end bg-stone-900/20" onClick={onClose}>
       <aside role="dialog" aria-modal="true" aria-label="Help" onClick={(e) => e.stopPropagation()}
         className="flex h-full w-full max-w-md flex-col bg-white shadow-xl">
@@ -66,6 +69,7 @@ export function HelpPanel({ onClose }: { onClose: () => void }) {
           <Link to={open ? `${ROUTES.help}/${open.slug}` : ROUTES.help} onClick={onClose} className="font-medium text-brand hover:underline">{open ? 'Open on the Help page' : 'All help'}</Link>
         </div>
       </aside>
-    </div>
+    </div>,
+    document.body,
   )
 }
