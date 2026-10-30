@@ -3310,3 +3310,17 @@ days … I just want it streamlined and simple for our vendors as well as us."
   email, phone), pickup hours and days, ready date, pickup services (residential, lift gate, limited access), one block
   per pallet with **Add another pallet** (pieces, weight, L×W×H, class and NMFC if known, stackable, hazmat, what's on
   it), their freight quote amount, anything else. Parcel (UPS/FedEx) list still to come. Dana: "wait to do form."
+- Oct 30, later (Dana): "some pay half freight and others will cap freight at a certain percentage. We need emails for
+  those too if the confirmation doesn't show what we agreed on." Build adds **Freight terms** on the order (Free · Half ·
+  Capped at __% · Charged), set when the order is placed and checked against the confirmation like free freight. Half
+  and capped still need the form (we pay part), so those emails carry the link. Wording agreed:
+  Half: "Our order was placed with the understanding that you would cover half of the freight, but we didn't see that
+  noted on the confirmation. Could you reply and confirm that this order, and any backorders that may arrive, will ship
+  with half the freight covered by you? Please also click the link below to enter the shipment details and your freight
+  quote, so we can see our share before it ships. Please hold the shipment until we have confirmed the freight."
+  Capped: "Our order was placed with the understanding that freight would be capped at [X]% of the order, but we didn't
+  see that noted on the confirmation. Could you reply and confirm that freight on this order, and on any backorders that
+  may arrive, will not exceed [X]%? Please also click the link below to enter the shipment details and your freight
+  quote. Please hold the shipment until we have confirmed the freight."
+  A reply that disagrees with the terms goes to whoever placed the order, Trevor cc'd. When the quote comes in, Trevor
+  sees our share next to the half or the cap and approves against the agreed number.
