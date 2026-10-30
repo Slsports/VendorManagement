@@ -13,9 +13,9 @@ import { Badge } from '@/components/ui'
 export function VendorShipmentSection({ vendorId }: { vendorId: string }) {
   const q = useSupabaseQuery(() => listVendorShipmentRequests(vendorId), [vendorId])
   useLiveTable('shipment_requests', `vendor_id=eq.${vendorId}`, () => { void q.refetch() })
+  const [now] = useState(() => new Date().toISOString())
   const rows = q.data ?? []
   if (!rows.length) return null
-  const [now] = useState(() => new Date().toISOString())
   return (
     <section className="rounded-2xl border border-stone-200 bg-white p-5">
       <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500"><ClipboardList className="size-4" aria-hidden="true" />Shipment details</h2>
