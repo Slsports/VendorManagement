@@ -27,21 +27,23 @@ export default function ShipmentFormPage() {
   const [data, setData] = useState<Loaded | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState<string | null>(null)
+  // a look at what vendors see (Dana, Oct 31), with nothing recorded and nothing sent
   const preview = token === 'preview'
+  const sample: Loaded = { vendor: 'Example Vendor Co', po: '26000', description: 'Spring order', kind: 'details', method: null, answered_at: null, answers: {}, status: 'sent' }
   useEffect(() => {
-    // a look at what vendors see (Dana, Oct 31), with nothing recorded and nothing sent
-    if (preview) { setData({ vendor: 'Example Vendor Co', po: '26000', description: 'Spring order', kind: 'details', method: null, answered_at: null, answers: {}, status: 'sent' }); return }
+    if (preview) return
     call({ action: 'form', token }).then((d) => setData(d as Loaded)).catch(() => setError('This link is not valid. Please email orders@shaverlakesports.com.'))
   }, [token, preview])
+  const shown = preview ? sample : data
   return (
     <main className="min-h-screen bg-stone-50 px-4 py-8 text-stone-900">
       <div className="mx-auto max-w-2xl">
         <img src="/brand/sls/email-logo.png" alt="Shaver Lake Sports" className="mb-6 h-12" />
         {preview ? <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">Preview: this is what a vendor sees from the link in our email. Nothing you enter here is saved or sent.</p> : null}
         {error ? <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</p>
-          : !data ? <p className="text-sm text-stone-500">Loading…</p>
-          : done ? <Thanks vendor={data.vendor} po={data.po} />
-          : <TheForm token={token} initial={data} onDone={setDone} preview={preview} />}
+          : !shown ? <p className="text-sm text-stone-500">Loading…</p>
+          : done ? <Thanks vendor={shown.vendor} po={shown.po} />
+          : <TheForm token={token} initial={shown} onDone={setDone} preview={preview} />}
       </div>
     </main>
   )
