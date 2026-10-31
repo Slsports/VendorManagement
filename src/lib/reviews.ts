@@ -14,6 +14,7 @@ export const REVIEW_KIND_LABELS: Record<string, { title: string; help: string }>
   item_change: { title: 'Unavailable items', help: 'The vendor says these are discontinued, replaced or out of stock. Pick what to do; VMS writes it to Lightspeed with a dated note.' },
   portal_contact: { title: 'WWD portal contacts to check', help: 'People the Worldwide portal lists for a vendor that we have not emailed about that vendor in 24 months. Keep them, mark them no longer their rep (kept under Former contacts so their old mail can be found), or delete a mistake. Your answers are the list of outdated portal info for the show.' },
   portal_conflict: { title: 'Worldwide portal differences', help: 'The Worldwide portal says something different from what VMS has for a vendor. Keep ours, or use the portal\'s.' },
+  order_duplicate: { title: 'The same order twice?', help: 'Two orders from one vendor at the same show with the same kinds of items and not two different confirmations. Keep one (the other is cancelled as a copy and its papers, mail and tasks move over), or Not the same order. A ship-now and a ship-later order with their own confirmations are never shown here.' },
   inactive_vendor: { title: 'Inactive vendors coming back?', help: 'A vendor we made inactive has an order in VMS, or mail shows we may be ordering from them again (an order, a quote, a catalog or price list asked for). Make it active again, or keep it inactive.' },
   ls_po_reference: { title: 'PO in Lightspeed to change?', help: 'A vendor said it was too late to use our PO, so the order now uses theirs. The PO in Lightspeed still has ours in Reference #. Change it there, or keep ours.' },
   vendor_alias: { title: 'Names on the wrong vendor?', help: 'A name saved on a vendor that seems to belong to someone else (a rep agency\'s name on one of its lines). Remove it, or keep it. Mail that named the vendor only by that name is checked again.' },
@@ -94,7 +95,7 @@ export function reviewTabOfKind(kind: string): ReviewTab {
     case 'email_sender': return 'who'
     case 'delivery_receipt': case 'freight_card': return 'freight'
     case 'item_change': return 'items'
-    case 'invoice_upload': case 'wwd_po_mismatch': case 'wwd_credit_for': return 'hand'
+    case 'invoice_upload': case 'wwd_po_mismatch': case 'wwd_credit_for': case 'order_duplicate': return 'hand'
     case 'wwd_freight_differs': return 'freight'
     default: return 'vendor'
   }

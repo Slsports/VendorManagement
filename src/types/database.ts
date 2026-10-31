@@ -1229,6 +1229,7 @@ export type Database = {
       assign_email_thread: { Args: { p_thread: string; p_profile?: string | null }; Returns: undefined }
       set_email_thread_status: { Args: { p_thread: string; p_status: 'waiting_on_us' | 'waiting_on_vendor' | 'handled' }; Returns: undefined }
       apply_review_rules: { Args: { p_org: string; p_overwrite?: boolean }; Returns: number }
+      order_duplicate_answer: { Args: { p_item: string; p_keep: string | null }; Returns: undefined }
       inactive_vendor_answer: { Args: { p_item: string; p_reactivate: boolean }; Returns: undefined }
       is_our_address: { Args: { p_org: string; p_email: string }; Returns: boolean }
       rep_group_from_sender: { Args: { p_sender: string; p_name: string; p_website: string | null; p_phone: string | null; p_contacts: Json; p_vendors: string[] }; Returns: Json }
