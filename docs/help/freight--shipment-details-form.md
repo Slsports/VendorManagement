@@ -28,7 +28,7 @@ Claude reads the reply. "We ship free" or "yes, those terms" confirms the terms 
 Trevor gets a task **No shipment details yet: [vendor], PO [number]** with the follow-up email ready in his Drafts. **Go to it** opens the email; send it as is or change it. The task finishes itself when the form or a reply with the details comes in.
 
 ## Where to see it
-- **Freight › Shipment details**: every request with sent, opened and answered dates, the method and the status. **Waiting** shows what is still with vendors, red past 3 business days. **Send now** sends one that is ready (for example an order confirmed before this was built, or one that waited for an email address).
+- **Freight › Shipment details**: **See the form vendors get** opens the form as a preview (nothing saved). The list shows every request with sent, opened and answered dates, the method and the status. **Waiting** shows what is still with vendors, red past 3 business days. **Send now** sends one that is ready (for example an order confirmed before this was built, or one that waited for an email address).
 - The order page's **Shipment details** box and each vendor's page show the same.
 - The dashboard's **Freight bills** box has a line with how many are waiting.
 

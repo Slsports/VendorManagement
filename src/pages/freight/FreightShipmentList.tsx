@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Mail, Send } from 'lucide-react'
+import { ClipboardList, Mail, Send } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
@@ -51,7 +51,8 @@ export default function FreightShipmentListPage() {
   return (
     <div>
       <BackLink fallback={ROUTES.freight} fallbackLabel="Freight" />
-      <PageHeader title="Shipment details" description="The email VMS sends each vendor once an order is confirmed: the form for the shipment details and their freight quote, or the check on the freight we agreed. Red when 3 business days pass with nothing back." />
+      <PageHeader title="Shipment details" description="The email VMS sends each vendor once an order is confirmed: the form for the shipment details and their freight quote, or the check on the freight we agreed. Red when 3 business days pass with nothing back."
+        actions={<a href={`${ROUTES.shipmentForm}/preview`} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 text-sm font-medium text-stone-800 hover:bg-stone-50"><ClipboardList className="size-4" aria-hidden="true" />See the form vendors get</a>} />
       <ul className="mb-4 flex flex-wrap gap-1 rounded-xl bg-stone-100 p-1 sm:inline-flex" aria-label="Which requests">
         {TABS.map((t) => (
           <li key={t.value}>
