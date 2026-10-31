@@ -803,14 +803,14 @@ const CompareAnswer = z.object({
   unavailable: z.array(z.object({
     vendor_item_id: z.string().nullable().describe('Our item\'s Vendor ID as on our order or the document'),
     item_name: z.string().describe('Short name of our item'),
-    read_as: z.enum(['discontinued', 'replaced', 'out_of_stock', 'unclear']).describe('replaced: the vendor names the item that replaces it; discontinued: no longer made or sold and no replacement named; out_of_stock: temporarily unavailable or backordered; unclear: the vendor says something about it being unavailable but not clearly which'),
+    read_as: z.enum(['discontinued', 'replaced', 'out_of_stock', 'backordered', 'unclear']).describe('replaced: the vendor names the item that replaces it; discontinued: no longer made or sold and no replacement named; backordered: still coming on this order, just later (backordered, on backorder, B/O, ships later); out_of_stock: temporarily unavailable and NOT coming on this order; unclear: the vendor says something about it being unavailable but not clearly which'),
     sure: z.boolean().describe('true only when the vendor says it plainly about this exact item (and, for replaced, names the replacement\'s Vendor ID)'),
     replacement_vendor_item_id: z.string().nullable().describe('The replacement\'s Vendor ID exactly as the vendor wrote it; null when none is given'),
     replacement_name: z.string().nullable(),
     replacement_price: z.number().nullable().describe('The replacement\'s unit price when shown'),
-    back_date: z.string().nullable().describe('For out_of_stock: the date the vendor says it will be back or ship, YYYY-MM-DD; null when not given'),
+    back_date: z.string().nullable().describe('For out_of_stock or backordered: the date the vendor says it will be back or ship, YYYY-MM-DD; null when not given'),
     vendor_words: z.string().describe('The vendor\'s exact words about this item, short'),
-  })).describe('Confirmations only: every item the vendor says is discontinued, replaced or out of stock (on the document or in the email conversation). Empty for invoices or when there are none. Never guess: when the vendor does not say it, it is not here.'),
+  })).describe('Confirmations only: every item the vendor says is discontinued, replaced, out of stock or backordered (on the document or in the email conversation). Empty for invoices or when there are none. Never guess: when the vendor does not say it, it is not here.'),
 })
 export type CompareReading = z.infer<typeof CompareAnswer>
 

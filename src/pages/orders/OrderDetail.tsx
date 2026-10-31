@@ -17,6 +17,7 @@ import { ReportUsedCard } from '@/components/orders/ReportUsedCard'
 import { RecordTasks } from '@/components/tasks/RecordTasks'
 import { LsPoCard } from '@/components/ordering/LsPoCard'
 import { ShipCard } from '@/components/orders/ShipCard'
+import { OrderBackorders } from '@/components/orders/OrderBackorders'
 import { OrderPoCard } from '@/components/orders/OrderPoCard'
 import { OrderSourceCard } from '@/components/orders/OrderSourceCard'
 import { OrderRepsCard } from '@/components/orders/OrderRepsCard'
@@ -126,6 +127,7 @@ export default function OrderDetailPage() {
         <div className="space-y-6">
           <OrderSourceCard order={o} />
           <ShipCard order={o} canEdit={canEdit} onChange={() => void q.refetch()} focus={focusShip} />
+          <OrderBackorders orderId={o.id} />
           <OrderPoCard order={o} />
           <LsPoCard key={o.ls_po_number ?? ''} order={o} vendor={o.vendor} documents={o.documents} canEdit={canEdit} onChange={() => void q.refetch()} focus={focusPo} />
           <RecordTasks className="rounded-2xl border border-stone-200 bg-white p-5" preset={{ order: { id: o.id, name: [o.po_number ? `PO ${o.po_number}` : null, o.description].filter(Boolean).join(' · ') || 'This order' }, vendor: o.vendor ? { id: o.vendor.id, name: o.vendor.name } : null }} />

@@ -14,7 +14,7 @@ import { downloadVendorFile } from '@/services/lines'
 import { CHECK_KIND_LABEL, CHECK_TITLE, checkStatusText, priceIn } from '@/lib/orderChecks'
 import { buildFinalOrder, finalOrderEmail, isFieldRow, priceFlag, rowHandled, rowQtys, type ReadLine, type RowEdit } from '@/lib/finalOrder'
 import { listCheckItemChanges } from '@/services/itemChanges'
-import { ItemChangeCard } from '@/components/review/ItemChangeCard'
+import { ItemChangeList } from '@/components/review/ItemChangeList'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
 import { money as formatCurrency } from '@/lib/freight'
@@ -78,7 +78,6 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
   const hasPrices = rows.some((r) => r.our_cost != null || r.their_price != null)
   // items the vendor says are unavailable (Dana, Oct 18): decided ones change the final order and its email
   const unavailable = useSupabaseQuery(() => listCheckItemChanges(c.id), [c.id])
-  const undecided = (unavailable.data ?? []).filter((u) => !u.decision).length
   const final = finalMode ? buildFinalOrder(rows, edits, readingLines, newItems, unavailable.data ?? []) : null
   const firstName = /^Hi ([^,\n]+),/.exec(c.draft_body ?? '')?.[1]?.trim() ?? null
   const finalEmail = final ? finalOrderEmail({ firstName: firstName && firstName.toLowerCase() !== 'there' ? firstName : null, docNumber: c.doc_number, po: c.order?.po_number ?? c.po_number, items: final.items, changes: final.changes }) : null
@@ -276,14 +275,15 @@ function CheckView({ c, refetch }: { c: OrderCheckRow; refetch: () => Promise<un
         </section>
       ) : null}
 
-      {(unavailable.data ?? []).length ? (
-        <section className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-5">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-900">Unavailable items</h2>
-          <p className="mt-1 text-xs text-amber-900">The vendor says these are discontinued, replaced or out of stock. Your choice goes on the final order and into Lightspeed.{undecided ? ` ${undecided} still to decide.` : ''}</p>
-          <div className="mt-2 divide-y divide-amber-200">
-            {(unavailable.data ?? []).map((u) => <div key={u.id} className="py-2"><ItemChangeCard changeId={u.id} canEdit={canEdit} onDone={() => void unavailable.refetch()} /></div>)}
-          </div>
-        </section>
+      {(unavailable.data ?? []).some((u) => u.read_as !== 'backordered') ? (
+        <div className="mb-4">
+          <ItemChangeList title="Unavailable items" changeIds={(unavailable.data ?? []).map((u) => u.id)} canEdit={canEdit} onDone={() => void unavailable.refetch()} />
+        </div>
+      ) : null}
+      {(unavailable.data ?? []).some((u) => u.read_as === 'backordered') ? (
+        <p className="mb-4 rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm text-stone-700">
+          {(unavailable.data ?? []).filter((u) => u.read_as === 'backordered').length} backordered (still coming){c.order_id ? <>: listed on <Link to={`${ROUTES.orders}/${c.order_id}`} className="text-brand hover:underline">the order</Link></> : ''}.
+        </p>
       ) : null}
 
       {newItems.length ? (

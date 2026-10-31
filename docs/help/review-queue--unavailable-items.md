@@ -1,13 +1,21 @@
 ---
 title: "Unavailable items: replaced, discontinued or out of stock"
 section: Review queue
-keywords: unavailable, rep says, email the rep, discontinued, replaced, replacement, out of stock, backorder, back in stock, DNR, do not reorder, asterisk, Lightspeed note, confirmation, find replacement, don't need, sales report, no replacement on file
+keywords: unavailable, on backorder, backordered items, rep says, email the rep, discontinued, replaced, replacement, out of stock, backorder, back in stock, DNR, do not reorder, asterisk, Lightspeed note, confirmation, find replacement, don't need, sales report, no replacement on file
 who: Admin, managers and buyers
 ---
-When a vendor's confirmation says an item is discontinued, replaced or out of stock, Claude puts a card in the **Unavailable items** tab of the Review queue for whoever placed the order. The same cards show on the confirmation check under **Unavailable items**. What you choose is written to Lightspeed for you, so nobody has to go into Lightspeed separately.
+When a vendor's confirmation says an item is discontinued, replaced or out of stock, Claude puts a card in the **Unavailable items** tab of the Review queue for whoever placed the order. On the vendor's page and on the confirmation check they all show in one card, **Items the vendor says are unavailable**, one row per item. What you choose is written to Lightspeed for you, so nobody has to go into Lightspeed separately.
 
-## How to
-1. Open **Review queue** and click **Unavailable items** (or open the confirmation check).
+Backordered items are different: the vendor is still sending them, just later. They make no card. They show on the order under **On backorder**, the order is marked Backorder, and nothing is written to Lightspeed.
+
+## On the vendor's page (all items at once)
+1. At the top of the vendor's page, find **Items the vendor says are unavailable**.
+2. Each row shows the item, what the vendor wrote and what Claude read. When Claude is sure, its choice is already picked.
+3. Pick **What to do** on each row. For **Use replacement** type the replacement's Vendor ID; for **Out of stock** add the back-in-stock date if the vendor gave one; for **DNR** type why.
+4. Click **Save** once. Every row with a choice is saved and written to Lightspeed. Rows you skip stay for later.
+
+## How to (one card at a time)
+1. Open **Review queue** and click **Unavailable items**.
 2. Read the card: the item, what the vendor wrote, and what Claude read. When Claude is sure, its choice is already picked. Click **the confirmation it came from** to see the vendor's confirmation, or **the order**.
 3. Pick one:
    - **Use replacement**: check the replacement's Vendor ID.

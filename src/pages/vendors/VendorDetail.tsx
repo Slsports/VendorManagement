@@ -16,6 +16,7 @@ import { BackLink } from '@/components/shared/BackLink'
 import { FoldSection } from '@/components/shared/FoldSection'
 import { RouteBadges } from '@/components/vendors/RouteBadges'
 import { ReviewItemCard, VENDOR_DELETED } from '@/components/vendors/ReviewItemCard'
+import { ItemChangeList } from '@/components/review/ItemChangeList'
 import { VendorDocumentsSection } from '@/components/vendors/VendorDocumentsSection'
 import { VendorLightspeedBox } from '@/components/vendors/VendorLightspeedBox'
 import { VendorPortalSection } from '@/components/vendors/VendorPortalSection'
@@ -215,9 +216,17 @@ export default function VendorDetailPage() {
         </Alert>
       ) : null}
 
-      {reviewQ.data && reviewQ.data.length > 0 ? (
+      {/* unavailable items: one card with a row each, not a card each (Dana, Oct 31) */}
+      {reviewQ.data && reviewQ.data.some((r) => r.kind === 'item_change') ? (
+        <div className="mb-6">
+          <ItemChangeList changeIds={reviewQ.data.filter((r) => r.kind === 'item_change').map((r) => String((r.details as Record<string, unknown> | null)?.change_id ?? '')).filter(Boolean)}
+            canEdit={canEdit} onDone={async () => { await reviewQ.refetch() }} />
+        </div>
+      ) : null}
+
+      {reviewQ.data && reviewQ.data.some((r) => r.kind !== 'item_change') ? (
         <section className="mb-6 space-y-2">
-          {reviewQ.data.map((item) => {
+          {reviewQ.data.filter((r) => r.kind !== 'item_change').map((item) => {
             // Show the pair from this vendor's point of view.
             const mine = item.entity_id === v.id
             return (
