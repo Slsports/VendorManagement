@@ -90,6 +90,15 @@ async function apply(db: SupabaseClient, email: string, isQuote: boolean, r: Fre
   return data as string | null
 }
 
+/** Two PO numbers one character apart: one added, dropped or changed. */
+function oneOff(a: string, b: string): boolean {
+  if (a === b || Math.abs(a.length - b.length) > 1) return false
+  let i = 0
+  while (i < a.length && i < b.length && a[i] === b[i]) i++
+  if (a.length === b.length) return a.slice(i + 1) === b.slice(i + 1)
+  return a.length > b.length ? a.slice(i + 1) === b.slice(i) : a.slice(i) === b.slice(i + 1)
+}
+
 /** The email without the earlier mail quoted under it. */
 function ownPart(text: string): string {
   const m = /\n(?:On .{4,200}wrote:|-{3,} ?Original Message|_{10,}|From: .+\n(?:Sent|Date): )/i.exec(text)
@@ -123,6 +132,12 @@ async function orderFor(db: SupabaseClient, org: string, q: Queued, r: FreightQu
     const { data } = await query.limit(2000)
     const hit = one((data ?? []).filter((o) => pos.includes(norm(o.po_number))).map((o) => o.id))
     if (hit) return { order: hit, how: 'po' }
+    // one character off (Oct 31: World Famous's routing request said WFS24236 for our WFS2426): only that vendor's, and
+    // only when it is the only order that close
+    if (vendorId) {
+      const near = one((data ?? []).filter((o) => pos.some((p) => p.length >= 5 && oneOff(p, norm(o.po_number)))).map((o) => o.id))
+      if (near) return { order: near, how: 'po' }
+    }
   }
   // 2. the vendor's own numbers: a confirmation or invoice on file, or the order notes
   const nums = r.vendor_numbers.map(norm).filter((n) => n.length >= 4)
