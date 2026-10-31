@@ -11,6 +11,7 @@ The moment an order is confirmed, VMS emails the vendor from orders@ as Trevor (
 - **Free freight agreed, shown on the confirmation:** nothing goes out. The order shows "The vendor confirmed these terms on the confirmation."
 - **Free freight agreed, not on the confirmation:** a short email asking them to confirm this order and any backorders ship free. No form link, so nobody thinks they can fill it in and charge us.
 - **Half or capped freight agreed, not on the confirmation:** an email asking them to confirm the terms, with the form link so we see our share before it ships.
+- **The check emails never go out on their own.** Trevor gets a task **Check freight on the confirmation: [vendor], PO [number]** and the email waits in his Drafts. He opens the order and reads the confirmation: if the terms are there, he clicks **The confirmation shows the agreed terms** in the order's Shipping box and the task closes with no email; if not, **Go to it** on the task opens the order, and the email is in Mail › Drafts to send as is or change.
 - It goes to whoever sent us the confirmation, with the vendor's Shipping contact and our rep copied. Free-freight web-order vendors (Kelli's) and paperwork-only vendors (Rossignol) are skipped.
 
 ## The form
@@ -32,6 +33,6 @@ Trevor gets a task **No shipment details yet: [vendor], PO [number]** with the f
 - The dashboard's **Freight bills** box has a line with how many are waiting.
 
 ## Good to know
-- Set what was agreed on the order's **Shipping** box: free (and why), they cover half, capped at a percent, or we pay. That is what the confirmation is checked against.
+- Set what was agreed on the order's **Shipping** box: free (and why), they cover half, capped at a percent, or we pay. That is what the confirmation is checked against. **The confirmation shows the agreed terms** there records that a person checked it.
 - Every UPS shipment booked through WWEX carries our PO number in **Reference 1**.
 - This replaces the earlier "ask for their freight quote" email: one email per confirmed order, not two.

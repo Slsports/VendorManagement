@@ -36,7 +36,7 @@ export function ShipmentRequestCard({ orderId, canEdit }: { orderId: string; can
         {r.thread_id ? <Link to={`${ROUTES.mail}/${r.thread_id}`} className="inline-flex items-center gap-1 text-brand hover:underline"><Mail className="size-3.5" aria-hidden="true" />the email</Link> : null}
       </p>
       <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
-        <div><dt className="text-xs font-medium text-stone-500">Sent</dt><dd>{r.sent_at ? `${shortDate(r.sent_at)} to ${r.to_emails.join(', ')}${r.cc_emails.length ? ` (cc ${r.cc_emails.join(', ')})` : ''}` : r.status === 'ready' ? (r.to_emails.length ? (r.hold ? 'Ready, not sent yet' : 'Going out within a few minutes') : 'No email on file for this vendor') : '—'}</dd></div>
+        <div><dt className="text-xs font-medium text-stone-500">Sent</dt><dd>{r.sent_at ? `${shortDate(r.sent_at)} to ${r.to_emails.join(', ')}${r.cc_emails.length ? ` (cc ${r.cc_emails.join(', ')})` : ''}` : r.status === 'ready' ? (r.review_task_id ? `Waiting for ${'Trevor'} to check the confirmation first (the email is in Drafts)` : r.to_emails.length ? (r.hold ? 'Ready, not sent yet' : 'Going out within a few minutes') : 'No email on file for this vendor') : '—'}</dd></div>
         <div><dt className="text-xs font-medium text-stone-500">Opened · answered</dt><dd>{r.opened_at ? shortDate(r.opened_at) : '—'} · {r.answered_at ? `${shortDate(r.answered_at)} ${r.answered_how === 'form' ? 'on the form' : 'by email'}` : late ? <span className="font-medium text-red-700">nothing after 3 business days</span> : '—'}</dd></div>
       </dl>
       {r.status === 'answered' ? (

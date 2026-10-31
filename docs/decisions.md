@@ -3354,3 +3354,12 @@ Built (migration 0268, function shipment-requests, gmail-send sends as a named p
   2. Manufacturers Exchange is a rep group (Sunny Lakhani, Lance Kessler). Its lines: Becker, G & S Originals, Bluestone NYC, Royal Deluxe, Silverstar NYC (renamed from "MANUFACTURERS EXCH / SILVERSTAR NYC"), A-One, Steintex. Its 239 emails and 71 files re-filed to the line each is about; mail naming several lines or none stays with the rep group. The vendor record stays inactive only for Worldwide's vendor list (#10053) and the show listings.
   3. Quotes we state: the reader also reads mail we send (orders@ and Dana's own inbox) and mail coming in to Dana's own inbox. Our email giving the price we got or chose approves the vendor's open quotes for that order at our price, closes their tasks and sets the order's freight. From Dana's inbox only the carrier and amount are kept; a vendor quote arriving there makes its task for Dana.
   First run over Dana's inbox and sent mail: Becker approved at XPO $1,043 on the order (the three vendor and routing quotes, their tasks closed). World Famous PO WFS24236: Dana's "Yes, please! That's a great rate" approved FedEx Ground $375.87 (VMS can't tell which WFS order that PO is). Fixes the same day (0270, 0271): a conversation or order that already has an approved price opens no new quote (Becker's "Yes it is ready … Will you be sending a BOL?" and the routing company's "please proceed" had each made a task for Dana); our own note to one of us (Dana's "Can you please get a quote from ups" forward to Trevor) is not read as a quote. The extra records were set aside and their tasks closed.
+
+## Oct 31 — Freight check emails go through Trevor first (Dana)
+Dana: "I'm a little concerned about automatically sending those emails without human eyes on the confirmation first. I
+don't want us to look like idiots to our vendors. Maybe we should just send the draft to Trevor to check the confirmation
+before sending?" And yes to the tick "The confirmation shows the agreed terms".
+Built (migration 0272): a free / half / capped check is never sent by VMS. Trevor gets **Check freight on the
+confirmation: [vendor], PO n** ("It looks like the confirmation does not say who pays freight. We agreed …") with the email
+in his Drafts. The tick on the order's Shipping box settles it (draft gone, task closed, request Confirmed); sending the
+draft sends it and starts the 3-business-day clock. The shipment details email (we pay) still goes out on its own.

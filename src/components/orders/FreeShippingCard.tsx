@@ -41,6 +41,12 @@ export function FreeShippingCard({ order, vendor, canEdit, onChange }: FreeShipp
   if (vendor && answer === 'no' && vendor.free_shipping_policy === 'sometimes' && vendor.free_shipping_threshold !== null && value !== null && value >= vendor.free_shipping_threshold) warnings.push(`The order is over ${money(vendor.free_shipping_threshold)}. It should have shipped free; ask for the freight back.`)
   if (order.freight_cost !== null && order.freight_cost > 0 && answer === 'yes') warnings.push(`Freight of ${money(order.freight_cost)} was recorded on an order that should ship free. A credit may be due.`)
 
+  // Dana, Oct 31: a person's eyes on the confirmation settle the freight check; the waiting email and task go away
+  const [confirming, setConfirming] = useState(false)
+  async function confirmTerms() {
+    setConfirming(true)
+    try { await updateOrder(order.id, { freight_terms_confirmed_at: new Date().toISOString(), freight_terms_confirmed_how: 'person' }); toast.success('Noted: the confirmation shows the agreed terms'); await onChange() } catch (err) { toast.error(errorMessage(err)) } finally { setConfirming(false) }
+  }
   async function save() {
     setSaving(true)
     try {
@@ -99,6 +105,9 @@ export function FreeShippingCard({ order, vendor, canEdit, onChange }: FreeShipp
         ) : (
           <p className="mt-1 text-sm text-stone-900">{order.free_shipping === null ? 'Not stated' : order.free_shipping ? `Yes${order.free_shipping_basis ? ` · ${FREE_SHIPPING_BASIS_LABELS[order.free_shipping_basis]}` : ''}` : order.freight_terms === 'half' ? 'No · they cover half' : order.freight_terms === 'capped' ? `No · capped at ${order.freight_cap_pct ?? '?'}% of the order` : 'No, we pay freight'}{order.free_shipping_note ? ` · ${order.free_shipping_note}` : ''}</p>
         )}
+        {canEdit && !order.freight_terms_confirmed_at && (answer === 'yes' || (answer === 'no' && terms !== 'charged')) && !dirty ? (
+          <Button size="sm" variant="secondary" className="mt-3" loading={confirming} onClick={() => void confirmTerms()}>The confirmation shows the agreed terms</Button>
+        ) : null}
         {order.freight_terms_confirmed_at ? <p className="mt-2 text-xs text-emerald-800">The vendor confirmed these terms {order.freight_terms_confirmed_how === 'confirmation' ? 'on the confirmation' : order.freight_terms_confirmed_how === 'reply' ? 'by email' : ''} on {new Date(order.freight_terms_confirmed_at).toLocaleDateString()}.</p> : null}
         {warnings.map((w) => <p key={w} className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">{w}</p>)}
       </div>

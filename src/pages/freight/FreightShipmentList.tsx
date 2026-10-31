@@ -88,7 +88,7 @@ export default function FreightShipmentListPage() {
                       <td className="px-4 py-2 font-medium text-stone-900">{r.vendor ? <Link to={`${ROUTES.vendors}/${r.vendor.id}`} className="hover:text-brand">{r.vendor.name}</Link> : '—'}</td>
                       <td className="px-3 py-2">{r.order ? <Link to={`${ROUTES.orders}/${r.order.id}`} className="text-brand hover:underline">{r.order.po_number ?? 'order'}</Link> : '—'}</td>
                       <td className="px-3 py-2 text-stone-700">{shipmentKindLabel(r.kind)}</td>
-                      <td className="px-3 py-2 text-stone-700">{r.sent_at ? shortDate(r.sent_at) : r.hold ? <span className="text-amber-700">Ready, not sent</span> : r.status === 'ready' ? <span className="text-amber-700">{r.to_emails.length ? 'Sending…' : 'No email on file'}</span> : '—'}</td>
+                      <td className="px-3 py-2 text-stone-700">{r.sent_at ? shortDate(r.sent_at) : r.review_task_id && r.status === 'ready' ? <span className="text-amber-700">With Trevor to check</span> : r.hold ? <span className="text-amber-700">Ready, not sent</span> : r.status === 'ready' ? <span className="text-amber-700">{r.to_emails.length ? 'Sending…' : 'No email on file'}</span> : '—'}</td>
                       <td className="hidden px-3 py-2 text-stone-700 md:table-cell">{r.opened_at ? shortDate(r.opened_at) : '—'}</td>
                       <td className="px-3 py-2 text-stone-700">{r.answered_at ? shortDate(r.answered_at) : late ? <span className="font-medium text-red-700">Past 3 business days{r.followup_task_id ? ', follow-up with Trevor' : ''}</span> : '—'}</td>
                       <td className="hidden px-3 py-2 text-stone-700 md:table-cell">{shipmentMethodLabel(r.method)}</td>
