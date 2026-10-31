@@ -192,7 +192,7 @@ function TheForm({ token, initial, onDone, preview = false }: { token: string; i
 
         <section className="rounded-2xl border border-stone-200 bg-white p-5">
           <h2 className="text-base font-semibold">Your freight quote</h2>
-          {isPallet ? <p className="mt-1 text-sm text-stone-700">Please quote delivery to Shaver Lake, CA 93664. We do not need a lift gate: we have a forklift and unload right off the back of the truck.</p> : null}
+          {isPallet ? <p className="mt-1 text-sm text-stone-700">Please quote delivery to Shaver Lake, CA 93664. We do not need a lift gate: we have a forklift.</p> : null}
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {field('Quote amount ($)', 'quote_amount', { required: true, inputMode: 'decimal', placeholder: '0.00' })}
             {field('Carrier the quote is from', 'carrier', { required: true, placeholder: isPallet ? 'e.g. Estes, XPO, Old Dominion' : 'e.g. UPS Ground, FedEx Ground' })}
