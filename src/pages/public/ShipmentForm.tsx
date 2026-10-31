@@ -38,7 +38,7 @@ export default function ShipmentFormPage() {
   return (
     <main className="min-h-screen bg-stone-50 px-4 py-8 text-stone-900">
       <div className="mx-auto max-w-2xl">
-        <img src="/brand/sls/email-logo.png" alt="Shaver Lake Sports" className="mb-6 h-12" />
+        <img src="/brand/sls/logo-horizontal.svg" alt="Shaver Lake Sports" className="mb-6 h-16" />
         {preview ? <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">Preview: this is what a vendor sees from the link in our email. Nothing you enter here is saved or sent.</p> : null}
         {error ? <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</p>
           : !shown ? <p className="text-sm text-stone-500">Loading…</p>
