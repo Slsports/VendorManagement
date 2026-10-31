@@ -41,7 +41,7 @@ export default function VendorConfirmFormPage() {
   return (
     <main className="min-h-dvh bg-stone-50 px-4 py-8">
       <div className="mx-auto max-w-2xl">
-        <img src="/brand/sls/email-logo@2x.png" alt="Shaver Lake Sports" width={240} height={31} className="mb-6 h-auto w-60" />
+        <img src="/brand/sls/logo-horizontal.svg" alt="Shaver Lake Sports" className="mb-6 h-16" />
         {error ? <p className="rounded-2xl border border-stone-200 bg-white p-6 text-stone-700">{error}</p>
           : done ? (
             <div className="rounded-2xl border border-stone-200 bg-white p-6">

@@ -22,7 +22,7 @@ export default function RoutingReceiptPage() {
   return (
     <main className="min-h-dvh bg-stone-50 px-4 py-10">
       <div className="mx-auto max-w-lg rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
-        <img src="/brand/sls/email-logo@2x.png" alt="Shaver Lake Sports" width={240} height={31} className="mb-6 h-auto w-60" />
+        <img src="/brand/sls/logo-horizontal.svg" alt="Shaver Lake Sports" className="mb-6 h-16" />
         {!r && !state.error ? <div className="flex justify-center py-6"><Spinner label="One moment…" className="text-brand" /></div> : null}
         {state.error ? <p className="text-stone-700">{state.error}</p> : null}
         {r ? (
