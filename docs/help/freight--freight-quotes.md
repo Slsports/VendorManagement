@@ -22,3 +22,5 @@ No order ships until its freight quote is approved. When a vendor emails a freig
 - Free-freight orders and web orders (like Kelli's) don't need a quote.
 - A quote can come from the shipment details form the vendor filled in (see "Shipment details and the freight quote from the vendor"); it shows the form's answers instead of an email.
 - When an invoice comes for an order with an approved quote, Claude checks the invoice's freight against it.
+- When you write to a vendor or routing company with a price you got yourself (for example "we got XPO for $1,043, we'll use them"), VMS reads it and approves the vendor's quote for that order at your price, so you don't have to click **Approve**. This works from orders@ and from Dana's own inbox. From Dana's inbox VMS keeps only the carrier and the amount.
+- A vendor's quote that comes to Dana's own inbox makes its task for Dana, not Trevor, because only she can open that email.

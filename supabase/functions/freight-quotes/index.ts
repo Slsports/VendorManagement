@@ -7,13 +7,15 @@
 //               with the vendor's open orders ("Sometimes the vendors screw up and dont use our po"; never "only one open
 //               order" alone) → none: the task asks "which order?" and Trevor picks
 //   4. save   — freight_quote_apply: the freight quote and "Get freight quote: <vendor>, PO <number>" due the next business day
+// Mail we send, and Dana's own inbox, are read too (Dana, Oct 30: "read quotes from my inbox too"): our email giving the
+// price we got or chose approves the vendor's quotes for that order at our price (freight_our_choice).
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, errorResponse, json, serviceClient } from '../_shared/caller.ts'
-import { aiEnabled, pickFreightOrder, readFreightQuote, type FreightQuoteReading } from '../_shared/ai.ts'
+import { aiEnabled, pickFreightOrder, readFreightQuote, readOurFreightChoice, type FreightQuoteReading } from '../_shared/ai.ts'
 
 const TIME_BUDGET_MS = 90_000
 
-interface Queued { email_id: string; thread_id: string | null; vendor_id: string | null; sender_kind: string | null; from_name: string | null; from_email: string | null; subject: string | null; body_text: string; received_at: string; attachments: string[] }
+interface Queued { email_id: string; thread_id: string | null; vendor_id: string | null; sender_kind: string | null; from_name: string | null; from_email: string | null; subject: string | null; body_text: string; received_at: string; attachments: string[]; direction: string; private: boolean }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
@@ -47,6 +49,7 @@ const norm = (s: string | null | undefined) => (s ?? '').toUpperCase().replace(/
 
 async function handle(db: SupabaseClient, org: string, q: Queued) {
   try {
+    if (q.direction === 'out') return await ours(db, org, q)
     const r = await readFreightQuote(db, org, { from: [q.from_name, q.from_email].filter(Boolean).join(' '), subject: q.subject, text: ownPart(q.body_text), attachments: q.attachments })
     if (!r?.is_quote) {
       await apply(db, q.email_id, false, null, null, null, null)
@@ -59,6 +62,25 @@ async function handle(db: SupabaseClient, org: string, q: Queued) {
   } catch (e) {
     return { email: q.email_id, error: e instanceof Error ? e.message : String(e) }
   }
+}
+
+/** Our own email: the price we got or chose, tied to its order like a vendor's quote; only the carrier and amount are kept. */
+async function ours(db: SupabaseClient, org: string, q: Queued) {
+  const r = await readOurFreightChoice(db, org, { from: q.from_email ?? '', subject: q.subject, text: ownPart(q.body_text) })
+  if (!r?.states_our_price || !r.cost) {
+    await apply(db, q.email_id, false, null, null, null, null)
+    return { email: q.email_id, ours: false }
+  }
+  const reading: FreightQuoteReading = {
+    is_quote: true, vendor_name: r.vendor_name || null, po_numbers: r.po_numbers, vendor_numbers: r.vendor_numbers, carrier: r.carrier || null, service: null,
+    cost: r.cost, transit: null, ships_by: null, merchandise_total: null, item_hints: [],
+    details: { ship_from: null, ship_from_zip: null, pickup_type: null, ready_date: null, pickup_hours: null, contact: null, cartons: [], pallets: [], total_weight: null, value: null, hazardous: null, notes: null },
+  }
+  const vendorId = q.vendor_id ?? await vendorFor(db, org, reading)
+  const { order } = await orderFor(db, org, q, reading, vendorId)
+  const { data, error } = await db.rpc('freight_our_choice', { p_email: q.email_id, p_carrier: r.carrier || null, p_cost: r.cost, p_vendor: vendorId, p_order: order })
+  if (error) throw new Error(error.message)
+  return { email: q.email_id, ours: data, order }
 }
 
 async function apply(db: SupabaseClient, email: string, isQuote: boolean, r: FreightQuoteReading | null, vendor: string | null, order: string | null, how: string | null) {

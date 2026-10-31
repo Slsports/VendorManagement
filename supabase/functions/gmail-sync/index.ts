@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
   }
 
   // the picture back-check (Dana, Oct 15), run by hand from the scheduler's secret
-  const body = await req.clone().json().catch(() => ({})) as { pictures_backcheck?: boolean; proofs_backcheck?: boolean; forwards_backcheck?: boolean; asks_backcheck?: boolean; diagnose?: string; message?: string; attachment?: string }
+  const body = await req.clone().json().catch(() => ({})) as { pictures_backcheck?: boolean; proofs_backcheck?: boolean; forwards_backcheck?: boolean; asks_backcheck?: boolean; diagnose?: string; message?: string; attachment?: string; file_attachment?: { attachment: string; vendor_id: string; kind: string; order_id?: string } }
   // Read-only look at one mailbox's Gmail changes since its stored cursor (Oct 19, billing@ stuck since Oct 16): pages,
   // added and relabeled counts, time taken, and one message fetched three ways. Scheduler secret only; changes nothing.
   // Read-only: one stored attachment's bytes (base64), to look at a new kind of paperwork before building for it.
@@ -69,6 +69,34 @@ Deno.serve(async (req) => {
     let bin = ''
     for (const b of bytes) bin += String.fromCharCode(b)
     return json({ file_name: a.file_name, size: bytes.length, base64: btoa(bin) })
+  }
+  // File one stored attachment into a vendor's folder (a fix or back-check run by hand with the scheduler's secret, Oct 30:
+  // Becker's show order spreadsheets had been filed under the rep agency). A copy already on file is linked, never saved twice.
+  if (trusted && body.file_attachment) {
+    const f = body.file_attachment
+    const { data: a } = await db.from('email_attachments').select('id, email_id, file_name, mime_type, gmail_attachment_id, vendor_link_id, email:emails!email_attachments_email_id_fkey(gmail_id, gmail_box, received_at)').eq('id', f.attachment).maybeSingle()
+    const em = a?.email as unknown as { gmail_id: string; gmail_box: string | null; received_at: string } | null
+    const { data: v } = await db.from('vendors').select('id, organization_id').eq('id', f.vendor_id).maybeSingle()
+    if (!a?.gmail_attachment_id || !em?.gmail_box || !v) return json({ error: 'no such attachment or vendor' }, 404)
+    if (a.vendor_link_id) return json({ vendor_link_id: a.vendor_link_id, already: true })
+    const bytes = await attachmentBytes(new Gmail(await googleAccessToken(em.gmail_box)), em.gmail_id, a.gmail_attachment_id)
+    const { data: same } = await db.from('vendor_links').select('id, storage_path').eq('vendor_id', v.id).eq('file_size', bytes.length)
+      .ilike('file_name', a.file_name.replace(/[%_\\]/g, (c: string) => `\\${c}`)).not('storage_path', 'is', null).limit(1)
+    let linkId = same?.[0]?.id as string | undefined
+    let path = same?.[0]?.storage_path as string | undefined
+    if (!linkId) {
+      path = `${v.organization_id}/${v.id}/${crypto.randomUUID()}-${a.file_name.replace(/[^A-Za-z0-9._-]+/g, '_')}`
+      const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: a.mime_type ?? 'application/octet-stream', upsert: false })
+      if (upErr) return json({ error: `Saving the file failed: ${upErr.message}` }, 500)
+      const { data: link, error: linkErr } = await db.from('vendor_links').insert({
+        organization_id: v.organization_id, vendor_id: v.id, kind: f.kind, label: a.file_name.replace(/\.[a-z0-9]{2,5}$/i, ''), storage_path: path, file_name: a.file_name,
+        file_size: bytes.length, mime_type: a.mime_type, received_at: em.received_at.slice(0, 10), source: 'email', email_id: a.email_id, order_id: f.order_id ?? null,
+      }).select('id').single()
+      if (linkErr || !link) return json({ error: `Saving the file failed: ${linkErr?.message}` }, 500)
+      linkId = link.id
+    }
+    await db.from('email_attachments').update({ storage_path: path, vendor_link_id: linkId }).eq('id', a.id)
+    return json({ vendor_link_id: linkId, already: !!same?.[0] })
   }
   if (trusted && body.diagnose) {
     const t0 = Date.now()
