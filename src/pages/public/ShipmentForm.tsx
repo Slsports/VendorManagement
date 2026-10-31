@@ -85,6 +85,7 @@ function TheForm({ token, initial, onDone, preview = false }: { token: string; i
     if (!f.contact_name.trim() || (!f.contact_email.trim() && !f.contact_phone.trim())) { setErr('Please give a pickup contact with an email or phone.'); return }
     if (items.some((i) => !i.weight.trim())) { setErr(`Please give the weight of each ${unit}.`); return }
     if (!f.quote_amount.trim()) { setErr('Please give your freight quote.'); return }
+    if (!f.carrier.trim()) { setErr('Please tell us which carrier the quote is from.'); return }
     if (preview) { setErr('This is a preview: nothing is sent.'); return }
     setBusy(true)
     try {
@@ -193,7 +194,7 @@ function TheForm({ token, initial, onDone, preview = false }: { token: string; i
           <h2 className="text-base font-semibold">Your freight quote</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {field('Quote amount ($)', 'quote_amount', { required: true, inputMode: 'decimal', placeholder: '0.00' })}
-            {field('Carrier you would use (optional)', 'carrier')}
+            {field('Carrier the quote is from', 'carrier', { required: true, placeholder: isPallet ? 'e.g. Estes, XPO, Old Dominion' : 'e.g. UPS Ground, FedEx Ground' })}
           </div>
           <div className="mt-3"><FormField label="Anything else we should know" htmlFor="sf-notes"><Textarea id="sf-notes" rows={3} value={f.notes} onChange={(e) => set('notes', e.target.value)} /></FormField></div>
         </section>
