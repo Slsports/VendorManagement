@@ -24,3 +24,4 @@ No order ships until its freight quote is approved. When a vendor emails a freig
 - When an invoice comes for an order with an approved quote, Claude checks the invoice's freight against it.
 - When you write to a vendor or routing company with a price you got yourself (for example "we got XPO for $1,043, we'll use them"), VMS reads it and approves the vendor's quote for that order at your price, so you don't have to click **Approve**. This works from orders@ and from Dana's own inbox. From Dana's inbox VMS keeps only the carrier and the amount.
 - A vendor's quote that comes to Dana's own inbox makes its task for Dana, not Trevor, because only she can open that email.
+- A PO that's one character off (like "WFS24236" for our WFS2426) still finds the order, but only when that vendor has no other order that close.
