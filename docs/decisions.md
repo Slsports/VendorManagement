@@ -3453,3 +3453,13 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   to its packages). Fixed: those lines now hold only their own package and every bill's lines equal its total (checked
   across all freight bills). Migration 0283: a re-read never adds a shipment already confirmed (same shipper and ship
   date), the other packages of a confirmed shipment follow it to its order, and "INV.# 32962" matches order 32962.
+- Nov 2 (Dana): "Why didn't that fix Coyote?? I found an email from Coyote … tracking # 1z546 070 03 4393 8112" and "The
+  invoice attached to that email had the po in it that matches Hotshow2-1-26 … Please check all the ones you had me looking
+  up and give me anything that still has no match." Why: the tracking was written with spaces and the email itself was not
+  tied to an order (its attached invoice 169580 shows P.O. HOTSHOW2-1-26). Done: Coyote → HOTSHOW2-1-26 (invoice 169580 now
+  filed on the order); Cal Mango → CALMANGO-2-12-2 (bill ref #48571 is their invoice 48571 on that order); Hot Fashions →
+  B671840 (invoice 8806 dated the ship day); West End Express / Bluestone → BLUESTONE2526 (invoice 10000008 dated the ship
+  day; her Bill.com note); Joy Linens Sep 10 → 44882 (invoice 44882 dated the ship day). Built (migration 0284): these
+  proofs run on every bill (tracking however spaced in the vendor's own email and its attached papers; a reference that is
+  the vendor's invoice number; the vendor's one invoice dated the ship day). Left for her: Nationwide Sep 2 (PS00623603,
+  $36.17) and the 2022 FedEx bill AB14315420.
