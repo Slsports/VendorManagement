@@ -87,6 +87,12 @@ with a back-check that re-applies the new rule to everything already filed, for 
 Never save a second copy: link to the file on file (`linkExistingCopy` in gmail-sync, the same check in gmail-read and
 uploads); `vendor_links_dedupe()` merges any that slip in (hourly cron).
 
+## Newer email wins (Nov 2)
+Dana: "Newer email should win throughout VMS - that would apply to orders and confirmations also." When a later email about
+the same thing (order/PO, confirmation, invoice, freight bill, policy or account number including old numbers) says it was
+cancelled, a duplicate, paid, replaced, renumbered or changed, VMS updates the earlier record itself with a link to that
+email and closes its tasks (done_note); it asks Dana only when the newer email is unclear. Every new mail reader follows this.
+
 ## Contacts: former vs. misfiled (Oct 22)
 "Former" (former_at) is only for a real rep or vendor person who no longer works there; former contacts never file mail
 or match senders. A contact that was filed in the wrong place is deleted when it is moved, never kept as former.

@@ -3513,3 +3513,10 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   year notes the earlier COM 0300848608 00. Not yet confirmed: what COM 0300366534 (Shelly's "25-26" file and the CVCB
   evidence of insurance) is; the guide does not list it. accounting-file takes a trusted upload (in pieces) so a file Dana
   hands to Claude can be filed from a cloud session.
+- Nov 2 (Dana): "Any newer emails would override something from the month before … VMS should not be flagging it, they
+  should be filing it" … "Newer email should win throughout VMS - that would apply to orders and confirmations also."
+  Rule: when a later email about the same thing (policy or account number, old numbers included; order or PO; invoice;
+  freight bill) says it was cancelled, a duplicate, paid, replaced, renumbered or changed, VMS updates the earlier record
+  itself, with a link to the email that said so, closes any task it made with a done_note, and files instead of flagging.
+  Dana is asked only when the newer email does not make it clear. Found: Accounting reads each email's papers alone (the
+  $4,077 duplicate Cal Fair invoice sat in Needs a look though Hub cancelled it a month later). Build waiting for go.
