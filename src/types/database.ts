@@ -595,9 +595,9 @@ export type Database = {
         Relationships: []
       }
       accounting_policy_terms: {
-        Row: { id: string; organization_id: string; policy_id: string; term_label: string; premium: number | null; paid_on: string | null; paid_from: string; received_at: string | null; document_id: string | null; notes: string; created_at: string; updated_at: string }
-        Insert: { id?: string; organization_id: string; policy_id: string; term_label: string; premium?: number | null; paid_on?: string | null; paid_from?: string; received_at?: string | null; document_id?: string | null; notes?: string; created_at?: string; updated_at?: string }
-        Update: { id?: string; organization_id?: string; policy_id?: string; term_label?: string; premium?: number | null; paid_on?: string | null; paid_from?: string; received_at?: string | null; document_id?: string | null; notes?: string; created_at?: string; updated_at?: string }
+        Row: { id: string; organization_id: string; policy_id: string; term_label: string; premium: number | null; paid_on: string | null; paid_from: string; received_at: string | null; document_id: string | null; notes: string; created_at: string; updated_at: string; paid_amount: number | null; paid_email_id: string | null }
+        Insert: { id?: string; organization_id: string; policy_id: string; term_label: string; premium?: number | null; paid_on?: string | null; paid_from?: string; received_at?: string | null; document_id?: string | null; notes?: string; created_at?: string; updated_at?: string; paid_amount?: number | null; paid_email_id?: string | null }
+        Update: { id?: string; organization_id?: string; policy_id?: string; term_label?: string; premium?: number | null; paid_on?: string | null; paid_from?: string; received_at?: string | null; document_id?: string | null; notes?: string; created_at?: string; updated_at?: string; paid_amount?: number | null; paid_email_id?: string | null }
         Relationships: [{ foreignKeyName: 'accounting_policy_terms_policy_id_fkey'; columns: ['policy_id']; isOneToOne: false; referencedRelation: 'accounting_policies'; referencedColumns: ['id'] }]
       }
       accounting_policy_recipients: {

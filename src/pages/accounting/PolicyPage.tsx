@@ -96,7 +96,10 @@ export default function PolicyPage() {
               <tr key={t.id}>
                 <td className="px-4 py-2 font-medium text-stone-900">{t.term_label}</td>
                 <td className="px-4 py-2 text-right text-stone-800">{money(t.premium)}</td>
-                <td className="px-4 py-2 text-stone-700">{t.paid_on ? new Date(`${t.paid_on}T00:00:00`).toLocaleDateString() : <span className="text-stone-400">not yet</span>}</td>
+                <td className="px-4 py-2 text-stone-700">
+                  {t.paid_on ? new Date(`${t.paid_on}T00:00:00`).toLocaleDateString() : <span className="text-stone-400">not yet</span>}
+                  {t.paid_amount != null ? <span className="block text-xs text-stone-500">{money(t.paid_amount)}{t.paid_email?.thread_id ? <> · <Link to={`/mail/${t.paid_email.thread_id}`} className="text-brand hover:underline">the payment email</Link></> : null}</span> : null}
+                </td>
                 <td className="px-4 py-2 text-stone-700">{t.paid_from}</td>
                 <td className="px-4 py-2 text-stone-700">{t.received_at ? `received ${new Date(t.received_at).toLocaleDateString()}` : <span className="text-stone-400">—</span>}</td>
                 <td className="px-4 py-2 text-right">

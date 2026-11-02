@@ -119,6 +119,8 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   if (kind === 'vmscmd' && t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the email to send' }
   // Accounting (Dana, Oct 16): renewals open the policy, proof sends open the recipient with the email ready
   if (kind === 'policy_renewal' && id) return { kind: 'page', to: `/accounting/insurance/${id}`, label: 'Open the policy' }
+  // an insurer's bill (Dana, Nov 2): the bill email itself
+  if (kind === 'policy_bill' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open the bill' }
   if (kind === 'policy_send' && t.recipient_id) return { kind: 'page', to: `/accounting/insurance/who/${t.recipient_id}?send=${t.policy_id ?? ''}`, label: 'Send it' }
   if ((kind === 'contract_payment' || kind === 'contract_renewal' || kind === 'contract_followup') && t.contract_id) return { kind: 'page', to: `/accounting/contracts/${t.contract_id}`, label: kind === 'contract_payment' ? 'Open the contract to mark it paid' : 'Open the contract' }
   if (t.contract_id) return { kind: 'page', to: `/accounting/contracts/${t.contract_id}`, label: 'Open the contract' }

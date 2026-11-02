@@ -10,7 +10,7 @@ Some companies must get our policies every year: the lender on the commercial lo
 1. Click **Accounting** in the menu, then **Insurance**, then the **Who needs proof** tab.
 2. **Find requesters in the mail** looks through billing@ for people who asked for a certificate or proof of insurance and lists them as **To confirm**. Open one, tick **Which policies** they need, say why, and save as **Confirmed**. ✓ confirms, ✕ ignores.
 3. **Add someone** adds a person by hand: company, person, email, which policies, and whether they need it at renewal or by a date each year.
-4. When a policy's paper arrives, click **Policy received** on the policy. Each confirmed person who needs it gets a task "Send … to …", due in a week.
+4. When a policy's paper arrives, click **Policy received** on the policy (or let VMS do it: when the new policy paper is filed to the policy under **Documents**, the tasks come on their own; old papers filed later never make one). Each confirmed person who needs it gets a task "Send … to …", due in a week.
 5. Click the task. It opens the person with the email ready: right address, the policy attached if it is on file, standard wording, from billing@. Click **Send**. VMS logs the date and policy year and closes the task.
 6. If Hub International sent it instead, click **Hub sent it** and enter the date.
 

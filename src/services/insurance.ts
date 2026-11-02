@@ -5,11 +5,11 @@ import type { TablesInsert, TablesUpdate } from '@/types/database'
 // ---- policies ------------------------------------------------------------------------------------------------------
 
 export interface PolicyRow extends AccountingPolicy {
-  terms: AccountingPolicyTerm[]
+  terms: (AccountingPolicyTerm & { paid_email?: { thread_id: string } | null })[]
   agent: { id: string; company: string; person: string } | null
 }
 
-const POLICY_SELECT = '*, terms:accounting_policy_terms(*), agent:accounting_contacts!accounting_policies_agent_contact_id_fkey(id, company, person)'
+const POLICY_SELECT = '*, terms:accounting_policy_terms(*, paid_email:emails!accounting_policy_terms_paid_email_id_fkey(thread_id)), agent:accounting_contacts!accounting_policies_agent_contact_id_fkey(id, company, person)'
 
 /** The insurance tracker (Dana, Oct 16): every policy with its years, renewal first. */
 export async function listPolicies(organizationId: string, includeInactive = false): Promise<PolicyRow[]> {
