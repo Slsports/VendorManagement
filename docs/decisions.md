@@ -3496,3 +3496,10 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   eight months when the items agree; back-check found 1 more pair (Royal Deluxe INV 802289 entered twice, a review card).
   The freight order dropdown hides cancelled copies and groups orders: placed before it shipped, after, a year or more before.
   The 11 orders made from emails in the Oct 13-16 back-fill were checked: only Bearpaw's had the resend date.
+- Nov 2 (Dana): "Did vms see the email from Shelly at Hub with the policies we were missing?" … "go". Found: Shelly's
+  Nov 2 email had two policies; the 2026-27 CGL (OMO4815073) was filed, the 2026-27 umbrella (CUMB, 6.5 MB) was dropped
+  "file not shown" because VMS only showed Claude files up to 5 MB and let Claude skip a file it never saw. Now: a PDF
+  over 5 MB is read by its first pages (up to 3) and the whole PDF is filed; PDFs up to 30 MB are kept (other files 15 MB);
+  a file Claude could not see is never left in the email, it goes to Needs a look; a big file is noted before reading so a
+  run that runs out of memory is not repeated. Back-check: every billing@ file over 5 MB that was left in its email for a
+  reason Claude gave (or as too big) is read again.

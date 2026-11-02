@@ -1,6 +1,7 @@
 // Shared by accounting-file (billing@ attachments, the drop box) and dropbox (Dana's Dropbox): how a bookkeeping paper
 // becomes an Accounting document (Category / Party / Year, named by the convention). Deno only.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
+import { PDFDocument } from 'npm:pdf-lib@1.17.1'
 import { sheetFileText } from './sheetFile.ts'
 import { ACCOUNTING_CATEGORIES, ACCOUNTING_KINDS, imageType, type AccountingChoiceReading, type AccountingFileCtx, type AccountingPaperReading, type PaperFile } from './ai.ts'
 
@@ -10,6 +11,10 @@ export const ACCOUNTING_BUCKET = 'accounting-files'
 export const MAX_READ_BYTES = 5 * 1024 * 1024
 export const MAX_CALL_BYTES = 12 * 1024 * 1024
 export const MAX_KEEP_BYTES = 15 * 1024 * 1024
+// A PDF over 5 MB is shown to Claude by its first pages (the declarations page of a policy; Dana, Nov 2: the Hub umbrella
+// policy was 6.5 MB and was dropped unseen), and PDFs up to 30 MB are kept.
+export const MAX_KEEP_PDF_BYTES = 30 * 1024 * 1024
+const FIRST_PAGES = 3
 
 export const PICTURE = /\.(png|jpe?g|gif|webp|bmp|tiff?|heic)$/i
 export const JUNK = /\.(ics|vcf|p7s|zip|html?|eml|txt|rtf|json|xml|asc|sig|gz|rar)$/i
@@ -39,7 +44,29 @@ export async function paperFile(name: string, mime: string | null, bytes: Uint8A
   const isPdf = /pdf/i.test(kind) || /\.pdf$/i.test(name)
   const img = !isPdf && imageType(bytes)
   if ((isPdf || img) && bytes.length <= MAX_READ_BYTES) return { name, mime: isPdf ? 'application/pdf' : img || kind, bytes }
+  if (isPdf) {
+    const first = await firstPages(bytes)
+    if (first) return { name, mime: 'application/pdf', bytes: first.bytes, shown: first.shown }
+  }
   return { name, mime: kind, bytes: new Uint8Array() }
+}
+
+/** A big PDF's first pages as a small PDF Claude can read (fewer pages until it fits), or null when it can't be done. */
+export async function firstPages(bytes: Uint8Array): Promise<{ bytes: Uint8Array; shown: string } | null> {
+  try {
+    const src = await PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false })
+    const total = src.getPageCount()
+    for (let n = Math.min(FIRST_PAGES, total); n >= 1; n--) {
+      const part = await PDFDocument.create()
+      const copied = await part.copyPages(src, Array.from({ length: n }, (_, i) => i))
+      copied.forEach((p) => part.addPage(p))
+      const out = await part.save()
+      if (out.length <= MAX_READ_BYTES) return { bytes: out, shown: n === 1 ? `the first page of ${total}` : `the first ${n} pages of ${total}` }
+    }
+  } catch (e) {
+    console.error('firstPages:', e instanceof Error ? e.message : e)
+  }
+  return null
 }
 
 /** What Claude is told about the business's own records, so parties, policies and contracts come out consistent. */

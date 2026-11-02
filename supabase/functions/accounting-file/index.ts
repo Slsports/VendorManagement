@@ -11,7 +11,7 @@
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { Gmail, GMAIL_SCOPES, googleAccessToken } from '../_shared/gmail.ts'
 import { aiEnabled, askAccountingQuestions, readAccountingPapers, type AccountingFileCtx, type AccountingPaperReading, type PaperFile } from '../_shared/ai.ts'
-import { ACCOUNTING_BUCKET as BUCKET, DOC, JUNK, MAX_CALL_BYTES, MAX_KEEP_BYTES, PICTURE, SHEET, cleanChoices, cleanReading, extOf, knownContext, paperFile, rowFromReading, sha256 } from '../_shared/accountingFiling.ts'
+import { ACCOUNTING_BUCKET as BUCKET, DOC, JUNK, MAX_CALL_BYTES, MAX_KEEP_BYTES, MAX_KEEP_PDF_BYTES, MAX_READ_BYTES, PICTURE, SHEET, cleanChoices, cleanReading, extOf, knownContext, paperFile, rowFromReading, sha256 } from '../_shared/accountingFiling.ts'
 
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-cron-secret', 'Access-Control-Allow-Methods': 'POST, OPTIONS' }
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', ...CORS } })
@@ -158,10 +158,12 @@ async function loadMail(db: SupabaseClient, id: string): Promise<Mail | null> {
 
 /** Why an attachment is left in the email before any reading; null when Claude should look at it. */
 function preSkip(a: Att, mail: Mail, force: boolean): string | null {
-  if (force) return null
-  if ((a.size ?? 0) > MAX_KEEP_BYTES) return 'too big to keep (over 15 MB)'
-  if (mail.is_bulk) return 'bulk mail'
   const name = a.file_name
+  const pdf = /\.pdf$/i.test(name) || /pdf/i.test(a.mime_type ?? '')
+  // a PDF up to 30 MB is kept and read by its first pages; anything else over 15 MB stays in the email (even "File in Accounting")
+  if ((a.size ?? 0) > (pdf ? MAX_KEEP_PDF_BYTES : MAX_KEEP_BYTES)) return pdf ? 'too big to keep (over 30 MB)' : 'too big to keep (over 15 MB)'
+  if (force) return null
+  if (mail.is_bulk) return 'bulk mail'
   const pic = /^image\//i.test(a.mime_type ?? '') || PICTURE.test(name)
   if (pic && (a.size ?? 0) < 400 * 1024) return 'picture'
   if (JUNK.test(name) || /^text\/calendar|^application\/pkcs7|^application\/zip|^message\//i.test(a.mime_type ?? '')) return 'not a document'
@@ -200,6 +202,12 @@ async function fileMail(db: SupabaseClient, mail: Mail, opts: { only?: string; f
         continue
       }
       if (!a.gmail_attachment_id) throw new Error('not available from Gmail')
+      if ((a.size ?? 0) > MAX_READ_BYTES) {
+        // a big file can run the worker out of memory: say so first and stamp the email, so a run that dies is not repeated
+        // every minute; a finished reading replaces the note
+        await db.from('email_attachments').update({ accounting_skip: 'error: this big file did not finish reading; press File in Accounting to try again' }).eq('id', a.id)
+        if (!opts.only) await db.from('emails').update({ accounting_filed_at: new Date().toISOString() }).eq('id', mail.id)
+      }
       gmail ??= new Gmail(await googleAccessToken(mail.gmail_box ?? ''))
       const bytes = await attachmentBytes(gmail, mail.gmail_id, a.gmail_attachment_id)
       const sha = await sha256(bytes)
@@ -221,18 +229,22 @@ async function fileMail(db: SupabaseClient, mail: Mail, opts: { only?: string; f
     const known = await knownContext(db, org)
     const ctx: AccountingFileCtx = { from: mail.from_email, from_name: mail.from_name, direction: mail.direction, subject: mail.subject, received_on: mail.received_at.slice(0, 10), email_text: mail.body_text, contact: contact ? { company: contact.company, category: contact.category } : null, ...known }
     try {
-      // a few files per call; a long email is read in rounds
-      for (let i = 0; i < toRead.length; i += 6) {
-        const batch = toRead.slice(i, i + 6)
-        // keep the call within the worker's memory: past the budget, files go by name only
-        let budget = MAX_CALL_BYTES
-        for (const b of batch) { if (b.file.bytes.length > budget) b.file = { ...b.file, bytes: new Uint8Array(), text: undefined }; else budget -= b.file.bytes.length }
+      // a few files per call, at most 12 MB of them; a long email is read in rounds
+      const batches: (typeof toRead)[] = []
+      for (const b of toRead) {
+        const last = batches[batches.length - 1]
+        const used = last ? last.reduce((n, x) => n + x.file.bytes.length, 0) : 0
+        if (last && last.length < 6 && used + b.file.bytes.length <= MAX_CALL_BYTES) last.push(b); else batches.push([b])
+      }
+      for (const batch of batches) {
         let readings: AccountingPaperReading[]
+        let blind = false
         try {
           readings = await readAccountingPapers(db, org, ctx, batch.map((b) => b.file))
         } catch (err) {
           // a PDF Claude cannot open (damaged, odd encoding): read the email and the names instead, and say so
           if (!/PDF specified was not valid|could not process/i.test(err instanceof Error ? err.message : String(err))) throw err
+          blind = true
           readings = (await readAccountingPapers(db, org, ctx, batch.map((b) => ({ ...b.file, bytes: new Uint8Array(), text: undefined }))))
             .map((r) => ({ ...r, sure: false, note: `${r.note ? `${r.note} ` : ''}The file itself could not be opened by Claude; filed by its name and the email.`.trim() }))
         }
@@ -241,7 +253,10 @@ async function fileMail(db: SupabaseClient, mail: Mail, opts: { only?: string; f
           const raw = readings.find((r) => r.file === j + 1)
           try {
             if (!raw) throw new Error('Claude gave no answer for this file')
-            const r = cleanReading(raw, known, Number(mail.received_at.slice(0, 4)))
+            let r = cleanReading(raw, known, Number(mail.received_at.slice(0, 4)))
+            // a file Claude never saw is never dropped (Dana, Nov 2): it is kept for Dana to look at
+            const unseen = blind || (!b.file.bytes.length && !b.file.text)
+            if (!r.keep && unseen) r = { ...r, keep: true, sure: false, note: `Claude could not see this file, only its name and the email (it thought: ${r.skip_reason || 'not a paper to keep'}). Kept for you to look at.` }
             if (!r.keep && !opts.force) {
               const why = (r.skip_reason || 'not a paper to keep').slice(0, 120)
               await db.from('email_attachments').update({ accounting_skip: why }).eq('id', b.a.id)
