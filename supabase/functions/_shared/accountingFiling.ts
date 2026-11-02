@@ -12,8 +12,9 @@ export const MAX_READ_BYTES = 5 * 1024 * 1024
 export const MAX_CALL_BYTES = 12 * 1024 * 1024
 export const MAX_KEEP_BYTES = 15 * 1024 * 1024
 // A PDF over 5 MB is shown to Claude by its first pages (the declarations page of a policy; Dana, Nov 2: the Hub umbrella
-// policy was 6.5 MB and was dropped unseen), and PDFs up to 30 MB are kept.
-export const MAX_KEEP_PDF_BYTES = 30 * 1024 * 1024
+// policy was 6.5 MB and was dropped unseen), and PDFs up to 14 MB are kept. Bigger ones ran the worker out of memory in the
+// Nov 2 back-check (16-25 MB failed every time, one at a time), so they stay in their email with that reason.
+export const MAX_KEEP_PDF_BYTES = 14 * 1024 * 1024
 const FIRST_PAGES = 3
 
 export const PICTURE = /\.(png|jpe?g|gif|webp|bmp|tiff?|heic)$/i

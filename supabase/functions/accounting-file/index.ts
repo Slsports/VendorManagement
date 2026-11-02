@@ -160,8 +160,8 @@ async function loadMail(db: SupabaseClient, id: string): Promise<Mail | null> {
 function preSkip(a: Att, mail: Mail, force: boolean): string | null {
   const name = a.file_name
   const pdf = /\.pdf$/i.test(name) || /pdf/i.test(a.mime_type ?? '')
-  // a PDF up to 30 MB is kept and read by its first pages; anything else over 15 MB stays in the email (even "File in Accounting")
-  if ((a.size ?? 0) > (pdf ? MAX_KEEP_PDF_BYTES : MAX_KEEP_BYTES)) return pdf ? 'too big to keep (over 30 MB)' : 'too big to keep (over 15 MB)'
+  // a PDF up to 14 MB is kept and read by its first pages; anything else over 15 MB stays in the email (even "File in Accounting")
+  if ((a.size ?? 0) > (pdf ? MAX_KEEP_PDF_BYTES : MAX_KEEP_BYTES)) return pdf ? 'too big for VMS to read (over 14 MB)' : 'too big to keep (over 15 MB)'
   if (force) return null
   if (mail.is_bulk) return 'bulk mail'
   const pic = /^image\//i.test(a.mime_type ?? '') || PICTURE.test(name)
