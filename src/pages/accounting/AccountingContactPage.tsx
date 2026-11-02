@@ -107,7 +107,7 @@ function ContactForm({ organizationId, contactId, contact, addresses, confirming
   onSaved: (id: string) => Promise<void>; onCancel: () => void
 }) {
   const [form, setForm] = useState<ContactInput>(() => contact
-    ? { company: contact.company, person: contact.person, role: contact.role, category: contact.category, phones: contact.phones, notes: contact.notes, status: contact.status === 'proposed' && confirming ? 'confirmed' : contact.status, addresses: addresses.map((a) => a.address), filing: contact.filing, filing_note: contact.filing_note }
+    ? { company: contact.company, person: contact.person, role: contact.role, category: contact.category, phones: contact.phones, notes: contact.notes, status: contact.status === 'proposed' && confirming ? 'confirmed' : contact.status, addresses: addresses.map((a) => a.address), filing: contact.filing, filing_note: contact.filing_note, quiet: contact.quiet }
     : EMPTY)
   const [addrText, setAddrText] = useState(() => addresses.map((a) => a.address).join('\n'))
   const [phoneText, setPhoneText] = useState(() => (contact?.phones ?? []).join('\n'))
@@ -144,6 +144,7 @@ function ContactForm({ organizationId, contactId, contact, addresses, confirming
             {ACCOUNTING_CATEGORIES.map((k) => <option key={k} value={k}>{ACCOUNTING_CATEGORY_LABELS[k]}</option>)}
           </Select>
         </FormField>
+        <label className="flex items-center gap-2 self-end pb-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={!!form.quiet} onChange={(e) => setForm({ ...form, quiet: e.target.checked })} /> Only tell me about deadlines (their mail files as Handled)</label>
         <FormField label="Email addresses" htmlFor="c-addresses" hint="One per line. A bare company domain (mbsaccountancy.com) means everyone there.">
           <Textarea id="c-addresses" rows={4} value={addrText} onChange={(e) => setAddrText(e.target.value)} />
         </FormField>

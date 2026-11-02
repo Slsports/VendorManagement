@@ -15,6 +15,7 @@ Accounting contacts are the people and companies in the billing@ mail: the accou
 
 ## Good to know
 - The category sorts their mail under Accounting → Mail and, later, decides where their documents are filed.
+- **Only tell me about deadlines** files all their mail as Handled and makes a task only for a deadline you have to meet (Paychex, Blue Shield).
 - Same person or company twice? On one card, pick the other under **Same person or company twice?** and click **Merge**. Emails, conversations and counts move over.
 - Ignored contacts stay under **Ignored** and can be brought back. Newsletters and one-off senders are never proposed.
 - When you change a contact's email addresses, every billing@ conversation is matched again, old mail included.

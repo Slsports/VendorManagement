@@ -3407,3 +3407,16 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   task 30 days ahead. Repeating autopays (autopay_schedules): Drive every 6 months, Markel and Hub yearly, IRS Jan/Jun/Sep
   and FTB Jan/Jun estimates, reminded 5 days ahead; an email for one updates that task. Starlink, Midvalley Disposal and
   Keith Garcia never make autopay tasks.
+- Nov 2 (Dana): insurance answers and quiet Paychex / Blue Shield mail. Dana: "I believe Orion180 replaced both for SJ&E";
+  "41777 Tollhouse for the SLS Building which is owned by P&S"; "the bank does have an interest in our personal property on
+  Aunt Julia too so I guess that one should go to them too but they never ask us for it"; "We sold our boat to SLSI so its
+  not on our personal insurance anymore"; "I need Blue Shield as an accounting company contact and all their emails should
+  be filed with them. Same with Paychex … I don't want vms to notify me unless they are telling me about some deadline for
+  something I have to do"; Zurich EPD-PayChex: "Paychex"; "go". Built (migration 0280, function quiet-mail): from Hub's
+  2026-27 certificate pack, liability OMO4815073 and umbrella XLO004815073 (National Casualty; Hub's Aug 14 autopay
+  $62,560 + $16,993), workers' comp WCC332560A, Travelers auto BA1R5085172242G, pollution PPK2309059-002 (Tokio Marine);
+  SJ&E Road's Orion180 home policy OICDPCA_01809203 added, Cal Fair and Steadily SJ&E retired; Community West Bank needs the
+  SLS building (Cal Fair + P&S DIC), liability, umbrella, WC, auto, pollution and 35775 Aunt Julia; boat papers back to
+  business insurance. Paychex (with Mid Atlantic 401(k), Mineral, Paychex Flex, surveys, webinars, Zurich EPD) and Blue
+  Shield of California are one contact each, quiet: their mail files as Handled, Claude makes a task only for a deadline
+  she must meet; back-check: waiting conversations to Handled, the last 90 days read for deadlines.
