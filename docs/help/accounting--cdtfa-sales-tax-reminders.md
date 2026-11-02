@@ -1,7 +1,7 @@
 ---
 title: CDTFA sales tax reminders
 section: Accounting
-keywords: CDTFA, sales tax, prepayment, quarterly return, 24th, end of month, payment confirmation, filing confirmation, reminders weekly
+keywords: Nawal, MBS, send the return, CDTFA, sales tax, prepayment, quarterly return, 24th, end of month, payment confirmation, filing confirmation, reminders weekly
 who: Accounting
 ---
 VMS keeps the sales tax rhythm for you. Prepayments for the first two months of a quarter are due by the 24th of the following month; the third month's payment and the quarterly return are due by the end of the following month.
@@ -18,6 +18,7 @@ VMS keeps the sales tax rhythm for you. Prepayments for the first two months of 
 - It reminds you weekly, again 3 days before the due date, and on the due date, by dashboard, email or text.
 - CDTFA's own confirmation emails to billing@ close it: a prepayment task closes on the **Payment Confirmation**; the quarter task closes only when both the **Payment Confirmation** and the **Filing Confirmation** for that period have arrived. The task's note says which confirmation numbers VMS saw.
 - You can also tick a task done yourself.
+- The day after the quarter task closes on both confirmations, you get a task at 9 AM: **Send the Q3 2026 sales tax return to Nawal (MBS)**. Click it to open the email VMS already wrote to Nawal from billing@. Log in to CDTFA, download the completed return (it is there the day after filing), attach it with **Attach a file** and click **Send**. Sending it closes the task.
 
 ## Good to know
 - The due dates stay on the 24th and the month-end whatever day of the week they fall on; you file online.

@@ -3431,3 +3431,10 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   line notes such as "ACE/NC PROMOTIONS", or the vendor's only order at the ship date): 10 bills done; 12 keep 22 shipments
   for her; PartnerShip bills marked paid through Bill.com (9 with Bill.com's PAID date, 11 older ones with the due date
   shown because the payment date is not in VMS); PS00625902 and PS00626515 have no PDF and are not in Bill.com yet.
+- Nov 2 (Dana, "Work on this"): "When I file our cdtfa quarterly return, the following day I need to email the copy of the
+  return to Nawal at MBS. Please set a task reminder the day after the return and pmt confirmation comes in and create a
+  draft email to nawal … I have to login to cdtfa the next day and download the return, it is not instantly available."
+  Built (migration 0281): when the quarter's CDTFA task closes on both confirmations, VMS writes a draft from billing@ to
+  nawal@mbsaccountancy.com in her usual words ("Q3 2026 Sales Tax Return" / "Here is the 3rd quarter 2026 sales tax
+  return. Thanks! :-)") and a task the next day at 9 AM that opens it; sending it to Nawal closes the task. Back-check:
+  Q3 2026 (filed and paid Oct 23, nothing sent to Nawal in billing@) got its task and draft now.
