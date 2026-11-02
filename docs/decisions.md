@@ -3469,3 +3469,17 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
 - Nov 2 (Dana): Nationwide Sep 2 shipment (PS00623603, tracking 1ZA913R20348442706, found on no email or paper): "yes, that was
   the one I thought it was based on the box size and weight". Matched to the Aug 21 ponytail caps order (72 women's ponytail
   caps); Nationwide invoice 32968 ($533.50, Aug 31; Yehuda's Sep 1 "invoice on the ponytail hats") filed on that order.
+- Nov 2 (Dana): freight bill PDFs both ways between VMS and Dropbox: "If I upload a freight invoice to vms can it copy it to my
+  dropbox under 1-A Shaver Lake Sports/Freight/<vendor>" … "if trevor downloads them and then uploads to vms, my dropbox would
+  not get those. So I would like it to work both ways" … "you are good to go on all of it". Found first: Dropbox was connected in
+  history mode, read once Oct 26-27, so new Dropbox files were not reaching VMS. Built (migration 0285, dropbox function): the
+  Freight folder is watched on its own (own cursor); a new freight bill there that Claude is sure of is filed by itself; a
+  freight bill whose PDF came into VMS another way is copied to Freight/<carrier folder> (PartnerShip, UPS/<year>, FedEx, XPO,
+  Pinnacle-Priority 1, SHIP STATION - WWEX GROUP; new carriers by name) named "<invoice #> <carrier> Invoice <m-d-yy>.pdf"; the
+  same bytes already in Dropbox are linked, never copied again; a file VMS wrote is never read back in. Folders are by freight
+  company (where Dana saves them). Back-check: the 4 freight PDFs in VMS not yet in Dropbox.
+  Found while testing (Nov 2): copying into Dropbox fails because the VMS app in Dana's Dropbox was granted read permissions
+  only (Dropbox: "does not have the required scope 'files.content.write'"). Settings › Dropbox now says so and a **Reconnect**
+  button was added; once she ticks files.content.write on the app's Permissions tab and reconnects, the 3 waiting bills
+  (Priority One 18493871, UPS 000089787W404, FedEx AB14315420) copy on the next run. Dropbox → VMS works now (it picked up
+  her new PS00625902 and PS00626515 PDFs).

@@ -45,6 +45,7 @@ interface Conn {
   account_name: string | null; account_email: string | null; folder_path: string | null; folder_path_lower: string | null; mode: 'history' | 'inbox'; move_filed: boolean
   cursor: string | null; scan_done: boolean; reading: boolean; run_lock_at: string | null; oauth_state: string | null; oauth_state_at: string | null; code_verifier: string | null
   connected_at: string | null; connected_by: string | null; last_scan_at: string | null; last_read_at: string | null; last_error: string | null
+  watch_freight?: boolean; freight_cursor?: string | null
 }
 interface DbxEntry { '.tag': 'file' | 'folder' | 'deleted'; id?: string; name: string; path_lower?: string; path_display?: string; size?: number; content_hash?: string; client_modified?: string; server_modified?: string }
 interface FileRow {
@@ -272,28 +273,7 @@ async function scan(db: SupabaseClient, c: Conn, started: number): Promise<{ lis
       const page = c.cursor
         ? await api<{ entries: DbxEntry[]; cursor: string; has_more: boolean }>(db, c, 'files/list_folder/continue', { cursor: c.cursor })
         : await api<{ entries: DbxEntry[]; cursor: string; has_more: boolean }>(db, c, 'files/list_folder', { path: c.folder_path_lower, recursive: true, include_deleted: false, include_non_downloadable_files: false, limit: 1000 })
-      const files = page.entries.filter((e) => e['.tag'] === 'file' && e.id && e.path_lower)
-      if (files.length) {
-        const ids = files.map((e) => e.id!)
-        const { data: have } = await db.from('dropbox_files').select('dropbox_id, content_hash, status').eq('organization_id', c.organization_id).in('dropbox_id', ids)
-        const known = new Map((have ?? []).map((h) => [h.dropbox_id, h]))
-        const rows = files.flatMap((e) => {
-          const k = known.get(e.id!)
-          const filed = k && ['filed', 'linked', 'approved'].includes(k.status)
-          if (k && (k.content_hash === (e.content_hash ?? null) || filed)) return []       // same bytes, or already dealt with
-          const pd = e.path_display ?? e.path_lower!
-          const skip = preSkip(e.name, e.size ?? 0)
-          return [{
-            organization_id: c.organization_id, dropbox_id: e.id!, path_lower: e.path_lower!, path_display: pd, name: e.name, folder: subfolder(c, pd), size: e.size ?? null, content_hash: e.content_hash ?? null,
-            modified_at: e.client_modified ?? e.server_modified ?? null, status: skip ? 'skipped' : 'new', skip_reason: skip, target: null, vendor_id: null, kind: null, accounting: null, sure: null, note: null, error: null, sha256: null, read_at: null, updated_at: new Date().toISOString(),
-          }]
-        })
-        for (let i = 0; i < rows.length; i += 200) {
-          const { error } = await db.from('dropbox_files').upsert(rows.slice(i, i + 200), { onConflict: 'organization_id,dropbox_id' })
-          if (error) throw new Error(error.message)
-        }
-        listed += rows.length
-      }
+      listed += await listNewFiles(db, c, page.entries, false)
       // in inbox mode a file deleted or moved out of the folder is forgotten unless VMS already filed it
       for (const e of page.entries) if (e['.tag'] === 'deleted' && e.path_lower) await db.from('dropbox_files').delete().eq('organization_id', c.organization_id).eq('path_lower', e.path_lower).in('status', ['new', 'skipped', 'proposed', 'leftover', 'error'])
       c.cursor = page.cursor; hasMore = page.has_more
@@ -304,6 +284,125 @@ async function scan(db: SupabaseClient, c: Conn, started: number): Promise<{ lis
     throw e
   }
   return { listed, has_more: hasMore }
+}
+
+/** Files from a Dropbox listing into dropbox_files as new (to be read); ones already known with the same bytes, or already
+ *  dealt with (filed, linked, approved, or copied there by VMS), are left as they are. Returns how many were added. */
+async function listNewFiles(db: SupabaseClient, c: Conn, entries: DbxEntry[], fromWatch: boolean): Promise<number> {
+  const files = entries.filter((e) => e['.tag'] === 'file' && e.id && e.path_lower)
+  if (!files.length) return 0
+  const { data: have } = await db.from('dropbox_files').select('dropbox_id, content_hash, status').eq('organization_id', c.organization_id).in('dropbox_id', files.map((e) => e.id!))
+  const known = new Map((have ?? []).map((h) => [h.dropbox_id, h]))
+  const rows = files.flatMap((e) => {
+    const k = known.get(e.id!)
+    const filed = k && ['filed', 'linked', 'approved'].includes(k.status)
+    if (k && (k.content_hash === (e.content_hash ?? null) || filed)) return []       // same bytes, or already dealt with
+    const pd = e.path_display ?? e.path_lower!
+    const skip = preSkip(e.name, e.size ?? 0)
+    return [{
+      organization_id: c.organization_id, dropbox_id: e.id!, path_lower: e.path_lower!, path_display: pd, name: e.name, folder: subfolder(c, pd), size: e.size ?? null, content_hash: e.content_hash ?? null,
+      modified_at: e.client_modified ?? e.server_modified ?? null, status: skip ? 'skipped' : 'new', skip_reason: skip, target: null, vendor_id: null, kind: null, accounting: null, sure: null, note: null, error: null, sha256: null, read_at: null, updated_at: new Date().toISOString(),
+      ...(fromWatch ? { from_watch: true } : {}),
+    }]
+  })
+  for (let i = 0; i < rows.length; i += 200) {
+    const { error } = await db.from('dropbox_files').upsert(rows.slice(i, i + 200), { onConflict: 'organization_id,dropbox_id' })
+    if (error) throw new Error(error.message)
+  }
+  return rows.length
+}
+
+// ---- freight bills both ways (Dana, Nov 2): the Freight folder is watched on its own; VMS's freight PDFs are copied there --------
+/** New files in <folder>/Freight since the watch started (its own cursor; the first listing only marks what is there now). */
+async function scanFreight(db: SupabaseClient, c: Conn, started: number): Promise<{ listed: number }> {
+  if (!c.watch_freight || !c.folder_path_lower) return { listed: 0 }
+  let listed = 0, hasMore = true
+  const first = !c.freight_cursor
+  while (hasMore && Date.now() - started < TIME_BUDGET_MS / 2) {
+    const page = c.freight_cursor
+      ? await api<{ entries: DbxEntry[]; cursor: string; has_more: boolean }>(db, c, 'files/list_folder/continue', { cursor: c.freight_cursor })
+      : await api<{ entries: DbxEntry[]; cursor: string; has_more: boolean }>(db, c, 'files/list_folder', { path: `${c.folder_path_lower}/freight`, recursive: true, include_deleted: false, include_non_downloadable_files: false, limit: 1000 })
+    // the first listing is what was already there (the history read had it): only files never seen are read, none filed by itself
+    listed += await listNewFiles(db, c, page.entries, !first)
+    c.freight_cursor = page.cursor; hasMore = page.has_more
+    await db.from('dropbox_connections').update({ freight_cursor: c.freight_cursor, updated_at: new Date().toISOString() }).eq('organization_id', c.organization_id)
+  }
+  return { listed }
+}
+
+/** Dropbox's own content hash (4 MB blocks), to know a file is already there whatever its name. */
+async function dropboxHash(bytes: Uint8Array): Promise<string> {
+  const BLOCK = 4 * 1024 * 1024
+  const parts: Uint8Array[] = []
+  for (let i = 0; i < bytes.length || i === 0; i += BLOCK) {
+    parts.push(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes.subarray(i, i + BLOCK))))
+    if (bytes.length === 0) break
+  }
+  const all = new Uint8Array(parts.length * 32)
+  parts.forEach((p, i) => all.set(p, i * 32))
+  return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', all))).map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+async function upload(db: SupabaseClient, c: Conn, path: string, bytes: Uint8Array, retry = true): Promise<DbxEntry> {
+  const token = await accessToken(db, c)
+  const arg = JSON.stringify({ path, mode: 'add', autorename: true, mute: true }).replace(/[\u007f-\uffff]/g, (ch) => `\\u${ch.charCodeAt(0).toString(16).padStart(4, '0')}`)
+  const res = await fetch(`${DBX_CONTENT}/files/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Dropbox-API-Arg': arg, 'Content-Type': 'application/octet-stream' }, body: bytes })
+  if (res.status === 401 && retry) { await accessToken(db, c, true); return upload(db, c, path, bytes, false) }
+  if (!res.ok) { const t = await res.text(); throw new Error(`Dropbox upload failed (${res.status}): ${(() => { try { return (JSON.parse(t) as { user_message?: { text?: string } }).user_message?.text ?? t } catch { return t } })().slice(0, 400)}`) }
+  return { '.tag': 'file', ...(await res.json()) } as DbxEntry
+}
+
+/** "PS00626515 PartnerShip Invoice 10-12-26.pdf", the way Dana names them; the stored name when there is no number. */
+function billFileName(b: { invoice_number: string | null; invoice_date: string | null; file_name: string | null }, carrier: string): string {
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(b.invoice_date ?? '') ? b.invoice_date! : null
+  const md = d ? `${Number(d.slice(5, 7))}-${Number(d.slice(8, 10))}-${d.slice(2, 4)}` : ''
+  const base = b.invoice_number ? [b.invoice_number, carrier, 'Invoice', md].filter(Boolean).join(' ') : (b.file_name ?? 'Freight bill').replace(/\.pdf$/i, '')
+  return `${base.replace(/[\\/:*?"<>|]+/g, '-').trim()}.pdf`
+}
+
+/** Freight bills whose PDF is in VMS but not in Dropbox: copied to Freight/<carrier folder>; already there (same bytes) → linked. */
+async function copyFreightToDropbox(db: SupabaseClient, c: Conn, started: number): Promise<{ copied: number; linked: number; errors: number; why?: string[] }> {
+  const out = { copied: 0, linked: 0, errors: 0, why: [] as string[] }
+  if (!c.watch_freight || !c.folder_path) return out
+  const org = c.organization_id
+  if (/files\.content\.write/.test(c.last_error ?? '')) return out   // waiting for the write permission (reconnect clears it)
+  const { data: bills } = await db.from('freight_bills').select('id, invoice_number, invoice_date, file_name, storage_path, carrier_id, carriers(name, dropbox_folder)')
+    .eq('organization_id', org).is('dropbox_path', null).not('storage_path', 'is', null).in('status', ['to_match', 'done']).order('created_at').limit(10)
+  for (const b of bills ?? []) {
+    if (Date.now() - started > TIME_BUDGET_MS) break
+    try {
+      const { data: rec } = await db.from('dropbox_files').select('path_display').eq('organization_id', org).eq('freight_bill_id', b.id).in('status', ['filed', 'linked']).limit(1)
+      if (rec?.[0]) { await db.from('freight_bills').update({ dropbox_path: rec[0].path_display }).eq('id', b.id); out.linked++; continue }
+      const { data: file, error } = await db.storage.from(VENDOR_BUCKET).download(b.storage_path!)
+      if (error || !file) throw new Error(error?.message ?? 'PDF not found')
+      const bytes = new Uint8Array(await file.arrayBuffer())
+      const hash = await dropboxHash(bytes)
+      const { data: twin } = await db.from('dropbox_files').select('path_display').eq('organization_id', org).eq('content_hash', hash).limit(1)
+      if (twin?.[0]) { await db.from('freight_bills').update({ dropbox_path: twin[0].path_display }).eq('id', b.id); out.linked++; continue }
+      const car = b.carriers as unknown as { name: string; dropbox_folder: string | null } | null
+      const year = (b.invoice_date ?? '').slice(0, 4) || String(new Date().getFullYear())
+      const folder = (car?.dropbox_folder ?? car?.name ?? 'Other').replace('{year}', year).replace(/^\/+|\/+$/g, '')
+      const meta = await upload(db, c, `${c.folder_path!.replace(/\/+$/, '')}/Freight/${folder}/${billFileName(b, car?.name ?? '')}`, bytes)
+      const pd = meta.path_display ?? meta.path_lower!
+      await db.from('dropbox_files').upsert({
+        organization_id: org, dropbox_id: meta.id!, path_lower: meta.path_lower!, path_display: pd, name: meta.name, folder: subfolder(c, pd), size: meta.size ?? bytes.length, content_hash: meta.content_hash ?? hash,
+        modified_at: meta.server_modified ?? new Date().toISOString(), status: 'filed', target: 'freight', freight_bill_id: b.id, carrier_id: b.carrier_id, filed_at: new Date().toISOString(),
+        note: 'Copied to Dropbox by VMS (the bill came in through VMS)', updated_at: new Date().toISOString(),
+      }, { onConflict: 'organization_id,dropbox_id' })
+      await db.from('freight_bills').update({ dropbox_path: pd }).eq('id', b.id)
+      out.copied++
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      out.why.push(`${b.invoice_number ?? b.id}: ${msg.slice(0, 200)}`)
+      out.errors++
+      // the Dropbox app was not given write permission: say so once in Settings › Dropbox and stop until it is reconnected
+      if (/required scope/i.test(msg)) {
+        await db.from('dropbox_connections').update({ last_error: 'VMS cannot save freight bills to Dropbox yet: in the Dropbox App Console, tick files.content.write under Permissions, then click Reconnect here.' }).eq('organization_id', org)
+        break
+      }
+    }
+  }
+  return out
 }
 
 /** Why a file is not even read: not a document, or too big to keep. Null when Claude should look. */
@@ -567,10 +666,10 @@ async function applyApproved(db: SupabaseClient, c: Conn, started: number): Prom
           const { data: bill } = await db.from('freight_bills').select('id, storage_path').eq('id', billId).maybeSingle()
           if (!bill) throw new Error('The freight bill is gone')
           if (bill.storage_path) throw new Error('The freight bill already has a PDF')
-          const { error } = await db.from('freight_bills').update({ storage_path: path, file_name: f.name, status: 'reading', read_note: null }).eq('id', billId)
+          const { error } = await db.from('freight_bills').update({ storage_path: path, file_name: f.name, status: 'reading', read_note: null, dropbox_path: f.path_display }).eq('id', billId)
           if (error) throw new Error(error.message)
         } else {
-          const { data: made, error } = await db.from('freight_bills').insert({ organization_id: org, carrier_id: f.carrier_id, invoice_number: f.doc_number, invoice_date: f.doc_date, total: f.doc_total, storage_path: path, file_name: f.name, status: 'reading' }).select('id').single()
+          const { data: made, error } = await db.from('freight_bills').insert({ organization_id: org, carrier_id: f.carrier_id, invoice_number: f.doc_number, invoice_date: f.doc_date, total: f.doc_total, storage_path: path, file_name: f.name, status: 'reading', dropbox_path: f.path_display }).select('id').single()
           if (error) { await db.storage.from(VENDOR_BUCKET).remove([path]); throw new Error(error.message) }
           billId = made.id
         }
@@ -619,9 +718,17 @@ async function syncOrg(db: SupabaseClient, c: Conn) {
   if (!lock?.length) return { ...r, skipped: 'another run is going' }
   // inbox mode re-lists on every run (the cursor carries on from last time); history mode lists until it is done
   if (c.mode === 'inbox' || !c.scan_done) r.scan = await scan(db, c, started)
+  // freight bills both ways (Dana, Nov 2): new files in the Freight folder come in even after the history read is done
+  const freight = await scanFreight(db, c, started).catch((e) => ({ listed: 0, error: e instanceof Error ? e.message : String(e) }))
+  r.freight_scan = freight
   // what Dana approved is filed before more is read: reading uses the whole time budget, and approvals sat unfiled (Oct 27)
   r.apply = await applyApproved(db, c, started)
-  if (c.mode === 'inbox' || c.reading) r.read = await readFiles(db, c, started)
+  if (c.mode === 'inbox' || c.reading || freight.listed > 0) r.read = await readFiles(db, c, started)
+  if (c.watch_freight) {
+    // a freight bill new in the Freight folder that Claude is sure of is filed by itself (Dana, Nov 2)
+    await db.from('dropbox_files').update({ status: 'approved', decided_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq('organization_id', c.organization_id).eq('status', 'proposed').eq('sure', true).eq('target', 'freight').eq('from_watch', true)
+  }
   if (c.mode === 'inbox') {
     // new scans: what Claude is sure about is filed on its own; the rest asks Dana with a task that opens this page
     await db.from('dropbox_files').update({ status: 'approved', decided_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('organization_id', c.organization_id).eq('status', 'proposed').eq('sure', true)
@@ -632,5 +739,6 @@ async function syncOrg(db: SupabaseClient, c: Conn) {
     }
   }
   r.apply_after = await applyApproved(db, c, started)
+  if (Date.now() - started < TIME_BUDGET_MS) r.freight_copy = await copyFreightToDropbox(db, c, started)
   return r
 }

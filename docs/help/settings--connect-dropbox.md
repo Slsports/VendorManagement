@@ -12,6 +12,7 @@ VMS can read one folder of your Dropbox and file what is in it by VMS's own rule
 3. On the **Settings** tab, under **OAuth 2 › Redirect URIs**, paste the address shown on VMS's Dropbox page and click **Add**.
 4. Copy the **App key** (not the secret), open **Settings** › **Dropbox** in VMS, paste it and click **Save**.
 5. Click **Connect to Dropbox**, allow VMS on Dropbox's page, and you come back **Connected**.
+6. Changed a permission on the app later (for example ticking **files.content.write** so VMS can save freight bills into Dropbox)? Click **Reconnect** and allow VMS again; the new permission only counts after that.
 
 ## The history pass
 1. Under **The folder VMS reads**, browse to your folder (for example Shaver Lake Sports), click **Pick**, leave **History** chosen and click **Save folder**.

@@ -62,6 +62,7 @@ function Dropbox({ s, refetch }: { s: DropboxStatus; refetch: () => Promise<unkn
         {s.set_up && !editing ? (
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {!s.connected ? <Button loading={busy === 'connect'} disabled={!!busy} onClick={() => void run('connect', async () => { window.location.assign(await dropboxSignInUrl()) })}>Connect to Dropbox</Button> : null}
+            {s.connected ? <Button variant="secondary" size="sm" loading={busy === 'connect'} disabled={!!busy} onClick={() => void run('connect', async () => { window.location.assign(await dropboxSignInUrl()) })}>Reconnect</Button> : null}
             {s.connected ? <Button variant="ghost" size="sm" loading={busy === 'disconnect'} disabled={!!busy} onClick={() => { if (window.confirm('Disconnect VMS from Dropbox? Files already filed stay in VMS.')) void run('disconnect', disconnectDropbox, 'Disconnected') }}>Disconnect</Button> : null}
             <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>Replace the App key</Button>
           </div>
