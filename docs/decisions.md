@@ -3420,3 +3420,14 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   business insurance. Paychex (with Mid Atlantic 401(k), Mineral, Paychex Flex, surveys, webinars, Zurich EPD) and Blue
   Shield of California are one contact each, quiet: their mail files as Handled, Claude makes a task only for a deadline
   she must meet; back-check: waiting conversations to Handled, the last 90 days read for deadlines.
+- Nov 2 (Dana): "On the freight page it lists Priority One twice … Why were these not matched and closed?" and "alot of
+  Partnership bills that have not been closed. They were all paid through Bill.com and all the invoices are in my dropbox
+  under Freight/Partnership … Please match them up and get them out of my 'To Match' tab." Found: Priority One invoice
+  18493871 was saved twice (Oct 8 from the payment receipt, Oct 22 from the invoice email; bills were only kept apart by
+  email, not by invoice number), and To Match means the bill's shipments are not yet confirmed to orders. Done (data,
+  at her request): the copy merged into the paid bill and its Stansport shipment confirmed to PO 6729870 (done); a second
+  PS00605186 copy removed; one Dropbox copy of 20 PartnerShip invoices approved and read (26 other copies linked, not saved
+  again); shipments confirmed to orders only with evidence (tracking number in the vendor's shipping email, her Bill.com
+  line notes such as "ACE/NC PROMOTIONS", or the vendor's only order at the ship date): 10 bills done; 12 keep 22 shipments
+  for her; PartnerShip bills marked paid through Bill.com (9 with Bill.com's PAID date, 11 older ones with the due date
+  shown because the payment date is not in VMS); PS00625902 and PS00626515 have no PDF and are not in Bill.com yet.
