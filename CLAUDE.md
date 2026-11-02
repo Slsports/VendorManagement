@@ -77,7 +77,8 @@ Personal mailboxes and the old Gmail live in `mailboxes`; their threads/emails h
 private to the owner and the admin (RLS). Never copy their subjects, snippets or senders into org-wide tables
 (review_items, notes, logs); Orders lists filter `mailbox_id is null or shared_at is not null`. Gmail calls use the
 email's `gmail_box`, never the org's single mailbox. The accounting mailbox (billing@, `kind = 'accounting'`) is seen only
-with `profiles.sees_accounting` (`sees_accounting()` in RLS; admin alone is not enough) and can never be shared to Orders.
+with `profiles.sees_accounting` (`sees_accounting()` in RLS; admin alone is not enough). Only its vendor and rep-group
+conversations go to Orders (auto-shared, they stay in Accounting too; Dana, Nov 2, migration 0278); nothing else in it is ever shared.
 
 ## Filing changes re-check the old (Oct 14)
 Dana: "Everytime we change something I want all the old stuff checked to make sure it goes in the right place … And no

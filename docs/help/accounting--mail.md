@@ -1,7 +1,7 @@
 ---
 title: Read and answer the billing@ mail
 section: Accounting
-keywords: accounting mail, billing, billing@, needs an answer, waiting, category, taxes, insurance, banking, sent
+keywords: accounting mail, billing, billing@, vendor mail, share to orders, needs an answer, waiting, category, taxes, insurance, banking, sent
 who: People with the Accounting tick
 ---
 The billing@ mail works like the Orders mail, sorted by who it is with instead of by vendor.
@@ -17,4 +17,5 @@ The billing@ mail works like the Orders mail, sorted by who it is with instead o
 ## Good to know
 - The **Who** column is the contact the conversation is with. Open a conversation to put it on a different contact.
 - The category buttons follow the contact's category, so confirming contacts with the right category is what makes them useful.
-- This mail never shows on the Orders Mail page and cannot be shared there.
+- Conversations where a known vendor or rep group writes to billing@ (Becker, Manufacturers Exchange and so on) are shared to Orders by themselves, so they go through the usual vendor steps and the team sees them. They stay here in Accounting too.
+- Everything else (your accountant, insurance, taxes, banks, freight companies) never shows on the Orders Mail page. A conversation where a vendor and someone else both wrote stays private until you click **Share to Orders**.
