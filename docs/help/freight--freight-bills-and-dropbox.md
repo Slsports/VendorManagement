@@ -8,7 +8,7 @@ Freight bill PDFs stay the same in VMS and in Dropbox, whichever one you put the
 
 ## How it works
 1. **Saved to Dropbox first:** put the bill PDF in the Dropbox folder **1-A Shaver Lake Sports › Freight** (any carrier folder inside it, like Freight/PartnerShip or Freight/UPS/2026). Within a few minutes VMS finds it, reads it and files it on the **Freight** page, on the bill that was waiting for it or as a new bill. If VMS is not sure which carrier it is, it asks you in Settings › Dropbox.
-2. **Uploaded to VMS first** (by you or Trevor): VMS copies the PDF to Dropbox in the carrier's folder under Freight, named like "PS00626515 PartnerShip Invoice 10-12-26.pdf". UPS bills go in the year folder (Freight/UPS/2026).
+2. **Uploaded to VMS first** (by you or Trevor): VMS copies the PDF to Dropbox in the carrier's folder under Freight, named with the invoice date first, like "10-12-26 PS00626515 PartnerShip Invoice.pdf", so you can find a bill by date. UPS bills go in the year folder (Freight/UPS/2026).
 3. Either way, the bill is then read and matched to its orders as usual.
 
 ## Good to know

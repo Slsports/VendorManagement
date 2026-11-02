@@ -3483,3 +3483,6 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   button was added; once she ticks files.content.write on the app's Permissions tab and reconnects, the 3 waiting bills
   (Priority One 18493871, UPS 000089787W404, FedEx AB14315420) copy on the next run. Dropbox → VMS works now (it picked up
   her new PS00625902 and PS00626515 PDFs).
+- Nov 2 (Dana): "I like the date of the invoice to always be first in the filename, that way I can quickly find an invoice
+  by date." Freight bills VMS copies to Dropbox are named "<m-d-yy> <invoice #> <carrier> Invoice.pdf" (10-12-26 PS00626515
+  PartnerShip Invoice.pdf). None had been copied yet (waiting on the Dropbox write permission), so no renames were needed.

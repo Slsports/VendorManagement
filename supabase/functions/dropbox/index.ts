@@ -352,11 +352,12 @@ async function upload(db: SupabaseClient, c: Conn, path: string, bytes: Uint8Arr
   return { '.tag': 'file', ...(await res.json()) } as DbxEntry
 }
 
-/** "PS00626515 PartnerShip Invoice 10-12-26.pdf", the way Dana names them; the stored name when there is no number. */
+/** "10-12-26 PS00626515 PartnerShip Invoice.pdf": the invoice date first, so Dana finds a bill by date (Nov 2); the stored
+ *  name (after the date) when there is no number. */
 function billFileName(b: { invoice_number: string | null; invoice_date: string | null; file_name: string | null }, carrier: string): string {
   const d = /^\d{4}-\d{2}-\d{2}$/.test(b.invoice_date ?? '') ? b.invoice_date! : null
   const md = d ? `${Number(d.slice(5, 7))}-${Number(d.slice(8, 10))}-${d.slice(2, 4)}` : ''
-  const base = b.invoice_number ? [b.invoice_number, carrier, 'Invoice', md].filter(Boolean).join(' ') : (b.file_name ?? 'Freight bill').replace(/\.pdf$/i, '')
+  const base = [md, ...(b.invoice_number ? [b.invoice_number, carrier, 'Invoice'] : [(b.file_name ?? 'Freight bill').replace(/\.pdf$/i, '')])].filter(Boolean).join(' ')
   return `${base.replace(/[\\/:*?"<>|]+/g, '-').trim()}.pdf`
 }
 
