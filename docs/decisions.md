@@ -3520,3 +3520,6 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   itself, with a link to the email that said so, closes any task it made with a done_note, and files instead of flagging.
   Dana is asked only when the newer email does not make it clear. Found: Accounting reads each email's papers alone (the
   $4,077 duplicate Cal Fair invoice sat in Needs a look though Hub cancelled it a month later). Build waiting for go.
+- Nov 2 (Dana): "The P&S are not always paid from P&S account … the old bookkeeper had been paying them from SLS - then doing
+  a shareholder distribution to P&S which is an LLC." When matching insurance payments, a P&S policy can be paid from SLS
+  (older years especially); look in both books, and do not treat an SLS payment on a P&S policy as wrong.
