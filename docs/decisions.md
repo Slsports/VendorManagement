@@ -3374,6 +3374,8 @@ routing letter receipt) switched.
 
 ## Oct 31 — The two watches rebuilt as Sonnet sessions (Dana: "go rebuild the two paused watches as Sonnet sessions")
 The hourly provider mail watch and deployment watch had run as turns in the Fable session (paused Oct 27 to save Fable
-usage). Rebuilt as scheduled tasks that each start a fresh Sonnet session every 3 hours (provider mail at :11, deployments
-at :41, Pacific), with a push notification to Dana when something needs her; a quiet run ends with one line. The old
-paused tasks were deleted. The provider mail watch checks the last 7 days of tasks first so an alert is never doubled.
+usage). Rebuilt (Nov 1) as two standing Sonnet sessions with the repository checked out ("Provider mail watch (Sonnet)" and
+"VMS deployment watch (Sonnet)"), each woken by a scheduled task every 3 hours (provider mail at :11, deployments at :41,
+Pacific); a quiet run ends with one line. A first try as fresh sessions with no repository could reach neither the
+scripts nor GitHub, so it was replaced the same day. Anything Dana must do reaches her as a dashboard task (with her
+reminder email or text); a deployment fix is pushed and noted in that session. The old paused tasks were deleted.
