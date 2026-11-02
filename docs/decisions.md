@@ -3466,3 +3466,6 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
 - Nov 2 (Dana): "#2 yes, close them and I will look at Nationwide." The 2022 FedEx bill AB14315420 (Rossignol, Coghlan's, two
   Kent shipments; no 2022 orders in VMS) closed with each shipment on its vendor and no order. Nationwide Sep 2
   (PS00623603) left for her.
+- Nov 2 (Dana): Nationwide Sep 2 shipment (PS00623603, tracking 1ZA913R20348442706, found on no email or paper): "yes, that was
+  the one I thought it was based on the box size and weight". Matched to the Aug 21 ponytail caps order (72 women's ponytail
+  caps); Nationwide invoice 32968 ($533.50, Aug 31; Yehuda's Sep 1 "invoice on the ponytail hats") filed on that order.
