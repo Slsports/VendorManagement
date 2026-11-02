@@ -1364,7 +1364,7 @@ export async function classifyPictures(db: SupabaseClient, org: string, pics: Pa
 }
 
 // ---- accounting papers (Dana, Oct 16): folder and file name for everything that comes to billing@ ------------------
-export const ACCOUNTING_CATEGORIES = ['taxes', 'insurance', 'banking', 'payroll', 'donations', 'contracts', 'accounting_firm', 'bills', 'other'] as const
+export const ACCOUNTING_CATEGORIES = ['taxes', 'insurance', 'personal_insurance', 'banking', 'payroll', 'donations', 'contracts', 'accounting_firm', 'bills', 'other'] as const
 export const ACCOUNTING_KINDS = ['invoice', 'receipt', 'statement', 'policy', 'certificate', 'license', 'contract', 'quote', 'letter', 'form', 'tax_return', 'notice', 'report', 'check', 'other'] as const
 const AccountingChoice = z.object({
   label: z.string().describe('The button, one to four words: "GS", "SLM", "The SLS building", "Merchandise vendor"'),
@@ -1377,7 +1377,7 @@ const AccountingPaper = z.object({
   file: z.number().describe('The FILE number'),
   keep: z.boolean().describe('True when this is a paper worth keeping in the bookkeeping files: a bill, receipt, statement, policy, certificate of insurance, license, contract, tax paper, bank or payroll paper, donation letter, a signed form. False for pictures in signatures, logos, catalogs, flyers, price lists, newsletters, ads, and anything that is not a document'),
   skip_reason: z.string().describe('When keep is false: three or four plain words why (signature picture, vendor catalog, flyer)'),
-  category: z.string().describe('The top folder, one of: ' + ACCOUNTING_CATEGORIES.join(', ') + '. bills: utilities, propane, phone, software, services and any invoice or receipt that is not from a merchandise vendor; accounting_firm: the CPA or bookkeeping firm; contracts: licenses, leases and loans'),
+  category: z.string().describe('The top folder, one of: ' + ACCOUNTING_CATEGORIES.join(', ') + '. bills: utilities, propane, phone, software, services and any invoice or receipt that is not from a merchandise vendor; accounting_firm: the CPA or bookkeeping firm; contracts: licenses, leases and loans; personal_insurance: the family\'s own insurance through Goosehead: the homes at 35775 and 35771 Aunt Julia Lane and SJ&E Road (Cal Fair dwelling, Bamboo, Steadily) and the family vehicles (Drive / Progressive); insurance: the business policies (stores, buildings at Tollhouse, marina, liability, workers comp, Hub)'),
   party: z.string().describe('The folder under the category: the company the paper is from or about, short and as the owner says it, Title Case, abbreviated when a known short form exists (SCE, Cal Fair, Hub). Never Shaver Lake Sports itself. Use a name from known_parties when it is the same company'),
   whose: z.string().describe('Who it is for or who pays, one of SLS, P&S, SLM, GS or empty: SLS = Shaver Lake Sports Inc (the stores, the default); P&S = Powell & Son Properties (the buildings, property insurance and property tax); SLM = Shaver Lake Marina; GS = the Happy Camper General Store at Camp Edison. Empty only when unclear'),
   kind: z.string().describe('One of: ' + ACCOUNTING_KINDS.join(', ') + ' (a quote or proposal is quote; a W-9, 1099 or tax form is form; a tax return is tax_return)'),

@@ -1,11 +1,12 @@
 import type { AccountingCategory } from '@/types'
 
 /** Dana's buckets for who she deals with in billing@ (Oct 16). The contact's category sorts its mail and, later, its files. */
-export const ACCOUNTING_CATEGORIES: readonly AccountingCategory[] = ['taxes', 'insurance', 'banking', 'payroll', 'donations', 'contracts', 'accounting_firm', 'bills', 'other']
+export const ACCOUNTING_CATEGORIES: readonly AccountingCategory[] = ['taxes', 'insurance', 'personal_insurance', 'banking', 'payroll', 'donations', 'contracts', 'accounting_firm', 'bills', 'other']
 
 export const ACCOUNTING_CATEGORY_LABELS: Record<AccountingCategory, string> = {
   taxes: 'Taxes',
   insurance: 'Insurance',
+  personal_insurance: 'Personal insurance',
   banking: 'Banking',
   payroll: 'Payroll',
   donations: 'Donations',

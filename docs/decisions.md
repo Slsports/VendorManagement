@@ -3390,3 +3390,20 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   mailboxes; it stays in Accounting too. Freight companies, the accountant, insurance, taxes and banks stay private. A
   conversation where someone else also wrote is not shared by itself (Dana can click Share to Orders). Unshare sticks.
   Shared billing@ vendor mail is now read for payments. Back-check: 12 months shared, payment emails queued.
+- Nov 2 (Dana): personal insurance, the bank's proof, Markel, repeating autopays. Dana: "Markel is not auto - its waverunner
+  liability insurance for the marina … the big payment is always around the same time" then "Yes, we have markel on auto
+  pay"; "Hub International is our commercial insurance agents company, that is not actually one of our insurance companies";
+  "Goosehead Insurance is all our personal insurance, that should be in a separate 'personal insurance' location. Those are
+  tied to 35775 Aunt Julia Lane, 35771 Aunt Julia lane and the SJ&E Road properties"; "bamboo & steadily are personal
+  property insurance … Cal FAir for fire and the other policies are considered a wrap/dic"; "Drive is Progressive and is
+  personal insurance for Tylers truck, Gregs Truck and my toyota"; Myinsuranceinfo emails come when the proof is uploaded to
+  Community West Bank for the commercial loan every year: "Link them together"; "I don't need this on Starlink or midvalley
+  disposal. Keith Garcia is on auto pay through bill.com"; "go, and yes remind me on personal autopays too". Built (migration
+  0279): category Personal insurance (contacts, mail, papers, procedures; Claude files to it); policies get a Personal tick
+  and their own Personal tab; 7 personal policies (35775 Aunt Julia Cal Fair CFP 0100341142 + Bamboo; 35771 Aunt Julia Cal
+  Fair CFP 0102401593 + Steadily; SJ&E Road Cal Fair CFP 0102402240 + Steadily; Drive/Progressive auto 963278000) and
+  Markel MTD00000469812 (marina, autopay) added. Community West Bank is on Who needs proof (by Nov 6 each year, upload at
+  myinsuranceinfo.com); a Myinsuranceinfo confirmation logs the send and closes the task; recipients with a date get a
+  task 30 days ahead. Repeating autopays (autopay_schedules): Drive every 6 months, Markel and Hub yearly, IRS Jan/Jun/Sep
+  and FTB Jan/Jun estimates, reminded 5 days ahead; an email for one updates that task. Starlink, Midvalley Disposal and
+  Keith Garcia never make autopay tasks.

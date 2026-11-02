@@ -67,7 +67,7 @@ export default function RecipientPage() {
   return (
     <div>
       <BackLink fallback={`${ROUTES.accountingInsurance}?tab=who`} fallbackLabel="Who needs proof" />
-      <PageHeader title={title} description={[r!.person && r!.company ? r!.person : null, r!.email, r!.why].filter(Boolean).join(' · ')}
+      <PageHeader title={title} description={[r!.person && r!.company ? r!.person : null, r!.email, r!.why, r!.send_how].filter(Boolean).join(' · ')}
         actions={<div className="flex flex-wrap gap-2">
           <Badge tone={r!.status === 'confirmed' ? 'success' : r!.status === 'proposed' ? 'warning' : 'neutral'}>{r!.status === 'proposed' ? 'To confirm' : r!.status === 'confirmed' ? 'Confirmed' : 'Ignored'}</Badge>
           <Button variant="secondary" onClick={() => setEditing(true)}>Edit</Button>
@@ -164,7 +164,7 @@ function AgentSentDialog({ recipient, policy, onClose, onDone }: { recipient: Ac
 
 function RecipientForm({ organizationId, recipient, policies, onSaved, onCancel }: { organizationId: string; recipient: AccountingPolicyRecipient | null; policies: PolicyRow[]; onSaved: (id: string) => Promise<void>; onCancel: () => void }) {
   const [f, setF] = useState({
-    company: recipient?.company ?? '', person: recipient?.person ?? '', email: recipient?.email ?? '', why: recipient?.why ?? '', when_kind: recipient?.when_kind ?? 'renewal',
+    company: recipient?.company ?? '', person: recipient?.person ?? '', email: recipient?.email ?? '', why: recipient?.why ?? '', send_how: recipient?.send_how ?? '', when_kind: recipient?.when_kind ?? 'renewal',
     due_month: recipient?.due_month ? String(recipient.due_month) : '', due_day: recipient?.due_day ? String(recipient.due_day) : '', notes: recipient?.notes ?? '',
     status: recipient?.status === 'proposed' ? 'confirmed' : (recipient?.status ?? 'confirmed'), policy_ids: recipient?.policy_ids ?? [],
   })
@@ -179,7 +179,7 @@ function RecipientForm({ organizationId, recipient, policies, onSaved, onCancel 
     setError(null)
     try {
       const id = await saveRecipient(organizationId, recipient?.id ?? null, {
-        company: f.company.trim(), person: f.person.trim(), email: f.email, why: f.why.trim(), when_kind: f.when_kind as 'renewal' | 'date',
+        company: f.company.trim(), person: f.person.trim(), email: f.email, why: f.why.trim(), send_how: f.send_how.trim(), when_kind: f.when_kind as 'renewal' | 'date',
         due_month: f.when_kind === 'date' && f.due_month ? Number(f.due_month) : null, due_day: f.when_kind === 'date' && f.due_day ? Number(f.due_day) : null,
         notes: f.notes, status: f.status as AccountingPolicyRecipient['status'], policy_ids: f.policy_ids,
       })
@@ -201,6 +201,7 @@ function RecipientForm({ organizationId, recipient, policies, onSaved, onCancel 
         <FormField label="Person" htmlFor="rf-person"><Input id="rf-person" value={f.person} onChange={(e) => set('person', e.target.value)} /></FormField>
         <FormField label="Send to (email)" htmlFor="rf-email"><Input id="rf-email" type="email" value={f.email} onChange={(e) => set('email', e.target.value)} /></FormField>
         <FormField label="Why they need it" htmlFor="rf-why" hint="Commercial loan, lease, contract…"><Input id="rf-why" value={f.why} onChange={(e) => set('why', e.target.value)} /></FormField>
+        <FormField label="How to send it (if not by email)" htmlFor="rf-how" hint="For an upload site: Upload it at myinsuranceinfo.com…" className="sm:col-span-2"><Input id="rf-how" value={f.send_how} onChange={(e) => set('send_how', e.target.value)} /></FormField>
         <fieldset className="sm:col-span-2">
           <legend className="mb-1.5 text-sm font-medium text-stone-800">Which policies</legend>
           <div className="grid gap-1 sm:grid-cols-2">

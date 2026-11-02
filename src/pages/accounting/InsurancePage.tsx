@@ -16,14 +16,15 @@ import { BackLink } from '@/components/shared/BackLink'
 import { SortHeader } from '@/components/shared/SortHeader'
 import { Alert, Badge, Button, Spinner } from '@/components/ui'
 
-type Tab = 'policies' | 'who'
+type Tab = 'policies' | 'personal' | 'who'
 
-/** The insurance tracker (Dana, Oct 16): every policy and its renewal, and who must get proof each year. */
+/** The insurance tracker (Dana, Oct 16): every policy and its renewal, and who must get proof each year. Personal insurance
+ *  (Goosehead: the homes and the family vehicles) has its own tab (Dana, Nov 2). */
 export default function InsurancePage() {
   const { organization } = useAuth()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
-  const tab: Tab = params.get('tab') === 'who' ? 'who' : 'policies'
+  const tab: Tab = params.get('tab') === 'who' ? 'who' : params.get('tab') === 'personal' ? 'personal' : 'policies'
   const [showInactive, setShowInactive] = useState(false)
   const policies = useSupabaseQuery(async () => (organization ? listPolicies(organization.id, showInactive) : []), [organization?.id, showInactive])
   const recipients = useSupabaseQuery(async () => (organization ? listRecipients(organization.id) : []), [organization?.id])
@@ -73,15 +74,15 @@ export default function InsurancePage() {
     <div>
       <BackLink fallback={ROUTES.accounting} fallbackLabel="Accounting" />
       <PageHeader title="Insurance" description="Every policy, when it renews, what it cost and who paid. Renewal tasks appear 30 days ahead. Who needs proof gets a send task when the new policy comes in."
-        actions={tab === 'policies'
-          ? <Button onClick={() => navigate(`${ROUTES.accountingInsurance}/new`)} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add policy</Button>
+        actions={tab !== 'who'
+          ? <Button onClick={() => navigate(`${ROUTES.accountingInsurance}/new${tab === 'personal' ? '?personal=1' : ''}`)} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add policy</Button>
           : <div className="flex gap-2">
               <Button variant="secondary" loading={busy} onClick={() => void findRequesters()} leftIcon={<Search className="size-4" aria-hidden="true" />}>Find requesters in the mail</Button>
               <Button onClick={() => navigate(`${ROUTES.accountingInsurance}/who/new`)} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add someone</Button>
             </div>} />
       <nav aria-label="Insurance" className="mb-4 flex flex-wrap items-center gap-3">
         <ul className="flex w-max gap-1 rounded-xl bg-stone-100 p-1">
-          {[{ v: 'policies' as Tab, label: 'Policies' }, { v: 'who' as Tab, label: `Who needs proof${(recipients.data ?? []).some((r) => r.status === 'proposed') ? ` (${(recipients.data ?? []).filter((r) => r.status === 'proposed').length} to confirm)` : ''}` }].map((t) => (
+          {[{ v: 'policies' as Tab, label: 'Business' }, { v: 'personal' as Tab, label: 'Personal' }, { v: 'who' as Tab, label: `Who needs proof${(recipients.data ?? []).some((r) => r.status === 'proposed') ? ` (${(recipients.data ?? []).filter((r) => r.status === 'proposed').length} to confirm)` : ''}` }].map((t) => (
             <li key={t.v}>
               <button type="button" onClick={() => setTab(t.v)} aria-current={tab === t.v ? 'page' : undefined}
                 className={cn('block whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium', tab === t.v ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900')}>
@@ -97,12 +98,12 @@ export default function InsurancePage() {
           {proofProc ? <Link to={`${ROUTES.accountingProcedures}/${proofProc.id}`} className="text-brand hover:underline">proof of insurance</Link> : null}
         </span>
       </nav>
-      {tab === 'policies' ? (
+      {tab !== 'who' ? (
         <>
           <label className="mb-3 flex items-center gap-2 text-sm text-stone-700"><input type="checkbox" className="size-4 accent-brand" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} /> Show retired policies</label>
           {policies.isLoading ? <div className="flex justify-center py-16"><Spinner label="Loading…" className="text-brand" /></div>
             : policies.error ? <Alert variant="error">{policies.error}</Alert>
-            : <PolicyTable rows={policies.data ?? []} />}
+            : <PolicyTable rows={(policies.data ?? []).filter((p) => p.personal === (tab === 'personal'))} personal={tab === 'personal'} />}
         </>
       ) : (
         recipients.isLoading ? <div className="flex justify-center py-16"><Spinner label="Loading…" className="text-brand" /></div>
@@ -113,7 +114,7 @@ export default function InsurancePage() {
   )
 }
 
-function PolicyTable({ rows }: { rows: PolicyRow[] }) {
+function PolicyTable({ rows, personal }: { rows: PolicyRow[]; personal: boolean }) {
   const { sorted, sort, toggle } = useTableSort(rows, {
     label: (p) => p.label,
     type: (p) => coverageLabel(p.coverage_type),
@@ -123,7 +124,7 @@ function PolicyTable({ rows }: { rows: PolicyRow[] }) {
     premium: (p) => latestTerm(p.terms)?.premium ?? null,
     number: (p) => p.policy_number,
   })
-  if (!rows.length) return <p className="rounded-2xl border border-dashed border-stone-300 py-12 text-center text-sm text-stone-600">No policies yet. Add one, or send Claude the insurance guide.</p>
+  if (!rows.length) return <p className="rounded-2xl border border-dashed border-stone-300 py-12 text-center text-sm text-stone-600">{personal ? 'No personal policies yet. Add one.' : 'No policies yet. Add one, or send Claude the insurance guide.'}</p>
   return (
     <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white">
       <table className="w-full text-sm">

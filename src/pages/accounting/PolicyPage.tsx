@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { CalendarCheck, FileCheck, Pencil, Trash2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
@@ -221,7 +221,9 @@ function TermDialog({ organizationId, policyId, term, onClose, onDone }: { organ
 
 function PolicyForm({ organizationId, policy, onSaved, onCancel }: { organizationId: string; policy: PolicyRow | null; onSaved: (id: string) => Promise<void>; onCancel: () => void }) {
   const contacts = useSupabaseQuery(() => listAccountingContacts(organizationId), [organizationId])
+  const [params] = useSearchParams()
   const [f, setF] = useState({
+    personal: policy?.personal ?? params.get('personal') === '1',
     label: policy?.label ?? '', property: policy?.property ?? '', coverage_description: policy?.coverage_description ?? '', coverage_type: (policy?.coverage_type ?? 'other') as CoverageType,
     carrier: policy?.carrier ?? '', agent_contact_id: policy?.agent_contact_id ?? '', policy_number: policy?.policy_number ?? '', prior: (policy?.prior_policy_numbers ?? []).join(', '),
     named_insured: policy?.named_insured ?? '', building_owner: policy?.building_owner ?? '', paid_by: policy?.paid_by ?? '', coverage_limits: policy?.coverage_limits ?? '',
@@ -240,7 +242,7 @@ function PolicyForm({ organizationId, policy, onSaved, onCancel }: { organizatio
       const id = await savePolicy(organizationId, policy?.id ?? null, {
         label: f.label.trim(), property: f.property, coverage_description: f.coverage_description, coverage_type: f.coverage_type, carrier: f.carrier, agent_contact_id: f.agent_contact_id || null,
         policy_number: f.policy_number, prior_policy_numbers: f.prior.split(/[,;\n]+/).map((x) => x.trim()).filter(Boolean), named_insured: f.named_insured, building_owner: f.building_owner,
-        paid_by: f.paid_by, coverage_limits: f.coverage_limits, renewal_date: f.renewal_date || null, autopay: f.autopay, billed_with: f.billed_with, notes: f.notes, is_active: f.is_active,
+        paid_by: f.paid_by, coverage_limits: f.coverage_limits, renewal_date: f.renewal_date || null, autopay: f.autopay, billed_with: f.billed_with, notes: f.notes, is_active: f.is_active, personal: f.personal,
       })
       toast.success('Saved')
       await onSaved(id)
@@ -280,6 +282,7 @@ function PolicyForm({ organizationId, policy, onSaved, onCancel }: { organizatio
         <div className="flex flex-wrap gap-6 sm:col-span-2">
           <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={f.autopay} onChange={(e) => set('autopay', e.target.checked)} /> On autopay</label>
           <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={f.is_active} onChange={(e) => set('is_active', e.target.checked)} /> Active (makes renewal tasks)</label>
+          <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={f.personal} onChange={(e) => set('personal', e.target.checked)} /> Personal insurance (our homes and family vehicles)</label>
         </div>
         <FormField label="Notes" htmlFor="pf-notes" className="sm:col-span-2"><Textarea id="pf-notes" rows={4} value={f.notes} onChange={(e) => set('notes', e.target.value)} /></FormField>
       </div>
