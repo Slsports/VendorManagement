@@ -1,7 +1,7 @@
 ---
 title: Match a freight bill to vendors and orders
 section: Freight
-keywords: match, confirm, shipper, vendor, order, freight cost, line, undo, freight bill lines
+keywords: match, confirm, shipper, vendor, order, freight cost, line, undo, freight bill lines, PO, reference, ship date, tracking
 who: Admin, managers and buyers
 ---
 A freight bill can cover several shipments from different vendors. Each line is one shipment; you tell VMS which vendor shipped it and, if you know it, which order it was for.
@@ -17,6 +17,8 @@ A freight bill can cover several shipments from different vendors. Each line is 
 
 ## Good to know
 - Claude reads the bill and fills in what it can; you check and confirm.
+- VMS confirms a line by itself when it can prove the order: our PO is printed on the bill (Ref # or PO, like PARICON1-19-26), or the tracking number is in the vendor's shipping email for that order. A bill whose lines are all proven leaves **To match** on its own. When a shipment comes as several packages, confirming one package puts the others from the same shipper and day on the same order.
+- Otherwise it only suggests the vendor's order placed closest before the ship date (the order date, or a date in the PO like 1-19-26). It never suggests an order placed after the shipment or a cancelled one.
 - An invoice fee on the bill is added to the line for the biggest order.
 - If the lines do not add up to the bill total, the total shows in red ("bill says ...").
 - Once a line is confirmed, the bill is also filed in the vendor's Documents (Shipping) and on the matched order.

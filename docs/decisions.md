@@ -3438,3 +3438,18 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   nawal@mbsaccountancy.com in her usual words ("Q3 2026 Sales Tax Return" / "Here is the 3rd quarter 2026 sales tax
   return. Thanks! :-)") and a task the next day at 9 AM that opens it; sending it to Nawal closes the task. Back-check:
   Q3 2026 (filed and paid Oct 23, nothing sent to Nawal in billing@) got its task and draft now.
+- Nov 2 (Dana, "go on both"): Triple T and Paricon freight. PS00548954 (Triple T, shipped Oct 26, 2023; PartnerShip's first
+  statement after it took over Parcel Management Group's billing) closed with no order: no Triple T order in VMS is from
+  2023. Dana: "the name of the triple t order in vms clearly states the date is 2/4/26. that can be a clue" and "Paricon:
+  The partnership invoice clearly says the PO, which includes the date 1-19-26 … Why did VMS not figure that out??" Why:
+  the freight reader never kept the bill's "Ref #" / PO lines, and VMS suggested the vendor's newest order not yet
+  received whatever the ship date. Built (migration 0282, freight reader): the reader keeps each shipment's PO and
+  reference numbers; a printed PO matching one of our orders, or the tracking number in that order's shipping email,
+  confirms the line by itself; otherwise VMS only suggests the vendor's order placed closest before the ship date (order
+  date, else a date in the PO such as 1-19-26 or 020426), never a later or cancelled one; a bill with every line proven is
+  done. Re-reading a bill never duplicates a confirmed line. Back-check: the open bills are read again.
+  Back-check note (same day): re-reading the open bills split some shipments into one line per package, and four bills
+  (PS00606597, PS00610650, PS00623100, PS00625159) briefly counted a shipment twice (an older whole-shipment line kept next
+  to its packages). Fixed: those lines now hold only their own package and every bill's lines equal its total (checked
+  across all freight bills). Migration 0283: a re-read never adds a shipment already confirmed (same shipper and ship
+  date), the other packages of a confirmed shipment follow it to its order, and "INV.# 32962" matches order 32962.
