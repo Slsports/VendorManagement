@@ -3504,3 +3504,12 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   a file Claude could not see is never left in the email, it goes to Needs a look; a big file is noted before reading so a
   run that runs out of memory is not repeated. Back-check: every billing@ file over 5 MB that was left in its email for a
   reason Claude gave (or as too big) is read again.
+- Nov 2 (Dana): sent compressed copies of two big Hub papers to file. The 24-25 Cal Fair SLS building policy (COM 0300848608
+  00) was already on file from Shelly's Nov 7 2025 email, so no second copy. The 24-25 Hudson DIC policy SL 2923292 (the 22.8
+  MB "24-25 CDIC policy Residential Retail.pdf") is filed under P&S DIC for Residential & Storage, confirmed by Dana's
+  "Commercial Property Insurance Informational Guide v6" (9-24-26: SL2923292 $478,500 = #1 Residential & Storage); both Hub
+  emails now point at it. "Cal fair changed our account number on the same property" … "check the current acct number by
+  looking at the spreadsheet": the guide gives COM 0301476591 02 for the Sports Store building (what VMS has); the 2024-25
+  year notes the earlier COM 0300848608 00. Not yet confirmed: what COM 0300366534 (Shelly's "25-26" file and the CVCB
+  evidence of insurance) is; the guide does not list it. accounting-file takes a trusted upload (in pieces) so a file Dana
+  hands to Claude can be filed from a cloud session.

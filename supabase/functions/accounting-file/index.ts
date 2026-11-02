@@ -8,6 +8,9 @@
 //   { attachment_id, force? }         → one attachment, filed even when Claude would have skipped it ("File in Accounting")
 //   { document_id, hint? }            → a file dropped on the Documents page: read it, name it, file it
 //   { backcheck: true }               → trusted only: look again at every email whose files were skipped (a rule changed)
+//   { upload: { organization_id, name, mime, base64 | parts, token, hint? } } → trusted only: a file Dana handed to Claude (a
+//                                       cloud session has no Storage key): sent in pieces ({ token, part, base64 }) when big,
+//                                       saved like the drop box, never a second copy, then filed
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { Gmail, GMAIL_SCOPES, googleAccessToken } from '../_shared/gmail.ts'
 import { aiEnabled, askAccountingQuestions, readAccountingPapers, type AccountingFileCtx, type AccountingPaperReading, type PaperFile } from '../_shared/ai.ts'
@@ -37,7 +40,7 @@ Deno.serve(async (req) => {
       me = { id: p.id, organization_id: p.organization_id }
     }
     if (!aiEnabled()) return json({ error: 'Claude is not set up for this organization' }, 503)
-    const body = await req.json().catch(() => ({})) as { email_id?: string; attachment_id?: string; force?: boolean; document_id?: string; hint?: string; backcheck?: boolean; gmail_filters?: boolean; apply_contact_filing?: string; questions?: boolean }
+    const body = await req.json().catch(() => ({})) as { upload?: { organization_id: string; name?: string; mime?: string | null; base64?: string; token?: string; part?: number; parts?: number; hint?: string | null }; email_id?: string; attachment_id?: string; force?: boolean; document_id?: string; hint?: string; backcheck?: boolean; gmail_filters?: boolean; apply_contact_filing?: string; questions?: boolean }
     const started = Date.now()
 
     // Trusted only (Dana, Oct 27): papers flagged before the question buttons get their question from the note.
@@ -93,6 +96,43 @@ Deno.serve(async (req) => {
         }
       }
       return json(out)
+    }
+
+    if (body.upload && trusted) {
+      const u = body.upload
+      const decode = (b64: string) => { const bin = atob(b64); const out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out }
+      const staging = (n: number) => `${u.organization_id}/staging/${(u.token ?? '').replace(/[^A-Za-z0-9-]/g, '')}/${n}`
+      if (u.token && u.part != null && u.base64) {
+        const { error } = await db.storage.from(BUCKET).upload(staging(u.part), decode(u.base64), { contentType: 'application/octet-stream', upsert: true })
+        return error ? json({ error: error.message }, 500) : json({ part: u.part })
+      }
+      let bytes: Uint8Array
+      if (u.token && u.parts) {
+        const pieces: Uint8Array[] = []
+        for (let n = 0; n < u.parts; n++) {
+          const { data, error } = await db.storage.from(BUCKET).download(staging(n))
+          if (error || !data) return json({ error: `piece ${n}: ${error?.message ?? 'missing'}` }, 400)
+          pieces.push(new Uint8Array(await data.arrayBuffer()))
+        }
+        bytes = new Uint8Array(pieces.reduce((n, p) => n + p.length, 0))
+        let at = 0
+        for (const p of pieces) { bytes.set(p, at); at += p.length }
+        await db.storage.from(BUCKET).remove(Array.from({ length: u.parts }, (_, n) => staging(n)))
+      } else if (u.base64) bytes = decode(u.base64)
+      else return json({ error: 'nothing to upload' }, 400)
+      if (!u.name) return json({ error: 'name needed' }, 400)
+      const sha = await sha256(bytes)
+      const { data: same } = await db.from('accounting_documents').select('id, file_name').eq('organization_id', u.organization_id).eq('sha256', sha).maybeSingle()
+      if (same) return json({ already: same })
+      const ext = extOf(u.name, u.mime ?? null)
+      const path = `${u.organization_id}/${crypto.randomUUID()}.${ext}`
+      const { error: upErr } = await db.storage.from(BUCKET).upload(path, bytes, { contentType: u.mime || 'application/octet-stream', upsert: false })
+      if (upErr) return json({ error: upErr.message }, 500)
+      const { data: row, error } = await db.from('accounting_documents').insert({
+        organization_id: u.organization_id, doc_year: new Date().getFullYear(), file_name: u.name, original_name: u.name, storage_path: path, mime_type: u.mime || null, size: bytes.length, sha256: sha, source: 'upload', status: 'new',
+      }).select('*').single()
+      if (error) { await db.storage.from(BUCKET).remove([path]); return json({ error: error.message }, 500) }
+      return json(await fileUploaded(db, row, u.hint ?? null))
     }
 
     if (body.document_id) {
