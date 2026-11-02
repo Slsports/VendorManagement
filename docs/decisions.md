@@ -3463,3 +3463,6 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   proofs run on every bill (tracking however spaced in the vendor's own email and its attached papers; a reference that is
   the vendor's invoice number; the vendor's one invoice dated the ship day). Left for her: Nationwide Sep 2 (PS00623603,
   $36.17) and the 2022 FedEx bill AB14315420.
+- Nov 2 (Dana): "#2 yes, close them and I will look at Nationwide." The 2022 FedEx bill AB14315420 (Rossignol, Coghlan's, two
+  Kent shipments; no 2022 orders in VMS) closed with each shipment on its vendor and no order. Nationwide Sep 2
+  (PS00623603) left for her.
