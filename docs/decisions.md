@@ -3486,3 +3486,13 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
 - Nov 2 (Dana): "I like the date of the invoice to always be first in the filename, that way I can quickly find an invoice
   by date." Freight bills VMS copies to Dropbox are named "<m-d-yy> <invoice #> <carrier> Invoice.pdf" (10-12-26 PS00626515
   PartnerShip Invoice.pdf). None had been copied yet (waiting on the Dropbox write permission), so no renames were needed.
+- Nov 2 (Dana): "WHY there are 3 orders listed for the same order for $1350 for Bearclaw" (Bearpaw) … "there are actually 4
+  entries in the dropdown" … "go on all of it, keep B671841 as the PO". Why: three imports each made their own order
+  (Buying Guide BEARPAW020426 Oct 6; Placed Order Summary 297880 Oct 9, paid through WWD, invoice 3034206; B671841 made Oct
+  15 from Bearpaw's resent Aug 10 confirmation 2978800 and dated Aug 10 though placed Feb 4 at the show); the duplicate
+  check only compared orders from the same show or a week apart. The 4th dropdown entry is the real 2024 order 2162661.
+  Done (migration 0286): merged into B671841 (Feb 4, WWD spring 2026 show, paid through WWD Oct 8, all papers and the email
+  on it); the duplicate check also pairs a confirmation number with a PO a trailing digit apart, and the same amount within
+  eight months when the items agree; back-check found 1 more pair (Royal Deluxe INV 802289 entered twice, a review card).
+  The freight order dropdown hides cancelled copies and groups orders: placed before it shipped, after, a year or more before.
+  The 11 orders made from emails in the Oct 13-16 back-fill were checked: only Bearpaw's had the resend date.

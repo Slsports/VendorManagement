@@ -10,7 +10,7 @@ A freight bill can cover several shipments from different vendors. Each line is 
 1. Open the bill from the **Freight** page (the **To match** tab).
 2. For each line, look at the shipper, date, pieces, weight and tracking numbers.
 3. If no vendor is filled in, click **Which vendor shipped it?** and pick the vendor. To change a vendor Claude picked, click its name and pick another.
-4. In the order box, pick the order (date, PO, amount), or leave **No order (vendor only)**.
+4. In the order box, pick the order (date, PO, amount), or leave **No order (vendor only)**. The list is grouped: **Placed before it shipped** first (newest first), then **Placed after it shipped**, then **More than a year earlier**. Cancelled copies are not listed.
 5. Click **Confirm**. The freight is now on that vendor (and order).
 6. Made a mistake? Click **Undo** on the line.
 7. When every line is done, click **Mark done** at the top.

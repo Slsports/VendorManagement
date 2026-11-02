@@ -155,6 +155,23 @@ function PaidDialog({ onClose, onSave }: { onClose: () => void; onSave: (p: { pa
 
 type Line = FreightBillDetail['freight_bill_lines'][number]
 
+/** The vendor's orders for a shipment, newest first in three groups (Dana, Nov 2): placed before it shipped (the likely
+ *  ones), placed after, and more than a year before it, at the bottom. Without a ship date: newest first, one group. */
+function orderGroups<T extends { order_date: string | null }>(orders: T[], shipDate: string | null): { label: string; orders: T[] }[] {
+  if (!shipDate) return orders.length ? [{ label: 'Orders, newest first', orders }] : []
+  const ship = new Date(`${shipDate}T00:00:00`).getTime()
+  const yearBefore = ship - 365 * 86_400_000
+  const at = (o: T) => (o.order_date ? new Date(`${o.order_date}T00:00:00`).getTime() : null)
+  const before = orders.filter((o) => { const t = at(o); return t != null && t <= ship + 3 * 86_400_000 && t >= yearBefore })
+  const after = orders.filter((o) => { const t = at(o); return t != null && t > ship + 3 * 86_400_000 })
+  const older = orders.filter((o) => { const t = at(o); return t == null || t < yearBefore })
+  return [
+    { label: 'Placed before it shipped', orders: before },
+    { label: 'Placed after it shipped', orders: after },
+    { label: 'More than a year earlier', orders: older },
+  ].filter((g) => g.orders.length)
+}
+
 function LineRow({ line: l, canEdit, onChange }: { line: Line; canEdit: boolean; onChange: () => Promise<void> }) {
   const [vendor, setVendor] = useState<{ id: string; name: string } | null>(l.vendors)
   const [orderId, setOrderId] = useState(l.order_id ?? '')
@@ -194,8 +211,12 @@ function LineRow({ line: l, canEdit, onChange }: { line: Line; canEdit: boolean;
             </div>
             <Select value={orderId} onChange={(e) => setOrderId(e.target.value)} aria-label="Order" className="h-9 sm:w-64" disabled={!vendor}>
               <option value="">{vendor ? (orders.isLoading ? 'Loading orders…' : 'No order (vendor only)') : 'Pick the vendor first'}</option>
-              {(orders.data ?? []).map((o) => (
-                <option key={o.id} value={o.id}>{[shortDate(o.order_date), o.po_number, money(o.final_cost ?? o.est_cost), o.date_received ? 'received' : null].filter((x) => x && x !== '—').join(' · ')}</option>
+              {orderGroups(orders.data ?? [], l.ship_date).map((g) => (
+                <optgroup key={g.label} label={g.label}>
+                  {g.orders.map((o) => (
+                    <option key={o.id} value={o.id}>{[shortDate(o.order_date), o.po_number, money(o.final_cost ?? o.est_cost), o.date_received ? 'received' : null].filter((x) => x && x !== '—').join(' · ')}</option>
+                  ))}
+                </optgroup>
               ))}
             </Select>
           </>

@@ -88,8 +88,9 @@ export async function getFreightBill(id: string): Promise<FreightBillDetail> {
 
 /** A vendor's orders to pick from on a freight line, newest first. */
 export async function listVendorOrdersForFreight(vendorId: string) {
+  // cancelled copies never show (Dana, Nov 2: Bearpaw had four entries, three of them one order)
   const { data, error } = await supabase.from('orders').select('id, order_date, po_number, est_cost, final_cost, description, date_received')
-    .eq('vendor_id', vendorId).order('order_date', { ascending: false, nullsFirst: false }).limit(25)
+    .eq('vendor_id', vendorId).neq('status', 'cancelled').order('order_date', { ascending: false, nullsFirst: false }).limit(40)
   if (error) throw error
   return data ?? []
 }
