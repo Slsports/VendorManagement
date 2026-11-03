@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
   const db = serviceClient()
   try {
-    const body = await req.json().catch(() => ({})) as { action?: string; app_key?: string; code?: string; state?: string; path?: string; folder_path?: string; mode?: string; move_filed?: boolean; on?: boolean }
+    const body = await req.json().catch(() => ({})) as { relative_path?: string; base64?: string; action?: string; app_key?: string; code?: string; state?: string; path?: string; folder_path?: string; mode?: string; move_filed?: boolean; on?: boolean }
     const cronSecret = Deno.env.get('MAIL_CRON_SECRET')
     const trusted = !!cronSecret && req.headers.get('x-cron-secret') === cronSecret
     if (trusted) {
@@ -79,6 +79,19 @@ Deno.serve(async (req) => {
           if (!page.has_more) break
         }
         return json({ folder: c.folder_path, top: top.entries.map((e) => `${e['.tag']}: ${e.name}`), top_has_more: top.has_more, pages })
+      }
+      // a file Dana asked Claude to put in her Dropbox (a cloud session cannot reach Dropbox itself): inside the connected
+      // folder only, never over an existing file (Dropbox renames a clash)
+      if (body.action === 'put_file') {
+        const { data: cs } = await db.from('dropbox_connections').select('*').not('refresh_token', 'is', null).not('folder_path', 'is', null).limit(1)
+        const c = (cs ?? [])[0] as Conn | undefined
+        const rel = String(body.relative_path ?? '').replace(/^\/+/, '')
+        if (!c?.folder_path || !rel || rel.split('/').some((p) => p === '..' || p === '') || !body.base64) throw new HttpError(400, 'Need relative_path and base64')
+        const bin = atob(body.base64)
+        const bytes = new Uint8Array(bin.length)
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+        const meta = await upload(db, c, `${c.folder_path.replace(/\/+$/, '')}/${rel}`, bytes)
+        return json({ path: meta.path_display, size: bytes.length })
       }
       if (body.action !== 'sync') throw new HttpError(400, 'Unknown action')
       const { data: conns } = await db.from('dropbox_connections').select('*').not('refresh_token', 'is', null).not('folder_path', 'is', null)

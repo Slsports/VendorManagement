@@ -3543,3 +3543,8 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   $82,656 (8/13/24), $76,703 (8/5/25), $17,111.38, $755, $372, $34, $24; Nationwide $3,653 (10/2/26); Markel; Sports
   Store contents shows $4,858 twice in the guide but once in QBO (1/30/26); Residential & Storage $1,779 (6/26/26) and SLS
   building $4,472 (9/25/26) are not in the SLS QBO report.
+- Nov 3 (Dana): "send the insurance guide to my dropbox folder and rename it ver 7 … 1-A Shaver Lake Sports/Insurance/
+  Coverage Summaries". Saved "11-3-26 Commercial Property Insurance Informational Guide v7.xlsx" there: v6 with the Red
+  House and Residential & Storage Cal Fair rows corrected (numbers, limits, renewal dates, premiums, paid dates, notes) and
+  the Instructions notes fixed. v6 was left where it is. The dropbox function takes a trusted put_file (inside the
+  connected folder, never over a file) so Claude can hand Dana a file from a cloud session.
