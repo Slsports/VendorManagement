@@ -3584,3 +3584,9 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
 - Nov 3 (Dana: "go"): one freight bill per invoice (migration 0287). The copy check (same billing company + invoice
   number) now also runs on bills made from carrier emails; a copy is dropped and the bill kept takes its email, attachment,
   Dropbox path and payment links (and its PDF and lines when it was waiting for one). Back-check: 0 copies on file.
+- Nov 3 (Dana: "go"): Accounting pieces of newer-email-wins. Earlier numbers on the SLS building (COM 0300848608 00,
+  COM 0300366534, quotes COMQ0300419957, COMQ0301290543) and Sports Store contents (COM 0300498076, COM 2905361, COM 0301157901,
+  three COMQ quotes); the Accounting reader now sees earlier numbers. The 9 COM 0301157901 papers (duplicate contents policy)
+  and 4 COM 0300366534 papers (second number on the SLS building, incl. the $4,211 receipt) are filed on their policy with a
+  note. Community West Bank: the CVCB card merged in (9 addresses, 117 conversations), its 52 papers in one Community West
+  Bank folder; contact pages show a Proof of insurance box linking to the send log.

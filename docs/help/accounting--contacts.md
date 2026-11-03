@@ -14,6 +14,7 @@ Accounting contacts are the people and companies in the billing@ mail: the accou
 5. **Find new in the mail** looks through the mail again after more has come in. VMS also does this on its own as mail arrives.
 
 ## Good to know
+- A contact you send proof of insurance to (the bank) shows a **Proof of insurance** box with the last one sent. Click it to see every proof sent, each with its email.
 - The category sorts their mail under Accounting → Mail and, later, decides where their documents are filed.
 - **Only tell me about deadlines** files all their mail as Handled and makes a task only for a deadline you have to meet (Paychex, Blue Shield).
 - Same person or company twice? On one card, pick the other under **Same person or company twice?** and click **Merge**. Emails, conversations and counts move over.

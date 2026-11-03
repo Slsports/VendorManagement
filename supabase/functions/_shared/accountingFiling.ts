@@ -74,7 +74,7 @@ export async function firstPages(bytes: Uint8Array): Promise<{ bytes: Uint8Array
 export async function knownContext(db: SupabaseClient, org: string): Promise<Pick<AccountingFileCtx, 'known_parties' | 'policies' | 'contracts'>> {
   const [{ data: contacts }, { data: policies }, { data: contracts }, { data: parties }] = await Promise.all([
     db.from('accounting_contacts').select('company').eq('organization_id', org).eq('status', 'confirmed').neq('company', ''),
-    db.from('accounting_policies').select('id, label, policy_number, carrier').eq('organization_id', org).eq('is_active', true),
+    db.from('accounting_policies').select('id, label, policy_number, prior_policy_numbers, carrier').eq('organization_id', org).eq('is_active', true),
     db.from('accounting_contracts').select('id, label, contract_number, other_party').eq('organization_id', org).in('status', ['pending', 'active']),
     db.from('accounting_documents').select('party').eq('organization_id', org).neq('party', '').limit(2000),
   ])
@@ -85,7 +85,8 @@ export async function knownContext(db: SupabaseClient, org: string): Promise<Pic
   for (const c of contracts ?? []) if (c.other_party) known.add(c.other_party)
   return {
     known_parties: [...known].sort().slice(0, 300),
-    policies: (policies ?? []).map((p) => ({ id: p.id, label: p.label, number: p.policy_number, carrier: p.carrier })),
+    // earlier numbers too (a renumbered or lapsed policy, the quote it came from), so old papers find their policy (Dana, Nov 2)
+    policies: (policies ?? []).map((p) => ({ id: p.id, label: p.label, number: [p.policy_number, ...((p.prior_policy_numbers as string[] | null) ?? []).map((n) => `earlier ${n}`)].filter(Boolean).join('; '), carrier: p.carrier })),
     contracts: (contracts ?? []).map((c) => ({ id: c.id, label: c.label, number: c.contract_number, party: c.other_party })),
   }
 }

@@ -16,7 +16,7 @@ The Insurance page is the tracker: every policy, when it renews, what each year 
 ## Good to know
 - A renewal task appears 30 days before each active policy's renewal date, with the checklist from the renewal procedure.
 - Policies on **autopay** say so on the task: confirm the payment went through, do not pay twice.
-- Cal Fair issues a new policy number if a policy lapses; the old ones are kept under Prior numbers. A policy that was replaced (SJ&E Road's Cal Fair and Steadily, replaced by Orion180) is retired: tick **Show retired policies** to see it.
+- Cal Fair issues a new policy number if a policy lapses; the old ones are kept under Prior numbers (also the quote numbers, CFPQ and COMQ). VMS files a paper with an old number or a quote number under the right policy. A policy that was replaced (SJ&E Road's Cal Fair and Steadily, replaced by Orion180) is retired: tick **Show retired policies** to see it.
 - The agent on each policy is a contact with phone numbers: Sam Gibbs at Hub International for the business, David Wagner at Goosehead for personal insurance.
 - Personal insurance contacts and papers are filed under **Personal insurance** in Contacts, Mail and Documents, apart from the business insurance.
 - An insurer's billing emails to billing@ that show the policy's number (Travelers shows "Billing account 7276G0232") make a task **Pay …: $… due …**, reminded 5 days before the due date. A "due soon" or "past due" email reminds you right away (past due says so in the title). Clicking the task opens the bill email.

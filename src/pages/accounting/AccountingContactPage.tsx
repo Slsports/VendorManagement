@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { getAccountingContact, listAccountingContacts, listContactThreads, mergeAccountingContacts, saveAccountingContact, type ContactAddress, type ContactInput, type ContactStatus } from '@/services/accounting'
 import { listMailboxes } from '@/services/mail'
+import { listRecipients } from '@/services/insurance'
 import { ACCOUNTING_CATEGORIES, ACCOUNTING_CATEGORY_LABELS, contactName } from '@/lib/accounting'
 import { ROUTES } from '@/lib/constants'
 import { errorMessage } from '@/lib/utils'
@@ -29,6 +30,8 @@ export default function AccountingContactPage() {
   const box = (boxes.data ?? []).find((b) => b.kind === 'accounting') ?? null
   const mail = useSupabaseQuery(async () => (organization && box && !isNew ? listContactThreads(organization.id, box.id, id) : []), [organization?.id, box?.id, id])
   const others = useSupabaseQuery(async () => (organization ? listAccountingContacts(organization.id) : []), [organization?.id])
+  // the proof of insurance this contact gets (Dana, Nov 2: the bank's page should show what we sent them)
+  const proofs = useSupabaseQuery(async () => (organization && !isNew ? (await listRecipients(organization.id)).filter((r) => r.contact_id === id && r.status !== 'ignored') : []), [organization?.id, id])
   const [mergeInto, setMergeInto] = useState('')
   const [merging, setMerging] = useState(false)
   const loaded = q.data
@@ -75,6 +78,20 @@ export default function AccountingContactPage() {
         }}
         onCancel={() => navigate(ROUTES.accountingContacts)}
       />
+      {(proofs.data ?? []).length ? (
+        <section className="mt-6 rounded-2xl border border-stone-200 bg-white p-4 sm:p-5">
+          <h2 className="text-base font-semibold text-stone-900">Proof of insurance</h2>
+          <ul className="mt-2 space-y-1 text-sm">
+            {(proofs.data ?? []).map((r) => (
+              <li key={r.id}>
+                <Link to={`${ROUTES.accountingInsurance}/who/${r.id}`} className="font-medium text-brand hover:underline">{r.person || r.company || 'Proof of insurance'}</Link>
+                <span className="text-stone-600"> · {r.policy_ids.length} {r.policy_ids.length === 1 ? 'policy' : 'policies'} · last sent {r.last_sent_on ? `${r.last_sent_term ? `${r.last_sent_term} on ` : ''}${new Date(`${r.last_sent_on}T00:00:00`).toLocaleDateString()}` : 'never'}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1 text-xs text-stone-500">Open it for every proof sent, each with its email. The papers stay filed under the insurance company.</p>
+        </section>
+      ) : null}
       {!isNew ? (
         <section className="mt-6 rounded-2xl border border-stone-200 bg-white p-4 sm:p-5">
           <h2 className="text-base font-semibold text-stone-900">Same person or company twice?</h2>
