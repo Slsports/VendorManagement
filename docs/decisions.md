@@ -3558,3 +3558,8 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
 - Nov 3: both 3/6/24 Cal Fair refunds were for 41777 policies: $5,467.41 = COM 2905361 (SLS contents, 8/15/23-8/15/24,
   insured typo'd "SHAVER LAKE INC"; billed back in May 2024 and paid $5,469.91 on 5/16/24); $2,864.13 = COM 2875282 (P&S
   house at 41777, 5/23/23-5/23/24, cancelled), so its QBO line "41698 Tollhouse / SLH" is the slip.
+- Nov 3 (Dana): "the sports shop has an apartment upstairs that we used to rent. we keep a bunch of inventory up there and
+  decided a couple years ago to boot the tenant and utilize the entire upstairs for storage. So the type of coverage was
+  changed." The 2023-24 contents policy (COM 2905361) described building 1 as "Sporting goods store and (1) apartment"
+  ($800,000) plus a building 2 "Storage" ($100,000); the 2026-27 contents policy (COM 0302578325) lists only the store
+  building ($750,000). Question for Shelly: is SLS inventory kept in the storage bay (building 2) still covered?
