@@ -3579,3 +3579,5 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   can be filed (PDF limit back to 30 MB). Back-check: the 12 billing@ files that had been too big all read without running
   out of memory: 8 vendor catalogs left in their email, 2 Gastelum copies linked to the copy on file, the business sale
   profile (fcbb) and its pictures version read.
+- Nov 3 (Dana: "go"): the email attachment button is now **Make freight bill** and shows only on mail from a freight
+  company or a vendor (it read like a label on insurance papers in billing@).

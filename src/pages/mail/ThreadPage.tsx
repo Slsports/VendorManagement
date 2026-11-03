@@ -296,8 +296,9 @@ function Message({ email: e, startOpen, focus = false, vendor, carrierId, accoun
                 <FolderInput className="size-3.5" aria-hidden="true" />Save to documents
               </button>
             ) : null}
-          {canEdit && a.gmail_attachment_id && /pdf/i.test(`${a.mime_type ?? ''} ${a.file_name}`) ? (
-            <button type="button" onClick={() => setBillFrom(a)} className="border-l border-stone-200 px-2 py-1 text-stone-500 hover:text-brand" title="Make a freight bill from this PDF">Freight bill</button>
+          {/* only on mail from a freight company or a vendor (Dana, Nov 2: it read as a label on insurance papers) */}
+          {canEdit && a.gmail_attachment_id && (carrierId || vendor) && /pdf/i.test(`${a.mime_type ?? ''} ${a.file_name}`) ? (
+            <button type="button" onClick={() => setBillFrom(a)} className="border-l border-stone-200 px-2 py-1 text-stone-500 hover:text-brand" title="Make a freight bill from this PDF">Make freight bill</button>
           ) : null}
           {accounting ? (() => {
             const docId = filedNow[a.id] ?? a.accounting_document_id
