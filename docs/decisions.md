@@ -3711,3 +3711,8 @@ Dana: "yes tie Simple Products to LUX PRO - you can tell because the vendor is s
 WWD bills LuxPro under its company name Simple Products Corp (portal #32767; the brand is B032767). The name is now an alias
 of LUX PRO (wwd_assign_name), its 2 WWD invoices (7075382, 7286593) are on LUX PRO, and the LaserVault copy of 7075382
 (batch 4) is read again so it files there.
+
+## Nov 3, 2026 — WWD's "SCSR Innovations dba Andreas" is ANDREAS; Donna is the rep
+Dana: "Andreas should be listed as one of our vendors" — "Donna is the rep for them." The WWD name is now an alias of
+ANDREAS (its WWD invoice, PO JAROPENER101824, is on ANDREAS), the WWD line of that name points at ANDREAS, and Donna Hoffman
+(DandyLines / Diverse Marketing, donna@dandylinesllc.com) is Andreas's main rep.
