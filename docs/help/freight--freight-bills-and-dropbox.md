@@ -13,7 +13,7 @@ Freight bill PDFs stay the same in VMS and in Dropbox, whichever one you put the
 
 ## Good to know
 - A PDF already in Dropbox (the same file, whatever its name or folder) is never copied again, and a file VMS copied to Dropbox is never read in a second time.
-- One bill per invoice: when the same invoice from the same billing company comes in again (the carrier's email, Dropbox, an upload), VMS keeps the bill it already has and adds the email or PDF to it. It never makes a second bill.
+- One bill per invoice: when the same invoice from the same billing company comes in again (the carrier's email, Dropbox, an upload), VMS keeps the bill it already has and adds the email or PDF to it. It never makes a second bill. If the newer one is a corrected bill (same invoice number, different total), the newer one wins: the bill takes the new PDF, total and shipments, keeps its payment, and its note says what was replaced.
 - The carrier folders are PartnerShip, UPS (by year), FedEx, XPO, Pinnacle-Priority 1 and SHIP STATION - WWEX GROUP. A new freight company gets a folder with its name.
 - Copying into Dropbox needs the **files.content.write** permission on your Dropbox app. If Settings › Dropbox says VMS cannot save freight bills yet, tick it on the app's **Permissions** tab in the Dropbox App Console, click **Submit**, then click **Reconnect** in Settings › Dropbox.
 - Only the Freight folder is watched. The rest of your Dropbox was read once when Dropbox was connected.
