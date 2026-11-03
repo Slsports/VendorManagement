@@ -3563,3 +3563,10 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   changed." The 2023-24 contents policy (COM 2905361) described building 1 as "Sporting goods store and (1) apartment"
   ($800,000) plus a building 2 "Storage" ($100,000); the 2026-27 contents policy (COM 0302578325) lists only the store
   building ($750,000). Question for Shelly: is SLS inventory kept in the storage bay (building 2) still covered?
+- Nov 3 (Dana): "the storage plus residential used to be just storage. We remodeled the upstairs and turned it into a 3
+  bed 2 bath home, there are storage bays down stairs. One is my hubby's shop, another we rent out to a painting
+  contractor and the rest are storage for SLS." Cal Fair's 3/26/2025 notice on CFP 0100377050 (choice to convert to
+  Commercial Property) says "Dwelling policy does not cover business property". The building is on a Dwelling Fire
+  policy (CFP 0102829144: 1 unit, owner, permitted incidental occupancy $0), and the 2026-27 SLS contents policy lists only
+  the store building. Questions for Shelly: is SLS inventory in those bays covered; is the painting contractor's rented
+  bay (and the shop) allowed on a dwelling policy; should this building move to the Commercial Property program.
