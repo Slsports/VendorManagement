@@ -3657,3 +3657,11 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   page. The reader now also takes it from those (gmail-sync v101); the unplaced files were read again. Not filed by VMS
   and left on Dana's "Edenred: … VMS couldn't place" task: XPO freight bills sent through WWD (a freight company, not a
   vendor) and Mechanix Wear / Strike King Lure (no such vendor in VMS yet).
+- Nov 3 (Dana: "add Mechanix and Strike King as vendors and attach the XPO bills"; Edenred export 10-20-26 to 11-3-26):
+  the export's 20 invoices VMS did not have yet were loaded with their lines (144 lines; 2 orders got items, 1 freight
+  filled, 2 credit cards, 1 shared freight bill); the 331 already loaded were left as they were. Mechanix Wear and Strike
+  King Lure Co. promoted from WWD lines to WWD vendors with the portal data Dana sent (address, terms, minimum, freight,
+  returns; Jeff Kendall added to Mechanix; Strike King marked fishing); their two Edenred invoices filed. The 5 XPO
+  freight PDFs billed through WWD are on XPO freight bills: 3 filled the bills on file, 2 new (126-995212 $629.65,
+  711-027940 $592.94, to match). Migration 0294: attaching a PDF to a bill that already has its lines keeps the lines and
+  status (it had put Trevor's split XPO bills 381292391 and 454400273 back to To match with an extra line; fixed).
