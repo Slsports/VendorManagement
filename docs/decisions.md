@@ -3752,3 +3752,10 @@ terminal around Nov 13) and the 3 of our replies that weren't tied to the order 
   <date>". Built: upper right Tasks then Activity feed (newest first: emails, papers filed, orders placed / confirmed / shipped /
   received / entered to LS by whom / paid, finished tasks, notes; each line opens its source); the old Recent activity strip
   is gone; Their info and what they sell is at the bottom of Overview. Invoices sit on their own invoice date.
+
+## Nov 3, 2026 — Paricon: Ted Morton is the rep
+Dana: "Why is Ted Morton not showing as our rep." Confirmed: VMS learned Ted from email on Oct 13 as an "Other" contact (no
+title or phones). The WWD portal read on Oct 16 lists him as Paricon's rep (Sales Manager, 207-743-6896, cell 206-499-5506), but
+`wwd_portal_apply` skips a contact whose address is already on the vendor, so his rep role, title and phones never came in.
+Fixed for Ted (rep, title, phones, Paricon's main rep). Same gap on file: 57 contacts on 18+ vendors (23 missing the rep role,
+41 the title, 25 the phones); the portal fill-in and back-check wait for Dana's go.
