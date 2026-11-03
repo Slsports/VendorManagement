@@ -1,17 +1,27 @@
 ---
 title: Import WWD payment files
 section: Payments
-keywords: WWD, Worldwide, Payment History, EdenRed, payment sheet, scan, import, PB number, WWD payment #, xls, N/D Freight, NDOF, no discount on freight
+keywords: WWD, Worldwide, Payments Due, future payments, discount date, Disc Date, Disc Avail, reminders, Payment History, EdenRed, payment sheet, scan, import, PB number, WWD payment #, xls, N/D Freight, NDOF, no discount on freight
 who: Admin and managers
 ---
-Worldwide's portals never show the whole picture, so VMS puts it together from several files: the Payment History export, the EdenRed invoice export, Edenred's invoice line export, your own payment sheets, and scans of printed sheets.
+Worldwide's portals never show the whole picture, so VMS puts it together from several files: the Payment History export, the EdenRed invoice export, Edenred's invoice line export, your own payment sheets, scans of printed sheets, and WWD's **Payments Due** list.
 
 ## How to
 1. Click **Payments** in the menu.
 2. In **Worldwide (WWD) payments**, click **Choose files** and pick any mix of files: Excel (including the History "xls"), Word copies of your sheets, or PDFs and photos of printed sheets.
-3. Each file is listed with what VMS took it for (**Payment History**, **EdenRed invoices**, **Payment sheet** or **Scanned sheet (read by Claude)**) and how many payments or invoices it holds. Scans take Claude about a minute each.
+3. Each file is listed with what VMS took it for (**Payment History**, **EdenRed invoices**, **Payment sheet**, **Payments due (not paid yet)** or **Scanned sheet (read by Claude)**) and how many payments or invoices it holds. Scans take Claude about a minute each.
 4. Click **Add more files** for more. Check the summary: invoices (how many new), payments (how many new), and vendor names found in VMS.
 5. Click **Import**. A green note says what was added and how many orders were marked paid.
+
+## WWD's Payments Due list
+- Copy WWD's list of bills not paid yet into Excel, with a title like "WORLDWIDE PAYMENTS DUE - NO PAYMENT MADE YET", or put "Payments Due" in the file name. Then upload it here like the other files.
+- VMS lists it as **Payments due (not paid yet)**. Nothing on it is marked paid.
+- WWD's **Date Due** replaces the due date VMS had. Bills VMS did not have yet are added.
+- Each bill gets a reminder **3 days before** in your tasks:
+  - a bill with a **Disc Avail** amount: "Pay … by (Disc Date) to take the $… discount"
+  - other bills: "Pay … by (Date Due)"
+- If the discount date passes unpaid, the reminder changes to the due date, because the discount can't be taken anymore.
+- When you upload your payment sheet for a bill, its reminder closes as **Paid**.
 
 ## Good to know
 - Names VMS does not know are listed after import under **WWD names to match**. Import anyway; you pick the vendor once.

@@ -96,3 +96,27 @@ describe('parseEdenredLines', () => {
     expect(edenred.map((e) => [e.seq, e.nd_freight, e.ndof, e.lines.length])).toEqual([['7323738', 'Y', 21.41, 2], ['7400001', 'N', null, 1]])
   })
 })
+
+describe("WWD's Payments Due list (Dana, Nov 3)", () => {
+  const due = [
+    ['WORLDWIDE PAYMENTS DUE - NO PAYMENT MADE YET - SET REMINDERS IN VMS 3 DAYS BEFORE DUE DATE'],
+    ['Sel', 'Invoice #', 'Disc Date', 'Disc Avail', 'Date Inv', 'Date Due', 'Desc', 'Vendor', 'Inv Amt', 'Amt Paid', 'Amt Due'],
+    ['', 7441239, '', 0, '9/4/2026', '12/3/2026', 'INV', 'Kai USA Ltd / Kershaw Knives', 1056.71, 0, 1056.71],
+    ['', 7451930, '1/14/2027', 283.86, '9/16/2026', '1/15/2027', 'INV', 'Normark Corp / Rapala', 4730.94, 0, 4730.94],
+  ]
+  it('is never read as a payment sheet', () => {
+    const r = parseWwdTable(due, '11-3-26_WORLDWIDE_FUTURE_PAYMENTS_DUE.xlsx')
+    expect(r.kind).toBe('due')
+    expect(r.batch.invoices).toEqual([])
+    expect(r.batch.due).toEqual([
+      { seq: '7441239', kind: 'invoice', wwd_date: '2026-09-04', vendor_name: 'Kai USA Ltd / Kershaw Knives', amount: 1056.71, amount_due: 1056.71, due_date: '2026-12-03', disc_date: null, disc_avail: null },
+      { seq: '7451930', kind: 'invoice', wwd_date: '2026-09-16', vendor_name: 'Normark Corp / Rapala', amount: 4730.94, amount_due: 4730.94, due_date: '2027-01-15', disc_date: '2027-01-14', disc_avail: 283.86 },
+    ])
+  })
+  it('a paid sheet with the same columns is still a payment sheet', () => {
+    const paid = [['WORLDWIDE PAYMET 11-3-26 $9,672.85'], due[1]!.slice(1), [7489971, '11/25/2026', 54.32, '10/26/2026', '11/26/2026', 'INV', 'XPO Logistics Freight, Inc', 362.1, 54.32, 307.78]]
+    const r = parseWwdTable(paid, '11-3-26_WORLDWIDE_PAYMENT_9672.85.xlsx')
+    expect(r.kind).toBe('sheet')
+    expect(r.batch.invoices[0]).toMatchObject({ seq: '7489971', sheet_paid_date: '2026-11-03', discount: 54.32 })
+  })
+})

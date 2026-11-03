@@ -45,7 +45,7 @@ export async function readWwdFile(file: File, organizationId: string): Promise<W
     }
     const parts = tables.map((t) => parseWwdTable(t, name))
     const kind = parts.find((p) => p.kind)?.kind ?? null
-    if (!kind) return { name, kind: null, batch: empty(), error: 'Not a WWD file this page knows (Payment History, EdenRed export or a payment sheet)' }
+    if (!kind) return { name, kind: null, batch: empty(), error: 'Not a WWD file this page knows (Payment History, EdenRed export, a payment sheet or the Payments Due list)' }
     return { name, kind, batch: mergeBatches(parts.map((p) => p.batch)) }
   } catch (err) {
     return { name, kind: null, batch: empty(), error: err instanceof Error ? err.message : String(err) }
@@ -58,7 +58,9 @@ export interface EdenredLinesResult {
   invoices: number; lines: number; not_in_vms: number; tied_by_po: number; po_cards: number; credits_linked: number; credit_cards: number
   orders_given_items: number; freight_filled: number; freight_cards: number; vendors_wwd_status: number; shared_bills: number
 }
-export interface WwdImportResult { invoices_new: number; payments_new: number; lines_new: number; orders_paid: number; no_vendor: number; linked_orders: number; edenred?: EdenredLinesResult }
+/** What WWD's Payments Due list did (Nov 3): bills read, new to VMS, reminders made or moved. */
+export interface WwdDueResult { rows: number; added: number; dates_changed: number; with_discount: number; reminders: number }
+export interface WwdImportResult { invoices_new: number; payments_new: number; lines_new: number; orders_paid: number; no_vendor: number; linked_orders: number; edenred?: EdenredLinesResult; due?: WwdDueResult }
 
 async function rpc<T>(fn: 'wwd_preview' | 'wwd_import', p: WwdBatch): Promise<T> {
   const { data, error } = await supabase.rpc(fn, { p: p as unknown as never })
@@ -106,6 +108,18 @@ export async function importWwd(batch: WwdBatch, onProgress?: (done: number, tot
       onProgress?.(steps.length + Math.ceil((i + 40) / 40), steps.length + Math.ceil(eden.length / 40))
     }
     total.edenred = sum
+  }
+  // WWD's Payments Due list: due and discount dates, then the reminders (100 bills a request)
+  const due = batch.due ?? []
+  if (due.length) {
+    const sum: WwdDueResult = { rows: 0, added: 0, dates_changed: 0, with_discount: 0, reminders: 0 }
+    for (let i = 0; i < due.length; i += 100) {
+      const { data, error } = await supabase.rpc('wwd_due_list', { p: { rows: due.slice(i, i + 100) } as unknown as never })
+      if (error) throw error
+      const r = data as unknown as WwdDueResult
+      for (const k of Object.keys(sum) as (keyof WwdDueResult)[]) sum[k] += Number(r[k] ?? 0)
+    }
+    total.due = sum
   }
   return total
 }

@@ -7,7 +7,7 @@ import { mergeBatches } from '@/lib/wwdFiles'
 import { errorMessage } from '@/lib/utils'
 import { Badge, Button } from '@/components/ui'
 
-const KIND_LABELS = { history: 'Payment History', edenred: 'EdenRed invoices', edenred_lines: 'EdenRed invoice lines', sheet: 'Payment sheet', scan: 'Scanned sheet (read by Claude)' } as const
+const KIND_LABELS = { history: 'Payment History', edenred: 'EdenRed invoices', edenred_lines: 'EdenRed invoice lines', sheet: 'Payment sheet', due: 'Payments due (not paid yet)', scan: 'Scanned sheet (read by Claude)' } as const
 
 /**
  * WWD payments (Dana, Oct 9): drop in any mix of Worldwide's Payment History export, the EdenRed invoice
@@ -63,7 +63,7 @@ export function WwdImportSection({ onImported }: { onImported: () => void | Prom
         <Building2 className="size-6 text-stone-400" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-semibold text-stone-900">Worldwide (WWD) payments</h2>
-          <p className="text-sm text-stone-600">Choose any mix of: the Payment History export, the EdenRed invoice export, your payment sheets (Excel or Word) and scans of printed ones.</p>
+          <p className="text-sm text-stone-600">Choose any mix of: the Payment History export, the EdenRed invoice export, your payment sheets (Excel or Word), scans of printed ones, and WWD's Payments Due list (reminders 3 days before each date).</p>
         </div>
         <Button variant="secondary" loading={!!busy && !preview} disabled={!!busy} onClick={() => input.current?.click()} leftIcon={<Upload className="size-4" aria-hidden="true" />}>{files.length ? 'Add more files' : 'Choose files'}</Button>
         <input ref={input} type="file" multiple accept=".xls,.xlsx,.docx,.pdf,.png,.jpg,.jpeg" className="hidden" onChange={(e) => { const l = [...(e.target.files ?? [])]; e.target.value = ''; void read(l) }} />
@@ -78,7 +78,7 @@ export function WwdImportSection({ onImported }: { onImported: () => void | Prom
               {f.error ? <span className="text-xs text-red-700">{f.error}</span> : (
                 <span className="flex items-center gap-2 text-xs text-stone-500">
                   <Badge tone="info">{f.kind ? KIND_LABELS[f.kind] : '?'}</Badge>
-                  {f.batch.payments.length ? `${f.batch.payments.length} payments · ${f.batch.lines.length} lines` : `${f.batch.invoices.length} invoices`}
+                  {f.kind === 'due' ? `${f.batch.due?.length ?? 0} bills due · reminders 3 days before` : f.batch.payments.length ? `${f.batch.payments.length} payments · ${f.batch.lines.length} lines` : `${f.batch.invoices.length} invoices`}
                   {f.kind === 'sheet' || f.kind === 'scan' ? ` · paid ${f.batch.invoices[0]?.sheet_paid_date ?? 'date not found'}` : ''}
                 </span>
               )}
@@ -106,6 +106,12 @@ export function WwdImportSection({ onImported }: { onImported: () => void | Prom
       {result ? (
         <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
           Added {result.invoices_new} WWD invoices, {result.payments_new} payments and {result.lines_new} paid lines; {result.orders_paid} orders marked paid. {result.linked_orders} orders now have their WWD invoices. {result.no_vendor ? `${result.no_vendor} invoices have no vendor yet.` : ''}
+        </p>
+      ) : null}
+      {result?.due ? (
+        <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          Payments due: {result.due.rows} bills read ({result.due.added} new to VMS, {result.due.dates_changed} due dates updated to WWD's). {result.due.with_discount} have a discount if paid by its date.
+          {' '}{result.due.reminders} reminders made or moved; each reminds you 3 days before.
         </p>
       ) : null}
       {result?.edenred ? (

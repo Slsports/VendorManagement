@@ -3642,3 +3642,12 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
 - Nov 3 (Dana: "go"): new emails can be sent From **Billing (billing@)** for people with the Accounting tick (the From list
   had only orders@ and the person's own mailbox; Accounting → Mail's New email already sent from billing@ but the box showed
   orders@). billing.slsports@gmail.com cannot be sent from by VMS (plain Gmail); Dana is switching to billing@.
+- Nov 3 (Dana: "go ahead with the WWD sheets and reminders"): WWD's Payments Due list (migration 0293). Their labels → VMS:
+  Invoice # → WWD invoice; Date Inv → WWD date; Date Due → wwd_due_date (and due_date: WWD's screen wins); Disc Date →
+  disc_date; Disc Avail → disc_avail; Vendor → WWD vendor name; Inv Amt → amount. The reader tells the list apart from a
+  payment sheet by its title ("NO PAYMENT MADE YET", "PAYMENTS DUE") or file name; it never marks anything paid (before,
+  it would have been read as paid on Nov 3). Reminders 3 days before: pay by the Disc Date to take the discount, else by the
+  Date Due; when the discount date passes the due-date reminder takes over; a bill on a payment sheet closes as Paid. Other
+  WWD reminders (terms tiers) stay 5 days ahead. Loaded: the 11-3-26 payment sheet ($9,672.85, 14 lines, 3 new WWD
+  invoices, 3 orders paid) and the Payments Due list (24 bills, 5 new, 18 due dates changed to WWD's, 6 with a discount,
+  24 reminders; the Rapala terms reminder replaced by WWD's own Jan 14 date).

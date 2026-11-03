@@ -6,6 +6,9 @@
 //     The AP columns are WWD's side with the vendor (Nichole, Oct 19) and are never read.
 //   * Dana's payment sheets (.xlsx or Word): the portal's list pasted as she paid it: Invoice #, Disc Date,
 //     Disc Avail, Date Inv, Date Due, Desc, Vendor, Inv Amt, Amt Paid, Amt Due; the payment date in the title.
+//   * WWD's Payments Due list (Dana, Nov 3: "WORLDWIDE PAYMENTS DUE - NO PAYMENT MADE YET"): the same columns, but
+//     nothing on it is paid. Read as 'due' (never as a payment sheet): Date Due, and Disc Date / Disc Avail = the
+//     discount taken when it is paid by that date.
 // No imports here, so the loading script can run this file as is.
 
 export interface WwdInvoiceRow {
@@ -31,8 +34,13 @@ export interface WwdLineRow { ref: string; pay_date: string; seq: string; amount
 /** One invoice's lines from Edenred's line export (Oct 21): MfgStockNo = Vendor ID, ItemNumber = UPC. */
 export interface EdenredLine { vid: string | null; upc: string | null; desc: string | null; qty: number | null; price: number | null; unit_discount: number | null; amount: number | null }
 export interface EdenredInvoice { seq: string; credit: boolean; nd_freight: string | null; ndof: number | null; vendor_active: string | null; tracking: string | null; misc: number | null; freight: number | null; lines: EdenredLine[] }
-export interface WwdBatch { invoices: WwdInvoiceRow[]; payments: WwdPaymentRow[]; lines: WwdLineRow[]; edenred?: EdenredInvoice[] }
-export type WwdFileKind = 'history' | 'edenred' | 'edenred_lines' | 'sheet'
+/** One bill on WWD's Payments Due list (not paid yet). */
+export interface WwdDueRow {
+  seq: string; kind: 'invoice' | 'credit' | 'debit' | null; wwd_date: string | null; vendor_name: string | null
+  amount: number | null; amount_due: number | null; due_date: string | null; disc_date: string | null; disc_avail: number | null
+}
+export interface WwdBatch { invoices: WwdInvoiceRow[]; payments: WwdPaymentRow[]; lines: WwdLineRow[]; edenred?: EdenredInvoice[]; due?: WwdDueRow[] }
+export type WwdFileKind = 'history' | 'edenred' | 'edenred_lines' | 'sheet' | 'due'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -86,7 +94,12 @@ export function htmlTableRows(html: string): string[][] {
 }
 
 /** Which WWD file a table is. */
-export function wwdKind(table: unknown[][]): WwdFileKind | null {
+export function wwdKind(table: unknown[][], fileName = ''): WwdFileKind | null {
+  // WWD's list of bills not paid yet looks like a payment sheet; its title (or file name) says so
+  const head = table.slice(0, 4).flat().map((c) => String(c ?? '')).join(' ')
+  if (/no payment made|payments? due|future payments?/i.test(head) || /future[\s_-]*payments?|payments?[\s_-]*due/i.test(fileName)) {
+    if (table.some((r) => r.some((c) => /^invoice\s*#$/i.test(String(c ?? '').trim())))) return 'due'
+  }
   for (const r of table.slice(0, 15)) {
     const cells = r.map((c) => String(c ?? '').trim().toLowerCase())
     if (cells.some((c) => c.startsWith('check #')) && cells.some((c) => c.startsWith('invoice/credit'))) return 'history'
@@ -191,6 +204,28 @@ export function parseSheet(table: unknown[][], fileName: string): WwdInvoiceRow[
   })
 }
 
+/** WWD's Payments Due list: every bill on it, by its own column names. */
+export function parseDue(table: unknown[][]): WwdDueRow[] {
+  const hi = table.findIndex((r) => r.some((c) => /^invoice\s*#$/i.test(String(c ?? '').trim())))
+  if (hi < 0) return []
+  const h = table[hi]!.map((c) => String(c ?? '').replace(/\s+/g, ' ').trim().toLowerCase())
+  const col = (re: RegExp) => h.findIndex((c) => re.test(c))
+  const C = { seq: col(/^invoice\s*#$/), discDate: col(/^disc date/), discAvail: col(/^disc avail/), dateInv: col(/^date inv/), dateDue: col(/^date due/),
+              desc: col(/^desc/), vendor: col(/^vendor/), invAmt: col(/^inv amt/), amtDue: col(/^amt due/) }
+  const at = (r: unknown[], i: number) => (i >= 0 ? r[i] : undefined)
+  return table.slice(hi + 1).flatMap((r) => {
+    const seq = seqOf(String(at(r, C.seq) ?? ''))
+    if (!seq) return []
+    const desc = String(at(r, C.desc) ?? '').trim().toUpperCase()
+    const avail = wwdMoney(at(r, C.discAvail))
+    return [{
+      seq, kind: desc.startsWith('CRD') ? 'credit' : desc.startsWith('DEB') ? 'debit' : desc.startsWith('INV') ? 'invoice' : null,
+      wwd_date: wwdDate(at(r, C.dateInv)), vendor_name: text(at(r, C.vendor)), amount: wwdMoney(at(r, C.invAmt)), amount_due: wwdMoney(at(r, C.amtDue)),
+      due_date: wwdDate(at(r, C.dateDue)), disc_date: avail ? wwdDate(at(r, C.discDate)) : null, disc_avail: avail || null,
+    } satisfies WwdDueRow]
+  })
+}
+
 /**
  * Edenred's line export (Oct 21): one row per invoice line, its columns named as Edenred names them (SequenceNo,
  * DocumentType, PONumber, InvoiceNumber, MfgStockNo, ItemNumber, LineDescription…). Its invoices go through the usual
@@ -242,12 +277,13 @@ export function parseEdenredLines(table: unknown[][]): { invoices: WwdInvoiceRow
 
 /** One table → its part of the batch. */
 export function parseWwdTable(table: unknown[][], fileName: string): { kind: WwdFileKind | null; batch: WwdBatch } {
-  const kind = wwdKind(table)
+  const kind = wwdKind(table, fileName)
   const empty: WwdBatch = { invoices: [], payments: [], lines: [] }
   if (kind === 'history') return { kind, batch: { ...empty, ...parseHistory(table) } }
   if (kind === 'edenred') return { kind, batch: { ...empty, invoices: parseEdenRed(table) } }
   if (kind === 'edenred_lines') return { kind, batch: { ...empty, ...parseEdenredLines(table) } }
   if (kind === 'sheet') return { kind, batch: { ...empty, invoices: parseSheet(table, fileName) } }
+  if (kind === 'due') return { kind, batch: { ...empty, due: parseDue(table) } }
   return { kind: null, batch: empty }
 }
 
@@ -264,5 +300,5 @@ export function scanToInvoices(r: { payments: { paid_date: string | null; lines:
 }
 
 export function mergeBatches(parts: WwdBatch[]): WwdBatch {
-  return { invoices: parts.flatMap((p) => p.invoices), payments: parts.flatMap((p) => p.payments), lines: parts.flatMap((p) => p.lines), edenred: parts.flatMap((p) => p.edenred ?? []) }
+  return { invoices: parts.flatMap((p) => p.invoices), payments: parts.flatMap((p) => p.payments), lines: parts.flatMap((p) => p.lines), edenred: parts.flatMap((p) => p.edenred ?? []), due: parts.flatMap((p) => p.due ?? []) }
 }
