@@ -3705,3 +3705,9 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   World Wide Distributors that no order claims goes to the WORLDWIDE vendor, confirmed, and the bill is done; it stays under
   its freight company (XPO). Runs after every read of a bill. Back-fix: 4 XPO bills (126-995212, 700-319174, 711-027940,
   934710475) now under WORLDWIDE and done.
+
+## Nov 3, 2026 — WWD's "Simple Products Corp" is LUX PRO
+Dana: "yes tie Simple Products to LUX PRO - you can tell because the vendor is showing simple products but the PO says Luxpro."
+WWD bills LuxPro under its company name Simple Products Corp (portal #32767; the brand is B032767). The name is now an alias
+of LUX PRO (wwd_assign_name), its 2 WWD invoices (7075382, 7286593) are on LUX PRO, and the LaserVault copy of 7075382
+(batch 4) is read again so it files there.
