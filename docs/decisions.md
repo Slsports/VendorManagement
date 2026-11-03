@@ -2987,8 +2987,8 @@ date and brief, one sentence summary of what happened … maybe do the last 5 in
 - Trevor's breakdown posted on the shared XPO bills. Jun 9 #381292391 ($253.85): all to American Plastic WWD819AP26.
   Aug 11 #454400273 ($400.86): Kid Galaxy 1782516 and Maxxsel DPR 2026, shared by order cost (Dana: no amount typed =
   share by cost): Kid Galaxy $275.22, Maxxsel $125.64. The Placed Order Summary had $170.36 on each.
-- Ty, Jul 30 2026: never an order. Dana held off on Aug 7 (22 of 49 SKUs out of stock on top of 46 retired, below the
-  freight minimum). Order removed; its four files stay on Ty's page; its confirmation check dismissed. Revisit Ty after
+- Ty, Jul 30 2026: not placed. Dana chose to wait and order next year because we have a lot of Ty inventory to move
+  (corrected Nov 3; also 22 of 49 SKUs out of stock on top of 46 retired, below the freight minimum). Order removed; its four files stay on Ty's page; its confirmation check dismissed. Revisit Ty after
   Jan 1, 2027 for new items.
 - Nichole (WWD): N/D Freight (Y/N) says whether the terms discount is allowed on an invoice's freight; NDOF Amount is
   the freight amount with no discount.
@@ -3610,3 +3610,12 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   order, and our own revised or re-sent order email, replace the order's lines (retail prices, UPCs and notes kept; WWD
   invoice lines never touched) and a revised total updates the estimate; an add-on email adds only new lines; our own cancel
   email cancels the order (no FYI). No back-check over old mail yet: offered to Dana as a re-read of recent vendor mail.
+- Nov 3 (Dana): Ty was not "never an order": Dana chose to wait and order next year because we have a lot of Ty inventory to
+  move. Fixed in this log, the Ty check note and the Jan 4, 2027 Ty task.
+- Nov 3 (Dana): Pure Fishing: the Sep 17 pallets were refused because Pure Fishing shipped the wrong order (the cancelled
+  booth show order). Noted on PUREFISHING091326 (Jarrett's corrected Sep 13 order, still Open) and the 15 "Pure Fishing
+  Order Help" emails filed on it. Re-read of the last 90 days of shared vendor mail for cancellations: nothing to change.
+- Nov 3 (Dana): Backorder marks cleared on the 75 paid orders (note on each). The 34 entered orders still marked get a
+  follow-up card once Dana uploads a current spreadsheet; then VMS compares each backorder with the sheet's later entries
+  to find backorders that were entered as a new row and never closed (sometimes the BO "yes" was simply never removed).
+  The sheets on file: "8-25-26 Summer WWD Order Guide v6" (loaded Oct 5) and the Placed Order Summary v2.0 (loaded Oct 8).
