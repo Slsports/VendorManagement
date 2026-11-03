@@ -817,6 +817,13 @@ async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, star
  * same number, or the same file, is linked instead. Files it can't place are left in the email and a task for Dana
  * opens it. Every Edenred email, newest first, a few files a run.
  */
+/** "<date> <vendor> <invoice #> <amount>.pdf" (Dana, Nov 3), the same as invoice_file_name() in the database. */
+async function invoiceFileName(db: SupabaseClient, vendorId: string, date: string | null, number: string | null, total: number | null, credit: boolean, fallback: string): Promise<string> {
+  const { data: v } = await db.from('vendors').select('name').eq('id', vendorId).maybeSingle()
+  const { data } = await db.rpc('invoice_file_name', { p_date: date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null, p_vendor: v?.name ?? null, p_number: number, p_total: total, p_credit: credit })
+  return (data as string | null) || fallback
+}
+
 async function edenredInvoices(db: SupabaseClient, gmail: Gmail, org: string, started: number, box: string) {
   const { data: queue } = await db.from('emails')
     .select('id, gmail_id, thread_id, received_at, from_email, attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
@@ -882,8 +889,9 @@ async function edenredInvoices(db: SupabaseClient, gmail: Gmail, org: string, st
               const path = `${org}/${vendorId}/${crypto.randomUUID()}-${label.replace(/[^A-Za-z0-9._-]+/g, '_')}.pdf`
               const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: 'application/pdf', upsert: false })
               if (upErr) throw new Error(`Saving ${a.file_name}: ${upErr.message}`)
+              const fileName = await invoiceFileName(db, vendorId, /^\d{4}-\d{2}-\d{2}$/.test(docDate) ? docDate : null, number, r.amount, kind === 'credit', a.file_name)
               const { data: link, error } = await db.from('vendor_links').insert({
-                organization_id: org, vendor_id: vendorId, kind, label, storage_path: path, file_name: a.file_name, file_size: bytes.length, mime_type: 'application/pdf',
+                organization_id: org, vendor_id: vendorId, kind, label, storage_path: path, file_name: fileName, file_size: bytes.length, mime_type: 'application/pdf',
                 received_at: e.received_at.slice(0, 10), doc_year: Number(docDate.slice(0, 4)), doc_number: number,
                 doc_date: /^\d{4}-\d{2}-\d{2}$/.test(docDate) ? docDate : null, doc_total: r.amount, source: 'email', email_id: e.id,
                 notes: 'From LaserVault (no WWD invoice number on it)',
@@ -911,8 +919,9 @@ async function edenredInvoices(db: SupabaseClient, gmail: Gmail, org: string, st
           const path = `${org}/${p.vendor_id}/${crypto.randomUUID()}-${label.replace(/[^A-Za-z0-9._-]+/g, '_')}.pdf`
           const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: 'application/pdf', upsert: false })
           if (upErr) throw new Error(`Saving ${a.file_name}: ${upErr.message}`)
+          const fileName = await invoiceFileName(db, p.vendor_id, /^\d{4}-\d{2}-\d{2}$/.test(docDate) ? docDate : null, p.doc_number ?? null, r!.amount, p.kind === 'credit', a.file_name)
           const { data: link, error } = await db.from('vendor_links').insert({
-            organization_id: org, vendor_id: p.vendor_id, order_id: p.order_id ?? null, kind: p.kind ?? 'invoice', label, storage_path: path, file_name: a.file_name,
+            organization_id: org, vendor_id: p.vendor_id, order_id: p.order_id ?? null, kind: p.kind ?? 'invoice', label, storage_path: path, file_name: fileName,
             file_size: bytes.length, mime_type: 'application/pdf', received_at: e.received_at.slice(0, 10), doc_year: Number(docDate.slice(0, 4)),
             doc_number: p.doc_number ?? null, doc_date: /^\d{4}-\d{2}-\d{2}$/.test(docDate) ? docDate : null, doc_total: r!.amount,
             source: 'email', email_id: e.id, notes: `From ${/edenred/i.test(String(e.from_email ?? '')) ? 'Edenred' : 'LaserVault'} (WWD ${(p.seqs ?? []).join(', ')})`.slice(0, 300),

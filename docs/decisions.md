@@ -3695,3 +3695,7 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   "LaserVault" in the subject; they only go to the vendor's documents (history back to 2022). gmail-sync v103: the Edenred
   reader takes those emails too (WWD number from the "… - Worldwide - #" header; filed once per vendor + number; notes say
   "From LaserVault").
+- Nov 3 (Dana: "I want invoice date first: <date> <vendor> <invoice #> <amount> go!"): every invoice and credit VMS files
+  from Edenred or LaserVault is named "2025-10-22 WORLD FAMOUS SPORTS 77872 $12176.85.pdf" (credit amount with a minus;
+  migration 0298 invoice_file_name, gmail-sync v105). Back-fix: 322 files renamed. LaserVault papers with no WWD number
+  go to the vendor they name (0297).

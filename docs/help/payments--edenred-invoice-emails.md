@@ -17,3 +17,5 @@ Edenred (Worldwide's invoice site) emails WWD invoices to orders@ in groups, one
 - A PDF without the Invoice Summary page is matched by the vendor's invoice number and amount.
 - Files VMS can't place stay in the email, and you get a task, **Edenred: N invoice files VMS couldn't place**, that opens the email.
 - Nothing already in VMS is overwritten; VMS only fills in blanks (like a missing PO, or the **posted to Edenred** date from the Invoice Summary page).
+- Each file is saved as **date, vendor, invoice #, amount**, for example "2025-10-22 WORLD FAMOUS SPORTS 77872 $12176.85.pdf". A credit's amount has a minus. So **Download all** on a vendor's folder gives you named files, not a pile of "Invoice.pdf".
+- Older WWD invoices from **LaserVault** (before November 2025) work the same way. Email them to orders@ with **LaserVault** in the subject, 10 or 20 at a time. Each goes to its vendor's documents. A paper with no WWD number, like a vendor's credit memo, goes to the vendor named on it.
