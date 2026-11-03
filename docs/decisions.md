@@ -3528,3 +3528,9 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   the commercial quote, as on COMQ0302535267.) VMS must never treat a quote number as a policy number; when the policy
   arrives, the quote's papers belong to that policy. Also Nov 3: COM 0301157901 was the duplicate Sports Store contents
   policy Hub had cancelled (its 2024-25 premium, $6,212 on 10/18/24, was paid alongside the real $7,207).
+- Nov 3 (Dana): which Cal Fair policy covers which house at 41777 Tollhouse. Dana's husband: "the red house was actually
+  build in the 60's, the residential with storage was built in the 80's (but could be 79??)". The $549,867 dwelling policy
+  (CFP 0100377050, then CFP 0102829144 00 after the May 2026 lapse) says built 1979, so it is #1 Residential & Storage, as
+  Hub named it; the Red House (#2, 1960s, no flooring, used for storage) is COM 0301205937, $275,000. The "Red House" note on
+  Dana's scan of CFP 0102829144 and the 9-24-26 guide rows are the mix-up. VMS currently has the two Cal Fair policies
+  swapped; fix waits for Dana's go.
