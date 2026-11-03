@@ -3684,3 +3684,14 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   the WWD name; wrong). Filed under Oeelinn on the Feb 2025 order; the WWD invoice is tied to Oeelinn and the order, which
   now shows paid Apr 21, 2025 (PB83424). It predates Edenred (Edenred's records start Nov 2025), so it was never in the
   Oct 20-21 Edenred emails. gmail-read v27: trusted save_vendor_file, for files Dana sends Claude (once per vendor + number).
+- Nov 3 (Dana: "go on the JollyBuyer setup"): migration 0296. Anngoti, Oeelinn and Pom Pom Tail stay separate vendors
+  (as in LS); each has Parent / billing company JollyBuyer Inc (vendor page; the top search finds all three by JollyBuyer or
+  Jolly Buyer). vendors.wwd_billing_names holds WWD's shared names ("JOLLY BUYER DBA POM POM TAIL", "JOLLYBUYER INC"): an
+  invoice under one goes to the brand of the order it is tied to by our PO, else the brand named in WWD's name (Pom Pom
+  Tail); runs after every weekly upload. POM POM TAIL added as a WWD vendor from the WWD portal record "Jollybuyer Inc"
+  (#33950: Donna Hoffman, Maggie Yu; $100 minimum, collect with 15% freight cap). Back-check: the 4 JollyBuyer invoices are
+  placed: Oeelinn 7011987, 7321137 and credit 7368772; Anngoti 7329458.
+- Nov 3 (Dana: LaserVault): Dana emails WWD's pre-Nov-2025 invoices from LaserVault to orders@, 10 or 20 at a time, with
+  "LaserVault" in the subject; they only go to the vendor's documents (history back to 2022). gmail-sync v103: the Edenred
+  reader takes those emails too (WWD number from the "… - Worldwide - #" header; filed once per vendor + number; notes say
+  "From LaserVault").

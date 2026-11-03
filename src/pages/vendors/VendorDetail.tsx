@@ -109,6 +109,7 @@ export default function VendorDetailPage() {
     ['Assigned to', assignedTo],
     ['WWD contacts', wwdLink],
     ['Aliases', v.aliases.length ? v.aliases.join(', ') : null],
+    ['Parent / billing company', v.parent_company ?? null],
     ['Name re-check', nameCheckQ.data ? <NameCheckNote key="name-check" check={nameCheckQ.data} /> : null],
     ['Our rep', ourRep ? contact(ourRep.name, ourRep.phone, ourRep.email) : null],
     ['Payment terms', v.payment_terms?.name],

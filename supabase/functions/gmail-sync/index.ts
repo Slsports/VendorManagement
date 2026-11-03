@@ -819,8 +819,10 @@ async function savePaperwork(db: SupabaseClient, gmail: Gmail, org: string, star
  */
 async function edenredInvoices(db: SupabaseClient, gmail: Gmail, org: string, started: number, box: string) {
   const { data: queue } = await db.from('emails')
-    .select('id, gmail_id, thread_id, received_at, attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
-    .eq('organization_id', org).eq('gmail_box', box).ilike('from_email', '%@edenredpayinvoice.com').eq('has_attachments', true).is('paper_scanned_at', null)
+    .select('id, gmail_id, thread_id, received_at, from_email, attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, vendor_link_id)')
+    // Edenred's emails, and the older WWD invoices Dana sends from LaserVault (Nov 3: "I just want them posted to the vendor
+    // documents so we have a full history back to 2022"; 10 or 20 at a time, "LaserVault" in the subject)
+    .eq('organization_id', org).eq('gmail_box', box).or('from_email.ilike.%@edenredpayinvoice.com,subject.ilike.%laservault%').eq('has_attachments', true).is('paper_scanned_at', null)
     .order('received_at', { ascending: false }).limit(3)
   let read = 0
   for (const e of queue ?? []) {
@@ -885,7 +887,7 @@ async function edenredInvoices(db: SupabaseClient, gmail: Gmail, org: string, st
             organization_id: org, vendor_id: p.vendor_id, order_id: p.order_id ?? null, kind: p.kind ?? 'invoice', label, storage_path: path, file_name: a.file_name,
             file_size: bytes.length, mime_type: 'application/pdf', received_at: e.received_at.slice(0, 10), doc_year: Number(docDate.slice(0, 4)),
             doc_number: p.doc_number ?? null, doc_date: /^\d{4}-\d{2}-\d{2}$/.test(docDate) ? docDate : null, doc_total: r!.amount,
-            source: 'email', email_id: e.id, notes: `From Edenred (WWD ${(p.seqs ?? []).join(', ')})`.slice(0, 300),
+            source: 'email', email_id: e.id, notes: `From ${/edenred/i.test(String(e.from_email ?? '')) ? 'Edenred' : 'LaserVault'} (WWD ${(p.seqs ?? []).join(', ')})`.slice(0, 300),
           }).select('id').single()
           if (error) throw new Error(error.message)
           linkId = link.id

@@ -4,7 +4,7 @@ import { TEST_LOGIN_PATTERN } from '@/services/reviews'
 import type { Database } from '@/types/database'
 
 export interface NamedRef { id: string; name: string }
-export interface VendorRef extends NamedRef { is_active: boolean }
+export interface VendorRef extends NamedRef { is_active: boolean; parent_company?: string | null }
 
 // Pickers on many review cards share one load per page visit.
 const cache = new Map<string, Promise<NamedRef[]>>()
@@ -23,7 +23,7 @@ export function listVendorNames(organizationId: string): Promise<VendorRef[]> {
   return once(`v:${organizationId}`, async () => {
     const out: VendorRef[] = []
     for (let from = 0; ; from += 1000) {
-      const { data, error } = await supabase.from('vendors').select('id, name, is_active').eq('organization_id', organizationId).is('merged_into_id', null).order('name').range(from, from + 999)
+      const { data, error } = await supabase.from('vendors').select('id, name, is_active, parent_company').eq('organization_id', organizationId).is('merged_into_id', null).order('name').range(from, from + 999)
       if (error) throw error
       out.push(...(data ?? []))
       if (!data || data.length < 1000) return out

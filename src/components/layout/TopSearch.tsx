@@ -28,7 +28,9 @@ export function TopSearch() {
   const matches = useMemo(() => {
     if (!q) return []
     const all = vendors.data ?? []
-    const hit = all.filter((v) => v.name.toLowerCase().includes(q))
+    // a brand's parent company finds it too (Dana, Nov 3: JollyBuyer brings up Anngoti, Oeelinn and Pom Pom Tail)
+    const squash = (t: string) => t.toLowerCase().replace(/[^a-z0-9]/g, '')
+    const hit = all.filter((v) => v.name.toLowerCase().includes(q) || (!!v.parent_company && squash(q).length >= 3 && squash(v.parent_company).includes(squash(q))))
     const rank = (n: string) => (n.toLowerCase().startsWith(q) ? 0 : n.toLowerCase().split(/[\s\-&/]+/).some((w) => w.startsWith(q)) ? 1 : 2)
     return hit.sort((a, b) => Number(!a.is_active) - Number(!b.is_active) || rank(a.name) - rank(b.name) || a.name.localeCompare(b.name)).slice(0, MAX)
   }, [vendors.data, q])
@@ -75,7 +77,7 @@ export function TopSearch() {
             <li key={v.id} role="option" aria-selected={active === i} onMouseDown={(e) => { e.preventDefault(); go(i) }}
               className={cn('flex cursor-pointer items-center justify-between gap-2 px-3 py-2', active === i && 'bg-stone-100', v.is_active ? 'text-stone-900' : 'text-stone-400')}>
               <span className="truncate">{v.name}</span>
-              <span className="shrink-0 text-xs text-stone-400">{v.is_active ? 'Vendor' : 'Inactive vendor'}</span>
+              <span className="shrink-0 text-xs text-stone-400">{v.parent_company ? `${v.parent_company} · ` : ''}{v.is_active ? 'Vendor' : 'Inactive vendor'}</span>
             </li>
           ))}
           <li role="option" aria-selected={active === matches.length} onMouseDown={(e) => { e.preventDefault(); go(matches.length) }}
