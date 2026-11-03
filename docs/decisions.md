@@ -3581,3 +3581,6 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   profile (fcbb) and its pictures version read.
 - Nov 3 (Dana: "go"): the email attachment button is now **Make freight bill** and shows only on mail from a freight
   company or a vendor (it read like a label on insurance papers in billing@).
+- Nov 3 (Dana: "go"): one freight bill per invoice (migration 0287). The copy check (same billing company + invoice
+  number) now also runs on bills made from carrier emails; a copy is dropped and the bill kept takes its email, attachment,
+  Dropbox path and payment links (and its PDF and lines when it was waiting for one). Back-check: 0 copies on file.

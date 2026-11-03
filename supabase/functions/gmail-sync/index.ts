@@ -543,6 +543,8 @@ async function freightBills(db: SupabaseClient, gmail: Gmail, org: string, start
       const reading = await readFreightPdf(db, org, bytes, (b.carriers as unknown as { name: string } | null)?.name ?? 'a freight carrier')
       index ??= await freightIndex(db, org)
       await applyFreightReading(db, b.id, org, reading, index)
+      // a copy of a bill already on file (same billing company and invoice number) is dropped; the kept bill keeps this email (0287)
+      await db.rpc('freight_bill_settle', { p_bill: b.id, p_ups: reading.our_ups_account, p_company: reading.billing_company, p_account: reading.our_account_number })
     } catch (err) {
       await db.from('freight_bills').update({ status: 'failed', read_note: (err instanceof Error ? err.message : String(err)).slice(0, 500) }).eq('id', b.id)
     }
@@ -598,6 +600,16 @@ async function freightBills(db: SupabaseClient, gmail: Gmail, org: string, start
           }
         }
       } else if (looksLikeBill(e.subject, e.body_text, !!pdf)) {
+        // the invoice is already on file (from Dropbox, an upload or another email): no second bill (0287); the bill on file
+        // keeps this email when it has none, and takes this PDF when it was waiting for one
+        const invNo = invoiceNumberFrom(e.subject) ?? invoiceFromBody(e.body_text)?.invoice_number ?? null
+        const { data: onFile } = invNo ? await db.rpc('freight_bill_copy_of', { p_org: org, p_carrier: sender.carrier_id, p_invoice: invNo }) : { data: null }
+        const { data: known } = onFile ? await db.from('freight_bills').select('id, email_id, storage_path').eq('id', onFile as string).maybeSingle() : { data: null }
+        if (known && (known.storage_path || !pdf)) {
+          if (!known.email_id) await db.from('freight_bills').update({ email_id: e.id }).eq('id', known.id)
+          await db.from('emails').update({ freight_checked_at: new Date().toISOString() }).eq('id', e.id)
+          continue
+        }
         const { data: bill, error } = await db.from('freight_bills').upsert({
           // PartnerShip lists the invoice in the email body; WWEX puts the number in the subject.
           organization_id: org, carrier_id: sender.carrier_id, email_id: e.id, invoice_number: invoiceNumberFrom(e.subject) ?? invoiceFromBody(e.body_text)?.invoice_number ?? null,
@@ -616,6 +628,7 @@ async function freightBills(db: SupabaseClient, gmail: Gmail, org: string, start
             const reading = await readFreightPdf(db, org, bytes, sender.carriers?.name ?? 'a freight carrier')
             index ??= await freightIndex(db, org)
             await applyFreightReading(db, bill.id, org, reading, index)
+            await db.rpc('freight_bill_settle', { p_bill: bill.id, p_ups: reading.our_ups_account, p_company: reading.billing_company, p_account: reading.our_account_number })
           } catch (err) {
             await db.from('freight_bills').update({ status: 'failed', read_note: (err instanceof Error ? err.message : String(err)).slice(0, 500) }).eq('id', bill.id)
           }
