@@ -1179,6 +1179,8 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
           if (ids.length === 1) shipper = ids[0]!
         }
         await check(db.rpc('mail_apply_reply', { p_email: e.email_id, p_reply: r.reply, p_note: r.note, p_ship: r.ship_status, p_shipper: shipper }))
+        // the vendor says the order is cancelled: newer email wins (Dana, Nov 3); the order is marked and its placer told
+        if (r.order_cancelled) await check(db.rpc('order_cancel_from_email', { p_email: e.email_id }))
         // "Hi Jarrett" (Dana, Oct 10): the conversation goes to the person the email greets
         if (r.greets) await check(db.rpc('mail_apply_greeting', { p_email: e.email_id, p_name: r.greets }))
       }

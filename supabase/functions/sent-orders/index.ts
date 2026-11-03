@@ -171,16 +171,25 @@ async function readStep(db: SupabaseClient, m: Mail) {
     }
     const r = await readSentOrder(db, m.organization_id, { vendor: vendor?.name ?? 'Unknown vendor', subject: m.subject, sent_on: day(m.received_at), text: m.body_text ?? '', files, sheets })
     if (!r.is_order) return await finish(db, m, { result: 'not_order' })
+    // newer email wins (Dana, Nov 3): a revised or re-sent order replaces the lines, an add-on adds only what is new, a cancel cancels
+    const change = r.change ?? (r.adds_to_earlier ? 'adds' : 'new')
     let orderId = await matchOrder(db, m, r)
     let adding = false
-    if (!orderId && r.adds_to_earlier) { orderId = await earlierOrder(db, m); adding = !!orderId }
+    if (!orderId && (r.adds_to_earlier || change !== 'new')) { orderId = await earlierOrder(db, m); adding = !!orderId }
+    if (change === 'cancels') {
+      if (!orderId) return await finish(db, m, { result: 'cancel_no_order', po: r.po_number })
+      const { data: ok } = await db.rpc('order_cancel_from_mail', { p_order: orderId, p_email: m.id, p_who: 'our' })
+      return await finish(db, m, { result: ok ? 'cancelled' : 'cancel_too_late', order_id: orderId, po: r.po_number })
+    }
     if (orderId) {
-      await fileOn(db, m, orderId, r, used, adding)
+      const mode = change === 'revises' || change === 'resends' ? 'replace' : adding || change === 'adds' ? 'append' : 'fill'
+      await fileOn(db, m, orderId, r, used, mode)
+      if (mode === 'replace' && change === 'revises') await revisedTotal(db, orderId, r.total, `Revised by our email of ${day(m.received_at)}.`)
       await db.rpc('order_checks_refind', { p_org: m.organization_id, p_vendor: m.vendor_id })
-      return await finish(db, m, { result: adding ? 'added_to' : 'linked', order_id: orderId, po: r.po_number })
+      return await finish(db, m, { result: mode === 'replace' ? (change === 'revises' ? 'revised' : 'resent') : adding ? 'added_to' : 'linked', order_id: orderId, po: r.po_number })
     }
     const created = await createOrder(db, m, r)
-    await fileOn(db, m, created, r, used, true)
+    await fileOn(db, m, created, r, used, 'fill')
     await db.rpc('order_checks_refind', { p_org: m.organization_id, p_vendor: m.vendor_id })
     return await finish(db, m, { result: 'created', order_id: created, po: r.po_number })
   } catch (e) {
@@ -305,7 +314,7 @@ export function orderFileKind(a: { file_name: string; mime_type: string | null }
  * the files that show what is ordered are "Our orders"; pictures of the products or the design sent along with an order
  * typed in the email go to Images (Dana, Oct 15: Planet Cotton's design pictures were taken for her typed order).
  */
-async function fileOn(db: SupabaseClient, m: Mail, orderId: string, r: SentOrderReading, used: { a: Att; bytes: Uint8Array }[], fresh: boolean, fileNote = 'The order we emailed the vendor') {
+async function fileOn(db: SupabaseClient, m: Mail, orderId: string, r: SentOrderReading, used: { a: Att; bytes: Uint8Array }[], lines: 'fill' | 'append' | 'replace', fileNote = 'The order we emailed the vendor') {
   const { data: o } = await db.from('orders').select('po_number').eq('id', orderId).single()
   if (!o?.po_number && r.po_number) await db.from('orders').update({ po_number: r.po_number }).eq('id', orderId)
   for (const { a, bytes } of used) {
@@ -325,12 +334,51 @@ async function fileOn(db: SupabaseClient, m: Mail, orderId: string, r: SentOrder
     if (error) throw new Error(error.message)
     await db.from('email_attachments').update({ vendor_link_id: link.id, storage_path: path }).eq('id', a.id)
   }
-  const { count } = await db.from('order_lines').select('id', { count: 'exact', head: true }).eq('order_id', orderId)
-  if ((fresh || !count) && r.items.length) {
-    await db.from('order_lines').insert(r.items.filter((l) => l.quantity > 0).map((l, i) => ({
-      organization_id: m.organization_id, order_id: orderId, sort_order: i, vendor_item_id: l.vendor_item_id, description: l.description, quantity: l.quantity, unit_cost: l.unit_cost ?? 0,
-    })))
+  await setLines(db, m.organization_id, orderId, r.items, lines)
+}
+
+const lineKey = (vid: string | null, desc: string | null) => ((vid ?? '').trim() || (desc ?? '').trim()).toUpperCase()
+
+/**
+ * The order's item lines from an email (newer email wins, Dana Nov 3): 'fill' only when it has none, 'append' adds the lines
+ * not already on it (an add-on, never twice), 'replace' swaps our lines for the newer list (a revised or changed order),
+ * keeping a line's retail price, UPC and notes when the item is still on it. Lines from WWD invoices are never touched.
+ */
+async function setLines(db: SupabaseClient, org: string, orderId: string, items: SentOrderReading['items'], mode: 'fill' | 'append' | 'replace') {
+  const wanted = items.filter((l) => l.quantity > 0)
+  if (!wanted.length) return
+  const { data: have } = await db.from('order_lines').select('id, vendor_item_id, description, quantity, retail_price, retail_edited, upc, notes, wwd_invoice_id').eq('order_id', orderId)
+  const mine = (have ?? []).filter((l) => !l.wwd_invoice_id)
+  if (mode === 'fill' && mine.length) return
+  const kept = new Map(mine.map((l) => [lineKey(l.vendor_item_id, l.description), l]))
+  let add = wanted
+  if (mode === 'append') {
+    const onIt = new Set(mine.map((l) => `${lineKey(l.vendor_item_id, l.description)}|${l.quantity}`))
+    add = wanted.filter((l) => !onIt.has(`${lineKey(l.vendor_item_id, l.description)}|${l.quantity}`))
   }
+  if (mode === 'replace' && mine.length) {
+    const { error } = await db.from('order_lines').delete().in('id', mine.map((l) => l.id))
+    if (error) throw new Error(error.message)
+  }
+  if (!add.length) return
+  const start = mode === 'append' ? mine.length : 0
+  const { error } = await db.from('order_lines').insert(add.map((l, i) => {
+    const was = mode === 'replace' ? kept.get(lineKey(l.vendor_item_id, l.description)) : undefined
+    return {
+      organization_id: org, order_id: orderId, sort_order: start + i, vendor_item_id: l.vendor_item_id, description: l.description, quantity: l.quantity, unit_cost: l.unit_cost ?? 0,
+      ...(was ? { retail_price: was.retail_price, retail_edited: was.retail_edited, upc: was.upc, notes: was.notes } : {}),
+    }
+  }))
+  if (error) throw new Error(error.message)
+}
+
+/** A changed order's new total becomes the estimate (until the final cost is known), with a note naming the email. */
+async function revisedTotal(db: SupabaseClient, orderId: string, total: number | null, note: string) {
+  const { data: o } = await db.from('orders').select('final_cost, notes').eq('id', orderId).single()
+  await db.from('orders').update({
+    ...(o?.final_cost == null && total != null ? { est_cost: total } : {}),
+    notes: [o?.notes, note].filter(Boolean).join(' '),
+  }).eq('id', orderId)
 }
 
 // ---- order emails from ordering services ---------------------------------------------------------------------------
@@ -383,15 +431,26 @@ async function serviceStep(db: SupabaseClient, m: InMail) {
     const orderIds: string[] = []
     for (const [i, one] of r.orders.entries()) {
       const reading: SentOrderReading = {
-        is_order: true, adds_to_earlier: false, po_number: one.po_number ?? one.order_number, ship_date: one.ship_date, total: one.total,
+        is_order: true, adds_to_earlier: false, change: 'new', po_number: one.po_number ?? one.order_number, ship_date: one.ship_date, total: one.total,
         description: one.description, placed_by: r.placed_by, store: r.store, items: one.items, note: r.note,
         // an ordering service's own email: its PDF is the order; pictures are its logo
         order_files: used.filter(({ a }) => !isPicture(a)).map(({ a }) => a.file_name),
       }
       const keep = i === 0 ? used : []
       let orderId = await matchServiceOrder(db, mail, one, orderIds)
+      // the service says it was cancelled or changed: newer email wins (Dana, Nov 3)
+      if (one.status === 'cancelled') {
+        if (orderId) { await db.rpc('order_cancel_from_mail', { p_order: orderId, p_email: m.id, p_who: r.service ?? r.vendor_name ?? 'the vendor\'s' }); orderIds.push(orderId) }
+        continue
+      }
+      if (orderId && one.status === 'changed') {
+        await fileOn(db, mail, orderId, reading, keep, 'replace', fileNote)
+        await revisedTotal(db, orderId, one.total, `Changed per the ${via} of ${day(m.received_at)}.`)
+        orderIds.push(orderId)
+        continue
+      }
       if (orderId) {
-        await fileOn(db, mail, orderId, reading, keep, false, fileNote)
+        await fileOn(db, mail, orderId, reading, keep, 'fill', fileNote)
         const { data: o } = await db.from('orders').select('est_cost, final_cost, taken_by, notes, order_date').eq('id', orderId).single()
         const num = one.order_number && one.order_number !== one.po_number ? `${r.service ?? 'Vendor'} order #${one.order_number}.` : null
         await db.from('orders').update({
@@ -402,7 +461,7 @@ async function serviceStep(db: SupabaseClient, m: InMail) {
         }).eq('id', orderId)
       } else {
         orderId = await createOrder(db, mail, reading, via, takenBy ? { taken_by: takenBy } : {})
-        await fileOn(db, mail, orderId, reading, keep, true, fileNote)
+        await fileOn(db, mail, orderId, reading, keep, 'fill', fileNote)
       }
       orderIds.push(orderId)
     }

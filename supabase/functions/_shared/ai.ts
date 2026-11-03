@@ -246,6 +246,7 @@ const ReplyAnswer = z.object({
     ship_status: z.enum(['picked_up', 'in_transit', 'out_for_delivery', 'delivered', 'exception']).nullable().describe('Only for a shipment status update'),
     shipper: z.string().nullable().describe('For a shipment update: the company that shipped it (Origin / Shipper), never the carrier'),
     greets: z.string().nullable().describe('The first name of the ONE person the email is written to in its greeting ("Hi Jarrett", "Dear Dana", "Trevor -"); null when it greets nobody by name, a group ("Hi all", "Hi team"), or several people'),
+    order_cancelled: z.boolean().describe('True only when the vendor or their rep says plainly that the store\'s whole order IS cancelled (by them, or as the store asked). False for one item, a question, an offer to cancel, a cancel date, or anything not certain'),
   })),
 })
 export type ReplyReading = z.infer<typeof ReplyAnswer>['results'][number]
@@ -936,6 +937,7 @@ export async function sortSentEmails(db: SupabaseClient, org: string, emails: Se
 const SentOrderAnswer = z.object({
   is_order: z.boolean().describe('True when this places a purchase order with the vendor'),
   adds_to_earlier: z.boolean().describe('True when it adds items to, changes or re-sends an order already sent to this vendor ("add to order", "please also add", "revised order")'),
+  change: z.enum(['new', 'adds', 'revises', 'resends', 'cancels']).describe('new: a new order; adds: items to add on top of an order already sent ("please also add"); revises: a changed version that replaces the order already sent ("revised order", "updated quantities", "use this one instead"); resends: the same order sent again; cancels: the store cancels an order already sent'),
   po_number: z.string().nullable().describe("The store's PO or order number, as written"),
   ship_date: z.string().nullable().describe('Requested ship date YYYY-MM-DD, if any'),
   total: z.number().nullable().describe('Order total in dollars, if stated or computable from the lines'),
@@ -1007,12 +1009,13 @@ A staff member is about to send this email from their own mailbox. Say whether i
 
 // ---- order emails from ordering services (Dana, Oct 13) ----------------------------------------------------------
 const ServiceOrderAnswer = z.object({
-  is_order: z.boolean().describe('True when this email records an order the store placed with a vendor (submitted, received or confirmed) through an ordering service (NuORDER, Faire, Elastic, MarketTime…) or the vendor\'s web store or order desk. False for shipping notices, invoices, marketing, invitations, reorder reminders, and orders placed by someone else with the store'),
+  is_order: z.boolean().describe('True when this email records an order the store placed with a vendor (submitted, received, confirmed, changed or cancelled) through an ordering service (NuORDER, Faire, Elastic, MarketTime…) or the vendor\'s web store or order desk. False for shipping notices, invoices, marketing, invitations, reorder reminders, and orders placed by someone else with the store'),
   vendor_name: z.string().nullable().describe('The company or brand the order is with, as written (not the ordering service: not NuORDER, Faire, MarketTime, Shopify, Elastic, NetSuite)'),
   service: z.string().nullable().describe('The ordering service or web store that sent it, e.g. NuORDER, Faire, MarketTime; null when the vendor sent it'),
   orders: z.array(z.object({
     po_number: z.string().nullable().describe("The store's PO for this order, as written"),
     order_number: z.string().nullable().describe("The service's or vendor's order number, as written"),
+    status: z.enum(['placed', 'changed', 'cancelled']).describe('placed: a new, received or confirmed order; changed: the email says this order was changed or updated (its items and total are the new ones); cancelled: the email says this order is cancelled'),
     ship_date: z.string().nullable().describe('Requested ship date YYYY-MM-DD, if any'),
     total: z.number().nullable().describe("This order's total in dollars"),
     description: z.string().describe('A few words on what was ordered, for a list'),

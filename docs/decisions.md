@@ -3604,3 +3604,9 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   nothing on backorder, or a newer email in the conversation shows it shipped. Back-check: 3 revised confirmations replaced
   (Sona Enterprises 111139400, Lazy One 316992, Continuum Games 26809369); no delay tasks or backorder flags needed changing
   (107 Backorder marks are from the Order Guide import on paid/entered orders with no papers in VMS).
+- Nov 3 (go): orders follow the newest email (migration 0290). A vendor/rep email or an ordering service (NuORDER, Faire…)
+  that says the order is cancelled marks it Cancelled with a note naming the email and gives whoever placed it an FYI task
+  that opens the email; orders already received, entered, ready to pay or paid are never changed. A service's changed
+  order, and our own revised or re-sent order email, replace the order's lines (retail prices, UPCs and notes kept; WWD
+  invoice lines never touched) and a revised total updates the estimate; an add-on email adds only new lines; our own cancel
+  email cancels the order (no FYI). No back-check over old mail yet: offered to Dana as a re-read of recent vendor mail.
