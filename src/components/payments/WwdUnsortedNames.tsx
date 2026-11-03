@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { ChevronDown, ChevronRight, Truck } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Truck } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { assignWwdName, assignWwdNameCarrier, countWwdNoVendor, listWwdFreightNoVendor, listWwdInvoicesByName, listWwdUnsorted, updateWwdInvoice } from '@/services/wwd'
+import { addWwdNameAsVendor, assignWwdName, assignWwdNameCarrier, wwdNamesOnPortal, countWwdNoVendor, listWwdFreightNoVendor, listWwdInvoicesByName, listWwdUnsorted, updateWwdInvoice } from '@/services/wwd'
 import { listCarriers } from '@/services/freight'
 import { money, shortDate } from '@/lib/freight'
 import { errorMessage } from '@/lib/utils'
@@ -40,9 +40,25 @@ export function WwdUnsortedNames({ refreshKey }: { refreshKey: number }) {
   const [lineVendor, setLineVendor] = useState<string | null>(null)
   const rows = q.data ?? []
   const lines = freight.data ?? []
+  // names the WWD portal list knows: one click makes the vendor (Dana, Nov 3)
+  const onPortal = useSupabaseQuery(async () => new Set(await wwdNamesOnPortal(rows.map((r) => r.name))), [rows.map((r) => r.name).join('|')])
+  const [adding, setAdding] = useState<string | null>(null)
   const nameless = (none.data ?? 0) - rows.reduce((s, r) => s + r.count, 0)
   if (!rows.length && !lines.length && nameless <= 0) return null
   const refresh = () => Promise.all([q.refetch(), none.refetch(), freight.refetch()])
+
+  async function addVendor(name: string) {
+    setAdding(name)
+    try {
+      await addWwdNameAsVendor(name)
+      toast.success(`${name} added as a WWD vendor with the WWD portal's details; its invoices moved there`)
+      await refresh()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    } finally {
+      setAdding(null)
+    }
+  }
 
   async function pickVendor(name: string, vendorId: string, vendorName: string) {
     setPicking(null)
@@ -83,7 +99,7 @@ export function WwdUnsortedNames({ refreshKey }: { refreshKey: number }) {
       {rows.length ? (
         <>
           <h2 className="text-sm font-semibold text-stone-900">WWD names to match ({rows.length})</h2>
-          <p className="text-sm text-stone-600">Click a name to see its invoices. Pick the vendor (or the freight company, for XPO and other trucking companies) once; every invoice with that name follows, and VMS remembers the name.</p>
+          <p className="text-sm text-stone-600">Click a name to see its invoices. Pick the vendor (or the freight company, for XPO and other trucking companies) once; every invoice with that name follows, and VMS remembers the name. A name on the WWD portal list that isn't a vendor yet has <span className="font-medium">Add as new vendor</span>.</p>
           <ul className="mt-2 divide-y divide-stone-100 text-sm">
             {rows.map((r) => {
               const isOpen = open === r.name
@@ -108,7 +124,10 @@ export function WwdUnsortedNames({ refreshKey }: { refreshKey: number }) {
                         <Button size="sm" variant="ghost" onClick={() => setPicking(null)}>Cancel</Button>
                       </span>
                     ) : (
-                      <span className="flex gap-2">
+                      <span className="flex flex-wrap gap-2">
+                        {onPortal.data?.has(r.name) ? (
+                          <Button size="sm" loading={adding === r.name} disabled={!!adding} leftIcon={<Plus className="size-4" aria-hidden="true" />} onClick={() => void addVendor(r.name)}>Add as new vendor</Button>
+                        ) : null}
                         <Button size="sm" variant="secondary" onClick={() => setPicking({ name: r.name, as: 'vendor' })}>Pick vendor</Button>
                         <Button size="sm" variant="ghost" leftIcon={<Truck className="size-4" aria-hidden="true" />} onClick={() => setPicking({ name: r.name, as: 'carrier' })}>Freight company</Button>
                       </span>

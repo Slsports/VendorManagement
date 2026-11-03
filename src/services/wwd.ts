@@ -283,3 +283,37 @@ export async function vendorsPoUse(organizationId: string) {
   if (error) throw error
   return data ?? []
 }
+
+/** The WWD weekly upload (Dana, Nov 3): after the import, log it and let VMS do the follow-up. */
+export interface WwdUploadFollowUp { files_to_read: number; emails_to_read: number; names_to_match: number; names_on_portal: number }
+export async function wwdUploadDone(kinds: string[], files: string[], result: WwdImportResult): Promise<WwdUploadFollowUp> {
+  const { data, error } = await supabase.rpc('wwd_upload_done', { p_kinds: kinds, p_files: files, p_result: result as unknown as never })
+  if (error) throw error
+  return data as unknown as WwdUploadFollowUp
+}
+
+/** The last WWD weekly upload: when and by whom. */
+export async function lastWwdUpload(organizationId: string): Promise<{ uploaded_at: string; who: string | null } | null> {
+  const { data, error } = await supabase.from('wwd_uploads').select('uploaded_at, uploaded_by').eq('organization_id', organizationId).order('uploaded_at', { ascending: false }).limit(1)
+  if (error) throw error
+  const r = data?.[0]
+  if (!r) return null
+  let who: string | null = null
+  if (r.uploaded_by) who = (await supabase.from('profiles').select('full_name').eq('id', r.uploaded_by).maybeSingle()).data?.full_name ?? null
+  return { uploaded_at: r.uploaded_at, who }
+}
+
+/** WWD names (of these) that are on the WWD portal list and not a vendor yet. */
+export async function wwdNamesOnPortal(names: string[]): Promise<string[]> {
+  if (!names.length) return []
+  const { data, error } = await supabase.rpc('wwd_names_on_portal', { p_names: names })
+  if (error) throw error
+  return data ?? []
+}
+
+/** "Add as new vendor": the WWD portal's details become a WWD vendor; the name's invoices follow. */
+export async function addWwdNameAsVendor(name: string): Promise<string> {
+  const { data, error } = await supabase.rpc('wwd_name_add_vendor', { p_name: name })
+  if (error) throw error
+  return data as string
+}

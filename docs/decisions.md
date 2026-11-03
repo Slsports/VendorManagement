@@ -3665,3 +3665,17 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   freight PDFs billed through WWD are on XPO freight bills: 3 filled the bills on file, 2 new (126-995212 $629.65,
   711-027940 $592.94, to match). Migration 0294: attaching a PDF to a bill that already has its lines keeps the lines and
   status (it had put Trevor's split XPO bills 381292391 and 454400273 back to To match with an extra line; fixed).
+- Nov 3 (Dana: "yes add Zach and Murski-Breeding, go on the weekly process - But also add a task for Jarrett to check the
+  rep & rep groups"): Zachary Golightly added to Mechanix Wear (rep). New rep group Murski-Breeding Sales Co
+  (murskibreeding.com) on Strike King, with Kevin Hollingsworth (moved from Strike King's contacts: entered once) and Ernie
+  Marlan, who had been filed under Leisure Sales (Zebco's group, leisuresalesinc.com) and was moved (misfiled, not
+  former); the murskibreeding.com sender now points at Murski-Breeding. Jarrett has two check tasks (Nov 6): Strike King /
+  Murski-Breeding (main rep; were the damaged rods Zebco or a Rather brand; who placed SLS090226-SK) and Mechanix reps.
+- Nov 3 (Dana: "go on the weekly process"): the WWD weekly upload (migration 0295, gmail-sync v102). Payments ›
+  WWD weekly upload takes this week's files in one go (Payment History, Edenred export with Select all, payment sheets,
+  Payments Due list). After Import VMS logs it (wwd_uploads) and does the follow-up: Edenred files in orders@ that waited
+  on a WWD number or vendor are read again; a freight bill sent through WWD (XPO) becomes a freight bill; WWD names on the
+  WWD portal list get Add as new vendor (portal details, invoices follow). Every Monday the person set (organizations.
+  wwd_upload_by = Trevor) gets "WWD weekly upload" (8 AM); it closes when an upload is done that week; not done by
+  Wednesday 9 AM, Dana gets a note. Help: "Do the WWD weekly upload". Not confirmed with Dana yet: Trevor's own WWD
+  portal and Edenred logins (assumed), and Monday (used).

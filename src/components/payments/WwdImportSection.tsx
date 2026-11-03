@@ -1,8 +1,10 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Building2, Upload } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import { importWwd, previewWwd, readWwdFile, type WwdFileRead, type WwdImportResult, type WwdPreview } from '@/services/wwd'
+import { importWwd, lastWwdUpload, previewWwd, readWwdFile, wwdUploadDone, type WwdFileRead, type WwdImportResult, type WwdPreview, type WwdUploadFollowUp } from '@/services/wwd'
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
+import { shortDate } from '@/lib/freight'
 import { mergeBatches } from '@/lib/wwdFiles'
 import { errorMessage } from '@/lib/utils'
 import { Badge, Button } from '@/components/ui'
@@ -20,11 +22,16 @@ export function WwdImportSection({ onImported }: { onImported: () => void | Prom
   const [preview, setPreview] = useState<WwdPreview | null>(null)
   const [result, setResult] = useState<WwdImportResult | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
+  const [follow, setFollow] = useState<WwdUploadFollowUp | null>(null)
   const input = useRef<HTMLInputElement>(null)
+  const box = useRef<HTMLElement>(null)
+  const last = useSupabaseQuery(async () => (organization ? lastWwdUpload(organization.id) : null), [organization?.id, result])
+  // the weekly task's "Go to it" lands here
+  useEffect(() => { if (window.location.hash === '#wwd-upload') box.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }, [])
 
   async function read(list: File[]) {
     if (!organization || !list.length) return
-    setResult(null)
+    setResult(null); setFollow(null)
     const out: WwdFileRead[] = [...files]
     try {
       for (const [i, f] of list.entries()) {
@@ -45,6 +52,8 @@ export function WwdImportSection({ onImported }: { onImported: () => void | Prom
     setBusy('Importing…')
     try {
       const r = await importWwd(mergeBatches(files.map((f) => f.batch)), (done, total) => setBusy(`Importing… ${done} of ${total}`))
+      setBusy('Matching up the rest…')
+      setFollow(await wwdUploadDone([...new Set(files.map((f) => f.kind ?? 'unknown'))], files.map((f) => f.name), r))
       setResult(r)
       setFiles([]); setPreview(null)
       toast.success('WWD import done')
@@ -58,12 +67,13 @@ export function WwdImportSection({ onImported }: { onImported: () => void | Prom
 
   const unmatched = (preview?.names ?? []).filter((n) => !n.vendor)
   return (
-    <section className="mb-6 rounded-2xl border border-stone-200 bg-white p-4">
+    <section ref={box} id="wwd-upload" className="mb-6 scroll-mt-20 rounded-2xl border border-stone-200 bg-white p-4">
       <div className="flex flex-wrap items-center gap-3">
         <Building2 className="size-6 text-stone-400" aria-hidden="true" />
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold text-stone-900">Worldwide (WWD) payments</h2>
-          <p className="text-sm text-stone-600">Choose any mix of: the Payment History export, the EdenRed invoice export, your payment sheets (Excel or Word), scans of printed ones, and WWD's Payments Due list (reminders 3 days before each date).</p>
+          <h2 className="text-sm font-semibold text-stone-900">WWD weekly upload</h2>
+          <p className="text-sm text-stone-600">Every week: the WWD Payment History export, the Edenred invoice export (Select all columns), new WWD payment sheets and WWD's Payments Due list. Drop them all in, then click Import; VMS matches up the rest. Scans of printed sheets work too.</p>
+          <p className="text-xs text-stone-500">{last.data ? `Last upload ${shortDate(last.data.uploaded_at)}${last.data.who ? ` by ${last.data.who}` : ''}.` : 'No weekly upload yet.'}</p>
         </div>
         <Button variant="secondary" loading={!!busy && !preview} disabled={!!busy} onClick={() => input.current?.click()} leftIcon={<Upload className="size-4" aria-hidden="true" />}>{files.length ? 'Add more files' : 'Choose files'}</Button>
         <input ref={input} type="file" multiple accept=".xls,.xlsx,.docx,.pdf,.png,.jpg,.jpeg" className="hidden" onChange={(e) => { const l = [...(e.target.files ?? [])]; e.target.value = ''; void read(l) }} />
@@ -106,6 +116,12 @@ export function WwdImportSection({ onImported }: { onImported: () => void | Prom
       {result ? (
         <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
           Added {result.invoices_new} WWD invoices, {result.payments_new} payments and {result.lines_new} paid lines; {result.orders_paid} orders marked paid. {result.linked_orders} orders now have their WWD invoices. {result.no_vendor ? `${result.no_vendor} invoices have no vendor yet.` : ''}
+        </p>
+      ) : null}
+      {follow ? (
+        <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          VMS is now reading {follow.files_to_read} Edenred invoice file{follow.files_to_read === 1 ? '' : 's'} in {follow.emails_to_read} email{follow.emails_to_read === 1 ? '' : 's'} that were waiting on this upload (they file in the next few minutes; freight bills sent through WWD become freight bills).
+          {follow.names_to_match ? ` ${follow.names_to_match} WWD names still need a vendor (below)${follow.names_on_portal ? `; ${follow.names_on_portal} are on the WWD portal list: click Add as new vendor` : ''}.` : ' Every WWD name has its vendor.'}
         </p>
       ) : null}
       {result?.due ? (

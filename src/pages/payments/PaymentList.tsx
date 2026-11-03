@@ -62,7 +62,7 @@ export default function PaymentsPage() {
   const count = (f: (m: BillcomMatch) => boolean) => matches.filter((m, i) => keep.has(i) && f(m)).length
   return (
     <div>
-      <PageHeader title="Payments" description="Import Bill.com and Worldwide (WWD) payments: each payment marks its freight bill or vendor order paid, and stays as history on the vendor." />
+      <PageHeader title="Payments" description="The WWD weekly upload and Bill.com payments: each payment marks its freight bill or vendor order paid, and stays as history on the vendor." />
 
       <WwdImportSection onImported={() => setWwdRun((n) => n + 1)} />
       <WwdUnsortedNames refreshKey={wwdRun} />

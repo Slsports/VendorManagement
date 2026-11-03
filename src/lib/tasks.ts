@@ -157,6 +157,8 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   if (kind === 'credit' && t.vendor_id) return { kind: 'page', to: `/vendors/${t.vendor_id}?folder=credits${id ? `&doc=${id}` : ''}`, label: 'Open the credit' }
   // an invoice not in Bill.com yet (Dana, Oct 27, Emery Jensen): the invoice itself, to enter it
   if (kind === 'billcom_enter' && t.vendor_id) return { kind: 'page', to: `/vendors/${t.vendor_id}?folder=invoices${id ? `&doc=${id}` : ''}`, label: 'Open the invoice' }
+  // the WWD weekly upload (Dana, Nov 3): the upload box on Payments
+  if (kind === 'wwdweekly' || kind === 'wwdweekly_late') return { kind: 'page', to: '/payments#wwd-upload', label: 'Open the WWD weekly upload' }
   if (kind === 'supply') return { kind: 'page', to: t.thread_id ? `/mail/${t.thread_id}` : '/supplies', label: t.thread_id ? 'Open the request' : 'Open Supplies' }
   if ((kind === 'wwd' || kind === 'order' || kind === 'billcom') && id) return { kind: 'pay', label: 'Pay it', bill: kind, id }
   // any other task with an email written for it (Dana, Oct 28: "remind me to email World Famous"): that email, ready to send

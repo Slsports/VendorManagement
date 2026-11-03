@@ -9,7 +9,7 @@ The Payments page is where payment records come into VMS: Worldwide (WWD) paymen
 ## How to
 1. Click **Payments** in the menu (under Operations).
 2. From top to bottom you find:
-   - **Worldwide (WWD) payments**: load WWD's files and your payment sheets.
+   - **WWD weekly upload**: load WWD's and Edenred's files and your payment sheets once a week (see "Do the WWD weekly upload").
    - **WWD names to match** and **Freight to tie to a vendor**: only show when something needs you.
    - **WWD payments**: every WWD payment, newest first.
    - The **Bill.com** box: load Bill.com's Payments export.

@@ -38,6 +38,7 @@ export type Database = {
           is_active: boolean
           created_at: string
           updated_at: string
+          wwd_upload_by: string | null
         }
         Insert: {
           id?: string
@@ -58,6 +59,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
+          wwd_upload_by?: string | null
         }
         Update: {
           id?: string
@@ -78,6 +80,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
+          wwd_upload_by?: string | null
         }
         Relationships: []
       }
@@ -802,6 +805,12 @@ export type Database = {
           { foreignKeyName: 'snoozes_review_item_id_fkey'; columns: ['review_item_id']; isOneToOne: false; referencedRelation: 'review_items'; referencedColumns: ['id'] },
         ]
       }
+      wwd_uploads: {
+        Row: { id: string; organization_id: string; uploaded_by: string | null; uploaded_at: string; kinds: string[]; files: string[]; result: Json }
+        Insert: { id?: string; organization_id: string; uploaded_by?: string | null; uploaded_at?: string; kinds?: string[]; files?: string[]; result?: Json }
+        Update: { id?: string; organization_id?: string; uploaded_by?: string | null; uploaded_at?: string; kinds?: string[]; files?: string[]; result?: Json }
+        Relationships: []
+      }
       wwd_payments: {
         Row: { id: string; organization_id: string; ref: string; pay_date: string; total: number | null; created_at: string }
         Insert: { id?: string; organization_id: string; ref: string; pay_date: string; total?: number | null; created_at?: string }
@@ -1154,6 +1163,9 @@ export type Database = {
       wwd_preview: { Args: { p: never }; Returns: unknown }
       wwd_import: { Args: { p: never }; Returns: unknown }
       wwd_assign_name: { Args: { p_name: string; p_vendor: string }; Returns: number }
+      wwd_upload_done: { Args: { p_kinds: string[]; p_files: string[]; p_result: Json }; Returns: Json }
+      wwd_names_on_portal: { Args: { p_names: string[] }; Returns: string[] }
+      wwd_name_add_vendor: { Args: { p_name: string }; Returns: string }
       wwd_assign_name_carrier: { Args: { p_name: string; p_carrier: string }; Returns: number }
       wwd_payment_list: { Args: Record<string, never>; Returns: { payment_id: string | null; ref: string | null; pay_date: string; total: number | null; lines: number; vendors: number; discounts: number; unknown: number; pending: boolean }[] }
       wwd_update_invoice: { Args: { p_id: string; p_vendor?: string | null; p_order?: string | null; p_unlink_order?: boolean }; Returns: undefined }

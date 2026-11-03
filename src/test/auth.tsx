@@ -38,7 +38,7 @@ export function withAuth(role: UserRole, ui: ReactNode, initialEntries: string[]
       name: 'Test Org',
       slug: 'test',
       legal_name: null,
-      app_name: null, signature_template: null, edenred_url: null, own_addresses: [], billcom_url: null, confirm_email_subject: '', confirm_email_body: '',
+      app_name: null, signature_template: null, edenred_url: null, own_addresses: [], billcom_url: null, wwd_upload_by: null, confirm_email_subject: '', confirm_email_body: '',
       logo_url: null,
       logo_dark_url: null,
       accent_color: '#00b050',

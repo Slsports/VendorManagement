@@ -844,6 +844,26 @@ async function edenredInvoices(db: SupabaseClient, gmail: Gmail, org: string, st
         } }) : { data: null, error: null }
         if (pErr) throw new Error(pErr.message)
         const p = place as { placed: boolean; invoice_ids?: string[]; vendor_id?: string | null; order_id?: string | null; existing_doc?: string | null; doc_number?: string | null; kind?: 'invoice' | 'credit'; seqs?: string[] } | null
+        if (p?.placed && !p.vendor_id && (p.invoice_ids ?? []).length) {
+          // a freight company billed through WWD (XPO and the like, Dana Nov 3): it becomes a freight bill that the
+          // freight reader fills; the copy check keeps one bill per invoice number
+          const { data: inv } = await db.from('wwd_invoices').select('id, carrier_id').in('id', p.invoice_ids!).not('carrier_id', 'is', null).limit(1)
+          const carrier = inv?.[0]?.carrier_id as string | undefined
+          if (carrier) {
+            const { data: had } = await db.from('freight_bills').select('id').eq('source_attachment_id', a.id).limit(1)
+            const { data: onFile } = await db.from('freight_bills').select('id').eq('wwd_invoice_id', inv![0]!.id).not('storage_path', 'is', null).limit(1)
+            if (!had?.length && !onFile?.length) {
+              // a bill on file for this WWD invoice without its PDF takes this one (the copy check, after the read)
+              const { error: fbErr } = await db.from('freight_bills').insert({
+                organization_id: org, carrier_id: carrier, file_name: a.file_name, status: 'reading', source_attachment_id: a.id,
+                invoice_date: e.received_at.slice(0, 10),
+              })
+              if (fbErr) throw new Error(fbErr.message)
+            }
+            await db.from('email_attachments').update({ accounting_skip: 'Edenred: freight bill made' }).eq('id', a.id)
+            continue
+          }
+        }
         if (!p?.placed || !p.vendor_id) {
           // left in the email; the skip note marks it tried so it is not read again
           await db.from('email_attachments').update({ accounting_skip: p?.placed ? 'Edenred: WWD invoice has no vendor yet' : 'Edenred: no WWD invoice found' }).eq('id', a.id)

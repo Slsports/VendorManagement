@@ -8,7 +8,7 @@ Worldwide's portals never show the whole picture, so VMS puts it together from s
 
 ## How to
 1. Click **Payments** in the menu.
-2. In **Worldwide (WWD) payments**, click **Choose files** and pick any mix of files: Excel (including the History "xls"), Word copies of your sheets, or PDFs and photos of printed sheets.
+2. In **WWD weekly upload** at the top, click **Choose files** and pick any mix of files: Excel (including the History "xls"), Word copies of your sheets, or PDFs and photos of printed sheets.
 3. Each file is listed with what VMS took it for (**Payment History**, **EdenRed invoices**, **Payment sheet**, **Payments due (not paid yet)** or **Scanned sheet (read by Claude)**) and how many payments or invoices it holds. Scans take Claude about a minute each.
 4. Click **Add more files** for more. Check the summary: invoices (how many new), payments (how many new), and vendor names found in VMS.
 5. Click **Import**. A green note says what was added and how many orders were marked paid.
