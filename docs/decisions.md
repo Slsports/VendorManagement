@@ -3697,5 +3697,6 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   "From LaserVault").
 - Nov 3 (Dana: "I want invoice date first: <date> <vendor> <invoice #> <amount> go!"): every invoice and credit VMS files
   from Edenred or LaserVault is named "2025-10-22 WORLD FAMOUS SPORTS 77872 $12176.85.pdf" (credit amount with a minus;
-  migration 0298 invoice_file_name, gmail-sync v105). Back-fix: 322 files renamed. LaserVault papers with no WWD number
+  migration 0298 invoice_file_name, gmail-sync v105). Back-fix: 322 files renamed. Then (Dana) credits read
+  "2025-10-06 PUKA CREATIONS CREDIT 228361 -$8.00.pdf" (0299; 38 credits renamed). LaserVault papers with no WWD number
   go to the vendor they name (0297).
