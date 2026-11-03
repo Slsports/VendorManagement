@@ -3,6 +3,8 @@
 //   { action: 'attachment', attachment_id }            → the file itself (download / open)
 //   { action: 'trash' | 'untrash', thread_ids }        → Delete / Restore conversations (Gmail Trash)
 //   { action: 'file', attachment_id, vendor_id, kind, doc_year } → copy it into the vendor's documents (folder by kind, year)
+//   { action: 'save_vendor_file', organization_id, vendor_id, … , base64 } with the cron secret → a file Dana sent Claude
+//     (Nov 3: the March 2025 Oeelinn invoice from the old system) saved to the vendor's documents; once per vendor + number
 import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
 import { decodeBase64Url, type GmailMessage, type GmailPart } from '../_shared/mailParse.ts'
 import { CORS, caller, errorResponse, HttpError, json, serviceClient } from '../_shared/caller.ts'
@@ -13,6 +15,30 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
   const db = serviceClient()
   try {
+    const cronSecret = Deno.env.get('MAIL_CRON_SECRET')
+    if (cronSecret && req.headers.get('x-cron-secret') === cronSecret) {
+      const f = await req.json() as { action?: string; organization_id?: string; vendor_id?: string; order_id?: string | null; kind?: string; label?: string; file_name?: string; mime?: string; base64?: string; doc_number?: string | null; doc_date?: string | null; doc_total?: number | null; notes?: string | null }
+      if (f.action !== 'save_vendor_file' || !f.organization_id || !f.vendor_id || !f.base64 || !f.file_name) throw new HttpError(400, 'Unknown action')
+      const kind = KINDS.includes(f.kind ?? '') ? f.kind! : 'other'
+      const { data: v } = await db.from('vendors').select('id').eq('id', f.vendor_id).eq('organization_id', f.organization_id).single()
+      if (!v) throw new HttpError(404, 'Vendor not found')
+      if (f.doc_number) {
+        const { data: had } = await db.from('vendor_links').select('id').eq('vendor_id', v.id).eq('kind', kind).eq('doc_number', f.doc_number).limit(1)
+        if (had?.length) return json({ vendor_link_id: had[0]!.id, already: true })
+      }
+      const bytes = Uint8Array.from(atob(f.base64), (c) => c.charCodeAt(0))
+      const path = `${f.organization_id}/${v.id}/${crypto.randomUUID()}-${f.file_name.replace(/[^A-Za-z0-9._-]+/g, '_')}`
+      const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: f.mime ?? 'application/pdf', upsert: false })
+      if (upErr) throw new Error(`Saving the file failed: ${upErr.message}`)
+      const { data: link, error: linkErr } = await db.from('vendor_links').insert({
+        organization_id: f.organization_id, vendor_id: v.id, order_id: f.order_id ?? null, kind, label: (f.label ?? '').trim() || f.file_name, storage_path: path,
+        file_name: f.file_name, file_size: bytes.length, mime_type: f.mime ?? 'application/pdf', received_at: new Date().toISOString().slice(0, 10), source: 'upload',
+        doc_number: f.doc_number ?? null, doc_date: f.doc_date ?? null, doc_total: f.doc_total ?? null, doc_year: f.doc_date ? Number(f.doc_date.slice(0, 4)) : null,
+        notes: f.notes ?? null,
+      }).select('id').single()
+      if (linkErr || !link) throw new Error(`Saving the file failed: ${linkErr?.message}`)
+      return json({ vendor_link_id: link.id })
+    }
     const body = await req.json() as { action: string; email_id?: string; attachment_id?: string; vendor_id?: string; kind?: string; label?: string; doc_year?: number; thread_ids?: string[] }
     const me = await caller(req, db, ['file', 'trash', 'untrash'].includes(body.action))
     const { data: acct } = await db.from('mail_accounts').select('mailbox').eq('organization_id', me.organization_id).single()

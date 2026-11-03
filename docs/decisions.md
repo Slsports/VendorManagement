@@ -3679,3 +3679,8 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   wwd_upload_by = Trevor) gets "WWD weekly upload" (8 AM); it closes when an upload is done that week; not done by
   Wednesday 9 AM, Dana gets a note. Help: "Do the WWD weekly upload". Not confirmed with Dana yet: Trevor's own WWD
   portal and Edenred logins (assumed), and Monday (used).
+- Nov 3 (Dana sent the March 2025 Oeelinn invoice from the old system): JollyBuyer's WWD 7011987 ($2,881.33, billed as
+  "Jolly Buyer DBA Pom Pom Tail") is Oeelinn invoice W41220-0001, PO OEEL111824 (Claude had called it Pom Pom Tail from
+  the WWD name; wrong). Filed under Oeelinn on the Feb 2025 order; the WWD invoice is tied to Oeelinn and the order, which
+  now shows paid Apr 21, 2025 (PB83424). It predates Edenred (Edenred's records start Nov 2025), so it was never in the
+  Oct 20-21 Edenred emails. gmail-read v27: trusted save_vendor_file, for files Dana sends Claude (once per vendor + number).
