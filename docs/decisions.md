@@ -3534,3 +3534,12 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   Hub named it; the Red House (#2, 1960s, no flooring, used for storage) is COM 0301205937, $275,000. The "Red House" note on
   Dana's scan of CFP 0102829144 and the 9-24-26 guide rows are the mix-up. VMS currently has the two Cal Fair policies
   swapped; fix waits for Dana's go.
+- Nov 3 (Dana: "go"): done. The two P&S Cal Fair house policies were swapped in VMS: CFP 0102829144 00 (was CFP 0100377050;
+  $549,867, built 1979) is now Residential & Storage (#1); COM 0301205937 ($275,000, from quote COMQ0301152863, Oct 2024) is
+  the Red House (#2). Their years, 19 papers and names follow the policy number (papers naming the wrong house renamed;
+  Dana's scan of CFP 0102829144 filed as Residential & Storage). 28 policy years got their payment from Dana's QBO
+  Transaction List by Vendor reports (all paid from SLS, Community West Checking 6429), with the QBO line in the notes; the
+  five reports are filed in Accounting (QuickBooks). Not recorded, waiting on Dana: Cal Fair $5,469.91 (5/20/24); Hub
+  $82,656 (8/13/24), $76,703 (8/5/25), $17,111.38, $755, $372, $34, $24; Nationwide $3,653 (10/2/26); Markel; Sports
+  Store contents shows $4,858 twice in the guide but once in QBO (1/30/26); Residential & Storage $1,779 (6/26/26) and SLS
+  building $4,472 (9/25/26) are not in the SLS QBO report.
