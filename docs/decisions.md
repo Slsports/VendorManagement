@@ -3716,3 +3716,11 @@ of LUX PRO (wwd_assign_name), its 2 WWD invoices (7075382, 7286593) are on LUX P
 Dana: "Andreas should be listed as one of our vendors" — "Donna is the rep for them." The WWD name is now an alias of
 ANDREAS (its WWD invoice, PO JAROPENER101824, is on ANDREAS), the WWD line of that name points at ANDREAS, and Donna Hoffman
 (DandyLines / Diverse Marketing, donna@dandylinesllc.com) is Andreas's main rep.
+
+## Nov 3, 2026 — LaserVault history: all 675 sent; older WWD names match on their own (0302)
+Dana: "All the invoices in Laservault have been sent. A total of 675!!" — "the further back we get in years the PO's will be
+all over the place … We just tightened it up a couple years ago." Older WWD invoices already in VMS from WWD's payment list had
+no vendor name; when a LaserVault paper filled the name in, VMS did not run the vendor match (AURORA, JACOB ASH, MUELLER, SMITH
+OPTICS, TRIPLE T, WORLD FAMOUS SPORTS were skipped "no vendor yet"). Migration 0302 runs the match when the paper fills the
+name, matched what was on file, and puts the skipped papers back in line. Still without a vendor: Icy - Hot - Hydration,
+Int'l Leisure Prod / Swimline (2), QRSKIN USA Inc — Dana to say which vendor. The PO-name rule waits for her go.
