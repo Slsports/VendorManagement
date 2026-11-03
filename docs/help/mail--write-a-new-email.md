@@ -1,14 +1,14 @@
 ---
 title: Write a new email
 section: Mail
-keywords: compose, new message, send email, from, address book, worldwide contacts, cc
+keywords: billing@, send from billing, compose, new message, send email, from, address book, worldwide contacts, cc
 who: Admin, managers and buyers
 ---
 Start a fresh email to a vendor, a rep or anyone else from inside VMS.
 
 ## How to
 1. On the Mail page, click **New email**.
-2. If you have your own mailbox, pick **From**: **Orders (orders@)** or **Me**.
+2. Pick **From**: **Orders (orders@)**, **Me** (your own mailbox) or, if you have the Accounting tick, **Billing (billing@)**. People without their own mailbox or the Accounting tick always send from orders@.
 3. Type the address in **To**, or use **Add someone: type a name or Worldwide** to pick from the address book.
 4. Add **Cc** if needed, then the **Subject** and **Message**.
 5. Attach files if you like (see "Attach files to an email").

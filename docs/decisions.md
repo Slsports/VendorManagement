@@ -3639,3 +3639,6 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   Dana (list sent): 21 direct orders with a paid Bill.com bill from the same vendor for the same or a close amount (not
   marked: amount only), 34 direct orders with no Bill.com bill found, 37 WWD orders (7 with unpaid WWD invoices, 30 with no
   WWD invoice tied). Dana is uploading a new WWD Payment History.
+- Nov 3 (Dana: "go"): new emails can be sent From **Billing (billing@)** for people with the Accounting tick (the From list
+  had only orders@ and the person's own mailbox; Accounting → Mail's New email already sent from billing@ but the box showed
+  orders@). billing.slsports@gmail.com cannot be sent from by VMS (plain Gmail); Dana is switching to billing@.

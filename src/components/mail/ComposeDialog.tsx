@@ -84,6 +84,9 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
   const [fromBox, setFromBox] = useState<string>(draft.mailbox_id ?? '')
   const boxes = useSupabaseQuery(async () => (organization && !draft.thread_id ? listMailboxes(organization.id) : []), [organization?.id, draft.thread_id])
   const myBox = (boxes.data ?? []).find((b) => b.kind === 'personal' && b.owner_id === profile?.id)
+  // billing@ for people with the Accounting tick (Dana, Nov 3: "I need to be able to send from billing@")
+  const billBox = profile?.sees_accounting ? (boxes.data ?? []).find((b) => b.kind === 'accounting') : undefined
+  const fromBoxes = [myBox, billBox].filter((b): b is NonNullable<typeof b> => !!b)
   const links = useSupabaseQuery(async () => (draft.vendor_id ? (await listVendorLinks(draft.vendor_id)).filter((l) => l.storage_path) : []), [draft.vendor_id])
 
   useEffect(() => {
@@ -171,7 +174,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
     }
   }
 
-  const fromAddress = draft.thread_id ? 'this conversation\'s mailbox' : fromBox && myBox ? myBox.address : 'orders@'
+  const fromAddress = draft.thread_id ? 'this conversation\'s mailbox' : fromBoxes.find((b) => b.id === fromBox)?.address ?? 'orders@'
   const unused = suggestions.filter((s) => !splitAddresses(to).map((a) => a.toLowerCase()).includes(s.email.toLowerCase()))
 
   return (
@@ -183,11 +186,12 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
         </div>
         <div className="space-y-3 overflow-y-auto px-4 py-3">
           {draft.note ? <p className="rounded-lg bg-stone-50 px-3 py-2 text-xs text-stone-600">{draft.note}</p> : null}
-          {myBox ? (
+          {fromBoxes.length ? (
             <FormField label="From" htmlFor="compose-from">
               <select id="compose-from" value={fromBox} onChange={(e) => setFromBox(e.target.value)} className="h-11 w-full rounded-lg border border-stone-300 bg-white px-3 text-base shadow-sm sm:text-sm">
                 <option value="">Orders (orders@)</option>
-                <option value={myBox.id}>Me ({myBox.address})</option>
+                {myBox ? <option value={myBox.id}>Me ({myBox.address})</option> : null}
+                {billBox ? <option value={billBox.id}>Billing ({billBox.address})</option> : null}
               </select>
             </FormField>
           ) : null}
