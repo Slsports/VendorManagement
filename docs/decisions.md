@@ -3732,3 +3732,11 @@ years ago." Built as a backup: WWD's own name decides first; only when VMS doesn
 exactly one vendor's name or alias, then the invoice goes there and WWD's name is saved as that vendor's alias. Never Worldwide
 itself by PO; a person's choice is never changed. Back-check on everything on file: nothing new to place (the 4 left have no
 PO or a date-only PO).
+
+## Nov 3, 2026 — More WWD names: Swimline, QRSKIN; Becker BECKER2926 in transit
+Dana: "INTERNATIONAL LEISURE PRODUCTS IS SWIMLINE" — WWD's "Int'l Leisure Prod / Swimline" is now an alias of INTERNATIONAL
+LEISURE PRODUCTS (2 WWD invoices). A separate vendor INTERNATIONAL SWIM LINE also exists (13 files, no orders); merging the two
+waits for Dana. Dana: "QRSKIN IS MOSQUINTO" — the vendor in VMS is MOSKINTO (QRSKIN's Katie sent the Moskinto item breakdown, Jun
+2024); WWD's "QRSKIN USA Inc" is its alias now, and the WWD line points at it. Becker PO BECKER2926: the order was in VMS
+(Confirmed); Dana: picked up today, in transit with XPO. Moved to Shipped with the Pinnacle details (BOL 60116518904, at the XPO
+terminal around Nov 13) and the 3 of our replies that weren't tied to the order are now.
