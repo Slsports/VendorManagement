@@ -3619,3 +3619,11 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   follow-up card once Dana uploads a current spreadsheet; then VMS compares each backorder with the sheet's later entries
   to find backorders that were entered as a new row and never closed (sometimes the BO "yes" was simply never removed).
   The sheets on file: "8-25-26 Summer WWD Order Guide v6" (loaded Oct 5) and the Placed Order Summary v2.0 (loaded Oct 8).
+- Nov 3 (Dana): billing.slsports@gmail.com sent mail never reaches VMS (only its received mail is forwarded to billing@;
+  the one-time import ran through Oct 15). Dana will switch to billing@shaverlakesports.com and tell her contacts; Claude
+  made the contact list (people emailed 3+ times, 4 tabs; exports/, kept out of git) and a draft notice. Pending her go:
+  Sno-Park task to "Did we receive our Sno-Park passes?", Marina paperwork tasks closed, DocuSign follow-up; and the build
+  (paperwork sent turns the task into the next step, sent paperwork in Waiting on them, read our quoted emails in replies).
+- Nov 3 (Dana): future Accounting upgrade, not now: automate MBS work to cut costs (monthly inventory transfers and
+  inventory value reports per store emailed to Nawal on the 1st, a reports-only MBS login, connecting SLH's LS account).
+  Reminder task for Dana Dec 3, 2026 (Accounting tasks).
