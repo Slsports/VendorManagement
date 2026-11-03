@@ -3574,3 +3574,8 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   (payee "Markel American Insurance Company"; the vendor page had a Custom date filter on): 2024-25 $20,461, 2025-26 $21,484,
   2026-27 $20,303 + $1,924 (7/1/26 jet ski change, annual $22,558). The 7/7/26 change page and the QBO export are filed; the
   renewal was already on file.
+- Nov 3 (Dana: "go"): big attachments. Gmail attachments are now decoded a slice at a time (Gmail.attachment in
+  _shared/gmail.ts, used by gmail-read, gmail-sync and accounting-file), so files of 15-25 MB open and download in VMS and
+  can be filed (PDF limit back to 30 MB). Back-check: the 12 billing@ files that had been too big all read without running
+  out of memory: 8 vendor catalogs left in their email, 2 Gastelum copies linked to the copy on file, the business sale
+  profile (fcbb) and its pictures version read.

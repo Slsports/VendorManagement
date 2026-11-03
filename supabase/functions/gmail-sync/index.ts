@@ -513,12 +513,7 @@ async function forwardsBackcheck(db: SupabaseClient, acct: Account) {
 
 /** An attachment's bytes from Gmail (base64url). */
 async function attachmentBytes(gmail: Gmail, messageId: string, attachmentId: string): Promise<Uint8Array> {
-  const part = await gmail.call<{ data: string }>(`messages/${messageId}/attachments/${attachmentId}`)
-  const b64 = part.data.replace(/-/g, '+').replace(/_/g, '/')
-  const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4))
-  const bytes = new Uint8Array(bin.length)
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
-  return bytes
+  return gmail.attachment(messageId, attachmentId)
 }
 
 /**

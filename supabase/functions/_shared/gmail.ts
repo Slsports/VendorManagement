@@ -54,6 +54,32 @@ export class Gmail {
     }
   }
 
+  /**
+   * An attachment's bytes, decoded a slice at a time (Dana, Nov 3: a 22.8 MB policy would not open). Parsing the JSON and
+   * decoding the whole base64 string at once held five copies of the file and ran the worker out of memory; this keeps
+   * the response text and the bytes only.
+   */
+  async attachment(messageId: string, attachmentId: string): Promise<Uint8Array> {
+    const path = `messages/${messageId}/attachments/${attachmentId}`
+    const url = `https://gmail.googleapis.com/gmail/v1/users/${this.user}/${path}`
+    for (let attempt = 0; ; attempt++) {
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${this.token}` } })
+      if ((res.status === 429 || res.status >= 500) && attempt < 4) {
+        await new Promise((r) => setTimeout(r, 500 * 2 ** attempt))
+        continue
+      }
+      let text = await res.text()
+      if (!res.ok) throw new GmailError(res.status, `Gmail ${res.status} on ${path}: ${text.slice(0, 300)}`)
+      const key = text.indexOf('"data"')
+      if (key < 0) throw new Error('Gmail sent no attachment data')
+      const start = text.indexOf('"', text.indexOf(':', key) + 1) + 1
+      const end = text.indexOf('"', start)
+      const bytes = decodeBase64UrlSlice(text, start, end)
+      text = ''
+      return bytes
+    }
+  }
+
   /** Send a full RFC 5322 message, in an existing Gmail thread when threadId is given (multipart upload, up to 25 MB). */
   async send(raw: string, threadId?: string): Promise<{ id: string; threadId: string }> {
     const boundary = `vms-send-${crypto.randomUUID()}`
@@ -83,4 +109,22 @@ export class Gmail {
     return this.call<{ history?: { messagesAdded?: { message: { id: string } }[]; labelsAdded?: { message: { id: string } }[]; labelsRemoved?: { message: { id: string } }[] }[]; historyId: string; nextPageToken?: string }>(
       'history', { query: { startHistoryId, pageToken, maxResults: 500 } })
   }
+}
+
+/** Base64url text[start, end) to bytes, 4 MB of text at a time (padding optional). */
+export function decodeBase64UrlSlice(text: string, start: number, end: number): Uint8Array {
+  let stop = end
+  while (stop > start && text[stop - 1] === '=') stop--
+  const len = stop - start
+  const out = new Uint8Array(Math.floor((len * 3) / 4))
+  const STEP = 4 * 1024 * 1024
+  let at = 0
+  for (let i = start; i < stop; i += STEP) {
+    const j = Math.min(i + STEP, stop)
+    let piece = text.slice(i, j).replace(/-/g, '+').replace(/_/g, '/')
+    if (j === stop && piece.length % 4) piece += '='.repeat(4 - (piece.length % 4))
+    const bin = atob(piece)
+    for (let k = 0; k < bin.length; k++) out[at++] = bin.charCodeAt(k)
+  }
+  return at === out.length ? out : out.subarray(0, at)
 }

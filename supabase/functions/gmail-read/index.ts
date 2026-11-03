@@ -94,11 +94,7 @@ Deno.serve(async (req) => {
     const gmailId = em?.gmail_id
     if (!a.gmail_attachment_id || !gmailId) throw new HttpError(404, 'This attachment is not available from Gmail')
     const gmail = await gmailFor(em?.gmail_box)
-    const part = await gmail.call<{ data: string }>(`messages/${gmailId}/attachments/${a.gmail_attachment_id}`)
-    const b64 = part.data.replace(/-/g, '+').replace(/_/g, '/')
-    const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4))
-    const bytes = new Uint8Array(bin.length)
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+    const bytes = await gmail.attachment(gmailId, a.gmail_attachment_id)
 
     if (body.action === 'attachment') {
       return new Response(bytes, { headers: { ...CORS, 'Content-Type': a.mime_type || 'application/octet-stream', 'Content-Disposition': `inline; filename="${a.file_name.replace(/["\r\n]/g, '_')}"` } })

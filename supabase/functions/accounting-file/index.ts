@@ -201,7 +201,7 @@ function preSkip(a: Att, mail: Mail, force: boolean): string | null {
   const name = a.file_name
   const pdf = /\.pdf$/i.test(name) || /pdf/i.test(a.mime_type ?? '')
   // a PDF up to 14 MB is kept and read by its first pages; anything else over 15 MB stays in the email (even "File in Accounting")
-  if ((a.size ?? 0) > (pdf ? MAX_KEEP_PDF_BYTES : MAX_KEEP_BYTES)) return pdf ? 'too big for VMS to read (over 14 MB)' : 'too big to keep (over 15 MB)'
+  if ((a.size ?? 0) > (pdf ? MAX_KEEP_PDF_BYTES : MAX_KEEP_BYTES)) return pdf ? 'too big for VMS to read (over 30 MB)' : 'too big to keep (over 15 MB)'
   if (force) return null
   if (mail.is_bulk) return 'bulk mail'
   const pic = /^image\//i.test(a.mime_type ?? '') || PICTURE.test(name)
@@ -363,10 +363,5 @@ async function fileUploaded(db: SupabaseClient, d: { id: string; organization_id
 
 /** An attachment's bytes from Gmail (base64url). */
 async function attachmentBytes(gmail: Gmail, messageId: string, attachmentId: string): Promise<Uint8Array> {
-  const part = await gmail.call<{ data: string }>(`messages/${messageId}/attachments/${attachmentId}`)
-  const b64 = part.data.replace(/-/g, '+').replace(/_/g, '/')
-  const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4))
-  const bytes = new Uint8Array(bin.length)
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
-  return bytes
+  return gmail.attachment(messageId, attachmentId)
 }
