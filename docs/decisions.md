@@ -3594,3 +3594,6 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   cleared, vendor-delay shipupd: tasks never close, insurance bill emails match only the current policy number, a revised
   confirmation with a new total is not merged). Gap list sent to Dana for which fixes to build. Note: the 0287 freight copy
   check keeps the older bill; a corrected bill (same number, new total) should win instead - part of the list.
+- Nov 3 (Dana): "go 1-4 & 6" of the newer-email-wins gaps: revised confirmations replace the old one; orders cancelled
+  or changed by email; our own re-sent or revised order emails; backorders clear and delay tasks close; a corrected freight
+  bill (same number, new amount) wins over the copy on file.
