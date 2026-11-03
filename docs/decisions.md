@@ -3651,3 +3651,9 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   WWD reminders (terms tiers) stay 5 days ahead. Loaded: the 11-3-26 payment sheet ($9,672.85, 14 lines, 3 new WWD
   invoices, 3 orders paid) and the Payments Due list (24 bills, 5 new, 18 due dates changed to WWD's, 6 with a discount,
   24 reminders; the Rapala terms reminder replaced by WWD's own Jan 14 date).
+- Nov 3 (Dana: "check that they were properly filed"): EdenRed emails since the last download. Confirmed cause of files
+  left in the email: Worldwide's own invoice pages (title "… - Worldwide - # 07495614") and Worldwide Buying Group's own
+  bills (dues, drop ship service charge) have no Invoice Summary page, and the reader only took the WWD number from that
+  page. The reader now also takes it from those (gmail-sync v101); the unplaced files were read again. Not filed by VMS
+  and left on Dana's "Edenred: … VMS couldn't place" task: XPO freight bills sent through WWD (a freight company, not a
+  vendor) and Mechanix Wear / Strike King Lure (no such vendor in VMS yet).

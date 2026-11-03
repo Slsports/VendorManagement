@@ -1299,7 +1299,7 @@ export async function classifyPaperwork(db: SupabaseClient, org: string, file: P
 
 // ---- Edenred invoice PDFs (Dana, Oct 19) ---------------------------------------------------------------------------
 const EdenredAnswer = z.object({
-  wwd_invoice_number: z.string().describe('"Worldwide Invoice Number" on the Invoice Summary page, digits only; empty when the file has no Invoice Summary page'),
+  wwd_invoice_number: z.string().describe('Worldwide\'s own number for this bill, digits only: "Worldwide Invoice Number" on the Invoice Summary page; else, on Worldwide\'s invoice page, the number after "Worldwide - #" in its title line (e.g. "10-30-2026 - Worldwide - # 07495614" → 07495614); else, on an invoice from Worldwide Buying Group itself (dues, drop ship service charges), its "Invoice #". Empty when none of these is shown'),
   vendor_invoice_number: z.string().describe("The vendor's own invoice or credit memo number (\"Vendor Invoice Number\" on the summary, else the number on the vendor's invoice), exactly as printed"),
   vendor_name: z.string().describe('The vendor (the summary\'s "Vendor Name", else the company that issued the invoice)'),
   amount: z.number().nullable().describe('"Invoice Amount" on the summary, else the invoice total; always positive'),
