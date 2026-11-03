@@ -3590,3 +3590,7 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   and 4 COM 0300366534 papers (second number on the SLS building, incl. the $4,211 receipt) are filed on their policy with a
   note. Community West Bank: the CVCB card merged in (9 addresses, 117 conversations), its 52 papers in one Community West
   Bank folder; contact pages show a Proof of insurance box linking to the send log.
+- Nov 3: newer-email-wins survey of every mail reader (results in the session; checked: the Backorder flag is never
+  cleared, vendor-delay shipupd: tasks never close, insurance bill emails match only the current policy number, a revised
+  confirmation with a new total is not merged). Gap list sent to Dana for which fixes to build. Note: the 0287 freight copy
+  check keeps the older bill; a corrected bill (same number, new total) should win instead - part of the list.
