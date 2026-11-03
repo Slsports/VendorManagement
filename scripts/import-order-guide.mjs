@@ -177,7 +177,16 @@ const vals = rows.map((r) => {
   const vid = vendorIdFor(r.sheetVendor); if (!vid) { skipped++; return null }
   return `(${lit(ORG)}, ${lit(vid)}::uuid, ${lit(r.status)}::public.order_status, ${D(r.orderDate)}, ${r.season ? lit(r.season) + '::public.order_season' : 'null'}, ${lit(r.show?.code || null)}, ${!!r.show}, ${lit(r.placedBy)}, ${textArray(r.stores)}, ${r.route ? lit(r.route) + '::public.billing_route' : 'null'}, ${lit(r.description)}, ${D(r.estShip)}, ${N(r.estCost)}, ${N(r.freight)}, ${lit(r.freightNotes)}, ${D(r.received)}, ${lit(r.po)}, ${lit(r.arDue)}, ${D(r.arDueDate)}, ${D(r.enteredLs)}, ${lit(r.enteredBy)}, ${r.backorder}, ${lit(r.shipNotes)}, ${r.creditsDue}, ${lit(r.creditNotes)}, ${D(r.creditsReceived)}, ${r.okToPay}, ${lit(r.notes)}, ${N(r.finalCost)}, ${D(r.paidDate)}, ${lit(r.paidVia)}, ${lit(r.paidRef)}, ${N(r.costBasis)}, 'order_guide', ${lit(r.key)}, ${lit(r.sheet)}, ${lit(JSON.stringify(r.extra))}::jsonb)`
 }).filter(Boolean)
-const updates = cols.split(', ').filter((c) => !['organization_id', 'source', 'source_key'].includes(c)).map((c) => `${c} = excluded.${c}`).join(', ')
+// A re-import never takes a paid or cancelled order back to an earlier tab, never drops a paid date VMS has, and leaves the
+// Backorder mark off a paid order (Dana, Nov 3: paid orders came off Payments due and their old BO marks were cleared).
+const KEEP = {
+  status: `case when public.orders.status in ('paid', 'cancelled') and excluded.status not in ('paid', 'cancelled') then public.orders.status else excluded.status end`,
+  paid_date: 'coalesce(excluded.paid_date, public.orders.paid_date)',
+  paid_via: 'coalesce(excluded.paid_via, public.orders.paid_via)',
+  paid_ref: 'coalesce(excluded.paid_ref, public.orders.paid_ref)',
+  backorder: `case when public.orders.status = 'paid' then public.orders.backorder else excluded.backorder end`,
+}
+const updates = cols.split(', ').filter((c) => !['organization_id', 'source', 'source_key'].includes(c)).map((c) => `${c} = ${KEEP[c] ?? `excluded.${c}`}`).join(', ')
 for (let i = 0; i < vals.length; i += 100) {
   await query(`select set_config('vms.import', 'on', true);
   insert into public.orders (${cols}) values ${vals.slice(i, i + 100).join(',\n')} on conflict (organization_id, source_key) where source_key is not null do update set ${updates}`)

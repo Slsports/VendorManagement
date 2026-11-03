@@ -5,6 +5,10 @@
 //   { action: 'sync_now' }                                 → read the bills now (the scheduler does it every 15 minutes)
 //   { action: 'disconnect' }                               → forget the token (the key stays)
 //   { action: 'sync' } with the scheduler's secret         → every organization
+//   { action: 'backfill', organization_id, since } with the secret → read every bill due on or after `since` once
+//     (Dana, Nov 3: "Can't you see all payments in bill.com?"), then match paid bills to orders
+//   { action: 'probe_payments', organization_id } with the secret → one page of Bill.com's payment list (keys only)
+// Every read also reads Bill.com's payment list over the same window (process date), kept in vendor_payments.
 // Fields per Bill.com's "Get list of bills" page (Dana, Oct 19): results[], nextPage, id, vendorId, vendorName, amount,
 // dueAmount, dueDate, invoice{invoiceNumber, invoiceDate}, paymentStatus PAID/UNPAID/PARTIALLY_PAID/SCHEDULED/IN_PROCESS,
 // recordStatus ACTIVE/…, archived.
@@ -33,6 +37,13 @@ Deno.serve(async (req) => {
     const cronSecret = Deno.env.get('MAIL_CRON_SECRET')
     const trusted = !!cronSecret && req.headers.get('x-cron-secret') === cronSecret
     if (trusted) {
+      const b = body as { action?: string; organization_id?: string; since?: string }
+      if ((b.action === 'backfill' || b.action === 'probe_payments') && b.organization_id) {
+        const c = await conn(db, b.organization_id)
+        if (b.action === 'probe_payments') return json(await probePayments(db, c))
+        const since = /^\d{4}-\d{2}-\d{2}$/.test(String(b.since ?? '')) ? String(b.since) : '2025-01-01'
+        return json(await syncOrg(db, c, { since, pages: 80 }))
+      }
       if (body.action !== 'sync') throw new HttpError(400, 'Unknown action')
       const { data: conns } = await db.from('billcom_connections').select('*').not('password', 'is', null)
       const out: unknown[] = []
@@ -144,15 +155,15 @@ async function test(db: SupabaseClient, org: string, by: string | null) {
 }
 
 /** Read the bills, newest due dates first, and keep the pay-by tasks right. */
-async function syncOrg(db: SupabaseClient, c: Conn) {
+async function syncOrg(db: SupabaseClient, c: Conn, opts: { since?: string; pages?: number } = {}) {
   const org = c.organization_id
   const started = new Date().toISOString()
   try {
     const seen = new Map<string, Bill>()
     let page: string | null = null
-    const cutoff = new Date(Date.now() - OLD_DAYS * 86_400_000).toISOString().slice(0, 10)
+    const cutoff = opts.since ?? new Date(Date.now() - OLD_DAYS * 86_400_000).toISOString().slice(0, 10)
     let sort = 'dueDate:desc'
-    for (let i = 0; i < PAGES; i++) {
+    for (let i = 0; i < (opts.pages ?? PAGES); i++) {
       // Bill.com refuses sort (or filters) together with a page cursor; the cursor carries the first page's sort (Oct 22)
       const q = new URLSearchParams({ max: '100' })
       if (page) q.set('page', page); else q.set('sort', sort)
@@ -191,15 +202,78 @@ async function syncOrg(db: SupabaseClient, c: Conn) {
       if (error) throw new Error(error.message)
     }
     // bills in the window that Bill.com no longer lists are gone (deleted or archived out of the list)
-    await db.from('billcom_bills').update({ gone_at: now }).eq('organization_id', org).is('gone_at', null).lt('synced_at', started).gte('due_date', cutoff)
-    const papers = await readPapers(db, org)
+    if (!opts.since) await db.from('billcom_bills').update({ gone_at: now }).eq('organization_id', org).is('gone_at', null).lt('synced_at', started).gte('due_date', cutoff)
+    const papers = opts.since ? 0 : await readPapers(db, org)
     const { data: tasks } = await db.rpc('billcom_bill_tasks', { p_org: org })
-    await db.from('billcom_connections').update({ last_sync_at: now, last_error: null, bills_seen: rowsOut.length }).eq('organization_id', org)
-    return { organization_id: org, bills: rowsOut.length, papers_read: papers, tasks: tasks ?? 0 }
+    // Bill.com's payment list: the date each bill was paid (Dana, Nov 3)
+    const payments = await readPayments(db, c, cutoff, opts.pages ?? PAGES)
+    // a paid bill pays the order it belongs to (Dana, Nov 3: the Payments due card is matched against Bill.com)
+    const { data: ordersPaid, error: payErr } = await db.rpc('billcom_orders_paid', { p_org: org })
+    if (payErr) throw new Error(payErr.message)
+    if (!opts.since) await db.from('billcom_connections').update({ last_sync_at: now, last_error: null, bills_seen: rowsOut.length }).eq('organization_id', org)
+    const dates = rowsOut.map((r) => r.due_date).filter(Boolean).sort() as string[]
+    return { organization_id: org, bills: rowsOut.length, oldest_due: dates[0] ?? null, papers_read: papers, tasks: tasks ?? 0, payments, orders_paid: ordersPaid ?? 0 }
   } catch (e) {
     await db.from('billcom_connections').update({ last_error: (e instanceof Error ? e.message : String(e)).slice(0, 500) }).eq('organization_id', org)
     throw e
   }
+}
+
+/**
+ * Bill.com's payments, newest first, back to `since` (process date). Each bill a payment covers becomes one history row
+ * (billcom_payments_save): payment id, bill id, payee, process date, status, amount for that bill, confirmation number.
+ */
+async function readPayments(db: SupabaseClient, c: Conn, since: string, pages: number): Promise<{ read: number; saved: number }> {
+  const rows: Record<string, unknown>[] = []
+  let page: string | null = null
+  let sort = 'processDate:desc'
+  for (let i = 0; i < pages; i++) {
+    const q = new URLSearchParams({ max: '100' })
+    if (page) q.set('page', page); else q.set('sort', sort)
+    let answer: unknown
+    try {
+      answer = await api<unknown>(db, c, `/v3/payments?${q}`)
+    } catch (e) {
+      if (i === 0 && sort === 'processDate:desc' && /\(400\)/.test(String(e))) { sort = 'createdTime:desc'; q.set('sort', sort); answer = await api<unknown>(db, c, `/v3/payments?${q}`) } else throw e
+    }
+    const { rows: list, next } = listOf(answer)
+    let old = false
+    for (const p of list) {
+      const id = str(p.id)
+      if (!id) continue
+      const when = str(p.processDate) ?? str(p.createdTime)?.slice(0, 10) ?? null
+      if (when && when < since) old = true
+      const base = { payment_id: id, payee: str(p.vendorName), process_date: when?.slice(0, 10) ?? null, status: str(p.status) ?? str(p.singleStatus) ?? str(p.disbursementStatus),
+                     confirmation: str(p.confirmationNumber) ?? str(p.transactionNumber) }
+      const parts = Array.isArray(p.billPayments) ? (p.billPayments as Record<string, unknown>[]) : []
+      if (parts.length) for (const bp of parts) rows.push({ ...base, bill_id: str(bp.billId) ?? str((bp.bill as Record<string, unknown> | undefined)?.id), amount: num(bp.amount) })
+      else rows.push({ ...base, bill_id: str(p.billId), amount: num(p.amount) })
+    }
+    if (!next || old || list.length === 0) break
+    page = next
+  }
+  let saved = 0
+  for (let i = 0; i < rows.length; i += 200) {
+    const { data, error } = await db.rpc('billcom_payments_save', { p_org: c.organization_id, p_rows: rows.slice(i, i + 200) })
+    if (error) throw new Error(error.message)
+    saved += Number(data ?? 0)
+  }
+  return { read: rows.length, saved }
+}
+
+/** Does the connection see Bill.com's payment list? Field names only, never amounts or names. */
+async function probePayments(db: SupabaseClient, c: Conn) {
+  const out: Record<string, unknown> = {}
+  for (const path of ['/v3/payments?max=2', '/v3/bills/payments?max=2']) {
+    try {
+      const page = await api<unknown>(db, c, path)
+      const { rows, keys } = listOf(page)
+      out[path] = { ok: true, page_keys: keys, rows: rows.length, row_keys: rows[0] ? Object.keys(rows[0]) : [] }
+    } catch (e) {
+      out[path] = { ok: false, error: (e instanceof Error ? e.message : String(e)).slice(0, 200) }
+    }
+  }
+  return out
 }
 
 /**

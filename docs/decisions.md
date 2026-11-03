@@ -3627,3 +3627,15 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
 - Nov 3 (Dana): future Accounting upgrade, not now: automate MBS work to cut costs (monthly inventory transfers and
   inventory value reports per store emailed to Nawal on the 1st, a reports-only MBS login, connecting SLH's LS account).
   Reminder task for Dana Dec 3, 2026 (Accounting tasks).
+- Nov 3 (Dana: "go on 1, 2 and 3"): Payments due matched against WWD and Bill.com (migrations 0291, 0292; billcom
+  function). Confirmed cause: the Order Guide import put orders on their sheet tab with the sheet's paid date, and the WWD
+  step only moves an order to Paid when it has no paid date yet, so paid orders stayed on the card; Bill.com was never
+  matched to orders, and the connection read only 120 days of bills. Now: a paid date on an Entered/Ready to pay order
+  moves it to Paid (a person can set it back); a Bill.com bill shown PAID pays its order (our PO on the bill, or the
+  invoice saved on the order, same vendor; never by amount alone); the connection also reads Bill.com's payment list
+  (process date, confirmation) into vendor_payments, so the order gets the real paid date; an Order Guide re-import no
+  longer takes paid orders back to Entered or a cleared Backorder mark back on. One full read back to Jan 2025: 700
+  bills, 722 payments. Back-check: 183 WWD orders and 13 Bill.com orders moved to Paid (288 → 92 on the card). Left for
+  Dana (list sent): 21 direct orders with a paid Bill.com bill from the same vendor for the same or a close amount (not
+  marked: amount only), 34 direct orders with no Bill.com bill found, 37 WWD orders (7 with unpaid WWD invoices, 30 with no
+  WWD invoice tied). Dana is uploading a new WWD Payment History.
