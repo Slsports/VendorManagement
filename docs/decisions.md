@@ -3597,3 +3597,10 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
 - Nov 3 (Dana): "go 1-4 & 6" of the newer-email-wins gaps: revised confirmations replace the old one; orders cancelled
   or changed by email; our own re-sent or revised order emails; backorders clear and delay tasks close; a corrected freight
   bill (same number, new amount) wins over the copy on file.
+- Nov 3 (go): newer paper wins on orders (migration 0289). A revised confirmation (same number, newer date) replaces the
+  earlier one (paper to Confirmations › Old, check closed with a note, its item cards closed); split-shipment numbers stay.
+  Backorders follow the order's newest confirmation or invoice (invoices now record backordered lines); when nothing is left
+  on backorder the flag clears and shipupd: delay tasks close; those tasks also close when the order is Shipped or later with
+  nothing on backorder, or a newer email in the conversation shows it shipped. Back-check: 3 revised confirmations replaced
+  (Sona Enterprises 111139400, Lazy One 316992, Continuum Games 26809369); no delay tasks or backorder flags needed changing
+  (107 Backorder marks are from the Order Guide import on paid/entered orders with no papers in VMS).

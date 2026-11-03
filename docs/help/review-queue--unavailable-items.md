@@ -6,7 +6,7 @@ who: Admin, managers and buyers
 ---
 When a vendor's confirmation says an item is discontinued, replaced or out of stock, Claude puts a card in the **Unavailable items** tab of the Review queue for whoever placed the order. On the vendor's page and on the confirmation check they all show in one card, **Items the vendor says are unavailable**, one row per item. What you choose is written to Lightspeed for you, so nobody has to go into Lightspeed separately.
 
-Backordered items are different: the vendor is still sending them, just later. They make no card. They show on the order under **On backorder**, the order is marked Backorder, and nothing is written to Lightspeed.
+Backordered items are different: the vendor is still sending them, just later. They make no card. They show on the order under **On backorder**, the order is marked Backorder, and nothing is written to Lightspeed. The vendor's newest paper decides: when a newer confirmation or invoice no longer lists an item on backorder, it drops off **On backorder**, and when nothing is left the Backorder mark comes off and the vendor's "backorders or shipping delays" task closes on its own (see **Closed by VMS** in Tasks). That task also closes when the order is marked Shipped with nothing on backorder, or a newer email in the conversation shows it shipped.
 
 ## On the vendor's page (all items at once)
 1. At the top of the vendor's page, find **Items the vendor says are unavailable**.

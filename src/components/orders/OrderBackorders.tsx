@@ -11,7 +11,7 @@ import type { ItemChange } from '@/types'
  */
 export function OrderBackorders({ orderId }: { orderId: string }) {
   const q = useSupabaseQuery(async () => {
-    const { data, error } = await supabase.from('item_changes').select('*').eq('order_id', orderId).eq('read_as', 'backordered').order('vendor_item_id')
+    const { data, error } = await supabase.from('item_changes').select('*').eq('order_id', orderId).eq('read_as', 'backordered').is('superseded_at', null).order('vendor_item_id')
     if (error) throw error
     return (data ?? []) as ItemChange[]
   }, [orderId])

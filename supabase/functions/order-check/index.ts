@@ -216,7 +216,12 @@ async function compare(db: SupabaseClient, c: Check, doc: PaperFile) {
   } })
   if (error) throw new Error(error.message)
   await db.from('order_checks').update({ new_items: r.new_items ?? [] }).eq('id', c.id)
+  // invoices count for backorders too (a B/O line, or none left); other problems stay confirmation-only (Oct 18)
   if (c.kind === 'confirmation') await recordUnavailable(db, c.id, r.unavailable)
+  else await recordUnavailable(db, c.id, (r.unavailable ?? []).filter((u) => u.read_as === 'backordered'))
+  // the newer paper wins (Dana, Nov 3): a revised confirmation replaces the earlier one; backorders follow the newest paper
+  const { error: nwErr } = await db.rpc('order_check_newer_wins', { p_check: c.id })
+  if (nwErr) console.error('newer wins:', nwErr.message)
 }
 
 /**
@@ -281,6 +286,8 @@ async function compareReport(db: SupabaseClient, c: Check, doc: PaperFile, order
   if (e2) throw new Error(e2.message)
   await db.from('order_checks').update({ new_items: r.new_items ?? [] }).eq('id', c.id)
   await recordUnavailable(db, c.id, r.unavailable)
+  const { error: nwErr } = await db.rpc('order_check_newer_wins', { p_check: c.id })
+  if (nwErr) console.error('newer wins:', nwErr.message)
   return true
 }
 
