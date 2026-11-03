@@ -901,6 +901,20 @@ async function edenredInvoices(db: SupabaseClient, gmail: Gmail, org: string, st
             }
             continue
           }
+          // a freight company's bill (WWD's Distribution Center Freight Bill for XPO): a freight bill under that company
+          const { data: carrier } = await db.rpc('carrier_for_name', { p_org: org, p_name: r.vendor_name })
+          if (carrier) {
+            const { data: had } = await db.from('freight_bills').select('id').eq('source_attachment_id', a.id).limit(1)
+            if (!had?.length) {
+              const { error: fbErr } = await db.from('freight_bills').insert({
+                organization_id: org, carrier_id: carrier as string, file_name: a.file_name, status: 'reading', source_attachment_id: a.id,
+                invoice_date: r.invoice_date && /^\d{4}-\d{2}-\d{2}$/.test(r.invoice_date) ? r.invoice_date : e.received_at.slice(0, 10),
+              })
+              if (fbErr) throw new Error(fbErr.message)
+            }
+            await db.from('email_attachments').update({ accounting_skip: 'LaserVault: freight bill made' }).eq('id', a.id)
+            continue
+          }
         }
         if (!p?.placed || !p.vendor_id) {
           // left in the email; the skip note marks it tried so it is not read again
