@@ -3724,3 +3724,11 @@ no vendor name; when a LaserVault paper filled the name in, VMS did not run the 
 OPTICS, TRIPLE T, WORLD FAMOUS SPORTS were skipped "no vendor yet"). Migration 0302 runs the match when the paper fills the
 name, matched what was on file, and puts the skipped papers back in line. Still without a vendor: Icy - Hot - Hydration,
 Int'l Leisure Prod / Swimline (2), QRSKIN USA Inc — Dana to say which vendor. The PO-name rule waits for her go.
+
+## Nov 3, 2026 — The PO-name rule (0303)
+Dana: "can't we just have a rule that they look at the PO and if it matches a NAME of one of our vendors it files it there?" —
+"go on PO-name rule" — "the further back we get in years the PO's will be all over the place … We just tightened it up a couple
+years ago." Built as a backup: WWD's own name decides first; only when VMS doesn't know it, the PO without the date must be
+exactly one vendor's name or alias, then the invoice goes there and WWD's name is saved as that vendor's alias. Never Worldwide
+itself by PO; a person's choice is never changed. Back-check on everything on file: nothing new to place (the 4 left have no
+PO or a date-only PO).

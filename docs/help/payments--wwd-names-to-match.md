@@ -1,7 +1,7 @@
 ---
 title: Match WWD vendor names
 section: Payments
-keywords: WWD names to match, unmatched, alias, spelling, vendor name, pick vendor, freight company, XPO
+keywords: WWD names to match, unmatched, alias, spelling, vendor name, pick vendor, freight company, XPO, PO, purchase order
 who: Admin and managers
 ---
 When a WWD file spells a vendor in a way VMS does not know, the name waits in **WWD names to match** on the Payments page. Answer once and VMS remembers the spelling.
@@ -14,5 +14,7 @@ When a WWD file spells a vendor in a way VMS does not know, the name waits in **
 5. Changed your mind before choosing? Click **Cancel**.
 
 ## Good to know
+- When WWD's name is new to VMS, VMS looks at our PO. If the PO without the date is exactly one vendor's name ("LUXPRO82725" is LUX PRO), the invoice goes to that vendor and WWD's name is saved on it. POs that don't start with a vendor's name ("SPR2026", "HOTSHOW") still wait here.
+- A PO that says "Worldwide" never puts the invoice under Worldwide; the vendor who billed it decides.
 - The name becomes an alias of the vendor, so future imports match it on their own.
 - Older WWD invoices with no vendor name anywhere (paid before your payment sheets start) are counted at the bottom, not listed. They stay on file by WWD number.
