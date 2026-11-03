@@ -12,6 +12,7 @@ Freight bill PDFs stay the same in VMS and in Dropbox, whichever one you put the
 3. Either way, the bill is then read and matched to its orders as usual.
 
 ## Good to know
+- A freight bill for a pallet WWD shipped from its own warehouse (shipper "World Wide Distributors"), like the XPO bills sent through WWD, is filed under the **WORLDWIDE** vendor and under the freight company, and marked done. VMS does not split it across orders.
 - A PDF already in Dropbox (the same file, whatever its name or folder) is never copied again, and a file VMS copied to Dropbox is never read in a second time.
 - One bill per invoice: when the same invoice from the same billing company comes in again (the carrier's email, Dropbox, an upload), VMS keeps the bill it already has and adds the email or PDF to it. It never makes a second bill. If the newer one is a corrected bill (same invoice number, different total), the newer one wins: the bill takes the new PDF, total and shipments, keeps its payment, and its note says what was replaced.
 - The carrier folders are PartnerShip, UPS (by year), FedEx, XPO, Pinnacle-Priority 1 and SHIP STATION - WWEX GROUP. A new freight company gets a folder with its name.

@@ -3700,3 +3700,8 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   migration 0298 invoice_file_name, gmail-sync v105). Back-fix: 322 files renamed. Then (Dana) credits read
   "2025-10-06 PUKA CREATIONS CREDIT 228361 -$8.00.pdf" (0299; 38 credits renamed). LaserVault papers with no WWD number
   go to the vendor they name (0297).
+- Nov 3 (Dana: "Put the unknown pallets from WWD also under WWD … We are not going to go back in history … I just want to
+  know that they were WWD shipments … filed there and with the freight co."): migration 0301. A freight line shipped by
+  World Wide Distributors that no order claims goes to the WORLDWIDE vendor, confirmed, and the bill is done; it stays under
+  its freight company (XPO). Runs after every read of a bill. Back-fix: 4 XPO bills (126-995212, 700-319174, 711-027940,
+  934710475) now under WORLDWIDE and done.
