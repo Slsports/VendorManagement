@@ -866,6 +866,34 @@ async function edenredInvoices(db: SupabaseClient, gmail: Gmail, org: string, st
             continue
           }
         }
+        // a LaserVault paper with no WWD match (a vendor's credit memo with only WWD's stamp): to the vendor it names
+        if ((!p?.placed || !p.vendor_id) && !/edenred/i.test(String(e.from_email ?? '')) && r?.vendor_name) {
+          const { data: named } = await db.rpc('vendor_for_name', { p_org: org, p_name: r.vendor_name })
+          if (named) {
+            const vendorId = named as string
+            const kind = r.credit ? 'credit' : 'invoice'
+            const number = r.vendor_invoice_number || null
+            const { data: had } = number ? await db.from('vendor_links').select('id, storage_path').eq('vendor_id', vendorId).eq('kind', kind).eq('doc_number', number).limit(1) : { data: [] }
+            if (had?.length) {
+              await db.from('email_attachments').update({ vendor_link_id: had[0]!.id, storage_path: had[0]!.storage_path }).eq('id', a.id)
+            } else if (!(await linkExistingCopy(db, vendorId, a))) {
+              const docDate = r.invoice_date || e.received_at.slice(0, 10)
+              const label = `${kind === 'credit' ? 'Credit' : 'Invoice'} ${number ?? a.file_name.replace(/\.pdf$/i, '')}`
+              const path = `${org}/${vendorId}/${crypto.randomUUID()}-${label.replace(/[^A-Za-z0-9._-]+/g, '_')}.pdf`
+              const { error: upErr } = await db.storage.from('vendor-files').upload(path, bytes, { contentType: 'application/pdf', upsert: false })
+              if (upErr) throw new Error(`Saving ${a.file_name}: ${upErr.message}`)
+              const { data: link, error } = await db.from('vendor_links').insert({
+                organization_id: org, vendor_id: vendorId, kind, label, storage_path: path, file_name: a.file_name, file_size: bytes.length, mime_type: 'application/pdf',
+                received_at: e.received_at.slice(0, 10), doc_year: Number(docDate.slice(0, 4)), doc_number: number,
+                doc_date: /^\d{4}-\d{2}-\d{2}$/.test(docDate) ? docDate : null, doc_total: r.amount, source: 'email', email_id: e.id,
+                notes: 'From LaserVault (no WWD invoice number on it)',
+              }).select('id').single()
+              if (error) throw new Error(error.message)
+              await db.from('email_attachments').update({ vendor_link_id: link.id, storage_path: path }).eq('id', a.id)
+            }
+            continue
+          }
+        }
         if (!p?.placed || !p.vendor_id) {
           // left in the email; the skip note marks it tried so it is not read again
           await db.from('email_attachments').update({ accounting_skip: p?.placed ? 'Edenred: WWD invoice has no vendor yet' : 'Edenred: no WWD invoice found' }).eq('id', a.id)
