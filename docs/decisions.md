@@ -3523,3 +3523,8 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
 - Nov 2 (Dana): "The P&S are not always paid from P&S account … the old bookkeeper had been paying them from SLS - then doing
   a shareholder distribution to P&S which is an LLC." When matching insurance payments, a P&S policy can be paid from SLS
   (older years especially); look in both books, and do not treat an SLS payment on a P&S policy as wrong.
+- Nov 3 (Dana): Cal Fair numbers: "Commercial starts with a COM and the residential starts with CFP. Also if the number has
+  CFPQ its a quote, not a policy number and when its paid they send you a policy with a new policy number on it." (COMQ is
+  the commercial quote, as on COMQ0302535267.) VMS must never treat a quote number as a policy number; when the policy
+  arrives, the quote's papers belong to that policy. Also Nov 3: COM 0301157901 was the duplicate Sports Store contents
+  policy Hub had cancelled (its 2024-25 premium, $6,212 on 10/18/24, was paid alongside the real $7,207).
