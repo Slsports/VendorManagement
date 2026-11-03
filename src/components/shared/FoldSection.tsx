@@ -9,6 +9,8 @@ export interface FoldSectionProps {
   /** Buttons on the right of the title bar. Clicking them does not open or close the box. */
   actions?: ReactNode
   className?: string
+  /** so a link elsewhere on the page can scroll to it */
+  id?: string
   defaultOpen?: boolean
   /** Set both to open or close the box from outside (e.g. "Add rule" opens it). */
   open?: boolean
@@ -20,7 +22,7 @@ export interface FoldSectionProps {
  * A box on a long page that starts closed: just the title bar with a count. Click the bar to open it, again
  * to close it (Dana, Oct 12). What is inside is only drawn while open.
  */
-export function FoldSection({ title, summary, actions, className, defaultOpen = false, open: openProp, onOpenChange, children }: FoldSectionProps) {
+export function FoldSection({ title, summary, actions, className, id, defaultOpen = false, open: openProp, onOpenChange, children }: FoldSectionProps) {
   const [openState, setOpenState] = useState(defaultOpen)
   const open = openProp ?? openState
   const toggle = () => {
@@ -28,7 +30,7 @@ export function FoldSection({ title, summary, actions, className, defaultOpen = 
     onOpenChange?.(!open)
   }
   return (
-    <section className={cn('rounded-2xl border border-stone-200 bg-white', className)}>
+    <section id={id} className={cn('rounded-2xl border border-stone-200 bg-white', className)}>
       <div className="flex flex-wrap items-center gap-2 px-5 py-4">
         <h2 className="min-w-0 flex-1">
           <button type="button" aria-expanded={open} onClick={toggle} className="flex w-full flex-wrap items-center gap-x-2 gap-y-1 text-left">

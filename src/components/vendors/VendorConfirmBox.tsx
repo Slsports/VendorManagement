@@ -15,7 +15,7 @@ import { Badge, Button, Input } from '@/components/ui'
  * On a vendor's page (Dana, Oct 13): did they confirm their info on our form, ask them to (an email per contact, in
  * Mail › Drafts), and what they sell (from Worldwide and their own form).
  */
-export function VendorConfirmBox({ vendorId, organizationId, canEdit, infoConfirmedAt }: { vendorId: string; organizationId: string; canEdit: boolean; infoConfirmedAt: string | null }) {
+export function VendorConfirmBox({ vendorId, organizationId, canEdit, infoConfirmedAt, inline = false }: { vendorId: string; organizationId: string; canEdit: boolean; infoConfirmedAt: string | null; inline?: boolean }) {
   const conf = useSupabaseQuery(() => listConfirmations(organizationId, vendorId), [organizationId, vendorId])
   const sells = useSupabaseQuery(() => listVendorSells(vendorId), [vendorId])
   const [busy, setBusy] = useState(false)
@@ -42,8 +42,8 @@ export function VendorConfirmBox({ vendorId, organizationId, canEdit, infoConfir
     if (error) toast.error(errorMessage(error)); else await sells.refetch()
   }
 
-  return (
-    <FoldSection title="Their info and what they sell" summary={summary}>
+  const body = (
+    <>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-stone-700">{infoConfirmedAt ? <Badge tone="success">Confirmed by the vendor {shortDate(infoConfirmedAt)}</Badge> : 'They have not confirmed their info on our form yet.'}</p>
         {canEdit ? <Button size="sm" variant="secondary" loading={busy} onClick={() => void ask()}>Ask them to confirm</Button> : null}
@@ -75,6 +75,14 @@ export function VendorConfirmBox({ vendorId, organizationId, canEdit, infoConfir
         </form>
       ) : null}
       <Link to={ROUTES.contactConfirmations} className="mt-3 inline-block text-xs font-medium text-brand hover:underline">All contact confirmations</Link>
-    </FoldSection>
+    </>
   )
+  // in the Overview (Dana, Nov 3: "doesn't really need to be a card"): what they sell first, then their info
+  if (inline) return (
+    <div className="mt-4 border-t border-stone-100 pt-4">
+      <h3 className="text-xs font-medium text-stone-500">Their info <span className="font-normal">· {summary}</span></h3>
+      <div className="mt-1">{body}</div>
+    </div>
+  )
+  return <FoldSection title="Their info and what they sell" summary={summary}>{body}</FoldSection>
 }

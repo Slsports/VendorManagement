@@ -3740,3 +3740,15 @@ waits for Dana. Dana: "QRSKIN IS MOSQUINTO" — the vendor in VMS is MOSKINTO (Q
 2024); WWD's "QRSKIN USA Inc" is its alias now, and the WWD line points at it. Becker PO BECKER2926: the order was in VMS
 (Confirmed); Dana: picked up today, in transit with XPO. Moved to Shipped with the Pinnacle details (BOL 60116518904, at the XPO
 terminal around Nov 13) and the 3 of our replies that weren't tied to the order are now.
+
+## Nov 3, 2026 — Spreadsheet viewer, vendor page Activity feed
+- Dana (Becker confirmation): "too hard to see your items with the cost column so wide" — "GO". The viewer keeps Excel's merged
+  cells (a long note no longer sits in one column on one line), wraps long text, and leaves out empty rows and columns; the
+  download is untouched (`src/lib/sheetLayout.ts`).
+- Dana: "I WANT AN 'ACTIVITY FEED' IN THE UPPER RIGHT OF EVERY VENDOR RECORD, WHERE THE TASKS IS, AND MOVE THE TASKS UP ABOVE THE
+  ACTIVITY FEED. WHAT THEY SELL DOESN'T REALLY NEED TO BE A CARD, PUT IT IN THE OVERVIEW SOMEWHERE." — "Activity feed should be in
+  chronological order of anything done with this record … You can click on each one and it will pull up the email or invoice"
+  — "If the order was received: received order PO XYZ and date. If the order was entered: Entered to LS by <employee> on
+  <date>". Built: upper right Tasks then Activity feed (newest first: emails, papers filed, orders placed / confirmed / shipped /
+  received / entered to LS by whom / paid, finished tasks, notes; each line opens its source); the old Recent activity strip
+  is gone; Their info and what they sell is at the bottom of Overview. Invoices sit on their own invoice date.

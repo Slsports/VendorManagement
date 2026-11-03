@@ -13,7 +13,7 @@ Documents open right inside VMS, without downloading them first.
 4. Click **Download** to keep a copy, or the **X** (or press Esc) to close.
 
 ## Good to know
-- PDFs show page by page and pictures as they are, on any computer or phone. Excel and CSV files show as tables (the first 1,000 rows of each sheet). Word files (.docx) show as a page.
+- PDFs show page by page and pictures as they are, on any computer or phone. Excel and CSV files show as tables (the first 1,000 rows of each sheet). Cells that are merged in Excel stay merged, long text wraps onto a few lines, and empty rows and columns are left out, so the items sit next to each other. **Download** still gives you the file exactly as it was sent. Word files (.docx) show as a page.
 - Files VMS cannot show (an old .doc, for example) offer a **Download** button instead.
 - Email attachments open in the same viewer.
 - Files saved from an email show "from an email" under the name; click it to open that conversation.

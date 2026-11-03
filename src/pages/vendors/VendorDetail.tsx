@@ -38,7 +38,7 @@ import { VendorItemRulesSection } from '@/components/vendors/VendorItemRulesSect
 import { PhoneLinks } from '@/components/shared/Phones'
 import { VendorRoutingLetter } from '@/components/vendors/VendorRoutingLetter'
 import { VendorConfirmBox } from '@/components/vendors/VendorConfirmBox'
-import { VendorRecentActivity } from '@/components/vendors/VendorRecentActivity'
+import { VendorActivityFeed } from '@/components/vendors/VendorActivityFeed'
 import { Alert, Badge, Button, Select, Spinner, Textarea } from '@/components/ui'
 import { NameCheckNote } from '@/components/vendors/NameCheckNote'
 import { latestNameCheck } from '@/services/repAgency'
@@ -58,6 +58,9 @@ export default function VendorDetailPage() {
   const [draft, setDraft] = useState<ComposeDraft | null>(null)
   /** "Add our rep" opens the add-contact form in Reps & contacts right here (Dana, Oct 13). */
   const [addRep, setAddRep] = useState(0)
+  const [notesOpen, setNotesOpen] = useState(false)
+  // a note in the Activity feed opens Notes and scrolls to it
+  const openNotes = () => { setNotesOpen(true); window.setTimeout(() => document.getElementById('notes')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50) }
 
   if (vendorQ.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading vendor…" className="text-brand" /></div>
   if (vendorQ.error || !v) return <Alert variant="error">{vendorQ.error ?? 'Vendor not found'}</Alert>
@@ -248,9 +251,6 @@ export default function VendorDetailPage() {
         </section>
       ) : null}
 
-      {/* What happened lately, newest first (Dana, Oct 20) */}
-      <VendorRecentActivity vendorId={v.id} />
-
       <div className="grid gap-6 lg:grid-cols-3">
         <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Overview</h2>
@@ -273,14 +273,19 @@ export default function VendorDetailPage() {
           <div className="mt-4 text-xs text-stone-500">
             {v.vendor_billing_routes.map((r) => <p key={r.route}>{BILLING_ROUTE_HELP[r.route]}{r.is_default ? ' (default)' : ''}</p>)}
           </div>
+          {/* what they sell, in the Overview instead of its own card (Dana, Nov 3) */}
+          <VendorConfirmBox inline vendorId={v.id} organizationId={v.organization_id} canEdit={canEdit} infoConfirmedAt={v.info_confirmed_at} />
         </section>
 
-        <VendorConfirmBox vendorId={v.id} organizationId={v.organization_id} canEdit={canEdit} infoConfirmedAt={v.info_confirmed_at} />
+        {/* upper right: Tasks, then the Activity feed (Dana, Nov 3) */}
+        <div className="space-y-6 lg:row-span-2">
+          <RecordTasks fold preset={{ vendor: { id: v.id, name: v.name } }} />
+          <VendorActivityFeed organizationId={v.organization_id} vendorId={v.id} onNote={openNotes} />
+        </div>
         <VendorRoutingLetter vendorId={v.id} organizationId={v.organization_id} />
         <VendorLightspeedBox vendor={v} canEdit={canEdit} onChange={() => void vendorQ.refetch()} />
 
         <VendorOrderingPanel vendor={{ id: v.id, name: v.name, aliases: v.aliases }} assignedBuyerId={v.assigned_buyer_id} canEdit={canEdit} windows={v.vendor_order_windows} />
-        <RecordTasks fold preset={{ vendor: { id: v.id, name: v.name } }} />
         <VendorDocumentsSection vendorId={v.id} vendorName={v.name} organizationId={v.organization_id} userId={profile?.id ?? null} canEdit={canEdit} />
         <VendorMailSection vendorId={v.id} organizationId={v.organization_id} onNewEmail={canEdit ? () => compose(suggestions[0] ? [suggestions[0].email] : []) : undefined} />
         <VendorRepGroupCard vendorId={v.id} group={v.rep_groups} />
@@ -296,7 +301,7 @@ export default function VendorDetailPage() {
         <VendorFreightSection vendorId={v.id} />
         <WwdInvoiceList fold vendorId={v.id} />
 
-        <FoldSection title="Notes" summary={notesQ.isLoading ? null : notesQ.data?.length ? `${notesQ.data.length} note${notesQ.data.length === 1 ? '' : 's'}` : 'None'} className="lg:col-span-1">
+        <FoldSection id="notes" open={notesOpen} onOpenChange={setNotesOpen} title="Notes" summary={notesQ.isLoading ? null : notesQ.data?.length ? `${notesQ.data.length} note${notesQ.data.length === 1 ? '' : 's'}` : 'None'} className="lg:col-span-1">
           {canEdit && profile && organization ? (
             <NoteForm onSubmit={async (body) => { await addNote({ organization_id: organization.id, entity_type: 'vendor', entity_id: v.id, body, created_by: profile.id }); await notesQ.refetch() }} />
           ) : null}
