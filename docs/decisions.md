@@ -3570,3 +3570,7 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   policy (CFP 0102829144: 1 unit, owner, permitted incidental occupancy $0), and the 2026-27 SLS contents policy lists only
   the store building. Questions for Shelly: is SLS inventory in those bays covered; is the painting contractor's rented
   bay (and the shop) allowed on a dwelling policy; should this building move to the Commercial Property program.
+- Nov 3 (Dana: "go"): Markel payments recorded on the Markel policy from Markel's autopay emails and Dana's QBO export
+  (payee "Markel American Insurance Company"; the vendor page had a Custom date filter on): 2024-25 $20,461, 2025-26 $21,484,
+  2026-27 $20,303 + $1,924 (7/1/26 jet ski change, annual $22,558). The 7/7/26 change page and the QBO export are filed; the
+  renewal was already on file.
