@@ -3548,3 +3548,13 @@ reminder email or text); a deployment fix is pushed and noted in that session. T
   House and Residential & Storage Cal Fair rows corrected (numbers, limits, renewal dates, premiums, paid dates, notes) and
   the Instructions notes fixed. v6 was left where it is. The dropbox function takes a trusted put_file (inside the
   connected folder, never over a file) so Claude can hand Dana a file from a cloud session.
+- Nov 3 (Dana): "We can't confirm the date these places were built for sure so that cannot be an indicator." The 1979 on
+  the Cal Fair dwelling policy is not proof of which house it covers. What still points to CFP 0100377050 / CFP 0102829144
+  being Residential & Storage: Dana's own values ("The 275K is red house, the residential with storage is 549K"), Hub's
+  file names (Mar 2025 "Residential with Storage"; Aug 2025 "Red House Invoice" for COM 0301205937), Shelly's Jan 8 2026
+  list ("Storage / Residence #1 CFP 0100377050"), the 5/6/25 QBO memo, and the Hudson wrap (Red House $275,000). Against
+  it: Dana's 2024 file name "CFP 2 GP - #2 Red House" and her note on the 2026 scan. VMS stays as set; Shelly is asked to
+  confirm which building each Cal Fair policy covers and to put the building # on each policy.
+- Nov 3: both 3/6/24 Cal Fair refunds were for 41777 policies: $5,467.41 = COM 2905361 (SLS contents, 8/15/23-8/15/24,
+  insured typo'd "SHAVER LAKE INC"; billed back in May 2024 and paid $5,469.91 on 5/16/24); $2,864.13 = COM 2875282 (P&S
+  house at 41777, 5/23/23-5/23/24, cancelled), so its QBO line "41698 Tollhouse / SLH" is the slip.
