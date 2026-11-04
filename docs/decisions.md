@@ -3775,3 +3775,17 @@ with shipping or customer service and not an order being placed." — "go" (with
 Dana: "yes tie all four" — Guntersville Breathables Inc. → FROGG TOGGS, LHB Industries → LHB, Reliable Knitting Works → RELIABLE
 OF MILWAUKEE, Star Asia USA, LLC d.b.a. Titan → TITAN TOOLS (aliases via wwd_assign_name); their LaserVault papers read again.
 No WWD invoice is left without a vendor.
+
+## Nov 4, 2026 — Dana's answers: Swimline, Pure Fishing, backorders, Trevor, carrier pickups
+- "Fifty/Fifty is correct - the po matched it" (WWD "Icy - Hot - Hydration" #6918336).
+- Merged INTERNATIONAL SWIM LINE into INTERNATIONAL LEISURE PRODUCTS (15 files, 1 contact). Dana: their invoices say
+  "International Leisure Products, Inc, By Swimline", WWD says "International Leisure Prod/Swimline": both, and "Swimline",
+  are aliases.
+- Pure Fishing booth show order added as Cancelled (PUREFISHING091026, Sep 10 order writer from Travis attached): the
+  pallets refused Sep 17 were this order; the corrected order is PUREFISHING091326.
+- Backorders from the 11-3-26 Placed Order Summary (Dana: "go on that"; the sheet itself was not re-imported, it would change
+  284 statuses and add 13 orders, offered separately): 53 rows on Open/Entered still say BO = Y; 24 have a later row on the
+  sheet that looks like the backorder arriving (same PO, or a row that starts "Backordered…"). One task per vendor for Dana
+  (25, auto_key bofollow:<vendor>:2026-11-03), each row with what the sheet shows and the sheet tab and row.
+- Trevor does the WWD weekly upload on Mondays with his own WWD and Edenred logins (confirmed).
+- Carrier/broker pickup emails move the order to Shipped: "yes" (built next).
