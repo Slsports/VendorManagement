@@ -432,6 +432,8 @@ async function storeMessages(db: SupabaseClient, gmail: Gmail, ctx: Context, ids
     from_name: p.from?.name ?? null,
     to_emails: p.to.map((a) => a.email),
     cc_emails: p.cc.map((a) => a.email),
+    // where it was delivered or forwarded to (0309: Bill.com forwarding turns on when a vendor bills billing@ directly)
+    delivered_to: p.delivered_to.length ? [...new Set(p.delivered_to)] : null,
     subject: p.subject,
     snippet: p.snippet,
     body_text: p.body_text,

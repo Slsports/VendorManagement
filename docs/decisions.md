@@ -3823,3 +3823,9 @@ Pacific Stihl, Interstate Battery System of Fresno, Vikan / Remco, Sandbox Group
 - Red Triangle Oil (marina gas) and Cheyenne Jenkins (janitorial) to Bill.com too: their invoices come to billing@
   (Accounting), which the forwarder does not cover yet — offered.
 - Donna's vendors: Dana will say which ("most are WWD").
+- Nov 4 (Dana: "Go"): VMS turns Bill.com forwarding on by itself when a vendor first bills billing@ directly (0309). The mail
+  sync now saves each email's delivery addresses (emails.delivered_to); vendors.billcom_auto_on_from names the old address
+  (billing.slsports@gmail.com for EJD and Stihl); the first email from that vendor not passing through it turns "Send invoices
+  to Bill.com" on for it and the vendors it bills (Stihl's parent / billing company is now EMERY JENSEN DIST) and gives Dana a
+  task to turn the old Gmail forward off. The EJD/Stihl watch is set after checking that the next forwarded EJD email really
+  shows billing.slsports@gmail.com in its delivery addresses.
