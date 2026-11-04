@@ -3,7 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { getOrder, moveOrderVendor, updateOrder } from '@/services/orders'
+import { getOrder, moveOrderVendor, threadsOfEmails, updateOrder } from '@/services/orders'
 import { ORDER_STATUSES, ORDER_STATUS_LABELS, ROUTES, type OrderStatus } from '@/lib/constants'
 import { BILLING_ROUTE_LABELS, PAID_VIA_LABELS, money, showLabel } from '@/lib/vendors'
 import { errorMessage } from '@/lib/utils'
@@ -44,6 +44,9 @@ export default function OrderDetailPage() {
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
   const q = useSupabaseQuery(() => getOrder(id), [id])
   const [changingVendor, setChangingVendor] = useState(false)
+  // the carrier or vendor email that moved it to Shipped (Dana, Nov 4), one click
+  const shippedId = q.data?.shipped_email_id ?? null
+  const shippedThread = useSupabaseQuery(async () => (shippedId ? (await threadsOfEmails([shippedId])).get(shippedId) ?? null : null), [shippedId])
   const o = q.data
   if (q.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading order…" className="text-brand" /></div>
   if (q.error || !o) return <Alert variant="error">{q.error ?? 'Order not found'}</Alert>
@@ -84,7 +87,7 @@ export default function OrderDetailPage() {
       <PageHeader
         eyebrow="Order"
         title={o.vendor ? o.vendor.name : 'Order'}
-        description={<span className="inline-flex flex-wrap items-center gap-2"><OrderStatusBadge status={o.status} />{o.order_date ? <span>{d(o.order_date)}</span> : null}{o.source !== 'manual' ? <Badge tone="neutral">from {o.source.replaceAll('_', ' ')}</Badge> : null}{o.art_approved_at ? <Badge tone="success">Artwork approved {new Date(o.art_approved_at).toLocaleDateString()}</Badge> : null}</span>}
+        description={<span className="inline-flex flex-wrap items-center gap-2"><OrderStatusBadge status={o.status} />{o.order_date ? <span>{d(o.order_date)}</span> : null}{o.source !== 'manual' ? <Badge tone="neutral">from {o.source.replaceAll('_', ' ')}</Badge> : null}{o.art_approved_at ? <Badge tone="success">Artwork approved {new Date(o.art_approved_at).toLocaleDateString()}</Badge> : null}{o.shipped_email_id && shippedThread.data ? <Link to={`/mail/${shippedThread.data}?email=${o.shipped_email_id}`} className="text-sm font-medium text-brand hover:underline">Shipped per email</Link> : null}</span>}
         actions={canEdit ? (
           <div className="flex flex-wrap items-center gap-2">
             {changingVendor ? (

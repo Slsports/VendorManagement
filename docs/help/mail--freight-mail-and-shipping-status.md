@@ -12,7 +12,7 @@ Mail from freight carriers is sorted, read and tied to vendors on its own.
 
 ## Good to know
 - Carrier mail goes to Trevor; Dana sees it all for now.
-- Carrier status updates show a tag on the conversation: **Picked up**, **In transit**, **Out for delivery**, **Delivered** or **Shipping problem**. The update is filed to the vendor that shipped.
+- Carrier status updates show a tag on the conversation: **Picked up**, **In transit**, **Out for delivery**, **Delivered** or **Shipping problem**. The update is filed to the vendor that shipped. When it is about one of our orders (by its PO) and says picked up, in transit, out for delivery or delivered, the order moves to **Shipped** with the carrier, BOL or tracking number and expected date in its shipment notes. An order already received, entered or paid stays as it is.
 - When a vendor itself writes about backorders or shipping delays (like a list of what is shipping and what is backordered), the person who placed that order gets a task **[Vendor]: backorders or shipping delays**, reminded right away. Clicking it opens their email. If the email came to someone's own inbox and isn't shared, only that inbox's owner gets the task. Emails up to 30 days old count. A carrier's own delay notice doesn't make a task.
 - Claude reads carrier bills (such as Worldwide Express PDFs) and makes the freight bill.
 - Delivery receipts are read: the shipper is the vendor, the PO finds the order, and the receipt is saved to the vendor's and order's files.

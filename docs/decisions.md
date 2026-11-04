@@ -3789,3 +3789,7 @@ No WWD invoice is left without a vendor.
   (25, auto_key bofollow:<vendor>:2026-11-03), each row with what the sheet shows and the sheet tab and row.
 - Trevor does the WWD weekly upload on Mondays with his own WWD and Edenred logins (confirmed).
 - Carrier/broker pickup emails move the order to Shipped: "yes" (built next).
+- Carrier pickups (0305): the reply check also reads the carrier, the BOL/PRO/tracking number and the expected date of a
+  shipping email; when the email is about one of our orders (Orders or shared mail) and the order is Open, Waiting for
+  confirmation or Confirmed, the order moves to Shipped with a note and the email on the order (**Shipped per email**).
+  Back-check of 90 days: 23 shipping emails, 11 on orders, all already Shipped, Paid or Cancelled, so none moved.

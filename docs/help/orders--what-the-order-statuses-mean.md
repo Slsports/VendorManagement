@@ -1,7 +1,7 @@
 ---
 title: What the order statuses mean
 section: Orders
-keywords: status, open, awaiting confirmation, confirmed, shipped, received, entered, ready to pay, paid, cancelled, steps
+keywords: status, open, awaiting confirmation, confirmed, shipped, picked up, in transit, BOL, tracking, received, entered, ready to pay, paid, cancelled, steps
 who: Everyone
 ---
 Every order has one status that shows how far along it is, from placed to paid.
@@ -10,7 +10,7 @@ Every order has one status that shows how far along it is, from placed to paid.
 1. **Open**: placed with the vendor.
 2. **Awaiting confirmation**: waiting for the vendor's confirmation.
 3. **Confirmed**: the vendor confirmed it. The shipping email is ready and Trevor gets a "Ship and receive" task.
-4. **Shipped**: on its way. A packing slip landing in the vendor's **Shipping** folder moves the order here by itself.
+4. **Shipped**: on its way. A packing slip landing in the vendor's **Shipping** folder moves the order here by itself, and so does an email from the carrier, a freight broker (like Pinnacle) or the vendor saying our PO was picked up or is in transit. The order's **Shipment notes** then say who carries it, the BOL or tracking number and the expected date, and **Shipped per email** at the top opens that email.
 5. **Received**: in the store. **Mark received** in the order's **Shipping & receiving** box sets it.
 6. **Entered**: entered in LS.
 7. **Ready to pay**: checked and OK to pay.

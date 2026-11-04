@@ -1251,6 +1251,12 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
           const ids = shipperVendors(rIndex, r.shipper)
           if (ids.length === 1) shipper = ids[0]!
         }
+        // the carrier, BOL / tracking and expected date go on the email first: when its status lands, the order it is
+        // about moves to Shipped with them (Dana, Nov 4; email_ship_moves_order, 0305)
+        if (r.ship_status) {
+          const eta = r.ship_eta && /^\d{4}-\d{2}-\d{2}$/.test(r.ship_eta) ? r.ship_eta : null
+          await db.from('emails').update({ ship_carrier: r.ship_carrier?.trim().slice(0, 80) || null, ship_ref: r.ship_ref?.trim().slice(0, 80) || null, ship_eta: eta }).eq('id', e.email_id)
+        }
         await check(db.rpc('mail_apply_reply', { p_email: e.email_id, p_reply: r.reply, p_note: r.note, p_ship: r.ship_status, p_shipper: shipper }))
         // the vendor says the order is cancelled: newer email wins (Dana, Nov 3); the order is marked and its placer told
         if (r.order_cancelled) await check(db.rpc('order_cancel_from_email', { p_email: e.email_id }))
