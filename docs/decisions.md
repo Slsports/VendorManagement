@@ -3807,3 +3807,17 @@ No WWD invoice is left without a vendor.
 - Insurance draft (Nov 4): premium line added to #2 ($2,403 with the three coverages, $1,779 without); Travelers request taken
   out (Dana sent the compressed 2026-27 policy: BA-1R508517-26-42-G, $8,526, filed in Accounting, the Travelers record
   updated with coverage and vehicles); Dana: "leave the payments in" (#5 and #6 stay).
+
+## Nov 4, 2026 — Who sends invoices to Bill.com
+From two years of Bill.com payments (Nov 2024 - Nov 2026) and Dana's answers: "Send invoices to Bill.com" switched on for 28
+more vendors (36 in all): every Maryellen Reynolds vendor ("Turn all maryellen on"), Shaver Lake Volunteers ("We buy maps from
+SL volunteers"), Chains Required, Bumwraps, Piranha Propellers, Slippery Racer, Sun Valley Ski Tools, Sticker Pack, Keystone
+Trading, Nationwide Wholesale/River Trail, Holden International, Lakeshirts, A-One Enterprises, Talahi, Interstate Battery,
+Remco, Sandboxx Group, Western Woods. Bill.com's names tied to vendors (aliases and payments): Emery Jensen Distribution,
+Pacific Stihl, Interstate Battery System of Fresno, Vikan / Remco, Sandbox Group, Western Woods Dist.
+- "We dont buy from John burton" — left off. EJD and Stihl: "i pay on their portal, both are billed by ejd, but I still post as
+  offline payments in bill.com"; their invoices go to EJD (Dana forwards them from billing.slsports@gmail.com) — not forwarded
+  to Bill.com; noted on both vendors.
+- Red Triangle Oil (marina gas) and Cheyenne Jenkins (janitorial) to Bill.com too: their invoices come to billing@
+  (Accounting), which the forwarder does not cover yet — offered.
+- Donna's vendors: Dana will say which ("most are WWD").
