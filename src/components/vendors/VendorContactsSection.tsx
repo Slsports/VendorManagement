@@ -47,9 +47,11 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
   const former = formerFor(v)
   const main = new Set(ourReps(v).map((p) => p.key))
   // the conversation of each email a contact was learned from, to open that exact email (Dana, Oct 21)
-  const learnedIds = [...new Set(people.map((p) => p.learnedEmailId).filter((id): id is string => !!id))]
+  const learnedIds = [...new Set(people.flatMap((p) => [p.learnedEmailId, p.roleEmailId]).filter((id): id is string => !!id))]
   const learnedThreads = useSupabaseQuery(() => threadsOfEmails(learnedIds), [learnedIds.join()])
   const learnedThread = (p: PersonRow) => (p.learnedEmailId ? learnedThreads.data?.get(p.learnedEmailId) ?? null : null)
+  // why they are the rep (or shipping, customer service): the email that showed it, one click (Dana, Nov 3)
+  const roleThread = (p: PersonRow) => (p.roleEmailId ? learnedThreads.data?.get(p.roleEmailId) ?? null : null)
 
   // "Add our rep" at the top of the vendor page: open this section on a new contact with Rep ticked, and scroll to it.
   const [seenAddRep, setSeenAddRep] = useState(addRep)
@@ -204,6 +206,9 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
                       : p.email
                       ? <Link to={mailWithUrl(ROUTES.mailWith, p.email)} onClick={(e) => e.stopPropagation()} className="ml-2 text-xs font-normal text-brand hover:underline" title={p.note ?? 'All mail with them'}>Learned from email</Link>
                       : <span className="ml-2 text-xs font-normal text-stone-400" title={p.note ?? undefined}>Learned from email</span>) : null}
+                    {p.roleNote && roleThread(p)
+                      ? <Link to={`${ROUTES.mail}/${roleThread(p)}?email=${p.roleEmailId}`} onClick={(e) => e.stopPropagation()} className="ml-2 text-xs font-normal text-brand hover:underline" title={p.roleNote}>Why {p.type.toLowerCase()}</Link>
+                      : null}
                     {p.portalUnconfirmed ? <span title="Only the WWD portal lists them: no email with them about this vendor in 24 months. Never shown as Main rep until confirmed."><Badge tone="warning" className="ml-1">From WWD · not confirmed</Badge></span> : null}
                   </p>
                   {/* links inside the card do their own thing, not open the editor */}

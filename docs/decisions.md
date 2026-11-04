@@ -3759,3 +3759,14 @@ title or phones). The WWD portal read on Oct 16 lists him as Paricon's rep (Sale
 `wwd_portal_apply` skips a contact whose address is already on the vendor, so his rep role, title and phones never came in.
 Fixed for Ted (rep, title, phones, Paricon's main rep). Same gap on file: 57 contacts on 18+ vendors (23 missing the rep role,
 41 the title, 25 the phones); the portal fill-in and back-check wait for Dana's go.
+
+## Nov 3, 2026 — Who is our rep (0304)
+Dana: "If we are emailing back and forth with someone that should generally peg them as our rep unless the emails have to do
+with shipping or customer service and not an order being placed." — "go" (with the portal fill-in).
+- The WWD portal fills in what is missing on someone already on file (title, phones, the rep role). Back-check: 43 contacts
+  filled in (titles 541 → 581, with phones 563 → 587, reps 438 → 460).
+- contacts-learn reads everyone we have mail with both ways (Orders and shared mail) and sets the role: order talk = Rep;
+  only shipping / customer service / billing = that role. Rep group vendors keep the group's person as rep (their own people
+  are customer service). Typed contacts, vendor-confirmed ones and a starred main rep never change; a WWD rep is never taken
+  off. A vendor with no main rep and exactly one rep gets that person as main rep. The email that showed it opens from
+  **Why rep** on the contact. Read again after new mail for anyone not a rep.

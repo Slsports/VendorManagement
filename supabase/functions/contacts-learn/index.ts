@@ -9,9 +9,12 @@
 //               the starred rep never change. Each address is read once (contact_learning), so deleted ones stay gone.
 //               The email the details came from is kept on the contact (learned_email_id), so "Learned from email" opens
 //               it (Dana, Oct 21).
+//   4. roles  — who is our rep (Dana, Nov 3): someone we email back and forth with about placing an order is our rep,
+//               unless it is only shipping or customer service (contact_role_queue / contact_role_apply, 0304). A vendor with
+//               no main rep and one rep gets that person as main rep.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, errorResponse, json, serviceClient } from '../_shared/caller.ts'
-import { aiEnabled, readContacts, type ContactReading, type ContactToRead } from '../_shared/ai.ts'
+import { aiEnabled, readContactRoles, readContacts, type ContactReading, type ContactToRead } from '../_shared/ai.ts'
 
 const TIME_BUDGET_MS = 90_000
 const BATCH = 8
@@ -42,6 +45,24 @@ Deno.serve(async (req) => {
         for (const q of batch) {
           const result = await save(db, org, q, byEmail.get(q.email))
           tally[result] = (tally[result] ?? 0) + 1
+        }
+      }
+      // 4. roles, once everyone new is learned
+      while (Date.now() - started < TIME_BUDGET_MS * 0.9) {
+        const { data, error } = await db.rpc('contact_role_queue', { p_org: org, p_limit: 6 })
+        if (error) throw new Error(error.message)
+        const batch = (data ?? []) as { id: string; email: string; company: string; rep_group: boolean; emails: { id: string; direction: string; from_name: string | null; subject: string | null; text: string }[] }[]
+        if (!batch.length) break
+        const readings = await readContactRoles(db, org, batch.map((q) => ({ email: q.email, company: q.company, emails: q.emails.map((e) => ({ ...e, text: ownPart(e.text) })) })))
+        const byEmail = new Map(readings.map((r) => [r.email.trim().toLowerCase(), r]))
+        for (const q of batch) {
+          const r = byEmail.get(q.email)
+          const n = r?.source_n
+          const emailId = n != null && Number.isInteger(n) && n >= 1 && n <= q.emails.length ? q.emails[n - 1]!.id : null
+          // not read: checked anyway (role other keeps what they have) so one bad answer never blocks the queue
+          const { data: res, error: aErr } = await db.rpc('contact_role_apply', { p_id: q.id, p_role: r?.role ?? 'other', p_email: emailId, p_note: r?.reason ?? 'Claude did not read it' })
+          const key = aErr ? 'role_failed' : `role_${String(res)}`
+          tally[key] = (tally[key] ?? 0) + 1
         }
       }
       out[org] = tally
