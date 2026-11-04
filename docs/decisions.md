@@ -3816,8 +3816,8 @@ Trading, Nationwide Wholesale/River Trail, Holden International, Lakeshirts, A-O
 Remco, Sandboxx Group, Western Woods. Bill.com's names tied to vendors (aliases and payments): Emery Jensen Distribution,
 Pacific Stihl, Interstate Battery System of Fresno, Vikan / Remco, Sandbox Group, Western Woods Dist.
 - "We dont buy from John burton" — left off. EJD and Stihl: "i pay on their portal, both are billed by ejd, but I still post as
-  offline payments in bill.com"; their invoices go to EJD (Dana forwards them from billing.slsports@gmail.com) — not forwarded
-  to Bill.com; noted on both vendors.
+  offline payments in bill.com"; then "Ejd and stihl invoices must go to bill.com or I cant mark them as paid": switched on
+  too (38 in all; EJD invoices come to billing@ and are filed under EMERY JENSEN DIST); noted on both vendors.
 - Red Triangle Oil (marina gas) and Cheyenne Jenkins (janitorial) to Bill.com too: their invoices come to billing@
   (Accounting), which the forwarder does not cover yet — offered.
 - Donna's vendors: Dana will say which ("most are WWD").
