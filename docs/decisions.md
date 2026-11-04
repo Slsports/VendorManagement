@@ -3770,3 +3770,8 @@ with shipping or customer service and not an order being placed." — "go" (with
   are customer service). Typed contacts, vendor-confirmed ones and a starred main rep never change; a WWD rep is never taken
   off. A vendor with no main rep and exactly one rep gets that person as main rep. The email that showed it opens from
   **Why rep** on the contact. Read again after new mail for anyone not a rep.
+
+## Nov 4, 2026 — Four more WWD names (2023 LaserVault invoices)
+Dana: "yes tie all four" — Guntersville Breathables Inc. → FROGG TOGGS, LHB Industries → LHB, Reliable Knitting Works → RELIABLE
+OF MILWAUKEE, Star Asia USA, LLC d.b.a. Titan → TITAN TOOLS (aliases via wwd_assign_name); their LaserVault papers read again.
+No WWD invoice is left without a vendor.
