@@ -3817,7 +3817,9 @@ Remco, Sandboxx Group, Western Woods. Bill.com's names tied to vendors (aliases 
 Pacific Stihl, Interstate Battery System of Fresno, Vikan / Remco, Sandbox Group, Western Woods Dist.
 - "We dont buy from John burton" — left off. EJD and Stihl: "i pay on their portal, both are billed by ejd, but I still post as
   offline payments in bill.com"; then "Ejd and stihl invoices must go to bill.com or I cant mark them as paid": switched on
-  too (38 in all; EJD invoices come to billing@ and are filed under EMERY JENSEN DIST); noted on both vendors.
+  too, then off again the same hour: Dana's billing.slsports@gmail.com filter already forwards them, and "I am going to try to
+  get ejd switched to my billing@ email, until then it just forwards from billing.slsports@gmail.com". Turn VMS on for EJD and
+  Stihl once EJD bills billing@ directly (36 vendors on for now).
 - Red Triangle Oil (marina gas) and Cheyenne Jenkins (janitorial) to Bill.com too: their invoices come to billing@
   (Accounting), which the forwarder does not cover yet — offered.
 - Donna's vendors: Dana will say which ("most are WWD").
