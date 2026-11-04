@@ -42,6 +42,8 @@ export function TaskDialog({ task, preset, area, onClose, onSaved }: { task?: Ta
   const [notes, setNotes] = useState(task?.notes ?? '')
   const [due, setDue] = useState(task?.due_date ?? '')
   const [remind, setRemind] = useState(toLocalInput(task?.remind_at ?? null))
+  // Text me about this task (Dana, Nov 4): use my categories, always, or never
+  const [textMe, setTextMe] = useState<'' | 'yes' | 'no'>(task?.text_me == null ? '' : task.text_me ? 'yes' : 'no')
   const [assignee, setAssignee] = useState(task?.assigned_to ?? profile?.id ?? '')
   const [vendor, setVendor] = useState<Ref | null>(task?.vendor ?? preset?.vendor ?? null)
   const [carrier, setCarrier] = useState<Ref | null>(task?.carrier ?? preset?.carrier ?? null)
@@ -81,6 +83,7 @@ export function TaskDialog({ task, preset, area, onClose, onSaved }: { task?: Ta
       thread_id: thread?.id ?? null, tag_other: other.trim() || null,
       repeat_every: repeat.every, repeat_unit: repeat.unit, repeat_days: repeat.days, repeat_until: repeat.until,
       area: taskArea, procedure_id: taskArea === 'accounting' ? procedure || null : null,
+      text_me: textMe === '' ? null : textMe === 'yes',
     }
     setBusy(true)
     try {
@@ -122,6 +125,15 @@ export function TaskDialog({ task, preset, area, onClose, onSaved }: { task?: Ta
           <Input id="task-remind" type="datetime-local" value={remind} onChange={(e) => setRemind(e.target.value)} />
         </FormField>
       </div>
+      {remind ? (
+        <FormField label="Text me" htmlFor="task-textme" hint="Only for people who get texts (Settings).">
+          <Select id="task-textme" value={textMe} onChange={(e) => setTextMe(e.target.value as '' | 'yes' | 'no')}>
+            <option value="">As my text settings say</option>
+            <option value="yes">Always text me about this task</option>
+            <option value="no">Never text me about this task</option>
+          </Select>
+        </FormField>
+      ) : null}
       {taskArea === 'accounting' ? (
         <FormField label="Procedure" htmlFor="task-procedure" hint="The steps to follow; opens from the task.">
           <Select id="task-procedure" value={procedure} onChange={(e) => setProcedure(e.target.value)}>

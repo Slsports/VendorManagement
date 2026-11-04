@@ -14,20 +14,21 @@ import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
 import { buildMime, formatAddress } from '../_shared/mime.ts'
 import { nextTextTime } from '../_shared/textHours.ts'
 import { fillSignature, htmlEmail, textEmail } from '../_shared/signature.ts'
+import { textCategory, textWanted, type TextCategory } from '../_shared/textAlerts.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://vms.shaverlakesports.com'
 const TZ = 'America/Los_Angeles'
 const BATCH = 40
 
-interface Person { id: string; full_name: string | null; email: string; remind_email: boolean; remind_text: boolean; mobile_phone: string | null; text_from: string | null; text_until: string | null }
+interface Person { id: string; full_name: string | null; email: string; remind_email: boolean; remind_text: boolean; mobile_phone: string | null; text_from: string | null; text_until: string | null; text_categories: string[] | null }
 interface TaskRow {
   id: string; organization_id: string; title: string; notes: string | null; due_date: string | null; assigned_to: string; created_by: string | null
-  done_by: string | null; done_note: string | null; tag_other: string | null; auto_key: string | null; thread_id: string | null; remind_rule: string | null
+  done_by: string | null; done_note: string | null; tag_other: string | null; auto_key: string | null; thread_id: string | null; remind_rule: string | null; text_me: boolean | null
   vendor: { name: string } | null; carrier: { name: string } | null; rep_group: { name: string } | null
   order: { po_number: string | null; description: string | null } | null
   thread: { subject: string | null; mailbox_id: string | null; shared_at: string | null } | null
 }
-const SELECT = `id, organization_id, title, notes, due_date, assigned_to, created_by, done_by, done_note, tag_other, auto_key, thread_id, remind_rule,
+const SELECT = `id, organization_id, title, notes, due_date, assigned_to, created_by, done_by, done_note, tag_other, auto_key, thread_id, remind_rule, text_me,
   vendor:vendors!tasks_vendor_id_fkey(name), carrier:carriers!tasks_carrier_id_fkey(name), rep_group:rep_groups!tasks_rep_group_id_fkey(name),
   order:orders!tasks_order_id_fkey(po_number, description), thread:email_threads!tasks_thread_id_fkey(subject, mailbox_id, shared_at)`
 
@@ -46,7 +47,7 @@ Deno.serve(async (req) => {
     for (const t of reminded) {
       // a credit we asked for (Dana, Oct 27): the follow-up email is in the person's Drafts when the reminder goes
       if (t.auto_key?.startsWith('credit_req:')) await db.rpc('credit_request_followup', { p_task: t.id })
-      const { errors, textAt } = await sender.notify(t.organization_id, t.assigned_to, `Reminder: ${t.title}`, reminderText(t), reminderSms(t))
+      const { errors, textAt } = await sender.notify(t.organization_id, t.assigned_to, `Reminder: ${t.title}`, reminderText(t), reminderSms(t), { category: textCategory(t.auto_key), textMe: t.text_me })
       if (errors.length || textAt) await db.from('tasks').update({ ...(errors.length ? { remind_error: errors.join('; ').slice(0, 500) } : {}), ...(textAt ? { text_wait_until: textAt } : {}) }).eq('id', t.id)
       // paperwork asks and CDTFA (Dana, Oct 27): after each reminder the next one is set: weekly, 3 days before, on the day
       if (t.remind_rule) {
@@ -69,7 +70,7 @@ Deno.serve(async (req) => {
     for (const t of finished) {
       if (!t.created_by || t.created_by === t.done_by) continue
       const who = (await sender.person(t.done_by ?? t.assigned_to))?.full_name?.split(' ')[0] ?? 'Someone'
-      const { textAt } = await sender.notify(t.organization_id, t.created_by, `Done: ${t.title}`, doneText(t, who), doneSms(t, who))
+      const { textAt } = await sender.notify(t.organization_id, t.created_by, `Done: ${t.title}`, doneText(t, who), doneSms(t, who), { category: 'from_person' })
       if (textAt) await db.from('tasks').update({ done_text_wait_until: textAt }).eq('id', t.id)
     }
     const { data: doneWaited } = await db.from('tasks').update({ done_text_wait_until: null }).lte('done_text_wait_until', now).select(SELECT)
@@ -104,7 +105,7 @@ async function mailMornings(db: SupabaseClient, sender: Sender): Promise<number>
     const first = (await sender.person(d.profile_id))?.full_name?.split(' ')[0] ?? ''
     const n = list.length
     const subject = `${n} orders@ ${n === 1 ? 'email is' : 'emails are'} waiting on you`
-    const { errors } = await sender.notify(d.organization_id, d.profile_id, subject, morningText(first, list), `VMS: ${subject}. Open Mail: ${APP_URL}/mail?who=mine`)
+    const { errors } = await sender.notify(d.organization_id, d.profile_id, subject, morningText(first, list), `VMS: ${subject}. Open Mail: ${APP_URL}/mail?who=mine`, { category: 'questions' })
     if (errors.length) console.error('mail morning', d.profile_id, errors.join('; '))
     else sent++
   }
@@ -193,7 +194,7 @@ class Sender {
 
   async person(id: string): Promise<Person | null> {
     if (!this.people.has(id)) {
-      const { data } = await this.db.from('profiles').select('id, full_name, email, remind_email, remind_text, mobile_phone, text_from, text_until').eq('id', id).maybeSingle()
+      const { data } = await this.db.from('profiles').select('id, full_name, email, remind_email, remind_text, mobile_phone, text_from, text_until, text_categories').eq('id', id).maybeSingle()
       this.people.set(id, (data as Person | null) ?? null)
     }
     return this.people.get(id) ?? null
@@ -211,7 +212,7 @@ class Sender {
    * Email and/or text the person, as they chose. Outside their texting hours the text is not sent: textAt says when it
    * may go (the caller keeps it waiting). Returns what went wrong.
    */
-  async notify(org: string, personId: string, subject: string, body: string, sms: string): Promise<{ errors: string[]; textAt: string | null }> {
+  async notify(org: string, personId: string, subject: string, body: string, sms: string, opts: { category?: TextCategory | null; textMe?: boolean | null } = {}): Promise<{ errors: string[]; textAt: string | null }> {
     const p = await this.person(personId)
     if (!p) return { errors: ['person not found'], textAt: null }
     const errors: string[] = []
@@ -225,7 +226,8 @@ class Sender {
       }
     }
     let textAt: string | null = null
-    if (p.remind_text) {
+    // only the kinds of reminders the person chose for texts (Dana, Nov 4); the task's own Text me wins
+    if (p.remind_text && textWanted(opts.category ?? null, p.text_categories, opts.textMe)) {
       const now = new Date()
       const when = nextTextTime(now, p.text_from, p.text_until)
       if (when.getTime() > now.getTime()) textAt = when.toISOString()

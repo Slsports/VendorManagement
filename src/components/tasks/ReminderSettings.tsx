@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { saveReminderSettings } from '@/services/tasks'
 import { errorMessage } from '@/lib/utils'
 import { Button, Input } from '@/components/ui'
+import { SUGGESTED_TEXT_CATEGORIES, TEXT_CATEGORIES } from '../../../supabase/functions/_shared/textAlerts.ts'
 
 /** How I get reminders (Dana, Oct 11): dashboard, email and/or text, any mix; dashboard + email to start. */
 export function ReminderSettings() {
@@ -15,14 +16,19 @@ export function ReminderSettings() {
   // texts only in these hours (Dana, Oct 24: 8 am to 6 pm unless the person sets their own)
   const [from, setFrom] = useState((profile?.text_from ?? '08:00').slice(0, 5))
   const [until, setUntil] = useState((profile?.text_until ?? '18:00').slice(0, 5))
+  // which kinds of reminders come by text (Dana, Nov 4); none ticked = all
+  const [cats, setCats] = useState<string[]>(profile?.text_categories?.length ? profile.text_categories : [...SUGGESTED_TEXT_CATEGORIES])
   const [busy, setBusy] = useState(false)
   if (!profile) return null
-  const changed = dash !== profile.remind_dashboard || email !== profile.remind_email || text !== profile.remind_text || (phone.trim() || null) !== profile.mobile_phone || from !== profile.text_from.slice(0, 5) || until !== profile.text_until.slice(0, 5)
+  const savedCats = profile.text_categories ?? []
+  const catsChanged = text && (cats.length !== savedCats.length || cats.some((c) => !savedCats.includes(c)))
+  const changed = catsChanged || dash !== profile.remind_dashboard || email !== profile.remind_email || text !== profile.remind_text || (phone.trim() || null) !== profile.mobile_phone || from !== profile.text_from.slice(0, 5) || until !== profile.text_until.slice(0, 5)
   async function save() {
     if (text && phone.replace(/\D/g, '').length < 10) { toast.error('Add your cell number for texts'); return }
+    if (text && !cats.length) { toast.error('Tick at least one kind of text, or untick By text'); return }
     setBusy(true)
     try {
-      await saveReminderSettings(profile!.id, { remind_dashboard: dash, remind_email: email, remind_text: text, mobile_phone: phone.trim() || null, text_from: from || '08:00', text_until: until || '18:00' })
+      await saveReminderSettings(profile!.id, { remind_dashboard: dash, remind_email: email, remind_text: text, mobile_phone: phone.trim() || null, text_from: from || '08:00', text_until: until || '18:00', ...(text ? { text_categories: cats } : {}) })
       await refreshProfile()
       toast.success('Reminder settings saved')
     } catch (e) {
@@ -52,6 +58,19 @@ export function ReminderSettings() {
             <Input aria-label="Texts stop at" type="time" value={until} onChange={(e) => setUntil(e.target.value)} className="h-9 w-32" />
           </div>
           <p className="mt-1 text-xs text-stone-500">A reminder due outside these hours shows on your dashboard and in email right away; its text waits until the start time.</p>
+          <fieldset className="mt-4">
+            <legend className="text-sm font-medium text-stone-800">Text me about</legend>
+            <p className="text-xs text-stone-500">Everything else still comes to your dashboard and email. A task's own <b>Text me</b> setting wins.</p>
+            <div className="mt-2 space-y-1.5">
+              {TEXT_CATEGORIES.map((c) => (
+                <label key={c.key} className="flex items-start gap-2 text-sm text-stone-800">
+                  <input type="checkbox" className={`${box} mt-0.5`} checked={cats.includes(c.key)}
+                    onChange={(e) => setCats(e.target.checked ? [...cats, c.key] : cats.filter((x) => x !== c.key))} />
+                  <span>{c.label} <span className="block text-xs text-stone-500">{c.example}</span></span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <div className="mt-2 space-y-1 text-xs text-stone-500">
             <p><b>What you get:</b> task reminders and a note when a task you handed off is finished, from Shaver Lake Sports VMS. Nothing promotional.</p>
             <p><b>How often:</b> varies with your tasks, typically a few texts a week; one text per reminder.</p>

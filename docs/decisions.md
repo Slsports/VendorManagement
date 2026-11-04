@@ -3793,3 +3793,17 @@ No WWD invoice is left without a vendor.
   shipping email; when the email is about one of our orders (Orders or shared mail) and the order is Open, Waiting for
   confirmation or Confirmed, the order moves to Shipped with a note and the email on the order (**Shipped per email**).
   Back-check of 90 days: 23 shipping emails, 11 on orders, all already Shipped, Paid or Cancelled, so none moved.
+
+## Nov 4, 2026 — Text alerts by category; price list replies (0306-0308)
+- Dana: "I would like to be able to tell the system what types of alerts I want to my texts … categories" — "go with your
+  suggested picks". Settings → How I get reminders → **Text me about**: 10 categories (supabase/functions/_shared/textAlerts.ts);
+  Dana has Price lists and catalogs, Payments due and discounts, Insurance and contracts, Questions waiting on you. Unticked
+  kinds still reach the dashboard and email. Each task has **Text me** (as my settings / always / never). The morning mail
+  list counts as Questions; done notices as Tasks from a person.
+- Dana: a rep's reply to our request for a price list, catalog or order writer → task for whoever asked, "only if i made the
+  request, I don't want theirs". Who asked = sent from VMS, else the store person signing the email, else Dana. Reminded right
+  away (texts per the person's categories). Only replies of the last 30 days; back-check made 3 tasks without reminders
+  (Royal Deluxe Accessories and Norty for Dana, Sabre for Jarrett). Jarrett and Trevor have no cell number yet.
+- Insurance draft (Nov 4): premium line added to #2 ($2,403 with the three coverages, $1,779 without); Travelers request taken
+  out (Dana sent the compressed 2026-27 policy: BA-1R508517-26-42-G, $8,526, filed in Accounting, the Travelers record
+  updated with coverage and vehicles); Dana: "leave the payments in" (#5 and #6 stay).
