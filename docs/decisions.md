@@ -3879,3 +3879,9 @@ Dana: "Tim Parratto ... should be listed as the main alternate" and "no need to 
 to send something to tim." Each vendor has a main rep and can have one alternate (Make alternate in Reps & contacts). The alternate
 shows under the main rep at the top of the vendor page and in the order's Reps box. VMS never copies the alternate on its emails.
 Tim Parratto is the alternate on SMITH OPTICS - SUNCLOUD OPTICS and CHAOS (migration 0310).
+
+## Nov 5, 2026 — Only Dana changes VMS
+Dana: "NO ONE but me can have claude change the code in vms, but we could have something that sends their request to me in our chat
+and I can authorize a change in code." Staff never get Claude to change VMS (code, screens, rules). When someone asks for a change
+(for example in the planned Ask VMS chat), it becomes a change request for Dana. Claude builds it only after Dana approves it.
+Ask VMS chat itself: proposed, waiting on Dana's answers (who can use it, whether she sees their chats, model and daily limit).

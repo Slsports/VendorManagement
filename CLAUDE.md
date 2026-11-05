@@ -22,6 +22,8 @@ by Vercel from the branch `claude/ecstatic-carson-ziz2a9`.
 - Say "Vendor ID" for the vendor's item number. Call Lightspeed "LS" is fine; Worldwide Distributors is
   "WWD". Nothing in Lightspeed changes until VMS is connected to it and each batch is approved.
 - Only Dana is an admin. Trevor and Jarrett are managers. Do not promote anyone.
+- **Only Dana changes VMS (Nov 5).** No one else can have Claude change the code, screens or rules. A staff request for a change
+  comes to Dana as a change request; build it only after Dana approves it.
 - Dana reviews proposals before data changes: duplicates, renames, category changes go through the
   review queue, never applied silently.
 - **Wait for Dana's go-ahead.** When a task is being discussed, give a short overview and stop. Do not
