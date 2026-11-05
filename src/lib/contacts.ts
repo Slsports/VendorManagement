@@ -8,11 +8,16 @@ export interface ContactsVendor {
   rep_groups: (RepGroup & { rep_group_contacts?: RepGroupContact[] }) | null
   assigned_rep_contact_id: string | null
   assigned_rep_group_contact_id: string | null
+  /** Our alternate rep (Dana, Nov 5: Tim Parratto for Smith): shown under the main rep, never copied on VMS emails */
+  alternate_rep_contact_id?: string | null
+  alternate_rep_group_contact_id?: string | null
 }
 
 /** One person on the vendor page: the vendor's own contact, or someone at its rep group. */
 export interface PersonRow {
-  key: string; kind: 'vendor' | 'group'; id: string; name: string | null; email: string | null; phone: string | null; phones: ContactPhone[]; title: string | null; type: string; roles: ContactType[]; starred: boolean; learned: boolean; note: string | null; confirmedAt: string | null; badEmail: boolean
+  key: string; kind: 'vendor' | 'group'; id: string; name: string | null; email: string | null; phone: string | null; phones: ContactPhone[]; title: string | null; type: string; roles: ContactType[]; starred: boolean
+  /** Picked as our alternate rep (Dana, Nov 5) */
+  alternate: boolean; learned: boolean; note: string | null; confirmedAt: string | null; badEmail: boolean
   /** The email Claude learned them from (Dana, Oct 21): "Learned from email" opens it; null before Oct 21 or when typed */
   learnedEmailId: string | null
   /** Why VMS gave them their role (Dana, Nov 3: back-and-forth about an order makes them our rep) and the email that showed it */
@@ -35,9 +40,9 @@ export function portalUnconfirmed(c: { source: string; former_at?: string | null
 const fromPortal = (notes: string | null) => !!notes && notes.startsWith('From the Worldwide portal')
 
 function allPeople(v: ContactsVendor): PersonRow[] {
-  const own: PersonRow[] = v.vendor_emails.map((c) => ({ key: `v:${c.id}`, kind: 'vendor', id: c.id, name: c.contact_name, email: c.email, phone: c.phone, phones: phonesOf(c), title: c.title, type: (c.roles?.length ? c.roles : [c.contact_type]).map((r) => CONTACT_TYPE_LABELS[r as ContactType] ?? r).join(' · '), roles: (c.roles?.length ? c.roles : [c.contact_type]) as ContactType[], starred: v.assigned_rep_contact_id === c.id, learned: c.source === 'email_enrichment', learnedEmailId: c.learned_email_id ?? null, roleNote: c.role_note ?? null, roleEmailId: c.role_email_id ?? null, note: c.notes, confirmedAt: c.confirmed_at, badEmail: !!c.bad_email_at,
+  const own: PersonRow[] = v.vendor_emails.map((c) => ({ key: `v:${c.id}`, kind: 'vendor', id: c.id, name: c.contact_name, email: c.email, phone: c.phone, phones: phonesOf(c), title: c.title, type: (c.roles?.length ? c.roles : [c.contact_type]).map((r) => CONTACT_TYPE_LABELS[r as ContactType] ?? r).join(' · '), roles: (c.roles?.length ? c.roles : [c.contact_type]) as ContactType[], starred: v.assigned_rep_contact_id === c.id, alternate: !!v.alternate_rep_contact_id && v.alternate_rep_contact_id === c.id, learned: c.source === 'email_enrichment', learnedEmailId: c.learned_email_id ?? null, roleNote: c.role_note ?? null, roleEmailId: c.role_email_id ?? null, note: c.notes, confirmedAt: c.confirmed_at, badEmail: !!c.bad_email_at,
     portalUnconfirmed: portalUnconfirmed(c), formerAt: c.former_at ?? null, firstMailAt: c.first_mail_at ?? null, lastMailAt: c.last_mail_at ?? null, lastVendorMailAt: c.last_vendor_mail_at ?? null }))
-  const group: PersonRow[] = (v.rep_groups?.rep_group_contacts ?? []).map((c) => ({ key: `g:${c.id}`, kind: 'group', id: c.id, name: c.name, email: c.email, phone: c.phone, phones: phonesOf(c), title: c.title, type: `Rep · ${v.rep_groups!.name}`, roles: ['rep'] as ContactType[], starred: v.assigned_rep_group_contact_id === c.id, learned: !!c.learned_email_id, learnedEmailId: c.learned_email_id ?? null, roleNote: null, roleEmailId: null, note: c.notes, confirmedAt: null, badEmail: false,
+  const group: PersonRow[] = (v.rep_groups?.rep_group_contacts ?? []).map((c) => ({ key: `g:${c.id}`, kind: 'group', id: c.id, name: c.name, email: c.email, phone: c.phone, phones: phonesOf(c), title: c.title, type: `Rep · ${v.rep_groups!.name}`, roles: ['rep'] as ContactType[], starred: v.assigned_rep_group_contact_id === c.id, alternate: !!v.alternate_rep_group_contact_id && v.alternate_rep_group_contact_id === c.id, learned: !!c.learned_email_id, learnedEmailId: c.learned_email_id ?? null, roleNote: null, roleEmailId: null, note: c.notes, confirmedAt: null, badEmail: false,
     // a rep group person read from the portal counts once we have mail with them in 24 months (any vendor of the group)
     portalUnconfirmed: !c.former_at && fromPortal(c.notes) && (!c.last_mail_at || Date.now() - new Date(c.last_mail_at).getTime() > TWO_YEARS_MS),
     formerAt: c.former_at ?? null, firstMailAt: c.first_mail_at ?? null, lastMailAt: c.last_mail_at ?? null, lastVendorMailAt: c.last_mail_at ?? null }))
@@ -64,10 +69,22 @@ export function ourReps(v: ContactsVendor): PersonRow[] {
   const people = peopleFor(v)
   const starred = people.filter((p) => p.starred)
   if (starred.length) return starred
+  // the alternate is never shown as a main rep (Dana, Nov 5)
+  const others = people.filter((p) => !p.alternate)
   // never someone only the WWD portal names (Dana, Oct 19: Jeff Lipke showed as WFS's Main rep from WWD's old page)
-  const group = people.filter((p) => p.kind === 'group' && !p.portalUnconfirmed)
+  const group = others.filter((p) => p.kind === 'group' && !p.portalUnconfirmed)
   if (group.length) return group.slice(0, 2)
   // the vendor's own reps, the one we wrote with most recently about this vendor first
-  return people.filter((p) => p.kind === 'vendor' && p.roles.includes('rep') && !p.portalUnconfirmed)
+  return others.filter((p) => p.kind === 'vendor' && p.roles.includes('rep') && !p.portalUnconfirmed)
     .sort((a, b) => (b.lastVendorMailAt ?? '').localeCompare(a.lastVendorMailAt ?? '')).slice(0, 2)
+}
+
+/**
+ * Our alternate rep (Dana, Nov 5: "Tim Parratto ... should be listed as the main alternate"): the one picked with Make
+ * alternate, shown under the main rep. Never a former contact and never the main rep. VMS does not copy them on its emails
+ * ("If we don't get a response we will know to send something to tim").
+ */
+export function alternateRep(v: ContactsVendor): PersonRow | undefined {
+  const main = new Set(ourReps(v).map((p) => p.key))
+  return peopleFor(v).find((p) => p.alternate && !main.has(p.key))
 }

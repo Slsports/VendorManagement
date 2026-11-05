@@ -24,7 +24,7 @@ import { RecordTasks } from '@/components/tasks/RecordTasks'
 import { VendorOrderingPanel } from '@/components/ordering/VendorOrderingPanel'
 import { VendorRepGroupCard } from '@/components/vendors/VendorRepGroupCard'
 import { VendorContactsSection } from '@/components/vendors/VendorContactsSection'
-import { ourReps, peopleFor } from '@/lib/contacts'
+import { alternateRep, ourReps, peopleFor } from '@/lib/contacts'
 import { VendorShowsSection } from '@/components/vendors/VendorShowsSection'
 import { VendorOrdersSection } from '@/components/vendors/VendorOrdersSection'
 import { VendorMailSection } from '@/components/vendors/VendorMailSection'
@@ -371,6 +371,7 @@ function ActiveSwitch({ active, onChange }: { active: boolean; onChange: (on: bo
 
 function OurRepStrip({ vendor: v, canEdit, onEmail, onAddRep }: { vendor: VendorDetail; canEdit: boolean; onEmail: (email: string) => void; onAddRep: () => void }) {
   const reps = ourReps(v)
+  const alt = alternateRep(v)
   return (
     <section className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/60 px-5 py-3 text-sm">
       {reps.length === 0 ? (
@@ -388,6 +389,15 @@ function OurRepStrip({ vendor: v, canEdit, onEmail, onAddRep }: { vendor: Vendor
           {!p.email && !p.phones.length && canEdit ? <Link to={`${ROUTES.vendors}/${v.id}/edit`} className="text-xs text-brand hover:underline">Add email and phone</Link> : null}
         </p>
       ))}
+      {/* the alternate, for when the main rep doesn't answer (Dana, Nov 5); VMS never copies them on its emails */}
+      {reps.length && alt ? (
+        <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span><span className="font-semibold text-stone-800">Alternate:</span> <span className="font-medium text-stone-900">{alt.name || alt.email || alt.phone}</span>
+            {alt.kind === 'group' && v.rep_groups ? <span className="text-stone-500"> · <Link to={`${ROUTES.repGroups}/${v.rep_groups.id}`} className="hover:underline">{v.rep_groups.name}</Link></span> : null}</span>
+          {alt.email ? <button type="button" onClick={() => onEmail(alt.email!)} className="inline-flex items-center gap-1 text-brand hover:underline" title="Write an email from VMS"><Mail className="size-3.5" aria-hidden="true" />{alt.email}</button> : null}
+          <PhoneLinks phones={alt.phones} className="text-brand hover:underline" />
+        </p>
+      ) : null}
     </section>
   )
 }

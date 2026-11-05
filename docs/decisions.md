@@ -3873,3 +3873,9 @@ and their 4 emails are filed to Smith.
 Rule (Dana, Nov 5): "It doesn't matter if we have ordered from a vendor or not when it comes to listing that vendor with a rep
 group. If we go to that rep group, I need to see all vendors I can work with that vendor group on." Every line a rep group reps
 goes on that group's page, whether we have ever ordered from it or not.
+
+## Nov 5, 2026 — Alternate rep
+Dana: "Tim Parratto ... should be listed as the main alternate" and "no need to copy to tim. If we don't get a response we will know
+to send something to tim." Each vendor has a main rep and can have one alternate (Make alternate in Reps & contacts). The alternate
+shows under the main rep at the top of the vendor page and in the order's Reps box. VMS never copies the alternate on its emails.
+Tim Parratto is the alternate on SMITH OPTICS - SUNCLOUD OPTICS and CHAOS (migration 0310).

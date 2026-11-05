@@ -4,7 +4,7 @@ import { Mail, Pencil, Star } from 'lucide-react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { getVendor } from '@/services/vendors'
 import { updateOrder } from '@/services/orders'
-import { ourReps, peopleFor } from '@/lib/contacts'
+import { alternateRep, ourReps, peopleFor } from '@/lib/contacts'
 import { errorMessage } from '@/lib/utils'
 import { Button, Input } from '@/components/ui'
 
@@ -13,6 +13,7 @@ export function OrderRepsCard({ orderId, vendorId, takenBy, canEdit, onChange }:
   const vq = useSupabaseQuery(() => getVendor(vendorId), [vendorId])
   const people = vq.data ? peopleFor(vq.data) : []
   const ourRep = vq.data ? ourReps(vq.data)[0] : undefined
+  const alt = vq.data && ourRep ? alternateRep(vq.data) : undefined
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(takenBy ?? '')
   const [saving, setSaving] = useState(false)
@@ -60,6 +61,15 @@ export function OrderRepsCard({ orderId, vendorId, takenBy, canEdit, onChange }:
             ) : <span className="text-stone-400">None yet; pick one on the vendor page with Make main rep.</span>}
           </dd>
         </div>
+        {alt ? (
+          <div>
+            <dt className="text-xs font-medium text-stone-500">Alternate (if the main rep doesn't answer)</dt>
+            <dd className="inline-flex flex-wrap items-center gap-x-2 text-stone-900">
+              {alt.name || alt.email}
+              {alt.email ? <a href={`mailto:${alt.email}`} className="inline-flex items-center gap-1 text-brand hover:underline"><Mail className="size-3.5" aria-hidden="true" />{alt.email}</a> : null}
+            </dd>
+          </div>
+        ) : null}
       </dl>
     </section>
   )

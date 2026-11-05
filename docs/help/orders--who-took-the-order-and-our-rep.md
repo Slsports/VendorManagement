@@ -1,7 +1,7 @@
 ---
 title: Record who took the order and see our rep
 section: Orders
-keywords: reps, order taken by, show rep, assigned rep, follow-ups, starred contact, sales rep
+keywords: reps, alternate, order taken by, show rep, assigned rep, follow-ups, starred contact, sales rep
 who: Admin, managers and buyers
 ---
 The **Reps** box on an order shows who wrote the order (often the rep at a show) and our main rep, who gets the follow-ups.
@@ -15,3 +15,4 @@ The **Reps** box on an order shows who wrote the order (often the rep at a show)
 - **Our main rep (follow-ups)** is the vendor's main rep, with their email to click. With a rep group, that is the rep group's rep. To change it, click **Make main rep** on someone in the vendor's **Reps & contacts**.
 - If there is no main rep yet, the box says so.
 - You can also fill in Order taken by when you add an order.
+- When the vendor has an alternate rep, the box also shows **Alternate (if the main rep doesn't answer)** with their email. VMS never copies them on its emails.

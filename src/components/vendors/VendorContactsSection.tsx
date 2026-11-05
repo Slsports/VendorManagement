@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { AlertTriangle, History, Mail, Pencil, Plus, RotateCcw, Star, Trash2, UserX } from 'lucide-react'
+import { AlertTriangle, History, Mail, Pencil, Plus, RotateCcw, Star, Trash2, UserRound, UserX } from 'lucide-react'
 import { addVendorEmail, moveContactToRepGroup, setRepGroupContact, setVendorContact, updateVendor, updateVendorEmail } from '@/services/vendors'
 import { updateRepGroupContact } from '@/services/lines'
 import { threadsOfEmails } from '@/services/orders'
@@ -10,7 +10,7 @@ import { ROUTES } from '@/lib/constants'
 import { CONTACT_TYPE_LABELS } from '@/lib/vendors'
 import { cn, errorMessage } from '@/lib/utils'
 import type { ContactType } from '@/types'
-import { formerFor, ourReps, peopleFor, type ContactsVendor, type PersonRow } from '@/lib/contacts'
+import { alternateRep, formerFor, ourReps, peopleFor, type ContactsVendor, type PersonRow } from '@/lib/contacts'
 import { mailWithUrl } from '@/lib/mail'
 import { Badge, Button, FormField, Input } from '@/components/ui'
 import { FoldSection } from '@/components/shared/FoldSection'
@@ -46,6 +46,7 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
   const people = peopleFor(v)
   const former = formerFor(v)
   const main = new Set(ourReps(v).map((p) => p.key))
+  const alt = alternateRep(v)?.key
   // the conversation of each email a contact was learned from, to open that exact email (Dana, Oct 21)
   const learnedIds = [...new Set(people.flatMap((p) => [p.learnedEmailId, p.roleEmailId]).filter((id): id is string => !!id))]
   const learnedThreads = useSupabaseQuery(() => threadsOfEmails(learnedIds), [learnedIds.join()])
@@ -111,6 +112,19 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
     }
   }
 
+  /** Our alternate rep (Dana, Nov 5): shown under the main rep; VMS never copies them on its emails. */
+  async function makeAlternate(p: PersonRow | null) {
+    try {
+      await updateVendor(v.id, p
+        ? { alternate_rep_contact_id: p.kind === 'vendor' ? p.id : null, alternate_rep_group_contact_id: p.kind === 'group' ? p.id : null }
+        : { alternate_rep_contact_id: null, alternate_rep_group_contact_id: null })
+      toast.success(p ? `${p.name || p.email} is our alternate rep` : 'No alternate rep now')
+      await onChange()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
+
   function edit(p: PersonRow) {
     setForm({ contact_name: p.name ?? '', email: p.email ?? '', phones: p.phones, title: p.title ?? '', roles: p.roles })
     setEditingId(p.id)
@@ -150,7 +164,7 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
     <FoldSection title="Reps & contacts" open={open} onOpenChange={setOpen}
       summary={people.length ? `${people.length} ${people.length === 1 ? 'person' : 'people'}` : 'None'}
       actions={canEdit && !adding ? <Button size="sm" variant="secondary" onClick={() => { setForm(blank); setEditingId(null); setEditingGroup(false); setToGroup(!!v.rep_groups); setAsOurRep(false); setAdding(true); setOpen(true) }} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add contact</Button> : null}>
-      {people.length > 0 ? <p className="mt-1 text-xs text-stone-500">The <strong>Main rep</strong> is who we place orders through, shown at the top of the page. Everyone else is for customer service, shipping or billing questions.{canEdit ? ' Click anyone to change them.' : ''}</p> : null}
+      {people.length > 0 ? <p className="mt-1 text-xs text-stone-500">The <strong>Main rep</strong> is who we place orders through, shown at the top of the page. The <strong>Alternate</strong> is who to try when the main rep doesn't answer. Everyone else is for customer service, shipping or billing questions.{canEdit ? ' Click anyone to change them.' : ''}</p> : null}
       {adding ? (
         <form onSubmit={submit} className="mt-3 grid gap-3 rounded-xl bg-stone-50 p-4 sm:grid-cols-2">
           <FormField label="Name" htmlFor="c-name"><Input id="c-name" value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} autoFocus /></FormField>
@@ -189,13 +203,14 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
           {people.map((p) => (
             <li key={p.key} onClick={canEdit ? () => edit(p) : undefined} className={cn('flex items-start justify-between gap-3 py-2.5 text-sm', canEdit && 'cursor-pointer rounded-lg hover:bg-stone-50')}>
               <div className="flex min-w-0 items-start gap-2">
-                {main.has(p.key) ? <Star className="mt-1 size-4 shrink-0 fill-amber-400 text-amber-500" aria-hidden="true" /> : <span className="size-4 shrink-0" aria-hidden="true" />}
+                {main.has(p.key) ? <Star className="mt-1 size-4 shrink-0 fill-amber-400 text-amber-500" aria-hidden="true" /> : alt === p.key ? <UserRound className="mt-1 size-4 shrink-0 text-sky-600" aria-hidden="true" /> : <span className="size-4 shrink-0" aria-hidden="true" />}
                 <div className="min-w-0">
                   <p className="font-medium text-stone-900">
                     {canEdit
                       ? <button type="button" onClick={(e) => { e.stopPropagation(); edit(p) }} className="text-left hover:text-brand hover:underline" title="Change">{p.name || p.email || p.phones[0]?.number}</button>
                       : p.name || p.email || p.phones[0]?.number}
                     {main.has(p.key) ? <Badge tone="warning" className="ml-1">Main rep</Badge> : null}
+                    {alt === p.key ? <Badge tone="info" className="ml-1">Alternate</Badge> : null}
                     <Badge tone="neutral" className="ml-1">{p.kind === 'group' ? <Link to={`${ROUTES.repGroups}/${v.rep_groups!.id}`} onClick={(e) => e.stopPropagation()} className="hover:underline">{p.type}</Link> : p.type}</Badge>
                     {p.title ? <span className="ml-2 text-xs font-normal text-stone-500">{p.title}</span> : null}
                     {p.confirmedAt ? <Badge tone="success" className="ml-1">Confirmed {new Date(p.confirmedAt).toLocaleDateString()}</Badge> : null}
@@ -225,6 +240,8 @@ export function VendorContactsSection({ vendor: v, canEdit, onChange, onEmail, d
               {canEdit ? (
                 <span className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
                   {!main.has(p.key) ? <Button size="sm" variant="ghost" onClick={() => void makeMain(p)} leftIcon={<Star className="size-3.5" aria-hidden="true" />}>Make main rep</Button> : null}
+                  {!main.has(p.key) && alt !== p.key ? <Button size="sm" variant="ghost" onClick={() => void makeAlternate(p)} leftIcon={<UserRound className="size-3.5" aria-hidden="true" />}>Make alternate</Button> : null}
+                  {alt === p.key ? <Button size="sm" variant="ghost" onClick={() => void makeAlternate(null)}>Not alternate</Button> : null}
                   <button type="button" onClick={() => edit(p)} aria-label={`Change ${p.name || p.email}`} title="Change" className="rounded-md p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-700">
                     <Pencil className="size-4" aria-hidden="true" />
                   </button>
