@@ -3841,3 +3841,12 @@ Checked the two EJD emails that reached billing@ since Nov 4: both show they cam
 (billing.slsports@gmail.com). So the watch is on for EMERY JENSEN DIST and STIHL INC (`billcom_auto_on_from`). Forwarding
 stays off while EJD mail comes through the old Gmail (Dana's Gmail forward already sends it to Bill.com). The first EJD invoice
 sent straight to billing@ turns "Send invoices to Bill.com" on for both, and Dana gets a task saying so.
+
+## Nov 5, 2026 — Smith Optics: ship date, new rep, two old orders closed
+Dana said yes to all. The two preseason orders (SMITH022726 goggles, SMITHHELMETS2-27-26 helmets) now ship Nov 16, 2026: Shannon Carey
+Parratto moved them to mid-November in her Oct 9 email (Jarrett asked for them to arrive 11/16). Shannon (shannon@careyonsports.com)
+is the main rep and Tim (tim@careyonsports.com) is a rep, both from Carey On Sports. Jared Rodriguez is marked former (he left Smith Oct 9;
+now Skyline Sales Group). SMITHHELMETS (Dec 21, 2025) and YTHGOGSMITH2025 (Dec 17, 2025) were received, entered and paid Jul 5, 2026,
+so they are now Paid. Totals: VMS has our order-writer totals ($5,135 goggles, $8,292.50 helmets). Smith's Oct 9 list shows $8,268.90 and
+$7,104.8x. The goggle order also has the 192 Electras Jarrett added on Mar 5, which are not in VMS. We don't have Smith's line-by-line
+confirmation yet.
