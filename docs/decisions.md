@@ -3850,3 +3850,10 @@ now Skyline Sales Group). SMITHHELMETS (Dec 21, 2025) and YTHGOGSMITH2025 (Dec 1
 so they are now Paid. Totals: VMS has our order-writer totals ($5,135 goggles, $8,292.50 helmets). Smith's Oct 9 list shows $8,268.90 and
 $7,104.8x. The goggle order also has the 192 Electras Jarrett added on Mar 5, which are not in VMS. We don't have Smith's line-by-line
 confirmation yet.
+
+## Nov 5 — Vercel builds only the live branch (Dana)
+Preview builds of another session's scratch branch (claude/modest-mendel-6e6l7v, spreadsheets only, no app) failed
+every push and emailed Dana. Dana set the vms project's Ignored Build Step to **Only build production** (Project →
+Settings → Build and Deployment), so only claude/ecstatic-carson-ziz2a9 is built. The deployment watch (Sonnet session)
+looks only at Production deployments. Vendor order forms and sales reports belong in VMS Documents under the vendor, not
+in a code branch.
