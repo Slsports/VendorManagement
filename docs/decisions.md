@@ -3892,3 +3892,10 @@ $5 a day per person. Built Nov 5 (migrations 0311-0312, function ask-vms, menu A
 ## Nov 5, 2026 — Cc gets the same name lookup as To
 Dana: "If I send an email to a vendor and I want to cc WWD, I want it to be easy to find." Under the Cc box in the email window,
 "Add someone to Cc: type a name or Worldwide" picks from the same address book as To (Worldwide corporate contacts included).
+
+## Nov 5, 2026 — Address boxes suggest as you type; Delete draft in the draft
+Dana: "All address fields for sending mail should pop up any vendor contact email if you start typing as well as sls employees.
+I went to type jarr for jarrett and nothing came up." To and Cc now suggest people as you type a name, email or company: our staff,
+the Worldwide contacts, rep group reps and every vendor contact (inactive vendors marked). The separate "Add someone" boxes are gone.
+Dana: "I cant see where to delete a draft." The trash can was the last column, off the edge of a wide table; it is now first, and
+an open draft has a **Delete draft** button.

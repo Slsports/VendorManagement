@@ -100,16 +100,20 @@ export function DraftsList() {
           <table className="w-full text-sm">
             <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
               <tr>
+                {/* delete first, so it is on screen even when the table is wider than the window (Dana, Nov 5) */}
+                <th scope="col" className="w-10 px-2 py-2"><span className="sr-only">Delete</span></th>
                 <SortHeader label="To" sortKey="to" sort={sort} onSort={toggle} className="px-3 py-2" />
                 <SortHeader label="Subject" sortKey="subject" sort={sort} onSort={toggle} className="px-3 py-2" />
                 <SortHeader label="Vendor" sortKey="vendor" sort={sort} onSort={toggle} className="px-3 py-2" />
                 <SortHeader label="Saved" sortKey="updated" sort={sort} onSort={toggle} className="px-3 py-2" />
-                <th scope="col" className="px-3 py-2"><span className="sr-only">Delete</span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
               {sorted.map((d) => (
                 <tr key={d.id} onClick={() => setOpen(d)} className="cursor-pointer align-top hover:bg-stone-50">
+                  <td className="px-2 py-2">
+                    <button type="button" onClick={(e) => { e.stopPropagation(); void remove(d) }} aria-label={`Delete draft ${d.subject}`} title="Delete this draft" className="rounded-md p-1 text-stone-400 hover:bg-red-50 hover:text-red-700"><Trash2 className="size-4" aria-hidden="true" /></button>
+                  </td>
                   <td className="max-w-56 truncate px-3 py-2 text-stone-800">{d.to_emails.join(', ') || '—'}</td>
                   <td className="min-w-56 px-3 py-2">
                     <span className="font-medium text-stone-900">{d.subject || '(no subject)'}</span>
@@ -126,9 +130,6 @@ export function DraftsList() {
                   </td>
                   <td className="whitespace-nowrap px-3 py-2 text-stone-700">{d.vendor?.name ?? ''}</td>
                   <td className="whitespace-nowrap px-3 py-2 text-stone-600">{when(d.updated_at)}</td>
-                  <td className="px-3 py-2 text-right">
-                    <button type="button" onClick={(e) => { e.stopPropagation(); void remove(d) }} aria-label={`Delete draft ${d.subject}`} title="Delete" className="rounded-md p-1 text-stone-400 hover:bg-red-50 hover:text-red-700"><Trash2 className="size-4" aria-hidden="true" /></button>
-                  </td>
                 </tr>
               ))}
             </tbody>

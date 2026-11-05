@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
-import { FileText, Inbox, Paperclip, Send, X } from 'lucide-react'
+import { FileText, Inbox, Paperclip, Send, Trash2, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { listMailboxes, saveDraft, sendEmail, type SendEmailInput } from '@/services/mail'
+import { deleteDraft, listMailboxes, saveDraft, sendEmail, type SendEmailInput } from '@/services/mail'
 import { listAddressBook } from '@/services/contacts'
 import { listVendorLinks } from '@/services/lines'
 import { errorMessage } from '@/lib/utils'
 import { fillSignature, LOGO_URL } from '@/lib/signature'
 import { Button, FormField, Input, Textarea } from '@/components/ui'
 import { VendorFilePicker } from './VendorFilePicker'
+import { AddressInput } from './AddressInput'
 
 export interface ComposeDraft {
   to: string[]
@@ -79,9 +80,6 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
   const fileInput = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const book = useSupabaseQuery(async () => (organization ? listAddressBook(organization.id) : []), [organization?.id])
-  const [who, setWho] = useState('')
-  // the same name lookup for Cc (Dana, Nov 5: "If I send an email to a vendor and I want to cc WWD, I want it to be easy to find")
-  const [ccWho, setCcWho] = useState('')
   // From: orders@ or my own mailbox, for a new email
   const [fromBox, setFromBox] = useState<string>(draft.mailbox_id ?? '')
   const boxes = useSupabaseQuery(async () => (organization && !draft.thread_id ? listMailboxes(organization.id) : []), [organization?.id, draft.thread_id])
@@ -103,11 +101,6 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
   function addTo(email: string) {
     const list = splitAddresses(to)
     if (!list.map((a) => a.toLowerCase()).includes(email.toLowerCase())) setTo([...list, email].join(', '))
-  }
-
-  function addCc(email: string) {
-    const list = splitAddresses(cc)
-    if (!list.map((a) => a.toLowerCase()).includes(email.toLowerCase())) setCc([...list, email].join(', '))
   }
 
   async function submit(e: FormEvent) {
@@ -161,6 +154,18 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
     }
   }
 
+  /** Delete this draft (Dana, Nov 5: "I cant see where to delete a draft"). */
+  async function dropDraft() {
+    if (!draftId || !window.confirm('Delete this draft?')) return
+    try {
+      await deleteDraft(draftId)
+      toast.success('Draft deleted')
+      onClose()
+    } catch (err) {
+      toast.error(errorMessage(err))
+    }
+  }
+
   /** Save draft (Dana, Oct 12): keep it in Mail › Drafts to finish or send later. Attachments picked from the computer are not kept. */
   async function keepDraft() {
     if (!organization || !profile) return
@@ -202,40 +207,18 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
               </select>
             </FormField>
           ) : null}
+          {/* type a name, email or company and the people pop up: staff, Worldwide, reps, vendor contacts (Dana, Nov 5) */}
           <FormField label="To" htmlFor="compose-to">
-            <Input id="compose-to" value={to} onChange={(e) => setTo(e.target.value)} placeholder="name@vendor.com" autoComplete="off" required />
+            <AddressInput id="compose-to" value={to} onChange={setTo} book={book.data ?? []} placeholder="Type a name, email or company (Worldwide, a vendor…)" required />
           </FormField>
-          {(book.data ?? []).length ? (
-            <div className="-mt-1">
-              <Input list="compose-book" value={who} aria-label="Add someone"
-                placeholder="Add someone: type a name or Worldwide"
-                className="h-9"
-                onChange={(e) => {
-                  const v = e.target.value
-                  const hit = (book.data ?? []).find((b) => bookLabel(b) === v)
-                  if (hit) { addTo(hit.email); setWho('') } else setWho(v)
-                }} />
-              <datalist id="compose-book">{(book.data ?? []).map((b) => <option key={`${b.email}-${b.name}`} value={bookLabel(b)} />)}</datalist>
-            </div>
-          ) : null}
           {unused.length ? (
             <div className="-mt-1 flex flex-wrap gap-1">
               {unused.map((s) => <button key={s.email} type="button" onClick={() => addTo(s.email)} className="rounded-full bg-stone-100 px-2.5 py-1 text-xs text-stone-700 hover:bg-stone-200">+ {s.label}</button>)}
             </div>
           ) : null}
-          <FormField label="Cc" htmlFor="compose-cc"><Input id="compose-cc" value={cc} onChange={(e) => setCc(e.target.value)} autoComplete="off" /></FormField>
-          {(book.data ?? []).length ? (
-            <div className="-mt-1">
-              <Input list="compose-book" value={ccWho} aria-label="Add someone to Cc"
-                placeholder="Add someone to Cc: type a name or Worldwide"
-                className="h-9"
-                onChange={(e) => {
-                  const v = e.target.value
-                  const hit = (book.data ?? []).find((b) => bookLabel(b) === v)
-                  if (hit) { addCc(hit.email); setCcWho('') } else setCcWho(v)
-                }} />
-            </div>
-          ) : null}
+          <FormField label="Cc" htmlFor="compose-cc">
+            <AddressInput id="compose-cc" value={cc} onChange={setCc} book={book.data ?? []} placeholder="Type a name, email or company to copy someone" />
+          </FormField>
           <FormField label="Subject" htmlFor="compose-subject"><Input id="compose-subject" value={subject} onChange={(e) => setSubject(e.target.value)} required /></FormField>
           <FormField label="Message" htmlFor="compose-body">
             <Textarea id="compose-body" ref={bodyRef} value={body} onChange={(e) => setBody(e.target.value)} rows={12} />
@@ -269,6 +252,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
         <div className="flex items-center justify-between gap-2 border-t border-stone-200 px-4 py-3">
           <p className="text-xs text-stone-500">Sends from {fromAddress} as {profile?.full_name ?? 'you'}.</p>
           <div className="flex gap-2">
+            {draftId ? <Button type="button" variant="ghost" onClick={() => void dropDraft()} disabled={sending || saving} leftIcon={<Trash2 className="size-4" aria-hidden="true" />}>Delete draft</Button> : null}
             <Button type="button" variant="ghost" onClick={onClose} disabled={sending || saving}>Cancel</Button>
             <Button type="button" variant="secondary" onClick={() => void keepDraft()} loading={saving} disabled={sending} leftIcon={<FileText className="size-4" aria-hidden="true" />}>Save draft</Button>
             <Button type="submit" loading={sending} leftIcon={<Send className="size-4" aria-hidden="true" />}>Send</Button>
@@ -297,4 +281,3 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
   )
 }
 
-const bookLabel = (b: { name: string; where: string; email: string }) => `${b.name} (${b.where}) <${b.email}>`
