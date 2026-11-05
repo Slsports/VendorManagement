@@ -13,7 +13,7 @@ const STOP_FILL = solid('FFF8CBAD'), OOS_FILL = solid('FFDDEBF7')
 const thin = { style: 'thin' as const, color: { argb: 'FF000000' } }
 const BOX = { top: thin, left: thin, bottom: thin, right: thin }
 
-type ColKey = 'sid' | 'upc' | 'vendor' | 'vid' | 'desc' | 'cost' | 'cat' | 'last' | 'sold' | 'qoh' | 'need' | 'onorder' | 'after' | 'order' | 'notes'
+type ColKey = 'sid' | 'upc' | 'vendor' | 'vid' | 'desc' | 'cost' | 'cat' | 'last' | 'sold' | 'qoh' | 'need' | 'onorder' | 'after' | 'order' | 'ournotes' | 'notes'
 interface Col { key: ColKey; head: string; store?: string }
 interface Layout { cols: Col[]; at: (key: ColKey, store?: string) => number; soldCols: number[]; qohCols: number[] }
 
@@ -30,7 +30,8 @@ function layout(plan: ReportPlan): Layout {
   }
   cols.push({ key: 'need', head: 'NEED' })
   if (plan.onOrder) cols.push({ key: 'onorder', head: 'ON ORDER' }, { key: 'after', head: 'NEED AFTER ORDERS' })
-  cols.push({ key: 'order', head: 'ORDER' }, { key: 'notes', head: 'NOTES' })
+  // NOTES is blank for our own notes about the order; what LS and VMS say goes in LS NOTES to its right (Dana, Nov 5)
+  cols.push({ key: 'order', head: 'ORDER' }, { key: 'ournotes', head: 'NOTES' }, { key: 'notes', head: 'LS NOTES' })
   const at = (key: ColKey, store?: string) => cols.findIndex((c) => c.key === key && (store === undefined || c.store === store)) + 1
   const soldCols = cols.map((c, i) => (c.key === 'sold' ? i + 1 : 0)).filter(Boolean)
   const qohCols = cols.map((c, i) => (c.key === 'qoh' ? i + 1 : 0)).filter(Boolean)
@@ -82,7 +83,7 @@ function itemRow(ws: Worksheet, lay: Layout, r: number, x: SalesItem, shade: boo
     c.value = (col.key === 'notes' && x.link ? { text: v as string, hyperlink: x.link } : v) as never
     c.font = col.key === 'notes' && x.link ? { name: FONT, size: 11, underline: true, color: { argb: 'FF1D4ED8' } } : { name: FONT, size: 11 }
     c.border = BOX
-    c.alignment = { horizontal: col.key === 'desc' || col.key === 'notes' || col.key === 'vendor' ? 'left' : col.key === 'cat' ? 'right' : 'center', vertical: 'middle', wrapText: col.key === 'notes' }
+    c.alignment = { horizontal: col.key === 'desc' || col.key === 'notes' || col.key === 'ournotes' || col.key === 'vendor' ? 'left' : col.key === 'cat' ? 'right' : 'center', vertical: 'middle', wrapText: col.key === 'notes' || col.key === 'ournotes' }
     if (col.key === 'sid' || col.key === 'upc' || col.key === 'vid') c.numFmt = '@'
     if (col.key === 'cost') c.numFmt = '$#,##0.00'
     if (col.key === 'last' && v instanceof Date) c.numFmt = 'm/d/yy'
@@ -152,6 +153,7 @@ function table(ws: Worksheet, lay: Layout, title: string, rows: SalesItem[], opt
     const longest = Math.max(col.head.length, ...all.map((x) => String((col.key === 'notes' ? x.notes.join(' ') : col.key === 'last' ? '00/00/00' : cellValue(x, col)) ?? '').length))
     let w = Math.max(longest, col.key === 'sold' || col.key === 'need' || col.key === 'order' ? 6 : 8) + 2
     if (col.key === 'notes') w = Math.min(Math.max(w, 30), 60)
+    if (col.key === 'ournotes') w = 30
     ws.getColumn(i + 1).width = Math.min(w, 70)
   })
 }
@@ -205,9 +207,9 @@ function typeSummary(ws: Worksheet, plan: ReportPlan) {
   for (let i = 2; i <= 5; i++) ws.getColumn(i).width = 11
 }
 
-/** The Size Summary (spec v49): Gender, Subcategory, Size, # SKUs, Sold, In Stock, Need, ORDER, Notes; a TOTAL row per gender and subcategory. */
+/** The Size Summary (spec v49): Gender, Subcategory, Size, # SKUs, Sold, In Stock, Need, ORDER, Notes (blank, ours), LS Notes; a TOTAL row per gender and subcategory. */
 function sizeSummary(ws: Worksheet, plan: ReportPlan) {
-  const cols = plan.onOrder ? ['Gender', 'Subcategory', 'Size', '# SKUs', 'Sold', 'In Stock', 'Need', 'On Order', 'Need After Orders', 'ORDER', 'Notes'] : ['Gender', 'Subcategory', 'Size', '# SKUs', 'Sold', 'In Stock', 'Need', 'ORDER', 'Notes']
+  const cols = plan.onOrder ? ['Gender', 'Subcategory', 'Size', '# SKUs', 'Sold', 'In Stock', 'Need', 'On Order', 'Need After Orders', 'ORDER', 'Notes', 'LS Notes'] : ['Gender', 'Subcategory', 'Size', '# SKUs', 'Sold', 'In Stock', 'Need', 'ORDER', 'Notes', 'LS Notes']
   const oo = plan.onOrder ? 2 : 0
   header(ws, plan.title, cols)
   let r = 3
@@ -220,13 +222,13 @@ function sizeSummary(ws: Worksheet, plan: ReportPlan) {
     const a = r
     for (const s of list) {
       const note = s.variants.length > 1 ? `Sizes written as ${s.variants.join(', ')}` : ''
-      const vals = plan.onOrder ? [gender || '—', sub, s.size, s.skus, s.sold, s.inStock, s.need, s.onOrder, Math.max(0, s.need - s.onOrder), null, note] : [gender || '—', sub, s.size, s.skus, s.sold, s.inStock, s.need, null, note]
+      const vals = plan.onOrder ? [gender || '—', sub, s.size, s.skus, s.sold, s.inStock, s.need, s.onOrder, Math.max(0, s.need - s.onOrder), null, null, note] : [gender || '—', sub, s.size, s.skus, s.sold, s.inStock, s.need, null, null, note]
       vals.forEach((v, i) => {
         const c = ws.getCell(r, i + 1)
         c.value = v as never
         c.font = { name: FONT, size: 11 }
         c.border = BOX
-        c.alignment = { horizontal: i < 3 || i === cols.length - 1 ? 'left' : 'center', vertical: 'middle', wrapText: i === cols.length - 1 }
+        c.alignment = { horizontal: i < 3 || i >= cols.length - 2 ? 'left' : 'center', vertical: 'middle', wrapText: i >= cols.length - 2 }
       })
       ws.getCell(r, 7).fill = NEED_FILL
       if (plan.onOrder) ws.getCell(r, 9).fill = NEED_FILL
@@ -254,7 +256,7 @@ function sizeSummary(ws: Worksheet, plan: ReportPlan) {
   note.value = 'Need per size = sum of each item’s positive Need (Sold − In Stock); overstock in one size never offsets another. Spelling variants of a size (SZ 8, SIZE 8) are one row.'
   note.font = { name: FONT, size: 9, italic: true }
   ws.views = [{ state: 'frozen', ySplit: 2 }]
-  ;(plan.onOrder ? [10, Math.max(14, ...rows.map((s) => s.subcategory.length)) + 2, 9, 8, 8, 10, 8, 9, 11, 8, 36] : [10, Math.max(14, ...rows.map((s) => s.subcategory.length)) + 2, 9, 8, 8, 10, 8, 8, 36]).forEach((w, i) => { ws.getColumn(i + 1).width = w })
+  ;(plan.onOrder ? [10, Math.max(14, ...rows.map((s) => s.subcategory.length)) + 2, 9, 8, 8, 10, 8, 9, 11, 8, 30, 36] : [10, Math.max(14, ...rows.map((s) => s.subcategory.length)) + 2, 9, 8, 8, 10, 8, 8, 30, 36]).forEach((w, i) => { ws.getColumn(i + 1).width = w })
 }
 
 /** The formatted report as an .xlsx file. */

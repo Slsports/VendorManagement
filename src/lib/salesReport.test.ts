@@ -135,3 +135,21 @@ describe('sizes and category reports (Oct 16)', () => {
     expect(bytes.byteLength).toBeGreaterThan(1000)
   })
 })
+
+describe('the report file', () => {
+  it('has a blank NOTES column for us, with the LS notes to its right (Dana, Nov 5)', async () => {
+    const { buildReportXlsx } = await import('./salesReportXlsx')
+    const ExcelJS = (await import('exceljs')).default
+    const items = readExport([row('1'), row('5', { 'Item Default Vendor ID': 'V1', 'Item Category': '' })], RUN)
+    const wb = new ExcelJS.Workbook()
+    await wb.xlsx.load(await buildReportXlsx(planReport(items, 'PARICON', runText(RUN))))
+    const ws = wb.worksheets[0]!
+    const head = (ws.getRow(2).values as unknown[]).slice(1).map(String)
+    const n = head.indexOf('NOTES')
+    expect(n).toBeGreaterThan(head.indexOf('ORDER'))
+    expect(head[n + 1]).toBe('LS NOTES')
+    const flagged = [3, 4].map((r) => ws.getRow(r)).find((r) => String(r.getCell(n + 2).value ?? '').includes('Category missing'))
+    expect(flagged).toBeTruthy()
+    expect(flagged!.getCell(n + 1).value ?? null).toBeNull()
+  })
+})

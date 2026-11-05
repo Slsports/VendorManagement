@@ -3829,3 +3829,9 @@ Pacific Stihl, Interstate Battery System of Fresno, Vikan / Remco, Sandbox Group
   to Bill.com" on for it and the vendors it bills (Stihl's parent / billing company is now EMERY JENSEN DIST) and gives Dana a
   task to turn the old Gmail forward off. The EJD/Stihl watch is set after checking that the next forwarded EJD email really
   shows billing.slsports@gmail.com in its delivery addresses.
+
+## Nov 5, 2026 — Sales report: our NOTES column is blank, LS NOTES to its right
+Dana: "The column that says NOTES should be blank, its for us to write notes about the order, not what shows up in lightspeed
+notes. Please put the LS notes to the right of our order notes." Item tabs: … ORDER, NOTES (blank), LS NOTES (the notes VMS
+writes: LS item notes, discontinued/replacement, duplicates, missing category, on order). Size Summary: ORDER, Notes (blank),
+LS Notes. Reports run from now on; ones already made keep their old columns.
