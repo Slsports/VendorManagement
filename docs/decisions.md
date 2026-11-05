@@ -3835,3 +3835,9 @@ Dana: "The column that says NOTES should be blank, its for us to write notes abo
 notes. Please put the LS notes to the right of our order notes." Item tabs: … ORDER, NOTES (blank), LS NOTES (the notes VMS
 writes: LS item notes, discontinued/replacement, duplicates, missing category, on order). Size Summary: ORDER, Notes (blank),
 LS Notes. Reports run from now on; ones already made keep their old columns.
+
+## Nov 5, 2026 — EJD and Stihl: Bill.com forwarding turns on by itself when EJD bills billing@ directly
+Checked the two EJD emails that reached billing@ since Nov 4: both show they came through Dana's old Gmail
+(billing.slsports@gmail.com). So the watch is on for EMERY JENSEN DIST and STIHL INC (`billcom_auto_on_from`). Forwarding
+stays off while EJD mail comes through the old Gmail (Dana's Gmail forward already sends it to Bill.com). The first EJD invoice
+sent straight to billing@ turns "Send invoices to Bill.com" on for both, and Dana gets a task saying so.
