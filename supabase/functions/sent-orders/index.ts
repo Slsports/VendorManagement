@@ -173,10 +173,12 @@ async function readStep(db: SupabaseClient, sent: Mail) {
     }
     const r = await readSentOrder(db, m.organization_id, { vendor: vendor?.name ?? 'Unknown vendor', subject: m.subject, sent_on: day(m.received_at), text: m.body_text ?? '', files, sheets })
     if (!r.is_order) return await finish(db, m, { result: 'not_order' })
-    if (!m.vendor_id) {
-      // the address was not on file: the vendor Claude named, matched to the vendor list (names and aliases)
-      const named = r.vendor_name ? (await db.rpc('vendor_by_name', { p_org: m.organization_id, p_name: r.vendor_name })).data as string | null : null
-      if (!named) return await finish(db, m, { result: 'no_vendor', vendor_name: r.vendor_name })
+    // the vendor the email names, matched to the vendor list (names and aliases). It wins when the address was not on
+    // file, and when the address is a rep's who handles several lines (fong@activeoutdoors.com is Yakima's and Okuma's:
+    // the Okuma order filed under Yakima, Nov 5)
+    const named = r.vendor_name ? (await db.rpc('vendor_by_name', { p_org: m.organization_id, p_name: r.vendor_name })).data as string | null : null
+    if (!m.vendor_id && !named) return await finish(db, m, { result: 'no_vendor', vendor_name: r.vendor_name })
+    if (named && named !== m.vendor_id) {
       await db.from('emails').update({ vendor_id: named }).eq('id', m.id)
       m = { ...m, vendor_id: named }
       if (!m.mailbox_id || await sharedThread(db, m.thread_id)) await learnOrderAddress(db, m, r.vendor_name!)
@@ -266,14 +268,14 @@ async function finish(db: SupabaseClient, m: Mail, scan: Record<string, unknown>
 
 /**
  * The address we sent the order to is saved on the vendor as an Orders contact, so the next email matches on its own.
- * Never from a private mailbox (nothing from one is copied but the order itself), never an address another vendor has.
+ * Never from a private mailbox (nothing from one is copied but the order itself). A rep's address can be on several vendors.
  */
 async function learnOrderAddress(db: SupabaseClient, m: Mail, vendorName: string) {
   const ours = /@shaverlakesports\.com$/i
   for (const raw of m.to_emails ?? []) {
     const email = raw.toLowerCase().trim()
     if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(email) || ours.test(email)) continue
-    const { data: have } = await db.from('vendor_emails').select('id, vendor_id').eq('organization_id', m.organization_id).ilike('email', email)
+    const { data: have } = await db.from('vendor_emails').select('id').eq('vendor_id', m.vendor_id!).ilike('email', email)
     if (have?.length) continue
     await db.from('vendor_emails').insert({
       organization_id: m.organization_id, vendor_id: m.vendor_id, email, contact_type: 'orders', roles: ['orders'],

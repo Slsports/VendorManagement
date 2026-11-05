@@ -3907,3 +3907,7 @@ avoid having too many things that need my attention." Before this, a sent order 
 from the email and the file, VMS matches it to the vendor list (names and aliases), adds the order under that vendor and saves the
 address as the vendor's Orders contact so the next email matches on its own. Only an email that names no vendor anywhere stays
 "no vendor". Back-check: the 1,359 sent emails marked "no vendor" in the last 12 months were put back in the queue (migration 0313).
+Same day, found in the back-check: the Okuma WWD order (Aug 29) had been filed under Yakima because the rep's address
+(fong@activeoutdoors.com) is on both vendors and the address match picked Yakima. Rule extended: the vendor named in the email
+or order form wins over the address whenever it matches the vendor list, and the address is added to that vendor. The order,
+its files and emails were moved to Okuma; the two other sent orders to shared rep addresses were re-read.
