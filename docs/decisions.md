@@ -3857,3 +3857,9 @@ every push and emailed Dana. Dana set the vms project's Ignored Build Step to **
 Settings → Build and Deployment), so only claude/ecstatic-carson-ziz2a9 is built. The deployment watch (Sonnet session)
 looks only at Production deployments. Vendor order forms and sales reports belong in VMS Documents under the vendor, not
 in a code branch.
+- Freight (Dana, Nov 5): if Smith's orders or any backorders are not free shipping, we need a freight quote before we approve shipment.
+  VMS already does this for every confirmed order (shipment details request, Oct 30): both Smith orders are set as free freight, so once
+  Smith's confirmation comes in, Trevor gets the check and the email asking Smith to confirm that the order and any backorders ship free.
+  If Smith says freight will be charged, it goes back to the buyer. The old "Ask for their freight quote" switch was turned on and then
+  off again the same day: it would have sent a second, older freight email. Last season's backorder freight: 3 helmets cost $92.81 on
+  our UPS account (Dana's Jan 6, 2026 email), and Smith gave a $100 credit (4076523, Jan 15, 2026).
