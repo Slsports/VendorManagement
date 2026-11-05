@@ -3863,3 +3863,13 @@ in a code branch.
   If Smith says freight will be charged, it goes back to the buyer. The old "Ask for their freight quote" switch was turned on and then
   off again the same day: it would have sent a second, older freight email. Last season's backorder freight: 3 helmets cost $92.81 on
   our UPS account (Dana's Jan 6, 2026 email), and Smith gave a $100 credit (4076523, Jan 15, 2026).
+
+## Nov 5, 2026 — Carey On Sports rep group; a rep group lists every line it reps
+Dana: "She should be added as a rep group with all her vendors listed." Carey On Sports (careyonsports.com) is now a rep group:
+Shannon Carey Parratto (main rep for Smith and Chaos) and Tim Parratto. Vendors: SMITH OPTICS - SUNCLOUD OPTICS and CHAOS. Other
+lines: Chaos / CTR USA and CTR (Worldwide listings), Hestra Gloves and Dermatone (from Shannon's Oct 9 email; on no Worldwide list).
+Shannon and Tim were moved off Smith's own contacts onto the rep group. The Oct 7 "Mail from @careyonsports.com" card is answered,
+and their 4 emails are filed to Smith.
+Rule (Dana, Nov 5): "It doesn't matter if we have ordered from a vendor or not when it comes to listing that vendor with a rep
+group. If we go to that rep group, I need to see all vendors I can work with that vendor group on." Every line a rep group reps
+goes on that group's page, whether we have ever ordered from it or not.
