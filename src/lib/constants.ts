@@ -114,6 +114,7 @@ export const ROUTES = {
   accountingDocuments: '/accounting/documents',
   lsPos: '/ls-pos',
   help: '/help',
+  ask: '/ask',
   mergeReport: '/review/merges',
 } as const
 

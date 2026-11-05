@@ -13,6 +13,6 @@ People are added and changed in **Settings › Users**. Only people on this list
 4. To change a role or stores later, change it on their row. To stop someone signing in, click **Deactivate**.
 
 ## Good to know
-- The same row has the ticks for **Accounting**, **Can see**, **Enter counts** and **Send counts to LS**.
+- The same row has the ticks for **Accounting**, **Ask VMS** (the buying chat), **Can see**, **Enter counts** and **Send counts to LS**.
 - Only Dana is admin; the role list never offers admin.
 - See "Who can do what" for what each role allows.

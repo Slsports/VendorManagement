@@ -159,6 +159,8 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   if (kind === 'billcom_enter' && t.vendor_id) return { kind: 'page', to: `/vendors/${t.vendor_id}?folder=invoices${id ? `&doc=${id}` : ''}`, label: 'Open the invoice' }
   // the WWD weekly upload (Dana, Nov 3): the upload box on Payments
   // a rep sent the price list we asked for (Dana, Nov 4): their reply itself
+  // a request to change VMS (Dana, Nov 5): Ask VMS › Change requests, where Dana approves or turns it down
+  if (kind === 'changereq' || kind === 'changeans') return { kind: 'page', to: '/ask?tab=changes', label: 'Open the change request' }
   if (kind === 'pricelist' && id && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}?email=${id}`, label: 'Open their reply' }
   if (kind === 'wwdweekly' || kind === 'wwdweekly_late') return { kind: 'page', to: '/payments#wwd-upload', label: 'Open the WWD weekly upload' }
   if (kind === 'supply') return { kind: 'page', to: t.thread_id ? `/mail/${t.thread_id}` : '/supplies', label: t.thread_id ? 'Open the request' : 'Open Supplies' }

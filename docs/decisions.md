@@ -3886,4 +3886,5 @@ and I can authorize a change in code." Staff never get Claude to change VMS (cod
 (for example in the planned Ask VMS chat), it becomes a change request for Dana. Claude builds it only after Dana approves it.
 Ask VMS chat (Dana, Nov 5): for managers and buyers doing buying work. Trevor is not a buyer and doesn't need the buying
 questions, but may get a chat for his own work later. Dana reads everyone's chats ("so I can know if they are asking the right
-questions to get the data they need - its good training"). Model and daily limit: waiting on Dana.
+questions to get the data they need - its good training"). Model: Claude Opus 5.5 (Dana: "yes go with opus and $5 limit"),
+$5 a day per person. Built Nov 5 (migrations 0311-0312, function ask-vms, menu Ask VMS, Settings › Users tick; Jarrett ticked).

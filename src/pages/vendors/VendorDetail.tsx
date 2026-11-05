@@ -12,6 +12,7 @@ import { BILLING_ROUTE_HELP, ORDERING_FREQUENCY_LABELS, freeShippingRule, standi
 import { errorMessage, shortDate } from '@/lib/utils'
 import { VendorPoUseBadge } from '@/components/vendors/VendorPoUseBadge'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { AskButton } from '@/components/ask/AskButton'
 import { BackLink } from '@/components/shared/BackLink'
 import { FoldSection } from '@/components/shared/FoldSection'
 import { RouteBadges } from '@/components/vendors/RouteBadges'
@@ -185,6 +186,7 @@ export default function VendorDetailPage() {
         actions={canEdit ? (
           <div className="flex items-center gap-3">
             <ActiveSwitch active={v.is_active} onChange={(on) => void setActive(on)} />
+            <AskButton vendorId={v.id} />
             <Button variant="secondary" onClick={() => navigate(`${ROUTES.vendors}/${v.id}/edit`)} leftIcon={<Pencil className="size-4" aria-hidden="true" />}>Edit</Button>
           </div>
         ) : undefined}

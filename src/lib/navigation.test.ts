@@ -31,6 +31,13 @@ describe('navForRole', () => {
     expect(labels('uploader')).toEqual(['Invoice Uploads'])
   })
 
+  it('shows Ask VMS to Dana and to the people she ticks, not to others (Nov 5)', () => {
+    expect(labels('admin')).toContain('Ask VMS')
+    expect(labels('manager')).not.toContain('Ask VMS')
+    expect(navForRole('manager', { ask_vms: true }).flatMap((g) => g.items.map((i) => i.label))).toContain('Ask VMS')
+    expect(navForRole('viewer', { ask_vms: true }).flatMap((g) => g.items.map((i) => i.label))).not.toContain('Ask VMS')
+  })
+
   it('returns nothing when signed out', () => {
     expect(navForRole(null)).toEqual([])
   })

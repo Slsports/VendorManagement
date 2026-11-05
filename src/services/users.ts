@@ -69,6 +69,12 @@ export async function setUserAccounting(id: string, sees_accounting: boolean) {
   if (error) throw error
 }
 
+/** Can use Ask VMS (Dana, Nov 5: managers and buyers she picks). Only the admin changes it. */
+export async function setUserAskVms(id: string, ask_vms: boolean) {
+  const { error } = await supabase.from('profiles').update({ ask_vms }).eq('id', id)
+  if (error) throw error
+}
+
 /** Whose work this person can see in their Showing switch (Dana sets it). */
 export async function setUserCanSee(id: string, can_see: string[]) {
   const { error } = await supabase.from('profiles').update({ can_see }).eq('id', id)

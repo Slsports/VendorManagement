@@ -8,6 +8,7 @@ import { ORDER_STATUSES, ORDER_STATUS_LABELS, ROUTES, type OrderStatus } from '@
 import { BILLING_ROUTE_LABELS, PAID_VIA_LABELS, money, showLabel } from '@/lib/vendors'
 import { errorMessage } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { AskButton } from '@/components/ask/AskButton'
 import { BackLink } from '@/components/shared/BackLink'
 import { OrderStatusBadge } from '@/components/orders/OrderStatusBadge'
 import { AddOnsChoice } from '@/components/orders/AddOnsChoice'
@@ -90,6 +91,7 @@ export default function OrderDetailPage() {
         description={<span className="inline-flex flex-wrap items-center gap-2"><OrderStatusBadge status={o.status} />{o.order_date ? <span>{d(o.order_date)}</span> : null}{o.source !== 'manual' ? <Badge tone="neutral">from {o.source.replaceAll('_', ' ')}</Badge> : null}{o.art_approved_at ? <Badge tone="success">Artwork approved {new Date(o.art_approved_at).toLocaleDateString()}</Badge> : null}{o.shipped_email_id && shippedThread.data ? <Link to={`/mail/${shippedThread.data}?email=${o.shipped_email_id}`} className="text-sm font-medium text-brand hover:underline">Shipped per email</Link> : null}</span>}
         actions={canEdit ? (
           <div className="flex flex-wrap items-center gap-2">
+            <AskButton orderId={o.id} />
             {changingVendor ? (
               <span className="flex items-center gap-2">
                 <VendorPicker autoFocus className="w-60" placeholder="The real vendor" onPick={async (v) => {

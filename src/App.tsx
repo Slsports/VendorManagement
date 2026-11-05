@@ -64,6 +64,7 @@ const FreightQuoteDetail = lazy(() => import('@/pages/freight/FreightQuoteDetail
 const BuyingShowList = lazy(() => import('@/pages/buying-shows/BuyingShowList'))
 const PaymentList = lazy(() => import('@/pages/payments/PaymentList'))
 const SalesReportsHub = lazy(() => import('@/pages/sales-reports/SalesReportsHub'))
+const AskPage = lazy(() => import('@/pages/ask/AskPage'))
 const ReportList = lazy(() => import('@/pages/reports/ReportList'))
 const ProductSourcing = lazy(() => import('@/pages/product-sourcing/ProductSourcing'))
 const FileManager = lazy(() => import('@/pages/file-manager/FileManager'))
@@ -178,6 +179,7 @@ export default function App() {
                 <Route path={`${ROUTES.freight}/:id`} element={<FreightBillDetail />} />
                 <Route path={ROUTES.buyingShows} element={<BuyingShowList />} />
                 <Route path={ROUTES.salesReports} element={<SalesReportsHub />} />
+                <Route path={ROUTES.ask} element={<AskPage />} />
                 <Route path={`${ROUTES.inventoryCounts}/:id`} element={<InventoryCountPage />} />
                 <Route path={ROUTES.itemNames} element={<ItemNamesPage />} />
                 <Route path={ROUTES.reports} element={<ReportList />} />

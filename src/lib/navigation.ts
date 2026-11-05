@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Banknote, Building2, Calculator, CalendarDays, ChartColumn, CircleHelp, ClipboardCheck, ClipboardList, Contact, FileText, FolderOpen, LayoutDashboard, Lightbulb, ListTodo, Mail, Package, Receipt, Settings, ShoppingCart, SpellCheck, Tags, Truck, Undo2, Upload, Users, UsersRound } from 'lucide-react'
+import { Banknote, Building2, MessagesSquare, Calculator, CalendarDays, ChartColumn, CircleHelp, ClipboardCheck, ClipboardList, Contact, FileText, FolderOpen, LayoutDashboard, Lightbulb, ListTodo, Mail, Package, Receipt, Settings, ShoppingCart, SpellCheck, Tags, Truck, Undo2, Upload, Users, UsersRound } from 'lucide-react'
 import { ORDER_STATUSES, ORDER_STATUS_LABELS, ROUTES, type UserRole } from './constants'
 
 export interface NavChild {
@@ -19,10 +19,10 @@ export interface NavItem {
   /** Show a live count beside the label. */
   badge?: 'mail'
   /** Only people with this tick on their profile see the item (Accounting, Dana Oct 16). */
-  flag?: 'sees_accounting'
+  flag?: 'sees_accounting' | 'ask_vms'
 }
 
-export type NavFlags = { sees_accounting?: boolean } | null | undefined
+export type NavFlags = { sees_accounting?: boolean; ask_vms?: boolean } | null | undefined
 
 export interface NavGroup {
   label: string
@@ -74,6 +74,8 @@ export const NAV_GROUPS: readonly NavGroup[] = [
   {
     label: 'Insights',
     items: [
+      // the buying chat (Dana, Nov 5): people she ticks, and Dana
+      { label: 'Ask VMS', to: ROUTES.ask, icon: MessagesSquare, roles: ['admin', 'manager', 'buyer'], flag: 'ask_vms' },
       { label: 'Sales Reports', to: ROUTES.salesReports, icon: ChartColumn },
       { label: 'Reports', to: ROUTES.reports, icon: FileText },
       { label: 'Product Sourcing', to: ROUTES.productSourcing, icon: Lightbulb },
@@ -118,7 +120,7 @@ export function navForRole(role: UserRole | null | undefined, flags?: NavFlags):
   if (role === 'uploader') return [...UPLOADER_NAV]
   return NAV_GROUPS.map((group) => ({
     label: group.label,
-    items: group.items.filter((item) => (!item.roles || item.roles.includes(role)) && (!item.flag || !!flags?.[item.flag])),
+    items: group.items.filter((item) => (!item.roles || item.roles.includes(role)) && (!item.flag || !!flags?.[item.flag] || (item.flag === 'ask_vms' && role === 'admin'))),
   })).filter((group) => group.items.length > 0)
 }
 

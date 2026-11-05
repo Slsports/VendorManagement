@@ -22,3 +22,4 @@ Each vendor has one page with everything about them: details, documents, mail, p
 - Buttons on a box's title bar, like **New email**, **Upload**, **Add order** and **Task**, work while the box is closed.
 - **Payments** and **WWD invoices** only appear once there is at least one.
 - Viewers see the page but not the Edit, Upload or Add buttons.
+- **Ask VMS** at the top (for Dana and the buyers she turns it on for) opens a chat that already knows this vendor, to ask what's on order, what sold and what's in stock.

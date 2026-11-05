@@ -13,6 +13,7 @@ import {
   sendSetPasswordEmail,
   setStoreGrants,
   setUserAccounting,
+  setUserAskVms,
   setUserCanSee,
   setUserCounts,
   setUserActive,
@@ -144,6 +145,7 @@ export default function UserSettings() {
               <SortHeader label="Last sign-in" sortKey="signin" sort={sort} onSort={toggle} className="px-4 py-2.5" />
               <SortHeader label="Status" sortKey="status" sort={sort} onSort={toggle} className="px-4 py-2.5" />
               <th className="px-4 py-2.5" title="Sees the Accounting area: billing@ mail, bills, accounting tasks. Admin alone is not enough.">Accounting</th>
+              <th className="px-4 py-2.5" title="Can use Ask VMS, the buying chat. You always can, and you read everyone's chats.">Ask VMS</th>
               <th className="px-4 py-2.5" title="Whose dashboard, Review queue, tasks and orders this person can see in their Showing switch. Personal mail and Accounting stay private.">Can see</th>
               <th className="px-4 py-2.5" title="May type physical inventory counts into a checklist.">Enter counts</th>
               <th className="px-4 py-2.5" title="May send a checklist's counts to Lightspeed as an Inventory Count.">Send counts to LS</th>
@@ -213,6 +215,10 @@ export default function UserSettings() {
                       aria-label={`${u.full_name} sees Accounting`}
                       onChange={(e) => void run(e.target.checked ? `${u.full_name} now sees Accounting` : `${u.full_name} no longer sees Accounting`, () => setUserAccounting(u.id, e.target.checked))}
                     />
+                  </td>
+                  <td className="px-4 py-3">
+                    <input type="checkbox" className="size-4 accent-brand" checked={u.ask_vms || u.role === 'admin'} disabled={u.role === 'admin'} aria-label={`${u.full_name} uses Ask VMS`}
+                      onChange={(e) => void run(e.target.checked ? `${u.full_name} can use Ask VMS` : `${u.full_name} can no longer use Ask VMS`, () => setUserAskVms(u.id, e.target.checked))} />
                   </td>
                   <td className="px-4 py-3">
                     {u.role === 'admin' ? 'Everyone' : (

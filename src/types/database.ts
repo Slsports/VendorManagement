@@ -159,7 +159,7 @@ export type Database = {
           is_active: boolean
           created_at: string
           updated_at: string
-       ; email_signature: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null; places_orders: boolean; sees_freight: boolean; sees_accounting: boolean; can_dnr: boolean; handles_logistics: boolean; note_initials: string | null; can_see: string[]
+       ; email_signature: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null; places_orders: boolean; sees_freight: boolean; sees_accounting: boolean; ask_vms: boolean; can_dnr: boolean; handles_logistics: boolean; note_initials: string | null; can_see: string[]
           enters_counts: boolean
           sends_counts: boolean; dashboard_layout: Json | null; remind_dashboard: boolean; remind_email: boolean; remind_text: boolean; mobile_phone: string | null; reviews_ls_pos: boolean; text_from: string; text_until: string; text_categories: string[] }
         Insert: {
@@ -173,7 +173,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; can_dnr?: boolean; handles_logistics?: boolean; note_initials?: string | null; can_see?: string[]
+       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; ask_vms?: boolean; can_dnr?: boolean; handles_logistics?: boolean; note_initials?: string | null; can_see?: string[]
           enters_counts?: boolean
           sends_counts?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean; text_from?: string; text_until?: string; text_categories?: string[] }
         Update: {
@@ -187,7 +187,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; can_dnr?: boolean; handles_logistics?: boolean; note_initials?: string | null; can_see?: string[]
+       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; ask_vms?: boolean; can_dnr?: boolean; handles_logistics?: boolean; note_initials?: string | null; can_see?: string[]
           enters_counts?: boolean
           sends_counts?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean; text_from?: string; text_until?: string; text_categories?: string[] }
         Relationships: [
@@ -693,6 +693,24 @@ export type Database = {
           { foreignKeyName: 'dropbox_files_line_id_fkey'; columns: ['line_id']; isOneToOne: false; referencedRelation: 'vendor_directory'; referencedColumns: ['id'] },
           { foreignKeyName: 'dropbox_files_rep_group_id_fkey'; columns: ['rep_group_id']; isOneToOne: false; referencedRelation: 'rep_groups'; referencedColumns: ['id'] },
         ]
+      }
+      ask_chats: {
+        Row: { id: string; organization_id: string; owner_id: string; title: string | null; vendor_id: string | null; order_id: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; owner_id: string; title?: string | null; vendor_id?: string | null; order_id?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; owner_id?: string; title?: string | null; vendor_id?: string | null; order_id?: string | null; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      ask_messages: {
+        Row: { id: string; organization_id: string; chat_id: string; role: 'user' | 'assistant'; content: string; status: 'working' | 'done' | 'failed'; progress: string | null; steps: Json; cost_usd: number; input_tokens: number; output_tokens: number; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; chat_id: string; role: 'user' | 'assistant'; content?: string; status?: 'working' | 'done' | 'failed'; progress?: string | null; steps?: Json; cost_usd?: number; input_tokens?: number; output_tokens?: number; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; chat_id?: string; role?: 'user' | 'assistant'; content?: string; status?: 'working' | 'done' | 'failed'; progress?: string | null; steps?: Json; cost_usd?: number; input_tokens?: number; output_tokens?: number; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      change_requests: {
+        Row: { id: string; organization_id: string; requested_by: string; chat_id: string | null; title: string; details: string; why: string | null; status: 'waiting' | 'approved' | 'declined' | 'built'; decision_note: string | null; decided_by: string | null; decided_at: string | null; created_at: string }
+        Insert: { id?: string; organization_id: string; requested_by: string; chat_id?: string | null; title: string; details?: string; why?: string | null; status?: 'waiting' | 'approved' | 'declined' | 'built'; decision_note?: string | null; decided_by?: string | null; decided_at?: string | null; created_at?: string }
+        Update: { id?: string; organization_id?: string; requested_by?: string; chat_id?: string | null; title?: string; details?: string; why?: string | null; status?: 'waiting' | 'approved' | 'declined' | 'built'; decision_note?: string | null; decided_by?: string | null; decided_at?: string | null; created_at?: string }
+        Relationships: []
       }
       ai_usage: {
         Row: { id: string; organization_id: string; purpose: string; model: string; input_tokens: number; output_tokens: number; cost_usd: number; items: number; created_at: string; request_id: string | null; cache_read_tokens: number; cache_write_tokens: number }
@@ -1224,6 +1242,9 @@ export type Database = {
       mail_watch_set: { Args: { p_thread: string; p_address: string; p_name?: string | null }; Returns: string }
       mail_watch_stop: { Args: { p_id: string }; Returns: undefined }
       can_see_mailbox: { Args: { p_mailbox: string }; Returns: boolean }
+      can_ask_vms: { Args: Record<string, never>; Returns: boolean }
+      ask_my_spend: { Args: Record<string, never>; Returns: number }
+      change_request_decide: { Args: { p_id: string; p_status: string; p_note: string }; Returns: undefined }
       can_see_person: { Args: { p_person: string }; Returns: boolean }
       mail_with: { Args: { p_org: string; p_email: string; p_company?: boolean; p_limit?: number }; Returns: { id: string; thread_id: string; direction: 'in' | 'out' | 'internal'; from_email: string | null; from_name: string | null; to_emails: string[]; cc_emails: string[]; subject: string | null; snippet: string | null; received_at: string; has_attachments: boolean; vendor_id: string | null; vendor_name: string | null }[] }
       mail_free_domain: { Args: { p_domain: string }; Returns: boolean }
