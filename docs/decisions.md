@@ -3888,3 +3888,7 @@ Ask VMS chat (Dana, Nov 5): for managers and buyers doing buying work. Trevor is
 questions, but may get a chat for his own work later. Dana reads everyone's chats ("so I can know if they are asking the right
 questions to get the data they need - its good training"). Model: Claude Opus 5.5 (Dana: "yes go with opus and $5 limit"),
 $5 a day per person. Built Nov 5 (migrations 0311-0312, function ask-vms, menu Ask VMS, Settings › Users tick; Jarrett ticked).
+
+## Nov 5, 2026 — Cc gets the same name lookup as To
+Dana: "If I send an email to a vendor and I want to cc WWD, I want it to be easy to find." Under the Cc box in the email window,
+"Add someone to Cc: type a name or Worldwide" picks from the same address book as To (Worldwide corporate contacts included).

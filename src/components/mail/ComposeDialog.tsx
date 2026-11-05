@@ -80,6 +80,8 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
   const bodyRef = useRef<HTMLTextAreaElement>(null)
   const book = useSupabaseQuery(async () => (organization ? listAddressBook(organization.id) : []), [organization?.id])
   const [who, setWho] = useState('')
+  // the same name lookup for Cc (Dana, Nov 5: "If I send an email to a vendor and I want to cc WWD, I want it to be easy to find")
+  const [ccWho, setCcWho] = useState('')
   // From: orders@ or my own mailbox, for a new email
   const [fromBox, setFromBox] = useState<string>(draft.mailbox_id ?? '')
   const boxes = useSupabaseQuery(async () => (organization && !draft.thread_id ? listMailboxes(organization.id) : []), [organization?.id, draft.thread_id])
@@ -101,6 +103,11 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
   function addTo(email: string) {
     const list = splitAddresses(to)
     if (!list.map((a) => a.toLowerCase()).includes(email.toLowerCase())) setTo([...list, email].join(', '))
+  }
+
+  function addCc(email: string) {
+    const list = splitAddresses(cc)
+    if (!list.map((a) => a.toLowerCase()).includes(email.toLowerCase())) setCc([...list, email].join(', '))
   }
 
   async function submit(e: FormEvent) {
@@ -217,6 +224,18 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
             </div>
           ) : null}
           <FormField label="Cc" htmlFor="compose-cc"><Input id="compose-cc" value={cc} onChange={(e) => setCc(e.target.value)} autoComplete="off" /></FormField>
+          {(book.data ?? []).length ? (
+            <div className="-mt-1">
+              <Input list="compose-book" value={ccWho} aria-label="Add someone to Cc"
+                placeholder="Add someone to Cc: type a name or Worldwide"
+                className="h-9"
+                onChange={(e) => {
+                  const v = e.target.value
+                  const hit = (book.data ?? []).find((b) => bookLabel(b) === v)
+                  if (hit) { addCc(hit.email); setCcWho('') } else setCcWho(v)
+                }} />
+            </div>
+          ) : null}
           <FormField label="Subject" htmlFor="compose-subject"><Input id="compose-subject" value={subject} onChange={(e) => setSubject(e.target.value)} required /></FormField>
           <FormField label="Message" htmlFor="compose-body">
             <Textarea id="compose-body" ref={bodyRef} value={body} onChange={(e) => setBody(e.target.value)} rows={12} />
