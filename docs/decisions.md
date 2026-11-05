@@ -3899,3 +3899,11 @@ I went to type jarr for jarrett and nothing came up." To and Cc now suggest peop
 the Worldwide contacts, rep group reps and every vendor contact (inactive vendors marked). The separate "Add someone" boxes are gone.
 Dana: "I cant see where to delete a draft." The trash can was the last column, off the edge of a wide table; it is now first, and
 an open draft has a **Delete draft** button.
+
+## Nov 5, 2026 — Orders emailed to an address VMS does not know
+Dana: "If the vendor name is listed anywhere in the email or the attachment it should attach it to that vendor. I am trying to
+avoid having too many things that need my attention." Before this, a sent order whose "to" address was not on file was marked
+"no vendor" before Claude read it. Now every sent email is sorted and read; when the address is unknown, Claude names the vendor
+from the email and the file, VMS matches it to the vendor list (names and aliases), adds the order under that vendor and saves the
+address as the vendor's Orders contact so the next email matches on its own. Only an email that names no vendor anywhere stays
+"no vendor". Back-check: the 1,359 sent emails marked "no vendor" in the last 12 months were put back in the queue (migration 0313).

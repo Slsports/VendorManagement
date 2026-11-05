@@ -22,7 +22,7 @@ const BACK_DAYS = 365
 const CHECK_STATUS_DAYS = 120
 
 interface Att { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; storage_path: string | null; vendor_link_id: string | null }
-interface Mail { id: string; organization_id: string; gmail_id: string; gmail_box: string | null; vendor_id: string | null; subject: string | null; body_text: string | null; to_emails: string[]; received_at: string; attachments: Att[] }
+interface Mail { id: string; organization_id: string; gmail_id: string; gmail_box: string | null; vendor_id: string | null; subject: string | null; body_text: string | null; to_emails: string[]; received_at: string; mailbox_id: string | null; thread_id: string | null; attachments: Att[] }
 interface InMail extends Mail { from_email: string | null; from_name: string | null; mailbox_id: string | null; thread_id: string | null }
 const SERVICE_PER_RUN = 3
 
@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
   }
 })
 
-const SELECT = 'id, organization_id, gmail_id, gmail_box, vendor_id, subject, body_text, to_emails, received_at, attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, storage_path, vendor_link_id)'
+const SELECT = 'id, organization_id, gmail_id, gmail_box, vendor_id, subject, body_text, to_emails, received_at, mailbox_id, thread_id, attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, storage_path, vendor_link_id)'
 const since = () => new Date(Date.now() - BACK_DAYS * 86_400_000).toISOString()
 const looksLikeJunk = (a: Att) => /^(image\d*|outlook|logo|signature|att\d+)\b/i.test(a.file_name) || /\.(ics|vcf|htm|html)$/i.test(a.file_name)
 
@@ -76,10 +76,11 @@ async function sortStep(db: SupabaseClient) {
   const mails = (data ?? []) as unknown as Mail[]
   if (!mails.length) return 0
   const now = new Date().toISOString()
-  const noVendor = mails.filter((m) => !m.vendor_id)
-  if (noVendor.length) await db.from('emails').update({ order_scan: { result: 'no_vendor' }, order_scanned_at: now }).in('id', noVendor.map((m) => m.id))
+  // an email to an address VMS does not know is sorted and read like the rest: Claude names the vendor from the email
+  // and the file (Dana, Nov 5: "If the vendor name is listed anywhere in the email or the attachment it should attach
+  // it to that vendor")
   const byOrg = new Map<string, Mail[]>()
-  for (const m of mails.filter((x) => x.vendor_id)) byOrg.set(m.organization_id, [...(byOrg.get(m.organization_id) ?? []), m])
+  for (const m of mails) byOrg.set(m.organization_id, [...(byOrg.get(m.organization_id) ?? []), m])
   for (const [org, list] of byOrg) {
     const orders = await sortSentEmails(db, org, list.map((m) => ({
       id: m.id, to: (m.to_emails ?? []).join(', '), subject: m.subject, text: m.body_text ?? '', attachments: (m.attachments ?? []).filter((a) => !looksLikeJunk(a)).map((a) => a.file_name),
@@ -153,9 +154,10 @@ const norm = (s: string | null | undefined) => (s ?? '').toUpperCase().replace(/
 const day = (iso: string) => iso.slice(0, 10)
 const plusDays = (d: string, n: number) => new Date(new Date(`${d}T12:00:00Z`).getTime() + n * 86_400_000).toISOString().slice(0, 10)
 
-async function readStep(db: SupabaseClient, m: Mail) {
+async function readStep(db: SupabaseClient, sent: Mail) {
+  let m = sent
   try {
-    const { data: vendor } = await db.from('vendors').select('id, name').eq('id', m.vendor_id!).maybeSingle()
+    const { data: vendor } = m.vendor_id ? await db.from('vendors').select('id, name').eq('id', m.vendor_id).maybeSingle() : { data: null }
     const files: PaperFile[] = []
     const sheets: { name: string; text: string }[] = []
     const used: { a: Att; bytes: Uint8Array }[] = []
@@ -171,6 +173,14 @@ async function readStep(db: SupabaseClient, m: Mail) {
     }
     const r = await readSentOrder(db, m.organization_id, { vendor: vendor?.name ?? 'Unknown vendor', subject: m.subject, sent_on: day(m.received_at), text: m.body_text ?? '', files, sheets })
     if (!r.is_order) return await finish(db, m, { result: 'not_order' })
+    if (!m.vendor_id) {
+      // the address was not on file: the vendor Claude named, matched to the vendor list (names and aliases)
+      const named = r.vendor_name ? (await db.rpc('vendor_by_name', { p_org: m.organization_id, p_name: r.vendor_name })).data as string | null : null
+      if (!named) return await finish(db, m, { result: 'no_vendor', vendor_name: r.vendor_name })
+      await db.from('emails').update({ vendor_id: named }).eq('id', m.id)
+      m = { ...m, vendor_id: named }
+      if (!m.mailbox_id || await sharedThread(db, m.thread_id)) await learnOrderAddress(db, m, r.vendor_name!)
+    }
     // newer email wins (Dana, Nov 3): a revised or re-sent order replaces the lines, an add-on adds only what is new, a cancel cancels
     const change = r.change ?? (r.adds_to_earlier ? 'adds' : 'new')
     let orderId = await matchOrder(db, m, r)
@@ -252,6 +262,24 @@ async function refileOrderFiles(db: SupabaseClient, started: number) {
 async function finish(db: SupabaseClient, m: Mail, scan: Record<string, unknown>) {
   await db.from('emails').update({ order_scan: scan, order_scanned_at: new Date().toISOString(), ...(scan.order_id ? { order_id: scan.order_id } : {}) }).eq('id', m.id)
   return { id: m.id, ...scan }
+}
+
+/**
+ * The address we sent the order to is saved on the vendor as an Orders contact, so the next email matches on its own.
+ * Never from a private mailbox (nothing from one is copied but the order itself), never an address another vendor has.
+ */
+async function learnOrderAddress(db: SupabaseClient, m: Mail, vendorName: string) {
+  const ours = /@shaverlakesports\.com$/i
+  for (const raw of m.to_emails ?? []) {
+    const email = raw.toLowerCase().trim()
+    if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(email) || ours.test(email)) continue
+    const { data: have } = await db.from('vendor_emails').select('id, vendor_id').eq('organization_id', m.organization_id).ilike('email', email)
+    if (have?.length) continue
+    await db.from('vendor_emails').insert({
+      organization_id: m.organization_id, vendor_id: m.vendor_id, email, contact_type: 'orders', roles: ['orders'],
+      source: 'email_enrichment', confidence: 0.8, notes: `We sent our order of ${day(m.received_at)} here (the email named ${vendorName})`, learned_email_id: m.id,
+    })
+  }
 }
 
 /** The order on file: same PO for the vendor, else the vendor's one order within 5 days with the same total. */
@@ -382,7 +410,7 @@ async function revisedTotal(db: SupabaseClient, orderId: string, total: number |
 }
 
 // ---- order emails from ordering services ---------------------------------------------------------------------------
-const IN_SELECT = `${SELECT}, from_email, from_name, mailbox_id, thread_id`
+const IN_SELECT = `${SELECT}, from_email, from_name`
 
 async function serviceQueue(db: SupabaseClient): Promise<InMail[]> {
   const { data: orgs } = await db.from('mail_accounts').select('organization_id')
@@ -432,7 +460,7 @@ async function serviceStep(db: SupabaseClient, m: InMail) {
     for (const [i, one] of r.orders.entries()) {
       const reading: SentOrderReading = {
         is_order: true, adds_to_earlier: false, change: 'new', po_number: one.po_number ?? one.order_number, ship_date: one.ship_date, total: one.total,
-        description: one.description, placed_by: r.placed_by, store: r.store, items: one.items, note: r.note,
+        description: one.description, placed_by: r.placed_by, store: r.store, vendor_name: r.vendor_name, items: one.items, note: r.note,
         // an ordering service's own email: its PDF is the order; pictures are its logo
         order_files: used.filter(({ a }) => !isPicture(a)).map(({ a }) => a.file_name),
       }
