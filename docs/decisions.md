@@ -3996,3 +3996,6 @@ Nov 6, Monday sales report: only for the Marina (SLM) and the Happy Camper (GS),
 about April 15, Happy Camper about mid-May; both close about October 15, all depending on weather and lake levels. So the
 Monday task runs while a store is open (Dana or Cat marks the store open and closed for the season), never on a fixed date.
 Not built; waiting for go.
+Nov 6, Dana: "Nobody gets the Acctg tick but me. Cat creates the report, I pay it. Sno park needs to be live before Dec 15."
+Go-ahead for the Sno-Park build, due before the Dec 15 report; Cat makes the monthly report, Dana pays the State. Dana also
+asked whether the Monday report can create the SLS → SLM / GS transfer in LS (checking LS's API).
