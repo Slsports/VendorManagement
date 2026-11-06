@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
 
 interface RunInput { db: SupabaseClient; udb: SupabaseClient; me: Caller; test: boolean; chatId: string; answerId: string; message: string; history: { role: string; content: string }[]; vendorId: string | null; orderId: string | null }
 
-const SYSTEM = `You are Ask VMS, the buying assistant inside VMS, the vendor management system of Shaver Lake Sports Inc. The company runs stores in the Shaver Lake, California mountain resort area. In Lightspeed (LS, the point of sale) the stores are SLS (Shaver Lake Sports, the main store: outdoor, sporting goods, snow gear in winter), SLM (the marina) and GS (The Happy Camper general store). SLH (the hardware store) is on a separate LS account and its sales are not in VMS. Most buying goes through Worldwide Distributors (WWD), a buying group, at group prices; some vendors are bought direct or on Faire.
+const SYSTEM = `You are Ask VMS, the buying assistant inside VMS, the vendor management system of Shaver Lake Sports Inc. The company runs stores in the Shaver Lake, California mountain resort area. In Lightspeed (LS, the point of sale) the stores are SLS (Shaver Lake Sports, the main store: outdoor, sporting goods, snow gear in winter), SLM (the marina) and GS (The Happy Camper general store). SLH (the hardware store) is on a separate LS account and its sales are not in VMS. Most buying goes through Worldwide Distributors (WWD), a buying group, at group prices; some vendors are bought direct or on Faire. Some SLS goods (Paricon sleds, charcoal and BBQ, camping) are bought from Emery Jensen (EJD), the hardware store's weekly supplier, because EJD's freight is a flat $65 per truckload.
 
 The people asking are the owner, Dana Powell, and her buyers. Dana reads these chats to coach her staff, so treat each question as a chance to teach: when it helps, say what you checked and why (what is on order, what sold last season and the season before, what is on the shelf, and where brands overlap in the same category), so the person learns to do the check. Be encouraging, never scolding.
 
@@ -117,7 +117,7 @@ const TOOLS: Anthropic.Tool[] = [
       stores: { type: 'array', items: { type: 'string', enum: ['SLS', 'SLM', 'GS'] }, description: 'Default: all three' },
       group_by: { type: 'string', enum: ['item', 'category', 'vendor'], description: 'Default item' },
     }, required: ['periods'] } },
-  { name: 'orders', description: 'Orders in VMS for a vendor, or all open orders. Each order: PO, status, dates, estimated ship date, total, who placed it, stores, received / entered in LS / paid dates, and how many lines and units are entered.',
+  { name: 'orders', description: 'Orders in VMS for a vendor, or all open orders. Each order: PO, status, dates, estimated ship date, total, who placed it, stores, received / entered in LS / paid dates, and how many lines and units are entered. A vendor\'s orders include the ones bought for it through a hardware supplier (for_sls_vendor; for example Paricon sleds bought from Emery Jensen, EJD).',
     input_schema: { type: 'object', properties: {
       vendor_id: { type: 'string' }, open_only: { type: 'boolean', description: 'Only orders not yet received, paid or cancelled' },
       since: { type: 'string', description: 'Order date from, YYYY-MM-DD' }, po: { type: 'string', description: 'Part of a PO number' },
@@ -278,9 +278,10 @@ async function callTool(r: RunInput, name: string, input: Record<string, unknown
     }
     case 'sales_and_stock': return salesAndStock(r, input)
     case 'orders': {
-      let q = udb.from('orders').select('id, po_number, status, order_date, season, est_ship_date, est_cost, final_cost, placed_by, description, store_codes, date_received, date_entered_ls, paid_date, backorder, free_shipping, shipment_notes, vendor_id, vendor:vendors!orders_vendor_id_fkey(name)')
+      let q = udb.from('orders').select('id, po_number, status, order_date, season, est_ship_date, est_cost, final_cost, placed_by, description, store_codes, date_received, date_entered_ls, paid_date, backorder, free_shipping, shipment_notes, vendor_id, brand_vendor_id, vendor:vendors!orders_vendor_id_fkey(name)')
         .eq('organization_id', org).order('order_date', { ascending: false, nullsFirst: false }).limit(60)
-      if (str(input.vendor_id)) q = q.eq('vendor_id', str(input.vendor_id))
+      // a vendor's own orders and the ones bought for it through a hardware supplier (Paricon from EJD, Dana Nov 6)
+      if (str(input.vendor_id)) q = q.or(`vendor_id.eq.${str(input.vendor_id)},brand_vendor_id.eq.${str(input.vendor_id)}`)
       if (input.open_only) q = q.not('status', 'in', '(received,entered,ready_to_pay,paid,cancelled)')
       if (str(input.since)) q = q.gte('order_date', str(input.since))
       if (str(input.po)) q = q.ilike('po_number', `%${str(input.po)}%`)
@@ -290,7 +291,10 @@ async function callTool(r: RunInput, name: string, input: Record<string, unknown
       const { data: lines } = ids.length ? await udb.from('order_lines').select('order_id, quantity').in('order_id', ids) : { data: [] }
       const per = new Map<string, { lines: number; units: number }>()
       for (const l of (lines ?? []) as { order_id: string; quantity: number | null }[]) { const p = per.get(l.order_id) ?? { lines: 0, units: 0 }; p.lines++; p.units += Number(l.quantity ?? 0); per.set(l.order_id, p) }
-      return { orders: (data ?? []).map((o) => ({ ...o, vendor: (o.vendor as unknown as { name: string } | null)?.name ?? null, lines_entered: per.get(o.id)?.lines ?? 0, units_entered: per.get(o.id)?.units ?? 0, link: `/orders/${o.id}` })) }
+      const brandIds = [...new Set((data ?? []).map((o) => o.brand_vendor_id).filter(Boolean))] as string[]
+      const { data: brands } = brandIds.length ? await udb.from('vendors').select('id, name').in('id', brandIds) : { data: [] }
+      const brandName = new Map((brands ?? []).map((b: { id: string; name: string }) => [b.id, b.name]))
+      return { orders: (data ?? []).map((o) => ({ ...o, vendor: (o.vendor as unknown as { name: string } | null)?.name ?? null, for_sls_vendor: o.brand_vendor_id ? brandName.get(o.brand_vendor_id) ?? null : null, lines_entered: per.get(o.id)?.lines ?? 0, units_entered: per.get(o.id)?.units ?? 0, link: `/orders/${o.id}` })) }
     }
     case 'order_paperwork': {
       const id = str(input.order_id)

@@ -62,7 +62,8 @@ export async function countOrdersByStatus(organizationId: string): Promise<Recor
 
 /** A vendor's orders, newest first, with a few totals for the vendor page. */
 export interface VendorOrderSummary {
-  orders: Order[]
+  /** through: the supplier an order was bought through (Paricon sleds from EJD); for: the SLS vendor a supplier's order is for (Dana, Nov 6) */
+  orders: (Order & { through: { id: string; name: string } | null; for_vendor: { id: string; name: string } | null })[]
   count: number
   lastOrderDate: string | null
   totalSpend: number
@@ -71,9 +72,19 @@ export interface VendorOrderSummary {
 }
 
 export async function vendorOrderSummary(vendorId: string): Promise<VendorOrderSummary> {
-  const { data, error } = await supabase.from('orders').select('*').eq('vendor_id', vendorId).order('order_date', { ascending: false, nullsFirst: false })
+  // its own orders, and the ones bought for it through a hardware supplier (Dana, Nov 6: Paricon sleds from EJD)
+  const { data, error } = await supabase.from('orders').select('*').or(`vendor_id.eq.${vendorId},brand_vendor_id.eq.${vendorId}`).order('order_date', { ascending: false, nullsFirst: false })
   if (error) throw error
-  const orders = data ?? []
+  const rows = data ?? []
+  const otherIds = [...new Set(rows.flatMap((o) => [o.vendor_id, o.brand_vendor_id]).filter((x): x is string => !!x && x !== vendorId))]
+  const { data: names, error: e2 } = otherIds.length ? await supabase.from('vendors').select('id, name').in('id', otherIds) : { data: [], error: null }
+  if (e2) throw e2
+  const name = new Map((names ?? []).map((v) => [v.id, v]))
+  const orders = rows.map((o) => ({
+    ...o,
+    through: o.vendor_id !== vendorId ? name.get(o.vendor_id) ?? null : null,
+    for_vendor: o.vendor_id === vendorId && o.brand_vendor_id ? name.get(o.brand_vendor_id) ?? null : null,
+  }))
   const seasons = { summer: 0, winter: 0 }
   for (const o of orders) if (o.season) seasons[o.season]++
   return {
