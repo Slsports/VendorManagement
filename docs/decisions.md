@@ -4040,3 +4040,9 @@ conversations; new mail still finds its contact as it arrives. The full re-match
 off Tyler Powell / Greg Powell (their addresses are our own since Oct 19), 87 off contacts Dana had ignored, 14 whose address is
 on no contact, 178 moved to the contact their address now belongs to. Same day: the vendor Activity feed was failing on every
 vendor (email list over the 8-second limit); it now finds the vendor's conversations first (0318).
+
+## Nov 6 — Hand-placed billing@ conversations stay where Dana puts them (0320)
+Dana: "yes, make hand-placed ones stay". Picking a contact on a billing@ conversation's Who line (or taking it off) now marks it
+placed by hand; new mail in it, confirming/ignoring/saving contacts and back-checks leave it alone. Merging contacts still moves
+it to the merged contact. "Let VMS match it" on the same list goes back to matching by address. Earlier hand placements were
+never recorded, so none could be marked (including any among the 14 taken off in the 0319 back-check).

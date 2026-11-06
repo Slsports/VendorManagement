@@ -120,8 +120,9 @@ export async function rematchAccountingMail(organizationId: string): Promise<num
   return data ?? 0
 }
 
-export async function setThreadContact(threadId: string, contactId: string | null) {
-  const { error } = await supabase.rpc('accounting_set_thread_contact', { p_thread: threadId, p_contact: contactId })
+/** Put a conversation on a contact by hand (it then stays there, Dana Nov 6), take it off, or let VMS match it again (auto). */
+export async function setThreadContact(threadId: string, contactId: string | null, auto = false) {
+  const { error } = await supabase.rpc('accounting_set_thread_contact', { p_thread: threadId, p_contact: contactId, p_auto: auto })
   if (error) throw error
 }
 
