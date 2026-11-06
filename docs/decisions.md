@@ -3930,3 +3930,5 @@ and some camping stuff."
 - Back-check: 3 EJD orders tied: EJDPARICON11526 (moved SLH → SLS), PARICON11724 (already SLS), and NEEDOH61226 (Jun 12, 2026, tied
   to SCHYLLING by its "Needoh" name, left SLH for Dana to say which store it was for).
 - The two EJD newsletter order forms (Growing Media / Mixing Warehouse) are waiting on Dana: remove, or keep with saved copies.
+- NEEDOH61226 (Needoh toys from EJD, Jun 12, 2026): Dana, Nov 6: "They were not able to fulfill that order - its cancelled so just
+  ignore it." Marked Cancelled with a note; it had no open tasks.
