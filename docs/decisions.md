@@ -4022,3 +4022,10 @@ sold passes, and Dana gets the check task; Mailed (date, tracking) marks the boo
 closes the season. The page shows LS's permit sales this season as a check next to the books. Help: four Sno-Park articles.
 Lightspeed transfers: their API's Transfer and TransferItem are read only (GET, no create), confirmed in Lightspeed's own
 developer docs on Nov 6; VMS cannot create the SLS → SLM / GS transfer for the Monday report. It can list what to transfer.
+
+## Nov 6, 2026 — What they sell: our LS categories and Worldwide's Product Lines, side by side
+Dana: "I want the category of what we purchase from a vendor to show as well as what WWD lists as their categories. WWD's
+categories are not as broad as ours but I want to know what other categories they sell other than the ones we buy from them."
+"no matching list necessary. I'd rather see too much than not enough." The vendor page's What they sell shows two lists: our LS
+categories for their items (with items still carried) and every Worldwide portal Product Line, each in its own words, no matching.
+Hand-added entries stay below. (The box had been empty for every vendor: nothing ever filled vendor_sells.)
