@@ -4063,3 +4063,6 @@ commercial property at 41698 Tollhouse belong in that Company Info folder, not 1
   Chicago Title / Arlene Fontes added as a confirmed Accounting contact (contracts; phones and address from her Jan 8 signature;
   ctt.com and her address); the Reconveyance conversation placed on her by hand; the reconveyance document moved to her, marked
   filed, with the payoff note.
+- Same day, Dana (correction): Powell & Son Properties owns 41777 Tollhouse, so its papers go in Company Info › Powell & Son
+  Properties › 41777 Tollhouse. Never move insurance or bill statements (utilities, propane). Mortgage and property-tax papers
+  for 41777 go there; each paper is opened and its property confirmed before it is moved.
