@@ -3976,3 +3976,6 @@ Nov 5, from the State's flowchart (OHMVR Division, Sno-Park Vendor Permit Proces
    season end. 4. Season end May 30, due by June 20: all books (empty, full, partial), the final OHV 54SP and payment. Mail to
    OHMVR Division, P.O. Box 942896, Sacramento, CA 94296. Vendors are liable for every permit assigned until returned; no
    outstanding permits or money allowed to take part. Contacts: Monica Perez (Program Analyst), Amy Woodhull (Program Manager).
+Nov 5: the season starts when the State emails the year's vendor packet ("2026-2027 SnoPark Season - Vendor Registration",
+Monica Perez, Sep 1 this year, re-sent Oct 8; replies Nov 3-4 with the forms). Dana fills the packet in and returns it with the
+first order. That email, not a date, opens the season in VMS. The mail is in Dana's own mailbox today.
