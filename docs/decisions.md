@@ -3911,3 +3911,9 @@ Same day, found in the back-check: the Okuma WWD order (Aug 29) had been filed u
 (fong@activeoutdoors.com) is on both vendors and the address match picked Yakima. Rule extended: the vendor named in the email
 or order form wins over the address whenever it matches the vendor list, and the address is added to that vendor. The order,
 its files and emails were moved to Okuma; the two other sent orders to shared rep addresses were re-read.
+
+## Nov 6, 2026 — Fix: the EJD Bill.com watch only counts billing@ mail (0314)
+EJD's order confirmation for the Paricon sleds (EJDPARICON11526, Nov 5) came to orders@ from EJD's system, and the 0309 watch took it
+as "EJD now bills billing@ directly": it turned Send invoices to Bill.com on for EMERY JENSEN DIST and STIHL INC and gave Dana a
+task to turn off the Gmail forward. Wrong; nothing was sent to Bill.com. Both are back to off with the watch on, the task is closed by
+VMS with a note, and from now on only mail that reaches the billing@ mailbox counts.
