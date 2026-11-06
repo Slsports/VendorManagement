@@ -3968,3 +3968,11 @@ clearly best (`order_match_undated`, migration 0316). An order past confirmed ke
 missing. This would have put the Planet Cotton hoodie emails on PO 26328 instead of adding a second order.
 Nov 5, Sno-Park correction: nothing monthly is emailed. Each month the report, the check and the empty (fully sold) books go
 to the State by mail. Email is only for ordering more books and for Dana's vendor application at the start of the season.
+Nov 5, from the State's flowchart (OHMVR Division, Sno-Park Vendor Permit Process, season Nov 1, 2026 to May 30, 2027):
+1. Registration: Agreement form 01 - OHV 56SP plus a copy of the business license, emailed to ohmvr.permits@parks.ca.gov;
+   the Division contacts the vendor if approved. 2. Permit request: form 02 - OHV 145SP, signed, emailed; 5-10 business days,
+   confirmation email and FedEx tracking. 3. Monthly, due the 15th: report only EMPTY books on OHV 54SP, pay for all permits
+   sold, return the empty books (covers) by mail. Unsold books are kept until emptied; partially sold books are accepted only at
+   season end. 4. Season end May 30, due by June 20: all books (empty, full, partial), the final OHV 54SP and payment. Mail to
+   OHMVR Division, P.O. Box 942896, Sacramento, CA 94296. Vendors are liable for every permit assigned until returned; no
+   outstanding permits or money allowed to take part. Contacts: Monica Perez (Program Analyst), Amy Woodhull (Program Manager).
