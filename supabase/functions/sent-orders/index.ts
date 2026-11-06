@@ -194,7 +194,7 @@ async function readStep(db: SupabaseClient, sent: Mail) {
       return await finish(db, m, { result: ok ? 'cancelled' : 'cancel_too_late', order_id: orderId, po: r.po_number })
     }
     if (orderId) {
-      const mode = change === 'revises' || change === 'resends' ? 'replace' : adding || change === 'adds' ? 'append' : 'fill'
+      const mode = await settled(db, orderId) ? 'fill' : change === 'revises' || change === 'resends' ? 'replace' : adding || change === 'adds' ? 'append' : 'fill'
       await fileOn(db, m, orderId, r, used, mode)
       if (mode === 'replace' && change === 'revises') await revisedTotal(db, orderId, r.total, `Revised by our email of ${day(m.received_at)}.`)
       await db.rpc('order_checks_refind', { p_org: m.organization_id, p_vendor: m.vendor_id })
@@ -300,9 +300,20 @@ async function matchOrder(db: SupabaseClient, m: Mail, r: SentOrderReading): Pro
   const near = orders.filter((o) => o.order_date && dist(o.order_date) <= 5)
     .sort((a, b) => dist(a.order_date!) - dist(b.order_date!) || Math.abs(Number(a.est_cost ?? a.final_cost ?? 1e9) - (r.total ?? 0)) - Math.abs(Number(b.est_cost ?? b.final_cost ?? 1e9) - (r.total ?? 0)))
   if (near.length) return near[0]!.id
+  // an undated order whose items line up (Dana, Nov 5): the order guide's orders carry no date, and the Planet Cotton
+  // hoodie emails had made a second order next to PO 26328, already paid
+  const text = [r.description, ...r.items.map((l) => [l.vendor_item_id, l.description].filter(Boolean).join(' '))].filter(Boolean).join('. ')
+  const { data: undated } = await db.rpc('order_match_undated', { p_vendor: m.vendor_id!, p_text: text })
+  if (undated) return undated as string
   // an order typed on Dana's sheet without a date ("PAJAMAS - WAITING ON CONFIRM"): the vendor's one open undated order
   const { data: open } = await db.from('orders').select('id').eq('vendor_id', m.vendor_id!).in('status', ['open', 'awaiting_confirmation']).is('order_date', null)
   return open?.length === 1 ? open[0]!.id : null
+}
+
+/** An order past confirmed (shipped, received, entered, paid) keeps its lines: our email only fills what is missing. */
+async function settled(db: SupabaseClient, orderId: string): Promise<boolean> {
+  const { data } = await db.from('orders').select('status').eq('id', orderId).maybeSingle()
+  return !['open', 'awaiting_confirmation', 'confirmed'].includes(data?.status ?? 'open')
 }
 
 /** "Add to order": the vendor's latest order from the 45 days before this email. */

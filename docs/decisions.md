@@ -3960,3 +3960,9 @@ Season ranges; last season "B450 - B473") and a declaration signed by Cat. Nov 2
 check $2,586.00. Dec 2025: day 5726-5750, 5776-6225, 7576-7750 (650), season 8611-8650, 9441-9530 (130), check $13,468.00.
 End of season: day 11176-11192 (17), season 9711-9715, 9721-9726, 9731-9735 (16), check $826.00. Files named
 "01 - 12-15-25 NOVEMBER 2025 SNOPARK SUBMISSION" (number, date sent, month). Planning only.
+
+## Nov 5, 2026 — Sent orders match undated orders whose items line up
+Dana: "GO ON THAT." The sent-mail reader now also matches the vendor's undated order (any status but cancelled, so the order
+guide's paid and entered orders count) when the item words line up the way the duplicate scan judges it and one candidate is
+clearly best (`order_match_undated`, migration 0316). An order past confirmed keeps its lines; our email only fills what is
+missing. This would have put the Planet Cotton hoodie emails on PO 26328 instead of adding a second order.

@@ -1150,6 +1150,8 @@ export type Database = {
       vendor_confirm_prepare: { Args: { p_org: string; p_vendor?: string | null }; Returns: number }
       vendor_confirm_states: { Args: { p_org: string }; Returns: { vendor_id: string; state: string; last_sent: string | null; confirmed_at: string | null }[] }
       vendor_by_name: { Args: { p_org: string; p_name: string }; Returns: string | null }
+      text_item_words: { Args: { p_text: string }; Returns: string[] }
+      order_match_undated: { Args: { p_vendor: string; p_text: string }; Returns: string | null }
       service_order_queue: { Args: { p_org: string; p_limit?: number }; Returns: { email_id: string }[] }
       resolve_rep_line: { Args: { p_item: string; p_action: string }; Returns: string | null }
       supply_add: { Args: { p_org: string; p_summary: string; p_requester?: string | null; p_store?: string | null }; Returns: string }
