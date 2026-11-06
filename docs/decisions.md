@@ -3979,3 +3979,7 @@ Nov 5, from the State's flowchart (OHMVR Division, Sno-Park Vendor Permit Proces
 Nov 5: the season starts when the State emails the year's vendor packet ("2026-2027 SnoPark Season - Vendor Registration",
 Monica Perez, Sep 1 this year, re-sent Oct 8; replies Nov 3-4 with the forms). Dana fills the packet in and returns it with the
 first order. That email, not a date, opens the season in VMS. The mail is in Dana's own mailbox today.
+Nov 5: the Sno-Park mail comes to billing@ (34 emails there in the last 15 months, none shared, none on the vendor). The sender
+@parks.ca.gov is still "unknown" with its "which vendor?" card waiting in the review queue. Once Dana answers it as CA Snow Park
+(and their address is on the vendor), billing@'s vendor conversations with them share to Orders on their own (migration 0278)
+and the packet email can open the season.
