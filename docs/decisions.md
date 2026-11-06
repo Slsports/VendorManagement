@@ -3944,3 +3944,6 @@ vendors. We email an order, they FedEx the passes, we add them to LS inventory. 
 we report what we sold and mail them a check for it; after the season we send a final report, settle up, and return the unsold
 passes. Cat kept track of this last season and will own it once the process is in VMS. Not built yet; Dana to supply their report
 forms, the season dates and due day, and Cat's login.
+Dana, same evening: every pass (season or day) carries a unique number. The monthly report lists the numbers sold that month; Cat
+will upload a scan of the sold passes with the book number, and VMS must fill the Excel report form the State provides. Initial
+planning only; Dana will upload the form and last season's information to go from.
