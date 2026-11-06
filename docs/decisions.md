@@ -4054,3 +4054,6 @@ in #2 - Its a commercial property and should probably be in the business folder.
 Sports › Company Info › 41698 Tollhouse as "2026-01-08 Full Reconveyance 41698 Tollhouse - Chicago Title 2026-0001604.pdf" (same
 bytes as the copy in Accounting Documents, so the Dropbox reader links it instead of filing a second copy). Papers for the
 commercial property at 41698 Tollhouse belong in that Company Info folder, not 1-GP › Properties.
+- Same day, Dana: "Anything for 41777 Tollhouse goes in the same company folder under 41777 Tollhouse folder." → Dropbox ›
+  Documents › 1-A Shaver Lake Sports › Company Info › 41777 Tollhouse (folder made by Dana Nov 6). Older 41777 papers still sit
+  in Company Info › Powell & Son Properties (e.g. the 2021 prelim for "41777 Highway 168") and in Insurance; not moved.
