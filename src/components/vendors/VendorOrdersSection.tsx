@@ -63,7 +63,10 @@ export function VendorOrdersSection({ vendorId, vendorName, canAdd = false }: { 
                   <tr key={o.id} className="align-top">
                     <td className="whitespace-nowrap py-1.5 pr-3"><Link to={`${ROUTES.orders}/${o.id}`} className="font-medium text-stone-900 hover:text-brand">{o.order_date ? new Date(o.order_date).toLocaleDateString() : 'no date'}</Link>{o.season ? <span className="block text-xs text-stone-500">{o.season}{o.show_code ? ` · ${showLabel(o.show_code)}${o.show_inferred ? '?' : ''}` : ''}</span> : null}</td>
                     <td className="py-1.5 pr-3"><OrderStatusBadge status={o.status} /></td>
-                    <td className="max-w-md py-1.5 pr-3 text-stone-700">{o.description}{o.po_number ? <span className="block text-xs text-stone-500">PO {o.po_number}</span> : null}</td>
+                    <td className="max-w-md py-1.5 pr-3 text-stone-700">{o.description}{o.po_number ? <span className="block text-xs text-stone-500">PO {o.po_number}</span> : null}
+                      {/* bought for an SLS vendor through a hardware supplier, shown on both pages (Dana, Nov 6) */}
+                      {o.through ? <span className="block text-xs text-stone-500">Bought through <Link to={`${ROUTES.vendors}/${o.through.id}`} className="text-brand hover:underline">{o.through.name}</Link></span> : null}
+                      {o.for_vendor ? <span className="block text-xs text-stone-500">SLS order for <Link to={`${ROUTES.vendors}/${o.for_vendor.id}`} className="text-brand hover:underline">{o.for_vendor.name}</Link></span> : null}</td>
                     <td className="whitespace-nowrap py-1.5 pr-3 text-stone-600">{o.store_codes.join(', ')}</td>
                     <td className="whitespace-nowrap py-1.5 pr-3 text-stone-600">{o.placed_by}</td>
                     <td className="whitespace-nowrap py-1.5 pr-3 text-right text-stone-900">{money(o.final_cost ?? o.est_cost)}{o.free_shipping === true ? <span className="block text-xs text-emerald-700">free ship</span> : o.free_shipping === false && o.freight_cost ? <span className="block text-xs text-stone-500">+{money(o.freight_cost)} freight</span> : null}</td>

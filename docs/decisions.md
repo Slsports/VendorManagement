@@ -3917,3 +3917,16 @@ EJD's order confirmation for the Paricon sleds (EJDPARICON11526, Nov 5) came to 
 as "EJD now bills billing@ directly": it turned Send invoices to Bill.com on for EMERY JENSEN DIST and STIHL INC and gave Dana a
 task to turn off the Gmail forward. Wrong; nothing was sent to Bill.com. Both are back to off with the watch on, the task is closed by
 VMS with a note, and from now on only mail that reaches the billing@ mailbox counts.
+
+## Nov 6, 2026 — SLS orders bought through EJD; EJD freight flat $65 (0315)
+Dana: "Sometimes we do buy things for the sls from EJD … With Emery Jensen, we have an order that comes in for the hardware store
+almost every week and they charge a flat $65 per truckload so it is essentially free for us to get some Paricon stuff from EJD."
+"1. yes, 2. yes but I also want it to show under EJD as an SLS Order. During the summer we also order brickettes and other bbq stuff,
+and some camping stuff."
+- EMERY JENSEN DIST freight: "Flat $65 per truckload; ships on the weekly hardware truck."
+- An order from a hardware supplier (SLH vendor) whose PO names one of our SLS vendors, or says SLS, is an SLS order: store SLS (when it
+  was SLH only or blank), still under EJD, and tied to that SLS vendor (orders.brand_vendor_id) so it shows on its page as
+  "Bought through EMERY JENSEN DIST" and on EJD's as "SLS order for PARICON". Ask VMS and the Activity feed include them.
+- Back-check: 3 EJD orders tied: EJDPARICON11526 (moved SLH → SLS), PARICON11724 (already SLS), and NEEDOH61226 (Jun 12, 2026, tied
+  to SCHYLLING by its "Needoh" name, left SLH for Dana to say which store it was for).
+- The two EJD newsletter order forms (Growing Media / Mixing Warehouse) are waiting on Dana: remove, or keep with saved copies.
