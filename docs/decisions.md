@@ -3999,3 +3999,6 @@ Not built; waiting for go.
 Nov 6, Dana: "Nobody gets the Acctg tick but me. Cat creates the report, I pay it. Sno park needs to be live before Dec 15."
 Go-ahead for the Sno-Park build, due before the Dec 15 report; Cat makes the monthly report, Dana pays the State. Dana also
 asked whether the Monday report can create the SLS → SLM / GS transfer in LS (checking LS's API).
+Nov 6, Dana: when the passes arrive they are entered on a VMS page by book: the book number and the range of permit numbers
+inside it (not just amounts). Then for the monthly submission Cat only picks the empty books and VMS already knows the permit
+numbers each one holds; the scan of the sold passes is filed with the report as the paper record, not the source of the numbers.
