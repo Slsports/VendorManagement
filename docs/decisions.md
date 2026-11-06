@@ -4066,3 +4066,9 @@ commercial property at 41698 Tollhouse belong in that Company Info folder, not 1
 - Same day, Dana (correction): Powell & Son Properties owns 41777 Tollhouse, so its papers go in Company Info › Powell & Son
   Properties › 41777 Tollhouse. Never move insurance or bill statements (utilities, propane). Mortgage and property-tax papers
   for 41777 go there; each paper is opened and its property confirmed before it is moved.
+- Same day, Dana (Dropbox clean-up of tax and property papers): put the company's tax returns, mortgages, property-tax statements
+  and 571-Ls in one place under Company Info, separated by location. GS is the Happy Camper, the summer camp store inside Camp
+  Edison near the marina; it shares the marina's address, 42696 Tollhouse Road, Shaver Lake. Every file is renamed to one pattern,
+  "Year - What - Who" (e.g. "2024 1120S Tax Return - SLSI"). Leave Greg's and Dana's personal returns in 1-GP and 1-Dana, leave
+  the Inventory Reports folder alone, never move insurance or bill statements. Extra copies go to a "Duplicates - review before
+  deleting" folder, never deleted. Done in batches with counts; other SLS folders get the same treatment later, a bit at a time.
