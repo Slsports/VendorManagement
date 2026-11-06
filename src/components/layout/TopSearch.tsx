@@ -4,6 +4,7 @@ import { Search } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listVendorNames } from '@/services/mail'
+import { searchVendors } from '@/lib/vendorSearch'
 import { ROUTES } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 
@@ -27,12 +28,8 @@ export function TopSearch() {
   const q = query.trim().toLowerCase()
   const matches = useMemo(() => {
     if (!q) return []
-    const all = vendors.data ?? []
-    // a brand's parent company finds it too (Dana, Nov 3: JollyBuyer brings up Anngoti, Oeelinn and Pom Pom Tail)
-    const squash = (t: string) => t.toLowerCase().replace(/[^a-z0-9]/g, '')
-    const hit = all.filter((v) => v.name.toLowerCase().includes(q) || (!!v.parent_company && squash(q).length >= 3 && squash(v.parent_company).includes(squash(q))))
-    const rank = (n: string) => (n.toLowerCase().startsWith(q) ? 0 : n.toLowerCase().split(/[\s\-&/]+/).some((w) => w.startsWith(q)) ? 1 : 2)
-    return hit.sort((a, b) => Number(!a.is_active) - Number(!b.is_active) || rank(a.name) - rank(b.name) || a.name.localeCompare(b.name)).slice(0, MAX)
+    // name, other names (aliases) and parent company; exactly what was typed first (Dana, Nov 6: "wwd" finds WORLDWIDE)
+    return searchVendors(vendors.data ?? [], q, MAX)
   }, [vendors.data, q])
   const rows = matches.length + 1 // the last row: search everything
 

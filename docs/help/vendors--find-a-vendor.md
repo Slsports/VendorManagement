@@ -13,7 +13,7 @@ The Vendors page lists every vendor. Search it by name, or sort it by any column
 4. To sort, click a column header (**Vendor**, **Billing**, **Rep group**, **Assigned to**, **Phone / email**, **Flags**). Click it again to reverse the order; the arrow shows which way it is sorted.
 
 ## Good to know
-- The search also matches a vendor's LS name and its other names (aliases). When the LS name differs, it shows in small gray text under the vendor's name ("LS: …").
+- The search also matches a vendor's LS name and its other names (aliases). A vendor whose name or other name is exactly what you typed is listed first: "WWD" puts WORLDWIDE at the top, ahead of the many vendors named "… - WWD". When the LS name differs, it shows in small gray text under the vendor's name ("LS: …").
 - The count under the list ("12 of 778") shows how many match out of the total.
 - The search bar at the very top of every screen also drops down matching vendors as you type.
 - Your search and sort are kept in the page address, so the **Back** link on a vendor page returns you to the same filtered list.
