@@ -1,0 +1,32 @@
+import { describe, expect, it } from 'vitest'
+import { daysUntil, monthName, money, nextBookNumber, range, reportTitle, splitRows } from './snopark'
+
+describe('snopark', () => {
+  it('names months and reports', () => {
+    expect(monthName('2026-11-01')).toBe('November 2026')
+    expect(reportTitle({ kind: 'monthly', month: '2026-11-01' })).toBe('November 2026 report')
+    expect(reportTitle({ kind: 'final', month: '2027-05-01' }, { label: '2026-2027' })).toBe('Final report 2026-2027')
+  })
+  it('formats money and ranges', () => {
+    expect(money(13468)).toBe('$13,468.00')
+    expect(money('330')).toBe('$330.00')
+    expect(range(5726, 5750)).toBe('5726 – 5750')
+    expect(range(10, 10)).toBe('10')
+  })
+  it('counts days to a due date', () => {
+    expect(daysUntil('2026-12-15', new Date('2026-12-10T20:00:00Z'))).toBe(5)
+    expect(daysUntil('2026-12-15', new Date('2026-12-16T02:00:00Z'))).toBe(-1)
+  })
+  it('suggests the next book', () => {
+    expect(nextBookNumber([], 'day')).toBeNull()
+    expect(nextBookNumber([{ kind: 'day', book_number: 'B450', last_permit: 5750 }, { kind: 'day', book_number: 'B451', last_permit: 5775 }], 'day')).toEqual({ book: 'B452', permit: 5776 })
+    expect(nextBookNumber([{ kind: 'season', book_number: '0099', last_permit: 10 }], 'season')).toEqual({ book: '0100', permit: 11 })
+  })
+  it('splits a report the way the form shows it', () => {
+    const row = (section: 'sold' | 'unsold', kind: 'day' | 'season') => ({ id: '', organization_id: '', report_id: '', book_id: null, section, kind, book_number: null, from_permit: 1, to_permit: 2, qty: 2, amount: 0, commission: 0, due: 0, sort: 0 })
+    const s = splitRows([row('sold', 'day'), row('sold', 'season'), row('unsold', 'day')])
+    expect(s.day).toHaveLength(1)
+    expect(s.season).toHaveLength(1)
+    expect(s.unsold).toHaveLength(1)
+  })
+})

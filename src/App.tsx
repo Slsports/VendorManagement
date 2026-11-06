@@ -60,6 +60,8 @@ const ContactConfirmationsPage = lazy(() => import('@/pages/vendors/ContactConfi
 const RoutingLetterPage = lazy(() => import('@/pages/freight/RoutingLetterPage'))
 const FreightQuoteList = lazy(() => import('@/pages/freight/FreightQuoteList'))
 const FreightShipmentList = lazy(() => import('@/pages/freight/FreightShipmentList'))
+const SnoParkPage = lazy(() => import('@/pages/snopark/SnoParkPage'))
+const SnoParkReportPage = lazy(() => import('@/pages/snopark/SnoParkReportPage'))
 const FreightQuoteDetail = lazy(() => import('@/pages/freight/FreightQuoteDetail'))
 const BuyingShowList = lazy(() => import('@/pages/buying-shows/BuyingShowList'))
 const PaymentList = lazy(() => import('@/pages/payments/PaymentList'))
@@ -174,6 +176,8 @@ export default function App() {
                 <Route path={`${ROUTES.freightCarriers}/:id`} element={<CarrierPage />} />
                 <Route path={ROUTES.freightQuotes} element={<FreightQuoteList />} />
                 <Route path={ROUTES.freightShipments} element={<FreightShipmentList />} />
+                <Route path={ROUTES.snopark} element={<SnoParkPage />} />
+                <Route path={`${ROUTES.snoparkReport}/:id`} element={<SnoParkReportPage />} />
                 <Route path={ROUTES.routingLetter} element={<RoutingLetterPage />} />
                 <Route path={`${ROUTES.freightQuotes}/:id`} element={<FreightQuoteDetail />} />
                 <Route path={`${ROUTES.freight}/:id`} element={<FreightBillDetail />} />

@@ -4002,3 +4002,17 @@ asked whether the Monday report can create the SLS → SLM / GS transfer in LS (
 Nov 6, Dana: when the passes arrive they are entered on a VMS page by book: the book number and the range of permit numbers
 inside it (not just amounts). Then for the monthly submission Cat only picks the empty books and VMS already knows the permit
 numbers each one holds; the scan of the sold passes is filed with the report as the paper record, not the source of the numbers.
+
+## Nov 6, 2026 — Sno-Park built (migration 0317, function snopark, menu → Sno-Park)
+Live before the Dec 15 report, as Dana asked. The season opens from the State's packet email (2026-2027 opened from Monica
+Perez's Sep 1 email; Dana has the "return the vendor packet with the first order" task, closed by our reply in that
+conversation). Books are entered when they arrive (Add books: first book number, how many, permits per book, first permit;
+VMS numbers the rest and refuses overlaps). A daily job makes each month's report and task on the 1st, due the 15th, for the
+season's owner (cat@shaverlakesports.com once she has a login, Dana until then); the final on June 1, due June 20. On the
+report page the person ticks the empty books (on the final, the last permit sold in a partly sold book), VMS works out the
+State's numbers (snopark_report_build), fills the State's own Excel (form OHV 54SP, Dana's December file as the template,
+cells edited in place so it looks exactly like theirs), files it under CA Snow Park in a Sno-Park folder with the scan of the
+sold passes, and Dana gets the check task; Mailed (date, tracking) marks the books returned and closes both tasks; the final
+closes the season. The page shows LS's permit sales this season as a check next to the books. Help: four Sno-Park articles.
+Lightspeed transfers: their API's Transfer and TransferItem are read only (GET, no create), confirmed in Lightspeed's own
+developer docs on Nov 6; VMS cannot create the SLS → SLM / GS transfer for the Monday report. It can list what to transfer.

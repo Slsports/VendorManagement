@@ -29,6 +29,7 @@ const PAGES: [RegExp, PageHelp][] = [
   [/^\/search/, { name: 'Search', slugs: ['getting-started--search'] }],
   [/^\/(rep-groups|lines|contacts|buying-shows)/, { name: 'Rep groups & lines', sections: ['Rep groups & lines'] }],
   [/^\/files/, { name: 'Files', sections: ['Documents'] }],
+  [/^\/snopark/, { name: 'Sno-Park', sections: ['Sno-Park'] }],
   [/^\/accounting/, { name: 'Accounting', sections: ['Accounting'] }],
   [/^\/settings/, { name: 'Settings', sections: ['Settings'] }],
 ]

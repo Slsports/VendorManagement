@@ -569,6 +569,30 @@ export type Database = {
         Update: { id?: string; organization_id?: string; order_id?: string; vendor_id?: string; kind?: 'details' | 'free_check' | 'half_check' | 'cap_check'; token?: string; status?: 'ready' | 'sent' | 'opened' | 'answered' | 'confirmed' | 'disputed' | 'skipped' | 'cancelled'; hold?: boolean; skip_reason?: string | null; to_emails?: string[]; cc_emails?: string[]; send_as?: string | null; reply_to_email_id?: string | null; sent_email_id?: string | null; thread_id?: string | null; sent_at?: string | null; opened_at?: string | null; answered_at?: string | null; answered_how?: 'form' | 'email' | null; reply_email_id?: string | null; last_reply_read_at?: string | null; method?: 'pallet' | 'parcel' | null; answers?: Json; quote_id?: string | null; followup_due_at?: string | null; followup_task_id?: string | null; followup_draft_id?: string | null; dispute_task_id?: string | null; note?: string | null; created_at?: string; updated_at?: string; review_task_id?: string | null; review_draft_id?: string | null }
         Relationships: []
       }
+      snopark_seasons: {
+        Row: { id: string; organization_id: string; vendor_id: string | null; label: string; opened_email_id: string | null; opened_at: string; closed_at: string | null; first_report_month: string; season_end: string; final_due: string; owner_email: string; day_price: number; day_commission: number; season_price: number; season_commission: number; status: 'open' | 'closed'; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; vendor_id?: string | null; label: string; opened_email_id?: string | null; opened_at?: string; closed_at?: string | null; first_report_month: string; season_end: string; final_due: string; owner_email?: string; day_price?: number; day_commission?: number; season_price?: number; season_commission?: number; status?: 'open' | 'closed'; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; vendor_id?: string | null; label?: string; opened_email_id?: string | null; opened_at?: string; closed_at?: string | null; first_report_month?: string; season_end?: string; final_due?: string; owner_email?: string; day_price?: number; day_commission?: number; season_price?: number; season_commission?: number; status?: 'open' | 'closed'; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      snopark_books: {
+        Row: { id: string; organization_id: string; season_id: string; kind: 'day' | 'season'; book_number: string; first_permit: number; last_permit: number; order_id: string | null; received_on: string | null; status: 'on_hand' | 'empty' | 'returned'; report_id: string | null; returned_on: string | null; notes: string | null; created_by: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; season_id: string; kind: 'day' | 'season'; book_number: string; first_permit: number; last_permit: number; order_id?: string | null; received_on?: string | null; status?: 'on_hand' | 'empty' | 'returned'; report_id?: string | null; returned_on?: string | null; notes?: string | null; created_by?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; season_id?: string; kind?: 'day' | 'season'; book_number?: string; first_permit?: number; last_permit?: number; order_id?: string | null; received_on?: string | null; status?: 'on_hand' | 'empty' | 'returned'; report_id?: string | null; returned_on?: string | null; notes?: string | null; created_by?: string | null; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      snopark_reports: {
+        Row: { id: string; organization_id: string; season_id: string; kind: 'monthly' | 'final'; month: string; seq: number; due_on: string; status: 'open' | 'ready' | 'mailed'; task_id: string | null; check_task_id: string | null; file_link_id: string | null; scan_link_ids: string[]; day_qty: number; day_amount: number; day_commission: number; day_due: number; season_qty: number; season_amount: number; season_commission: number; season_due: number; total_due: number; built_at: string | null; mailed_on: string | null; mailed_by: string | null; tracking: string | null; declared_by: string | null; notes: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; season_id: string; kind: 'monthly' | 'final'; month: string; seq: number; due_on: string; status?: 'open' | 'ready' | 'mailed'; task_id?: string | null; check_task_id?: string | null; file_link_id?: string | null; scan_link_ids?: string[]; day_qty?: number; day_amount?: number; day_commission?: number; day_due?: number; season_qty?: number; season_amount?: number; season_commission?: number; season_due?: number; total_due?: number; built_at?: string | null; mailed_on?: string | null; mailed_by?: string | null; tracking?: string | null; declared_by?: string | null; notes?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; season_id?: string; kind?: 'monthly' | 'final'; month?: string; seq?: number; due_on?: string; status?: 'open' | 'ready' | 'mailed'; task_id?: string | null; check_task_id?: string | null; file_link_id?: string | null; scan_link_ids?: string[]; day_qty?: number; day_amount?: number; day_commission?: number; day_due?: number; season_qty?: number; season_amount?: number; season_commission?: number; season_due?: number; total_due?: number; built_at?: string | null; mailed_on?: string | null; mailed_by?: string | null; tracking?: string | null; declared_by?: string | null; notes?: string | null; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      snopark_report_rows: {
+        Row: { id: string; organization_id: string; report_id: string; book_id: string | null; section: 'sold' | 'unsold'; kind: 'day' | 'season'; book_number: string | null; from_permit: number; to_permit: number; qty: number; amount: number; commission: number; due: number; sort: number }
+        Insert: { id?: string; organization_id: string; report_id: string; book_id?: string | null; section: 'sold' | 'unsold'; kind: 'day' | 'season'; book_number?: string | null; from_permit: number; to_permit: number; qty: number; amount?: number; commission?: number; due?: number; sort?: number }
+        Update: { id?: string; organization_id?: string; report_id?: string; book_id?: string | null; section?: 'sold' | 'unsold'; kind?: 'day' | 'season'; book_number?: string | null; from_permit?: number; to_permit?: number; qty?: number; amount?: number; commission?: number; due?: number; sort?: number }
+        Relationships: []
+      }
       credit_requests: {
         Row: { id: string; organization_id: string; email_id: string; thread_id: string | null; vendor_id: string; requested_by: string; requested_on: string; what: string; invoice_number: string | null; amount: number | null; status: 'open' | 'received' | 'on_edenred' | 'closed'; credit_link_id: string | null; received_on: string | null; wwd_invoice_id: string | null; on_edenred_on: string | null; task_id: string | null; created_at: string; updated_at: string }
         Insert: { id?: string; organization_id: string; email_id: string; thread_id?: string | null; vendor_id: string; requested_by: string; requested_on: string; what?: string; invoice_number?: string | null; amount?: number | null; status?: 'open' | 'received' | 'on_edenred' | 'closed'; credit_link_id?: string | null; received_on?: string | null; wwd_invoice_id?: string | null; on_edenred_on?: string | null; task_id?: string | null; created_at?: string; updated_at?: string }
@@ -1149,6 +1173,11 @@ export type Database = {
       routing_letter_missing: { Args: { p_org: string; p_who: string }; Returns: { vendor_id: string; vendor_name: string; open_orders: number }[] }
       vendor_confirm_prepare: { Args: { p_org: string; p_vendor?: string | null }; Returns: number }
       vendor_confirm_states: { Args: { p_org: string }; Returns: { vendor_id: string; state: string; last_sent: string | null; confirmed_at: string | null }[] }
+      snopark_season_open_by_hand: { Args: { p_label: string }; Returns: string }
+      snopark_books_add: { Args: { p_season: string; p_kind: 'day' | 'season'; p_first_book: string; p_books: number; p_per_book: number; p_first_permit: number; p_received?: string | null; p_order?: string | null }; Returns: number }
+      snopark_report_build: { Args: { p_report: string; p_sold: Json }; Returns: undefined }
+      snopark_report_mailed: { Args: { p_report: string; p_on: string; p_tracking?: string | null }; Returns: undefined }
+      snopark_ls_sold: { Args: { p_season: string; p_through?: string }; Returns: { kind: 'day' | 'season'; qty: number }[] }
       vendor_by_name: { Args: { p_org: string; p_name: string }; Returns: string | null }
       text_item_words: { Args: { p_text: string }; Returns: string[] }
       order_match_undated: { Args: { p_vendor: string; p_text: string }; Returns: string | null }
@@ -1293,7 +1322,7 @@ export type Database = {
       review_status: 'pending' | 'accepted' | 'rejected'
       order_status: 'open' | 'awaiting_confirmation' | 'confirmed' | 'shipped' | 'received' | 'entered' | 'ready_to_pay' | 'paid' | 'cancelled'
       order_season: 'summer' | 'winter'
-      link_kind: 'catalog' | 'price_list' | 'order_form' | 'specials' | 'website' | 'other' | 'invoice' | 'credit' | 'confirmation' | 'order' | 'ls_po' | 'packing_slip' | 'payment' | 'freight_bill' | 'delivery_receipt' | 'image' | 'approved_proof' | 'damage_photo' | 'sales_report' | 'proof' | 'inventory_count'
+      link_kind: 'catalog' | 'price_list' | 'order_form' | 'specials' | 'website' | 'other' | 'invoice' | 'credit' | 'confirmation' | 'order' | 'ls_po' | 'packing_slip' | 'payment' | 'freight_bill' | 'delivery_receipt' | 'image' | 'approved_proof' | 'damage_photo' | 'sales_report' | 'proof' | 'inventory_count' | 'snopark_report' | 'snopark_scan'
     }
     CompositeTypes: {
       [_ in never]: never

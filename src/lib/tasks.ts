@@ -134,6 +134,9 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   if (kind === 'shipcheck' && t.order_id) return { kind: 'page', to: `/orders/${t.order_id}`, label: 'Open the order and its confirmation' }
   if ((kind === 'shipreq' || kind === 'shipdispute' || kind === 'shipdispute_cc') && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: kind === 'shipreq' ? 'Open the conversation' : 'Open their reply' }
   if (kind === 'shipreq_noemail' && t.vendor_id) return { kind: 'page', to: `/vendors/${t.vendor_id}`, label: 'Open the vendor to add an email' }
+  // Sno-Park (Dana, Nov 5): the report page for Cat's report and Dana's check; the State's email for the packet
+  if ((kind === 'snopark' || kind === 'snopark_check') && id) return { kind: 'page', to: `/snopark/reports/${id}`, label: 'Open the report' }
+  if (kind === 'snopark_packet' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: "Open the State's email" }
   // a credit we asked for (Dana, Oct 27): the follow-up email once it is drafted, else the conversation
   if (kind === 'credit_req' && t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the follow-up email' }
   if (kind === 'credit_req' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open the conversation' }

@@ -78,6 +78,8 @@ export const ROUTES = {
   payments: '/payments',
   salesReports: '/sales-reports',
   inventoryCounts: '/inventory-counts',
+  snopark: '/snopark',
+  snoparkReport: '/snopark/reports',
   itemNames: '/item-names',
   reports: '/reports',
   vendorScores: '/reports/vendor-scores',

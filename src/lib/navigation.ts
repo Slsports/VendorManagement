@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Banknote, Building2, MessagesSquare, Calculator, CalendarDays, ChartColumn, CircleHelp, ClipboardCheck, ClipboardList, Contact, FileText, FolderOpen, LayoutDashboard, Lightbulb, ListTodo, Mail, Package, Receipt, Settings, ShoppingCart, SpellCheck, Tags, Truck, Undo2, Upload, Users, UsersRound } from 'lucide-react'
+import { Banknote, Building2, MessagesSquare, Calculator, CalendarDays, ChartColumn, CircleHelp, ClipboardCheck, ClipboardList, Contact, FileText, FolderOpen, LayoutDashboard, Lightbulb, ListTodo, Mail, Package, Receipt, Settings, ShoppingCart, Snowflake, SpellCheck, Tags, Truck, Undo2, Upload, Users, UsersRound } from 'lucide-react'
 import { ORDER_STATUSES, ORDER_STATUS_LABELS, ROUTES, type UserRole } from './constants'
 
 export interface NavChild {
@@ -64,6 +64,8 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       { label: 'Incoming Shipments', to: ROUTES.shipments, icon: Truck },
       { label: 'Freight', to: ROUTES.freight, icon: Receipt },
       { label: 'Supplies', to: ROUTES.supplies, icon: Package },
+      // Sno-Park passes: books on hand and the monthly reports to the State (Dana, Nov 5)
+      { label: 'Sno-Park', to: ROUTES.snopark, icon: Snowflake },
       // scan or upload paper invoices (Dana, Oct 20)
       { label: 'Invoice Uploads', to: ROUTES.upload, icon: Upload, roles: ['admin', 'manager', 'buyer'] },
       { label: 'Item names', to: ROUTES.itemNames, icon: SpellCheck, roles: ['admin', 'manager', 'buyer'] },
