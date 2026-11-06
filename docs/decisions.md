@@ -3947,3 +3947,8 @@ forms, the season dates and due day, and Cat's login.
 Dana, same evening: every pass (season or day) carries a unique number. The monthly report lists the numbers sold that month; Cat
 will upload a scan of the sold passes with the book number, and VMS must fill the Excel report form the State provides. Initial
 planning only; Dana will upload the form and last season's information to go from.
+Nov 5, after the back-check: the three Planet Cotton emails had made a new order next to PO 26328 (paid, from the order guide,
+no date), which the sent-mail matcher does not consider (it only takes an undated order when it is still open). Their files and
+emails were moved to PO 26328. Eleven "The same order twice?" cards were put in the review queue for the back-check's new orders
+that sit next to an order already on file (Dorfman-Milano, Slippery Racer, Baffin, Coghlan, Bluestone x2, Signs 4 Fun, Planet
+Cotton, Alexander, Okuma x2); Dana decides, nothing merged on its own.
