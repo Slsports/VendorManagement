@@ -3911,3 +3911,5 @@ Same day, found in the back-check: the Okuma WWD order (Aug 29) had been filed u
 (fong@activeoutdoors.com) is on both vendors and the address match picked Yakima. Rule extended: the vendor named in the email
 or order form wins over the address whenever it matches the vendor list, and the address is added to that vendor. The order,
 its files and emails were moved to Okuma; the two other sent orders to shared rep addresses were re-read.
+Nov 5: "PC is Planet Cotton. Maryellen is the rep." Alias PC added to Planet Cotton; the three SL Marina hoodie and T-shirt order
+emails of May 19-22 (sent to maryellenreps@gmail.com) were filed under Planet Cotton and read as orders.
