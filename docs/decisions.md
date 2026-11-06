@@ -4029,3 +4029,14 @@ categories are not as broad as ours but I want to know what other categories the
 "no matching list necessary. I'd rather see too much than not enough." The vendor page's What they sell shows two lists: our LS
 categories for their items (with items still carried) and every Worldwide portal Product Line, each in its own words, no matching.
 Hand-added entries stay below. (The box had been empty for every vendor: nothing ever filled vendor_sells.)
+
+## Nov 6 — Accounting contacts look only at what changed (0319)
+Dana: "Why do we need to check all the way back in conversations?? After the first run through it should only be updating new
+emails, new documents being added, etc." ("go"). The minute step that finds new people in billing@ had failed every minute for at
+least a day (8-second limit) because it read all billing@ mail and re-matched all ~22,100 conversations each time. Now: finding
+new people reads only mail added since the last look; confirming, ignoring or saving a contact re-matches only that contact's
+conversations; new mail still finds its contact as it arrives. The full re-match is kept only for back-checks (all at once,
+~0.7 s). Catch-up: 48 new contacts proposed, 105 more conversations matched. Back-check of all 22,100: 841 changed — 562 came
+off Tyler Powell / Greg Powell (their addresses are our own since Oct 19), 87 off contacts Dana had ignored, 14 whose address is
+on no contact, 178 moved to the contact their address now belongs to. Same day: the vendor Activity feed was failing on every
+vendor (email list over the 8-second limit); it now finds the vendor's conversations first (0318).

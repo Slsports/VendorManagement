@@ -19,5 +19,5 @@ Accounting contacts are the people and companies in the billing@ mail: the accou
 - **Only tell me about deadlines** files all their mail as Handled and makes a task only for a deadline you have to meet (Paychex, Blue Shield).
 - Same person or company twice? On one card, pick the other under **Same person or company twice?** and click **Merge**. Emails, conversations and counts move over.
 - Ignored contacts stay under **Ignored** and can be brought back. Newsletters and one-off senders are never proposed.
-- When you change a contact's email addresses, every billing@ conversation is matched again, old mail included.
+- When you save a contact, tick ✓ or ✕, or change its email addresses, VMS matches that contact's conversations again, old mail included. New mail finds its contact as it arrives, and VMS looks for new people only in mail that came in since its last look.
 - **Their papers** on a contact: normally the files they email are filed in Documents. Choose **Leave them in the email** for a company whose invoices are handled elsewhere (Emery Jensen goes to bill.com) and say where; their files then show that note instead of being filed, and any already filed are taken back out.

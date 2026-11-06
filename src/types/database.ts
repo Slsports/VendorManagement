@@ -651,6 +651,12 @@ export type Database = {
         Update: { organization_id?: string; address?: string; is_domain?: boolean; contact_id?: string; created_at?: string }
         Relationships: [{ foreignKeyName: 'accounting_contact_addresses_contact_id_fkey'; columns: ['contact_id']; isOneToOne: false; referencedRelation: 'accounting_contacts'; referencedColumns: ['id'] }]
       }
+      accounting_propose_state: {
+        Row: { organization_id: string; checked_to: string }
+        Insert: { organization_id: string; checked_to: string }
+        Update: { organization_id?: string; checked_to?: string }
+        Relationships: []
+      }
       contact_removals: {
         Row: { id: string; organization_id: string; vendor_id: string | null; rep_group_id: string | null; email: string; removed_at: string; removed_by: string | null }
         Insert: { id?: string; organization_id: string; vendor_id?: string | null; rep_group_id?: string | null; email: string; removed_at?: string; removed_by?: string | null }
@@ -1259,6 +1265,8 @@ export type Database = {
       accounting_propose_recipients: { Args: { p_org: string }; Returns: number }
       accounting_propose_contacts: { Args: { p_org: string }; Returns: number }
       accounting_rematch_all: { Args: { p_org: string }; Returns: number }
+      accounting_rematch_keys: { Args: { p_org: string; p_keys: string[]; p_contacts?: string[] }; Returns: number }
+      accounting_rematch_contact: { Args: { p_contact: string; p_old_addresses?: string[] }; Returns: number }
       accounting_merge_contacts: { Args: { p_from: string; p_into: string }; Returns: undefined }
       accounting_set_thread_contact: { Args: { p_thread: string; p_contact: string | null }; Returns: undefined }
       accounting_recount: { Args: { p_org: string }; Returns: undefined }
