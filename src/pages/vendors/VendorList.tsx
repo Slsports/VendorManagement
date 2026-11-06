@@ -14,6 +14,7 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { CONFIRM_STATE_LABELS, confirmStates, type ConfirmState } from '@/services/vendorConfirmations'
 import { SortHeader } from '@/components/shared/SortHeader'
 import { useTableSort } from '@/hooks/useTableSort'
+import { searchVendors } from '@/lib/vendorSearch'
 import { RouteBadges } from '@/components/vendors/RouteBadges'
 import { Alert, Badge, Button, Select, Spinner } from '@/components/ui'
 
@@ -50,7 +51,8 @@ export default function VendorListPage() {
   const rows = useMemo(() => {
     let list = (data ?? []).filter((v) => (status === 'all' ? true : status === 'inactive' ? !v.is_active : v.is_active))
     const s = search.trim().toLowerCase()
-    if (s) list = list.filter((v) => v.name.toLowerCase().includes(s) || (v.lightspeed_name ?? '').toLowerCase().includes(s) || v.aliases.some((a) => a.toLowerCase().includes(s)))
+    // name, other names, LS name; what you typed exactly comes first (Dana, Nov 6: "wwd" brings up WORLDWIDE first)
+    if (s) list = searchVendors(list, s)
     if (route === 'none') list = list.filter((v) => v.vendor_billing_routes.length === 0)
     else if (route) list = list.filter((v) => v.vendor_billing_routes.some((r) => r.route === route))
     if (review) list = list.filter((v) => v.needs_review)

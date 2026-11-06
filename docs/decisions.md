@@ -3934,3 +3934,10 @@ and some camping stuff."
   ignore it." Marked Cancelled with a note; it had no open tasks.
 - EJD's two newsletter order forms (Growing Media / Mixing Warehouse Drop Ship Order Form, links from the Nov 2 newsletter): Dana,
   Nov 6: "Remove". Both removed from EMERY JENSEN DIST › Order forms.
+
+## Nov 6, 2026 — Vendor search finds other names; exact match first
+Dana: "When I search for a vendor with wwd, it should bring up Worldwide, it doesnt. I entered it as an alias … WHY". Two causes:
+the top search bar (and the vendor pickers) matched names only, never aliases; the Vendors page did match aliases, but 325 vendors
+have "- WWD" in an alias, so WORLDWIDE was buried. Now all three find vendors by name, other names (aliases), LS name and parent
+company, and a vendor whose name or other name is exactly what was typed comes first.
+Waiting on Dana: "What they sell" from WWD's Product Lines plus our LS categories (proposed, not built).

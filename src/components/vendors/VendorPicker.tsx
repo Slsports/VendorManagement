@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { clearPickerCache, listVendorNames, type VendorRef } from '@/services/mail'
+import { searchVendors } from '@/lib/vendorSearch'
 import { createVendor, setVendorRoutes, updateVendor } from '@/services/vendors'
 import { BILLING_ROUTE_LABELS } from '@/lib/vendors'
 import { cn, errorMessage } from '@/lib/utils'
@@ -39,11 +40,10 @@ export function VendorPicker({ onPick, prefill, placeholder = 'Type a vendor nam
   const listId = useId()
 
   const matches = useMemo(() => {
-    const s = text.trim().toLowerCase()
     const all = q.data ?? []
-    const hit = s ? all.filter((v) => v.name.toLowerCase().includes(s)) : all
-    const starts = (v: VendorRef) => (s && v.name.toLowerCase().startsWith(s) ? 0 : 1)
-    return [...hit].sort((a, b) => Number(!a.is_active) - Number(!b.is_active) || starts(a) - starts(b) || a.name.localeCompare(b.name)).slice(0, MAX_SHOWN)
+    // other names count too, and an exact match comes first (Dana, Nov 6)
+    if (!text.trim()) return [...all].sort((a, b) => Number(!a.is_active) - Number(!b.is_active) || a.name.localeCompare(b.name)).slice(0, MAX_SHOWN)
+    return searchVendors(all, text, MAX_SHOWN)
   }, [q.data, text])
   // Row 0 is always "+ Add new vendor…".
   const rows = matches.length + 1
