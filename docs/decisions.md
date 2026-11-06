@@ -3932,3 +3932,5 @@ and some camping stuff."
 - The two EJD newsletter order forms (Growing Media / Mixing Warehouse) are waiting on Dana: remove, or keep with saved copies.
 - NEEDOH61226 (Needoh toys from EJD, Jun 12, 2026): Dana, Nov 6: "They were not able to fulfill that order - its cancelled so just
   ignore it." Marked Cancelled with a note; it had no open tasks.
+- EJD's two newsletter order forms (Growing Media / Mixing Warehouse Drop Ship Order Form, links from the Nov 2 newsletter): Dana,
+  Nov 6: "Remove". Both removed from EMERY JENSEN DIST › Order forms.
