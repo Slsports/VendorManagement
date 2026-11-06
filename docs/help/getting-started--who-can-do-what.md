@@ -15,6 +15,6 @@ Each login has a role. The role decides which pages you see in the menu and whet
 
 ## Good to know
 - If you open a page your role can't use, VMS says "You don't have access to this page". Click **Go back home**.
-- Only Dana is an administrator. There is no screen in VMS yet to add people or change roles (Settings > Users is coming).
+- Only Dana is an administrator. She adds people and changes roles at **Settings** > **Users** (see "Add people and change roles").
 - Personal mailboxes are private: only the owner and Dana see them.
 - Everyone sees their own dashboard, mail and tasks; Dana can look at anyone's with **Showing**, and people she ticks under **Can see** (Trevor and Jarrett see each other) get the switch for those names.

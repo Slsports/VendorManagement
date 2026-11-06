@@ -3911,6 +3911,9 @@ Same day, found in the back-check: the Okuma WWD order (Aug 29) had been filed u
 (fong@activeoutdoors.com) is on both vendors and the address match picked Yakima. Rule extended: the vendor named in the email
 or order form wins over the address whenever it matches the vendor list, and the address is added to that vendor. The order,
 its files and emails were moved to Okuma; the two other sent orders to shared rep addresses were re-read.
+Nov 5: "PC is Planet Cotton. Maryellen is the rep." Alias PC added to Planet Cotton; the three SL Marina hoodie and T-shirt order
+emails of May 19-22 (sent to maryellenreps@gmail.com) were filed under Planet Cotton and read as orders.
+
 
 ## Nov 6, 2026 — Fix: the EJD Bill.com watch only counts billing@ mail (0314)
 EJD's order confirmation for the Paricon sleds (EJDPARICON11526, Nov 5) came to orders@ from EJD's system, and the 0309 watch took it
@@ -3941,3 +3944,67 @@ the top search bar (and the vendor pickers) matched names only, never aliases; t
 have "- WWD" in an alias, so WORLDWIDE was buried. Now all three find vendors by name, other names (aliases), LS name and parent
 company, and a vendor whose name or other name is exactly what was typed comes first.
 Waiting on Dana: "What they sell" from WWD's Product Lines plus our LS categories (proposed, not built).
+## Nov 5, 2026 — CA Sno-Park passes: a consignment-style vendor (process to build, Cat will run it)
+Dana: CA Sno-Park (the State of California, ohmvr.permits@parks.ca.gov; vendor "CA SNOW PARK") works differently from other
+vendors. We email an order, they FedEx the passes, we add them to LS inventory. Nothing is prepaid: every month during the season
+we report what we sold and mail them a check for it; after the season we send a final report, settle up, and return the unsold
+passes. Cat kept track of this last season and will own it once the process is in VMS. Not built yet; Dana to supply their report
+forms, the season dates and due day, and Cat's login.
+Dana, same evening: every pass (season or day) carries a unique number. The monthly report lists the numbers sold that month; Cat
+will upload a scan of the sold passes with the book number, and VMS must fill the Excel report form the State provides. Initial
+planning only; Dana will upload the form and last season's information to go from.
+Nov 5, after the back-check: the three Planet Cotton emails had made a new order next to PO 26328 (paid, from the order guide,
+no date), which the sent-mail matcher does not consider (it only takes an undated order when it is still open). Their files and
+emails were moved to PO 26328. Eleven "The same order twice?" cards were put in the review queue for the back-check's new orders
+that sit next to an order already on file (Dorfman-Milano, Slippery Racer, Baffin, Coghlan, Bluestone x2, Signs 4 Fun, Planet
+Cotton, Alexander, Okuma x2); Dana decides, nothing merged on its own.
+Nov 5, from the forms Dana uploaded (Nov and Dec 2025 submissions, 25-26 end-of-season report, all State form OHV 54SP
+"Vendor Report of Operations"): one sheet "Front". Day permits: rows of From / Including permit numbers, Quantity sold
+(= including − from + 1), Amount collected ($15 each), Vendor commission ($1.80 each), Amount due to State. Season permits: same
+with $40 each and $2.40 commission. Subtotals per section, grand total due (the check). End-of-season adds Unsold permits (Day-use /
+Season ranges; last season "B450 - B473") and a declaration signed by Cat. Nov 2025: day 5751-5775 (25), season 8551-8610 (60),
+check $2,586.00. Dec 2025: day 5726-5750, 5776-6225, 7576-7750 (650), season 8611-8650, 9441-9530 (130), check $13,468.00.
+End of season: day 11176-11192 (17), season 9711-9715, 9721-9726, 9731-9735 (16), check $826.00. Files named
+"01 - 12-15-25 NOVEMBER 2025 SNOPARK SUBMISSION" (number, date sent, month). Planning only.
+
+## Nov 5, 2026 — Sent orders match undated orders whose items line up
+Dana: "GO ON THAT." The sent-mail reader now also matches the vendor's undated order (any status but cancelled, so the order
+guide's paid and entered orders count) when the item words line up the way the duplicate scan judges it and one candidate is
+clearly best (`order_match_undated`, migration 0316). An order past confirmed keeps its lines; our email only fills what is
+missing. This would have put the Planet Cotton hoodie emails on PO 26328 instead of adding a second order.
+Nov 5, Sno-Park correction: nothing monthly is emailed. Each month the report, the check and the empty (fully sold) books go
+to the State by mail. Email is only for ordering more books and for Dana's vendor application at the start of the season.
+Nov 5, from the State's flowchart (OHMVR Division, Sno-Park Vendor Permit Process, season Nov 1, 2026 to May 30, 2027):
+1. Registration: Agreement form 01 - OHV 56SP plus a copy of the business license, emailed to ohmvr.permits@parks.ca.gov;
+   the Division contacts the vendor if approved. 2. Permit request: form 02 - OHV 145SP, signed, emailed; 5-10 business days,
+   confirmation email and FedEx tracking. 3. Monthly, due the 15th: report only EMPTY books on OHV 54SP, pay for all permits
+   sold, return the empty books (covers) by mail. Unsold books are kept until emptied; partially sold books are accepted only at
+   season end. 4. Season end May 30, due by June 20: all books (empty, full, partial), the final OHV 54SP and payment. Mail to
+   OHMVR Division, P.O. Box 942896, Sacramento, CA 94296. Vendors are liable for every permit assigned until returned; no
+   outstanding permits or money allowed to take part. Contacts: Monica Perez (Program Analyst), Amy Woodhull (Program Manager).
+Nov 5: the season starts when the State emails the year's vendor packet ("2026-2027 SnoPark Season - Vendor Registration",
+Monica Perez, Sep 1 this year, re-sent Oct 8; replies Nov 3-4 with the forms). Dana fills the packet in and returns it with the
+first order. That email, not a date, opens the season in VMS. The mail is in Dana's own mailbox today.
+Nov 5: the Sno-Park mail comes to billing@ (34 emails there in the last 15 months, none shared, none on the vendor). The sender
+@parks.ca.gov is still "unknown" with its "which vendor?" card waiting in the review queue. Once Dana answers it as CA Snow Park
+(and their address is on the vendor), billing@'s vendor conversations with them share to Orders on their own (migration 0278)
+and the packet email can open the season.
+Nov 5, Dana: set the @parks.ca.gov sender to CA Snow Park (done). The "New Order 1-15-26" email is last season's book order
+(Dana's permit request form, Jan 15, 2026; FedEx tracking came back Jan 21); it files under the vendor as a historical order.
+No snow in November: the first monthly report of any season is due December 15. "B450" is a book number: each book has a number
+and the permits inside it have sequential numbers (so VMS tracks books: number, kind, first and last permit).
+Cat (cat@shaverlakesports.com) will run Sno-Park, Mountain Milk invoices and the Happy Camper in summer; Dana is thinking about her
+role (not admin: only Dana is admin). Cat also needs the "Monday sales report" (everything sold the prior week Mon-Sun, by store)
+to restock by store transfer in LS; Dana would like the transfer created for her so she only collects the items at SLS and
+completes it. Not built. (Correction, Dana, Nov 6: LS is connected with full access since Oct 18; VMS already makes POs and
+inventory counts in LS. Whether LS's API lets VMS create a transfer is to be confirmed before promising it.)
+Nov 6, Monday sales report: only for the Marina (SLM) and the Happy Camper (GS), and only in their season. Marina opens
+about April 15, Happy Camper about mid-May; both close about October 15, all depending on weather and lake levels. So the
+Monday task runs while a store is open (Dana or Cat marks the store open and closed for the season), never on a fixed date.
+Not built; waiting for go.
+Nov 6, Dana: "Nobody gets the Acctg tick but me. Cat creates the report, I pay it. Sno park needs to be live before Dec 15."
+Go-ahead for the Sno-Park build, due before the Dec 15 report; Cat makes the monthly report, Dana pays the State. Dana also
+asked whether the Monday report can create the SLS → SLM / GS transfer in LS (checking LS's API).
+Nov 6, Dana: when the passes arrive they are entered on a VMS page by book: the book number and the range of permit numbers
+inside it (not just amounts). Then for the monthly submission Cat only picks the empty books and VMS already knows the permit
+numbers each one holds; the scan of the sold passes is filed with the report as the paper record, not the source of the numbers.
