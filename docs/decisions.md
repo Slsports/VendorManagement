@@ -3983,3 +3983,11 @@ Nov 5: the Sno-Park mail comes to billing@ (34 emails there in the last 15 month
 @parks.ca.gov is still "unknown" with its "which vendor?" card waiting in the review queue. Once Dana answers it as CA Snow Park
 (and their address is on the vendor), billing@'s vendor conversations with them share to Orders on their own (migration 0278)
 and the packet email can open the season.
+Nov 5, Dana: set the @parks.ca.gov sender to CA Snow Park (done). The "New Order 1-15-26" email is last season's book order
+(Dana's permit request form, Jan 15, 2026; FedEx tracking came back Jan 21); it files under the vendor as a historical order.
+No snow in November: the first monthly report of any season is due December 15. "B450" is a book number: each book has a number
+and the permits inside it have sequential numbers (so VMS tracks books: number, kind, first and last permit).
+Cat (cat@shaverlakesports.com) will run Sno-Park, Mountain Milk invoices and the Happy Camper in summer; Dana is thinking about her
+role (not admin: only Dana is admin). Cat also needs the "Monday sales report" (everything sold the prior week Mon-Sun, by store)
+to restock by store transfer in LS; Dana would like the transfer created for her so she only collects the items at SLS and
+completes it. Not built; LS write is not connected yet.
