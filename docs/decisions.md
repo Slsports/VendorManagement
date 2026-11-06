@@ -3990,4 +3990,5 @@ and the permits inside it have sequential numbers (so VMS tracks books: number, 
 Cat (cat@shaverlakesports.com) will run Sno-Park, Mountain Milk invoices and the Happy Camper in summer; Dana is thinking about her
 role (not admin: only Dana is admin). Cat also needs the "Monday sales report" (everything sold the prior week Mon-Sun, by store)
 to restock by store transfer in LS; Dana would like the transfer created for her so she only collects the items at SLS and
-completes it. Not built; LS write is not connected yet.
+completes it. Not built. (Correction, Dana, Nov 6: LS is connected with full access since Oct 18; VMS already makes POs and
+inventory counts in LS. Whether LS's API lets VMS create a transfer is to be confirmed before promising it.)
