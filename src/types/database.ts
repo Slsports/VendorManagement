@@ -1267,6 +1267,7 @@ export type Database = {
       wwd_edenred_place: { Args: { p_org: string; p: Json }; Returns: Json }
       resolve_email_sender_many: { Args: { p_sender: string; p_rep_group: string | null; p_vendors: string[] }; Returns: Json }
       vendor_recent_activity: { Args: { p_vendor: string; p_limit?: number }; Returns: { email_id: string; thread_id: string; received_at: string; direction: 'in' | 'out' | 'internal'; line: string | null; subject: string | null; from_name: string | null; from_email: string | null }[] }
+      vendor_thread_ids: { Args: { p_vendor: string }; Returns: string[] }
       mail_activity_queue: { Args: { p_org: string; p_limit?: number }; Returns: { email_id: string; direction: string; from_email: string | null; from_name: string | null; sender_name: string | null; to_emails: string[] | null; subject: string | null; body_text: string | null; sent_on: string }[] }
       vendor_contact_set: { Args: { p_id: string; p_action: 'keep' | 'former' | 'current' | 'delete' }; Returns: undefined }
       rep_group_contact_set: { Args: { p_id: string; p_action: 'former' | 'current' }; Returns: undefined }
