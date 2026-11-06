@@ -3966,3 +3966,5 @@ Dana: "GO ON THAT." The sent-mail reader now also matches the vendor's undated o
 guide's paid and entered orders count) when the item words line up the way the duplicate scan judges it and one candidate is
 clearly best (`order_match_undated`, migration 0316). An order past confirmed keeps its lines; our email only fills what is
 missing. This would have put the Planet Cotton hoodie emails on PO 26328 instead of adding a second order.
+Nov 5, Sno-Park correction: nothing monthly is emailed. Each month the report, the check and the empty (fully sold) books go
+to the State by mail. Email is only for ordering more books and for Dana's vendor application at the start of the season.
