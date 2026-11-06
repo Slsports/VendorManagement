@@ -4057,3 +4057,9 @@ commercial property at 41698 Tollhouse belong in that Company Info folder, not 1
 - Same day, Dana: "Anything for 41777 Tollhouse goes in the same company folder under 41777 Tollhouse folder." → Dropbox ›
   Documents › 1-A Shaver Lake Sports › Company Info › 41777 Tollhouse (folder made by Dana Nov 6). Older 41777 papers still sit
   in Company Info › Powell & Son Properties (e.g. the 2021 prelim for "41777 Highway 168") and in Insurance; not moved.
+- Same day, Dana: "41777 Highway 168" and "41777 Tollhouse" are the same property ("yes same property, move them"). Moved the 2021
+  prelim (Prelim_41777 Highway 168, Shaver Lake, CA - 8-2021.pdf) from Powell & Son Properties into Company Info › 41777 Tollhouse.
+  Insurance, property-tax, SCE and propane files that name 41777 stay in their own folders until Dana says otherwise (asked).
+  Chicago Title / Arlene Fontes added as a confirmed Accounting contact (contracts; phones and address from her Jan 8 signature;
+  ctt.com and her address); the Reconveyance conversation placed on her by hand; the reconveyance document moved to her, marked
+  filed, with the payoff note.
