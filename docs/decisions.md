@@ -3937,3 +3937,10 @@ and some camping stuff."
   ignore it." Marked Cancelled with a note; it had no open tasks.
 - EJD's two newsletter order forms (Growing Media / Mixing Warehouse Drop Ship Order Form, links from the Nov 2 newsletter): Dana,
   Nov 6: "Remove". Both removed from EMERY JENSEN DIST › Order forms.
+
+## Nov 5, 2026 — CA Sno-Park passes: a consignment-style vendor (process to build, Cat will run it)
+Dana: CA Sno-Park (the State of California, ohmvr.permits@parks.ca.gov; vendor "CA SNOW PARK") works differently from other
+vendors. We email an order, they FedEx the passes, we add them to LS inventory. Nothing is prepaid: every month during the season
+we report what we sold and mail them a check for it; after the season we send a final report, settle up, and return the unsold
+passes. Cat kept track of this last season and will own it once the process is in VMS. Not built yet; Dana to supply their report
+forms, the season dates and due day, and Cat's login.
