@@ -3992,3 +3992,7 @@ role (not admin: only Dana is admin). Cat also needs the "Monday sales report" (
 to restock by store transfer in LS; Dana would like the transfer created for her so she only collects the items at SLS and
 completes it. Not built. (Correction, Dana, Nov 6: LS is connected with full access since Oct 18; VMS already makes POs and
 inventory counts in LS. Whether LS's API lets VMS create a transfer is to be confirmed before promising it.)
+Nov 6, Monday sales report: only for the Marina (SLM) and the Happy Camper (GS), and only in their season. Marina opens
+about April 15, Happy Camper about mid-May; both close about October 15, all depending on weather and lake levels. So the
+Monday task runs while a store is open (Dana or Cat marks the store open and closed for the season), never on a fixed date.
+Not built; waiting for go.
