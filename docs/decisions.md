@@ -4046,3 +4046,11 @@ Dana: "yes, make hand-placed ones stay". Picking a contact on a billing@ convers
 placed by hand; new mail in it, confirming/ignoring/saving contacts and back-checks leave it alone. Merging contacts still moves
 it to the merged contact. "Let VMS match it" on the same list goes back to matching by address. Earlier hand placements were
 never recorded, so none could be marked (including any among the 14 taken off in the 0319 back-check).
+
+## Nov 6 — 41698 Tollhouse property papers go in the business folder
+Dana: the Chicago Title Full Reconveyance (Fresno County 2026-0001604, Jan 8, 2026) "was for the payoff of the 41698 Tollhouse
+Road property where the hardware store operates out of. Greg paid his parents off in the first week of January this year." "Put it
+in #2 - Its a commercial property and should probably be in the business folder." Saved to Dropbox › Documents › 1-A Shaver Lake
+Sports › Company Info › 41698 Tollhouse as "2026-01-08 Full Reconveyance 41698 Tollhouse - Chicago Title 2026-0001604.pdf" (same
+bytes as the copy in Accounting Documents, so the Dropbox reader links it instead of filing a second copy). Papers for the
+commercial property at 41698 Tollhouse belong in that Company Info folder, not 1-GP › Properties.
