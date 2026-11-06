@@ -3952,3 +3952,11 @@ no date), which the sent-mail matcher does not consider (it only takes an undate
 emails were moved to PO 26328. Eleven "The same order twice?" cards were put in the review queue for the back-check's new orders
 that sit next to an order already on file (Dorfman-Milano, Slippery Racer, Baffin, Coghlan, Bluestone x2, Signs 4 Fun, Planet
 Cotton, Alexander, Okuma x2); Dana decides, nothing merged on its own.
+Nov 5, from the forms Dana uploaded (Nov and Dec 2025 submissions, 25-26 end-of-season report, all State form OHV 54SP
+"Vendor Report of Operations"): one sheet "Front". Day permits: rows of From / Including permit numbers, Quantity sold
+(= including − from + 1), Amount collected ($15 each), Vendor commission ($1.80 each), Amount due to State. Season permits: same
+with $40 each and $2.40 commission. Subtotals per section, grand total due (the check). End-of-season adds Unsold permits (Day-use /
+Season ranges; last season "B450 - B473") and a declaration signed by Cat. Nov 2025: day 5751-5775 (25), season 8551-8610 (60),
+check $2,586.00. Dec 2025: day 5726-5750, 5776-6225, 7576-7750 (650), season 8611-8650, 9441-9530 (130), check $13,468.00.
+End of season: day 11176-11192 (17), season 9711-9715, 9721-9726, 9731-9735 (16), check $826.00. Files named
+"01 - 12-15-25 NOVEMBER 2025 SNOPARK SUBMISSION" (number, date sent, month). Planning only.
