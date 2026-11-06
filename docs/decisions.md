@@ -4072,3 +4072,8 @@ commercial property at 41698 Tollhouse belong in that Company Info folder, not 1
   "Year - What - Who" (e.g. "2024 1120S Tax Return - SLSI"). Leave Greg's and Dana's personal returns in 1-GP and 1-Dana, leave
   the Inventory Reports folder alone, never move insurance or bill statements. Extra copies go to a "Duplicates - review before
   deleting" folder, never deleted. Done in batches with counts; other SLS folders get the same treatment later, a bit at a time.
+- Same day, Dana: in the Dropbox clean-up, leave the SLM gas-tank permits and the SLH propane permit in Government -Filed
+  Reports › Health Dept, the SCE licenses in 1-Vendors › SCE Licensing, and the SLH sale papers where they are. The Marina and
+  Happy Camper have no mortgages. SLSI owns all the business property; the store DBAs own nothing. How many 571-Ls to file (one
+  per location or one for SLSI) and which account number to use is not settled yet: MBS was told by phone to use last year's
+  number, which Dana believes is wrong. To be confirmed with the Fresno County Assessor in writing.
