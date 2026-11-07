@@ -4081,3 +4081,5 @@ commercial property at 41698 Tollhouse belong in that Company Info folder, not 1
   Property Statement). Found while checking: every filed 571-L from 2018 to 2026 is the one SLSI account V0628A02, which the
   Assessor ties to 41698 Tollhouse Rd (notices to "Powell Gregory D, DBA Shaver Lake Sports LLC"), while MBS's copies give
   41777 Tollhouse as the address. Whether to label them SLS or SLH is asked; no files renamed or moved yet.
+- Nov 7, Dana (history): SLS was at 41698 Tollhouse until 2018, when it moved across the street to 41777; the hardware store
+  (SLH) opened at 41698 in 2019. So the 571-L account V0628A02 is SLS's account still listed at SLS's old address.
