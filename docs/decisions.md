@@ -4105,3 +4105,11 @@ commercial property at 41698 Tollhouse belong in that Company Info folder, not 1
   items. Strike King and Mechanix Edenred tasks closed: filed Nov 3. Migration 0321: an Edenred task now closes itself when
   its last unplaced file is filed or made a freight bill; the task lists those files with Open and File to a vendor (+ Add new
   vendor); Go to it opens the email with them first and the first one open; files in vendorless mail get File to a vendor.
+- Nov 7, Dana (freight): "I do want to know if there is a difference in what was quoted versus what we get on freight. And
+  that includes if we were told free freight and it didn't come out free freight. Because until an email goes off to the
+  vendor about it, that would not be considered handled. And of course, we would be waiting for a follow-up from the vendor
+  too." A freight difference is handled only when the vendor has been emailed about it AND has answered (or the credit came).
+  Re-check of the day's clean-up: 8 invoice checks I had closed were reopened (freight charged on orders marked free freight:
+  Bright Stripes 40009181, Continuum Games 87882, Mighty Fun 5426, Professor Puzzle 40030100, Toy Network TI0082512; free-freight
+  vendors charging freight: Balmshot 12735 and 16240, Water Sports 100633 over its $1,000 minimum). The 19 WWD freight-difference
+  cards stay closed: each is our share of a WWD pallet freight bill with $0 vendor freight on the invoice (no vendor charge).
