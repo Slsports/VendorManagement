@@ -4083,3 +4083,9 @@ commercial property at 41698 Tollhouse belong in that Company Info folder, not 1
   41777 Tollhouse as the address. Whether to label them SLS or SLH is asked; no files renamed or moved yet.
 - Nov 7, Dana (history): SLS was at 41698 Tollhouse until 2018, when it moved across the street to 41777; the hardware store
   (SLH) opened at 41698 in 2019. So the 571-L account V0628A02 is SLS's account still listed at SLS's old address.
+- Nov 7, Dana: "Have you put all the 571's in one place yet ... so I can look at them" (Nick was the previous accountant). Done:
+  all SLS 571-Ls 2018-2026 are in Dropbox › Company Info › SLS INC › 571-L Business Property Statements, one per year named
+  "YYYY 571-L SLS Business Property Statement", with the Assessor's notices to file (2022-2026), the 2025 county form packet sent
+  to MBS 3-26-25 and a 2024 blank form. The 13 extra copies (Nick's and Cassidy's copies of the same filings, the second MBS
+  Sharefile copies, the copies in 41698 Tollhouse - Owner - GP) are in its "Duplicates - review before deleting" folder; nothing deleted.
+  The county's own 571-L cover sheet says equipment at multiple locations may not be reported on a single statement.
