@@ -4089,3 +4089,8 @@ commercial property at 41698 Tollhouse belong in that Company Info folder, not 1
   to MBS 3-26-25 and a 2024 blank form. The 13 extra copies (Nick's and Cassidy's copies of the same filings, the second MBS
   Sharefile copies, the copies in 41698 Tollhouse - Owner - GP) are in its "Duplicates - review before deleting" folder; nothing deleted.
   The county's own 571-L cover sheet says equipment at multiple locations may not be reported on a single statement.
+- Nov 7, Dana ("go"): Jarrett's 2-28-26 Smith Optics preseason order is two orders. The VMS order made from the Placed Order
+  Summary ("SMITH HELMETS", PO SMITHHELMETS2-27-26, $8,292.50, with the 3-5-26 Electra revision) is the goggle order: renamed
+  "SMITH GOGGLES", PO SMIGOGG2-27-26, matched to Smith confirmation 7976790 ($8,268.90). New order "SMITH HELMETS", PO
+  SMIHELM2-27-26, $7,104.88, made for confirmation 7976788 with the helmet order form linked; VMS compares it. The CSV copies
+  of both confirmations (same email as the PDFs) were set aside, not deleted.
