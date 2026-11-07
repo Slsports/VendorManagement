@@ -4077,3 +4077,7 @@ commercial property at 41698 Tollhouse belong in that Company Info folder, not 1
   Happy Camper have no mortgages. SLSI owns all the business property; the store DBAs own nothing. How many 571-Ls to file (one
   per location or one for SLSI) and which account number to use is not settled yet: MBS was told by phone to use last year's
   number, which Dana believes is wrong. To be confirmed with the Fresno County Assessor in writing.
+- Nov 7, Dana: 571-L file names follow "2026 571-L SLS (or SLH) Business Property Statement" (year, 571-L, store, Business
+  Property Statement). Found while checking: every filed 571-L from 2018 to 2026 is the one SLSI account V0628A02, which the
+  Assessor ties to 41698 Tollhouse Rd (notices to "Powell Gregory D, DBA Shaver Lake Sports LLC"), while MBS's copies give
+  41777 Tollhouse as the address. Whether to label them SLS or SLH is asked; no files renamed or moved yet.
