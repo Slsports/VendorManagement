@@ -4094,3 +4094,14 @@ commercial property at 41698 Tollhouse belong in that Company Info folder, not 1
   "SMITH GOGGLES", PO SMIGOGG2-27-26, matched to Smith confirmation 7976790 ($8,268.90). New order "SMITH HELMETS", PO
   SMIHELM2-27-26, $7,104.88, made for confirmation 7976788 with the helmet order form linked; VMS compares it. The CSV copies
   of both confirmations (same email as the PDFs) were set aside, not deleted.
+- Nov 7, Dana: "I will always want a task closed when the items have been completed, whether I mark it or vms does … I need
+  you to make sure these things get cleaned up if they have had a resolution." Rule added to CLAUDE.md. Clean-up the same day
+  (each closed with a note saying what was already done): 10 tasks (closed at her request), 651 paperwork checks (389 invoices
+  matched to orders since paid, 13 to orders since entered, 194 no-order invoices paid through Worldwide, 8 paid through
+  Bill.com, 29 confirmations since invoiced and paid, 9 not paperwork, 7 duplicate reads, 1 replaced copy, 1 credit received),
+  58 review cards (25 conversations already answered or filed, 19 WWD freight differences on orders with a confirmed shared
+  pallet bill, 4 XPO delivery receipts done, 4 rep lines already placed, others) and the PNW freight quote (shipped on our
+  label). Left open: real money questions, never-read papers (56 failed on API limits; need Check again), unpaid or unclear
+  items. Strike King and Mechanix Edenred tasks closed: filed Nov 3. Migration 0321: an Edenred task now closes itself when
+  its last unplaced file is filed or made a freight bill; the task lists those files with Open and File to a vendor (+ Add new
+  vendor); Go to it opens the email with them first and the first one open; files in vendorless mail get File to a vendor.

@@ -143,7 +143,8 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   // a vendor's backorder or delay update (Dana, Oct 28): their email, open
   if (kind === 'shipupd' && t.thread_id && id) return { kind: 'page', to: `/mail/${t.thread_id}?email=${id}`, label: 'Open their email' }
   // an Edenred file VMS couldn't place (Dana, Oct 28: the button "takes me nowhere"): the one email with the file, opened
-  if (kind === 'edenred' && t.thread_id && id) return { kind: 'page', to: `/mail/${t.thread_id}?email=${id}`, label: 'Open the file\'s email' }
+  // Nov 7 ("it closed that screen and leaves me in Edenred Invoices"): the email open with those files first and the first one open
+  if (kind === 'edenred' && t.thread_id && id) return { kind: 'page', to: `/mail/${t.thread_id}?email=${id}&unplaced=1`, label: 'Open the files in the email' }
   // Tell me when they reply (Dana, Oct 19): straight to their reply
   if (kind === 'reply' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open their reply' }
   if (kind === 'promise' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}?do=reply`, label: 'Reply' }

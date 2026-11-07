@@ -1118,6 +1118,8 @@ export type Database = {
     }
     Functions: {
       resolve_booth_rep: { Args: { p_item: string; p_yes: boolean }; Returns: undefined }
+      edenred_unplaced_files: { Args: { p_email: string }; Returns: { id: string; file_name: string; mime_type: string | null; gmail_attachment_id: string | null; note: string | null }[] }
+      edenred_task_close: { Args: { p_email: string }; Returns: number }
       resolve_show_line: { Args: { p_item: string; p_yes: boolean }; Returns: undefined }
       item_names_decide: { Args: { p_org: string; p_items: Json; p_skip?: boolean }; Returns: number }
       item_names_undo: { Args: { p_ids: string[] }; Returns: number }

@@ -103,6 +103,10 @@ or match senders. A contact that was filed in the wrong place is deleted when it
 When Claude closes tasks because Dana asked, set `closed_how = 'request'` with the reason in `done_note`; anything VMS closes
 on its own is `vms` (the default for a task closed with no `done_by`). Dana checks the **Closed by VMS** tab, so every
 automatic close needs a plain `done_note` saying what VMS saw.
+**Done means closed (Dana, Nov 7):** "I will always want a task closed when the items have been completed, whether I mark it
+or vms does." Every task, review card and paperwork check VMS makes needs a rule that closes it when the thing is done, by
+any route (filed by hand, by Claude, by another screen); never leave her lists holding finished work. Any data fix Claude
+makes also closes the tasks/cards it finishes (migration 0321 does this for Edenred files).
 
 ## Help articles (Oct 11)
 The in-app Help page (menu → Help, `/help`) is built from `docs/help/*.md`, one "how do I…" per file, named
