@@ -11,7 +11,7 @@ Each person at a vendor gets an email with a link to a short form showing what w
 2. Open **The email** to check or change the message. Keep {form_link} in it.
 3. Click **Prepare emails**. One email per person at the vendors we buy from lands in **Mail › Drafts**.
 4. In **Mail › Drafts**, open a few to check them, then click **Send all**.
-5. For one vendor, open its page and click **Ask them to confirm** under **Their info** at the bottom of **Overview**.
+5. For one vendor, open its page, click **Show** on **Their info and what they sell** at the bottom of **Overview**, and click **Ask them to confirm**.
 
 ## What's on their form
 - Their name, title, email, phone numbers and what they do for us.

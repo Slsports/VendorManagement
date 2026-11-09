@@ -1,4 +1,4 @@
--- 0324 — Freight terms from email become review cards (Dana, Nov 9: "yes, rebuild it as review cards").
+-- 0325 — Freight terms from email become review cards (Dana, Nov 9: "yes, rebuild it as review cards").
 -- 0322 put Claude's reading straight on the order; 5 of 21 were wrong, so it was paused. Now:
 --   • Each reading is a card in Review › Freight: the terms, the vendor's exact words, their email one click away, the order
 --     VMS thinks it is for, and the vendor's other orders. A person clicks Put it on this order (any of them) or Not for an

@@ -13,5 +13,6 @@ When an email asks the store to fill out, sign or return paperwork (a registrati
 - billing@ asks go to Dana in Accounting › Tasks; orders@ asks go to whoever owns the conversation, else Dana.
 
 ## Good to know
+- **Administrative paperwork goes to Dana**, whichever mailbox it came into: credit applications and credit terms, W-9, resale or tax-exemption certificates, new customer or dealer account forms, agreements and contracts, insurance, licenses and registrations. Paperwork a buyer answers (order forms, worksheets, item setup, catalog requests) stays with the person the email came to.
 - A bill, a newsletter, an offer or paperwork they send for your records does not make a task. Only a real ask of you does.
 - If VMS missed one, open the email and add a task from it the usual way.

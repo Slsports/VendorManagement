@@ -10,6 +10,7 @@ import { ROUTES } from '@/lib/constants'
 import { shortDate } from '@/lib/freight'
 import { errorMessage } from '@/lib/utils'
 import { FoldSection } from '@/components/shared/FoldSection'
+import { useCardOpen } from '@/hooks/useCardOpen'
 import { Badge, Button, Input } from '@/components/ui'
 
 /**
@@ -21,6 +22,7 @@ export function VendorConfirmBox({ vendorId, organizationId, canEdit, infoConfir
   const sells = useSupabaseQuery(() => listVendorSells(vendorId), [vendorId])
   const sources = useSupabaseQuery(() => vendorSellsFromSources(vendorId), [vendorId])
   const [busy, setBusy] = useState(false)
+  const [infoOpen, setInfoOpen] = useCardOpen('vendor_info')
   const [adding, setAdding] = useState('')
   const rows = conf.data ?? []
   const summary = infoConfirmedAt ? `Confirmed ${shortDate(infoConfirmedAt)}` : rows.some((c) => c.sent_at && !c.confirmed_at) ? 'Waiting for their answer' : rows.length ? 'In Drafts, not sent' : 'Not asked yet'
@@ -103,11 +105,15 @@ export function VendorConfirmBox({ vendorId, organizationId, canEdit, infoConfir
       <Link to={ROUTES.contactConfirmations} className="mt-3 inline-block text-xs font-medium text-brand hover:underline">All contact confirmations</Link>
     </>
   )
-  // in the Overview (Dana, Nov 3: "doesn't really need to be a card"): what they sell first, then their info
+  // in the Overview (Dana, Nov 3: "doesn't really need to be a card"): closed until opened, remembered (Dana, Nov 9: "You
+  // have to scroll for days to get to your documents"); what they sell first, then their info
   if (inline) return (
     <div className="mt-4 border-t border-stone-100 pt-4">
-      <h3 className="text-xs font-medium text-stone-500">Their info <span className="font-normal">· {summary}</span></h3>
-      <div className="mt-1">{body}</div>
+      <button type="button" onClick={() => setInfoOpen((o) => !o)} aria-expanded={infoOpen} className="flex w-full items-center justify-between gap-3 text-left">
+        <h3 className="text-xs font-medium text-stone-500">Their info and what they sell <span className="font-normal">· {summary}</span></h3>
+        <span className="text-xs font-medium text-brand">{infoOpen ? 'Hide' : 'Show'}</span>
+      </button>
+      {infoOpen ? <div className="mt-1">{body}</div> : null}
     </div>
   )
   return <FoldSection title="Their info and what they sell" summary={summary}>{body}</FoldSection>

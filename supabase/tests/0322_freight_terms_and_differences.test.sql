@@ -10,7 +10,7 @@ insert into public.email_threads (organization_id, gmail_thread_id, subject, ven
 insert into public.emails (organization_id, gmail_id, thread_id, direction, from_email, to_emails, subject, body_text, received_at, vendor_id)
   values ('00000000-0000-0000-0000-000000000001', 'ft-e1', :'t1', 'in', 'rep@freight-test.example', array['orders@example.com'], 'Re: PO FTV-1', 'Yes, free freight on PO FTV-1.', now() - interval '20 days', :'v') returning id as e1 \gset
 
--- the reader found free freight for PO FTV-1; once applied (since 0324: by a person's answer on the card) it goes on the order with the email as its source
+-- the reader found free freight for PO FTV-1; once applied (since 0325: by a person's answer on the card) it goes on the order with the email as its source
 select public.freight_promises_save(:'e1', '[{"terms":"free","po":"FTV-1","basis":"negotiated","said_by":"vendor","quote":"Yes, free freight on PO FTV-1."}]') = 1 as saved;
 select public.freight_promise_apply(id) = 'applied' as applied from public.freight_promises where email_id = :'e1';
 select free_shipping and freight_terms = 'free' and freight_terms_source = 'email' and freight_terms_source_email_id = :'e1' and free_shipping_note like 'Per Freight Test Vendor''s email%' as order_has_email_terms from public.orders where id = :'o';

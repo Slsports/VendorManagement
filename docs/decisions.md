@@ -4023,6 +4023,11 @@ closes the season. The page shows LS's permit sales this season as a check next 
 Lightspeed transfers: their API's Transfer and TransferItem are read only (GET, no create), confirmed in Lightspeed's own
 developer docs on Nov 6; VMS cannot create the SLS → SLM / GS transfer for the Monday report. It can list what to transfer.
 
+## Nov 9, 2026 — Cat's login
+Dana: Cat is a manager, no Accounting tick. She manages the Happy Camper (GS) in summer and works at the sports shop (SLS) in
+winter. Dana adds her at Settings → Users (cat@shaverlakesports.com, Manager, stores GS and SLS); the Sno-Park report tasks go to
+her by that email as soon as her login exists.
+
 ## Nov 6, 2026 — What they sell: our LS categories and Worldwide's Product Lines, side by side
 Dana: "I want the category of what we purchase from a vendor to show as well as what WWD lists as their categories. WWD's
 categories are not as broad as ours but I want to know what other categories they sell other than the ones we buy from them."
@@ -4146,11 +4151,26 @@ commercial property at 41698 Tollhouse belong in that Company Info folder, not 1
   Reef Sport Suncare PO Jarrett061826 stays free: Sandboxx is Reef's rep group and Tom Dawson answered Dana "For you guys ...yes."
   Next (for Dana's go): rebuild as review cards (Put it on this order / Not for an order), skip price lists, promos and our own
   carrier prices, and match only orders of that vendor or its rep group's vendors.
+
+## Nov 9, 2026 — Administrative paperwork is Dana's; handing over a shared mailbox conversation (0324)
+Dana, on the SAA credit application task that went to Jarrett: "It should have been assigned to me. I handle all
+administrative tasks with vendors like sending our resale #, filling out credit apps, etc." Confirmed cause: the paperwork
+rule gave the task to the owner of the mailbox the email came into. Now Claude says whether the paperwork is administrative
+(credit application or terms, W-9, resale or tax-exemption certificate, customer / dealer / vendor account forms, agreements,
+insurance, licenses, registrations, banking details) and those tasks go to Dana whichever mailbox they came into; a buyer's
+paperwork (order forms, worksheets, item setup, catalogs) stays with the mailbox owner. Back-check: open paperwork tasks are
+judged from their words and the administrative ones move to Dana with a note (gmail-sync, 40 a run).
+Also confirmed: the Owner box on a conversation in Jarrett's mailbox said "Handed to Dana Powell" but snapped back to Jarrett,
+because the Oct 11 private-mail trigger keeps a mailbox conversation with its owner. Now a conversation shared to Orders can
+be handed to anyone (it stays in that mailbox); a private one shows "share it to Orders first" instead of pretending.
+Nov 9, Dana, on WFS's vendor page: "Their info and What they sell … needs to not be expanded when we open the page. You have to
+scroll for days to get to your documents." The Overview's Their info and what they sell is closed until Show is clicked and
+remembers the choice per person, like the dashboard boxes.
 - Nov 9, Dana: World Famous credit task (credit memo CM2600409, $71.70, Sep 11, for I87727-1): "Keep it waiting, re-word it so
   it's not late." The credit is in no WWD data VMS has (Edenred uploads through Nov 4, Payment History through Sep 15; the
   two invoices are not marked paid yet). Task renamed "Waiting for WWD to post World Famous credit CM2600409 ($71.70)" with
-  no due date. Migration 0324: every WWD credit received from now on waits the same way.
-- Nov 9, Dana ("yes, rebuild it as review cards"): migration 0324. Freight terms Claude reads in vendor/rep email are cards in
+  no due date. Migration 0325: every WWD credit received from now on waits the same way.
+- Nov 9, Dana ("yes, rebuild it as review cards"): migration 0325. Freight terms Claude reads in vendor/rep email are cards in
   Review › Freight ("Freight terms from email"): their words, the email one click away, the order VMS thinks it is for and
   the vendor's other orders; Put it on this order / Not for an order. Nothing touches an order without that click. No card
   when the order already says the same; one card per conversation per terms; a card closes itself when the order is set the
