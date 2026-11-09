@@ -6,6 +6,7 @@ import { docType, saveBlob } from '@/lib/viewer'
 import { cn, errorMessage } from '@/lib/utils'
 import { Button, Spinner } from '@/components/ui'
 import { PdfPages } from '@/components/shared/PdfPages'
+import { pdfPrintHtml } from '@/lib/pdfPrint'
 import { laySheet, type LaidCell, type SheetCell } from '@/lib/sheetLayout'
 
 export interface ViewerDoc {
@@ -82,15 +83,23 @@ export function DocumentViewer({ doc, onClose }: { doc: ViewerDoc; onClose: () =
   const printFrame = useRef<HTMLIFrameElement | null>(null)
   const printable = shown ? printPage(shown, tab, doc.name) : null
   // a hidden frame holds the page and opens the browser's print box; the document is data, so no scripts run in it
-  function print() {
+  const [preparing, setPreparing] = useState(false)
+  async function print() {
     if (!printable) return
+    let page = printable
+    // a PDF prints the pages VMS draws (the browser's own viewer refuses some files); its own viewer only if that fails
+    if ('src' in page && blob) {
+      setPreparing(true)
+      try { page = { html: await pdfPrintHtml(blob) } } catch { /* keep the browser's viewer */ } finally { setPreparing(false) }
+    }
     printFrame.current?.remove()
     const f = document.createElement('iframe')
     f.title = `Print ${doc.name}`
     f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'
-    if ('html' in printable) { f.setAttribute('sandbox', 'allow-same-origin allow-modals'); f.srcdoc = printable.html }
-    else f.src = printable.src
-    f.onload = () => { try { f.contentWindow?.focus(); f.contentWindow?.print() } catch { if ('src' in printable) window.open(printable.src, '_blank') } }
+    if ('html' in page) { f.setAttribute('sandbox', 'allow-same-origin allow-modals'); f.srcdoc = page.html }
+    else f.src = page.src
+    const src = 'src' in page ? page.src : null
+    f.onload = () => { try { f.contentWindow?.focus(); f.contentWindow?.print() } catch { if (src) window.open(src, '_blank') } }
     document.body.appendChild(f)
     printFrame.current = f
   }
@@ -194,7 +203,7 @@ export function DocumentViewer({ doc, onClose }: { doc: ViewerDoc; onClose: () =
           {shown && (shown.kind === 'pdf' || shown.kind === 'image') ? (
             <a href={shown.url} target="_blank" rel="noreferrer" className="hidden rounded-md p-1.5 text-stone-500 hover:bg-stone-100 sm:inline-flex" title="Open in a new tab"><ExternalLink className="size-5" aria-hidden="true" /><span className="sr-only">Open in a new tab</span></a>
           ) : null}
-          <Button size="sm" variant="secondary" disabled={!printable} onClick={print} leftIcon={<Printer className="size-4" aria-hidden="true" />}>Print</Button>
+          <Button size="sm" variant="secondary" disabled={!printable} loading={preparing} onClick={() => void print()} leftIcon={<Printer className="size-4" aria-hidden="true" />}>Print</Button>
           <Button size="sm" variant="secondary" disabled={!blob} onClick={() => blob && saveBlob(blob, doc.name)} leftIcon={<Download className="size-4" aria-hidden="true" />}>Download</Button>
           <button type="button" onClick={onClose} aria-label="Close" className="rounded-md p-1.5 text-stone-500 hover:bg-stone-100"><X className="size-5" aria-hidden="true" /></button>
         </div>
