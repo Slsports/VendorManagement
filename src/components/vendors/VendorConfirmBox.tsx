@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Plus, X } from 'lucide-react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { listConfirmations, listVendorSells, prepareConfirmations } from '@/services/vendorConfirmations'
+import { listConfirmations, listVendorSells, prepareConfirmations, vendorSellsFromSources } from '@/services/vendorConfirmations'
+import { pathLabel } from '@/lib/vendorSells'
 import { supabase } from '@/lib/supabase'
 import { ROUTES } from '@/lib/constants'
 import { shortDate } from '@/lib/freight'
@@ -18,6 +19,7 @@ import { Badge, Button, Input } from '@/components/ui'
 export function VendorConfirmBox({ vendorId, organizationId, canEdit, infoConfirmedAt, inline = false }: { vendorId: string; organizationId: string; canEdit: boolean; infoConfirmedAt: string | null; inline?: boolean }) {
   const conf = useSupabaseQuery(() => listConfirmations(organizationId, vendorId), [organizationId, vendorId])
   const sells = useSupabaseQuery(() => listVendorSells(vendorId), [vendorId])
+  const sources = useSupabaseQuery(() => vendorSellsFromSources(vendorId), [vendorId])
   const [busy, setBusy] = useState(false)
   const [adding, setAdding] = useState('')
   const rows = conf.data ?? []
@@ -59,6 +61,30 @@ export function VendorConfirmBox({ vendorId, organizationId, canEdit, infoConfir
         </ul>
       ) : null}
       <h3 className="mt-4 text-xs font-semibold uppercase tracking-wide text-stone-500">What they sell</h3>
+      {/* both sides, each in its own words (Dana, Nov 6): what we buy from them in LS, and everything Worldwide lists */}
+      <div className="mt-2 grid gap-4 sm:grid-cols-2">
+        <div>
+          <p className="text-xs font-medium text-stone-600">We buy from them (our LS categories)</p>
+          {!sources.data ? <p className="mt-1 text-sm text-stone-400">Loading…</p> : !sources.data.lsMatched ? <p className="mt-1 text-sm text-stone-500">Not matched to a Lightspeed vendor yet.</p> : !sources.data.ls.length ? <p className="mt-1 text-sm text-stone-500">No items in Lightspeed.</p> : (
+            <ul className="mt-1 space-y-0.5 text-sm">
+              {sources.data.ls.map((c) => (
+                <li key={c.path} className={c.carried ? 'text-stone-800' : 'text-stone-400'}>
+                  {pathLabel(c.path)} <span className="text-xs text-stone-500">· {c.carried ? `${c.carried} item${c.carried === 1 ? '' : 's'}` : 'no longer carried'}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div>
+          <p className="text-xs font-medium text-stone-600">Worldwide lists (their Product Lines)</p>
+          {!sources.data ? <p className="mt-1 text-sm text-stone-400">Loading…</p> : !sources.data.wwd.length ? <p className="mt-1 text-sm text-stone-500">Nothing from the Worldwide portal for them.</p> : (
+            <ul className="mt-1 space-y-0.5 text-sm text-stone-800">
+              {sources.data.wwd.map((l) => <li key={`${l.category}|${l.line}`} title={l.portal ? `Worldwide portal #${l.portal}` : undefined}>{l.category}{l.line ? ` › ${l.line}` : ''}</li>)}
+            </ul>
+          )}
+        </div>
+      </div>
+      {(sells.data ?? []).length || canEdit ? <p className="mt-3 text-xs font-medium text-stone-600">Added by us or from their form</p> : null}
       <div className="mt-2 flex flex-wrap gap-2">
         {(sells.data ?? []).map((s) => (
           <span key={s.id} className="inline-flex items-center gap-1 rounded-full bg-stone-100 px-3 py-1 text-sm text-stone-800" title={s.source === 'wwd' ? 'From Worldwide' : s.source === 'vendor_form' ? 'From their form' : 'Added here'}>
@@ -66,7 +92,7 @@ export function VendorConfirmBox({ vendorId, organizationId, canEdit, infoConfir
             {canEdit ? <button type="button" onClick={() => void removeSell(s.id)} aria-label={`Remove ${s.category}`} className="text-stone-400 hover:text-red-600"><X className="size-3.5" aria-hidden="true" /></button> : null}
           </span>
         ))}
-        {!(sells.data ?? []).length ? <span className="text-sm text-stone-500">Nothing yet. It fills in from Worldwide and their form.</span> : null}
+        {!(sells.data ?? []).length && canEdit ? <span className="text-sm text-stone-500">Nothing added yet.</span> : null}
       </div>
       {canEdit ? (
         <form className="mt-2 flex max-w-sm gap-2" onSubmit={(e) => { e.preventDefault(); void addSell() }}>

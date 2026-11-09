@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useHasInAppHistory } from '@/hooks/useHasInAppHistory'
 import toast from 'react-hot-toast'
 import { Bell, BellOff, Check, CheckCircle2, ClipboardList, ListTodo, Palette, ExternalLink, Trash2, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
@@ -71,6 +71,9 @@ export default function ThreadPage() {
   const wantsReply = params.get('do') === 'reply'
   // a line in a vendor's Recent Activity (Dana, Oct 20): that email open and in view
   const focusEmail = params.get('email')
+  // an Edenred task's Go to it (Dana, Nov 7): the files VMS couldn't place first, highlighted, and the first one open
+  const wantUnplaced = params.get('unplaced') === '1'
+  const goKey = useLocation().key
   const autoReply = useMemo(() => {
     if (!wantsReply || !q.data || !mailbox.data || !mayAnswer || !canEdit) return null
     const latest = [...q.data.emails].reverse().find((e) => e.direction === 'in') ?? q.data.emails[q.data.emails.length - 1]
@@ -225,7 +228,7 @@ export default function ThreadPage() {
         {/* Newest first and open; older ones closed to one line (Dana, Oct 8). */}
         {[...emails].reverse().map((e, i) => (
           // a link to this email (a task's Go to it) opens it, also when the page is already showing (Dana, Oct 28)
-          <Message key={e.id === focusEmail ? `${e.id}:open` : e.id} email={e} startOpen={i === 0 || e.id === focusEmail} focus={e.id === focusEmail} vendor={t.vendor} carrierId={t.carrier_id ?? null} accounting={box?.kind === 'accounting'}
+          <Message key={e.id === focusEmail ? `${e.id}:open` : e.id} email={e} startOpen={i === 0 || e.id === focusEmail} focus={e.id === focusEmail} openUnplaced={wantUnplaced && e.id === focusEmail ? goKey : null} vendor={t.vendor} carrierId={t.carrier_id ?? null} accounting={box?.kind === 'accounting'}
             onCompose={canEdit && mayAnswer && mailbox.data ? (kind) => setDraft(kind === 'forward' ? forwardDraft(t, e, e.attachments.length) : replyDraft(t, e, mailbox.data!, kind === 'all')) : undefined}
             onEmailAddress={canEdit ? (address) => setDraft({ to: [address], subject: '', body: '', vendor_id: t.vendor?.id ?? null }) : undefined} />
         ))}
@@ -241,7 +244,7 @@ export default function ThreadPage() {
   )
 }
 
-function Message({ email: e, startOpen, focus = false, vendor, carrierId, accounting = false, onCompose, onEmailAddress }: { email: ThreadDetail['emails'][number]; startOpen: boolean; focus?: boolean; vendor: { id: string; name: string } | null; carrierId: string | null; accounting?: boolean; onCompose?: (kind: 'reply' | 'all' | 'forward') => void; onEmailAddress?: (address: string) => void }) {
+function Message({ email: e, startOpen, focus = false, openUnplaced = null, vendor, carrierId, accounting = false, onCompose, onEmailAddress }: { email: ThreadDetail['emails'][number]; startOpen: boolean; focus?: boolean; openUnplaced?: string | null; vendor: { id: string; name: string } | null; carrierId: string | null; accounting?: boolean; onCompose?: (kind: 'reply' | 'all' | 'forward') => void; onEmailAddress?: (address: string) => void }) {
   const [open, setOpen] = useState(startOpen)
   const itemRef = useRef<HTMLLIElement>(null)
   useEffect(() => { if (focus) itemRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }) }, [focus])
@@ -278,11 +281,20 @@ function Message({ email: e, startOpen, focus = false, vendor, carrierId, accoun
   // Where a file was saved (Dana, Oct 10): "Saved to Confirmations › 2026" instead of a Save button.
   const savedTo = (a: Attachment) => saved[a.id] ?? (a.link ? `${folderLabel(folderOf(a.link.kind))}${a.link.doc_year ? ` › ${a.link.doc_year}` : ''}` : a.vendor_link_id ? 'documents' : null)
   const openFile = (a: Attachment) => view({ name: a.file_name, mime: a.mime_type, load: () => fetchAttachment(a.id) })
+  // Edenred files VMS couldn't place: not filed and marked by the Edenred reader (freight bills are marked differently)
+  const isUnplaced = (a: Attachment) => !a.vendor_link_id && !saved[a.id] && (a.accounting_skip === 'Edenred: no WWD invoice found' || a.accounting_skip === 'Edenred: WWD invoice has no vendor yet')
+  useEffect(() => {
+    if (!openUnplaced) return
+    const first = e.attachments.find((a) => isUnplaced(a) && a.gmail_attachment_id)
+    if (first) openFile(first)
+    // each Go to it (a new location key) opens it again, also when this page is already showing
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openUnplaced])
   const chip = (a: Attachment) => {
     const where = savedTo(a)
     const picture = isPicture(a)
     return (
-      <span key={a.id} className={cn('inline-flex rounded-lg bg-stone-100 text-xs text-stone-700', picture ? 'flex-col items-stretch overflow-hidden' : 'items-center gap-1')}>
+      <span key={a.id} className={cn('inline-flex rounded-lg bg-stone-100 text-xs text-stone-700', picture ? 'flex-col items-stretch overflow-hidden' : 'items-center gap-1', openUnplaced && isUnplaced(a) && 'bg-amber-50 ring-2 ring-amber-300')}>
         {picture && a.gmail_attachment_id ? <AttachmentThumb attachment={a} onOpen={() => openFile(a)} /> : null}
         <span className="inline-flex flex-wrap items-center gap-1">
           <button type="button" onClick={() => openFile(a)} disabled={!a.gmail_attachment_id} className="inline-flex max-w-56 items-center gap-1 px-2 py-1 hover:text-brand disabled:cursor-default disabled:hover:text-stone-700" title={a.gmail_attachment_id ? 'Open' : 'Not available from Gmail'}>
@@ -294,6 +306,11 @@ function Message({ email: e, startOpen, focus = false, vendor, carrierId, accoun
             : canEdit && vendor && a.gmail_attachment_id ? (
               <button type="button" onClick={() => setSaving(a)} className="inline-flex items-center gap-1 border-l border-stone-200 px-2 py-1 text-stone-500 hover:text-brand" title={`Save to ${vendor.name}'s documents`}>
                 <FolderInput className="size-3.5" aria-hidden="true" />Save to documents
+              </button>
+            ) : canEdit && !vendor && !accounting && a.gmail_attachment_id ? (
+              // mail with no vendor (Edenred, Dana Nov 7): file this one file to the vendor it belongs to, or a new vendor
+              <button type="button" onClick={() => setSaving(a)} className="inline-flex items-center gap-1 border-l border-stone-200 px-2 py-1 text-stone-500 hover:text-brand" title="Save this file to a vendor's documents">
+                <FolderInput className="size-3.5" aria-hidden="true" />File to a vendor
               </button>
             ) : null}
           {/* only on mail from a freight company or a vendor (Dana, Nov 2: it read as a label on insurance papers) */}
@@ -315,7 +332,7 @@ function Message({ email: e, startOpen, focus = false, vendor, carrierId, accoun
       </span>
     )
   }
-  const files = e.attachments.filter((a) => !isInlineImage(a))
+  const files = e.attachments.filter((a) => !isInlineImage(a)).sort((x, y) => (openUnplaced ? Number(isUnplaced(y)) - Number(isUnplaced(x)) : 0))
   const pictures = e.attachments.filter((a) => isInlineImage(a))
   // pictures VMS left for you (Dana, Oct 15: vendors marked "Ask before saving pictures", like Nationwide): one click saves them
   const waiting = e.attachments.filter((a) => !a.vendor_link_id && !saved[a.id] && a.gmail_attachment_id && a.picture_kind && a.picture_kind !== 'logo')
@@ -422,7 +439,7 @@ function Message({ email: e, startOpen, focus = false, vendor, carrierId, accoun
               onMoved={(f, year) => { setSaved((x) => ({ ...x, [movingFile.id]: `${folderLabel(f)} › ${year}` })); setMovingFile(null) }} />
           ) : null}
           {billFrom ? <MakeFreightBillDialog attachment={billFrom} carrierId={carrierId} onClose={() => setBillFrom(null)} /> : null}
-          {saving && vendor ? (
+          {saving ? (
             <SaveToDocumentsDialog attachment={saving} vendor={vendor} subject={e.subject} receivedAt={e.received_at} onClose={() => setSaving(null)} onSaved={(where) => { setSaved((x) => ({ ...x, [saving.id]: where })); setSaving(null) }} />
           ) : null}
         </div>

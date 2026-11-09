@@ -15,7 +15,7 @@ The billing@ mail works like the Orders mail, sorted by who it is with instead o
 6. **New email** writes a fresh email from billing@.
 
 ## Good to know
-- The **Who** column is the contact the conversation is with. Open a conversation to put it on a different contact.
+- The **Who** column is the contact the conversation is with. Open a conversation and pick a contact on its **Who** line to put it on a different one. A conversation you place by hand stays there (it shows **placed by hand**); new mail in it and re-checks leave it alone. Pick **Let VMS match it** on the same list to go back to matching by email address.
 - The category buttons follow the contact's category, so confirming contacts with the right category is what makes them useful.
 - Conversations where a known vendor or rep group writes to billing@ (Becker, Manufacturers Exchange and so on) are shared to Orders by themselves, so they go through the usual vendor steps and the team sees them. They stay here in Accounting too.
 - Everything else (your accountant, insurance, taxes, banks, freight companies) never shows on the Orders Mail page. A conversation where a vendor and someone else both wrote stays private until you click **Share to Orders**.

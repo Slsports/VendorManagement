@@ -77,7 +77,7 @@ export async function saveAccountingContact(organizationId: string, id: string |
     const { error } = await supabase.from('accounting_contact_addresses').upsert(add.map((address) => ({ organization_id: organizationId, address, is_domain: !address.includes('@'), contact_id: contactId! })), { onConflict: 'organization_id,address' })
     if (error) throw error
   }
-  await rematchAccountingMail(organizationId)
+  await rematchAccountingContact(organizationId, contactId, gone)
   // the filing rule re-checks the old (Dana, Oct 14): papers come out, or their emails are looked at again
   const { data: paths, error: ferr } = await supabase.rpc('accounting_apply_contact_filing', { p_contact: contactId })
   if (ferr) throw ferr
@@ -102,7 +102,16 @@ export async function proposeAccountingContacts(organizationId: string): Promise
   return data ?? 0
 }
 
-/** Match every billing@ conversation to its contact again (after a contact changes) and refresh the counts. */
+/** One contact changed (confirmed, ignored, addresses edited): match its conversations again, only those (Dana, Nov 6), and refresh the counts. */
+export async function rematchAccountingContact(organizationId: string, contactId: string, oldAddresses: string[] = []): Promise<number> {
+  const { data, error } = await supabase.rpc('accounting_rematch_contact', { p_contact: contactId, p_old_addresses: oldAddresses })
+  if (error) throw error
+  const { error: rerr } = await supabase.rpc('accounting_recount', { p_org: organizationId })
+  if (rerr) throw rerr
+  return data ?? 0
+}
+
+/** Match every billing@ conversation to its contact again (back-checks) and refresh the counts. */
 export async function rematchAccountingMail(organizationId: string): Promise<number> {
   const { data, error } = await supabase.rpc('accounting_rematch_all', { p_org: organizationId })
   if (error) throw error
@@ -111,8 +120,9 @@ export async function rematchAccountingMail(organizationId: string): Promise<num
   return data ?? 0
 }
 
-export async function setThreadContact(threadId: string, contactId: string | null) {
-  const { error } = await supabase.rpc('accounting_set_thread_contact', { p_thread: threadId, p_contact: contactId })
+/** Put a conversation on a contact by hand (it then stays there, Dana Nov 6), take it off, or let VMS match it again (auto). */
+export async function setThreadContact(threadId: string, contactId: string | null, auto = false) {
+  const { error } = await supabase.rpc('accounting_set_thread_contact', { p_thread: threadId, p_contact: contactId, p_auto: auto })
   if (error) throw error
 }
 

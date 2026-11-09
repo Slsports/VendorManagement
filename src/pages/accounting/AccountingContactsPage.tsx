@@ -5,7 +5,7 @@ import { Check, Plus, Search, UserRoundSearch, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useTableSort } from '@/hooks/useTableSort'
-import { listAccountingContacts, proposeAccountingContacts, rematchAccountingMail, setAccountingContactStatus, type ContactStatus } from '@/services/accounting'
+import { listAccountingContacts, proposeAccountingContacts, rematchAccountingContact, setAccountingContactStatus, type ContactStatus } from '@/services/accounting'
 import { categoryLabel } from '@/lib/accounting'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
@@ -66,7 +66,7 @@ export default function AccountingContactsPage() {
     if (!organization) return
     try {
       await setAccountingContactStatus(id, next)
-      await rematchAccountingMail(organization.id)
+      await rematchAccountingContact(organization.id, id)
       toast.success(label)
       await q.refetch()
     } catch (err) {

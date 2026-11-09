@@ -4027,3 +4027,127 @@ developer docs on Nov 6; VMS cannot create the SLS → SLM / GS transfer for the
 Dana: Cat is a manager, no Accounting tick. She manages the Happy Camper (GS) in summer and works at the sports shop (SLS) in
 winter. Dana adds her at Settings → Users (cat@shaverlakesports.com, Manager, stores GS and SLS); the Sno-Park report tasks go to
 her by that email as soon as her login exists.
+
+## Nov 6, 2026 — What they sell: our LS categories and Worldwide's Product Lines, side by side
+Dana: "I want the category of what we purchase from a vendor to show as well as what WWD lists as their categories. WWD's
+categories are not as broad as ours but I want to know what other categories they sell other than the ones we buy from them."
+"no matching list necessary. I'd rather see too much than not enough." The vendor page's What they sell shows two lists: our LS
+categories for their items (with items still carried) and every Worldwide portal Product Line, each in its own words, no matching.
+Hand-added entries stay below. (The box had been empty for every vendor: nothing ever filled vendor_sells.)
+
+## Nov 6 — Accounting contacts look only at what changed (0319)
+Dana: "Why do we need to check all the way back in conversations?? After the first run through it should only be updating new
+emails, new documents being added, etc." ("go"). The minute step that finds new people in billing@ had failed every minute for at
+least a day (8-second limit) because it read all billing@ mail and re-matched all ~22,100 conversations each time. Now: finding
+new people reads only mail added since the last look; confirming, ignoring or saving a contact re-matches only that contact's
+conversations; new mail still finds its contact as it arrives. The full re-match is kept only for back-checks (all at once,
+~0.7 s). Catch-up: 48 new contacts proposed, 105 more conversations matched. Back-check of all 22,100: 841 changed — 562 came
+off Tyler Powell / Greg Powell (their addresses are our own since Oct 19), 87 off contacts Dana had ignored, 14 whose address is
+on no contact, 178 moved to the contact their address now belongs to. Same day: the vendor Activity feed was failing on every
+vendor (email list over the 8-second limit); it now finds the vendor's conversations first (0318).
+
+## Nov 6 — Hand-placed billing@ conversations stay where Dana puts them (0320)
+Dana: "yes, make hand-placed ones stay". Picking a contact on a billing@ conversation's Who line (or taking it off) now marks it
+placed by hand; new mail in it, confirming/ignoring/saving contacts and back-checks leave it alone. Merging contacts still moves
+it to the merged contact. "Let VMS match it" on the same list goes back to matching by address. Earlier hand placements were
+never recorded, so none could be marked (including any among the 14 taken off in the 0319 back-check).
+
+## Nov 6 — 41698 Tollhouse property papers go in the business folder
+Dana: the Chicago Title Full Reconveyance (Fresno County 2026-0001604, Jan 8, 2026) "was for the payoff of the 41698 Tollhouse
+Road property where the hardware store operates out of. Greg paid his parents off in the first week of January this year." "Put it
+in #2 - Its a commercial property and should probably be in the business folder." Saved to Dropbox › Documents › 1-A Shaver Lake
+Sports › Company Info › 41698 Tollhouse as "2026-01-08 Full Reconveyance 41698 Tollhouse - Chicago Title 2026-0001604.pdf" (same
+bytes as the copy in Accounting Documents, so the Dropbox reader links it instead of filing a second copy). Papers for the
+commercial property at 41698 Tollhouse belong in that Company Info folder, not 1-GP › Properties.
+- Same day, Dana: "Anything for 41777 Tollhouse goes in the same company folder under 41777 Tollhouse folder." → Dropbox ›
+  Documents › 1-A Shaver Lake Sports › Company Info › 41777 Tollhouse (folder made by Dana Nov 6). Older 41777 papers still sit
+  in Company Info › Powell & Son Properties (e.g. the 2021 prelim for "41777 Highway 168") and in Insurance; not moved.
+- Same day, Dana: "41777 Highway 168" and "41777 Tollhouse" are the same property ("yes same property, move them"). Moved the 2021
+  prelim (Prelim_41777 Highway 168, Shaver Lake, CA - 8-2021.pdf) from Powell & Son Properties into Company Info › 41777 Tollhouse.
+  Insurance, property-tax, SCE and propane files that name 41777 stay in their own folders until Dana says otherwise (asked).
+  Chicago Title / Arlene Fontes added as a confirmed Accounting contact (contracts; phones and address from her Jan 8 signature;
+  ctt.com and her address); the Reconveyance conversation placed on her by hand; the reconveyance document moved to her, marked
+  filed, with the payoff note.
+- Same day, Dana (correction): Powell & Son Properties owns 41777 Tollhouse, so its papers go in Company Info › Powell & Son
+  Properties › 41777 Tollhouse. Never move insurance or bill statements (utilities, propane). Mortgage and property-tax papers
+  for 41777 go there; each paper is opened and its property confirmed before it is moved.
+- Same day, Dana (Dropbox clean-up of tax and property papers): put the company's tax returns, mortgages, property-tax statements
+  and 571-Ls in one place under Company Info, separated by location. GS is the Happy Camper, the summer camp store inside Camp
+  Edison near the marina; it shares the marina's address, 42696 Tollhouse Road, Shaver Lake. Every file is renamed to one pattern,
+  "Year - What - Who" (e.g. "2024 1120S Tax Return - SLSI"). Leave Greg's and Dana's personal returns in 1-GP and 1-Dana, leave
+  the Inventory Reports folder alone, never move insurance or bill statements. Extra copies go to a "Duplicates - review before
+  deleting" folder, never deleted. Done in batches with counts; other SLS folders get the same treatment later, a bit at a time.
+- Same day, Dana: in the Dropbox clean-up, leave the SLM gas-tank permits and the SLH propane permit in Government -Filed
+  Reports › Health Dept, the SCE licenses in 1-Vendors › SCE Licensing, and the SLH sale papers where they are. The Marina and
+  Happy Camper have no mortgages. SLSI owns all the business property; the store DBAs own nothing. How many 571-Ls to file (one
+  per location or one for SLSI) and which account number to use is not settled yet: MBS was told by phone to use last year's
+  number, which Dana believes is wrong. To be confirmed with the Fresno County Assessor in writing.
+- Nov 7, Dana: 571-L file names follow "2026 571-L SLS (or SLH) Business Property Statement" (year, 571-L, store, Business
+  Property Statement). Found while checking: every filed 571-L from 2018 to 2026 is the one SLSI account V0628A02, which the
+  Assessor ties to 41698 Tollhouse Rd (notices to "Powell Gregory D, DBA Shaver Lake Sports LLC"), while MBS's copies give
+  41777 Tollhouse as the address. Whether to label them SLS or SLH is asked; no files renamed or moved yet.
+- Nov 7, Dana (history): SLS was at 41698 Tollhouse until 2018, when it moved across the street to 41777; the hardware store
+  (SLH) opened at 41698 in 2019. So the 571-L account V0628A02 is SLS's account still listed at SLS's old address.
+- Nov 7, Dana: "Have you put all the 571's in one place yet ... so I can look at them" (Nick was the previous accountant). Done:
+  all SLS 571-Ls 2018-2026 are in Dropbox › Company Info › SLS INC › 571-L Business Property Statements, one per year named
+  "YYYY 571-L SLS Business Property Statement", with the Assessor's notices to file (2022-2026), the 2025 county form packet sent
+  to MBS 3-26-25 and a 2024 blank form. The 13 extra copies (Nick's and Cassidy's copies of the same filings, the second MBS
+  Sharefile copies, the copies in 41698 Tollhouse - Owner - GP) are in its "Duplicates - review before deleting" folder; nothing deleted.
+  The county's own 571-L cover sheet says equipment at multiple locations may not be reported on a single statement.
+- Nov 7, Dana ("go"): Jarrett's 2-28-26 Smith Optics preseason order is two orders. The VMS order made from the Placed Order
+  Summary ("SMITH HELMETS", PO SMITHHELMETS2-27-26, $8,292.50, with the 3-5-26 Electra revision) is the goggle order: renamed
+  "SMITH GOGGLES", PO SMIGOGG2-27-26, matched to Smith confirmation 7976790 ($8,268.90). New order "SMITH HELMETS", PO
+  SMIHELM2-27-26, $7,104.88, made for confirmation 7976788 with the helmet order form linked; VMS compares it. The CSV copies
+  of both confirmations (same email as the PDFs) were set aside, not deleted.
+- Nov 7, Dana: "I will always want a task closed when the items have been completed, whether I mark it or vms does … I need
+  you to make sure these things get cleaned up if they have had a resolution." Rule added to CLAUDE.md. Clean-up the same day
+  (each closed with a note saying what was already done): 10 tasks (closed at her request), 651 paperwork checks (389 invoices
+  matched to orders since paid, 13 to orders since entered, 194 no-order invoices paid through Worldwide, 8 paid through
+  Bill.com, 29 confirmations since invoiced and paid, 9 not paperwork, 7 duplicate reads, 1 replaced copy, 1 credit received),
+  58 review cards (25 conversations already answered or filed, 19 WWD freight differences on orders with a confirmed shared
+  pallet bill, 4 XPO delivery receipts done, 4 rep lines already placed, others) and the PNW freight quote (shipped on our
+  label). Left open: real money questions, never-read papers (56 failed on API limits; need Check again), unpaid or unclear
+  items. Strike King and Mechanix Edenred tasks closed: filed Nov 3. Migration 0321: an Edenred task now closes itself when
+  its last unplaced file is filed or made a freight bill; the task lists those files with Open and File to a vendor (+ Add new
+  vendor); Go to it opens the email with them first and the first one open; files in vendorless mail get File to a vendor.
+- Nov 7, Dana (freight): "I do want to know if there is a difference in what was quoted versus what we get on freight. And
+  that includes if we were told free freight and it didn't come out free freight. Because until an email goes off to the
+  vendor about it, that would not be considered handled. And of course, we would be waiting for a follow-up from the vendor
+  too." A freight difference is handled only when the vendor has been emailed about it AND has answered (or the credit came).
+  Re-check of the day's clean-up: 8 invoice checks I had closed were reopened (freight charged on orders marked free freight:
+  Bright Stripes 40009181, Continuum Games 87882, Mighty Fun 5426, Professor Puzzle 40030100, Toy Network TI0082512; free-freight
+  vendors charging freight: Balmshot 12735 and 16240, Water Sports 100633 over its $1,000 minimum). The 19 WWD freight-difference
+  cards stay closed: each is our share of a WWD pallet freight bill with $0 vendor freight on the invoice (no vendor charge).
+- Nov 7, Dana ("yes, go"): "If it comes from the vendor and they promise free freight it should log it for that order. Free
+  freight is not an always, every order situation. Each order can have different terms, even if the last order was free."
+  Built (migration 0322): Claude reads vendor and rep emails about freight (free, free over $X, half, capped at %, charged, a
+  quoted amount) and puts the terms on that one order, with the email one click away from the order's Shipping box. The order
+  is found by its PO, else the email's or conversation's one order; otherwise a "Which order?" task lists the vendor's orders.
+  A newer email wins; terms a person saved stand, and a differing email makes a task for that person. Every invoice is checked
+  against the order's terms, the accepted quote, the cap and the vendor's free-freight rule; each difference gets a task with
+  the email to the vendor written (invoice attached). Sending it makes the task "Waiting for <vendor>"; it closes on its own when
+  the vendor answers in that conversation or the credit comes. Back-check: 12 months of mail, then every invoice on file.
+- Nov 9, Dana ("yes, move it out of continuum"): Water Sports LLC invoice 100633 had a second copy filed under Continuum Games
+  (file "Inv_100633_from_Water_Sports_LLC_632.pdf"). The Continuum copy was removed and its email file now links to the Water
+  Sports copy already on file (no second copy). Its open "needs an order" paperwork check and its freight card went with it.
+- Nov 9, Dana: "No emails go to vendors without one of my team pressing send. They should be drafts. Until we get all the
+  bugs worked out and vms is tracking an order from beginning to end I want nothing sent automatically." Found sending on
+  their own today: shipment details requests (shipment-requests cron, as Trevor; none sent yet, 1 ready on hold), routing
+  letter reminders and contact-confirmation reminders a week later (task-reminders; none sent yet, 4 confirmations from
+  Nov 7 would be reminded Nov 14). Emails to our own staff (task reminders, supply "ordered" notes) and Bill.com forwards
+  are not vendor emails. Change to drafts waits for Dana's go.
+- Nov 9, Dana: "shipment details request should be sent by trevor, not automatic. The reminders can be sent automatically."
+  Migration 0323: every shipment request waits in Trevor's Drafts with his task "Send the shipment details email: <vendor>,
+  PO <po>" (the freight checks already did, Oct 31); the scheduler never sends one. Sending it (Drafts or Send now) starts the
+  3-business-day clock and closes the task. The routing letter and contact confirmation reminders stay automatic. The waiting
+  Planet Cotton PO 26569 request (held since Oct 30) went to Trevor's Drafts. Also fixed: freight-difference drafts no longer
+  carry the order, so sending one doesn't mark the order's shipping email sent or pick up the routing letter.
+- Nov 9, Dana ("yes, go"): the freight email reader read all 689 emails but too many readings were wrong (5 of 21 orders:
+  Alexander ALEXANDER1-30-26, Franklin Sports Franklin9226, Panther Martin PANTHERMARTIN2-22-26, Sona SONA090226, Triple T
+  2232026SLS; quote amounts on Royal Resortwear 51283 = a tag price, Becker BECKER2926 = our TForce price, Panther Martin, and
+  Hendrix 598142 = a free-freight minimum). Done: the reader is paused (gmail-sync FREIGHT_TERMS_PAUSED); those 5 orders were
+  put back to what the order sheets say (Freight column rule of Oct 7; their earlier shipping notes were not kept and are lost),
+  the 4 quote amounts cleared, Claude's readings behind them removed, and the 53 "Which order?" tasks closed at her request.
+  Reef Sport Suncare PO Jarrett061826 stays free: Sandboxx is Reef's rep group and Tom Dawson answered Dana "For you guys ...yes."
+  Next (for Dana's go): rebuild as review cards (Put it on this order / Not for an order), skip price lists, promos and our own
+  carrier prices, and match only orders of that vendor or its rep group's vendors.

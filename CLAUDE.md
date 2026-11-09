@@ -95,6 +95,12 @@ the same thing (order/PO, confirmation, invoice, freight bill, policy or account
 cancelled, a duplicate, paid, replaced, renumbered or changed, VMS updates the earlier record itself with a link to that
 email and closes its tasks (done_note); it asks Dana only when the newer email is unclear. Every new mail reader follows this.
 
+## Nothing goes to a vendor on its own (Nov 9)
+Dana: "No emails go to vendors without one of my team pressing send. They should be drafts." Until VMS tracks an order from
+beginning to end, every email to a vendor or rep is a draft (with a task) that a person sends. No cron or function sends one.
+The exception Dana allowed: the one-week reminders for the routing letter and the contact confirmation may go on their own.
+The shipment details email is Trevor's to send (migration 0323).
+
 ## Contacts: former vs. misfiled (Oct 22)
 "Former" (former_at) is only for a real rep or vendor person who no longer works there; former contacts never file mail
 or match senders. A contact that was filed in the wrong place is deleted when it is moved, never kept as former.
@@ -103,6 +109,10 @@ or match senders. A contact that was filed in the wrong place is deleted when it
 When Claude closes tasks because Dana asked, set `closed_how = 'request'` with the reason in `done_note`; anything VMS closes
 on its own is `vms` (the default for a task closed with no `done_by`). Dana checks the **Closed by VMS** tab, so every
 automatic close needs a plain `done_note` saying what VMS saw.
+**Done means closed (Dana, Nov 7):** "I will always want a task closed when the items have been completed, whether I mark it
+or vms does." Every task, review card and paperwork check VMS makes needs a rule that closes it when the thing is done, by
+any route (filed by hand, by Claude, by another screen); never leave her lists holding finished work. Any data fix Claude
+makes also closes the tasks/cards it finishes (migration 0321 does this for Edenred files).
 
 ## Help articles (Oct 11)
 The in-app Help page (menu → Help, `/help`) is built from `docs/help/*.md`, one "how do I…" per file, named

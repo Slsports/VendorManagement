@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { buyCategories, wwdLines, type BuyCategory, type WwdLine } from '@/lib/vendorSells'
 import type { VendorConfirmation } from '@/types'
 
 // Vendors confirming their own info (Dana, Oct 13).
@@ -38,4 +39,27 @@ export async function listVendorSells(vendorId: string): Promise<{ id: string; c
   const { data, error } = await supabase.from('vendor_sells').select('id, category, source, confirmed_at').eq('vendor_id', vendorId).order('category')
   if (error) throw error
   return data ?? []
+}
+
+/**
+ * What a vendor sells, from both sides (Dana, Nov 6): our LS categories for their items, and Worldwide's Product Lines from
+ * the portal. Each list in its own system's words; no matching between them ("I'd rather see too much than not enough").
+ */
+export async function vendorSellsFromSources(vendorId: string): Promise<{ ls: BuyCategory[]; lsMatched: boolean; wwd: WwdLine[] }> {
+  const [{ data: v, error }, { data: portal, error: e2 }] = await Promise.all([
+    supabase.from('vendors').select('lightspeed_vendor_id').eq('id', vendorId).maybeSingle(),
+    supabase.from('wwd_portal_vendors').select('number, data').eq('vendor_id', vendorId),
+  ])
+  if (error) throw error
+  if (e2) throw e2
+  const items: { category_path: string | null; archived: boolean }[] = []
+  if (v?.lightspeed_vendor_id) {
+    for (let from = 0; from < 20000; from += 1000) {
+      const { data, error: e3 } = await supabase.from('ls_items').select('category_path, archived').eq('default_vendor_id', v.lightspeed_vendor_id).range(from, from + 999)
+      if (e3) throw e3
+      items.push(...(data ?? []))
+      if (!data || data.length < 1000) break
+    }
+  }
+  return { ls: buyCategories(items), lsMatched: !!v?.lightspeed_vendor_id, wwd: wwdLines((portal ?? []).map((p) => ({ number: p.number, data: p.data }))) }
 }

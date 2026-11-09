@@ -380,6 +380,14 @@ export async function fetchAttachment(attachmentId: string): Promise<Blob> {
 }
 
 /** Copy an attachment into the vendor's documents (folder by kind, and the year folder). */
+/** The PDFs in an Edenred email VMS couldn't place yet (Dana, Nov 7): not filed to a vendor, not a freight bill. */
+export interface UnplacedFile { id: string; file_name: string; mime_type: string | null; gmail_attachment_id: string | null; note: string | null }
+export async function listEdenredUnplaced(emailId: string): Promise<UnplacedFile[]> {
+  const { data, error } = await supabase.rpc('edenred_unplaced_files', { p_email: emailId })
+  if (error) throw error
+  return (data ?? []) as UnplacedFile[]
+}
+
 export async function fileAttachmentToVendor(attachmentId: string, vendorId: string, kind: string, label?: string, year?: number): Promise<void> {
   const { error } = await supabase.functions.invoke('gmail-read', { body: { action: 'file', attachment_id: attachmentId, vendor_id: vendorId, kind, label, doc_year: year } })
   if (error) throw await functionError(error)

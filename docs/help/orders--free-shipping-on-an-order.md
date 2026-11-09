@@ -16,4 +16,6 @@ The **Shipping** box on an order records whether this order is supposed to ship 
 - The box also shows the vendor's usual rule, the freight on this order and our routing instructions from the vendor page.
 - VMS warns you when the answer does not fit, for example free shipping from a vendor that never offers it, an order over the vendor's free-shipping amount that was charged freight ("ask for the freight back"), or freight recorded on an order that should ship free ("a credit may be due").
 - The Orders list shows "free ship" under the cost of these orders.
+- Freight terms can come from the vendor's email (paused for now, see **Freight terms from email and freight differences**). The box then shows **From the vendor's email of** a date: click it to open the email.
+- Terms you save here stand. If a later email says something different, VMS gives you a task to look at it instead of changing your answer.
 - Viewers see the answer but cannot change it.

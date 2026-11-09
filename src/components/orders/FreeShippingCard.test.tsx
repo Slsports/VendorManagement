@@ -16,7 +16,7 @@ describe('FreeShippingCard', () => {
     fireEvent.change(screen.getByLabelText('Free shipping on this order'), { target: { value: 'yes' } })
     fireEvent.change(screen.getByLabelText('Why it ships free'), { target: { value: 'show_special' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
-    await waitFor(() => expect(updateOrder).toHaveBeenCalledWith('o1', { free_shipping: true, free_shipping_basis: 'show_special', free_shipping_note: null, freight_terms: 'free', freight_cap_pct: null }))
+    await waitFor(() => expect(updateOrder).toHaveBeenCalledWith('o1', { free_shipping: true, free_shipping_basis: 'show_special', free_shipping_note: null, freight_terms: 'free', freight_cap_pct: null, free_over: null, freight_terms_source: 'person', freight_terms_source_email_id: null }))
     expect(onChange).toHaveBeenCalled()
   })
 

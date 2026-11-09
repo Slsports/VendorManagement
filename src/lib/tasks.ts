@@ -131,6 +131,8 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   // the shipment details email (Dana, Oct 30): the follow-up draft once there is one, else the conversation; a dispute opens the reply
   if (kind === 'shipreq' && t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the follow-up email' }
   // the freight check (Dana, Oct 31): the order first, to look at the confirmation; the email waits in Drafts
+  // the shipment details email (Dana, Nov 9: sent by Trevor, never by VMS): the email waiting in his Drafts
+  if (kind === 'shipsend' && t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the email to send' }
   if (kind === 'shipcheck' && t.order_id) return { kind: 'page', to: `/orders/${t.order_id}`, label: 'Open the order and its confirmation' }
   if ((kind === 'shipreq' || kind === 'shipdispute' || kind === 'shipdispute_cc') && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: kind === 'shipreq' ? 'Open the conversation' : 'Open their reply' }
   if (kind === 'shipreq_noemail' && t.vendor_id) return { kind: 'page', to: `/vendors/${t.vendor_id}`, label: 'Open the vendor to add an email' }
@@ -143,7 +145,14 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   // a vendor's backorder or delay update (Dana, Oct 28): their email, open
   if (kind === 'shipupd' && t.thread_id && id) return { kind: 'page', to: `/mail/${t.thread_id}?email=${id}`, label: 'Open their email' }
   // an Edenred file VMS couldn't place (Dana, Oct 28: the button "takes me nowhere"): the one email with the file, opened
-  if (kind === 'edenred' && t.thread_id && id) return { kind: 'page', to: `/mail/${t.thread_id}?email=${id}`, label: 'Open the file\'s email' }
+  // Nov 7 ("it closed that screen and leaves me in Edenred Invoices"): the email open with those files first and the first one open
+  if (kind === 'edenred' && t.thread_id && id) return { kind: 'page', to: `/mail/${t.thread_id}?email=${id}&unplaced=1`, label: 'Open the files in the email' }
+  // a freight difference on an invoice (Dana, Nov 7): the email to the vendor, ready to send; once sent, the conversation
+  if (kind === 'freightissue' && t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the email to send' }
+  if (kind === 'freightissue' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open the conversation' }
+  // freight terms from an email: which order they are for, or the order a person set differently
+  if (kind === 'freightorder' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open the email' }
+  if (kind === 'freightterms' && t.order_id) return { kind: 'page', to: `/orders/${t.order_id}`, label: "Open the order's freight" }
   // Tell me when they reply (Dana, Oct 19): straight to their reply
   if (kind === 'reply' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open their reply' }
   if (kind === 'promise' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}?do=reply`, label: 'Reply' }
