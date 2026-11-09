@@ -6,7 +6,10 @@ who: Admin, managers and buyers
 ---
 Each order can have its own freight terms. Free freight on the last order does not mean free freight on this one. VMS reads the terms from the vendor's emails and checks every invoice against them.
 
-## Where the terms come from
+## Paused for now
+Claude reading freight terms from email is paused (Nov 9): too many readings were wrong. It will come back as review cards you approve before anything goes on an order. Terms already on an order from an email still show **From the vendor's email of** a date. The invoice check and the freight cards below keep working.
+
+## Where the terms come from (when it is on)
 1. Claude reads vendor and rep emails about freight: free freight, free over an amount, half freight, freight capped at a percent, freight charged, or a quoted freight amount.
 2. The terms go on the order the email is about (by its PO, or the one order in that conversation). The order's **Shipping** box shows them with **From the vendor's email of** a date. Click it to open the email.
 3. A newer email about the same order replaces the older terms.

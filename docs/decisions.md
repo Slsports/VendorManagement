@@ -4137,3 +4137,12 @@ commercial property at 41698 Tollhouse belong in that Company Info folder, not 1
   3-business-day clock and closes the task. The routing letter and contact confirmation reminders stay automatic. The waiting
   Planet Cotton PO 26569 request (held since Oct 30) went to Trevor's Drafts. Also fixed: freight-difference drafts no longer
   carry the order, so sending one doesn't mark the order's shipping email sent or pick up the routing letter.
+- Nov 9, Dana ("yes, go"): the freight email reader read all 689 emails but too many readings were wrong (5 of 21 orders:
+  Alexander ALEXANDER1-30-26, Franklin Sports Franklin9226, Panther Martin PANTHERMARTIN2-22-26, Sona SONA090226, Triple T
+  2232026SLS; quote amounts on Royal Resortwear 51283 = a tag price, Becker BECKER2926 = our TForce price, Panther Martin, and
+  Hendrix 598142 = a free-freight minimum). Done: the reader is paused (gmail-sync FREIGHT_TERMS_PAUSED); those 5 orders were
+  put back to what the order sheets say (Freight column rule of Oct 7; their earlier shipping notes were not kept and are lost),
+  the 4 quote amounts cleared, Claude's readings behind them removed, and the 53 "Which order?" tasks closed at her request.
+  Reef Sport Suncare PO Jarrett061826 stays free: Sandboxx is Reef's rep group and Tom Dawson answered Dana "For you guys ...yes."
+  Next (for Dana's go): rebuild as review cards (Put it on this order / Not for an order), skip price lists, promos and our own
+  carrier prices, and match only orders of that vendor or its rep group's vendors.
