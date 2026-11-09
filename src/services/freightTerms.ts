@@ -23,6 +23,13 @@ export async function setFreightPromiseOrder(promiseId: string, orderId: string 
   return data as string
 }
 
+/** A Freight terms card's answer (Dana, Nov 9): the order it goes on, or null for Not for an order. */
+export async function answerFreightTermsCard(itemId: string, orderId: string | null): Promise<string> {
+  const { data, error } = await supabase.rpc('freight_terms_review_answer', { p_item: itemId, p_order: orderId })
+  if (error) throw error
+  return data as string
+}
+
 /** "Free freight", "Free freight over $1,000", "Half freight", … in plain words. */
 export function freightPromiseText(p: Pick<FreightPromise, 'terms' | 'free_over' | 'cap_pct' | 'amount'>): string {
   const m = (n: number | null) => (n == null ? '' : n.toLocaleString('en-US', { style: 'currency', currency: 'USD' }))

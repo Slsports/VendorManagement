@@ -5,6 +5,7 @@ describe('review tabs', () => {
   it('puts each review kind on its tab', () => {
     expect(reviewTabOfKind('email_sender')).toBe('who')
     expect(reviewTabOfKind('mail_reply')).toBe('answer')
+    expect(reviewTabOfKind('freight_terms')).toBe('freight')
     expect(reviewTabOfKind('delivery_receipt')).toBe('freight')
     expect(reviewTabOfKind('vendor_duplicate')).toBe('vendor')
     expect(reviewTabOfKind('category_change')).toBe('vendor')

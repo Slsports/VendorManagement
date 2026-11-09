@@ -10,7 +10,7 @@ When you email a vendor from orders@ asking for a credit (damaged goods, a short
 1. VMS reads the email and makes a task **Credit from [vendor]: [what for]** for whoever signed it (Trevor when it can't tell). **Go to it** opens the conversation.
 2. If 7 days go by with no credit, the task reminds you (dashboard, email or text as your reminder choices say), then weekly. With the first reminder, a follow-up email to the vendor appears in your **Drafts**, written and ready; **Go to it** on the task opens it. Send it as is or change it first.
 3. When the vendor's credit memo comes in (a reply on that conversation, or a credit for that vendor with the same invoice number or amount), it is filed in the vendor's **Credits** folder marked **Received**, the reminders stop and the draft is removed.
-4. **WWD vendor**: the task stays open until Edenred shows the credit. When Trevor's Edenred upload carries it, the paper in Credits gets **On Edenred** with the date and the task finishes itself, with a note saying what VMS saw.
+4. **WWD vendor**: the task stays open until Edenred shows the credit. It is renamed **Waiting for WWD to post [vendor] credit [number] ([amount])** and has no due date, so it never shows as late; there is nothing to do until then. When Trevor's Edenred upload carries it, the paper in Credits gets **On Edenred** with the date and the task finishes itself, with a note saying what VMS saw.
 5. **Not a WWD vendor**: the task says the credit is in; check it against the invoice and mark it done yourself.
 
 ## Good to know

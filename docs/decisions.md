@@ -4146,3 +4146,15 @@ commercial property at 41698 Tollhouse belong in that Company Info folder, not 1
   Reef Sport Suncare PO Jarrett061826 stays free: Sandboxx is Reef's rep group and Tom Dawson answered Dana "For you guys ...yes."
   Next (for Dana's go): rebuild as review cards (Put it on this order / Not for an order), skip price lists, promos and our own
   carrier prices, and match only orders of that vendor or its rep group's vendors.
+- Nov 9, Dana: World Famous credit task (credit memo CM2600409, $71.70, Sep 11, for I87727-1): "Keep it waiting, re-word it so
+  it's not late." The credit is in no WWD data VMS has (Edenred uploads through Nov 4, Payment History through Sep 15; the
+  two invoices are not marked paid yet). Task renamed "Waiting for WWD to post World Famous credit CM2600409 ($71.70)" with
+  no due date. Migration 0324: every WWD credit received from now on waits the same way.
+- Nov 9, Dana ("yes, rebuild it as review cards"): migration 0324. Freight terms Claude reads in vendor/rep email are cards in
+  Review › Freight ("Freight terms from email"): their words, the email one click away, the order VMS thinks it is for and
+  the vendor's other orders; Put it on this order / Not for an order. Nothing touches an order without that click. No card
+  when the order already says the same; one card per conversation per terms; a card closes itself when the order is set the
+  same way. A PO matches only orders of that vendor, a brand it sells, or a vendor of its rep group. The reader's rules were
+  tightened from the mistakes (met the prepaid level = free; "no prepaid freight" = charged; our carrier prices and tag
+  prices are not quotes; promos and flyers left out). Back-check: the 53 no-order readings removed; their emails and every
+  email that gave nothing are read again. Balmshot cards: Dana will decide.
