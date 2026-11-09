@@ -4186,3 +4186,6 @@ remembers the choice per person, like the dashboard boxes.
 - Nov 9, Dana: "From the preview document page We can download, but we can't print. Can you please add a print button?"
   The document viewer has Print next to Download: a PDF prints as it is; a spreadsheet prints the sheet shown as a table;
   Word, pictures and text print as shown. Files VMS can't show can't be printed from VMS (Download them).
+- Nov 9, Dana: "Orders page, below the cost of each order list shipping cost, free, or 1/2 freight." The Orders list and a
+  vendor's order history show under each cost: Free freight, 1/2 freight (with the freight when known), Freight capped N%,
+  or "+$X freight"; blank when nothing is known.

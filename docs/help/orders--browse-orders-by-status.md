@@ -15,5 +15,5 @@ The Orders page lists every order, from placement to payment. Tabs across the to
 - Only statuses that have orders get a tab, so the row stays short.
 - You can also jump straight to a status from the menu: pick it from the list under **Orders**.
 - Each row shows the order date (and the show it came from, with a "?" when the show was guessed from the date), vendor, status, what was ordered and the PO, store, cost, ship date and paid date.
-- Under the cost you see "free ship" when the order ships free, or "+ $ freight" when freight was charged.
+- Under the cost you see **Free freight**, **1/2 freight** (with the freight when known), **Freight capped** at a percent, or the freight charged ("+$45.50 freight"). Blank when nothing is known yet; set it in the order's **Shipping** box.
 - The list shows the first 500 orders that match. Use the search box to narrow it if you need more.

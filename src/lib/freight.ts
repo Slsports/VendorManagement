@@ -18,3 +18,16 @@ export function domainsFrom(text: string): string[] {
     .filter((d) => /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(d))
   return [...new Set(out)]
 }
+
+/**
+ * The shipping line under an order's cost (Dana, Nov 9: "below the cost of each order list shipping cost, free, or 1/2
+ * freight"): free freight, half or capped (with the freight when known), else the freight paid. Null when nothing is known.
+ */
+export function orderShippingLine(o: { free_shipping: boolean | null; freight_terms?: 'free' | 'half' | 'capped' | 'charged' | null; freight_cap_pct?: number | null; freight_cost: number | null }): { text: string; free: boolean } | null {
+  const cost = o.freight_cost != null && o.freight_cost > 0 ? money(o.freight_cost) : null
+  if (o.free_shipping === true || o.freight_terms === 'free') return { text: 'Free freight', free: true }
+  if (o.freight_terms === 'half') return { text: cost ? `1/2 freight: ${cost}` : '1/2 freight', free: false }
+  if (o.freight_terms === 'capped') return { text: `Freight capped ${o.freight_cap_pct ?? '?'}%${cost ? `: ${cost}` : ''}`, free: false }
+  if (cost) return { text: `+${cost} freight`, free: false }
+  return null
+}

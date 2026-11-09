@@ -8,6 +8,7 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { vendorOrderSummary } from '@/services/orders'
 import { ROUTES } from '@/lib/constants'
 import { money, showLabel } from '@/lib/vendors'
+import { orderShippingLine } from '@/lib/freight'
 import { ORDER_STATUSES } from '@/lib/constants'
 import { OrderStatusBadge } from '@/components/orders/OrderStatusBadge'
 import { SortHeader } from '@/components/shared/SortHeader'
@@ -69,7 +70,7 @@ export function VendorOrdersSection({ vendorId, vendorName, canAdd = false }: { 
                       {o.for_vendor ? <span className="block text-xs text-stone-500">SLS order for <Link to={`${ROUTES.vendors}/${o.for_vendor.id}`} className="text-brand hover:underline">{o.for_vendor.name}</Link></span> : null}</td>
                     <td className="whitespace-nowrap py-1.5 pr-3 text-stone-600">{o.store_codes.join(', ')}</td>
                     <td className="whitespace-nowrap py-1.5 pr-3 text-stone-600">{o.placed_by}</td>
-                    <td className="whitespace-nowrap py-1.5 pr-3 text-right text-stone-900">{money(o.final_cost ?? o.est_cost)}{o.free_shipping === true ? <span className="block text-xs text-emerald-700">free ship</span> : o.free_shipping === false && o.freight_cost ? <span className="block text-xs text-stone-500">+{money(o.freight_cost)} freight</span> : null}</td>
+                    <td className="whitespace-nowrap py-1.5 pr-3 text-right text-stone-900">{money(o.final_cost ?? o.est_cost)}<ShippingLine order={o} /></td>
                     <td className="whitespace-nowrap py-1.5 pr-3 text-stone-600">{o.est_ship_date ? new Date(o.est_ship_date).toLocaleDateString() : ''}</td>
                     <td className="whitespace-nowrap py-1.5 text-stone-600">{o.paid_date ? new Date(o.paid_date).toLocaleDateString() : ''}</td>
                   </tr>
@@ -82,4 +83,10 @@ export function VendorOrdersSection({ vendorId, vendorName, canAdd = false }: { 
       {adding ? <AddOrderDialog vendor={{ id: vendorId, name: vendorName ?? 'this vendor' }} onClose={() => setAdding(false)} onSaved={() => void q.refetch()} /> : null}
     </>
   )
+}
+
+/** The shipping under the cost (Dana, Nov 9): free freight, 1/2 freight, capped, or the freight paid. */
+function ShippingLine({ order }: { order: Parameters<typeof orderShippingLine>[0] }) {
+  const line = orderShippingLine(order)
+  return line ? <span className={line.free ? 'block text-xs text-emerald-700' : 'block text-xs text-stone-500'}>{line.text}</span> : null
 }
