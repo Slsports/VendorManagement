@@ -131,6 +131,8 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   // the shipment details email (Dana, Oct 30): the follow-up draft once there is one, else the conversation; a dispute opens the reply
   if (kind === 'shipreq' && t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the follow-up email' }
   // the freight check (Dana, Oct 31): the order first, to look at the confirmation; the email waits in Drafts
+  // the shipment details email (Dana, Nov 9: sent by Trevor, never by VMS): the email waiting in his Drafts
+  if (kind === 'shipsend' && t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the email to send' }
   if (kind === 'shipcheck' && t.order_id) return { kind: 'page', to: `/orders/${t.order_id}`, label: 'Open the order and its confirmation' }
   if ((kind === 'shipreq' || kind === 'shipdispute' || kind === 'shipdispute_cc') && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: kind === 'shipreq' ? 'Open the conversation' : 'Open their reply' }
   if (kind === 'shipreq_noemail' && t.vendor_id) return { kind: 'page', to: `/vendors/${t.vendor_id}`, label: 'Open the vendor to add an email' }

@@ -98,6 +98,8 @@ email and closes its tasks (done_note); it asks Dana only when the newer email i
 ## Nothing goes to a vendor on its own (Nov 9)
 Dana: "No emails go to vendors without one of my team pressing send. They should be drafts." Until VMS tracks an order from
 beginning to end, every email to a vendor or rep is a draft (with a task) that a person sends. No cron or function sends one.
+The exception Dana allowed: the one-week reminders for the routing letter and the contact confirmation may go on their own.
+The shipment details email is Trevor's to send (migration 0323).
 
 ## Contacts: former vs. misfiled (Oct 22)
 "Former" (former_at) is only for a real rep or vendor person who no longer works there; former contacts never file mail

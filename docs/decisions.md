@@ -4131,3 +4131,9 @@ commercial property at 41698 Tollhouse belong in that Company Info folder, not 1
   letter reminders and contact-confirmation reminders a week later (task-reminders; none sent yet, 4 confirmations from
   Nov 7 would be reminded Nov 14). Emails to our own staff (task reminders, supply "ordered" notes) and Bill.com forwards
   are not vendor emails. Change to drafts waits for Dana's go.
+- Nov 9, Dana: "shipment details request should be sent by trevor, not automatic. The reminders can be sent automatically."
+  Migration 0323: every shipment request waits in Trevor's Drafts with his task "Send the shipment details email: <vendor>,
+  PO <po>" (the freight checks already did, Oct 31); the scheduler never sends one. Sending it (Drafts or Send now) starts the
+  3-business-day clock and closes the task. The routing letter and contact confirmation reminders stay automatic. The waiting
+  Planet Cotton PO 26569 request (held since Oct 30) went to Trevor's Drafts. Also fixed: freight-difference drafts no longer
+  carry the order, so sending one doesn't mark the order's shipping email sent or pick up the routing letter.

@@ -13,6 +13,7 @@ Click a task and VMS takes you to where the work is done, already on the step.
 - **Get freight quote**: the freight quote.
 - **Approve / Review the LS PO**: the LS PO.
 - **Approve the proof from [vendor]**: the proof itself opens, on the vendor's page with the Proofs folder open. A credit task (Trevor's) opens the credit itself, with the Credits folder open. **Edenred: … couldn't place** lists the files right in the task, each with **Open** and **File to a vendor**; **Go to it** opens the email with those files first and the first one open. A task with an email already written for it opens that email, ready to read and send. **[Vendor]: backorders or shipping delays** opens the vendor's email. This works from the vendor's own page too. The task also shows **Email: …**, the email the file came in on; click it to open that email.
+- **Send the shipment details email: [vendor], PO …**: that email in Mail › Drafts, ready to check and send.
 - **Freight on [vendor] invoice …**: the email to the vendor about the freight, ready to send; after it goes, **Waiting for [vendor]** opens that conversation. **Which order?** lists the vendor's orders right in the task, each with **This order**, plus **None of these**. **Freight terms on … the email and the order differ** opens the order's **Shipping** box.
 - **Pay [vendor] by…**: the task box opens with the bill, **Pay in the WWD portal** or **Pay in Bill.com**, and **I paid it** (see "Pay-by reminders").
 - Tasks you made yourself: whatever they're tagged to (the order, the email, then the vendor).

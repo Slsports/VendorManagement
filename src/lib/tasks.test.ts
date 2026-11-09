@@ -59,6 +59,7 @@ describe('Go to it', () => {
     expect(taskTarget({ ...base, auto_key: 'credit:l2', vendor_id: 'v1', order_id: 'o1' })).toEqual({ kind: 'page', to: '/vendors/v1?folder=credits&doc=l2', label: 'Open the credit' })
     expect(taskTarget({ ...base, auto_key: 'billcom_enter:l3', vendor_id: 'v1' })).toEqual({ kind: 'page', to: '/vendors/v1?folder=invoices&doc=l3', label: 'Open the invoice' })
     expect(taskTarget({ ...base, auto_key: 'edenred:e9', thread_id: 't1' })).toEqual({ kind: 'page', to: '/mail/t1?email=e9&unplaced=1', label: 'Open the files in the email' })
+    expect(taskTarget({ ...base, auto_key: 'shipsend:s1', draft_id: 'd2', order_id: 'o1' })).toEqual({ kind: 'page', to: '/mail?view=drafts&draft=d2', label: 'Open the email to send' })
     // a freight difference: the email ready to send, then the conversation it went in
     expect(taskTarget({ ...base, auto_key: 'freightissue:i1', draft_id: 'd1', order_id: 'o1' })).toEqual({ kind: 'page', to: '/mail?view=drafts&draft=d1', label: 'Open the email to send' })
     expect(taskTarget({ ...base, auto_key: 'freightissue:i1', thread_id: 't1', order_id: 'o1' })).toEqual({ kind: 'page', to: '/mail/t1', label: 'Open the conversation' })

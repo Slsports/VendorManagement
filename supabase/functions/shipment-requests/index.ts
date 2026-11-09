@@ -1,8 +1,8 @@
 // shipment-requests: the shipment details / freight email VMS sends the vendor when an order is confirmed, the form the
 // vendor fills in, their replies, and the 3-business-day follow-up (Dana, Oct 30; migration 0268).
-//   {action:"cron"}            — trusted (x-cron-secret), every 5 minutes: send 'ready' requests as Trevor (through
-//                                gmail-send), read new replies on sent requests (Claude), make the follow-ups
-//   {action:"send", id}        — a signed-in editor: send one request now (a held one from the backfill)
+//   {action:"cron"}            — trusted (x-cron-secret), every 5 minutes: never sends (Dana, Nov 9); a waiting request
+//                                gets its draft and task, read new replies on sent requests (Claude), make the follow-ups
+//   {action:"send", id}        — a signed-in editor presses Send now: that one request goes
 //   {action:"form", token}     — no login: the form's data (marks it opened)
 //   {action:"submit", token, method, answers} — no login: the vendor's answers
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
@@ -10,7 +10,6 @@ import { CORS, caller, errorResponse, HttpError, json, serviceClient } from '../
 import { aiEnabled, readShipmentReply } from '../_shared/ai.ts'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const SEND_PER_RUN = 10
 const TIME_BUDGET_MS = 45_000
 
 Deno.serve(async (req) => {
@@ -55,12 +54,14 @@ Deno.serve(async (req) => {
     const { data: orgs } = await db.from('organizations').select('id')
     const out: unknown[] = []
     for (const o of orgs ?? []) {
-      const r = { org: o.id, sent: 0, send_errors: [] as string[], replies: 0, followups: 0 }
-      // 1. send what is ready (not on hold, with somebody to send to), as the person it goes as
-      const { data: ready } = await db.from('shipment_requests').select('id').eq('organization_id', o.id).eq('status', 'ready').eq('hold', false).neq('to_emails', '{}').not('send_as', 'is', null).order('created_at').limit(SEND_PER_RUN)
-      for (const s of ready ?? []) {
-        if (Date.now() - started > TIME_BUDGET_MS) break
-        try { await sendOne(db, cronSecret!, s.id); r.sent++ } catch (e) { r.send_errors.push(`${s.id}: ${e instanceof Error ? e.message : String(e)}`.slice(0, 200)) }
+      const r = { org: o.id, drafted: 0, send_errors: [] as string[], replies: 0, followups: 0 }
+      // 1. nothing is sent from here (Dana, Nov 9: "shipment details request should be sent by trevor, not automatic"):
+      //    a request still waiting without a draft gets one in its sender's Drafts with their task (migration 0323)
+      const { data: waiting } = await db.from('shipment_requests').select('id').eq('organization_id', o.id).eq('status', 'ready').is('review_task_id', null).limit(20)
+      for (const s of waiting ?? []) {
+        const { error } = await db.rpc('shipment_request_review', { p_req: s.id })
+        if (error) r.send_errors.push(`${s.id}: ${error.message}`.slice(0, 200))
+        else r.drafted++
       }
       // 2. replies on sent requests: Claude reads what the vendor said
       if (aiEnabled()) r.replies = await readReplies(db, o.id, started)

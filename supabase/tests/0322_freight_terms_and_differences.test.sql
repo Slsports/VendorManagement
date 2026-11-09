@@ -22,7 +22,7 @@ update public.order_checks set order_id = :'o', status = 'to_review', doc_number
 select kind = 'free_order' and charged = 45.50 and status = 'open' and draft_id is not null and task_id is not null and expected_text like '%confirmed free freight by email%' as issue_made
   from public.freight_issues where check_id = :'chk';
 select id as issue, draft_id as draft, task_id as task from public.freight_issues where check_id = :'chk' \gset
-select 'ar@freight-test.example' = any (to_emails) and body like '%charges $45.50 freight%' and :'doc' = any (vendor_link_ids) as draft_to_vendor from public.email_drafts where id = :'draft';
+select 'ar@freight-test.example' = any (to_emails) and body like '%charges $45.50 freight%' and :'doc' = any (vendor_link_ids) and order_id is null as draft_to_vendor from public.email_drafts where id = :'draft';
 select title like 'Freight on Freight Test Vendor invoice 555: charged $45.50, should be free%' and draft_id = :'draft' as task_ready from public.tasks where id = :'task';
 
 -- sent: the task stays open and waits; no second credit request from that email
