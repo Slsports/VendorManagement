@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
+import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { latestSalesReport } from '@/services/ordering'
 import { DEFAULT_PARAMS, daysAgoIso, listLsStores, listLsVendorChoices, runLsReport, todayIso } from '@/services/lsReports'
 import { ROUTES } from '@/lib/constants'
@@ -24,9 +25,13 @@ export function RunReportButtons({ vendor, onSuggest, compact = false }: {
   const { organization, profile } = useAuth()
   const [busy, setBusy] = useState<'report' | 'order' | null>(null)
   const [status, setStatus] = useState<{ kind: 'running' | 'done' | 'error'; text: string } | null>(null)
+  /** The report just filed, to open in the preview (Dana, Nov 9: "I need a preview when I click on that green print"). */
+  const [filed, setFiled] = useState<{ name: string; file: Blob } | null>(null)
+  const { view, viewer } = useDocumentViewer()
 
   async function run(): Promise<boolean> {
     if (!organization || !profile) return false
+    setFiled(null)
     setStatus({ kind: 'running', text: 'Running the sales report from Lightspeed…' })
     const [stores, vendors] = await Promise.all([listLsStores(organization.id), listLsVendorChoices(organization.id)])
     const mine = vendors.filter((v) => v.vendor_id === vendor.id)
@@ -40,7 +45,8 @@ export function RunReportButtons({ vendor, onSuggest, compact = false }: {
     }
     const params = { ...DEFAULT_PARAMS, vendor_ids: [mine[0]!.ls_vendor_id], store_codes: stores.map((s) => s.code), from: daysAgoIso(365), to: todayIso(), days: 365 }
     const r = await runLsReport({ organizationId: organization.id, params, stores, vendors, profile: { id: profile.id, full_name: profile.full_name } })
-    setStatus({ kind: 'done', text: `Report filed under ${vendor.name}: ${r.run.file_name}.` })
+    setFiled({ name: r.run.file_name ?? 'Sales report.xlsx', file: r.file })
+    setStatus({ kind: 'done', text: `Report filed under ${vendor.name}: ` })
     return true
   }
 
@@ -77,9 +83,11 @@ export function RunReportButtons({ vendor, onSuggest, compact = false }: {
       {status ? (
         <span className={`${compact ? '' : 'basis-full '}text-xs ${status.kind === 'error' ? 'text-red-700' : status.kind === 'done' ? 'text-green-700' : 'text-stone-600'}`} role="status">
           {status.text}
+          {status.kind === 'done' && filed ? <><button type="button" onClick={() => view({ name: filed.name, mime: filed.file.type, load: async () => filed.file })} className="font-medium underline hover:text-green-900" title="Open the report">{filed.name}</button>.</> : null}
           {status.kind === 'error' && /In Lightspeed as/.test(status.text) && compact ? <> <Link to={link} className="font-medium text-brand hover:underline">Open the vendor</Link></> : null}
         </span>
       ) : null}
+      {viewer}
     </>
   )
 }

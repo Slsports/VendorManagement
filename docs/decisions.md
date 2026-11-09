@@ -4189,3 +4189,6 @@ remembers the choice per person, like the dashboard boxes.
 - Nov 9, Dana: "Orders page, below the cost of each order list shipping cost, free, or 1/2 freight." The Orders list and a
   vendor's order history show under each cost: Free freight, 1/2 freight (with the freight when known), Freight capped N%,
   or "+$X freight"; blank when nothing is known.
+- Nov 9, Dana: after Run report on a vendor's ordering card, the green "Report filed under Planet Cotton" line could not be
+  clicked: "I need a preview when I click on that green print." The report's name in that line now opens it in the
+  document preview (Print and Download there).
