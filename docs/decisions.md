@@ -4163,3 +4163,6 @@ judged from their words and the administrative ones move to Dana with a note (gm
 Also confirmed: the Owner box on a conversation in Jarrett's mailbox said "Handed to Dana Powell" but snapped back to Jarrett,
 because the Oct 11 private-mail trigger keeps a mailbox conversation with its owner. Now a conversation shared to Orders can
 be handed to anyone (it stays in that mailbox); a private one shows "share it to Orders first" instead of pretending.
+Nov 9, Dana, on WFS's vendor page: "Their info and What they sell … needs to not be expanded when we open the page. You have to
+scroll for days to get to your documents." The Overview's Their info and what they sell is closed until Show is clicked and
+remembers the choice per person, like the dashboard boxes.
