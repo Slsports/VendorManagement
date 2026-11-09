@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { laySheet } from './sheetLayout'
+import { frozenRowsBySheet, laidRowCount, laySheet } from './sheetLayout'
 
 const g = (rows: string[][]) => rows.map((r) => r.map((text) => ({ text })))
 
@@ -45,5 +45,23 @@ describe('laySheet', () => {
   it('keeps links and wraps them', () => {
     const rows = laySheet([[{ text: 'Open', link: 'https://x' }]])
     expect(rows[0]![0]).toMatchObject({ text: 'Open', link: 'https://x', wrap: true, colSpan: 1, rowSpan: 1 })
+  })
+})
+
+describe('frozenRowsBySheet', () => {
+  it('reads each sheet\'s frozen header rows from the file', () => {
+    const files: Record<string, string> = {
+      'xl/workbook.xml': '<workbook><sheets><sheet name="Size summary" sheetId="1" r:id="rId3"/><sheet name="Category &amp; class" sheetId="2" r:id="rId4"/><sheet name="Notes" sheetId="3" r:id="rId5"/></sheets></workbook>',
+      'xl/_rels/workbook.xml.rels': '<Relationships><Relationship Id="rId3" Type="x" Target="worksheets/sheet1.xml"/><Relationship Id="rId4" Type="x" Target="/xl/worksheets/sheet2.xml"/><Relationship Id="rId5" Type="x" Target="worksheets/sheet3.xml"/></Relationships>',
+      'xl/worksheets/sheet1.xml': '<worksheet><sheetViews><sheetView workbookViewId="0"><pane ySplit="3" topLeftCell="A4" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews></worksheet>',
+      'xl/worksheets/sheet2.xml': '<worksheet><sheetViews><sheetView><pane xSplit="1" ySplit="2" state="frozen"/></sheetView></sheetViews></worksheet>',
+      'xl/worksheets/sheet3.xml': '<worksheet><sheetViews><sheetView/></sheetViews></worksheet>',
+    }
+    const got = frozenRowsBySheet((p) => files[p] ?? null)
+    expect([...got]).toEqual([['Size summary', 3], ['Category & class', 2]])
+  })
+  it('counts the laid-out header rows (empty rows left out)', () => {
+    const grid = [[{ text: 'Report' }], [{ text: '' }], [{ text: 'Item' }, { text: 'Qty' }], [{ text: 'x' }, { text: '1' }]]
+    expect(laidRowCount(grid, [], 3)).toBe(2)
   })
 })

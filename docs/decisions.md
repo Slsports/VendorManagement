@@ -4192,3 +4192,6 @@ remembers the choice per person, like the dashboard boxes.
 - Nov 9, Dana: after Run report on a vendor's ordering card, the green "Report filed under Planet Cotton" line could not be
   clicked: "I need a preview when I click on that green print." The report's name in that line now opens it in the
   document preview (Print and Download there).
+- Nov 9, Dana: "in viewing reports, we want to see the header for the columns. They have to be fixed the whole time when
+  we're scrolling in size summary, category." The document preview now keeps each sheet's header rows on screen: the rows
+  frozen in the file (our sales reports freeze 2 or 3), else the first row. Printed, they repeat on every page.

@@ -14,6 +14,7 @@ Documents open right inside VMS, without downloading them first.
 
 ## Good to know
 - PDFs show page by page and pictures as they are, on any computer or phone. Excel and CSV files show as tables (the first 1,000 rows of each sheet). Cells that are merged in Excel stay merged, long text wraps onto a few lines, and empty rows and columns are left out, so the items sit next to each other. **Download** still gives you the file exactly as it was sent. Word files (.docx) show as a page.
+- In a spreadsheet, the header rows stay at the top while you scroll down (on our sales reports: the title and column names of **Size summary**, **Category** and the other tabs). Printed, they repeat on every page.
 - **Print** prints a PDF as it is. A spreadsheet prints the sheet you are looking at as a table; Word files, pictures and text print as shown.
 - Files VMS cannot show (an old .doc, for example) offer a **Download** button instead, and can't be printed from VMS.
 - Email attachments open in the same viewer.

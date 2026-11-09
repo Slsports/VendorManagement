@@ -7,7 +7,7 @@ import { cn, errorMessage } from '@/lib/utils'
 import { Button, Spinner } from '@/components/ui'
 import { PdfPages } from '@/components/shared/PdfPages'
 import { pdfPrintHtml } from '@/lib/pdfPrint'
-import { laySheet, type LaidCell, type SheetCell } from '@/lib/sheetLayout'
+import { frozenRowsBySheet, laidRowCount, laySheet, type LaidCell, type SheetCell } from '@/lib/sheetLayout'
 
 export interface ViewerDoc {
   name: string
@@ -18,7 +18,7 @@ export interface ViewerDoc {
 
 type Shown =
   | { kind: 'pdf' | 'image'; url: string }
-  | { kind: 'sheet'; sheets: { name: string; rows: LaidCell[][]; more: number }[] }
+  | { kind: 'sheet'; sheets: { name: string; rows: LaidCell[][]; head: number; more: number }[] }
   | { kind: 'word'; html: string }
   | { kind: 'text'; text: string }
   | { kind: 'other' }
@@ -27,9 +27,9 @@ const MAX_ROWS = 1000
 
 
 /** The sheet as laid-out rows: merged cells kept, empty rows and columns left out, long text wrapped (Dana, Nov 3). */
-function sheetRows(XLSX: typeof import('xlsx'), ws: import('xlsx').WorkSheet): LaidCell[][] {
+function sheetRows(XLSX: typeof import('xlsx'), ws: import('xlsx').WorkSheet, frozen: number): { rows: LaidCell[][]; head: number } {
   const ref = ws['!ref']
-  if (!ref) return []
+  if (!ref) return { rows: [], head: 0 }
   const range = XLSX.utils.decode_range(ref)
   const grid: SheetCell[][] = []
   for (let r = range.s.r; r <= range.e.r; r++) {
@@ -42,7 +42,10 @@ function sheetRows(XLSX: typeof import('xlsx'), ws: import('xlsx').WorkSheet): L
     grid.push(row)
   }
   const merges = (ws['!merges'] ?? []).map((m) => ({ s: { r: m.s.r - range.s.r, c: m.s.c - range.s.c }, e: { r: m.e.r - range.s.r, c: m.e.c - range.s.c } }))
-  return laySheet(grid, merges)
+  const rows = laySheet(grid, merges)
+  // the rows frozen in Excel stay on screen (Dana, Nov 9); a sheet with none keeps its first row
+  const head = Math.min(rows.length, frozen > 0 ? Math.max(1, laidRowCount(grid, merges, frozen - range.s.r)) : 1)
+  return { rows, head }
 }
 
 const esc = (t: string) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!)
@@ -57,10 +60,22 @@ function printPage(shown: Shown, sheetIndex: number, name: string): { src: strin
   if (shown.kind === 'sheet') {
     const sheet = shown.sheets[sheetIndex] ?? shown.sheets[0]
     if (!sheet) return null
-    const rows = sheet.rows.map((r, i) => `<tr${i === 0 ? ' style="font-weight:600;background:#f5f5f4"' : ''}>${r.map((c) => `<td${c.colSpan > 1 ? ` colspan="${c.colSpan}"` : ''}${c.rowSpan > 1 ? ` rowspan="${c.rowSpan}"` : ''}>${esc(c.text)}</td>`).join('')}</tr>`).join('')
+    const tr = (r: LaidCell[], head: boolean) => `<tr${head ? ' style="font-weight:600;background:#f5f5f4"' : ''}>${r.map((c) => `<td${c.colSpan > 1 ? ` colspan="${c.colSpan}"` : ''}${c.rowSpan > 1 ? ` rowspan="${c.rowSpan}"` : ''}>${esc(c.text)}</td>`).join('')}</tr>`
+    // the header rows repeat at the top of every printed page
+    const rows = `<thead>${sheet.rows.slice(0, sheet.head).map((r) => tr(r, true)).join('')}</thead><tbody>${sheet.rows.slice(sheet.head).map((r) => tr(r, false)).join('')}</tbody>`
     return { html: `${PRINT_STYLE}<h3>${esc(name)}${shown.sheets.length > 1 ? ` · ${esc(sheet.name)}` : ''}</h3><table>${rows}</table>` }
   }
   return null
+}
+
+/** One cell of a sheet; header cells keep a solid background so the rows scrolling under them don't show through. */
+function SheetTd({ cell: c, rowSpan, head = false }: { cell: LaidCell; rowSpan: number; head?: boolean }) {
+  return (
+    <td colSpan={c.colSpan > 1 ? c.colSpan : undefined} rowSpan={rowSpan > 1 ? rowSpan : undefined}
+      className={cn('border-b border-r border-stone-200 px-2 py-1 align-top text-stone-800 first:border-l', head ? 'bg-stone-100' : 'bg-white', !c.wrap ? 'whitespace-nowrap' : c.colSpan > 1 ? 'whitespace-normal' : 'min-w-40 max-w-xs whitespace-normal')}>
+      <CellText cell={c} />
+    </td>
+  )
 }
 
 function CellText({ cell }: { cell: SheetCell }) {
@@ -119,11 +134,13 @@ export function DocumentViewer({ doc, onClose }: { doc: ViewerDoc; onClose: () =
           setShown({ kind, url })
         } else if (kind === 'sheet') {
           const XLSX = await import('xlsx')
-          const book = XLSX.read(await b.arrayBuffer(), { type: 'array', cellDates: true })
+          const book = XLSX.read(await b.arrayBuffer(), { type: 'array', cellDates: true, bookFiles: true })
+          const files = (book as unknown as { files?: Record<string, { content?: Uint8Array | string }> }).files ?? {}
+          const frozen = frozenRowsBySheet((path) => { const c = files[path]?.content; return c == null ? null : typeof c === 'string' ? c : new TextDecoder().decode(c) })
           setShown({
             kind, sheets: book.SheetNames.map((name) => {
-              const rows = sheetRows(XLSX, book.Sheets[name]!)
-              return { name, rows: rows.slice(0, MAX_ROWS), more: Math.max(0, rows.length - MAX_ROWS) }
+              const { rows, head } = sheetRows(XLSX, book.Sheets[name]!, frozen.get(name) ?? 0)
+              return { name, rows: rows.slice(0, MAX_ROWS), head: Math.min(head, MAX_ROWS), more: Math.max(0, rows.length - MAX_ROWS) }
             }),
           })
         } else if (kind === 'word') {
@@ -170,13 +187,21 @@ export function DocumentViewer({ doc, onClose }: { doc: ViewerDoc; onClose: () =
             ))}
           </div>
         ) : null}
-        <div className="min-h-0 flex-1 overflow-auto">
+        <div className="max-h-none min-h-0 flex-1 overflow-auto">
           {sheet && sheet.rows.length ? (
-            <table className="border-collapse text-xs">
+            <table className="border-separate border-spacing-0 text-xs">
+              {/* the header rows stay on screen while scrolling (Dana, Nov 9: Size summary, Category) */}
+              <thead className="sticky top-0 z-10">
+                {sheet.rows.slice(0, sheet.head).map((r, i) => (
+                  <tr key={i} className="font-semibold">
+                    {r.map((c, j) => <SheetTd key={j} cell={c} rowSpan={Math.min(c.rowSpan, sheet.head - i)} head />)}
+                  </tr>
+                ))}
+              </thead>
               <tbody>
-                {sheet.rows.map((r, i) => (
-                  <tr key={i} className={i === 0 ? 'bg-stone-50 font-semibold' : ''}>
-                    {r.map((c, j) => <td key={j} colSpan={c.colSpan > 1 ? c.colSpan : undefined} rowSpan={c.rowSpan > 1 ? c.rowSpan : undefined} className={cn('border border-stone-200 px-2 py-1 align-top text-stone-800', !c.wrap ? 'whitespace-nowrap' : c.colSpan > 1 ? 'whitespace-normal' : 'min-w-40 max-w-xs whitespace-normal')}><CellText cell={c} /></td>)}
+                {sheet.rows.slice(sheet.head).map((r, i) => (
+                  <tr key={i}>
+                    {r.map((c, j) => <SheetTd key={j} cell={c} rowSpan={c.rowSpan} />)}
                   </tr>
                 ))}
               </tbody>
