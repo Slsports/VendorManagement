@@ -4183,3 +4183,6 @@ remembers the choice per person, like the dashboard boxes.
   Not main shipping, the Main shipping tag, and lists them right under the alternate; the top of the vendor page shows
   "Main shipping:" under "Alternate:". Picking someone ticks Shipping on them; a former contact is no longer it. Who the
   shipment details email goes to is unchanged (asked Dana).
+- Nov 9, Dana: "From the preview document page We can download, but we can't print. Can you please add a print button?"
+  The document viewer has Print next to Download: a PDF prints as it is; a spreadsheet prints the sheet shown as a table;
+  Word, pictures and text print as shown. Files VMS can't show can't be printed from VMS (Download them).

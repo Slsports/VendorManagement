@@ -1,7 +1,7 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
-import { Download, ExternalLink, X } from 'lucide-react'
+import { Download, ExternalLink, Printer, X } from 'lucide-react'
 import { docType, saveBlob } from '@/lib/viewer'
 import { cn, errorMessage } from '@/lib/utils'
 import { Button, Spinner } from '@/components/ui'
@@ -44,6 +44,24 @@ function sheetRows(XLSX: typeof import('xlsx'), ws: import('xlsx').WorkSheet): L
   return laySheet(grid, merges)
 }
 
+const esc = (t: string) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!)
+const PRINT_STYLE = '<style>body{font:13px/1.45 system-ui,sans-serif;color:#1c1917;margin:0;padding:12px}table{border-collapse:collapse}td,th{border:1px solid #a8a29e;padding:3px 6px;vertical-align:top}img{max-width:100%}pre{white-space:pre-wrap;word-break:break-word}</style>'
+
+/** What gets printed (Dana, Nov 9: "We can download, but we can't print"): the PDF itself, else a plain page of what is shown. */
+function printPage(shown: Shown, sheetIndex: number, name: string): { src: string } | { html: string } | null {
+  if (shown.kind === 'pdf') return { src: shown.url }
+  if (shown.kind === 'image') return { html: `${PRINT_STYLE}<img src="${shown.url}" alt="${esc(name)}">` }
+  if (shown.kind === 'word') return { html: PRINT_STYLE + shown.html }
+  if (shown.kind === 'text') return { html: `${PRINT_STYLE}<pre>${esc(shown.text)}</pre>` }
+  if (shown.kind === 'sheet') {
+    const sheet = shown.sheets[sheetIndex] ?? shown.sheets[0]
+    if (!sheet) return null
+    const rows = sheet.rows.map((r, i) => `<tr${i === 0 ? ' style="font-weight:600;background:#f5f5f4"' : ''}>${r.map((c) => `<td${c.colSpan > 1 ? ` colspan="${c.colSpan}"` : ''}${c.rowSpan > 1 ? ` rowspan="${c.rowSpan}"` : ''}>${esc(c.text)}</td>`).join('')}</tr>`).join('')
+    return { html: `${PRINT_STYLE}<h3>${esc(name)}${shown.sheets.length > 1 ? ` · ${esc(sheet.name)}` : ''}</h3><table>${rows}</table>` }
+  }
+  return null
+}
+
 function CellText({ cell }: { cell: SheetCell }) {
   if (!cell.link) return <>{cell.text}</>
   const cls = 'text-brand underline hover:text-brand-dark'
@@ -61,6 +79,22 @@ export function DocumentViewer({ doc, onClose }: { doc: ViewerDoc; onClose: () =
   const [shown, setShown] = useState<Shown | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState(0)
+  const printFrame = useRef<HTMLIFrameElement | null>(null)
+  const printable = shown ? printPage(shown, tab, doc.name) : null
+  // a hidden frame holds the page and opens the browser's print box; the document is data, so no scripts run in it
+  function print() {
+    if (!printable) return
+    printFrame.current?.remove()
+    const f = document.createElement('iframe')
+    f.title = `Print ${doc.name}`
+    f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'
+    if ('html' in printable) { f.setAttribute('sandbox', 'allow-same-origin allow-modals'); f.srcdoc = printable.html }
+    else f.src = printable.src
+    f.onload = () => { try { f.contentWindow?.focus(); f.contentWindow?.print() } catch { if ('src' in printable) window.open(printable.src, '_blank') } }
+    document.body.appendChild(f)
+    printFrame.current = f
+  }
+  useEffect(() => () => { printFrame.current?.remove() }, [])
 
   useEffect(() => {
     let url: string | null = null
@@ -160,6 +194,7 @@ export function DocumentViewer({ doc, onClose }: { doc: ViewerDoc; onClose: () =
           {shown && (shown.kind === 'pdf' || shown.kind === 'image') ? (
             <a href={shown.url} target="_blank" rel="noreferrer" className="hidden rounded-md p-1.5 text-stone-500 hover:bg-stone-100 sm:inline-flex" title="Open in a new tab"><ExternalLink className="size-5" aria-hidden="true" /><span className="sr-only">Open in a new tab</span></a>
           ) : null}
+          <Button size="sm" variant="secondary" disabled={!printable} onClick={print} leftIcon={<Printer className="size-4" aria-hidden="true" />}>Print</Button>
           <Button size="sm" variant="secondary" disabled={!blob} onClick={() => blob && saveBlob(blob, doc.name)} leftIcon={<Download className="size-4" aria-hidden="true" />}>Download</Button>
           <button type="button" onClick={onClose} aria-label="Close" className="rounded-md p-1.5 text-stone-500 hover:bg-stone-100"><X className="size-5" aria-hidden="true" /></button>
         </div>
