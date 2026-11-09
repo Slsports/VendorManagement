@@ -4125,3 +4125,9 @@ commercial property at 41698 Tollhouse belong in that Company Info folder, not 1
 - Nov 9, Dana ("yes, move it out of continuum"): Water Sports LLC invoice 100633 had a second copy filed under Continuum Games
   (file "Inv_100633_from_Water_Sports_LLC_632.pdf"). The Continuum copy was removed and its email file now links to the Water
   Sports copy already on file (no second copy). Its open "needs an order" paperwork check and its freight card went with it.
+- Nov 9, Dana: "No emails go to vendors without one of my team pressing send. They should be drafts. Until we get all the
+  bugs worked out and vms is tracking an order from beginning to end I want nothing sent automatically." Found sending on
+  their own today: shipment details requests (shipment-requests cron, as Trevor; none sent yet, 1 ready on hold), routing
+  letter reminders and contact-confirmation reminders a week later (task-reminders; none sent yet, 4 confirmations from
+  Nov 7 would be reminded Nov 14). Emails to our own staff (task reminders, supply "ordered" notes) and Bill.com forwards
+  are not vendor emails. Change to drafts waits for Dana's go.
