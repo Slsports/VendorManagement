@@ -4178,3 +4178,8 @@ remembers the choice per person, like the dashboard boxes.
   tightened from the mistakes (met the prepaid level = free; "no prepaid freight" = charged; our carrier prices and tag
   prices are not quotes; promos and flyers left out). Back-check: the 53 no-order readings removed; their emails and every
   email that gave nothing are read again. Balmshot cards: Dana will decide.
+- Nov 9, Dana: "Add to contacts a button for Make main shipping contact and list below the alternate main rep." Migration
+  0326: vendors.main_shipping_contact_id (one of the vendor's own people). Reps & contacts has Make main shipping contact /
+  Not main shipping, the Main shipping tag, and lists them right under the alternate; the top of the vendor page shows
+  "Main shipping:" under "Alternate:". Picking someone ticks Shipping on them; a former contact is no longer it. Who the
+  shipment details email goes to is unchanged (asked Dana).
