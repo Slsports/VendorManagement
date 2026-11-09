@@ -10,4 +10,9 @@ describe('ask the rep', () => {
     expect(m.body).toContain('(no Vendor ID)')
     expect(m.body).toContain('2 items')
   })
+  it('points to the attached spreadsheet instead of listing the items (Dana, Nov 9)', () => {
+    const m = availabilityEmail('LAZY ONE', [{ vid: 'PJ123', name: 'Bear Bellies PJ', qty: 6 }], true)
+    expect(m.body).toContain('attached spreadsheet')
+    expect(m.body).not.toContain('PJ123')
+  })
 })

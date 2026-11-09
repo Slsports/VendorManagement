@@ -3,21 +3,21 @@
 export interface AskItem { vid: string | null; name: string | null; qty: number }
 
 /** The email asking the rep which items can still be ordered. Plain words; the signature is added when it is sent. */
-export function availabilityEmail(vendorName: string, items: AskItem[]): { subject: string; body: string } {
+/** With `attached` the items go on an Excel sheet attached to the email, not in the body (Dana, Nov 9). */
+export function availabilityEmail(vendorName: string, items: AskItem[], attached = false): { subject: string; body: string } {
   const rows = items.map((i) => `${(i.vid || '(no Vendor ID)').padEnd(14)}  ${(i.name || '').slice(0, 60)}${i.qty ? `  (we'd order ${i.qty})` : ''}`)
   return {
     subject: `Can we still order these? ${vendorName} reorder for Shaver Lake Sports`,
     body: [
       'Hi,',
       '',
-      `We're putting together a reorder and want to be sure we only order what you can still ship. Could you look over the ${items.length === 1 ? 'item' : `${items.length} items`} below and let us know:`,
+      `We're putting together a reorder and want to be sure we only order what you can still ship. Could you look over the ${items.length === 1 ? 'item' : `${items.length} items`} ${attached ? 'on the attached spreadsheet' : 'below'} and let us know:`,
       '  - anything that has been discontinued, and its replacement if there is one',
       '  - anything that is out of stock, and when it will be back',
       '',
-      'Vendor ID       Item',
-      ...rows,
+      ...(attached ? ['The items are on the attached spreadsheet (Vendor ID, UPC, description and how many we would order).'] : ['Vendor ID       Item', ...rows]),
       '',
-      'A quick note by item number is perfect, or mark up this list and send it back.',
+      attached ? 'A quick note by item number is perfect, or mark up the spreadsheet and send it back.' : 'A quick note by item number is perfect, or mark up this list and send it back.',
       '',
       'Thank you!',
     ].join('\n'),

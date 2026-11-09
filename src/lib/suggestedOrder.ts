@@ -9,6 +9,8 @@ export interface OnOrder { orderId: string; orderLabel: string; qty: number; sta
 export interface SuggestedLine {
   sid: string
   vid: string
+  /** The item's UPC from the sales report (Dana, Nov 9: a UPC column) */
+  upc: string
   desc: string
   cost: number | null
   sold: number
@@ -40,7 +42,7 @@ export function suggestOrder(items: SalesItem[], incoming: IncomingLine[]): Sugg
     const onOrder = lines.reduce((s, l) => s + l.qty, 0)
     if (need <= 0 && !onOrder) continue
     out.push({
-      sid: x.sid, vid: x.vid, desc: x.desc, cost: x.cost, sold: x.sold, inStock: Math.max(0, x.qoh), need, onOrder,
+      sid: x.sid, vid: x.vid, upc: x.upc ?? '', desc: x.desc, cost: x.cost, sold: x.sold, inStock: Math.max(0, x.qoh), need, onOrder,
       from: lines.map((l) => ({ orderId: l.orderId, orderLabel: l.orderLabel, qty: l.qty, stage: l.stage, expected: l.expected })),
       suggested: Math.max(0, need - onOrder),
     })

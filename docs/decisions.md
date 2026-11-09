@@ -4201,3 +4201,7 @@ remembers the choice per person, like the dashboard boxes.
   from our own email is never their quote; one card for the same words from a vendor in any conversation; one reading per
   order per email (a quoted amount may sit beside it); no $0.00 amounts; no "free over" under $100. The reader is told
   carrier comparisons are our price check, pairs/units are not dollars, and promotions to all customers are left out.
+- Nov 9, Dana: "Suggested order - add upc column. When you click to email the vendor from the suggested order i dont want it
+  put inline in the email. I want it attached as an excel spreadsheet." The suggested order shows UPC after Vendor ID. Email
+  the rep and Add to PO now attach an Excel sheet (Vendor ID, UPC, description, quantity; Add to PO also unit cost and
+  total, and the original order on a second tab when no confirmation came back) and the email body only points to it.

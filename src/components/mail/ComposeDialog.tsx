@@ -41,6 +41,8 @@ export interface ComposeDraft {
   attach_routing_letter?: boolean
   /** "Can we still order these?" to a rep (Dana, Oct 21): Claude reads the reply. */
   availability_ask_id?: string | null
+  /** Files made for this email, attached from the start (Dana, Nov 9: the suggested order's items as an Excel sheet). */
+  files?: File[]
 }
 
 const MAX_BYTES = 20 * 1024 * 1024
@@ -67,7 +69,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
   const [cc, setCc] = useState((draft.cc ?? []).join(', '))
   const [subject, setSubject] = useState(draft.subject)
   const [body, setBody] = useState(draft.body)
-  const [files, setFiles] = useState<File[]>([])
+  const [files, setFiles] = useState<File[]>(draft.files ?? [])
   const [linkIds, setLinkIds] = useState<string[]>(draft.vendor_link_ids ?? [])
   const [sending, setSending] = useState(false)
   const [saving, setSaving] = useState(false)

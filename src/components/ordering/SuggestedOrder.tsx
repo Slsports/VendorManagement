@@ -22,6 +22,7 @@ import { OnOrderSources } from './OnOrderSources'
 import { createAvailabilityAsk, latestAvailabilityAsk, repAddresses } from '@/services/availability'
 import { ANSWER_WORD, availabilityEmail } from '@/lib/availability'
 import { matchLink } from '@/lib/mailSearch'
+import { orderSheetFile, orderSheetName } from '@/lib/orderSheetXlsx'
 
 // Dana, Oct 21: pending until the vendor confirms, placed once confirmed
 const STAGE_WORD = { placed: 'pending', confirmed: 'placed', shipped: 'shipped, not in LS yet' } as const
@@ -72,10 +73,15 @@ export function SuggestedOrderDialog({ vendor, onClose }: { vendor: { id: string
       const added = await addLinesToOrder(o.id, lines)
       const papers = await orderPapers(o.id)
       const to = await vendorOrderAddresses(vendor.id)
-      const m = addOnEmail({ vendorName: vendor.name, order: o, lines, hasConfirmation: !!papers.confirmation, originalLines: papers.originalLines })
+      const m = addOnEmail({ vendorName: vendor.name, order: o, lines, hasConfirmation: !!papers.confirmation, originalLines: papers.originalLines, attached: true })
       const attach = papers.confirmation ?? papers.orderSheet
+      // the items on an Excel sheet, attached, not in the email (Dana, Nov 9)
+      const sheet = await orderSheetFile([
+        { name: 'Please add', withCost: true, items: picked.map(({ l, n }) => ({ vid: l.vid || null, upc: l.upc || null, desc: l.desc, qty: n, cost: l.cost })) },
+        ...(!papers.confirmation && papers.originalLines.length ? [{ name: 'Original order', withCost: true, items: papers.originalLines.map((x) => ({ vid: x.vendor_item_id, upc: null, desc: x.description, qty: x.quantity, cost: x.unit_cost })) }] : []),
+      ], orderSheetName(vendor.name, `add to ${o.po_number ? `PO ${o.po_number}` : 'order'}`))
       toast.success(`${added} item${added === 1 ? '' : 's'} added to ${orderWord(o)}`)
-      setAddOnDraft({ to, subject: m.subject, body: m.body, vendor_id: vendor.id, vendor_link_ids: attach ? [attach.id] : [], note: attach ? `Attaching ${attach.file_name ?? 'the paper on file'}` : 'No confirmation or order sheet on file to attach; the original lines are in the email.' })
+      setAddOnDraft({ to, subject: m.subject, body: m.body, vendor_id: vendor.id, vendor_link_ids: attach ? [attach.id] : [], files: [sheet], note: `Attaching ${sheet.name}${attach ? ` and ${attach.file_name ?? 'the paper on file'}` : ''}.` })
     } catch (e) {
       toast.error(errorMessage(e))
     } finally {
@@ -87,9 +93,11 @@ export function SuggestedOrderDialog({ vendor, onClose }: { vendor: { id: string
     try {
       const items = lines.map((l) => ({ vid: l.vid || null, name: l.desc, qty: amount(l.sid, l.suggested) }))
       const askId = await createAvailabilityAsk(vendor.id, report?.id ?? null, items)
-      const m = availabilityEmail(vendor.name, items)
-      setAskDraft({ to: await repAddresses(vendor.id), subject: m.subject, body: m.body, vendor_id: vendor.id, availability_ask_id: askId,
-        note: 'When the rep replies, Claude reads it and puts anything discontinued or out of stock in your Review queue.' })
+      const m = availabilityEmail(vendor.name, items, true)
+      // the items on an Excel sheet, attached, not in the email (Dana, Nov 9)
+      const sheet = await orderSheetFile([{ name: 'Items', qtyHead: "We'd order", items: lines.map((l) => ({ vid: l.vid || null, upc: l.upc || null, desc: l.desc, qty: amount(l.sid, l.suggested) })) }], orderSheetName(vendor.name, 'reorder items'))
+      setAskDraft({ to: await repAddresses(vendor.id), subject: m.subject, body: m.body, vendor_id: vendor.id, availability_ask_id: askId, files: [sheet],
+        note: `Attaching ${sheet.name}. When the rep replies, Claude reads it and puts anything discontinued or out of stock in your Review queue.` })
     } catch (e) {
       toast.error(errorMessage(e))
     } finally {
@@ -139,7 +147,7 @@ export function SuggestedOrderDialog({ vendor, onClose }: { vendor: { id: string
                     <table className="w-full">
                       <thead className="text-left text-xs uppercase tracking-wide text-stone-500">
                         <tr>
-                          <th className="px-2 py-1.5">Vendor ID</th><th className="px-2 py-1.5">Description</th>
+                          <th className="px-2 py-1.5">Vendor ID</th><th className="px-2 py-1.5">UPC</th><th className="px-2 py-1.5">Description</th>
                           <th className="px-2 py-1.5 text-right">Sold</th><th className="px-2 py-1.5 text-right">In stock</th><th className="px-2 py-1.5 text-right">Need</th>
                           <th className="px-2 py-1.5">On order</th><th className="px-2 py-1.5 text-right">Order</th><th className="px-2 py-1.5 text-right">Cost</th>
                         </tr>
@@ -150,6 +158,7 @@ export function SuggestedOrderDialog({ vendor, onClose }: { vendor: { id: string
                           return (
                             <tr key={l.sid} className={cn('align-top', !n && 'text-stone-400')}>
                               <td className="whitespace-nowrap px-2 py-1.5">{l.vid || '—'}</td>
+                              <td className="whitespace-nowrap px-2 py-1.5 text-xs text-stone-600">{l.upc || '—'}</td>
                               <td className="min-w-48 px-2 py-1.5">{l.desc}{l.vid && answers.get(l.vid.toUpperCase()) && answers.get(l.vid.toUpperCase()) !== 'not_mentioned' ? <span className={cn('ml-1 rounded px-1 text-[11px] font-medium', answers.get(l.vid.toUpperCase()) === 'available' ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-900')}>{ANSWER_WORD[answers.get(l.vid.toUpperCase())!]}</span> : null}</td>
                               <td className="px-2 py-1.5 text-right">{l.sold}</td>
                               <td className="px-2 py-1.5 text-right">{l.inStock}</td>

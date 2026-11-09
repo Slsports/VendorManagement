@@ -9,7 +9,7 @@ From a suggested order you can email the rep the item list and ask which items a
 ## How to
 1. Open the vendor's suggested order.
 2. Click **Email the rep** at the bottom.
-3. An email opens with every item on the suggested order (Vendor ID, description and the quantity we would order), addressed to the vendor's rep. Change the wording or the address if you like.
+3. An email opens, addressed to the vendor's rep, with every item on the suggested order attached as an Excel spreadsheet (Vendor ID, UPC, description and the quantity we would order). The items are not typed into the email itself. Change the wording or the address if you like.
 4. Click **Send**.
 
 ## When the rep replies
