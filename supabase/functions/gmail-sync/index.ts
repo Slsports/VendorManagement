@@ -10,7 +10,7 @@ import { forwardedBody, forwardedSender } from '../_shared/forwarded.ts'
 import { extractLinks, itemPicture, maybePaperwork, maybeSheetPaperwork, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
 import { sheetFileText } from '../_shared/sheetFile.ts'
 import { runNameChecks } from '../_shared/nameCheck.ts'
-import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type PictureKind, readActivity, readArtwork, readEdenredPdf, readEmailVendors, readExpectsReply, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ActivityEmail, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type SentEmailToCheck, type UnsureEmail, readPaperworkAsks, readCreditRequests, type CreditAskEmail } from '../_shared/ai.ts'
+import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type PictureKind, readActivity, readArtwork, readEdenredPdf, readEmailVendors, readExpectsReply, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ActivityEmail, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type SentEmailToCheck, type UnsureEmail, readPaperworkAsks, readCreditRequests, type CreditAskEmail, readFreightTerms, type FreightTermsEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
@@ -1359,6 +1359,21 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
           const r = readings.get(e.email_id)
           if (r?.asks_credit) await check(db.rpc('credit_request_make', { p_email: e.email_id, p_what: r.what.slice(0, 160), p_invoice: r.invoice_number, p_amount: r.amount, p_signer: r.signed_by }))
           await check(db.from('emails').update({ credit_read_at: new Date().toISOString() }).eq('id', e.email_id))
+        }
+      }
+    }
+
+    // Freight terms (Dana, Nov 9): what a vendor's email says about freight on an order goes on that order, with the
+    // email as its source; the invoice is checked against it. 12 months of vendor mail that mentions freight, newest first.
+    if (Date.now() - started < TIME_BUDGET_MS) {
+      const { data: fq } = await db.rpc('mail_freight_queue', { p_org: org, p_limit: 20 })
+      const fList = (fq ?? []) as FreightTermsEmail[]
+      for (let i = 0; i < fList.length && Date.now() - started < TIME_BUDGET_MS; i += 10) {
+        const batch = fList.slice(i, i + 10)
+        const readings = await readFreightTerms(db, org, batch)
+        for (const e of batch) {
+          if (!readings.has(e.email_id)) continue
+          await check(db.rpc('freight_promises_save', { p_email: e.email_id, p_items: readings.get(e.email_id)!.items }))
         }
       }
     }

@@ -145,6 +145,12 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   // an Edenred file VMS couldn't place (Dana, Oct 28: the button "takes me nowhere"): the one email with the file, opened
   // Nov 7 ("it closed that screen and leaves me in Edenred Invoices"): the email open with those files first and the first one open
   if (kind === 'edenred' && t.thread_id && id) return { kind: 'page', to: `/mail/${t.thread_id}?email=${id}&unplaced=1`, label: 'Open the files in the email' }
+  // a freight difference on an invoice (Dana, Nov 7): the email to the vendor, ready to send; once sent, the conversation
+  if (kind === 'freightissue' && t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the email to send' }
+  if (kind === 'freightissue' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open the conversation' }
+  // freight terms from an email: which order they are for, or the order a person set differently
+  if (kind === 'freightorder' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open the email' }
+  if (kind === 'freightterms' && t.order_id) return { kind: 'page', to: `/orders/${t.order_id}`, label: "Open the order's freight" }
   // Tell me when they reply (Dana, Oct 19): straight to their reply
   if (kind === 'reply' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open their reply' }
   if (kind === 'promise' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}?do=reply`, label: 'Reply' }

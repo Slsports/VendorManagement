@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Truck } from 'lucide-react'
+import { ExternalLink, Truck } from 'lucide-react'
 import { updateOrder } from '@/services/orders'
 import { FREE_SHIPPING_BASIS_LABELS, freeShippingRule, money } from '@/lib/vendors'
 import { errorMessage } from '@/lib/utils'
@@ -8,7 +9,8 @@ import type { FreeShippingBasis, FreeShippingPolicy, Order } from '@/types'
 import { Button, Input, Select } from '@/components/ui'
 
 export interface FreeShippingCardProps {
-  order: Pick<Order, 'id' | 'free_shipping' | 'free_shipping_basis' | 'free_shipping_note' | 'freight_cost' | 'freight_notes' | 'est_cost' | 'final_cost'> & Partial<Pick<Order, 'freight_terms' | 'freight_cap_pct' | 'freight_terms_confirmed_at' | 'freight_terms_confirmed_how'>>
+  order: Pick<Order, 'id' | 'free_shipping' | 'free_shipping_basis' | 'free_shipping_note' | 'freight_cost' | 'freight_notes' | 'est_cost' | 'final_cost'> & Partial<Pick<Order, 'freight_terms' | 'freight_cap_pct' | 'freight_terms_confirmed_at' | 'freight_terms_confirmed_how' | 'free_over' | 'freight_quote_amount' | 'freight_terms_source'>>
+    & { terms_email?: { id: string; thread_id: string; received_at: string } | null }
   vendor: { free_shipping_policy: FreeShippingPolicy | null; free_shipping_threshold: number | null; freight_program: string | null; freight_routing: string | null } | null
   canEdit: boolean
   onChange: () => void | Promise<void>
@@ -58,6 +60,10 @@ export function FreeShippingCard({ order, vendor, canEdit, onChange }: FreeShipp
         free_shipping_note: note.trim() || null,
         freight_terms: answer === 'yes' ? 'free' : answer === 'no' ? terms : null,
         freight_cap_pct: answer === 'no' && terms === 'capped' ? capPct : null,
+        free_over: answer === 'yes' ? order.free_over ?? null : null,
+        // a person's terms stand: a later email that differs comes to them as a task (Dana, Nov 7)
+        freight_terms_source: 'person',
+        freight_terms_source_email_id: null,
       })
       toast.success('Shipping saved')
       await onChange()
@@ -107,6 +113,14 @@ export function FreeShippingCard({ order, vendor, canEdit, onChange }: FreeShipp
         )}
         {canEdit && !order.freight_terms_confirmed_at && (answer === 'yes' || (answer === 'no' && terms !== 'charged')) && !dirty ? (
           <Button size="sm" variant="secondary" className="mt-3" loading={confirming} onClick={() => void confirmTerms()}>The confirmation shows the agreed terms</Button>
+        ) : null}
+        {order.free_over != null || order.freight_quote_amount != null ? (
+          <p className="mt-2 text-sm text-stone-700">{[order.free_over != null ? `Free over ${money(order.free_over)}` : null, order.freight_quote_amount != null ? `Freight quoted at ${money(order.freight_quote_amount)}` : null].filter(Boolean).join(' · ')}</p>
+        ) : null}
+        {order.terms_email ? (
+          <Link to={`/mail/${order.terms_email.thread_id}?email=${order.terms_email.id}`} className="mt-2 inline-flex items-center gap-1 text-xs text-brand hover:underline">
+            <ExternalLink className="size-3.5" aria-hidden="true" />From the vendor's email of {new Date(order.terms_email.received_at).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' })}
+          </Link>
         ) : null}
         {order.freight_terms_confirmed_at ? <p className="mt-2 text-xs text-emerald-800">The vendor confirmed these terms {order.freight_terms_confirmed_how === 'confirmation' ? 'on the confirmation' : order.freight_terms_confirmed_how === 'reply' ? 'by email' : ''} on {new Date(order.freight_terms_confirmed_at).toLocaleDateString()}.</p> : null}
         {warnings.map((w) => <p key={w} className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">{w}</p>)}

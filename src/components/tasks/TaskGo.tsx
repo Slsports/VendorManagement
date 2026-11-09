@@ -8,6 +8,8 @@ import { getPayBill, markTaskPaid, savePayLinks, type TaskRow } from '@/services
 import { taskTarget } from '@/lib/tasks'
 import { fetchAttachment, listEdenredUnplaced, fileAttachmentToVendor, type UnplacedFile } from '@/services/mail'
 import { kickOrderChecks } from '@/services/orderChecks'
+import { listVendorOrdersForFreight } from '@/services/freight'
+import { getFreightPromise, setFreightPromiseOrder, freightPromiseText } from '@/services/freightTerms'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { VendorPicker } from '@/components/vendors/VendorPicker'
 import { money as formatCurrency } from '@/lib/freight'
@@ -29,6 +31,8 @@ export function TaskGo({ task, onGo }: { task: TaskRow; onGo: () => void }) {
   // the files right here, each with Open and File to a vendor (+ Add new vendor); the task closes when the last one is filed
   const [kind, id] = (task.auto_key ?? '').split(':')
   if (kind === 'edenred' && id && !task.done_at) return <div className="space-y-3">{go}<EdenredFilesPanel emailId={id} onAllFiled={onGo} /></div>
+  // freight terms from an email VMS couldn't tie to an order (Dana, Nov 7): the vendor's orders right here, pick one
+  if (kind === 'freightorder' && id && !task.done_at) return <div className="space-y-3">{go}<FreightOrderPanel promiseId={id} vendorId={task.vendor_id} onPicked={onGo} /></div>
   return go
 }
 
@@ -79,6 +83,58 @@ function EdenredFilesPanel({ emailId, onAllFiled }: { emailId: string; onAllFile
         ))}
       </ul>
       {viewer}
+    </section>
+  )
+}
+
+function FreightOrderPanel({ promiseId, vendorId, onPicked }: { promiseId: string; vendorId: string | null; onPicked: () => void }) {
+  const p = useSupabaseQuery(() => getFreightPromise(promiseId), [promiseId])
+  const orders = useSupabaseQuery(() => (vendorId ? listVendorOrdersForFreight(vendorId) : Promise.resolve([])), [vendorId])
+  const [busy, setBusy] = useState(false)
+  const promise = p.data
+
+  async function pick(orderId: string | null, label: string) {
+    setBusy(true)
+    try {
+      await setFreightPromiseOrder(promiseId, orderId)
+      toast.success(orderId ? `Freight terms put on ${label}` : 'Marked as not for an order')
+      onPicked()
+    } catch (e) {
+      toast.error(errorMessage(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (p.isLoading || orders.isLoading) return <p className="text-sm text-stone-500">Loading the orders…</p>
+  if (!promise) return null
+  if (promise.status !== 'needs_order') return <p className="text-sm text-emerald-700">These freight terms are already placed.</p>
+  const when = promise.email ? new Date(promise.email.received_at).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' }) : ''
+  const list = orders.data ?? []
+  return (
+    <section className="rounded-xl border border-amber-200 bg-amber-50/60 p-3 text-sm">
+      <p className="font-semibold text-stone-900">{freightPromiseText(promise)}{promise.po_text ? ` (they wrote ${promise.po_text})` : ''}</p>
+      {promise.quote && <p className="mt-1 italic text-stone-700">"{promise.quote}"</p>}
+      {promise.email && (
+        <Link to={`/mail/${promise.email.thread_id}?email=${promise.email.id}`} className="mt-1 inline-flex items-center gap-1 text-brand hover:underline">
+          <ExternalLink className="size-3.5" aria-hidden="true" />Their email of {when}
+        </Link>
+      )}
+      <p className="mt-3 text-xs font-medium text-stone-600">Which order is it for?</p>
+      {!list.length && <p className="mt-1 text-stone-500">This vendor has no orders in VMS.</p>}
+      <ul className="mt-1 divide-y divide-stone-200 rounded-lg bg-white ring-1 ring-stone-200">
+        {list.map((o) => {
+          const label = o.po_number ? `PO ${o.po_number}` : o.description || 'the order'
+          return (
+            <li key={o.id} className="flex flex-wrap items-center gap-2 p-2">
+              <Link to={`/orders/${o.id}`} className="font-medium text-brand hover:underline">{label}</Link>
+              <span className="text-xs text-stone-500">{[o.order_date, o.est_cost != null ? formatCurrency(o.est_cost) : null].filter(Boolean).join(' · ')}</span>
+              <Button size="sm" variant="secondary" className="ml-auto" disabled={busy} onClick={() => pick(o.id, label)}>This order</Button>
+            </li>
+          )
+        })}
+      </ul>
+      <Button size="sm" variant="ghost" className="mt-2" disabled={busy} onClick={() => pick(null, '')}>None of these</Button>
     </section>
   )
 }

@@ -4113,3 +4113,12 @@ commercial property at 41698 Tollhouse belong in that Company Info folder, not 1
   Bright Stripes 40009181, Continuum Games 87882, Mighty Fun 5426, Professor Puzzle 40030100, Toy Network TI0082512; free-freight
   vendors charging freight: Balmshot 12735 and 16240, Water Sports 100633 over its $1,000 minimum). The 19 WWD freight-difference
   cards stay closed: each is our share of a WWD pallet freight bill with $0 vendor freight on the invoice (no vendor charge).
+- Nov 7, Dana ("yes, go"): "If it comes from the vendor and they promise free freight it should log it for that order. Free
+  freight is not an always, every order situation. Each order can have different terms, even if the last order was free."
+  Built (migration 0322): Claude reads vendor and rep emails about freight (free, free over $X, half, capped at %, charged, a
+  quoted amount) and puts the terms on that one order, with the email one click away from the order's Shipping box. The order
+  is found by its PO, else the email's or conversation's one order; otherwise a "Which order?" task lists the vendor's orders.
+  A newer email wins; terms a person saved stand, and a differing email makes a task for that person. Every invoice is checked
+  against the order's terms, the accepted quote, the cap and the vendor's free-freight rule; each difference gets a task with
+  the email to the vendor written (invoice attached). Sending it makes the task "Waiting for <vendor>"; it closes on its own when
+  the vendor answers in that conversation or the credit comes. Back-check: 12 months of mail, then every invoice on file.
