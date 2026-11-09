@@ -4022,3 +4022,8 @@ sold passes, and Dana gets the check task; Mailed (date, tracking) marks the boo
 closes the season. The page shows LS's permit sales this season as a check next to the books. Help: four Sno-Park articles.
 Lightspeed transfers: their API's Transfer and TransferItem are read only (GET, no create), confirmed in Lightspeed's own
 developer docs on Nov 6; VMS cannot create the SLS → SLM / GS transfer for the Monday report. It can list what to transfer.
+
+## Nov 9, 2026 — Cat's login
+Dana: Cat is a manager, no Accounting tick. She manages the Happy Camper (GS) in summer and works at the sports shop (SLS) in
+winter. Dana adds her at Settings → Users (cat@shaverlakesports.com, Manager, stores GS and SLS); the Sno-Park report tasks go to
+her by that email as soon as her login exists.
