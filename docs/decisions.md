@@ -4122,3 +4122,6 @@ commercial property at 41698 Tollhouse belong in that Company Info folder, not 1
   against the order's terms, the accepted quote, the cap and the vendor's free-freight rule; each difference gets a task with
   the email to the vendor written (invoice attached). Sending it makes the task "Waiting for <vendor>"; it closes on its own when
   the vendor answers in that conversation or the credit comes. Back-check: 12 months of mail, then every invoice on file.
+- Nov 9, Dana ("yes, move it out of continuum"): Water Sports LLC invoice 100633 had a second copy filed under Continuum Games
+  (file "Inv_100633_from_Water_Sports_LLC_632.pdf"). The Continuum copy was removed and its email file now links to the Water
+  Sports copy already on file (no second copy). Its open "needs an order" paperwork check and its freight card went with it.
