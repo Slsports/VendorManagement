@@ -4195,3 +4195,9 @@ remembers the choice per person, like the dashboard boxes.
 - Nov 9, Dana: "in viewing reports, we want to see the header for the columns. They have to be fixed the whole time when
   we're scrolling in size summary, category." The document preview now keeps each sheet's header rows on screen: the rows
   frozen in the file (our sales reports freeze 2 or 3), else the first row. Printed, they repeat on every page.
+- Nov 9, Dana ("yes, close the 13 and fix the reader"): 13 freight-terms cards closed at her request (our own carrier prices
+  for Becker and Master Fishing, repeats for Franklin, Creative Angler, Panther Martin, Stansport and Master Fishing,
+  promotions or misreads for Ty, Triple T, Western Woods and Signs 4 Fun); 23 cards left. Migration 0327: a freight amount
+  from our own email is never their quote; one card for the same words from a vendor in any conversation; one reading per
+  order per email (a quoted amount may sit beside it); no $0.00 amounts; no "free over" under $100. The reader is told
+  carrier comparisons are our price check, pairs/units are not dollars, and promotions to all customers are left out.
