@@ -4151,3 +4151,15 @@ commercial property at 41698 Tollhouse belong in that Company Info folder, not 1
   Reef Sport Suncare PO Jarrett061826 stays free: Sandboxx is Reef's rep group and Tom Dawson answered Dana "For you guys ...yes."
   Next (for Dana's go): rebuild as review cards (Put it on this order / Not for an order), skip price lists, promos and our own
   carrier prices, and match only orders of that vendor or its rep group's vendors.
+
+## Nov 9, 2026 — Administrative paperwork is Dana's; handing over a shared mailbox conversation (0324)
+Dana, on the SAA credit application task that went to Jarrett: "It should have been assigned to me. I handle all
+administrative tasks with vendors like sending our resale #, filling out credit apps, etc." Confirmed cause: the paperwork
+rule gave the task to the owner of the mailbox the email came into. Now Claude says whether the paperwork is administrative
+(credit application or terms, W-9, resale or tax-exemption certificate, customer / dealer / vendor account forms, agreements,
+insurance, licenses, registrations, banking details) and those tasks go to Dana whichever mailbox they came into; a buyer's
+paperwork (order forms, worksheets, item setup, catalogs) stays with the mailbox owner. Back-check: open paperwork tasks are
+judged from their words and the administrative ones move to Dana with a note (gmail-sync, 40 a run).
+Also confirmed: the Owner box on a conversation in Jarrett's mailbox said "Handed to Dana Powell" but snapped back to Jarrett,
+because the Oct 11 private-mail trigger keeps a mailbox conversation with its owner. Now a conversation shared to Orders can
+be handed to anyone (it stays in that mailbox); a private one shows "share it to Orders first" instead of pretending.

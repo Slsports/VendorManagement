@@ -10,7 +10,7 @@ import { forwardedBody, forwardedSender } from '../_shared/forwarded.ts'
 import { extractLinks, itemPicture, maybePaperwork, maybeSheetPaperwork, paperworkKind, pictureLabel, seasonLabel, wantAttachment, wantLink } from '../_shared/offerFiles.ts'
 import { sheetFileText } from '../_shared/sheetFile.ts'
 import { runNameChecks } from '../_shared/nameCheck.ts'
-import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type PictureKind, readActivity, readArtwork, readEdenredPdf, readEmailVendors, readExpectsReply, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ActivityEmail, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type SentEmailToCheck, type UnsureEmail, readPaperworkAsks, readCreditRequests, type CreditAskEmail, readFreightTerms, type FreightTermsEmail } from '../_shared/ai.ts'
+import { aiEnabled, classifyPaperwork, classifyPictures, imageType, type PictureKind, readActivity, readArtwork, readEdenredPdf, readEmailVendors, readExpectsReply, readPaidNote, readPromises, readRepLines, readReplyNeeded, sortEmails, sortSenders, type ActivityEmail, type ArtEmail, type PromiseEmail, type ReplyEmail, type SenderToSort, type SentEmailToCheck, type UnsureEmail, readAdminPaperwork, readPaperworkAsks, readCreditRequests, type CreditAskEmail, readFreightTerms, type FreightTermsEmail } from '../_shared/ai.ts'
 import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invoiceFromBody, invoiceNumberFrom, looksLikeBill, looksLikePaymentReceipt, looksLikeReceipt, mentionsPayment, proNumberFrom, readFreightPdf, readPaymentPdf, readReceiptPdf } from '../_shared/freight.ts'
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
@@ -143,7 +143,8 @@ Deno.serve(async (req) => {
       const done = new Set((have ?? []).map((t) => t.auto_key!.slice(4)))
       const todo = ids.filter((id) => !done.has(id))
       const r = await paperworkAsks(db, o.id, todo)
-      out.push({ organization_id: o.id, looked_at: todo.length, ...r })
+      const back = await adminPaperworkBackcheck(db, o.id)
+      out.push({ organization_id: o.id, looked_at: todo.length, ...r, admin_backcheck: back })
     }
     return json(out)
   }
@@ -1223,11 +1224,30 @@ async function paperworkAsks(db: SupabaseClient, org: string, emailIds: string[]
       const r = readings.get(e.email_id)
       if (!r?.asks) continue
       const deadline = /^\d{4}-\d{2}-\d{2}$/.test(r.deadline ?? '') ? r.deadline : null
-      const { data: id } = await db.rpc('task_from_ask', { p_email: e.email_id, p_what: r.what.slice(0, 160), p_deadline: deadline })
+      const { data: id } = await db.rpc('task_from_ask', { p_email: e.email_id, p_what: r.what.slice(0, 160), p_deadline: deadline, p_admin: !!r.admin })
       if (id) tasks++
     }
   }
   return { read, tasks }
+}
+
+/**
+ * Administrative paperwork is Dana's (Nov 9). Open paperwork tasks made before the rule are judged from their words,
+ * 40 a run, and the administrative ones move to her with a note. Returns how many were judged and moved.
+ */
+async function adminPaperworkBackcheck(db: SupabaseClient, org: string): Promise<{ judged: number; moved: number }> {
+  const { data: rows } = await db.from('tasks').select('id, title').eq('organization_id', org).like('auto_key', 'ask:%').is('ask_admin', null).is('done_at', null).order('created_at', { ascending: false }).limit(40)
+  const items = (rows ?? []).map((t) => ({ id: t.id, what: String(t.title).replace(/^Paperwork for [^:]*:\s*/, '') }))
+  if (!items.length) return { judged: 0, moved: 0 }
+  const verdicts = await readAdminPaperwork(db, org, items)
+  let moved = 0
+  for (const t of items) {
+    const admin = verdicts.get(t.id)
+    if (admin === undefined) continue
+    const { data: did } = await db.rpc('ask_task_route', { p_task: t.id, p_admin: admin })
+    if (did) moved++
+  }
+  return { judged: verdicts.size, moved }
 }
 
 async function aiSteps(db: SupabaseClient, org: string, started: number) {
@@ -1272,6 +1292,7 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
     // Paperwork asked of us (Dana, Oct 27): an email that needs an answer and asks for a form, registration or agreement
     // becomes a task at once, reminded weekly, 3 days before and on the day, until a reply with attachments goes out.
     if (askCandidates.length) await paperworkAsks(db, org, askCandidates.map((e) => e.email_id))
+    await adminPaperworkBackcheck(db, org)
 
     // Artwork approvals (Dana, Oct 10): vendor mail waiting on us to approve a proof or design goes to the art
     // approver's dashboard card; our own "approved" closes it. Last 60 days, a batch a run.
