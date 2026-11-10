@@ -4353,3 +4353,7 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
 - Nov 10, Dana: Trevor moved to a Premium seat on the business Team account (Dana and Jarrett stay Standard; plan $175/month).
   Team API credit to "Shaver Lake Sports Inc" should rise from $60 to about $140/month (Premium $100 + 2 x $20); not yet
   confirmed on the Billing page. His higher-limit request is answered by the upgrade.
+- Nov 10, Dana ("go"): VMS uses two Claude keys. Every Claude call tries the key from "Dana's Individual Org" first (her Max
+  plan's $100 a month; Supabase secret ANTHROPIC_API_KEY_PERSONAL), then at once the main key ("Shaver Lake Sports Inc",
+  Team credit) when the first is out of credit, refused or busy; the first is tried again an hour later (a minute when
+  busy). Until Dana saves that secret nothing changes. One place in the code (_shared/claudeClient.ts) covers every caller.

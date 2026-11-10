@@ -6,6 +6,7 @@ import Anthropic from 'npm:@anthropic-ai/sdk'
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { serviceClient } from './caller.ts'
 import { costOf, usageFromSse, type CallUsage, type RawUsage } from './usageSse.ts'
+import { firstKeyFallsBack } from './claudeKeys.ts'
 
 let db: SupabaseClient | null = null
 let org: string | null = null
@@ -40,9 +41,31 @@ export function sys(text: string, more?: string): Anthropic.TextBlockParam[] {
   return blocks
 }
 
+/**
+ * Two Claude keys (Dana, Nov 10): the key in "Dana's Individual Org" first, where her Max plan puts $100 of credit a
+ * month (secret ANTHROPIC_API_KEY_PERSONAL), then the main key (ANTHROPIC_API_KEY, "Shaver Lake Sports Inc", which the
+ * Team plan's credit pays into). When the first key's credit runs out, or it is refused or too busy, the same request
+ * goes again on the main key at once, so VMS never stops; the first key is tried again an hour later (a minute later
+ * when it was only busy).
+ */
+let firstKeyRestsUntil = 0
+async function keyFetch(input: Parameters<typeof fetch>[0], init?: RequestInit): Promise<Response> {
+  const first = Deno.env.get('ANTHROPIC_API_KEY_PERSONAL')
+  if (!first || Date.now() < firstKeyRestsUntil) return fetch(input, init)
+  const headers = new Headers(init?.headers)
+  headers.set('x-api-key', first)
+  const res = await fetch(input, { ...init, headers })
+  if (res.ok) return res
+  const why = firstKeyFallsBack(res.status, await res.clone().text().catch(() => ''))
+  if (!why) return res
+  firstKeyRestsUntil = Date.now() + (why === 'busy' ? 60_000 : 3_600_000)
+  console.log(`Claude: first key ${why === 'busy' ? 'busy' : 'out of credit or refused'} (${res.status}); using the main key`)
+  return fetch(input, init)
+}
+
 /** fetch for the Claude client: passes everything through and records what each successful answer used. */
 const usageFetch: typeof fetch = async (input, init) => {
-  const res = await fetch(input, init)
+  const res = await keyFetch(input, init)
   try {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
     if (!res.ok || !/\/v1\/messages(\?|$)/.test(url)) return res
