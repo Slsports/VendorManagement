@@ -4307,3 +4307,6 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   from "Dana's Individual Org" for some work (e.g. Ask VMS, bulk reading), falling back to the main key when it runs out.
 - Nov 10 (Dana's screenshot of the business Team billing): the Team credit is already linked to "Shaver Lake Sports Inc"
   (since Oct 14) and is $60/month, not $140: 3 seats, $75/month plan total, which matches three Standard seats at $20 each.
+- Nov 10, Dana: Trevor moved to a Premium seat on the business Team account (Dana and Jarrett stay Standard; plan $175/month).
+  Team API credit to "Shaver Lake Sports Inc" should rise from $60 to about $140/month (Premium $100 + 2 x $20); not yet
+  confirmed on the Billing page. His higher-limit request is answered by the upgrade.
