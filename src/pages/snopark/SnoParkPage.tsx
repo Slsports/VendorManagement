@@ -279,6 +279,9 @@ function OpenSeason({ onClose, onDone }: { onClose: () => void; onDone: () => vo
   )
 }
 
+/** The season whose Report of Operations form is built into the snopark function (Dana's 26-27 file). */
+const BUILT_IN_FORM_SEASON = '2026-2027'
+
 /** The State's form for the season: they send a new one every year; VMS fills whichever is on file. */
 function SeasonForm({ view, canEdit, userId, onDone }: { view: SeasonView; canEdit: boolean; userId: string | null; onDone: () => void }) {
   const [busy, setBusy] = useState(false)
@@ -290,8 +293,10 @@ function SeasonForm({ view, canEdit, userId, onDone }: { view: SeasonView; canEd
   }
   return (
     <div className="mt-2 text-xs text-stone-600">
-      {view.form ? <p>The State's form: <span className="font-medium text-stone-800">{view.form.file_name}</span></p> : <p>The State's form for this season is not on file; VMS uses the 2026-2027 form it was built with.</p>}
-      {canEdit ? <label className="mt-1 inline-block cursor-pointer text-brand hover:underline">{busy ? 'Uploading…' : view.form ? 'Replace it' : "Upload the State's form (.xlsx)"}<input ref={ref} type="file" accept=".xlsx" className="sr-only" disabled={busy} onChange={(e) => pick(e.target.files)} /></label> : null}
+      {view.form ? <p>The State's form: <span className="font-medium text-stone-800">{view.form.file_name}</span></p>
+        : view.season.label === BUILT_IN_FORM_SEASON ? <p>The State's {BUILT_IN_FORM_SEASON} Report of Operations form is built into VMS; nothing to upload this season. When the State sends next season's form, it goes here.</p>
+        : <p>The State's form for this season is not on file. Upload the Report of Operations Excel they sent for {view.season.label}; until then VMS fills the {BUILT_IN_FORM_SEASON} form it was built with.</p>}
+      {canEdit ? <label className="mt-1 inline-block cursor-pointer text-brand hover:underline">{busy ? 'Uploading…' : view.form ? 'Replace it' : view.season.label === BUILT_IN_FORM_SEASON ? "Upload a different form for this season (.xlsx)" : "Upload the State's form for this season (.xlsx)"}<input ref={ref} type="file" accept=".xlsx" className="sr-only" disabled={busy} onChange={(e) => pick(e.target.files)} /></label> : null}
     </div>
   )
 }
