@@ -80,6 +80,7 @@ export const ROUTES = {
   inventoryCounts: '/inventory-counts',
   snopark: '/snopark',
   snoparkReport: '/snopark/reports',
+  snoparkReceive: '/snopark/receive',
   itemNames: '/item-names',
   reports: '/reports',
   vendorScores: '/reports/vendor-scores',

@@ -60,3 +60,54 @@ export function nextBookNumber(books: Pick<SnoparkBook, 'kind' | 'book_number' |
   if (!m) return { book: '', permit: last.last_permit + 1 }
   return { book: `${m[1]}${String(Number(m[2]) + 1).padStart(m[2]!.length, '0')}`, permit: last.last_permit + 1 }
 }
+
+// ---- receiving a box (Dana, Nov 10) -----------------------------------------------------------------------------
+/** The State's shipment sheet (form OHV 145SP) as Claude read it and the person confirmed it. */
+export interface SheetKind { from: number | null; to: number | null; books: number | null; permits: number | null }
+export interface Sheet { season_label: string | null; shipped_on: string | null; requested?: { day_books: number | null; day_permits: number | null; season_books: number | null; season_permits: number | null }; day: SheetKind; season: SheetKind; unclear?: string[] }
+export const EMPTY_SHEET: Sheet = { season_label: null, shipped_on: null, day: { from: null, to: null, books: null, permits: null }, season: { from: null, to: null, books: null, permits: null }, unclear: [] }
+
+export interface Difference { kind: 'day' | 'season'; text: string }
+
+export const SHIPMENT_STATUS: Record<'open' | 'off' | 'balanced' | 'done', { text: string; tone: 'neutral' | 'warning' | 'success' | 'danger' }> = {
+  open: { text: 'Being entered', tone: 'neutral' },
+  off: { text: 'Does not match', tone: 'danger' },
+  balanced: { text: 'Balances', tone: 'success' },
+  done: { text: 'In Lightspeed', tone: 'success' },
+}
+
+export interface BookRowInput { key: string; kind: 'day' | 'season'; book_number: string; first_permit: string; last_permit: string }
+
+let rowSeq = 0
+export const newRow = (kind: 'day' | 'season', first = '', last = '', book = ''): BookRowInput => ({ key: `r${++rowSeq}`, kind, book_number: book, first_permit: first, last_permit: last })
+
+/**
+ * The book rows a confirmed sheet suggests: the sheet's range cut into books of the season's standard size. Only when the
+ * range is a whole number of books; the book numbers are typed from the covers.
+ */
+export function rowsFromSheet(sheet: Sheet, perBook: { day: number; season: number }): BookRowInput[] {
+  const out: BookRowInput[] = []
+  for (const kind of ['day', 'season'] as const) {
+    const k = sheet[kind]
+    if (k.from == null || k.to == null || k.to < k.from) continue
+    const per = perBook[kind]
+    const n = k.to - k.from + 1
+    if (n % per !== 0 || n / per > 200) continue
+    for (let i = 0; i < n / per; i++) out.push(newRow(kind, String(k.from + i * per), String(k.from + i * per + per - 1)))
+  }
+  return out
+}
+
+/** What is wrong with a row before it is saved: a size that is not a whole book, a missing number. */
+export function rowProblem(r: BookRowInput, perBook: { day: number; season: number }): string | null {
+  const a = Number(r.first_permit), b = Number(r.last_permit)
+  if (!r.book_number.trim()) return 'Book number'
+  if (!r.first_permit || !r.last_permit || !Number.isFinite(a) || !Number.isFinite(b)) return 'Permit numbers'
+  if (b < a) return 'Last before first'
+  const n = b - a + 1
+  if (n !== perBook[r.kind]) return `${n} permits; a ${r.kind} book holds ${perBook[r.kind]}`
+  return null
+}
+
+/** The season-end check as stored on the season. */
+export interface SeasonCheck { day: { ls: number; reported: number }; season: { ls: number; reported: number }; off: boolean; through: string; emailed_at?: string | null; email_error?: string | null }

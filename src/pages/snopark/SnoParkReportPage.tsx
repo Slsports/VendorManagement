@@ -1,11 +1,11 @@
 import { useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { FileSpreadsheet, Mail, Paperclip } from 'lucide-react'
+import { Camera, FileSpreadsheet, FileText, Mail, Printer } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useLiveTable } from '@/hooks/useLiveTable'
-import { buildReport, getReport, lsSold, makeExcel, markMailed, uploadScan } from '@/services/snopark'
+import { buildReport, getReport, lsSold, makeExcel, makePacket, makePrint, markMailed, seasonCheck, uploadScan } from '@/services/snopark'
 import { signedFileUrl } from '@/services/lines'
 import { ROUTES } from '@/lib/constants'
 import { shortDate } from '@/lib/freight'
@@ -17,9 +17,10 @@ import { Alert, Badge, Button, FormField, Input, Spinner } from '@/components/ui
 import type { SnoparkBook } from '@/types'
 
 /**
- * One Sno-Park report (Dana, Nov 5-6, 2026). Cat ticks the books that are empty (on the final, the last permit sold in a
- * partly sold book too), VMS works out the State's numbers and fills their Excel, she uploads the scan of the sold passes,
- * and marks it Mailed once the report, the check and the books are in the envelope. Dana's check task comes with the Excel.
+ * One Sno-Park report (Dana, Nov 5-10, 2026). Cat ticks the books that are empty (on the final, the last permit sold in a
+ * partly sold book too), VMS works out the State's numbers, fills their Excel and makes the printable form, she photographs
+ * the cover of each book going back, and marks it Mailed once the form, the check and the books are in the envelope. VMS
+ * then files the packet (form first, then the covers) in "Submitted permit payments" or "Season final reports".
  */
 export default function SnoParkReportPage() {
   const { id } = useParams<{ id: string }>()
@@ -45,7 +46,7 @@ export default function SnoParkReportPage() {
   if (q.isLoading) return <Spinner />
   if (q.error) return <Alert variant="error">{errorMessage(q.error)}</Alert>
   if (!view) return <Alert variant="error">Report not found.</Alert>
-  const { report, season, books, rows, file, scans } = view
+  const { report, season, books, rows, file, print, packet, scans } = view
   const isFinal = report.kind === 'final'
   const locked = report.status === 'mailed' || !canEdit
   const title = reportTitle(report, season)
@@ -66,6 +67,19 @@ export default function SnoParkReportPage() {
     setBusy('excel')
     try { const r = await makeExcel(report.id); toast.success(`Made ${r.file_name}`); await q.refetch() } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(null) }
   }
+  async function printForm() {
+    setBusy('print')
+    try {
+      const r = await makePrint(report.id)
+      window.open(await signedFileUrl(r.storage_path), '_blank', 'noopener')
+      toast.success(`Made ${r.file_name}`)
+      await q.refetch()
+    } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(null) }
+  }
+  async function packetNow() {
+    setBusy('packet')
+    try { const r = await makePacket(report.id); toast.success(`Packet filed: the form and ${r.pictures} picture${r.pictures === 1 ? '' : 's'}${r.skipped.length ? ` (left out: ${r.skipped.join(', ')})` : ''}`); await q.refetch() } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(null) }
+  }
   async function open(path: string) {
     try { window.open(await signedFileUrl(path), '_blank', 'noopener') } catch (e) { toast.error(errorMessage(e)) }
   }
@@ -81,7 +95,14 @@ export default function SnoParkReportPage() {
   async function mailed() {
     if (!window.confirm(`Mark the ${title} mailed on ${shortDate(mailedOn)}? The books on it are marked returned and the tasks close.`)) return
     setBusy('mailed')
-    try { await markMailed(report.id, mailedOn, tracking.trim() || null); toast.success('Mailed'); await q.refetch() } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(null) }
+    try {
+      await markMailed(report.id, mailedOn, tracking.trim() || null)
+      toast.success('Mailed')
+      // the packet as mailed: the form first, then the covers; the final also runs the season-end check
+      try { await makePacket(report.id) } catch (e) { toast.error(`Mailed, but the packet was not filed: ${errorMessage(e)}. Click "File the packet" to try again.`) }
+      if (isFinal) { try { await seasonCheck(season.id) } catch (e) { toast.error(`The season-end check did not run: ${errorMessage(e)}`) } }
+      await q.refetch()
+    } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(null) }
   }
 
   return (
@@ -126,21 +147,30 @@ export default function SnoParkReportPage() {
             <div className="mt-4 flex flex-wrap items-center gap-3">
               {file ? <button type="button" onClick={() => open(file.storage_path!)} className="inline-flex items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-800 hover:bg-stone-50"><FileSpreadsheet className="size-4" aria-hidden="true" />{file.file_name}</button> : null}
               {!locked ? <Button variant={file ? 'secondary' : 'primary'} onClick={excel} disabled={busy !== null}>{busy === 'excel' ? 'Making the Excel…' : file ? 'Make the Excel again' : "Make the State's Excel"}</Button> : null}
+              {file || print ? <Button variant="secondary" onClick={printForm} disabled={busy !== null}><Printer className="size-4" aria-hidden="true" />{busy === 'print' ? 'Making the form…' : 'Print the form'}</Button> : null}
+              {print ? <button type="button" onClick={() => open(print.storage_path!)} className="text-sm text-brand hover:underline">{print.file_name}</button> : null}
             </div>
-            {file ? <p className="mt-2 text-xs text-stone-500">Filed under {view.vendor?.name ?? 'the vendor'} in the Sno-Park folder. Print it for the envelope.</p> : null}
+            {file ? <p className="mt-2 text-xs text-stone-500">Both are filed under {view.vendor?.name ?? 'the vendor'} in the Sno-Park folder. <strong>Print the form</strong> opens VMS's printable copy of the State's form for the envelope{isFinal ? ', with the Unsold box and the declaration to sign' : ''}; the Excel is the State's own file with the same numbers.</p> : null}
           </section>
         ) : null}
 
         <section className="rounded-2xl border border-stone-200 bg-white p-5">
-          <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500"><Paperclip className="size-4" aria-hidden="true" />3. Scan of the sold passes</h2>
-          <p className="mt-1 text-sm text-stone-600">The paper record: scan the sold passes (or the book covers) and upload it here. It is filed with the report.</p>
-          {scans.length ? <ul className="mt-2 space-y-1 text-sm">{scans.map((s) => <li key={s.id}><button type="button" onClick={() => open(s.storage_path!)} className="text-brand hover:underline">{s.file_name}</button> <span className="text-xs text-stone-500">{shortDate(s.created_at)}</span></li>)}</ul> : null}
-          {!locked ? <div className="mt-3"><input ref={fileRef} type="file" accept="application/pdf,image/*" multiple onChange={(e) => addScan(e.target.files)} disabled={busy !== null} className="text-sm" aria-label="Upload the scan" /></div> : null}
+          <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500"><Camera className="size-4" aria-hidden="true" />3. The book covers</h2>
+          <p className="mt-1 text-sm text-stone-600">Our proof of what went back: take a picture of the cover of every book going in the envelope (several at once is fine), on your phone or from a scan. VMS files them with the report and, once it is mailed, builds one PDF: the form first, then the covers in this order.</p>
+          {scans.length ? <ul className="mt-2 space-y-1 text-sm">{scans.map((s, i) => <li key={s.id}><span className="mr-2 text-xs text-stone-400">{i + 1}.</span><button type="button" onClick={() => open(s.storage_path!)} className="text-brand hover:underline">{s.file_name}</button> <span className="text-xs text-stone-500">{shortDate(s.created_at)}</span></li>)}</ul> : null}
+          {canEdit ? <div className="mt-3"><label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-800 hover:bg-stone-50"><Camera className="size-4" aria-hidden="true" />{busy === 'scan' ? 'Uploading…' : scans.length ? 'Add more covers' : 'Photograph the covers'}<input ref={fileRef} type="file" accept="image/*,application/pdf" multiple onChange={(e) => addScan(e.target.files)} disabled={busy !== null} className="sr-only" aria-label="Upload the book covers" /></label></div> : null}
+          {report.status === 'mailed' ? (
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+              {packet ? <button type="button" onClick={() => open(packet.storage_path!)} className="inline-flex items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-800 hover:bg-stone-50"><FileText className="size-4" aria-hidden="true" />{packet.file_name}</button> : null}
+              {canEdit ? <Button variant="secondary" onClick={packetNow} disabled={busy !== null}>{busy === 'packet' ? 'Filing…' : packet ? 'File the packet again' : 'File the packet'}</Button> : null}
+              <span className="text-xs text-stone-500">Filed under {view.vendor?.name ?? 'the vendor'} in {isFinal ? 'Season final reports' : 'Submitted permit payments'}.{packet && scans.some((s) => new Date(s.created_at) > new Date(packet.created_at)) ? ' Covers were added after the packet was filed: file it again.' : ''}</span>
+            </div>
+          ) : null}
         </section>
 
         <section className="rounded-2xl border border-stone-200 bg-white p-5">
           <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500"><Mail className="size-4" aria-hidden="true" />4. Mail it</h2>
-          <p className="mt-1 text-sm text-stone-700">In the envelope: the printed report, the check for <strong>{report.built_at ? money(report.total_due) : '…'}</strong>{isFinal ? ', and every book, sold or not' : `, and the ${books.filter((b) => b.report_id === report.id).length || ''} empty book${books.filter((b) => b.report_id === report.id).length === 1 ? '' : 's'} on it`}. Mail to <strong>{MAIL_TO}</strong>.</p>
+          <p className="mt-1 text-sm text-stone-700">In the envelope: the printed form, the check for <strong>{report.built_at ? money(report.total_due) : '…'}</strong>{isFinal ? ', and every book, sold or not' : `, and the ${books.filter((b) => b.report_id === report.id).length || ''} empty book${books.filter((b) => b.report_id === report.id).length === 1 ? '' : 's'} on it`}. Mail to <strong>{MAIL_TO}</strong>.</p>
           {report.status === 'mailed' ? (
             <p className="mt-2 text-sm text-stone-700">Mailed {shortDate(report.mailed_on!)}{report.tracking ? ` · tracking ${report.tracking}` : ''}. The books are marked returned.</p>
           ) : canEdit ? (

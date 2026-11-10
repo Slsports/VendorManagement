@@ -30,3 +30,20 @@ describe('snopark', () => {
     expect(s.unsold).toHaveLength(1)
   })
 })
+
+describe('receiving a box (Nov 10)', () => {
+  const per = { day: 25, season: 10 }
+  it('cuts a confirmed sheet into whole books, and refuses a range that is not whole books', async () => {
+    const { rowsFromSheet, EMPTY_SHEET } = await import('./snopark')
+    const rows = rowsFromSheet({ ...EMPTY_SHEET, day: { from: 7751, to: 7825, books: 3, permits: 75 }, season: { from: 10591, to: 10610, books: 2, permits: 20 } }, per)
+    expect(rows.map((r) => `${r.kind}:${r.first_permit}-${r.last_permit}`)).toEqual(['day:7751-7775', 'day:7776-7800', 'day:7801-7825', 'season:10591-10600', 'season:10601-10610'])
+    expect(rowsFromSheet({ ...EMPTY_SHEET, day: { from: 7751, to: 7774, books: 1, permits: 24 } }, per)).toEqual([])
+  })
+  it('names what is wrong with a row before it is saved', async () => {
+    const { rowProblem, newRow } = await import('./snopark')
+    expect(rowProblem({ ...newRow('day', '7751', '7775'), book_number: 'DB 543' }, per)).toBeNull()
+    expect(rowProblem({ ...newRow('day', '7751', '7774'), book_number: 'DB 543' }, per)).toBe('24 permits; a day book holds 25')
+    expect(rowProblem(newRow('day', '7751', '7775'), per)).toBe('Book number')
+    expect(rowProblem({ ...newRow('season', '20', '11'), book_number: 'S1' }, per)).toBe('Last before first')
+  })
+})

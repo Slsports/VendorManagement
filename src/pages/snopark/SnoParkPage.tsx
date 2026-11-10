@@ -1,35 +1,37 @@
 import { useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { BookOpen, Plus, Snowflake } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { BookOpen, PackageOpen, Pencil, Snowflake } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useLiveTable } from '@/hooks/useLiveTable'
 import { useTableSort } from '@/hooks/useTableSort'
-import { addBooks, deleteBook, getSeason, lsSold, openSeasonByHand, uploadSeasonForm, type AddBooksInput, type SeasonView } from '@/services/snopark'
+import { deleteBook, getSeason, lsSold, openSeasonByHand, seasonCheck, startShipment, updateBookNumbers, uploadSeasonForm, type SeasonView } from '@/services/snopark'
 import { ROUTES } from '@/lib/constants'
 import { shortDate } from '@/lib/freight'
 import { errorMessage } from '@/lib/utils'
-import { BOOK_STATUS, KIND_LABELS, MAIL_TO, REPORT_STATUS, daysUntil, money, nextBookNumber, permitsIn, range, reportTitle } from '@/lib/snopark'
+import { BOOK_STATUS, KIND_LABELS, MAIL_TO, REPORT_STATUS, SHIPMENT_STATUS, daysUntil, money, permitsIn, range, reportTitle, type SeasonCheck } from '@/lib/snopark'
 import { BackLink } from '@/components/shared/BackLink'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Modal } from '@/components/shared/Modal'
 import { SortHeader } from '@/components/shared/SortHeader'
-import { Alert, Badge, Button, FormField, Input, Select, Spinner } from '@/components/ui'
+import { Alert, Badge, Button, FormField, Input, Spinner } from '@/components/ui'
 import type { SnoparkBook } from '@/types'
 
 /**
- * Sno-Park passes (Dana, Nov 5-6, 2026): the season's books with the permit numbers inside each one, and the monthly reports
- * to the State. Books are entered when they arrive; each month Cat picks the empty ones on the report page.
+ * Sno-Park passes (Dana, Nov 5-10, 2026): the season's books with the permit numbers inside each one, the boxes received
+ * (checked against the State's sheet before they go into Lightspeed), and the monthly reports to the State.
  */
 export default function SnoParkPage() {
   const { organization, profile, isAdmin } = useAuth()
+  const navigate = useNavigate()
   const q = useSupabaseQuery(async () => (organization ? getSeason(organization.id) : null), [organization?.id])
   useLiveTable('snopark_books', organization ? `organization_id=eq.${organization.id}` : null, () => { void q.refetch() })
   useLiveTable('snopark_reports', organization ? `organization_id=eq.${organization.id}` : null, () => { void q.refetch() })
   const canEdit = ['admin', 'manager', 'buyer'].includes(profile?.role ?? '')
-  const [adding, setAdding] = useState(false)
+  const [receiving, setReceiving] = useState(false)
   const [opening, setOpening] = useState(false)
+  const [editing, setEditing] = useState<SnoparkBook | null>(null)
   const view = q.data
   const ls = useSupabaseQuery(async () => (view ? lsSold(view.season.id) : null), [view?.season.id])
   const books = view?.books ?? []
@@ -40,6 +42,7 @@ export default function SnoParkPage() {
     count: (b) => permitsIn(b),
     received: (b) => b.received_on ?? '',
     status: (b) => b.status,
+    returned: (b) => b.returned_on ?? '',
   }, { param: 'bk_sort' })
 
   async function remove(b: SnoparkBook) {
@@ -55,7 +58,7 @@ export default function SnoParkPage() {
     <div>
       <BackLink fallback={ROUTES.dashboard} fallbackLabel="Dashboard" />
       <PageHeader title="Sno-Park passes" description="The State's permit books we hold, with the permit numbers inside each one, and the monthly reports. Books are entered when they arrive; on the 15th Cat reports the empty ones, and the report, the check and the empty books go by mail."
-        actions={canEdit && view ? <Button onClick={() => setAdding(true)}><Plus className="size-4" aria-hidden="true" />Add books</Button> : null} />
+        actions={canEdit && view && view.season.status === 'open' ? <Button onClick={() => setReceiving(true)}><PackageOpen className="size-4" aria-hidden="true" />Receive books</Button> : null} />
       {q.isLoading ? <Spinner /> : q.error ? <Alert variant="error">{errorMessage(q.error)}</Alert> : !view ? (
         <section className="rounded-2xl border border-stone-200 bg-white p-5 text-sm text-stone-700">
           <p>No season is open yet. It opens on its own when the State emails the season's vendor packet ("Vendor Registration") to billing@.</p>
@@ -70,6 +73,7 @@ export default function SnoParkPage() {
               <p className="mt-1 text-xs text-stone-600">Reports due the 15th, the first for {reportTitle({ kind: 'monthly', month: view.season.first_report_month }).replace(' report', '')} on {shortDate(view.season.first_report_month.slice(0, 4) + '-12-15')}. Final due {shortDate(view.season.final_due)}.</p>
               {view.vendor ? <Link to={`${ROUTES.vendors}/${view.vendor.id}`} className="mt-1 inline-block text-xs text-brand hover:underline">{view.vendor.name}</Link> : null}
               <SeasonForm view={view} canEdit={canEdit} userId={profile?.id ?? null} onDone={() => { void q.refetch() }} />
+              <SeasonEndCheck view={view} canEdit={canEdit} onDone={() => { void q.refetch() }} />
             </div>
             <div className="rounded-2xl border border-stone-200 bg-white p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Permits on hand</p>
@@ -113,9 +117,37 @@ export default function SnoParkPage() {
           </section>
 
           <section className="rounded-2xl border border-stone-200 bg-white p-5">
+            <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500"><PackageOpen className="size-4" aria-hidden="true" />Boxes received</h2>
+            {view.shipments.length === 0 ? (
+              <p className="mt-2 text-sm text-stone-600">No box received yet. When the FedEx box arrives, click <strong>Receive books</strong>: scan the State's sheet, enter every book, and VMS checks the box against the sheet before the books go into Lightspeed.</p>
+            ) : (
+              <div className="mt-3 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead><tr className="text-left text-xs uppercase tracking-wide text-stone-500"><th className="py-2 pr-3">Received</th><th className="py-2 pr-3">Books</th><th className="py-2 pr-3">Permits</th><th className="py-2 pr-3">Status</th><th className="py-2 pr-3">Lightspeed</th></tr></thead>
+                  <tbody className="divide-y divide-stone-100">
+                    {view.shipments.map((sh) => {
+                      const mine = books.filter((b) => b.shipment_id === sh.id)
+                      const st = SHIPMENT_STATUS[sh.status]
+                      return (
+                        <tr key={sh.id}>
+                          <td className="py-2 pr-3"><Link to={`${ROUTES.snoparkReceive}/${sh.id}`} className="font-medium text-stone-900 hover:text-brand">{shortDate(sh.received_on)}</Link></td>
+                          <td className="py-2 pr-3 text-stone-700">{mine.filter((b) => b.kind === 'day').length} day · {mine.filter((b) => b.kind === 'season').length} season</td>
+                          <td className="py-2 pr-3 text-stone-700">{mine.filter((b) => b.kind === 'day').reduce((n, b) => n + permitsIn(b), 0).toLocaleString()} day · {mine.filter((b) => b.kind === 'season').reduce((n, b) => n + permitsIn(b), 0).toLocaleString()} season</td>
+                          <td className="py-2 pr-3"><Badge tone={st.tone}>{st.text}</Badge></td>
+                          <td className="py-2 pr-3 text-stone-700">{sh.ls_order_id ? `PO ${sh.ls_order_id}` : ''}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-2xl border border-stone-200 bg-white p-5">
             <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500"><BookOpen className="size-4" aria-hidden="true" />Books</h2>
             {books.length === 0 ? (
-              <p className="mt-2 text-sm text-stone-600">No books entered yet. When the FedEx box arrives, click <strong>Add books</strong> and enter the first book number, how many books came, how many permits are in each and the first permit number. VMS numbers the rest.</p>
+              <p className="mt-2 text-sm text-stone-600">No books entered yet. They are entered when a box is received, one row per book with its number and the permit numbers inside.</p>
             ) : (
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full text-sm">
@@ -127,6 +159,7 @@ export default function SnoParkPage() {
                       <SortHeader label="Count" sortKey="count" sort={sort} onSort={toggle} />
                       <SortHeader label="Received" sortKey="received" sort={sort} onSort={toggle} />
                       <SortHeader label="Status" sortKey="status" sort={sort} onSort={toggle} />
+                      <SortHeader label="Returned to State" sortKey="returned" sort={sort} onSort={toggle} />
                       <th className="py-2" />
                     </tr>
                   </thead>
@@ -141,7 +174,8 @@ export default function SnoParkPage() {
                           <td className="py-2 pr-3 text-stone-700">{permitsIn(b)}</td>
                           <td className="py-2 pr-3 text-stone-700">{b.received_on ? shortDate(b.received_on) : ''}{b.order_id ? <> · <Link to={`${ROUTES.orders}/${b.order_id}`} className="text-brand hover:underline">order</Link></> : null}</td>
                           <td className="py-2 pr-3"><Badge tone={BOOK_STATUS[b.status].tone}>{BOOK_STATUS[b.status].text}</Badge>{rep ? <> <Link to={`${ROUTES.snoparkReport}/${rep.id}`} className="text-xs text-brand hover:underline">{reportTitle(rep, view.season)}</Link></> : null}</td>
-                          <td className="py-2 text-right">{canEdit && b.status === 'on_hand' ? <button type="button" onClick={() => remove(b)} className="text-xs text-stone-500 hover:text-red-700">Remove</button> : null}</td>
+                          <td className="py-2 pr-3 text-stone-700">{b.returned_on ? shortDate(b.returned_on) : ''}</td>
+                          <td className="py-2 text-right whitespace-nowrap">{canEdit && b.status === 'on_hand' ? <><button type="button" onClick={() => setEditing(b)} className="mr-3 text-xs text-stone-500 hover:text-brand" aria-label={`Change book ${b.book_number}`}><Pencil className="inline size-3.5" /> Change</button><button type="button" onClick={() => remove(b)} className="text-xs text-stone-500 hover:text-red-700">Remove</button></> : null}</td>
                         </tr>
                       )
                     })}
@@ -152,59 +186,69 @@ export default function SnoParkPage() {
           </section>
         </div>
       )}
-      {adding && view ? <AddBooks seasonId={view.season.id} books={books} onClose={() => setAdding(false)} onDone={() => { setAdding(false); void q.refetch() }} /> : null}
+      {receiving && view ? <ReceiveBooks seasonId={view.season.id} onClose={() => setReceiving(false)} onDone={(id) => { setReceiving(false); navigate(`${ROUTES.snoparkReceive}/${id}`) }} /> : null}
+      {editing ? <EditBook book={editing} onClose={() => setEditing(null)} onDone={() => { setEditing(null); void q.refetch() }} /> : null}
       {opening ? <OpenSeason onClose={() => setOpening(false)} onDone={() => { setOpening(false); void q.refetch() }} /> : null}
     </div>
   )
 }
 
-function AddBooks({ seasonId, books, onClose, onDone }: { seasonId: string; books: SnoparkBook[]; onClose: () => void; onDone: () => void }) {
-  const [kind, setKind] = useState<SnoparkBook['kind']>('day')
-  const next = nextBookNumber(books, kind)
-  const [firstBook, setFirstBook] = useState(next?.book ?? '')
-  const [count, setCount] = useState('1')
-  const [perBook, setPerBook] = useState(kind === 'day' ? '25' : '10')
-  const [firstPermit, setFirstPermit] = useState(next ? String(next.permit) : '')
+function ReceiveBooks({ seasonId, onClose, onDone }: { seasonId: string; onClose: () => void; onDone: (id: string) => void }) {
   const [received, setReceived] = useState(() => new Date().toISOString().slice(0, 10))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const n = Number(count) || 0, per = Number(perBook) || 0, fp = Number(firstPermit) || 0
-  const last = fp && n && per ? fp + n * per - 1 : null
-
-  function pickKind(k: SnoparkBook['kind']) {
-    setKind(k)
-    const nx = nextBookNumber(books, k)
-    setFirstBook(nx?.book ?? '')
-    setFirstPermit(nx ? String(nx.permit) : '')
-    setPerBook(k === 'day' ? '25' : '10')
-  }
-
   async function submit() {
     setBusy(true); setError(null)
-    try {
-      const input: AddBooksInput = { season_id: seasonId, kind, first_book: firstBook.trim(), books: n, per_book: per, first_permit: fp, received_on: received || null, order_id: null }
-      const added = await addBooks(input)
-      toast.success(`${added} book${added === 1 ? '' : 's'} entered`)
-      onDone()
-    } catch (err) { setError(errorMessage(err)) } finally { setBusy(false) }
+    try { onDone(await startShipment(seasonId, received, null)) } catch (err) { setError(errorMessage(err)) } finally { setBusy(false) }
   }
-
   return (
-    <Modal title="Add books" submitLabel={busy ? 'Saving…' : 'Add books'} busy={busy} onSubmit={submit} onClose={onClose}>
-      <p className="text-sm text-stone-600">From the FedEx box: the first book number, how many books came, how many permits are in each book, and the first permit number. VMS numbers the rest in order.</p>
-      <FormField label="Kind" htmlFor="sp-kind">
-        <Select id="sp-kind" value={kind} onChange={(e) => pickKind(e.target.value as SnoparkBook['kind'])}><option value="day">Day permits</option><option value="season">Season permits</option></Select>
-      </FormField>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <FormField label="First book number" htmlFor="sp-book" hint="As printed on the cover, like B450"><Input id="sp-book" value={firstBook} onChange={(e) => setFirstBook(e.target.value)} required /></FormField>
-        <FormField label="How many books" htmlFor="sp-count"><Input id="sp-count" type="number" min={1} max={500} value={count} onChange={(e) => setCount(e.target.value)} required /></FormField>
-        <FormField label="Permits in each book" htmlFor="sp-per"><Input id="sp-per" type="number" min={1} max={500} value={perBook} onChange={(e) => setPerBook(e.target.value)} required /></FormField>
-        <FormField label="First permit number" htmlFor="sp-permit" hint="The first permit in the first book"><Input id="sp-permit" type="number" min={1} value={firstPermit} onChange={(e) => setFirstPermit(e.target.value)} required /></FormField>
-        <FormField label="Received on" htmlFor="sp-received"><Input id="sp-received" type="date" value={received} onChange={(e) => setReceived(e.target.value)} /></FormField>
-      </div>
-      {last ? <p className="text-sm text-stone-700">Permits {fp.toLocaleString()} to {last.toLocaleString()}: {(n * per).toLocaleString()} {KIND_LABELS[kind].toLowerCase()} permits in {n} book{n === 1 ? '' : 's'}.</p> : null}
+    <Modal title="Receive books" submitLabel={busy ? 'Opening…' : 'Start'} busy={busy} onSubmit={submit} onClose={onClose}>
+      <p className="text-sm text-stone-600">A box from the State. Next: scan the sheet that came in it, enter every book, and VMS checks the box against the sheet before the books go into Lightspeed.</p>
+      <FormField label="Received on" htmlFor="sp-received"><Input id="sp-received" type="date" value={received} onChange={(e) => setReceived(e.target.value)} required /></FormField>
       {error ? <Alert variant="error">{error}</Alert> : null}
     </Modal>
+  )
+}
+
+/** A book's number or permit numbers corrected while it is still on hand (Dana, Nov 10). */
+function EditBook({ book, onClose, onDone }: { book: SnoparkBook; onClose: () => void; onDone: () => void }) {
+  const [number, setNumber] = useState(book.book_number)
+  const [first, setFirst] = useState(String(book.first_permit))
+  const [last, setLast] = useState(String(book.last_permit))
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  async function submit() {
+    setBusy(true); setError(null)
+    try { await updateBookNumbers(book.id, number.trim(), Number(first), Number(last)); toast.success('Book changed'); onDone() } catch (err) { setError(errorMessage(err)) } finally { setBusy(false) }
+  }
+  return (
+    <Modal title={`Change book ${book.book_number}`} submitLabel={busy ? 'Saving…' : 'Save'} busy={busy} onSubmit={submit} onClose={onClose}>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <FormField label="Book number" htmlFor="eb-number"><Input id="eb-number" value={number} onChange={(e) => setNumber(e.target.value)} required /></FormField>
+        <FormField label="Starting permit #" htmlFor="eb-first"><Input id="eb-first" type="number" min={1} value={first} onChange={(e) => setFirst(e.target.value)} required /></FormField>
+        <FormField label="Ending permit #" htmlFor="eb-last"><Input id="eb-last" type="number" min={1} value={last} onChange={(e) => setLast(e.target.value)} required /></FormField>
+      </div>
+      {error ? <Alert variant="error">{error}</Alert> : null}
+    </Modal>
+  )
+}
+
+/** Season end (Dana, Nov 10): LS's sales against everything reported; when off, VMS emails Dana the summary itself. */
+function SeasonEndCheck({ view, canEdit, onDone }: { view: SeasonView; canEdit: boolean; onDone: () => void }) {
+  const [busy, setBusy] = useState(false)
+  const check = view.season.ls_check as unknown as SeasonCheck | null
+  if (view.season.status !== 'closed') return null
+  async function run() {
+    setBusy(true)
+    try { const r = await seasonCheck(view.season.id); toast.success(r.check.off ? 'Off; the summary was emailed to Dana' : 'Lightspeed and the reports match'); onDone() } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(false) }
+  }
+  return (
+    <div className="mt-2 text-xs text-stone-600">
+      {check ? (
+        <p className={check.off ? 'text-red-800' : 'text-emerald-800'}>Season-end check: Lightspeed sold {check.day.ls} day / {check.season.ls} season; reported {check.day.reported} day / {check.season.reported} season. {check.off ? `Off${check.emailed_at ? '; emailed to Dana' : check.email_error ? `; the email failed (${check.email_error})` : ''}.` : 'They match.'}</p>
+      ) : <p>Season-end check not run yet (it runs by itself the day after the final report is mailed).</p>}
+      {canEdit ? <button type="button" onClick={run} disabled={busy} className="mt-1 text-brand hover:underline">{busy ? 'Checking…' : 'Run the check now'}</button> : null}
+    </div>
   )
 }
 
