@@ -116,10 +116,10 @@ function SheetStep({ view, locked, userId, onDone }: { view: ShipmentView; locke
   return (
     <section className="rounded-2xl border border-stone-200 bg-white p-5">
       <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500"><FileCheck className="size-4" aria-hidden="true" />1. The State's sheet</h2>
-      <p className="mt-1 text-sm text-stone-600">The Vendor Permit Request Form that came in the box. Take a picture of it or upload the scan; VMS reads the State's verification box (the permit ranges, books and permits issued) and you check it against the paper.</p>
+      <p className="mt-1 text-sm text-stone-600">The Vendor Permit Request Form (confirmation sheet) that came in the box. Upload the scan or PDF from your computer, or take a picture on your phone; VMS reads the State's verification box (the permit ranges, books and permits issued) and you check it against the paper.</p>
       <div className="mt-3 flex flex-wrap items-center gap-3">
         {view.sheetFile ? <button type="button" onClick={open} className="text-sm text-brand hover:underline">{view.sheetFile.file_name}</button> : null}
-        {!locked ? <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-800 hover:bg-stone-50"><Camera className="size-4" aria-hidden="true" />{busy === 'read' ? 'Reading the sheet…' : view.sheetFile ? 'Scan it again' : 'Scan the sheet'}<input ref={ref} type="file" accept="image/*,application/pdf" className="sr-only" disabled={busy !== null} onChange={(e) => pick(e.target.files)} /></label> : null}
+        {!locked ? <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-800 hover:bg-stone-50"><Camera className="size-4" aria-hidden="true" />{busy === 'read' ? 'Reading the sheet…' : view.sheetFile ? 'Upload or scan it again' : 'Upload or scan the sheet'}<input ref={ref} type="file" accept="image/*,application/pdf" className="sr-only" disabled={busy !== null} onChange={(e) => pick(e.target.files)} /></label> : null}
       </div>
       {(saved || edit) ? (
         <div className="mt-4">
