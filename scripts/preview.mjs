@@ -4,7 +4,7 @@
 //   NODE_USE_ENV_PROXY=1 node scripts/preview.mjs /vendors /mail [--out dir] [--live]
 //   --live: screenshot https://vms.shaverlakesports.com instead (needs that host allowed in the network policy)
 import { spawn } from 'node:child_process'
-import { mkdirSync } from 'node:fs'
+import { existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { chromium } from 'playwright-core'
 import { loadEnv, requireEnv } from './env.mjs'
@@ -40,7 +40,9 @@ if (!flag('--live')) {
   }
 }
 
-const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM ?? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' })
+// the cloud container's browser (its folder name changes with each image; /opt/pw-browsers/chromium is the stable one)
+const browserPath = process.env.PLAYWRIGHT_CHROMIUM ?? ['/opt/pw-browsers/chromium', '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'].find((p) => existsSync(p))
+const browser = await chromium.launch(browserPath ? { executablePath: browserPath } : {})
 try {
   for (const [label, viewport] of [['computer', { width: 1366, height: 900 }], ['phone', { width: 390, height: 844 }]]) {
     const page = await browser.newPage({ viewport, deviceScaleFactor: label === 'phone' ? 2 : 1 })

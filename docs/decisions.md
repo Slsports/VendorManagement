@@ -4285,3 +4285,6 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   database address, walmart.com and ebay.com, and has a setup script (npm ci, start the test database). Left for Dana:
   remove the SUPABASE_SERVICE_ROLE_KEY network secret in the workspace settings (only scripts/create-user.mjs used it, and
   it never worked from the cloud); Claude's data work uses the Management API token, which stays.
+- Nov 10: Dana removed the service-role network secret (Fable agreed it was unused). Tested: the test login now signs in and
+  reads VMS; scripts/preview.mjs screenshots the live site (Orders shown fine; Payments is admin/manager only, so the buyer
+  test login sees "You don't have access"). preview.mjs now finds the container's browser itself. CLAUDE.md updated.

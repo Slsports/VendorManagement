@@ -143,9 +143,11 @@ Vite + React 19 + TypeScript + Tailwind 4, Supabase (project `bpdpkytfmpbwpbmpej
   the page shows "more than one relationship"). After such a migration run
   `NODE_USE_ENV_PROXY=1 node scripts/check-embeds.mjs src supabase/functions` and name the key
   (`vendor_emails!vendor_emails_vendor_id_fkey(*)`).
-- The cloud proxy drops user sign-in tokens to `*.supabase.co`, so `scripts/preview.mjs` and supabase-js calls as
-  the test login fail ("permission denied", 401) from a cloud session. To run an app RPC as a user, use `query`
-  with `select set_config('request.jwt.claims', '{"sub":"<profile id>","role":"authenticated"}', true); set local
+- Seeing screens works from the cloud since Nov 10 (Dana removed the service-role network secret that replaced user
+  sign-in tokens): `NODE_USE_ENV_PROXY=1 node scripts/preview.mjs /orders --live` screenshots the live site as the test
+  login "Claude (testing)" (a **buyer**: admin-only pages such as Payments and Accounting show "You don't have access").
+  Look at the pages after each screen change before telling Dana it's done. To run an app RPC as a user you can also use
+  `query` with `select set_config('request.jwt.claims', '{"sub":"<profile id>","role":"authenticated"}', true); set local
   role authenticated; select …` (the "Claude (testing)" profile), never Dana's.
 - Types are hand-maintained in `src/types/database.ts`; add Row/Insert/Update and function Returns for
   every schema change, then aliases in `src/types/index.ts`.
