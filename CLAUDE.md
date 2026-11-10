@@ -138,7 +138,7 @@ Vite + React 19 + TypeScript + Tailwind 4, Supabase (project `bpdpkytfmpbwpbmpej
 - Every migration grants explicitly (hosted default privileges give nothing) and adds RLS policies.
   Helpers: `user_in_org`, `user_can_edit` (admin/manager/buyer), `is_admin`.
 - Looking at screens: `NODE_USE_ENV_PROXY=1 node scripts/preview.mjs /vendors/<id>/edit` signs in as the test
-  login "Claude (testing)" (buyer; `VMS_TEST_EMAIL`/`VMS_TEST_PASSWORD` in the environment settings, created by
+  login "Claude (testing)" (admin since Nov 10; `VMS_TEST_EMAIL`/`VMS_TEST_PASSWORD` in the environment settings, created by
   `scripts/create-test-login.mjs`) and screenshots at computer and phone size. Never print the password.
 - A new foreign key between two tables that already had one makes `table(*)` embeds ambiguous (PGRST201,
   the page shows "more than one relationship"). After such a migration run
