@@ -4307,6 +4307,49 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   from "Dana's Individual Org" for some work (e.g. Ask VMS, bulk reading), falling back to the main key when it runs out.
 - Nov 10 (Dana's screenshot of the business Team billing): the Team credit is already linked to "Shaver Lake Sports Inc"
   (since Oct 14) and is $60/month, not $140: 3 seats, $75/month plan total, which matches three Standard seats at $20 each.
+
+## Nov 10, 2026 — Sno-Park receiving, packets and the season-end check (migration 0334, function snopark v3)
+- Dana, Nov 10, on the final 2024-25 packet (form plus photocopies of the book covers): books are numbered "DB 543" (day) and
+  "SB 1130" (season); a day book holds 25 permits, a season book 10 (now on the season: day_per_book, season_per_book).
+- Dana: "I want to have Cat (or another employee) enter every book into a form … a received date for the form, then columns
+  for Book #, Starting permit #, Ending permit number and date returned to state." Built as the receiving page
+  (Sno-Park → Receive books → /snopark/receive/<id>): one row per book; the Books table gained a "Returned to State" column
+  (filled when the report the book went on is marked mailed) and a Change button for an on-hand book's number or permits.
+- Dana: "I also want to scan the sheet that the state sends us when they send us our books … check the books to make sure
+  we received them against this sheet … VMS knows that we should only be receiving full books so if the numbers don't add
+  up it flags the person entering the items." The State's sheet is form OHV 145SP; its OHMVR Division Verification box
+  (ranges, books issued, permits issued, date shipped) is read by Claude (sonnet, purpose snopark_sheet) and confirmed by
+  the person. snopark_shipment_check compares: every book a whole book, the sheet's range a whole number of books, the
+  entered books inside the range and covering all of it, the book count. Differences → status off.
+- Dana: "the system drafts an email to send to them regarding an issue like that. The employee reviews the draft and sends
+  it with a cc to dana@." snopark_shipment_flag: a task for the person entering (auto_key snopark_ship:<shipment>) and an
+  email draft to the State's orders contact (ohmvr.permits@parks.ca.gov) cc Dana, with the sheet attached. Only Dana can
+  accept a box that does not match (snopark_shipment_accept, with a reason).
+- Dana: "So they mark off each book we received and it gets entered into LS. I'd like that to happen automatically, once
+  they agree we received those and I'd like a dated note in LS under each listing … <date> <employee> Received X Day and X
+  seasonal passes: Book #'s x,x,x holding Permit numbers xxx-xxx … So I guess it would create a PO." receive_ls: a
+  balanced box becomes an LS purchase order under CA Snow Park (LS vendor 139) at SLS, one line per kind at the net cost
+  (price minus commission), each line checked in, the PO marked complete, and the note line added on top of each permit
+  item's note (SNOW PARK PERMIT - DAY, custom SKU 15; SNOW PARK PERMIT - SEASON, custom SKU 16). VMS reads the SLS stock
+  before and after; when it did not move by the quantity received, Dana gets a task (snopark_ls:<shipment>). Not yet
+  confirmed on a real box: whether LS's "checked in" through the API moves stock the way the register's Check In does.
+  The first real receipt will show it; the note on the shipment says what VMS saw.
+- Dana: the printed form, the cover photos and the packet. VMS now makes a printable PDF copy of the State's form (print
+  action; the final adds the Unsold box and the declaration the Excel lacks) and, when a report is marked mailed, the
+  packet: the form first, then the cover photos in the order added, filed under CA Snow Park in "Submitted permit payments"
+  (monthly, kind snopark_packet) or "Season final reports" (final, snopark_final_packet). Phone photos are turned upright
+  and saved as JPEGs before upload (src/lib/photo.ts). The State's own Excel is still made and filed.
+- Dana: "at the end of the season … a complete check to make sure that LS sold the same amount of passes as we have
+  submitted on our monthly and end of season reports. If we are off I want a summary emailed to me automatically … an
+  exception to our rule." snopark_season_compare + the season_check action: when the final report is mailed (and daily by
+  cron for closed seasons not checked), LS's sales since October 1 through the season end against every sold range on the
+  reports; when off, VMS emails Dana from orders@ itself. This is the one Sno-Park email that does not wait for a person.
+- Dana, Nov 10: Monica Perez, Analyst I, (916) 206-0116, M-F 8 AM-4:30 PM, is our main contact at the OHMVR Division:
+  set as Main rep on CA SNOW PARK. The vendor's mailing address is the P.O. Box every report goes to. No State phone number
+  beyond hers is on file.
+- The 2026-2027 Excel blank has no store information cells VMS can find (its labels are drawing boxes); the printable form
+  carries the store's standard information (name, address, phone, as on the permit request form). Dana to say if the Excel
+  also needs it typed in.
 - Nov 10, Dana: Trevor moved to a Premium seat on the business Team account (Dana and Jarrett stay Standard; plan $175/month).
   Team API credit to "Shaver Lake Sports Inc" should rise from $60 to about $140/month (Premium $100 + 2 x $20); not yet
   confirmed on the Billing page. His higher-limit request is answered by the upgrade.

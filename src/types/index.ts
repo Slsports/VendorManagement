@@ -60,6 +60,7 @@ export type SnoparkSeason = Tables<'snopark_seasons'>
 export type SnoparkBook = Tables<'snopark_books'>
 export type SnoparkReport = Tables<'snopark_reports'>
 export type SnoparkReportRow = Tables<'snopark_report_rows'>
+export type SnoparkShipment = Tables<'snopark_shipments'>
 export type VendorLinkKind = VendorLink['kind']
 export type Order = Tables<'orders'>
 export type PoAsk = Tables<'po_asks'>

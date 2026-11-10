@@ -1,7 +1,7 @@
 import type { VendorLinkKind } from '@/types'
 
 // The vendor's Documents folders (Dana, Oct 8): each holds certain kinds of file, with a year folder inside.
-export type DocFolder = 'price_lists' | 'catalogs' | 'orders' | 'ls_pos' | 'confirmations' | 'invoices' | 'credits' | 'order_forms' | 'specials' | 'shipping' | 'images' | 'damaged' | 'proofs' | 'sales_reports' | 'inventory_counts' | 'snopark' | 'other'
+export type DocFolder = 'price_lists' | 'catalogs' | 'orders' | 'ls_pos' | 'confirmations' | 'invoices' | 'credits' | 'order_forms' | 'specials' | 'shipping' | 'images' | 'damaged' | 'proofs' | 'sales_reports' | 'inventory_counts' | 'snopark' | 'snopark_payments' | 'snopark_final' | 'other'
 
 export const DOC_FOLDERS: { id: DocFolder; label: string; kinds: VendorLinkKind[] }[] = [
   { id: 'price_lists', label: 'Price lists', kinds: ['price_list'] },
@@ -23,8 +23,11 @@ export const DOC_FOLDERS: { id: DocFolder; label: string; kinds: VendorLinkKind[
   // formatted LS sales reports (Dana, Oct 11)
   { id: 'sales_reports', label: 'Sales reports', kinds: ['sales_report'] },
   { id: 'inventory_counts', label: 'Inventory counts', kinds: ['inventory_count'] },
-  // the State's Sno-Park reports and the scans of sold passes (Dana, Nov 5)
-  { id: 'snopark', label: 'Sno-Park', kinds: ['snopark_report', 'snopark_scan', 'snopark_form'] },
+  // the State's Sno-Park reports, forms, shipment sheets and the cover photos (Dana, Nov 5 and 10)
+  { id: 'snopark', label: 'Sno-Park', kinds: ['snopark_report', 'snopark_scan', 'snopark_form', 'snopark_sheet', 'snopark_print'] },
+  // the packets as mailed: the form first, then the book-cover photos (Dana, Nov 10)
+  { id: 'snopark_payments', label: 'Submitted permit payments', kinds: ['snopark_packet'] },
+  { id: 'snopark_final', label: 'Season final reports', kinds: ['snopark_final_packet'] },
   { id: 'other', label: 'Other', kinds: ['other', 'website'] },
 ]
 
