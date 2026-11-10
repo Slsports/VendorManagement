@@ -4215,3 +4215,9 @@ remembers the choice per person, like the dashboard boxes.
   in a vendor's Documents: a new email to our main rep with the file attached, its name as the subject. (2) Attach from any
   vendor's files in every email box: pick a vendor, open their folders, tick files; files from several vendors can go in
   one email (an email with no vendor too).
+- Nov 10, Dana ("yes go"): so Claude can see VMS screens and live supplier pages. Confirmed cause of "can't see the screens":
+  the test login signs in, but the cloud workspace's saved key for the VMS database replaces the login on every request
+  after that (401 "requires a valid Bearer token"). Done: the workspace now allows vms.shaverlakesports.com, the VMS
+  database address, walmart.com and ebay.com, and has a setup script (npm ci, start the test database). Left for Dana:
+  remove the SUPABASE_SERVICE_ROLE_KEY network secret in the workspace settings (only scripts/create-user.mjs used it, and
+  it never worked from the cloud); Claude's data work uses the Management API token, which stays.
