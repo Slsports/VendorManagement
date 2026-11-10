@@ -4369,6 +4369,8 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   page: CA SNO-PARK" / "Permit Submission form on file: <file>" / "When the state sends the new form each year you will
   upload it here: Click here to upload the new season's form" / "Sold in Lightspeed this season: This checks the books on the
   submission report against the number of sales in Lightspeed to be sure we balance." / "Permits on hand - Season Totals".
+- Nov 10 (Dana's Console screenshot, ~12:25 pm): "Dana's Individual Org" spend this month $0.28, credit $109.49 -> $109.21.
+  VMS is using the personal key first. Working.
 
 ## Nov 10, 2026 — Sno-Park: the packet, the agreement, orders, the map, the instructions (migration 0336, snopark function)
 - Dana: "when we get the annual paperwork from them vms fills out the Vendor Registration form for me along with our first
