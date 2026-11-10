@@ -4357,3 +4357,6 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   plan's $100 a month; Supabase secret ANTHROPIC_API_KEY_PERSONAL), then at once the main key ("Shaver Lake Sports Inc",
   Team credit) when the first is out of credit, refused or busy; the first is tried again an hour later (a minute when
   busy). Until Dana saves that secret nothing changes. One place in the code (_shared/claudeClient.ts) covers every caller.
+- Nov 10: Dana made the key "vms-personal" in "Dana's Individual Org" (never expires) and saved it in Supabase as
+  ANTHROPIC_API_KEY_PERSONAL (12:08 pm). Claude calls kept succeeding afterwards. Check: that org's "Spend this month" in the
+  Claude Console should start rising from $0.00 (credit $109.49 at setup).
