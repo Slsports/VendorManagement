@@ -4233,3 +4233,8 @@ down (J37) and the month label area a row down (G40). VMS now: ships with the bl
 can carry its own form, uploaded on the Sno-Park page (filed under CA Snow Park as "Sno-Park form"); the filler finds the
 grand total cell and the label area by their formula and merge, keeps every formula of the State's, writes the quantity
 formula into the rows where the State's own sheet left it out, and writes the worked-out values too.
+Nov 10, Dana on season end: the State emails a reminder with the form (Apr 20 "PreWrap Up" and May 28 "Season Closing - Final
+Report" this year, both with the printed OHV 54SP PDF; the unsold box is on that PDF). The unsold books go back in the envelope,
+and Cat photocopies every book being returned first: one year the State charged for a book they said was not returned and,
+with no copy, the store had to pay. Dana is undecided whether the whole process runs through VMS or Cat keeps doing it by hand
+and uploads her submissions for the record. Not decided.
