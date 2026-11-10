@@ -12,6 +12,7 @@ Each conversation has one owner. It lands on that person's Mail list and dashboa
 3. To clear it, pick no one.
 
 ## Good to know
+- A conversation in someone's own mailbox that was answered through orders@ (same subject and vendor) is marked handled by itself.
 - A conversation in someone's own mailbox (jarrett@, trevor@) is theirs while it is private. Once it is shared to Orders it can be handed to anyone; it stays in that mailbox. Trying to hand over a private one shows a message saying to share it first.
 - Everyone can still see every Orders conversation; the owner only decides whose list it lands on.
 - Later replies in the conversation go to the owner.

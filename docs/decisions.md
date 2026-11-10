@@ -4272,3 +4272,9 @@ day's Claude spend is under history_daily_cap_usd ($10), until the first email o
 ago come in as received history with a note, never open work. Jarrett's mailbox (all of it, back to 2015, is already in
 VMS): every conversation in a staff mailbox with a vendor on it, either direction, is shared to Orders and tied to the vendor
 (71 of his were vendor conversations not yet shared); billing@ is untouched.
+
+## Nov 10, 2026 — A staff conversation handled through orders@ is handled (0333)
+Dana: "check his unanswered mail against the orders email. He may have handled something through orders@ that started in
+his jarrett@." When orders@ sends a reply in a conversation with the same subject (Re:/Fwd: aside) and vendor as a staff
+mailbox conversation waiting on us, that conversation is marked handled, from now on and in a back-check. Two of Jarrett's
+were left alone because orders@ had not finished them either (Gold Medal invoice, Knockaround order information).
