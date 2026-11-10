@@ -4363,3 +4363,9 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
 - Dana, Nov 10: "We do have an order that has already been received … It has already been entered in LS." Migration
   0335: **Already in Lightspeed** on the receiving page (snopark_shipment_entered_by_hand) runs the same check and records
   the box without a second LS PO; Receive books now asks which order the box answers (orders this season, received ones too).
+- Dana, Nov 10, wording for the Sno-Park season cards (used as written): "Reports are due the month after they are sold
+  on the 15th. ONLY completely sold books are put on the monthly submission form. Any partial books will be added to future
+  submissions. If we sold permits in November the first submission of the season would be December 15th." / "Go to vendor
+  page: CA SNO-PARK" / "Permit Submission form on file: <file>" / "When the state sends the new form each year you will
+  upload it here: Click here to upload the new season's form" / "Sold in Lightspeed this season: This checks the books on the
+  submission report against the number of sales in Lightspeed to be sure we balance." / "Permits on hand - Season Totals".

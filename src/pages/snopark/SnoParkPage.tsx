@@ -70,20 +70,20 @@ export default function SnoParkPage() {
             <div className="rounded-2xl border border-stone-200 bg-white p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Season</p>
               <p className="mt-1 text-lg font-semibold text-stone-900">{view.season.label} <Badge tone={view.season.status === 'open' ? 'success' : 'neutral'}>{view.season.status === 'open' ? 'Open' : 'Closed'}</Badge></p>
-              <p className="mt-1 text-xs text-stone-600">Reports due the 15th, the first for {reportTitle({ kind: 'monthly', month: view.season.first_report_month }).replace(' report', '')} on {shortDate(view.season.first_report_month.slice(0, 4) + '-12-15')}. Final due {shortDate(view.season.final_due)}.</p>
-              {view.vendor ? <Link to={`${ROUTES.vendors}/${view.vendor.id}`} className="mt-1 inline-block text-xs text-brand hover:underline">{view.vendor.name}</Link> : null}
+              <p className="mt-1 text-xs text-stone-600">Reports are due the month after they are sold, on the 15th. ONLY completely sold books are put on the monthly submission form. Any partial books will be added to future submissions. If we sold permits in November, the first submission of the season would be December 15th. The final report is due {shortDate(view.season.final_due)}.</p>
+              {view.vendor ? <p className="mt-2 text-xs text-stone-600">Go to vendor page: <Link to={`${ROUTES.vendors}/${view.vendor.id}`} className="font-medium text-brand hover:underline">{view.vendor.name}</Link></p> : null}
               <SeasonForm view={view} canEdit={canEdit} userId={profile?.id ?? null} onDone={() => { void q.refetch() }} />
               <SeasonEndCheck view={view} canEdit={canEdit} onDone={() => { void q.refetch() }} />
             </div>
             <div className="rounded-2xl border border-stone-200 bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Permits on hand</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Permits on hand · Season totals</p>
               <p className="mt-1 text-lg font-semibold text-stone-900">{permitsOnHand('day').toLocaleString()} day · {permitsOnHand('season').toLocaleString()} season</p>
-              <p className="mt-1 text-xs text-stone-600">In {onHand.length} book{onHand.length === 1 ? '' : 's'}. Reported or returned: {reported('day').toLocaleString()} day, {reported('season').toLocaleString()} season.</p>
+              <p className="mt-1 text-xs text-stone-600">On hand in {onHand.length} book{onHand.length === 1 ? '' : 's'}. Season totals reported or returned: {reported('day').toLocaleString()} day, {reported('season').toLocaleString()} season.</p>
             </div>
             <div className="rounded-2xl border border-stone-200 bg-white p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Sold in Lightspeed this season</p>
               {ls.isLoading ? <Spinner /> : ls.data ? <p className="mt-1 text-lg font-semibold text-stone-900">{ls.data.day.toLocaleString()} day · {ls.data.season.toLocaleString()} season</p> : <p className="mt-1 text-sm text-stone-500">Not available</p>}
-              <p className="mt-1 text-xs text-stone-600">A check against the books, from LS sales since October 1. Permits sold from books that are not empty yet are the difference.</p>
+              <p className="mt-1 text-xs text-stone-600">This checks the books on the submission reports against the number of sales in Lightspeed, to be sure we balance. Permits sold from books that are not empty yet are the difference until those books are submitted.</p>
             </div>
           </section>
 
@@ -293,10 +293,8 @@ function SeasonForm({ view, canEdit, userId, onDone }: { view: SeasonView; canEd
   }
   return (
     <div className="mt-2 text-xs text-stone-600">
-      {view.form ? <p>The State's form: <span className="font-medium text-stone-800">{view.form.file_name}</span></p>
-        : view.season.label === BUILT_IN_FORM_SEASON ? <p>The State's {BUILT_IN_FORM_SEASON} Report of Operations form is built into VMS; nothing to upload this season. When the State sends next season's form, it goes here.</p>
-        : <p>The State's form for this season is not on file. Upload the Report of Operations Excel they sent for {view.season.label}; until then VMS fills the {BUILT_IN_FORM_SEASON} form it was built with.</p>}
-      {canEdit ? <label className="mt-1 inline-block cursor-pointer text-brand hover:underline">{busy ? 'Uploading…' : view.form ? 'Replace it' : view.season.label === BUILT_IN_FORM_SEASON ? "Upload a different form for this season (.xlsx)" : "Upload the State's form for this season (.xlsx)"}<input ref={ref} type="file" accept=".xlsx" className="sr-only" disabled={busy} onChange={(e) => pick(e.target.files)} /></label> : null}
+      <p>Permit Submission form on file: <span className="font-medium text-stone-800">{view.form ? view.form.file_name : view.season.label === BUILT_IN_FORM_SEASON ? `${BUILT_IN_FORM_SEASON} Report of Operations (built into VMS)` : `none for ${view.season.label} yet; VMS fills the ${BUILT_IN_FORM_SEASON} form it was built with`}</span></p>
+      {canEdit ? <p className="mt-1">When the State sends the new form each year you will upload it here: <label className="inline cursor-pointer text-brand hover:underline">{busy ? 'Uploading…' : "Click here to upload the new season's form"}<input ref={ref} type="file" accept=".xlsx" className="sr-only" disabled={busy} onChange={(e) => pick(e.target.files)} /></label></p> : null}
     </div>
   )
 }
