@@ -4238,3 +4238,16 @@ Report" this year, both with the printed OHV 54SP PDF; the unsold box is on that
 and Cat photocopies every book being returned first: one year the State charged for a book they said was not returned and,
 with no copy, the store had to pay. Dana is undecided whether the whole process runs through VMS or Cat keeps doing it by hand
 and uploads her submissions for the record. Not decided.
+
+## Nov 10, 2026 — Vendors paid through Bill.com are checked against it (0330)
+Dana, on three Hendrix invoices showing unpaid in VMS while Bill.com had paid them: "If you see a vendor I am paying in
+bill.com you need to mark it as a bill.com paid vendor." Confirmed cause: VMS matched invoices to Bill.com only for vendors
+with the check on (EJD alone) and only invoices from the last 120 days; Hendrix's were from May and July. Now every vendor
+with a Bill.com payment or bill is checked (30 vendors today), a new Bill.com payment turns the check on by itself, and
+matching and Paid have no age limit (the "enter it in Bill.com" task keeps its 120-day window). Back-check run in the migration.
+The "277 days" Dana saw was the age of her own Feb 5 forward of Hendrix's past-due notice to Bill.com's inbox, not an invoice.
+Two wrong records fixed the same day: the Bill.com accounting contact had been named "BILL · John Burton" (Claude took the
+payee's name off a Bill.com notice on Oct 16; now "Bill.com"), and Mia Burton (mburtonjeep@gmail.com, a former employee and
+John Burton's wife) had been sorted on Oct 19 as a Maryellen Reynolds rep from her "PLANET COTTON" email, which put her on
+Planet Cotton's contacts and the cc of the (never sent) shipment request; she is now "not a vendor". Nothing was ever sent to
+her by VMS.

@@ -14,5 +14,5 @@ An invoice VMS knows is paid shows a green **Paid** tag in the vendor's Invoices
 ## Good to know
 - Invoices, payment reminders and past-due notices are not payments; they don't mark anything paid.
 - Private mailboxes and the Accounting mailbox are never read for this.
-- WWD invoices and Bill.com keep their own paid status on the Payments page. For a vendor checked against Bill.com (Emery Jensen), the invoice also gets **Paid** once Bill.com shows it paid.
+- WWD invoices and Bill.com keep their own paid status on the Payments page. For every vendor you pay through Bill.com (VMS turns the check on by itself the first time a Bill.com payment to that vendor comes in), the invoice gets **Paid** once Bill.com shows it paid, however old it is.
 - Only people with the Accounting tick see the **Paid** tag.
