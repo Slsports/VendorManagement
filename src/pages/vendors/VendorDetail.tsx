@@ -285,6 +285,8 @@ export default function VendorDetailPage() {
           <RecordTasks fold preset={{ vendor: { id: v.id, name: v.name } }} />
           <VendorActivityFeed organizationId={v.organization_id} vendorId={v.id} onNote={openNotes} />
         </div>
+        {/* CA Sno-Park: the permit submission page link sits at the top of its page (Dana, Nov 10) */}
+        <VendorSnoparkSection vendorId={v.id} />
         <VendorRoutingLetter vendorId={v.id} organizationId={v.organization_id} />
         <VendorLightspeedBox vendor={v} canEdit={canEdit} onChange={() => void vendorQ.refetch()} />
 
@@ -302,7 +304,6 @@ export default function VendorDetailPage() {
         <VendorOrdersSection vendorId={v.id} vendorName={v.name} canAdd={canEdit} />
         <VendorPaymentsSection vendorId={v.id} />
         <VendorShipmentSection vendorId={v.id} />
-        <VendorSnoparkSection vendorId={v.id} />
         <VendorFreightSection vendorId={v.id} />
         <WwdInvoiceList fold vendorId={v.id} />
 
