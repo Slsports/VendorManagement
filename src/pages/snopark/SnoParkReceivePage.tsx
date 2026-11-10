@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useLiveTable } from '@/hooks/useLiveTable'
-import { acceptShipment, checkShipment, confirmSheet, flagShipment, getShipment, receiveInLs, saveShipmentBooks, uploadSheet, type ShipmentView } from '@/services/snopark'
+import { acceptShipment, checkShipment, confirmSheet, enteredByHand, flagShipment, getShipment, receiveInLs, saveShipmentBooks, uploadSheet, type ShipmentView } from '@/services/snopark'
 import { signedFileUrl } from '@/services/lines'
 import { ROUTES } from '@/lib/constants'
 import { shortDate } from '@/lib/freight'
@@ -242,6 +242,18 @@ function CheckStep({ view, locked, isAdmin, onDone }: { view: ShipmentView; lock
     setBusy('ls')
     try { const r = await receiveInLs(shipment.id); setResult(r.note); toast.success(`In Lightspeed as PO ${r.po}`); onDone() } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(null) }
   }
+  // the box was already entered in Lightspeed by hand (Dana, Nov 10): the check still runs, no second LS PO
+  async function byHand() {
+    setBusy('byhand')
+    try {
+      const d = await checkShipment(shipment.id)
+      if (d.length) { toast.error(`${d.length} difference${d.length === 1 ? '' : 's'} with the sheet; fix them or email the State first`); onDone(); return }
+      const who = window.prompt('Who entered it in Lightspeed, and when? (optional)') ?? ''
+      await enteredByHand(shipment.id, who.trim() || null)
+      toast.success('Recorded; no second PO was made in Lightspeed')
+      onDone()
+    } catch (e) { toast.error(errorMessage(e)); onDone() } finally { setBusy(null) }
+  }
 
   return (
     <section className="rounded-2xl border border-stone-200 bg-white p-5">
@@ -253,7 +265,7 @@ function CheckStep({ view, locked, isAdmin, onDone }: { view: ShipmentView; lock
         </div>
       ) : (
         <>
-          <p className="mt-1 text-sm text-stone-600">When every book is entered, click <strong>All books received</strong>. VMS compares the books with the sheet and the standard book sizes. If it all matches, the books go into Lightspeed by themselves: a purchase order under CA Snow Park, checked in, and a dated note on each permit item saying who received which books and permit numbers.</p>
+          <p className="mt-1 text-sm text-stone-600">When every book is entered, click <strong>All books received</strong>. VMS compares the books with the sheet and the standard book sizes. If it all matches, the books go into Lightspeed by themselves: a purchase order under the State's vendor, checked in, and a dated note on each permit item saying who received which books and permit numbers. For a box someone already entered in Lightspeed by hand, click <strong>Already in Lightspeed</strong> instead: the check still runs, and no second purchase order is made.</p>
           {diffs.length ? (
             <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-900">
               <p className="font-semibold">The box does not match:</p>
@@ -268,6 +280,7 @@ function CheckStep({ view, locked, isAdmin, onDone }: { view: ShipmentView; lock
               {shipment.status === 'off' ? <Button variant="secondary" onClick={flag} disabled={busy !== null}>{busy === 'flag' ? 'Drafting…' : shipment.draft_id ? 'Draft the email again' : 'Email the State'}</Button> : null}
               {shipment.status === 'off' && shipment.draft_id ? <Link to={`/mail?view=drafts&draft=${shipment.draft_id}`} className="text-sm text-brand hover:underline">Open the email to send</Link> : null}
               {shipment.status === 'balanced' ? <Button variant="secondary" onClick={toLs} disabled={busy !== null}>{busy === 'ls' ? 'Entering…' : 'Enter it in Lightspeed'}</Button> : null}
+              {ready && shipment.status !== 'off' ? <Button variant="ghost" onClick={byHand} disabled={busy !== null}>{busy === 'byhand' ? 'Checking…' : 'Already in Lightspeed'}</Button> : null}
               {!ready ? <p className="text-xs text-stone-500">Confirm the sheet and save the books first.</p> : null}
             </div>
           ) : null}

@@ -1214,6 +1214,7 @@ export type Database = {
       snopark_shipment_flag: { Args: { p_shipment: string }; Returns: string }
       snopark_shipment_accept: { Args: { p_shipment: string; p_note: string }; Returns: undefined }
       snopark_season_compare: { Args: { p_season: string }; Returns: Json }
+      snopark_shipment_entered_by_hand: { Args: { p_shipment: string; p_note?: string | null }; Returns: undefined }
       park_release: { Args: { p_kind: string; p_id: string }; Returns: undefined }
       park_release_all: { Args: { p_kind: string }; Returns: number }
       vendor_by_name: { Args: { p_org: string; p_name: string }; Returns: string | null }

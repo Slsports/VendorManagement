@@ -20,4 +20,6 @@ Every book has a number on its cover and the permits inside run in order. When t
 - The **Books** table shows every book this season: on hand, on a report, or returned, with the date it went back to the State.
 - Only Dana can accept a box that does not match the sheet (when the State has answered or she knows why). She says why, and the books go into Lightspeed as entered.
 - No sheet in the box? Enter its numbers by hand, or skip it: VMS then checks only the book sizes.
+- A box that someone already put into Lightspeed by hand: enter it the same way and click **Already in Lightspeed** instead of **All books received**. The check still runs; VMS records the box without making a second purchase order.
+- **Receive books** asks which order to the State the box answers; pick it so the order is marked received.
 - The State's sheet is filed under CA Snow Park in the **Sno-Park** folder, with the order.

@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useLiveTable } from '@/hooks/useLiveTable'
 import { useTableSort } from '@/hooks/useTableSort'
-import { deleteBook, getSeason, lsSold, openSeasonByHand, seasonCheck, startShipment, updateBookNumbers, uploadSeasonForm, type SeasonView } from '@/services/snopark'
+import { deleteBook, getSeason, lsSold, openSeasonByHand, seasonCheck, seasonOrders, startShipment, updateBookNumbers, uploadSeasonForm, type SeasonView } from '@/services/snopark'
 import { ROUTES } from '@/lib/constants'
 import { shortDate } from '@/lib/freight'
 import { errorMessage } from '@/lib/utils'
@@ -15,7 +15,7 @@ import { BackLink } from '@/components/shared/BackLink'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Modal } from '@/components/shared/Modal'
 import { SortHeader } from '@/components/shared/SortHeader'
-import { Alert, Badge, Button, FormField, Input, Spinner } from '@/components/ui'
+import { Alert, Badge, Button, FormField, Input, Select, Spinner } from '@/components/ui'
 import type { SnoparkBook } from '@/types'
 
 /**
@@ -70,20 +70,20 @@ export default function SnoParkPage() {
             <div className="rounded-2xl border border-stone-200 bg-white p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Season</p>
               <p className="mt-1 text-lg font-semibold text-stone-900">{view.season.label} <Badge tone={view.season.status === 'open' ? 'success' : 'neutral'}>{view.season.status === 'open' ? 'Open' : 'Closed'}</Badge></p>
-              <p className="mt-1 text-xs text-stone-600">Reports due the 15th, the first for {reportTitle({ kind: 'monthly', month: view.season.first_report_month }).replace(' report', '')} on {shortDate(view.season.first_report_month.slice(0, 4) + '-12-15')}. Final due {shortDate(view.season.final_due)}.</p>
-              {view.vendor ? <Link to={`${ROUTES.vendors}/${view.vendor.id}`} className="mt-1 inline-block text-xs text-brand hover:underline">{view.vendor.name}</Link> : null}
+              <p className="mt-1 text-xs text-stone-600">Reports are due the month after they are sold, on the 15th. ONLY completely sold books are put on the monthly submission form. Any partial books will be added to future submissions. If we sold permits in November, the first submission of the season would be December 15th. The final report is due {shortDate(view.season.final_due)}.</p>
+              {view.vendor ? <p className="mt-2 text-xs text-stone-600">Go to vendor page: <Link to={`${ROUTES.vendors}/${view.vendor.id}`} className="font-medium text-brand hover:underline">{view.vendor.name}</Link></p> : null}
               <SeasonForm view={view} canEdit={canEdit} userId={profile?.id ?? null} onDone={() => { void q.refetch() }} />
               <SeasonEndCheck view={view} canEdit={canEdit} onDone={() => { void q.refetch() }} />
             </div>
             <div className="rounded-2xl border border-stone-200 bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Permits on hand</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Permits on hand · Season totals</p>
               <p className="mt-1 text-lg font-semibold text-stone-900">{permitsOnHand('day').toLocaleString()} day · {permitsOnHand('season').toLocaleString()} season</p>
-              <p className="mt-1 text-xs text-stone-600">In {onHand.length} book{onHand.length === 1 ? '' : 's'}. Reported or returned: {reported('day').toLocaleString()} day, {reported('season').toLocaleString()} season.</p>
+              <p className="mt-1 text-xs text-stone-600">On hand in {onHand.length} book{onHand.length === 1 ? '' : 's'}. Season totals reported or returned: {reported('day').toLocaleString()} day, {reported('season').toLocaleString()} season.</p>
             </div>
             <div className="rounded-2xl border border-stone-200 bg-white p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Sold in Lightspeed this season</p>
               {ls.isLoading ? <Spinner /> : ls.data ? <p className="mt-1 text-lg font-semibold text-stone-900">{ls.data.day.toLocaleString()} day · {ls.data.season.toLocaleString()} season</p> : <p className="mt-1 text-sm text-stone-500">Not available</p>}
-              <p className="mt-1 text-xs text-stone-600">A check against the books, from LS sales since October 1. Permits sold from books that are not empty yet are the difference.</p>
+              <p className="mt-1 text-xs text-stone-600">This checks the books on the submission reports against the number of sales in Lightspeed, to be sure we balance. Permits sold from books that are not empty yet are the difference until those books are submitted.</p>
             </div>
           </section>
 
@@ -186,25 +186,35 @@ export default function SnoParkPage() {
           </section>
         </div>
       )}
-      {receiving && view ? <ReceiveBooks seasonId={view.season.id} onClose={() => setReceiving(false)} onDone={(id) => { setReceiving(false); navigate(`${ROUTES.snoparkReceive}/${id}`) }} /> : null}
+      {receiving && view ? <ReceiveBooks view={view} onClose={() => setReceiving(false)} onDone={(id) => { setReceiving(false); navigate(`${ROUTES.snoparkReceive}/${id}`) }} /> : null}
       {editing ? <EditBook book={editing} onClose={() => setEditing(null)} onDone={() => { setEditing(null); void q.refetch() }} /> : null}
       {opening ? <OpenSeason onClose={() => setOpening(false)} onDone={() => { setOpening(false); void q.refetch() }} /> : null}
     </div>
   )
 }
 
-function ReceiveBooks({ seasonId, onClose, onDone }: { seasonId: string; onClose: () => void; onDone: (id: string) => void }) {
+function ReceiveBooks({ view, onClose, onDone }: { view: SeasonView; onClose: () => void; onDone: (id: string) => void }) {
   const [received, setReceived] = useState(() => new Date().toISOString().slice(0, 10))
+  const [orderId, setOrderId] = useState('')
+  const orders = useSupabaseQuery(async () => (view.vendor ? seasonOrders(view.vendor.id, view.season.label) : []), [view.vendor?.id, view.season.label])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   async function submit() {
     setBusy(true); setError(null)
-    try { onDone(await startShipment(seasonId, received, null)) } catch (err) { setError(errorMessage(err)) } finally { setBusy(false) }
+    try { onDone(await startShipment(view.season.id, received, orderId || null)) } catch (err) { setError(errorMessage(err)) } finally { setBusy(false) }
   }
   return (
     <Modal title="Receive books" submitLabel={busy ? 'Opening…' : 'Start'} busy={busy} onSubmit={submit} onClose={onClose}>
       <p className="text-sm text-stone-600">A box from the State. Next: scan the sheet that came in it, enter every book, and VMS checks the box against the sheet before the books go into Lightspeed.</p>
-      <FormField label="Received on" htmlFor="sp-received"><Input id="sp-received" type="date" value={received} onChange={(e) => setReceived(e.target.value)} required /></FormField>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <FormField label="Received on" htmlFor="sp-received"><Input id="sp-received" type="date" value={received} onChange={(e) => setReceived(e.target.value)} required /></FormField>
+        <FormField label="For the order" htmlFor="sp-order" hint="The order to the State this box answers">
+          <Select id="sp-order" value={orderId} onChange={(e) => setOrderId(e.target.value)}>
+            <option value="">{orders.isLoading ? 'Loading…' : orders.data?.length ? 'Pick the order' : 'No order on file this season'}</option>
+            {(orders.data ?? []).map((o) => <option key={o.id} value={o.id}>{o.order_date ? shortDate(o.order_date) : ''} {o.po_number ?? ''}{o.description ? ` · ${o.description.slice(0, 60)}` : ''}{o.status === 'received' ? ' (received)' : ''}</option>)}
+          </Select>
+        </FormField>
+      </div>
       {error ? <Alert variant="error">{error}</Alert> : null}
     </Modal>
   )
@@ -269,6 +279,9 @@ function OpenSeason({ onClose, onDone }: { onClose: () => void; onDone: () => vo
   )
 }
 
+/** The season whose Report of Operations form is built into the snopark function (Dana's 26-27 file). */
+const BUILT_IN_FORM_SEASON = '2026-2027'
+
 /** The State's form for the season: they send a new one every year; VMS fills whichever is on file. */
 function SeasonForm({ view, canEdit, userId, onDone }: { view: SeasonView; canEdit: boolean; userId: string | null; onDone: () => void }) {
   const [busy, setBusy] = useState(false)
@@ -280,8 +293,8 @@ function SeasonForm({ view, canEdit, userId, onDone }: { view: SeasonView; canEd
   }
   return (
     <div className="mt-2 text-xs text-stone-600">
-      {view.form ? <p>The State's form: <span className="font-medium text-stone-800">{view.form.file_name}</span></p> : <p>The State's form for this season is not on file; VMS uses the 2026-2027 form it was built with.</p>}
-      {canEdit ? <label className="mt-1 inline-block cursor-pointer text-brand hover:underline">{busy ? 'Uploading…' : view.form ? 'Replace it' : "Upload the State's form (.xlsx)"}<input ref={ref} type="file" accept=".xlsx" className="sr-only" disabled={busy} onChange={(e) => pick(e.target.files)} /></label> : null}
+      <p>Permit Submission form on file: <span className="font-medium text-stone-800">{view.form ? view.form.file_name : view.season.label === BUILT_IN_FORM_SEASON ? `${BUILT_IN_FORM_SEASON} Report of Operations (built into VMS)` : `none for ${view.season.label} yet; VMS fills the ${BUILT_IN_FORM_SEASON} form it was built with`}</span></p>
+      {canEdit ? <p className="mt-1">When the State sends the new form each year you will upload it here: <label className="inline cursor-pointer text-brand hover:underline">{busy ? 'Uploading…' : "Click here to upload the new season's form"}<input ref={ref} type="file" accept=".xlsx" className="sr-only" disabled={busy} onChange={(e) => pick(e.target.files)} /></label></p> : null}
     </div>
   )
 }
