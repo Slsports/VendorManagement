@@ -1,11 +1,11 @@
 import { useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Camera, FileCheck, Plus, Trash2 } from 'lucide-react'
+import { Camera, FileCheck, FileText, Map, Plus, Printer, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useLiveTable } from '@/hooks/useLiveTable'
-import { acceptShipment, checkShipment, confirmSheet, enteredByHand, flagShipment, getShipment, receiveInLs, saveShipmentBooks, uploadSheet, type ShipmentView } from '@/services/snopark'
+import { acceptShipment, checkShipment, confirmSheet, enteredByHand, flagShipment, getShipment, mapPrinted, receiveInLs, saveShipmentBooks, uploadSheet, type ShipmentView } from '@/services/snopark'
 import { signedFileUrl } from '@/services/lines'
 import { ROUTES } from '@/lib/constants'
 import { shortDate } from '@/lib/freight'
@@ -41,12 +41,44 @@ export default function SnoParkReceivePage() {
       <PageHeader title={`Books received ${shortDate(shipment.received_on)}`}
         description={view.order ? <>For the order {view.order.po_number ? <Link to={`${ROUTES.orders}/${view.order.id}`} className="text-brand hover:underline">{view.order.po_number}</Link> : <Link to={`${ROUTES.orders}/${view.order.id}`} className="text-brand hover:underline">placed {view.order.order_date ? shortDate(view.order.order_date) : ''}</Link>}{view.order.description ? ` (${view.order.description})` : ''}. Scan the State's sheet, enter every book, and VMS checks the box against the sheet before anything goes into Lightspeed.</> : "Scan the State's sheet, enter every book, and VMS checks the box against the sheet before anything goes into Lightspeed."}
         actions={<Badge tone={st.tone}>{st.text}</Badge>} />
+      {view.flowchart ? <p className="mb-4 text-sm"><FileLink link={view.flowchart} icon={<FileText className="size-4" aria-hidden="true" />} label="The State's instructions (flowchart)" /></p> : null}
       <div className="space-y-6">
         <SheetStep view={view} locked={locked} userId={profile?.id ?? null} onDone={() => { void q.refetch() }} />
         <BooksStep view={view} locked={locked} onDone={() => { void q.refetch() }} />
         <CheckStep view={view} locked={locked} isAdmin={isAdmin} onDone={() => { void q.refetch() }} />
+        <MapStep view={view} canEdit={canEdit} onDone={() => { void q.refetch() }} />
       </div>
     </div>
+  )
+}
+
+function FileLink({ link, icon, label }: { link: { storage_path: string | null; file_name: string | null }; icon: React.ReactNode; label?: string }) {
+  async function open() {
+    if (!link.storage_path) return
+    try { window.open(await signedFileUrl(link.storage_path), '_blank', 'noopener') } catch (e) { toast.error(errorMessage(e)) }
+  }
+  return <button type="button" onClick={open} className="inline-flex items-center gap-1.5 text-brand hover:underline">{icon}{label ?? link.file_name}</button>
+}
+
+/** 4. The season's map, printed when the first box is in (Dana, Nov 10): copies go by the register. */
+function MapStep({ view, canEdit, onDone }: { view: ShipmentView; canEdit: boolean; onDone: () => void }) {
+  const [busy, setBusy] = useState(false)
+  if (!view.map || view.shipment.status !== 'done') return null
+  const done = !!view.season.map_printed_at
+  async function printed() {
+    setBusy(true)
+    try { await mapPrinted(view.season.id); toast.success('Map printed'); onDone() } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(false) }
+  }
+  return (
+    <section className={`rounded-2xl border p-5 ${done ? 'border-stone-200 bg-white' : 'border-amber-200 bg-amber-50'}`}>
+      <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500"><Printer className="size-4" aria-hidden="true" />4. The Sno-Park map</h2>
+      {done ? <p className="mt-2 text-sm text-stone-700">Printed {shortDate(view.season.map_printed_at!)} and copies made for the register. <FileLink link={view.map} icon={<Map className="size-4" aria-hidden="true" />} label={`${view.season.label} map`} /></p> : (
+        <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-amber-900">
+          <p className="grow">Print this season's map, make copies and put them by the register: <FileLink link={view.map} icon={<Map className="size-4" aria-hidden="true" />} label={`${view.season.label} Sno-Park map`} /></p>
+          {canEdit ? <Button size="sm" onClick={printed} disabled={busy}>{busy ? 'Saving…' : 'Printed and copied'}</Button> : null}
+        </div>
+      )}
+    </section>
   )
 }
 

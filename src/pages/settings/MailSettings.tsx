@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { getAiUsageThisMonth, getMailStatus, listSignatures, reclassifyAllMail, saveSignature, saveSignatureTemplate, setFollowUpDays, syncMailNow, type PersonSignature } from '@/services/mail'
 import { fillSignature, LOGO_URL } from '@/lib/signature'
+import { signatureUrl, uploadSignature } from '@/services/snopark'
 import { FoldSection } from '@/components/shared/FoldSection'
 import { errorMessage } from '@/lib/utils'
 import { FreightWatchers } from '@/components/freight/FreightWatchers'
@@ -209,7 +210,10 @@ function PersonSignatureRow({ person: p, template, onSaved }: { person: PersonSi
           {own ? <Textarea aria-label={`Own signature for ${p.full_name}`} rows={6} value={v.email_signature} onChange={set('email_signature')} /> : null}
           {changed ? <Button size="sm" loading={saving} onClick={() => void save()}>Save</Button> : null}
         </div>
-        <SignaturePreview text={filled} label="Their signature" />
+        <div className="space-y-4">
+          <SignaturePreview text={filled} label="Their signature" />
+          <SignatureImage person={p} onSaved={onSaved} />
+        </div>
       </div>
     </FoldSection>
   )
@@ -237,5 +241,30 @@ function ClaudeUsage({ organizationId }: { organizationId: string }) {
         </>
       )}
     </section>
+  )
+}
+
+/**
+ * The person's handwritten signature as a picture (Dana, Nov 10: "use my digital signature"): VMS places it on the forms it
+ * fills for them (the State's Sno-Park agreement and permit requests). Kept in a private bucket only the admin can open.
+ */
+function SignatureImage({ person: p, onSaved }: { person: PersonSignature; onSaved: () => void }) {
+  const { organization, isAdmin } = useAuth()
+  const [busy, setBusy] = useState(false)
+  const url = useSupabaseQuery(async () => (p.signature_path && isAdmin ? signatureUrl(p.signature_path) : null), [p.signature_path, isAdmin])
+  if (!isAdmin) return null
+  async function pick(files: FileList | null) {
+    if (!files?.[0] || !organization) return
+    setBusy(true)
+    try { await uploadSignature(organization.id, p.id, files[0]); toast.success('Signature picture saved'); onSaved() } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(false) }
+  }
+  return (
+    <div>
+      <p className="mb-1 text-sm font-medium text-stone-700">Signature picture</p>
+      <div className="rounded-lg border border-stone-200 p-3 text-xs text-stone-600">
+        {url.data ? <img src={url.data} alt={`${p.full_name}'s signature`} className="mb-2 h-16 w-auto" /> : <p className="mb-2">None on file. VMS places it on the forms it fills and signs for this person (the State's Sno-Park agreement and permit requests).</p>}
+        <label className="inline-block cursor-pointer text-brand hover:underline">{busy ? 'Uploading…' : p.signature_path ? 'Replace it' : 'Upload a picture of the signature (PNG or JPEG, on white)'}<input type="file" accept="image/png,image/jpeg" className="sr-only" disabled={busy} onChange={(e) => pick(e.target.files)} /></label>
+      </div>
+    </div>
   )
 }

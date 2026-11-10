@@ -4369,3 +4369,32 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   page: CA SNO-PARK" / "Permit Submission form on file: <file>" / "When the state sends the new form each year you will
   upload it here: Click here to upload the new season's form" / "Sold in Lightspeed this season: This checks the books on the
   submission report against the number of sales in Lightspeed to be sure we balance." / "Permits on hand - Season Totals".
+
+## Nov 10, 2026 — Sno-Park: the packet, the agreement, orders, the map, the instructions (migration 0336, snopark function)
+- Dana: "when we get the annual paperwork from them vms fills out the Vendor Registration form for me along with our first
+  order (same quantities as this years), use my digital signature and create a draft email so I can review then email to
+  them. The vendor packet always comes in a zip file. You unzip it and the docs get filed in 3 folders under documents:
+  Orders, Payment Submissions, Vendor Packet." Built: the packet email's zip is fetched from Gmail (billing@), unzipped and
+  filed under CA SNO-PARK with the season in front of each name (kind snopark_packet_doc; the Report of Operations Excel
+  becomes the season's form); the agreement (OHV 56SP, a plain PDF, no fillable boxes) and the permit request (OHV 145SP)
+  are filled by drawing on the State's PDFs at the places measured from Dana's signed 2026-2027 agreement, with her
+  signature picture; the reply is drafted from billing@ in the State's conversation with both attached; her packet task
+  opens the draft and closes when it is sent. The store's standing answers live in organizations.snopark_agreement.
+- Dana's file name for an order: "#1 - 11-2-26 - OHV 145SP-2026-2027 - SLS Vendor Permit Request Form" ("the first number
+  stands for the order of the season … The 02 is what the sno parks form number is called in the packet"). Email subject
+  "Sno-Park Permit Request #n – season" (Dana: "good, yes"). "Cat sends, a copy goes to me": New order on the Sno-Park page
+  fills the form, files it in Orders (kind order, on a VMS order with its PO), drafts the email from orders@ to the permits
+  mailbox cc Dana, with the requester's task; the trigger emails_snopark_order_sent marks it sent from the subject.
+- Signature: Dana sent a picture of hers (Nov 10); uploaded to the private signatures bucket (admin only) and set on her
+  profile (profiles.signature_path). Settings › Mail › Signature picture replaces it.
+- Dana: "The map also needs to be printed each year and we make copies and place by the register … when Cat or whoever
+  enters it, the system tells her to print the map." The first box done makes the receiver's task (snopark_map:<season>)
+  and shows the map on the receiving and Sno-Park pages; Printed and copied closes it.
+- Dana: "a link on the receiving page and the vendor page to the workflow doc they provide" → the season's flowchart from
+  the packet (flowchart_link_id) is linked on the Sno-Park page, the receiving page and the vendor page.
+- Dana: "if we can customize the folders in their vendor file it is easier to keep the same structure as I have -
+  everything is listed under each year with all the corresponding folders." The vendor page shows each season with Vendor
+  Packet / Orders / Payment Submissions / Final Report; the Documents folders were renamed to match (Payment Submissions,
+  Vendor Packet, Final Report). The State's own forms keep their numbers ("01", "02", "03") in their names.
+- This season (2026-2027): the packet is filed from the Sep 1 email by the same job; the agreement and first order are not
+  made again (Dana sent them Nov 2; her packet task is closed).

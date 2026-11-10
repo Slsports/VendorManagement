@@ -111,3 +111,9 @@ export function rowProblem(r: BookRowInput, perBook: { day: number; season: numb
 
 /** The season-end check as stored on the season. */
 export interface SeasonCheck { day: { ls: number; reported: number }; season: { ls: number; reported: number }; off: boolean; through: string; emailed_at?: string | null; email_error?: string | null }
+
+export const ORDER_STATUS: Record<'draft' | 'sent' | 'received', { text: string; tone: 'neutral' | 'warning' | 'success' }> = {
+  draft: { text: 'To send', tone: 'warning' },
+  sent: { text: 'Sent', tone: 'neutral' },
+  received: { text: 'Received', tone: 'success' },
+}

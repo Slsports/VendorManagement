@@ -39,7 +39,7 @@ export type Database = {
           created_at: string
           updated_at: string
           wwd_upload_by: string | null
-       ; read_mail_since: string | null; history_daily_cap_usd: number }
+       ; read_mail_since: string | null; history_daily_cap_usd: number; snopark_agreement: Json | null }
         Insert: {
           id?: string
           name: string
@@ -60,7 +60,7 @@ export type Database = {
           created_at?: string
           updated_at?: string
           wwd_upload_by?: string | null
-       ; read_mail_since?: string | null; history_daily_cap_usd?: number }
+       ; read_mail_since?: string | null; history_daily_cap_usd?: number; snopark_agreement?: Json | null }
         Update: {
           id?: string
           name?: string
@@ -81,7 +81,7 @@ export type Database = {
           created_at?: string
           updated_at?: string
           wwd_upload_by?: string | null
-       ; read_mail_since?: string | null; history_daily_cap_usd?: number }
+       ; read_mail_since?: string | null; history_daily_cap_usd?: number; snopark_agreement?: Json | null }
         Relationships: []
       }
       stores: {
@@ -159,7 +159,7 @@ export type Database = {
           is_active: boolean
           created_at: string
           updated_at: string
-       ; email_signature: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null; places_orders: boolean; sees_freight: boolean; sees_accounting: boolean; ask_vms: boolean; can_dnr: boolean; handles_logistics: boolean; note_initials: string | null; can_see: string[]
+       ; email_signature: string | null; signature_path: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null; places_orders: boolean; sees_freight: boolean; sees_accounting: boolean; ask_vms: boolean; can_dnr: boolean; handles_logistics: boolean; note_initials: string | null; can_see: string[]
           enters_counts: boolean
           sends_counts: boolean; dashboard_layout: Json | null; remind_dashboard: boolean; remind_email: boolean; remind_text: boolean; mobile_phone: string | null; reviews_ls_pos: boolean; text_from: string; text_until: string; text_categories: string[] }
         Insert: {
@@ -173,7 +173,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; ask_vms?: boolean; can_dnr?: boolean; handles_logistics?: boolean; note_initials?: string | null; can_see?: string[]
+       ; email_signature?: string | null; signature_path?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; ask_vms?: boolean; can_dnr?: boolean; handles_logistics?: boolean; note_initials?: string | null; can_see?: string[]
           enters_counts?: boolean
           sends_counts?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean; text_from?: string; text_until?: string; text_categories?: string[] }
         Update: {
@@ -187,7 +187,7 @@ export type Database = {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-       ; email_signature?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; ask_vms?: boolean; can_dnr?: boolean; handles_logistics?: boolean; note_initials?: string | null; can_see?: string[]
+       ; email_signature?: string | null; signature_path?: string | null; signature_name?: string | null; job_title?: string | null; direct_phone?: string | null; places_orders?: boolean; sees_freight?: boolean; sees_accounting?: boolean; ask_vms?: boolean; can_dnr?: boolean; handles_logistics?: boolean; note_initials?: string | null; can_see?: string[]
           enters_counts?: boolean
           sends_counts?: boolean; dashboard_layout?: Json | null; remind_dashboard?: boolean; remind_email?: boolean; remind_text?: boolean; mobile_phone?: string | null; reviews_ls_pos?: boolean; text_from?: string; text_until?: string; text_categories?: string[] }
         Relationships: [
@@ -582,9 +582,9 @@ export type Database = {
         Relationships: []
       }
       snopark_seasons: {
-        Row: { id: string; organization_id: string; vendor_id: string | null; label: string; opened_email_id: string | null; opened_at: string; closed_at: string | null; first_report_month: string; season_end: string; final_due: string; owner_email: string; day_price: number; day_commission: number; season_price: number; season_commission: number; status: 'open' | 'closed'; form_link_id: string | null; day_per_book: number; season_per_book: number; ls_check: Json | null; ls_checked_at: string | null; created_at: string; updated_at: string }
-        Insert: { id?: string; organization_id: string; vendor_id?: string | null; label: string; opened_email_id?: string | null; opened_at?: string; closed_at?: string | null; first_report_month: string; season_end: string; final_due: string; owner_email?: string; day_price?: number; day_commission?: number; season_price?: number; season_commission?: number; status?: 'open' | 'closed'; form_link_id?: string | null; day_per_book?: number; season_per_book?: number; ls_check?: Json | null; ls_checked_at?: string | null; created_at?: string; updated_at?: string }
-        Update: { id?: string; organization_id?: string; vendor_id?: string | null; label?: string; opened_email_id?: string | null; opened_at?: string; closed_at?: string | null; first_report_month?: string; season_end?: string; final_due?: string; owner_email?: string; day_price?: number; day_commission?: number; season_price?: number; season_commission?: number; status?: 'open' | 'closed'; form_link_id?: string | null; day_per_book?: number; season_per_book?: number; ls_check?: Json | null; ls_checked_at?: string | null; created_at?: string; updated_at?: string }
+        Row: { id: string; organization_id: string; vendor_id: string | null; label: string; opened_email_id: string | null; opened_at: string; closed_at: string | null; first_report_month: string; season_end: string; final_due: string; owner_email: string; day_price: number; day_commission: number; season_price: number; season_commission: number; status: 'open' | 'closed'; form_link_id: string | null; day_per_book: number; season_per_book: number; ls_check: Json | null; ls_checked_at: string | null; packet_status: 'pending' | 'filed' | 'error' | null; packet_error: string | null; packet_filed_at: string | null; agreement_link_id: string | null; flowchart_link_id: string | null; map_link_id: string | null; map_printed_at: string | null; map_task_id: string | null; packet_draft_id: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; vendor_id?: string | null; label: string; opened_email_id?: string | null; opened_at?: string; closed_at?: string | null; first_report_month: string; season_end: string; final_due: string; owner_email?: string; day_price?: number; day_commission?: number; season_price?: number; season_commission?: number; status?: 'open' | 'closed'; form_link_id?: string | null; day_per_book?: number; season_per_book?: number; ls_check?: Json | null; ls_checked_at?: string | null; packet_status?: 'pending' | 'filed' | 'error' | null; packet_error?: string | null; packet_filed_at?: string | null; agreement_link_id?: string | null; flowchart_link_id?: string | null; map_link_id?: string | null; map_printed_at?: string | null; map_task_id?: string | null; packet_draft_id?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; vendor_id?: string | null; label?: string; opened_email_id?: string | null; opened_at?: string; closed_at?: string | null; first_report_month?: string; season_end?: string; final_due?: string; owner_email?: string; day_price?: number; day_commission?: number; season_price?: number; season_commission?: number; status?: 'open' | 'closed'; form_link_id?: string | null; day_per_book?: number; season_per_book?: number; ls_check?: Json | null; ls_checked_at?: string | null; packet_status?: 'pending' | 'filed' | 'error' | null; packet_error?: string | null; packet_filed_at?: string | null; agreement_link_id?: string | null; flowchart_link_id?: string | null; map_link_id?: string | null; map_printed_at?: string | null; map_task_id?: string | null; packet_draft_id?: string | null; created_at?: string; updated_at?: string }
         Relationships: []
       }
       snopark_books: {
@@ -609,6 +609,12 @@ export type Database = {
         Row: { id: string; organization_id: string; season_id: string; order_id: string | null; received_on: string; received_by: string | null; sheet_link_id: string | null; sheet: Json | null; sheet_confirmed_at: string | null; sheet_confirmed_by: string | null; status: 'open' | 'off' | 'balanced' | 'done'; differences: Json; accepted_note: string | null; task_id: string | null; draft_id: string | null; ls_order_id: string | null; ls_done_at: string | null; ls_note: string | null; notes: string | null; created_by: string | null; created_at: string; updated_at: string }
         Insert: { id?: string; organization_id: string; season_id: string; order_id?: string | null; received_on?: string; received_by?: string | null; sheet_link_id?: string | null; sheet?: Json | null; sheet_confirmed_at?: string | null; sheet_confirmed_by?: string | null; status?: 'open' | 'off' | 'balanced' | 'done'; differences?: Json; accepted_note?: string | null; task_id?: string | null; draft_id?: string | null; ls_order_id?: string | null; ls_done_at?: string | null; ls_note?: string | null; notes?: string | null; created_by?: string | null; created_at?: string; updated_at?: string }
         Update: { id?: string; organization_id?: string; season_id?: string; order_id?: string | null; received_on?: string; received_by?: string | null; sheet_link_id?: string | null; sheet?: Json | null; sheet_confirmed_at?: string | null; sheet_confirmed_by?: string | null; status?: 'open' | 'off' | 'balanced' | 'done'; differences?: Json; accepted_note?: string | null; task_id?: string | null; draft_id?: string | null; ls_order_id?: string | null; ls_done_at?: string | null; ls_note?: string | null; notes?: string | null; created_by?: string | null; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      snopark_orders: {
+        Row: { id: string; organization_id: string; season_id: string; seq: number; day_books: number; season_books: number; requested_on: string; requested_by: string | null; status: 'draft' | 'sent' | 'received'; order_id: string | null; file_link_id: string | null; draft_id: string | null; task_id: string | null; email_id: string | null; sent_on: string | null; notes: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; season_id: string; seq: number; day_books?: number; season_books?: number; requested_on?: string; requested_by?: string | null; status?: 'draft' | 'sent' | 'received'; order_id?: string | null; file_link_id?: string | null; draft_id?: string | null; task_id?: string | null; email_id?: string | null; sent_on?: string | null; notes?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; season_id?: string; seq?: number; day_books?: number; season_books?: number; requested_on?: string; requested_by?: string | null; status?: 'draft' | 'sent' | 'received'; order_id?: string | null; file_link_id?: string | null; draft_id?: string | null; task_id?: string | null; email_id?: string | null; sent_on?: string | null; notes?: string | null; created_at?: string; updated_at?: string }
         Relationships: []
       }
       credit_requests: {
@@ -1214,6 +1220,8 @@ export type Database = {
       snopark_shipment_flag: { Args: { p_shipment: string }; Returns: string }
       snopark_shipment_accept: { Args: { p_shipment: string; p_note: string }; Returns: undefined }
       snopark_season_compare: { Args: { p_season: string }; Returns: Json }
+      snopark_order_start: { Args: { p_season: string; p_day_books: number; p_season_books: number; p_requested_on?: string | null; p_by?: string | null }; Returns: string }
+      snopark_map_printed: { Args: { p_season: string }; Returns: undefined }
       snopark_shipment_entered_by_hand: { Args: { p_shipment: string; p_note?: string | null }; Returns: undefined }
       park_release: { Args: { p_kind: string; p_id: string }; Returns: undefined }
       park_release_all: { Args: { p_kind: string }; Returns: number }
@@ -1364,7 +1372,7 @@ export type Database = {
       review_status: 'pending' | 'accepted' | 'rejected'
       order_status: 'open' | 'awaiting_confirmation' | 'confirmed' | 'shipped' | 'received' | 'entered' | 'ready_to_pay' | 'paid' | 'cancelled'
       order_season: 'summer' | 'winter'
-      link_kind: 'catalog' | 'price_list' | 'order_form' | 'specials' | 'website' | 'other' | 'invoice' | 'credit' | 'confirmation' | 'order' | 'ls_po' | 'packing_slip' | 'payment' | 'freight_bill' | 'delivery_receipt' | 'image' | 'approved_proof' | 'damage_photo' | 'sales_report' | 'proof' | 'inventory_count' | 'snopark_report' | 'snopark_scan' | 'snopark_form' | 'snopark_sheet' | 'snopark_print' | 'snopark_packet' | 'snopark_final_packet'
+      link_kind: 'catalog' | 'price_list' | 'order_form' | 'specials' | 'website' | 'other' | 'invoice' | 'credit' | 'confirmation' | 'order' | 'ls_po' | 'packing_slip' | 'payment' | 'freight_bill' | 'delivery_receipt' | 'image' | 'approved_proof' | 'damage_photo' | 'sales_report' | 'proof' | 'inventory_count' | 'snopark_report' | 'snopark_scan' | 'snopark_form' | 'snopark_sheet' | 'snopark_print' | 'snopark_packet' | 'snopark_final_packet' | 'snopark_packet_doc' | 'snopark_agreement'
     }
     CompositeTypes: {
       [_ in never]: never

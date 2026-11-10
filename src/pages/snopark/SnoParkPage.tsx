@@ -1,22 +1,23 @@
 import { useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { BookOpen, PackageOpen, Pencil, Snowflake } from 'lucide-react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { BookOpen, FileText, Map, PackageOpen, Pencil, Printer, Send, Snowflake } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useLiveTable } from '@/hooks/useLiveTable'
 import { useTableSort } from '@/hooks/useTableSort'
-import { deleteBook, getSeason, lsSold, openSeasonByHand, seasonCheck, seasonOrders, startShipment, updateBookNumbers, uploadSeasonForm, type SeasonView } from '@/services/snopark'
+import { deleteBook, getSeason, lsSold, mapPrinted, openSeasonByHand, refillOrder, seasonCheck, seasonOrders, startOrder, startShipment, updateBookNumbers, uploadSeasonForm, type SeasonView } from '@/services/snopark'
+import { signedFileUrl } from '@/services/lines'
 import { ROUTES } from '@/lib/constants'
 import { shortDate } from '@/lib/freight'
 import { errorMessage } from '@/lib/utils'
-import { BOOK_STATUS, KIND_LABELS, MAIL_TO, REPORT_STATUS, SHIPMENT_STATUS, daysUntil, money, permitsIn, range, reportTitle, type SeasonCheck } from '@/lib/snopark'
+import { BOOK_STATUS, KIND_LABELS, MAIL_TO, ORDER_STATUS, REPORT_STATUS, SHIPMENT_STATUS, daysUntil, money, permitsIn, range, reportTitle, type SeasonCheck } from '@/lib/snopark'
 import { BackLink } from '@/components/shared/BackLink'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Modal } from '@/components/shared/Modal'
 import { SortHeader } from '@/components/shared/SortHeader'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner } from '@/components/ui'
-import type { SnoparkBook } from '@/types'
+import type { SnoparkBook, SnoparkOrder } from '@/types'
 
 /**
  * Sno-Park passes (Dana, Nov 5-10, 2026): the season's books with the permit numbers inside each one, the boxes received
@@ -25,11 +26,14 @@ import type { SnoparkBook } from '@/types'
 export default function SnoParkPage() {
   const { organization, profile, isAdmin } = useAuth()
   const navigate = useNavigate()
-  const q = useSupabaseQuery(async () => (organization ? getSeason(organization.id) : null), [organization?.id])
+  const [params] = useSearchParams()
+  const seasonParam = params.get('season')
+  const q = useSupabaseQuery(async () => (organization ? getSeason(organization.id, seasonParam) : null), [organization?.id, seasonParam])
   useLiveTable('snopark_books', organization ? `organization_id=eq.${organization.id}` : null, () => { void q.refetch() })
   useLiveTable('snopark_reports', organization ? `organization_id=eq.${organization.id}` : null, () => { void q.refetch() })
   const canEdit = ['admin', 'manager', 'buyer'].includes(profile?.role ?? '')
   const [receiving, setReceiving] = useState(false)
+  const [ordering, setOrdering] = useState(false)
   const [opening, setOpening] = useState(false)
   const [editing, setEditing] = useState<SnoparkBook | null>(null)
   const view = q.data
@@ -58,7 +62,8 @@ export default function SnoParkPage() {
     <div>
       <BackLink fallback={ROUTES.dashboard} fallbackLabel="Dashboard" />
       <PageHeader title="Sno-Park passes" description="The State's permit books we hold, with the permit numbers inside each one, and the monthly reports. Books are entered when they arrive; on the 15th Cat reports the empty ones, and the report, the check and the empty books go by mail."
-        actions={canEdit && view && view.season.status === 'open' ? <Button onClick={() => setReceiving(true)}><PackageOpen className="size-4" aria-hidden="true" />Receive books</Button> : null} />
+        actions={canEdit && view && view.season.status === 'open' ? <div className="flex flex-wrap gap-2"><Button variant="secondary" onClick={() => setOrdering(true)}><Send className="size-4" aria-hidden="true" />New order</Button><Button onClick={() => setReceiving(true)}><PackageOpen className="size-4" aria-hidden="true" />Receive books</Button></div> : null} />
+      {view ? <SeasonLinks view={view} canEdit={canEdit} onDone={() => { void q.refetch() }} /> : null}
       {q.isLoading ? <Spinner /> : q.error ? <Alert variant="error">{errorMessage(q.error)}</Alert> : !view ? (
         <section className="rounded-2xl border border-stone-200 bg-white p-5 text-sm text-stone-700">
           <p>No season is open yet. It opens on its own when the State emails the season's vendor packet ("Vendor Registration") to billing@.</p>
@@ -86,6 +91,8 @@ export default function SnoParkPage() {
               <p className="mt-1 text-xs text-stone-600">This checks the books on the submission reports against the number of sales in Lightspeed, to be sure we balance. Permits sold from books that are not empty yet are the difference until those books are submitted.</p>
             </div>
           </section>
+
+          <OrdersSection view={view} canEdit={canEdit} onDone={() => { void q.refetch() }} />
 
           <section className="rounded-2xl border border-stone-200 bg-white p-5">
             <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500"><Snowflake className="size-4" aria-hidden="true" />Reports</h2>
@@ -187,9 +194,115 @@ export default function SnoParkPage() {
         </div>
       )}
       {receiving && view ? <ReceiveBooks view={view} onClose={() => setReceiving(false)} onDone={(id) => { setReceiving(false); navigate(`${ROUTES.snoparkReceive}/${id}`) }} /> : null}
+      {ordering && view ? <NewOrder view={view} onClose={() => setOrdering(false)} onDone={(draftId) => { setOrdering(false); if (draftId) navigate(`/mail?view=drafts&draft=${draftId}`); else void q.refetch() }} /> : null}
       {editing ? <EditBook book={editing} onClose={() => setEditing(null)} onDone={() => { setEditing(null); void q.refetch() }} /> : null}
       {opening ? <OpenSeason onClose={() => setOpening(false)} onDone={() => { setOpening(false); void q.refetch() }} /> : null}
     </div>
+  )
+}
+
+/** The State's instructions and this season's map, one click away (Dana, Nov 10), plus the map-to-print step. */
+function SeasonLinks({ view, canEdit, onDone }: { view: SeasonView; canEdit: boolean; onDone: () => void }) {
+  const [busy, setBusy] = useState(false)
+  async function open(path: string | null) {
+    if (!path) return
+    try { window.open(await signedFileUrl(path), '_blank', 'noopener') } catch (e) { toast.error(errorMessage(e)) }
+  }
+  async function printed() {
+    setBusy(true)
+    try { await mapPrinted(view.season.id); toast.success('Map printed'); onDone() } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(false) }
+  }
+  const mapDue = !!view.map && !view.season.map_printed_at && !!view.season.map_task_id
+  if (!view.flowchart && !view.map && view.season.packet_status !== 'error') return null
+  return (
+    <div className="mb-4 space-y-3">
+      <div className="flex flex-wrap items-center gap-3 text-sm">
+        {view.flowchart ? <button type="button" onClick={() => open(view.flowchart!.storage_path)} className="inline-flex items-center gap-1.5 text-brand hover:underline"><FileText className="size-4" aria-hidden="true" />The State's instructions (flowchart)</button> : null}
+        {view.map ? <button type="button" onClick={() => open(view.map!.storage_path)} className="inline-flex items-center gap-1.5 text-brand hover:underline"><Map className="size-4" aria-hidden="true" />{view.season.label} Sno-Park map</button> : null}
+      </div>
+      {view.season.packet_status === 'error' ? <Alert variant="warning">The State's packet for {view.season.label} could not be filed: {view.season.packet_error}. VMS tries again every 10 minutes.</Alert> : null}
+      {mapDue ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <Printer className="size-5 shrink-0" aria-hidden="true" />
+          <p className="grow">The first box of the season is in. Print the <button type="button" onClick={() => open(view.map!.storage_path)} className="font-semibold underline">{view.season.label} Sno-Park map</button>, make copies and put them by the register.</p>
+          {canEdit ? <Button size="sm" onClick={printed} disabled={busy}>{busy ? 'Saving…' : 'Printed and copied'}</Button> : null}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+/** Orders to the State this season: Dana's numbering and file names, who asked, the email, the box it became. */
+function OrdersSection({ view, canEdit, onDone }: { view: SeasonView; canEdit: boolean; onDone: () => void }) {
+  const [busy, setBusy] = useState<string | null>(null)
+  async function refill(o: SnoparkOrder) {
+    setBusy(o.id)
+    try { const r = await refillOrder(o.id); toast.success(`Form made again${r.signed ? '' : ' (no signature on file yet)'}`); onDone() } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(null) }
+  }
+  return (
+    <section className="rounded-2xl border border-stone-200 bg-white p-5">
+      <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500"><Send className="size-4" aria-hidden="true" />Orders to the State</h2>
+      {view.orders.length === 0 ? (
+        <p className="mt-2 text-sm text-stone-600">No order this season yet. The first one goes with the vendor agreement when the State's packet arrives; after that, <strong>New order</strong> fills the State's form, files it and drafts the email.</p>
+      ) : (
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead><tr className="text-left text-xs uppercase tracking-wide text-stone-500"><th className="py-2 pr-3">#</th><th className="py-2 pr-3">Date</th><th className="py-2 pr-3">Books</th><th className="py-2 pr-3">By</th><th className="py-2 pr-3">Status</th><th className="py-2 pr-3">Links</th></tr></thead>
+            <tbody className="divide-y divide-stone-100">
+              {view.orders.map((o) => (
+                <tr key={o.id}>
+                  <td className="py-2 pr-3 font-medium text-stone-900">#{o.seq}</td>
+                  <td className="py-2 pr-3 text-stone-700">{shortDate(o.requested_on)}</td>
+                  <td className="py-2 pr-3 text-stone-700">{o.day_books} day · {o.season_books} season</td>
+                  <td className="py-2 pr-3 text-stone-700">{o.requested_by ? view.people[o.requested_by] ?? '' : 'VMS'}</td>
+                  <td className="py-2 pr-3"><Badge tone={ORDER_STATUS[o.status].tone}>{ORDER_STATUS[o.status].text}</Badge>{o.sent_on ? <span className="ml-1 text-xs text-stone-500">{shortDate(o.sent_on)}</span> : null}</td>
+                  <td className="py-2 pr-3 text-xs">
+                    <span className="flex flex-wrap gap-3">
+                      {o.order_id ? <Link to={`${ROUTES.orders}/${o.order_id}`} className="text-brand hover:underline">Order</Link> : null}
+                      {o.status === 'draft' && o.draft_id ? <Link to={`/mail?view=drafts&draft=${o.draft_id}`} className="text-brand hover:underline">Open the email to send</Link> : null}
+                      {o.status === 'draft' && canEdit ? <button type="button" onClick={() => refill(o)} disabled={busy !== null} className="text-stone-500 hover:text-brand">{busy === o.id ? 'Making…' : 'Make the form again'}</button> : null}
+                      {o.email_id ? <Link to={`/mail/email/${o.email_id}`} className="text-brand hover:underline">Email</Link> : null}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="mt-3 text-xs text-stone-500">Files are named the way Dana names them (#1 - 11-2-26 - OHV 145SP-2026-2027 - SLS Vendor Permit Request Form) and filed under the vendor in Our orders. The email goes to the State's permits mailbox with a copy to Dana; the person who made the order presses Send.</p>
+    </section>
+  )
+}
+
+function NewOrder({ view, onClose, onDone }: { view: SeasonView; onClose: () => void; onDone: (draftId: string | null) => void }) {
+  const last = view.orders[view.orders.length - 1]
+  const [day, setDay] = useState(String(last?.day_books ?? 20))
+  const [season, setSeason] = useState(String(last?.season_books ?? 10))
+  const [on, setOn] = useState(() => new Date().toISOString().slice(0, 10))
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const per = { day: view.season.day_per_book, season: view.season.season_per_book }
+  const d = Number(day) || 0, sn = Number(season) || 0
+  async function submit() {
+    setBusy(true); setError(null)
+    try {
+      const r = await startOrder(view.season.id, d, sn, on)
+      toast.success(`${r.file_name} made${r.signed ? '' : ' (no signature on file: Dana adds hers in Settings › Mail)'}; the email is in your Drafts`)
+      onDone(r.draft_id)
+    } catch (err) { setError(errorMessage(err)) } finally { setBusy(false) }
+  }
+  return (
+    <Modal title={`Order #${(last?.seq ?? 0) + 1} to the State`} submitLabel={busy ? 'Filling the form…' : 'Fill the form and draft the email'} busy={busy} onSubmit={submit} onClose={onClose}>
+      <p className="text-sm text-stone-600">How many books. VMS fills the State's permit request form, names it, files it, and writes the email to the permits mailbox (a copy to Dana). You read it over and press Send.</p>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <FormField label="Day books" htmlFor="no-day" hint={`${per.day} permits each`}><Input id="no-day" type="number" min={0} value={day} onChange={(e) => setDay(e.target.value)} /></FormField>
+        <FormField label="Season books" htmlFor="no-season" hint={`${per.season} permits each`}><Input id="no-season" type="number" min={0} value={season} onChange={(e) => setSeason(e.target.value)} /></FormField>
+        <FormField label="Date" htmlFor="no-date"><Input id="no-date" type="date" value={on} onChange={(e) => setOn(e.target.value)} /></FormField>
+      </div>
+      <p className="text-sm text-stone-700">{(d * per.day).toLocaleString()} day permits and {(sn * per.season).toLocaleString()} season permits.</p>
+      {error ? <Alert variant="error">{error}</Alert> : null}
+    </Modal>
   )
 }
 

@@ -141,6 +141,9 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   // a box that does not match the State's sheet (Dana, Nov 10): the receiving page, with the draft to the State in Drafts
   if (kind === 'snopark_ship' && id) return { kind: 'page', to: `/snopark/receive/${id}`, label: 'Open the box' }
   if (kind === 'snopark_ls' && id) return { kind: 'page', to: `/snopark/receive/${id}`, label: 'Open the box and the LS note' }
+  if (kind === 'snopark_map' && id) return { kind: 'page', to: `/snopark?season=${id}`, label: 'Open the map to print' }
+  if (kind === 'snopark_order' && t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the email to send' }
+  if (kind === 'snopark_order') return { kind: 'page', to: '/snopark', label: 'Open the Sno-Park page' }
   if (kind === 'snopark_packet' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: "Open the State's email" }
   // a credit we asked for (Dana, Oct 27): the follow-up email once it is drafted, else the conversation
   if (kind === 'credit_req' && t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the follow-up email' }

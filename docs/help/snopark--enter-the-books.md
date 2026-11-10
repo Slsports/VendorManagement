@@ -14,6 +14,8 @@ Every book has a number on its cover and the permits inside run in order. When t
    - **It matches**: the books go into Lightspeed as a purchase order under CA Snow Park, checked in, and each permit item gets a dated note: who received how many day and season passes, which book numbers, which permit numbers. The State's order is marked received.
    - **It does not match**: the differences are listed (a book that is short, a book missing from the box, a count that is off). Look at the box again and fix any row entered wrong. If the box really is different, click **Email the State**: you get a task and an email draft to the State, with Dana copied, waiting in your Drafts. Read it over and press Send. Nothing goes into Lightspeed until the box balances or Dana accepts it.
 
+5. **4. The Sno-Park map** (first box of the season only): print this season's map, make copies for the register, and click **Printed and copied**. Whoever received the box also gets a task for it.
+
 ## Good to know
 - A row that is not a whole book is marked in red before you save; a book whose number or permits overlap one already on file is refused, so a box cannot be entered twice.
 - A book's number or permits can be corrected later with **Change** in the **Books** table, as long as the book is still on hand.
