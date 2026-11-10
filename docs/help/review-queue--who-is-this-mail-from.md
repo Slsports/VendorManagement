@@ -23,6 +23,7 @@ When mail comes to orders@ from a sender VMS does not know, Claude reads it firs
 4. A message says how many emails were filed and which lines joined the rep group.
 
 ## Good to know
+- Cards and paperwork checks about something older than a year wait under "N parked" above the cards (see "Parked: things older than a year wait out of the way").
 - Rep or vendor? If they write about more than one company, or their signature says "rep" or "& Associates", pick the rep group. Picking one vendor sends **all** their mail to that vendor.
 - Vendor mail forwarded to orders@ from one of our own addresses is filed by the vendor it was forwarded from, not as mail from us (see "Vendor mail forwarded from another address").
 - Not sure? Click **See the N emails** first (see "Look at a sender's emails").

@@ -15,6 +15,7 @@ The four big tabs split mail by what kind it is, the way Outlook had Focused and
    - **Everything**: all mail, for searching.
 
 ## Good to know
+- Conversations that were waiting on us more than a year ago wait in the **Parked** tab, out of the counts (see "Parked: things older than a year wait out of the way").
 - Mail opens on **Primary**.
 - VMS sorts each email on its own, so a vendor's ads go to Promotions while their invoices and their rep's notes stay in Primary. When the rules are unsure, Claude reads it; anything still unsure stays in Primary.
 - Conversations we wrote in always stay in Primary.

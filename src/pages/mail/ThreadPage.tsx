@@ -4,6 +4,7 @@ import { useHasInAppHistory } from '@/hooks/useHasInAppHistory'
 import toast from 'react-hot-toast'
 import { Bell, BellOff, Check, CheckCircle2, ClipboardList, ListTodo, Palette, ExternalLink, Trash2, FolderInput, Forward, Paperclip, Reply, ReplyAll, RotateCcw, Send } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { unpark as unparkKind } from '@/services/tasks'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { assignEmailThread, fetchEmailHtml, getMyWatch, stopWatching, watchForReply, fileAttachmentToVendor, getMailbox, getThread, fetchAttachment, listMailboxes, shareThreadToOrders, setArtStatus, setEmailThreadStatus, setEmailVendor, setThreadView, setWorkingOrder, trashThreads, type ThreadDetail } from '@/services/mail'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
@@ -32,6 +33,8 @@ import { clearSnooze, mySnoozes } from '@/services/snooze'
 import { SnoozeButton } from '@/components/shared/SnoozeButton'
 
 /** One conversation: every message, who owns it, which vendor it is filed to, and where it stands. */
+const unparkThread = (id: string) => unparkKind('thread', id)
+
 export default function ThreadPage() {
   const { id = '' } = useParams()
   const { organization, role, profile } = useAuth()
@@ -148,6 +151,7 @@ export default function ThreadPage() {
               {t.shared_at ? 'Take back out of Orders' : 'Share to Orders'}
             </button>
           ) : null}
+          {t.parked_at ? <span className="inline-flex items-center gap-2 text-stone-500">· Parked, older than a year{canEdit ? <button type="button" onClick={() => void act('Back on the list', () => unparkThread(t.id))} className="rounded-md border border-stone-300 px-2 py-0.5 text-xs font-medium text-stone-700 hover:bg-stone-50">Unpark</button> : null}</span> : null}
           {mailbox.data ? <a href={gmailThreadUrl(mailbox.data, t.gmail_thread_id)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-stone-500 hover:text-stone-900">· Open in Gmail <ExternalLink className="size-3.5" aria-hidden="true" /></a> : null}
         </div>
       </header>

@@ -116,6 +116,7 @@ export interface ThreadRow {
   id: string
   gmail_thread_id: string
   subject: string | null
+  parked_at?: string | null
   status: EmailThreadStatus
   view: MailView
   vendor_id: string | null
@@ -145,7 +146,7 @@ export interface ThreadFilters {
   /** 'all' | 'mine' | 'none' | a profile id */
   who: string
   /** needs: waiting on us · waiting · no_answer (waiting past the follow-up date) · handled · open (not handled) · all */
-  status: 'needs' | 'waiting' | 'no_answer' | 'handled' | 'open' | 'all' | 'deleted' | 'snoozed'
+  status: 'needs' | 'waiting' | 'no_answer' | 'handled' | 'open' | 'all' | 'deleted' | 'snoozed' | 'parked'
   vendorId?: string
   /** One freight company's conversations (Freight page, Dana, Oct 12). */
   carrierId?: string
@@ -161,7 +162,7 @@ export interface ThreadFilters {
   category?: string
 }
 
-const THREAD_SELECT = 'id, gmail_thread_id, subject, status, view, vendor_id, owner_id, message_count, last_message_at, follow_up_at, ship_status, mailbox_id, shared_at, accounting_contact_id, vendor:vendors(id, name), owner:profiles!email_threads_owner_id_fkey(id, full_name), accounting_contact:accounting_contacts(id, company, person, category)'
+const THREAD_SELECT = 'id, gmail_thread_id, subject, status, view, vendor_id, owner_id, message_count, last_message_at, follow_up_at, ship_status, mailbox_id, shared_at, parked_at, accounting_contact_id, vendor:vendors(id, name), owner:profiles!email_threads_owner_id_fkey(id, full_name), accounting_contact:accounting_contacts(id, company, person, category)'
 
 async function withLastMessage(rows: Omit<ThreadRow, 'last'>[]): Promise<ThreadRow[]> {
   if (!rows.length) return []
@@ -193,6 +194,8 @@ const mine = (me: string, seesFreight?: boolean) => (seesFreight ? `owner_id.eq.
 export async function listThreads(organizationId: string, me: string | undefined, f: ThreadFilters, limit = 300, seesFreight = false): Promise<ThreadRow[]> {
   let q = supabase.from('email_threads').select(f.status === 'deleted' ? `${THREAD_SELECT}, deleted_at, deleted_by_person:profiles!email_threads_deleted_by_fkey(full_name)` : THREAD_SELECT).eq('organization_id', organizationId).not('last_message_at', 'is', null)
   q = f.status === 'deleted' ? q.not('deleted_at', 'is', null) : q.is('deleted_at', null)
+  // conversations waiting on us from more than a year ago wait in Parked (Dana, Nov 10)
+  q = f.status === 'parked' ? q.not('parked_at', 'is', null) : q.is('parked_at', null)
   q = !f.mailbox || f.mailbox === ORDERS ? q.or(ORDERS_MAIL) : q.eq('mailbox_id', f.mailbox)
   if (f.who === 'mine' && me) q = q.or(mine(me, seesFreight))
   else if (f.who === 'none') q = q.is('owner_id', null)
@@ -254,8 +257,8 @@ export async function listVendorActivity(vendorId: string, limit = 5): Promise<A
 /** Dashboard: replies waiting on `me` (everyone's when null), and mail with no answer past its follow-up date. */
 export async function listMailForMe(organizationId: string, me: string | null, seesFreight = false): Promise<{ needs: ThreadRow[]; noAnswer: ThreadRow[] }> {
   const now = new Date().toISOString()
-  let a = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).is('deleted_at', null).or(ORDERS_MAIL).eq('view', 'attention').eq('status', 'waiting_on_us')
-  let b = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).is('deleted_at', null).or(ORDERS_MAIL).eq('status', 'waiting_on_vendor').lt('follow_up_at', now)
+  let a = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).is('deleted_at', null).is('parked_at', null).or(ORDERS_MAIL).eq('view', 'attention').eq('status', 'waiting_on_us')
+  let b = supabase.from('email_threads').select(THREAD_SELECT).eq('organization_id', organizationId).is('deleted_at', null).is('parked_at', null).or(ORDERS_MAIL).eq('status', 'waiting_on_vendor').lt('follow_up_at', now)
   if (me) { a = a.or(mine(me, seesFreight)); b = b.or(mine(me, seesFreight)) }
   const hidden = me ? await snoozedThreadIds(me) : []
   if (hidden.length) { a = a.not('id', 'in', `(${hidden.join(',')})`); b = b.not('id', 'in', `(${hidden.join(',')})`) }
@@ -272,7 +275,7 @@ export async function countMailForMe(organizationId: string, me: string, seesFre
   const who = seesFreight ? `or(owner_id.eq.${me},carrier_id.not.is.null)` : `owner_id.eq.${me}`
   const hidden = await snoozedThreadIds(me)
   let q = supabase.from('email_threads').select('id', { count: 'exact', head: true })
-    .eq('organization_id', organizationId).is('deleted_at', null).or(ORDERS_MAIL).eq('view', 'attention')
+    .eq('organization_id', organizationId).is('deleted_at', null).is('parked_at', null).or(ORDERS_MAIL).eq('view', 'attention')
     .or(`and(${who},status.eq.waiting_on_us),and(${who},status.eq.waiting_on_vendor,follow_up_at.lt.${now})`)
   if (hidden.length) q = q.not('id', 'in', `(${hidden.join(',')})`)
   const { count, error } = await q

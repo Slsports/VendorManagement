@@ -4259,3 +4259,16 @@ address's mail carries it, so a relaying service (Bill.com) gets the company alo
 names that a minority of the contact's mail carried. Dana on the old 120-day Bill.com window: "anything that only has you go
 back 120 days for payments will obviously not see any of the old invoices so that was not logical. It just created more work
 for me." Removed in 0330.
+
+## Nov 10, 2026 — The holding tank and the history reader (0332)
+Dana ("go, build the tank and the history reader"): anything VMS asks a person to do or look at that is about something
+older than 12 months is parked (tasks, review cards and paperwork checks, conversations waiting on us, accounting papers
+needing a look): out of every list and count, in a Parked tab on each list, unparked one at a time or (Dana) all at once;
+new mail unparks a conversation, filing unparks a paper; new items park themselves at birth. Counts at the back-check:
+847 conversations and 1,467 accounting papers; no tasks or cards were that old. History: orders@ mail is already in VMS back
+to December 2023 (17,124 emails); what stopped at 12 months was the reading. organizations.read_mail_since (today: 12 months
+back) is the oldest mail the sent-orders and ordering-service readers look at; a daily job moves it back a month while the
+day's Claude spend is under history_daily_cap_usd ($10), until the first email on file. Orders found from more than a year
+ago come in as received history with a note, never open work. Jarrett's mailbox (all of it, back to 2015, is already in
+VMS): every conversation in a staff mailbox with a vendor on it, either direction, is shared to Orders and tied to the vendor
+(71 of his were vendor conversations not yet shared); billing@ is untouched.

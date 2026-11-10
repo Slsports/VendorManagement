@@ -13,5 +13,6 @@ Check a task off when it is done. Whoever gave it to you is told.
 4. To delete a task, click the trash can at the end of its row on the Tasks page.
 
 ## Good to know
+- Tasks about something older than a year wait in the **Parked** tab, out of the counts, until someone clicks **Unpark** (see "Parked: things older than a year wait out of the way").
 - The person who gave the task sees "… finished …" at the top of their dashboard (and by email or text if they chose).
 - Tasks you or your staff finish are on the **Done** tab. Tasks Claude or VMS closed are on **Closed at your request** and **Closed by VMS** instead.

@@ -3,10 +3,11 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { ClipboardCheck, Settings2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { unpark } from '@/services/tasks'
 import { useViewAs } from '@/hooks/useViewAs'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useLiveTable } from '@/hooks/useLiveTable'
-import { applyVendorRename, getReviewQueueItem, listReviewQueue } from '@/services/vendors'
+import { applyVendorRename, getReviewQueueItem, listReviewQueue, listReviewItems } from '@/services/vendors'
 import { assignReviewItem, listPeople } from '@/services/reviews'
 import { REVIEW_KIND_LABELS, REVIEW_TABS, reviewTabOfCheck, reviewTabOfKind, type ReviewTab } from '@/lib/reviews'
 import { listOpenChecks } from '@/services/orderChecks'
@@ -172,6 +173,7 @@ export default function ReviewQueuePage() {
         </ul>
       </nav>
       <p className="mb-3 text-sm text-stone-600">{REVIEW_TABS.find((t) => t.id === tab)!.help}</p>
+      <ParkedReview organizationId={organization?.id ?? null} canEdit={canEdit} onChanged={() => refresh()} />
       {openedId ? (
         <section className="mb-6 rounded-2xl border-2 border-brand/40 bg-brand-soft/30 p-3">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -226,5 +228,31 @@ export default function ReviewQueuePage() {
         itemSections
       )}
     </div>
+  )
+}
+
+
+/** Cards and paperwork checks about something older than a year (Dana, Nov 10): out of the way until unparked. */
+function ParkedReview({ organizationId, canEdit, onChanged }: { organizationId: string | null; canEdit: boolean; onChanged: () => void }) {
+  const [show, setShow] = useState(false)
+  const q = useSupabaseQuery(async () => (organizationId ? Promise.all([listReviewItems(organizationId, 'pending', 'only'), listOpenChecks(organizationId, null, 'only')]) : null), [organizationId])
+  const items = q.data?.[0] ?? []
+  const checks = q.data?.[1] ?? []
+  const n = items.length + checks.length
+  if (!n) return null
+  async function back(kind: 'review' | 'check', id: string) {
+    try { await unpark(kind, id); toast.success('Back on the list'); await q.refetch(); onChanged() } catch (e) { toast.error(errorMessage(e)) }
+  }
+  return (
+    <section className="mb-4 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700">
+      <button type="button" onClick={() => setShow((v) => !v)} className="font-medium text-stone-800 hover:text-brand">{n} parked{show ? ' · Hide' : ' · Show'}</button>
+      <span className="ml-2 text-stone-500">About things older than a year. They wait here until someone unparks them.</span>
+      {show ? (
+        <ul className="mt-2 divide-y divide-stone-200">
+          {items.map((i) => <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5"><span>{i.title}</span>{canEdit ? <button type="button" onClick={() => void back('review', i.id)} className="rounded-md border border-stone-300 bg-white px-2 py-0.5 text-xs font-medium hover:bg-stone-100">Unpark</button> : null}</li>)}
+          {checks.map((c) => <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5"><span>{c.kind === 'invoice' ? 'Invoice' : 'Confirmation'} {c.doc_number ?? ''} · {c.vendor?.name ?? ''}</span>{canEdit ? <button type="button" onClick={() => void back('check', c.id)} className="rounded-md border border-stone-300 bg-white px-2 py-0.5 text-xs font-medium hover:bg-stone-100">Unpark</button> : null}</li>)}
+        </ul>
+      ) : null}
+    </section>
   )
 }

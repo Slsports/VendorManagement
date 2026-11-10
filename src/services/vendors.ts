@@ -184,13 +184,15 @@ export async function addNote(input: { organization_id: string; entity_type: str
 }
 
 // ---- review queue ----
-export async function listReviewItems(organizationId: string, status: ReviewItem['status'] = 'pending'): Promise<ReviewItem[]> {
-  const { data, error } = await supabase
+export async function listReviewItems(organizationId: string, status: ReviewItem['status'] = 'pending', parked: 'no' | 'only' = 'no'): Promise<ReviewItem[]> {
+  let q = supabase
     .from('review_items')
     .select('*')
     .eq('organization_id', organizationId)
     .eq('status', status)
-    .order('created_at', { ascending: true })
+  // cards about something older than a year wait in Parked (Dana, Nov 10)
+  q = parked === 'only' ? q.not('parked_at', 'is', null) : q.is('parked_at', null)
+  const { data, error } = await q.order('created_at', { ascending: true })
   if (error) throw error
   return data ?? []
 }
