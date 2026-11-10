@@ -7,7 +7,7 @@ who: Dana and the buyers she turns it on for
 Ask VMS is a chat where you ask buying questions in plain words, like "What do we have on order for goggles across all brands, and how does that compare to what sold last winter and what's in stock?" It looks up the answer in VMS and links every number to where it came from.
 
 ## How to
-1. Click **Ask VMS** in the menu, or the **Ask VMS** button at the top of a vendor or order page. From a vendor or order page, the chat already knows which one you mean, so you can say "this vendor" or "this order".
+1. Click **Ask VMS** at the top of any page (next to **Help**; on a phone it's the speech-bubble icon), or in the menu. From a vendor or order page, the chat already knows which one you mean, so you can say "this vendor" or "this order".
 2. Type your question in the box and click **Ask** (or press Enter). Shift+Enter starts a new line.
 3. Wait a moment. While it works it says what it's checking, like **Checking sales and stock in LS…**.
 4. Read the answer. Click any link in it to open the order, the file, the email or the vendor it came from.

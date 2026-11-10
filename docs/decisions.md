@@ -4293,3 +4293,9 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   still Dana. Accounting stays hidden (no Accounting tick). Backups checked: daily backups at about 9 pm Pacific, last 8 days
   kept, no point-in-time recovery. Point-in-time recovery would cost $100/month (7 days), $200 (14) or $400 (28), and needs
   the Small compute size (about $15/month instead of the current Micro at about $10).
+- Nov 10, Dana ("do it now"): the VMS database moved to the Small server (about 4 minutes down, 9:41-9:46 am; background
+  jobs resumed 9:47) and 7-day point-in-time backup is on (any minute in the last 7 days can be restored). About $105 a
+  month more on Supabase.
+- Nov 10, Dana: "the 'ask vms' button that is on the vendor pages. I want it on all the pages so the staff can get quick
+  answers." Ask VMS is now in the top bar of every page, next to Help (from a vendor or order page the chat knows which
+  one). It shows for whoever has Ask VMS ticked in Settings › Users (today: Jarrett) and for admins.

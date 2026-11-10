@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Bell, CircleHelp, KeyRound, LogOut, Menu, Search, User } from 'lucide-react'
+import { Bell, CircleHelp, KeyRound, LogOut, Menu, MessagesSquare, Search, User } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { ROLE_LABELS, ROUTES } from '@/lib/constants'
 import { cn, errorMessage, initials } from '@/lib/utils'
@@ -9,9 +9,14 @@ import { Dropdown } from '@/components/ui'
 import { TopSearch } from './TopSearch'
 import { ViewAsSelect } from './ViewAsBar'
 import { HelpPanel } from '@/components/help/HelpPanel'
+import { askLink } from '@/lib/ask'
 
 export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
-  const { profile, role, signOut } = useAuth()
+  const { profile, role, signOut, isAdmin } = useAuth()
+  const { pathname } = useLocation()
+  // Ask VMS on every page (Dana, Nov 10: "so the staff can get quick answers"); on a vendor or order page it already knows which one
+  const canAsk = isAdmin || !!profile?.ask_vms
+  const askTo = askLink(pathname)
   const navigate = useNavigate()
   const canSearch = role !== 'uploader'
   // Help for the page being worked on (Dana, Oct 21)
@@ -51,6 +56,12 @@ export function Topbar({ onOpenMenu }: { onOpenMenu: () => void }) {
           </button>
         ) : null}
 
+        {canAsk && !pathname.startsWith(ROUTES.ask) ? (
+          <Link to={askTo} aria-label="Ask VMS" title="Ask VMS a question"
+            className="inline-flex items-center gap-1 rounded-lg p-2 text-sm font-medium text-stone-600 hover:bg-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring-brand">
+            <MessagesSquare className="size-5" aria-hidden="true" /><span className="hidden sm:inline">Ask VMS</span>
+          </Link>
+        ) : null}
         <button type="button" onClick={() => setHelp(true)} aria-label="Help for this page" title="Help for this page"
           className="inline-flex items-center gap-1 rounded-lg p-2 text-sm font-medium text-stone-600 hover:bg-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring-brand">
           <CircleHelp className="size-5" aria-hidden="true" /><span className="hidden sm:inline">Help</span>
