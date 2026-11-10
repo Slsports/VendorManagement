@@ -4225,3 +4225,11 @@ Nov 10, same: Trevor's "Send the shipment details email: PLANET COTTON, PO 26569
 drafts removed. Dana wants to "button up the shipping email draft and the routing instructions document" next: the shipping
 email that lands in Trevor's Drafts on confirmation still carries the Oct 20 placeholder wording, and no routing letter has
 ever been uploaded at Freight › Routing letter (0 on file). Waiting for Dana's wording and go.
+
+## Nov 10, 2026 — The State's Sno-Park form changes every season (0329)
+Dana sent the 2026-2027 Report of Operations form: "They send us new forms to use every year. You have to use this one and it
+auto calculates the amounts owed." Same layout as last year's (day rows 15-24, season rows 29-34), with the grand total one row
+down (J37) and the month label area a row down (G40). VMS now: ships with the blank 2026-2027 form as its template; a season
+can carry its own form, uploaded on the Sno-Park page (filed under CA Snow Park as "Sno-Park form"); the filler finds the
+grand total cell and the label area by their formula and merge, keeps every formula of the State's, writes the quantity
+formula into the rows where the State's own sheet left it out, and writes the worked-out values too.

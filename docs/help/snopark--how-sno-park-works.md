@@ -17,4 +17,5 @@ We sell Sno-Park permits for the State of California. Nothing is prepaid: the St
 - The first report of a season is for November, due December 15. There is no snow before that.
 - Nothing monthly is emailed. The State needs the check and the books in the envelope. Mail to OHMVR Division, P.O. Box 942896, Sacramento, CA 94296.
 - The Sno-Park page shows what Lightspeed says we sold this season next to what the books say. It is a check, not the source of the numbers: permits sold from a book that is not empty yet are not on a report until that book is empty.
-- The reports and the scans are filed under the vendor CA Snow Park in the **Sno-Park** folder.
+- The State sends a new Report of Operations form every season. Put it on file with **Upload the State's form** on the Sno-Park page, under the season, and VMS fills that one. Without it, VMS uses the 2026-2027 form it was built with.
+- The reports, the scans and the State's form are filed under the vendor CA Snow Park in the **Sno-Park** folder.

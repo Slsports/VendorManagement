@@ -38,7 +38,17 @@ if (import.meta.main) Deno.serve(async (req) => {
     const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }))
     const month = new Date(`${r.month}T12:00:00Z`)
     const label = r.kind === 'final' ? `${s.label.slice(2, 4)}-${s.label.slice(7, 9)} SNO PARK END OF SEASON REPORT` : `${MONTHS[month.getUTCMonth()]} ${month.getUTCFullYear()} SUBMISSION`
-    const bytes = fillForm({ seasonLabel: s.label, label, dayRows: day, seasonRows: season, unsold, prices: { day: [Number(s.day_price), Number(s.day_commission)], season: [Number(s.season_price), Number(s.season_commission)] } })
+    // the State's form for this season when one was uploaded (they send a new one every year), else the built-in blank
+    let template: Uint8Array | null = null
+    if (s.form_link_id) {
+      const { data: form } = await db.from('vendor_links').select('storage_path, file_name').eq('id', s.form_link_id).maybeSingle()
+      if (form?.storage_path) {
+        const { data: blob, error } = await db.storage.from('vendor-files').download(form.storage_path)
+        if (error || !blob) throw new HttpError(400, `The season's form (${form.file_name ?? 'file'}) could not be opened: ${error?.message ?? 'no file'}. Upload it again on the Sno-Park page.`)
+        template = new Uint8Array(await blob.arrayBuffer())
+      }
+    }
+    const bytes = fillForm({ template, seasonLabel: s.label, label, dayRows: day, seasonRows: season, unsold, prices: { day: [Number(s.day_price), Number(s.day_commission)], season: [Number(s.season_price), Number(s.season_commission)] } })
     const mmddyy = `${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}-${String(today.getFullYear()).slice(2)}`
     const fileName = `${String(r.seq).padStart(2, '0')} - ${mmddyy} ${r.kind === 'final' ? label : `${MONTHS[month.getUTCMonth()]} ${month.getUTCFullYear()} SNOPARK SUBMISSION`}.xlsx`
     const path = `${me.organization_id}/${s.vendor_id}/${crypto.randomUUID()}-${fileName.replace(/[^A-Za-z0-9._-]+/g, '_')}`
@@ -61,11 +71,13 @@ if (import.meta.main) Deno.serve(async (req) => {
 })
 
 /** The template with the cells filled: the number cells as values, the formula cells with their worked-out values. */
-export function fillForm(f: { seasonLabel: string; label: string; dayRows: Row[]; seasonRows: Row[]; unsold: Row[]; prices: { day: [number, number]; season: [number, number] } }): Uint8Array {
-  const tpl = Uint8Array.from(atob(SNOPARK_TEMPLATE_B64), (c) => c.charCodeAt(0))
-  const files = unzipSync(tpl)
+export function fillForm(f: { template?: Uint8Array | null; seasonLabel: string; label: string; dayRows: Row[]; seasonRows: Row[]; unsold: Row[]; prices: { day: [number, number]; season: [number, number] } }): Uint8Array {
+  const tpl = f.template ?? Uint8Array.from(atob(SNOPARK_TEMPLATE_B64), (c) => c.charCodeAt(0))
+  let files: Record<string, Uint8Array>
+  try { files = unzipSync(tpl) } catch { throw new HttpError(400, "The season's form is not an Excel file VMS can open") }
+  if (!files['xl/worksheets/sheet1.xml']) throw new HttpError(400, "The season's form has no sheet VMS can fill")
   let xml = strFromU8(files['xl/worksheets/sheet1.xml']!)
-  const setNum = (ref: string, v: number | null) => { xml = setCell(xml, ref, v === null ? null : { v: String(v) }) }
+  const setNum = (ref: string, v: number | null, formula?: string) => { xml = setCell(xml, ref, v === null ? null : { v: String(v), formula }) }
   const setStr = (ref: string, v: string) => { xml = setCell(xml, ref, { v: xmlEscape(v), str: true }) }
   const money = (n: number) => Math.round(n * 100) / 100
   const put = (rows: Row[], refs: number[], price: number, comm: number) => {
@@ -76,7 +88,7 @@ export function fillForm(f: { seasonLabel: string; label: string; dayRows: Row[]
       setNum(`A${rowNo}`, row ? row.from_permit : null)
       setNum(`B${rowNo}`, row ? row.to_permit : null)
       setNum(`K${rowNo}`, row ? 1 : 0)
-      setNum(`C${rowNo}`, q)
+      setNum(`C${rowNo}`, q, `B${rowNo}-A${rowNo}+K${rowNo}`)   // the State's own sheet leaves this formula out of some rows
       setNum(`D${rowNo}`, money(q * price))
       setNum(`G${rowNo}`, money(q * comm))
       setNum(`J${rowNo}`, money(q * (price - comm)))
@@ -88,9 +100,12 @@ export function fillForm(f: { seasonLabel: string; label: string; dayRows: Row[]
   const s = put(f.seasonRows, SEASON_ROWS, f.prices.season[0], f.prices.season[1])
   setNum('C25', d.qty); setNum('D25', d.amount); setNum('G25', d.commission); setNum('J25', d.due)
   setNum('C35', s.qty); setNum('D35', s.amount); setNum('G35', s.commission); setNum('J35', s.due)
-  setNum('J36', money(d.due + s.due))
+  // the grand total cell and the label area move a row between the State's yearly forms: found by formula and by merge
+  const totalRef = xml.match(/<c r="([A-Z]+\d+)"[^>]*><f>J25\+J35<\/f>/)?.[1] ?? 'J37'
+  setNum(totalRef, money(d.due + s.due))
   setStr('C2', f.seasonLabel)
-  setStr('G39', f.label)
+  const labelRef = xml.match(/<mergeCell ref="(G\d+):J45"/)?.[1] ?? 'G40'
+  setStr(labelRef, f.label)
   // the final report's unsold permits, under the ranges (the State's Excel has no unsold section; the printed form does)
   if (f.unsold.length) {
     const text = ['UNSOLD PERMITS GOING BACK:', ...f.unsold.map((u) => `${u.kind === 'day' ? 'Day-use' : 'Season'} book ${u.book_number ?? ''}: ${u.from_permit} - ${u.to_permit} (${u.to_permit - u.from_permit + 1})`)]
@@ -101,14 +116,14 @@ export function fillForm(f: { seasonLabel: string; label: string; dayRows: Row[]
 }
 
 /** Replace one cell in the sheet XML, keeping its style; a missing cell is added to its row in column order. */
-function setCell(xml: string, ref: string, val: { v: string; str?: boolean } | null): string {
+function setCell(xml: string, ref: string, val: { v: string; str?: boolean; formula?: string } | null): string {
   const rowNo = ref.replace(/[A-Z]+/, '')
   const col = ref.replace(/\d+/, '')
   const cellRe = new RegExp(`<c r="${ref}"(?: s="(\\d+)")?(?: t="[a-zA-Z]+")?(?:/>|>.*?</c>)`, 's')
   const m = xml.match(cellRe)
   const style = m?.[1] ? ` s="${m[1]}"` : ''
   // a formula cell keeps its formula (the State's sheet still adds up if they change a number); only the shown value changes
-  const formula = m?.[0].match(/<f\b[^>]*\/>|<f\b[^>]*>.*?<\/f>/s)?.[0] ?? ''
+  const formula = m?.[0].match(/<f\b[^>]*\/>|<f\b[^>]*>.*?<\/f>/s)?.[0] ?? (val?.formula ? `<f>${val.formula}</f>` : '')
   const cell = val === null ? `<c r="${ref}"${style}/>` : val.str ? `<c r="${ref}"${style} t="inlineStr"><is><t>${val.v}</t></is></c>` : `<c r="${ref}"${style}>${formula}<v>${val.v}</v></c>`
   if (m) return xml.replace(cellRe, cell)
   // no such cell yet: put it in the row (made if missing), after the last cell whose column comes before it

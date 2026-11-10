@@ -85,6 +85,7 @@ export const LINK_KIND_LABELS: Record<import('@/types').VendorLinkKind, string> 
   inventory_count: 'Inventory count sheet',
   snopark_report: 'Sno-Park report',
   snopark_scan: 'Sno-Park scan of sold passes',
+  snopark_form: "Sno-Park form (the State's, for the season)",
 }
 
 export const ORDER_SEASON_LABELS: Record<import('@/types').OrderSeason, string> = { summer: 'Summer', winter: 'Winter' }
