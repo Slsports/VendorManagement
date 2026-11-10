@@ -4221,3 +4221,7 @@ Dana: "that is fine."
   in a vendor's Documents: a new email to our main rep with the file attached, its name as the subject. (2) Attach from any
   vendor's files in every email box: pick a vendor, open their folders, tick files; files from several vendors can go in
   one email (an email with no vendor too).
+Nov 10, same: Trevor's "Send the shipment details email: PLANET COTTON, PO 26569" task closed (request) and the two waiting
+drafts removed. Dana wants to "button up the shipping email draft and the routing instructions document" next: the shipping
+email that lands in Trevor's Drafts on confirmation still carries the Oct 20 placeholder wording, and no routing letter has
+ever been uploaded at Freight › Routing letter (0 on file). Waiting for Dana's wording and go.
