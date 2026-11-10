@@ -4305,3 +4305,5 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   next Nov 11). VMS's key is in the "Shaver Lake Sports Inc" Console org. Next: link the business Team account's credit
   ($100 Premium + $20 x 2 Standard = $140/month) to "Shaver Lake Sports Inc"; then, with Dana's go, VMS uses a second key
   from "Dana's Individual Org" for some work (e.g. Ask VMS, bulk reading), falling back to the main key when it runs out.
+- Nov 10 (Dana's screenshot of the business Team billing): the Team credit is already linked to "Shaver Lake Sports Inc"
+  (since Oct 14) and is $60/month, not $140: 3 seats, $75/month plan total, which matches three Standard seats at $20 each.
