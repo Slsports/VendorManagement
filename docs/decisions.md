@@ -4299,3 +4299,4 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
 - Nov 10, Dana: "the 'ask vms' button that is on the vendor pages. I want it on all the pages so the staff can get quick
   answers." Ask VMS is now in the top bar of every page, next to Help (from a vendor or order page the chat knows which
   one). It shows for whoever has Ask VMS ticked in Settings › Users (today: Jarrett) and for admins.
+- Nov 10, Dana: "turn on Ask VMS for Trevor". Done (Settings › Users tick); Jarrett and Trevor have it, admins always do.
