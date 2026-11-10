@@ -81,21 +81,57 @@ export interface BookRowInput { key: string; kind: 'day' | 'season'; book_number
 let rowSeq = 0
 export const newRow = (kind: 'day' | 'season', first = '', last = '', book = ''): BookRowInput => ({ key: `r${++rowSeq}`, kind, book_number: book, first_permit: first, last_permit: last })
 
+/** How many whole books the sheet's range holds for a kind; null when it is no whole number of books. */
+export function sheetBooks(sheet: Sheet, kind: 'day' | 'season', per: number): { from: number; to: number; n: number } | null {
+  const k = sheet[kind]
+  if (k.from == null || k.to == null || k.to < k.from) return null
+  const n = k.to - k.from + 1
+  if (n % per !== 0 || n / per > 500) return null
+  return { from: k.from, to: k.to, n: n / per }
+}
+
+/** "DB 543" → { prefix: "DB ", num: 543, width: 3 }; null when the number does not end in digits. */
+export function parseBookNumber(text: string): { prefix: string; num: number; width: number } | null {
+  const m = text.trim().match(/^(.*?)(\d+)$/)
+  if (!m) return null
+  return { prefix: m[1]!, num: Number(m[2]), width: m[2]!.length }
+}
+
+/** The book number that comes n after another: "DB 543" + 2 → "DB 545". */
+export function bookNumberAfter(first: string, n: number): string {
+  const b = parseBookNumber(first)
+  if (!b) return ''
+  return `${b.prefix}${String(b.num + n).padStart(b.width, '0')}`
+}
+
 /**
- * The book rows a confirmed sheet suggests: the sheet's range cut into books of the season's standard size. Only when the
- * range is a whole number of books; the book numbers are typed from the covers.
+ * The book rows from a confirmed sheet (Dana, Nov 10: "put in the first book number and last book number in Day passes
+ * and in the season books - that will autofill all the permit numbers and log the book numbers to correspond with the
+ * permit numbers"). The sheet's range is cut into whole books; the book numbers run from the first one given. The last
+ * book number must land on the sheet's count, else the reason comes back as an error.
  */
-export function rowsFromSheet(sheet: Sheet, perBook: { day: number; season: number }): BookRowInput[] {
+export function rowsFromSheet(sheet: Sheet, perBook: { day: number; season: number }, books: { day?: { first: string; last: string }; season?: { first: string; last: string } }): { rows: BookRowInput[]; error: string | null } {
   const out: BookRowInput[] = []
   for (const kind of ['day', 'season'] as const) {
-    const k = sheet[kind]
-    if (k.from == null || k.to == null || k.to < k.from) continue
-    const per = perBook[kind]
-    const n = k.to - k.from + 1
-    if (n % per !== 0 || n / per > 200) continue
-    for (let i = 0; i < n / per; i++) out.push(newRow(kind, String(k.from + i * per), String(k.from + i * per + per - 1)))
+    const range = sheetBooks(sheet, kind, perBook[kind])
+    const given = books[kind]
+    if (!range) {
+      if (given?.first.trim()) return { rows: [], error: `The sheet's ${kind} range is not a whole number of books of ${perBook[kind]}; check the sheet's numbers first.` }
+      continue
+    }
+    if (!given?.first.trim()) return { rows: [], error: `The sheet says ${range.n} ${kind} book${range.n === 1 ? '' : 's'} (permits ${range.from} to ${range.to}): enter the first ${kind} book number.` }
+    const first = parseBookNumber(given.first)
+    if (!first) return { rows: [], error: `The ${kind} book number should end in digits, like DB 543.` }
+    if (given.last.trim()) {
+      const last = parseBookNumber(given.last)
+      if (!last || last.prefix.trim().toUpperCase() !== first.prefix.trim().toUpperCase()) return { rows: [], error: `The last ${kind} book number should look like the first one (${given.first.trim()}).` }
+      const count = last.num - first.num + 1
+      if (count !== range.n) return { rows: [], error: `${given.first.trim()} to ${given.last.trim()} is ${count} ${kind} book${count === 1 ? '' : 's'}, but the sheet's range (${range.from} to ${range.to}) is ${range.n}. Check the book numbers on the covers or the sheet.` }
+    }
+    for (let i = 0; i < range.n; i++) out.push(newRow(kind, String(range.from + i * perBook[kind]), String(range.from + i * perBook[kind] + perBook[kind] - 1), bookNumberAfter(given.first, i)))
   }
-  return out
+  if (!out.length) return { rows: [], error: 'The sheet has no permit ranges to cut into books.' }
+  return { rows: out, error: null }
 }
 
 /** What is wrong with a row before it is saved: a size that is not a whole book, a missing number. */

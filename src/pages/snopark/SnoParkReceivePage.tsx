@@ -10,7 +10,7 @@ import { signedFileUrl } from '@/services/lines'
 import { ROUTES } from '@/lib/constants'
 import { shortDate } from '@/lib/freight'
 import { errorMessage } from '@/lib/utils'
-import { EMPTY_SHEET, KIND_LABELS, SHIPMENT_STATUS, newRow, rowProblem, rowsFromSheet, type BookRowInput, type Difference, type Sheet } from '@/lib/snopark'
+import { EMPTY_SHEET, KIND_LABELS, SHIPMENT_STATUS, bookNumberAfter, newRow, rowProblem, rowsFromSheet, sheetBooks, type BookRowInput, type Difference, type Sheet } from '@/lib/snopark'
 import { BackLink } from '@/components/shared/BackLink'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
@@ -167,12 +167,23 @@ function BooksStep({ view, locked, onDone }: { view: ShipmentView; locked: boole
   const onReport = view.books.filter((b) => b.status !== 'on_hand')
   const dirty = rows !== null
 
-  function suggest() {
-    if (!sheet) return
-    const s = rowsFromSheet(sheet, per)
-    if (!s.length) { toast.error("The sheet's ranges are not a whole number of books, so VMS cannot cut them into books. Enter each book from its cover."); return }
-    setRows(s)
+  // Dana, Nov 10: the first and last book number of each kind fill every row, book numbers and permits together
+  const [fill, setFill] = useState<{ day: { first: string; last: string }; season: { first: string; last: string } } | null>(null)
+  const dayRange = sheet ? sheetBooks(sheet, 'day', per.day) : null
+  const seasonRange = sheet ? sheetBooks(sheet, 'season', per.season) : null
+  function fillRows() {
+    if (!sheet || !fill) return
+    const r = rowsFromSheet(sheet, per, { day: dayRange ? fill.day : undefined, season: seasonRange ? fill.season : undefined })
+    if (r.error) { toast.error(r.error); return }
+    setRows(r.rows)
+    setFill(null)
   }
+  const setFirst = (kind: 'day' | 'season', v: string) => setFill((f) => {
+    const cur = f ?? { day: { first: '', last: '' }, season: { first: '', last: '' } }
+    const range = kind === 'day' ? dayRange : seasonRange
+    const last = range && v.trim() ? bookNumberAfter(v, range.n - 1) : cur[kind].last
+    return { ...cur, [kind]: { first: v, last } }
+  })
   function update(key: string, patch: Partial<BookRowInput>) { setRows(shown.map((r) => (r.key === key ? { ...r, ...patch } : r))) }
   function add(kind: 'day' | 'season') {
     const mine = shown.filter((r) => r.kind === kind)
@@ -199,6 +210,7 @@ function BooksStep({ view, locked, onDone }: { view: ShipmentView; locked: boole
       <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">2. The books in the box</h2>
       <p className="mt-1 text-sm text-stone-600">One row per book, from its cover: the book number and the first and last permit number inside. A day book holds {per.day} permits, a season book {per.season}; a row of another size is marked.</p>
       {onReport.length ? <p className="mt-2 text-xs text-stone-500">{onReport.length} book{onReport.length === 1 ? ' from this box is' : 's from this box are'} already on a report and cannot be changed here.</p> : null}
+      {dirty && shown.length ? <Alert variant="info" className="mt-3">{shown.some((r) => !r.book_number.trim()) ? <>Type each book's number from its cover in the <strong>Book #</strong> column, then click <strong>Save the books</strong> at the bottom.</> : <>Check the rows against the books in the box, then click <strong>Save the books</strong> at the bottom.</>}</Alert> : null}
       <div className="mt-3 overflow-x-auto">
         <table className="w-full text-sm">
           <thead><tr className="text-left text-xs uppercase tracking-wide text-stone-500"><th className="py-2 pr-3">Kind</th><th className="py-2 pr-3">Book #</th><th className="py-2 pr-3">Starting permit #</th><th className="py-2 pr-3">Ending permit #</th><th className="py-2 pr-3">Permits</th><th className="py-2" /></tr></thead>
@@ -210,10 +222,10 @@ function BooksStep({ view, locked, onDone }: { view: ShipmentView; locked: boole
               return (
                 <tr key={r.key} className={problem && r.first_permit && r.last_permit && r.book_number ? 'bg-red-50/60' : ''}>
                   <td className="py-1.5 pr-3"><Select value={r.kind} onChange={(e) => update(r.key, { kind: e.target.value as 'day' | 'season' })} disabled={locked} aria-label="Kind"><option value="day">Day</option><option value="season">Season</option></Select></td>
-                  <td className="py-1.5 pr-3"><Input value={r.book_number} onChange={(e) => update(r.key, { book_number: e.target.value })} disabled={locked} placeholder="DB 543" className="w-28" aria-label="Book number" /></td>
+                  <td className="py-1.5 pr-3"><Input value={r.book_number} onChange={(e) => update(r.key, { book_number: e.target.value })} disabled={locked} placeholder="from the cover" className="w-32" aria-label="Book number" /></td>
                   <td className="py-1.5 pr-3"><Input type="number" inputMode="numeric" value={r.first_permit} onChange={(e) => update(r.key, { first_permit: e.target.value, last_permit: r.last_permit || (e.target.value ? String(Number(e.target.value) + per[r.kind] - 1) : '') })} disabled={locked} className="w-28" aria-label="Starting permit" /></td>
                   <td className="py-1.5 pr-3"><Input type="number" inputMode="numeric" value={r.last_permit} onChange={(e) => update(r.key, { last_permit: e.target.value })} disabled={locked} className="w-28" aria-label="Ending permit" /></td>
-                  <td className="py-1.5 pr-3 text-stone-700">{Number.isFinite(n) && n > 0 ? n : ''}{problem && r.first_permit && r.last_permit ? <span className="ml-2 text-xs text-red-700">{problem}</span> : null}</td>
+                  <td className="py-1.5 pr-3 text-stone-700">{Number.isFinite(n) && n > 0 ? n : ''}{problem === 'Book number' && r.first_permit && r.last_permit ? <span className="ml-2 text-xs text-amber-700">type the book # from the cover</span> : problem && r.first_permit && r.last_permit ? <span className="ml-2 text-xs text-red-700">{problem}</span> : null}</td>
                   <td className="py-1.5 text-right">{!locked ? <button type="button" onClick={() => setRows(shown.filter((x) => x.key !== r.key))} className="text-stone-400 hover:text-red-700" aria-label="Remove row"><Trash2 className="size-4" /></button> : null}</td>
                 </tr>
               )
@@ -221,11 +233,21 @@ function BooksStep({ view, locked, onDone }: { view: ShipmentView; locked: boole
           </tbody>
         </table>
       </div>
+      {fill && !locked ? (
+        <div className="mt-3 rounded-xl border border-stone-200 bg-stone-50 p-4">
+          <p className="text-sm text-stone-700">From the sheet: {dayRange ? <><strong>{dayRange.n} day book{dayRange.n === 1 ? '' : 's'}</strong> (permits {dayRange.from} to {dayRange.to})</> : 'no day books'}{seasonRange ? <> and <strong>{seasonRange.n} season book{seasonRange.n === 1 ? '' : 's'}</strong> (permits {seasonRange.from} to {seasonRange.to})</> : ' and no season books'}. Type the first and last book number from the covers; VMS fills every row with its book number and permit numbers.</p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {dayRange ? <div className="grid grid-cols-2 gap-3"><FormField label="First day book #" htmlFor="fill-day-first"><Input id="fill-day-first" value={fill.day.first} onChange={(e) => setFirst('day', e.target.value)} placeholder="DB 543" /></FormField><FormField label="Last day book #" htmlFor="fill-day-last"><Input id="fill-day-last" value={fill.day.last} onChange={(e) => setFill({ ...fill, day: { ...fill.day, last: e.target.value } })} /></FormField></div> : null}
+            {seasonRange ? <div className="grid grid-cols-2 gap-3"><FormField label="First season book #" htmlFor="fill-season-first"><Input id="fill-season-first" value={fill.season.first} onChange={(e) => setFirst('season', e.target.value)} placeholder="SB 1130" /></FormField><FormField label="Last season book #" htmlFor="fill-season-last"><Input id="fill-season-last" value={fill.season.last} onChange={(e) => setFill({ ...fill, season: { ...fill.season, last: e.target.value } })} /></FormField></div> : null}
+          </div>
+          <div className="mt-3 flex gap-2"><Button onClick={fillRows}>Fill the rows</Button><Button variant="ghost" onClick={() => setFill(null)}>Cancel</Button></div>
+        </div>
+      ) : null}
       {!locked ? (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Button variant="secondary" onClick={() => add('day')}><Plus className="size-4" aria-hidden="true" />Day book</Button>
           <Button variant="secondary" onClick={() => add('season')}><Plus className="size-4" aria-hidden="true" />Season book</Button>
-          {sheet && shipment.sheet_confirmed_at && !shown.length ? <Button variant="ghost" onClick={suggest}>Fill the rows from the sheet</Button> : null}
+          {sheet && shipment.sheet_confirmed_at && !shown.length && !fill ? <Button variant="ghost" onClick={() => setFill({ day: { first: '', last: '' }, season: { first: '', last: '' } })}>Fill the rows from the sheet</Button> : null}
           <span className="grow" />
           {dirty ? <Button variant="ghost" onClick={() => setRows(null)}>Cancel</Button> : null}
           <Button onClick={save} disabled={busy || (!dirty && view.books.length > 0)}>{busy ? 'Saving…' : 'Save the books'}</Button>
