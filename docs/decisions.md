@@ -4288,3 +4288,8 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
 - Nov 10: Dana removed the service-role network secret (Fable agreed it was unused). Tested: the test login now signs in and
   reads VMS; scripts/preview.mjs screenshots the live site (Orders shown fine; Payments is admin/manager only, so the buyer
   test login sees "You don't have access"). preview.mjs now finds the container's browser itself. CLAUDE.md updated.
+- Nov 10, Dana ("yes make it admin"): the "Claude (testing)" login is now an admin, so Claude can see admin screens
+  (Payments checked: opens). Checked first: every place VMS picks "the admin" for tasks and notes takes the earliest admin,
+  still Dana. Accounting stays hidden (no Accounting tick). Backups checked: daily backups at about 9 pm Pacific, last 8 days
+  kept, no point-in-time recovery. Point-in-time recovery would cost $100/month (7 days), $200 (14) or $400 (28), and needs
+  the Small compute size (about $15/month instead of the current Micro at about $10).
