@@ -9,7 +9,7 @@ Attachments open inside VMS, without downloading them first.
 ## How to
 1. Open the email. Its attachments are listed at the top, each with its size.
 2. Pictures show a small preview; click it to see it full size.
-3. Click a file name to open it in VMS. The viewer has **Download** if you want a copy.
+3. Click a file name to open it in VMS. The viewer has **Print** and **Download**.
 4. Signature logos and small pasted pictures are folded into **+N images**; click it to show them.
 
 ## Good to know

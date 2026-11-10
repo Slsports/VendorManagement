@@ -5,7 +5,7 @@ import { FileText, Send, Sparkles, Trash2 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useTableSort } from '@/hooks/useTableSort'
-import { deleteDraft, getDraft, listDrafts, sendEmail, type DraftRow } from '@/services/mail'
+import { deleteDraft, draftFilesOf, getDraft, listDrafts, sendEmail, type DraftRow } from '@/services/mail'
 import { errorMessage } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants'
 import { SortHeader } from '@/components/shared/SortHeader'
@@ -60,7 +60,7 @@ export function DraftsList() {
     const failed: string[] = []
     for (const d of list) {
       try {
-        const res = await sendEmail({ to: d.to_emails, cc: d.cc_emails, subject: d.subject, body: d.body, vendor_id: d.vendor_id, draft_id: d.id, vendor_link_ids: d.vendor_link_ids, routing_send_id: d.routing_send_id, attach_routing_letter: !d.routing_send_id && d.attach_routing_letter, confirmation_id: d.confirmation_id, signature: d.signature ?? undefined })
+        const res = await sendEmail({ to: d.to_emails, cc: d.cc_emails, subject: d.subject, body: d.body, vendor_id: d.vendor_id, draft_id: d.id, vendor_link_ids: d.vendor_link_ids, draft_files: draftFilesOf(d.files), availability_ask_id: d.availability_ask_id, routing_send_id: d.routing_send_id, attach_routing_letter: !d.routing_send_id && d.attach_routing_letter, confirmation_id: d.confirmation_id, signature: d.signature ?? undefined })
         if (res.needs_choice) failed.push(d.to_emails.join(', '))
         else ok++
       } catch (e) {
@@ -138,7 +138,7 @@ export function DraftsList() {
       )}
       {open ? (
         <ComposeDialog
-          draft={{ draft_id: open.id, order_id: open.order_id, vendor_link_ids: open.vendor_link_ids, to: open.to_emails, cc: open.cc_emails, subject: open.subject, body: open.body, thread_id: open.thread_id, reply_to_email_id: open.reply_to_email_id, forward_email_id: open.forward_email_id, vendor_id: open.vendor_id, mailbox_id: open.mailbox_id, note: open.note ?? undefined, signature: open.signature, routing_send_id: open.routing_send_id, confirmation_id: open.confirmation_id, attach_routing_letter: open.attach_routing_letter }}
+          draft={{ draft_id: open.id, order_id: open.order_id, vendor_link_ids: open.vendor_link_ids, to: open.to_emails, cc: open.cc_emails, subject: open.subject, body: open.body, thread_id: open.thread_id, reply_to_email_id: open.reply_to_email_id, forward_email_id: open.forward_email_id, vendor_id: open.vendor_id, mailbox_id: open.mailbox_id, note: open.note ?? undefined, signature: open.signature, routing_send_id: open.routing_send_id, confirmation_id: open.confirmation_id, attach_routing_letter: open.attach_routing_letter, saved_files: draftFilesOf(open.files), availability_ask_id: open.availability_ask_id }}
           onClose={() => { setOpen(null); void q.refetch() }}
           onSent={() => void q.refetch()} />
       ) : null}

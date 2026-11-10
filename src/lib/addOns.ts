@@ -27,7 +27,8 @@ export function linesTable(lines: AddOnLine[]): string {
 }
 
 /** The add-on email: subject and body, before the signature. */
-export function addOnEmail(input: { vendorName: string; order: AddOnOrder; lines: AddOnLine[]; hasConfirmation: boolean; originalLines: AddOnLine[] }): { subject: string; body: string } {
+/** With `attached` the items go on an Excel sheet attached to the email, not in the body (Dana, Nov 9). */
+export function addOnEmail(input: { vendorName: string; order: AddOnOrder; lines: AddOnLine[]; hasConfirmation: boolean; originalLines: AddOnLine[]; attached?: boolean }): { subject: string; body: string } {
   const what = orderWord(input.order)
   const subject = `${input.order.po_number ? `PO ${input.order.po_number}` : 'Our order'}: please add the following`
   const ship = input.order.est_ship_date ? ` (ships ${day(input.order.est_ship_date)})` : ''
@@ -37,8 +38,11 @@ export function addOnEmail(input: { vendorName: string; order: AddOnOrder; lines
   } else {
     parts.push(`Hello,\n\nWe have not received a confirmation yet for ${what}${input.order.order_date ? `, sent on ${day(input.order.order_date)}` : ''}. Please add the items below to that order.`)
   }
-  parts.push(`Please add:\n\n${linesTable(input.lines)}`)
-  if (!input.hasConfirmation && input.originalLines.length) parts.push(`For reference, the original order:\n\n${linesTable(input.originalLines)}`)
+  if (input.attached) parts.push(`The items to add are on the attached spreadsheet (${input.lines.length} item${input.lines.length === 1 ? '' : 's'}${!input.hasConfirmation && input.originalLines.length ? ', with the original order on its second tab' : ''}).`)
+  else {
+    parts.push(`Please add:\n\n${linesTable(input.lines)}`)
+    if (!input.hasConfirmation && input.originalLines.length) parts.push(`For reference, the original order:\n\n${linesTable(input.originalLines)}`)
+  }
   parts.push('When it is updated, please send one confirmation covering the whole order, with the ship date.\n\nThank you,')
   return { subject, body: parts.join('\n\n') }
 }

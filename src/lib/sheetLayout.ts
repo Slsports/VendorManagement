@@ -50,3 +50,37 @@ export function laySheet(grid: SheetCell[][], merges: SheetMerge[] = []): LaidCe
   }
   return out
 }
+
+/**
+ * How many rows each sheet keeps frozen at the top in Excel (Dana, Nov 9: "we want to see the header for the columns …
+ * size summary, category, those go away when you scroll down"). Read from the file itself: workbook.xml names each sheet,
+ * its relationship points at the sheet's XML, and that XML's frozen pane says how many rows (ySplit).
+ */
+export function frozenRowsBySheet(text: (path: string) => string | null): Map<string, number> {
+  const out = new Map<string, number>()
+  const book = text('xl/workbook.xml')
+  const rels = text('xl/_rels/workbook.xml.rels')
+  if (!book || !rels) return out
+  const target = new Map<string, string>()
+  for (const m of rels.matchAll(/<Relationship\b[^>]*>/g)) {
+    const id = /\bId="([^"]+)"/.exec(m[0])?.[1]
+    const t = /\bTarget="([^"]+)"/.exec(m[0])?.[1]
+    if (id && t) target.set(id, t.startsWith('/') ? t.slice(1) : `xl/${t}`)
+  }
+  const unescape = (s: string) => s.replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+  for (const m of book.matchAll(/<sheet\b[^>]*>/g)) {
+    const name = /\bname="([^"]*)"/.exec(m[0])?.[1]
+    const rid = /\br:id="([^"]+)"/.exec(m[0])?.[1]
+    const path = rid ? target.get(rid) : undefined
+    const xml = path ? text(path) : null
+    const pane = xml ? /<pane\b[^>]*>/.exec(xml)?.[0] : undefined
+    const y = pane && /\bstate="frozen(Split)?"/.test(pane) ? Number(/\bySplit="(\d+(?:\.\d+)?)"/.exec(pane)?.[1] ?? 0) : 0
+    if (name && y > 0) out.set(unescape(name), Math.floor(y))
+  }
+  return out
+}
+
+/** How many laid-out rows the first `upTo` rows of the sheet become (empty rows are left out). */
+export function laidRowCount(grid: SheetCell[][], merges: SheetMerge[], upTo: number): number {
+  return upTo > 0 ? laySheet(grid.slice(0, upTo), merges).length : 0
+}

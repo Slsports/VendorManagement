@@ -4171,3 +4171,53 @@ remembers the choice per person, like the dashboard boxes.
 Dana: "skip it, Planet Cotton usually comes in under 10% shipping." The PO 26569 shipment details request (on hold since
 Oct 30) is skipped. Non-WWD credit requests: VMS marks the credit received for Dana to check and finish, not closed on its own;
 Dana: "that is fine."
+
+- Nov 9, Dana: World Famous credit task (credit memo CM2600409, $71.70, Sep 11, for I87727-1): "Keep it waiting, re-word it so
+  it's not late." The credit is in no WWD data VMS has (Edenred uploads through Nov 4, Payment History through Sep 15; the
+  two invoices are not marked paid yet). Task renamed "Waiting for WWD to post World Famous credit CM2600409 ($71.70)" with
+  no due date. Migration 0325: every WWD credit received from now on waits the same way.
+- Nov 9, Dana ("yes, rebuild it as review cards"): migration 0325. Freight terms Claude reads in vendor/rep email are cards in
+  Review › Freight ("Freight terms from email"): their words, the email one click away, the order VMS thinks it is for and
+  the vendor's other orders; Put it on this order / Not for an order. Nothing touches an order without that click. No card
+  when the order already says the same; one card per conversation per terms; a card closes itself when the order is set the
+  same way. A PO matches only orders of that vendor, a brand it sells, or a vendor of its rep group. The reader's rules were
+  tightened from the mistakes (met the prepaid level = free; "no prepaid freight" = charged; our carrier prices and tag
+  prices are not quotes; promos and flyers left out). Back-check: the 53 no-order readings removed; their emails and every
+  email that gave nothing are read again. Balmshot cards: Dana will decide.
+- Nov 9, Dana: "Add to contacts a button for Make main shipping contact and list below the alternate main rep." Migration
+  0326: vendors.main_shipping_contact_id (one of the vendor's own people). Reps & contacts has Make main shipping contact /
+  Not main shipping, the Main shipping tag, and lists them right under the alternate; the top of the vendor page shows
+  "Main shipping:" under "Alternate:". Picking someone ticks Shipping on them; a former contact is no longer it. Who the
+  shipment details email goes to is unchanged (asked Dana).
+- Nov 9, Dana: "From the preview document page We can download, but we can't print. Can you please add a print button?"
+  The document viewer has Print next to Download: a PDF prints as it is; a spreadsheet prints the sheet shown as a table;
+  Word, pictures and text print as shown. Files VMS can't show can't be printed from VMS (Download them).
+- Nov 9, Dana: "Orders page, below the cost of each order list shipping cost, free, or 1/2 freight." The Orders list and a
+  vendor's order history show under each cost: Free freight, 1/2 freight (with the freight when known), Freight capped N%,
+  or "+$X freight"; blank when nothing is known.
+- Nov 9, Dana: after Run report on a vendor's ordering card, the green "Report filed under Planet Cotton" line could not be
+  clicked: "I need a preview when I click on that green print." The report's name in that line now opens it in the
+  document preview (Print and Download there).
+- Nov 9, Dana: "in viewing reports, we want to see the header for the columns. They have to be fixed the whole time when
+  we're scrolling in size summary, category." The document preview now keeps each sheet's header rows on screen: the rows
+  frozen in the file (our sales reports freeze 2 or 3), else the first row. Printed, they repeat on every page.
+- Nov 9, Dana ("yes, close the 13 and fix the reader"): 13 freight-terms cards closed at her request (our own carrier prices
+  for Becker and Master Fishing, repeats for Franklin, Creative Angler, Panther Martin, Stansport and Master Fishing,
+  promotions or misreads for Ty, Triple T, Western Woods and Signs 4 Fun); 23 cards left. Migration 0327: a freight amount
+  from our own email is never their quote; one card for the same words from a vendor in any conversation; one reading per
+  order per email (a quoted amount may sit beside it); no $0.00 amounts; no "free over" under $100. The reader is told
+  carrier comparisons are our price check, pairs/units are not dollars, and promotions to all customers are left out.
+- Nov 9, Dana: "Suggested order - add upc column. When you click to email the vendor from the suggested order i dont want it
+  put inline in the email. I want it attached as an excel spreadsheet." The suggested order shows UPC after Vendor ID. Email
+  the rep and Add to PO now attach an Excel sheet (Vendor ID, UPC, description, quantity; Add to PO also unit cost and
+  total, and the original order on a second tab when no confirmation came back) and the email body only points to it.
+- Nov 9, Dana (Paricon › Ordering › Run order › Email the rep): subject is now "<Vendor> reorder for Shaver Lake Sports" (no
+  "Can we still order these?"). "I should be able to save this to my drafts with the order attached": migration 0328, Save
+  draft keeps every attachment (computer/phone files and files VMS made) in storage with the draft, and Send attaches them;
+  an ask-the-rep draft keeps its link so the reply is still read. "I cannot attach anything from my computer or phone": the
+  Attach from computer button was at the bottom of the email box under the signature; it now sits right under Subject.
+  Why it didn't work for her is not confirmed yet (asked for a screenshot if it still doesn't).
+- Nov 9, Dana ("yes both"): attaching a vendor's documents without downloading and uploading. (1) Email it on every file
+  in a vendor's Documents: a new email to our main rep with the file attached, its name as the subject. (2) Attach from any
+  vendor's files in every email box: pick a vendor, open their folders, tick files; files from several vendors can go in
+  one email (an email with no vendor too).

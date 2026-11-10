@@ -7,6 +7,7 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { countOrdersByStatus, listOrders, ORDER_VIEW_LABELS, type OrderView } from '@/services/orders'
 import { ORDER_STATUSES, ORDER_STATUS_LABELS, ROUTES, type OrderStatus } from '@/lib/constants'
 import { money, showLabel } from '@/lib/vendors'
+import { orderShippingLine } from '@/lib/freight'
 import { cn } from '@/lib/utils'
 import { BackLink } from '@/components/shared/BackLink'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -111,7 +112,7 @@ export default function OrderListPage() {
                     <td className="px-3 py-2"><OrderStatusBadge status={o.status} /></td>
                     <td className="max-w-md px-3 py-2 text-stone-700">{o.description}{o.po_number ? <span className="block text-xs text-stone-500">PO {o.po_number}</span> : null}</td>
                     <td className="whitespace-nowrap px-3 py-2 text-stone-600">{o.store_codes.join(', ')}</td>
-                    <td className="whitespace-nowrap px-3 py-2 text-right">{money(o.final_cost ?? o.est_cost)}{o.free_shipping === true ? <span className="block text-xs text-emerald-700">free ship</span> : o.free_shipping === false && o.freight_cost ? <span className="block text-xs text-stone-500">+{money(o.freight_cost)} freight</span> : null}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-right">{money(o.final_cost ?? o.est_cost)}<ShippingLine order={o} /></td>
                     <td className="whitespace-nowrap px-3 py-2 text-stone-600">{o.est_ship_date ? new Date(o.est_ship_date).toLocaleDateString() : ''}</td>
                     <td className="whitespace-nowrap px-3 py-2 text-stone-600">{o.paid_date ? new Date(o.paid_date).toLocaleDateString() : ''}</td>
                   </tr>
@@ -127,4 +128,10 @@ export default function OrderListPage() {
 
 function tab(active: boolean) {
   return cn('block whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors', active ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900')
+}
+
+/** The shipping under the cost (Dana, Nov 9): free freight, 1/2 freight, capped, or the freight paid. */
+function ShippingLine({ order }: { order: Parameters<typeof orderShippingLine>[0] }) {
+  const line = orderShippingLine(order)
+  return line ? <span className={line.free ? 'block text-xs text-emerald-700' : 'block text-xs text-stone-500'}>{line.text}</span> : null
 }

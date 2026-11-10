@@ -20,6 +20,7 @@ The card starts closed with one number (everything on it, red when an order is o
 1. Click a count. Its list opens across the dashboard.
 2. Click a vendor or order name to open it.
 3. In **Check stock** and **To order**, use the buttons on each row: **Run report**, **Run order**, **Suggested order**, **Reports** (the Sales Reports page for other periods or stores apart), **Upload sales report** (a historical LS export), **Order it**, **Order placed**, **Don't need it** or **Remove**.
+   After **Run report**, the green line names the report it filed: click the name to open it.
 4. If a line says the vendor is not tied to a Lightspeed vendor yet, open the vendor and set **In Lightspeed as**; then run again.
 
 ## Good to know

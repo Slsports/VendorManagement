@@ -15,8 +15,8 @@ import { applyFreightReading, applyReceiptReading, freightIndex, freshText, invo
 
 // Small slices: an Edge Function run has little CPU time and memory, so each run takes about 100
 // messages and the scheduler comes back every minute until the history is in (from backfill_after).
-/** Freight terms from email onto orders: off until it is rebuilt as review cards (Dana, Nov 9). */
-const FREIGHT_TERMS_PAUSED = true
+/** Freight terms from email: back on as review cards (Dana, Nov 9); nothing goes on an order without a person's click. */
+const FREIGHT_TERMS_PAUSED = false
 const TIME_BUDGET_MS = 20_000
 const PAGE = 25
 const PARALLEL = 5
@@ -1388,7 +1388,7 @@ async function aiSteps(db: SupabaseClient, org: string, started: number) {
 
     // Freight terms (Dana, Nov 9): what a vendor's email says about freight on an order goes on that order, with the
     // email as its source; the invoice is checked against it. 12 months of vendor mail that mentions freight, newest first.
-    // Paused (Dana, Nov 9): too many readings were wrong to put straight on orders. It comes back as review cards.
+    // Review cards since Nov 9 (migration 0325): too many readings were wrong to put straight on orders.
     if (!FREIGHT_TERMS_PAUSED && Date.now() - started < TIME_BUDGET_MS) {
       const { data: fq } = await db.rpc('mail_freight_queue', { p_org: org, p_limit: 20 })
       const fList = (fq ?? []) as FreightTermsEmail[]

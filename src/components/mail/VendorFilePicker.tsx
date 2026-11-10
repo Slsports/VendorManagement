@@ -9,18 +9,24 @@ import { shortDate } from '@/lib/utils'
  * conversation on top, then the vendor's folders; a folder shows its files newest first with their dates. The files
  * picked show above as chips, so the email always says what goes with it.
  */
-export function VendorFilePicker({ links, selected, onChange, orderId, threadId }: {
+export function VendorFilePicker({ links, selected, onChange, orderId, threadId, labels, vendorName, onOtherVendor }: {
   links: VendorLinkRow[]
   selected: string[]
   onChange: (ids: string[]) => void
   orderId?: string | null
   threadId?: string | null
+  /** Names of files picked from another vendor (Dana, Nov 9: attach from any vendor's files), for their chips. */
+  labels?: Map<string, string>
+  /** Whose files these are, when it isn't the email's own vendor. */
+  vendorName?: string | null
+  /** Pick another vendor whose files to attach. */
+  onOtherVendor?: () => void
 }) {
   const [open, setOpen] = useState(false)
   const [folder, setFolder] = useState<DocFolder | null>(null)
   const [find, setFind] = useState('')
   const byId = useMemo(() => new Map(links.map((l) => [l.id, l])), [links])
-  const picked = selected.map((id) => byId.get(id)).filter((l): l is VendorLinkRow => !!l)
+  const picked = selected.map((id) => ({ id, label: byId.get(id)?.label ?? labels?.get(id) ?? null })).filter((l): l is { id: string; label: string } => !!l.label)
   const here = links.filter((l) => (orderId && l.order_id === orderId) || (threadId && l.email?.thread_id === threadId))
   const counts = new Map<DocFolder, number>()
   for (const l of links) counts.set(folderOf(l.kind), (counts.get(folderOf(l.kind)) ?? 0) + 1)
@@ -42,7 +48,7 @@ export function VendorFilePicker({ links, selected, onChange, orderId, threadId 
     </li>
   )
 
-  if (!links.length) return null
+  if (!links.length && !picked.length && !onOtherVendor) return null
   return (
     <div className="mt-2">
       {picked.length ? (
@@ -55,9 +61,14 @@ export function VendorFilePicker({ links, selected, onChange, orderId, threadId 
           ))}
         </ul>
       ) : null}
-      <button type="button" onClick={() => setOpen((x) => !x)} aria-expanded={open} className="text-xs font-medium text-brand hover:underline">
-        {open ? 'Close the vendor\'s files' : `Attach from the vendor's files (${links.length})`}
-      </button>
+      <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        {links.length ? (
+          <button type="button" onClick={() => setOpen((x) => !x)} aria-expanded={open} className="text-xs font-medium text-brand hover:underline">
+            {open ? `Close ${vendorName ? `${vendorName}'s` : 'the vendor\'s'} files` : `Attach from ${vendorName ? `${vendorName}'s` : 'the vendor\'s'} files (${links.length})`}
+          </button>
+        ) : vendorName ? <span className="text-xs text-stone-500">{vendorName} has no files on file.</span> : null}
+        {onOtherVendor ? <button type="button" onClick={onOtherVendor} className="text-xs font-medium text-brand hover:underline">Attach from any vendor's files</button> : null}
+      </span>
       {open ? (
         <div className="mt-2 rounded-xl border border-stone-200 p-2">
           <input type="search" value={find} onChange={(e) => setFind(e.target.value)} placeholder="Find a file: number, name…" aria-label="Find a vendor file"

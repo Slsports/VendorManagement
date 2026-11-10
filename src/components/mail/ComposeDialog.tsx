@@ -3,13 +3,14 @@ import toast from 'react-hot-toast'
 import { FileText, Inbox, Paperclip, Send, Trash2, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { deleteDraft, listMailboxes, saveDraft, sendEmail, type SendEmailInput } from '@/services/mail'
+import { deleteDraft, listMailboxes, saveDraft, sendEmail, uploadDraftFile, type DraftFile, type SendEmailInput } from '@/services/mail'
 import { listAddressBook } from '@/services/contacts'
 import { listVendorLinks } from '@/services/lines'
 import { errorMessage } from '@/lib/utils'
 import { fillSignature, LOGO_URL } from '@/lib/signature'
 import { Button, FormField, Input, Textarea } from '@/components/ui'
 import { VendorFilePicker } from './VendorFilePicker'
+import { VendorPicker } from '@/components/vendors/VendorPicker'
 import { AddressInput } from './AddressInput'
 
 export interface ComposeDraft {
@@ -41,6 +42,10 @@ export interface ComposeDraft {
   attach_routing_letter?: boolean
   /** "Can we still order these?" to a rep (Dana, Oct 21): Claude reads the reply. */
   availability_ask_id?: string | null
+  /** Files made for this email, attached from the start (Dana, Nov 9: the suggested order's items as an Excel sheet). */
+  files?: File[]
+  /** Files kept with a saved draft (Dana, Nov 9: "save this to my drafts with the order attached"). */
+  saved_files?: DraftFile[]
 }
 
 const MAX_BYTES = 20 * 1024 * 1024
@@ -67,7 +72,8 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
   const [cc, setCc] = useState((draft.cc ?? []).join(', '))
   const [subject, setSubject] = useState(draft.subject)
   const [body, setBody] = useState(draft.body)
-  const [files, setFiles] = useState<File[]>([])
+  const [files, setFiles] = useState<File[]>(draft.files ?? [])
+  const [savedFiles, setSavedFiles] = useState<DraftFile[]>(draft.saved_files ?? [])
   const [linkIds, setLinkIds] = useState<string[]>(draft.vendor_link_ids ?? [])
   const [sending, setSending] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -87,7 +93,14 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
   // billing@ for people with the Accounting tick (Dana, Nov 3: "I need to be able to send from billing@")
   const billBox = profile?.sees_accounting ? (boxes.data ?? []).find((b) => b.kind === 'accounting') : undefined
   const fromBoxes = [myBox, billBox].filter((b): b is NonNullable<typeof b> => !!b)
-  const links = useSupabaseQuery(async () => (draft.vendor_id ? (await listVendorLinks(draft.vendor_id)).filter((l) => l.storage_path) : []), [draft.vendor_id])
+  // whose files to attach from: the email's vendor, or any vendor picked (Dana, Nov 9: "attach from any vendor's files")
+  const [fileVendor, setFileVendor] = useState<{ id: string; name: string } | null>(null)
+  const [choosingVendor, setChoosingVendor] = useState(false)
+  const filesOf = fileVendor?.id ?? draft.vendor_id ?? null
+  const links = useSupabaseQuery(async () => (filesOf ? (await listVendorLinks(filesOf)).filter((l) => l.storage_path) : []), [filesOf])
+  // the names of files picked from any vendor, so their chips stay when another vendor's files are open
+  const [linkLabels, setLinkLabels] = useState<Map<string, string>>(new Map())
+  const rememberLabels = (ids: string[]) => setLinkLabels((m) => { const n = new Map(m); for (const l of links.data ?? []) if (ids.includes(l.id)) n.set(l.id, l.label); return n })
 
   useEffect(() => {
     // Replies start with the cursor above the quoted mail.
@@ -105,7 +118,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
 
   async function submit(e: FormEvent) {
     e.preventDefault()
-    const total = files.reduce((n, f) => n + f.size, 0)
+    const total = files.reduce((n, f) => n + f.size, 0) + savedFiles.reduce((n, f) => n + (f.size || 0), 0)
     if (total > MAX_BYTES) return toast.error('Attachments add up to more than 20 MB. Leave some out or send them separately.')
     setSending(true)
     try {
@@ -120,6 +133,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
         body,
         attachments: await Promise.all(files.map(async (f) => ({ name: f.name, mime: f.type || 'application/octet-stream', base64: await readBase64(f) }))),
         vendor_link_ids: linkIds,
+        draft_files: savedFiles,
         mailbox_id: draft.thread_id ? null : fromBox || null,
         draft_id: draftId,
         signature,
@@ -171,13 +185,18 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
     if (!organization || !profile) return
     setSaving(true)
     try {
+      // files from the computer (or made by VMS) are kept with the draft (Dana, Nov 9)
+      const kept = [...savedFiles, ...(await Promise.all(files.map((f) => uploadDraftFile(organization.id, f))))]
       const id = await saveDraft(organization.id, profile.id, {
         id: draftId, to: splitAddresses(to), cc: splitAddresses(cc), subject, body,
         thread_id: draft.thread_id ?? null, reply_to_email_id: draft.reply_to_email_id ?? null, forward_email_id: draft.forward_email_id ?? null,
         vendor_id: draft.vendor_id ?? null, mailbox_id: draft.thread_id ? null : fromBox || null, signature, vendor_link_ids: linkIds,
+        files: kept, availability_ask_id: draft.availability_ask_id ?? null,
       })
       setDraftId(id)
-      toast.success(files.length ? 'Saved in Drafts (attach the files again when you send)' : 'Saved in Drafts')
+      setSavedFiles(kept)
+      setFiles([])
+      toast.success(kept.length ? `Saved in Drafts with ${kept.length === 1 ? 'its file' : `its ${kept.length} files`}` : 'Saved in Drafts')
       onClose()
     } catch (err) {
       toast.error(errorMessage(err))
@@ -220,6 +239,39 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
             <AddressInput id="compose-cc" value={cc} onChange={setCc} book={book.data ?? []} placeholder="Type a name, email or company to copy someone" />
           </FormField>
           <FormField label="Subject" htmlFor="compose-subject"><Input id="compose-subject" value={subject} onChange={(e) => setSubject(e.target.value)} required /></FormField>
+          {/* the attachments sit right under the subject, in sight without scrolling (Dana, Nov 9) */}
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" size="sm" variant="secondary" onClick={() => fileInput.current?.click()} leftIcon={<Paperclip className="size-4" aria-hidden="true" />}>Attach from computer</Button>
+              {draft.routing_send_id ? <span className="text-xs font-medium text-stone-600">The routing letter is attached when it sends.</span>
+                : <label className="flex items-center gap-1.5 text-sm text-stone-700"><input type="checkbox" checked={attachLetter} onChange={(e) => setAttachLetter(e.target.checked)} className="size-4 accent-brand" />Attach our routing letter</label>}
+              <input ref={fileInput} type="file" multiple className="hidden" onChange={(e) => { setFiles((f) => [...f, ...Array.from(e.target.files ?? [])]); e.target.value = '' }} />
+            </div>
+            {files.length || savedFiles.length ? (
+              <ul className="mt-2 flex flex-wrap gap-2">
+                {savedFiles.map((f) => (
+                  <li key={f.path} className="inline-flex items-center gap-1 rounded-lg bg-stone-100 px-2 py-1 text-xs text-stone-700">
+                    {f.name}
+                    <button type="button" onClick={() => setSavedFiles((all) => all.filter((x) => x.path !== f.path))} aria-label={`Remove ${f.name}`} className="text-stone-400 hover:text-red-600"><X className="size-3.5" aria-hidden="true" /></button>
+                  </li>
+                ))}
+                {files.map((f, i) => (
+                  <li key={`${f.name}-${i}`} className="inline-flex items-center gap-1 rounded-lg bg-stone-100 px-2 py-1 text-xs text-stone-700">
+                    {f.name}
+                    <button type="button" onClick={() => setFiles((all) => all.filter((_, j) => j !== i))} aria-label={`Remove ${f.name}`} className="text-stone-400 hover:text-red-600"><X className="size-3.5" aria-hidden="true" /></button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <VendorFilePicker links={links.data ?? []} selected={linkIds} onChange={(ids) => { rememberLabels(ids); setLinkIds(ids) }} orderId={fileVendor ? null : draft.order_id} threadId={fileVendor ? null : draft.thread_id}
+              labels={linkLabels} vendorName={fileVendor?.name ?? null} onOtherVendor={() => setChoosingVendor(true)} />
+            {choosingVendor ? (
+              <div className="mt-2 flex items-center gap-2">
+                <VendorPicker className="min-w-0 flex-1" autoFocus placeholder="Whose files? Type a vendor name" onPick={(v) => { rememberLabels(linkIds); setFileVendor({ id: v.id, name: v.name }); setChoosingVendor(false) }} />
+                <Button type="button" size="sm" variant="ghost" onClick={() => setChoosingVendor(false)}>Cancel</Button>
+              </div>
+            ) : null}
+          </div>
           <FormField label="Message" htmlFor="compose-body">
             <Textarea id="compose-body" ref={bodyRef} value={body} onChange={(e) => setBody(e.target.value)} rows={12} />
           </FormField>
@@ -229,25 +281,6 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
               <Textarea id="compose-signature" value={signature} onChange={(e) => setSignature(e.target.value)} rows={Math.min(8, Math.max(3, signature.split('\n').length))} className="bg-white text-sm" />
             </div>
           </FormField>
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button type="button" size="sm" variant="secondary" onClick={() => fileInput.current?.click()} leftIcon={<Paperclip className="size-4" aria-hidden="true" />}>Attach from computer</Button>
-              {draft.routing_send_id ? <span className="text-xs font-medium text-stone-600">The routing letter is attached when it sends.</span>
-                : <label className="flex items-center gap-1.5 text-sm text-stone-700"><input type="checkbox" checked={attachLetter} onChange={(e) => setAttachLetter(e.target.checked)} className="size-4 accent-brand" />Attach our routing letter</label>}
-              <input ref={fileInput} type="file" multiple className="hidden" onChange={(e) => { setFiles((f) => [...f, ...Array.from(e.target.files ?? [])]); e.target.value = '' }} />
-            </div>
-            {files.length ? (
-              <ul className="mt-2 flex flex-wrap gap-2">
-                {files.map((f, i) => (
-                  <li key={`${f.name}-${i}`} className="inline-flex items-center gap-1 rounded-lg bg-stone-100 px-2 py-1 text-xs text-stone-700">
-                    {f.name}
-                    <button type="button" onClick={() => setFiles((all) => all.filter((_, j) => j !== i))} aria-label={`Remove ${f.name}`} className="text-stone-400 hover:text-red-600"><X className="size-3.5" aria-hidden="true" /></button>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            <VendorFilePicker links={links.data ?? []} selected={linkIds} onChange={setLinkIds} orderId={draft.order_id} threadId={draft.thread_id} />
-          </div>
         </div>
         <div className="flex items-center justify-between gap-2 border-t border-stone-200 px-4 py-3">
           <p className="text-xs text-stone-500">Sends from {fromAddress} as {profile?.full_name ?? 'you'}.</p>

@@ -9,7 +9,7 @@ When a sales report shows we need more of something and the vendor already has a
 ## How to
 1. On the order's page, set **Add-ons**: **Yes until it ships**, **No**, or **Ask the rep**. Blank means nobody has said. **Ask the rep** drafts the one-line question from orders@; set the answer when it comes back.
 2. Every sales report now shows **ON ORDER** and **NEED AFTER ORDERS** next to NEED, with the order and its ship date in **LS NOTES** ("12 on PO SLS101426, ships Nov 3"). Where the order is marked Yes, the note says "add to PO SLS101426"; otherwise "add-ons not confirmed".
-3. In the **Suggested order**, fill in the Order quantities and click **Add to PO SLS101426** (it only shows for orders marked Yes). The items go on that order as add-on lines, marked with the day, and the email opens: the add-on items in one table, the original confirmation attached as it is, and a request for one confirmation covering the whole order. If no confirmation has come back yet, the email says so and lists the original order too.
+3. In the **Suggested order**, fill in the Order quantities and click **Add to PO SLS101426** (it only shows for orders marked Yes). The items go on that order as add-on lines, marked with the day, and the email opens: the add-on items attached as an Excel spreadsheet (Vendor ID, UPC, description, quantity and cost), the original confirmation attached as it is, and a request for one confirmation covering the whole order. If no confirmation has come back yet, the email says so and the spreadsheet has the original order on a second tab.
 4. Send it. The order goes back to **Awaiting confirmation**; the confirmation check then compares the new confirmation against the whole order, add-ons included.
 
 ## Good to know

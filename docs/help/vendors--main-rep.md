@@ -1,7 +1,7 @@
 ---
-title: Pick the main rep and the alternate for a vendor
+title: Pick the main rep, the alternate and the main shipping contact for a vendor
 section: Vendors
-keywords: main rep, alternate, alternate rep, backup rep, second rep, WWD portal, not confirmed, most recent email, our rep, rep group, star, contact, customer service, who we order through, change contact
+keywords: main rep, alternate, main shipping contact, shipping contact, make main shipping contact, alternate rep, backup rep, second rep, WWD portal, not confirmed, most recent email, our rep, rep group, star, contact, customer service, who we order through, change contact
 who: Admin, managers and buyers
 ---
 The main rep is the person we place orders through. They show at the top of the vendor's page and get the follow-ups. Everyone else in **Reps & contacts** is there for customer service, shipping or billing questions.
@@ -11,7 +11,8 @@ The main rep is the person we place orders through. They show at the top of the 
 2. Find the person and click **Make main rep** on their row. They get a gold star and the **Main rep** tag, and show at the top of the page.
 3. To pick the alternate, the person to try when the main rep doesn't answer, click **Make alternate** on their row. They get the **Alternate** tag and show under the main rep at the top of the page as **Alternate:**.
 4. To take the alternate off, click **Not alternate** on their row.
-5. To change anyone's details, click their card, change it and click **Save contact**.
+5. To pick the main shipping contact, the person we go to about shipping, click **Make main shipping contact** on their row. They get the **Main shipping** tag, are listed right under the alternate, and show at the top of the page as **Main shipping:**. VMS ticks **Shipping** on them if it wasn't ticked. **Not main shipping** takes it off.
+6. To change anyone's details, click their card, change it and click **Save contact**.
 
 ## Good to know
 - When the vendor has a rep group, the rep group's rep is the main rep by itself, even when the company's own people write to us. Use **Make main rep** only to pick someone else.
@@ -19,4 +20,5 @@ The main rep is the person we place orders through. They show at the top of the 
 - With no one picked and no rep group, the main rep is the vendor's rep we emailed most recently about this vendor.
 - Someone only the Worldwide portal lists (tagged **From WWD · not confirmed**) is never the main rep, and neither is a former contact.
 - VMS never copies the alternate on the emails it sends. If the main rep doesn't answer, write to the alternate yourself: click their email at the top of the page.
-- Making the alternate the main rep takes the alternate off. Someone who leaves (former) is no longer the alternate.
+- Making the alternate the main rep takes the alternate off. Someone who leaves (former) is no longer the alternate or the main shipping contact.
+- The main shipping contact is one of the vendor's own people, not someone at the rep group.

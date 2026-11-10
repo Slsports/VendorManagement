@@ -10,8 +10,9 @@ insert into public.email_threads (organization_id, gmail_thread_id, subject, ven
 insert into public.emails (organization_id, gmail_id, thread_id, direction, from_email, to_emails, subject, body_text, received_at, vendor_id)
   values ('00000000-0000-0000-0000-000000000001', 'ft-e1', :'t1', 'in', 'rep@freight-test.example', array['orders@example.com'], 'Re: PO FTV-1', 'Yes, free freight on PO FTV-1.', now() - interval '20 days', :'v') returning id as e1 \gset
 
--- the reader found free freight for PO FTV-1: it goes on the order with the email as its source
+-- the reader found free freight for PO FTV-1; once applied (since 0325: by a person's answer on the card) it goes on the order with the email as its source
 select public.freight_promises_save(:'e1', '[{"terms":"free","po":"FTV-1","basis":"negotiated","said_by":"vendor","quote":"Yes, free freight on PO FTV-1."}]') = 1 as saved;
+select public.freight_promise_apply(id) = 'applied' as applied from public.freight_promises where email_id = :'e1';
 select free_shipping and freight_terms = 'free' and freight_terms_source = 'email' and freight_terms_source_email_id = :'e1' and free_shipping_note like 'Per Freight Test Vendor''s email%' as order_has_email_terms from public.orders where id = :'o';
 select freight_read_at is not null as email_marked_read from public.emails where id = :'e1';
 
@@ -49,9 +50,11 @@ select not exists (select 1 from public.email_drafts where id = :'draft2') as dr
 select done_at is not null and closed_how = 'vms' as task2_closed from public.tasks where id = :'task2';
 
 -- a person set the order: a differing email does not overwrite it; that person gets a task
+insert into public.email_threads (organization_id, gmail_thread_id, subject, vendor_id) values ('00000000-0000-0000-0000-000000000001', 'ft-t3', 'PO FTV-1 again', :'v') returning id as t3 \gset
 insert into public.emails (organization_id, gmail_id, thread_id, direction, from_email, to_emails, subject, body_text, received_at, vendor_id)
-  values ('00000000-0000-0000-0000-000000000001', 'ft-e2', :'t1', 'in', 'rep@freight-test.example', array['orders@example.com'], 'Re: PO FTV-1', 'Free freight on FTV-1 after all.', now(), :'v') returning id as e2 \gset
+  values ('00000000-0000-0000-0000-000000000001', 'ft-e2', :'t3', 'in', 'rep@freight-test.example', array['orders@example.com'], 'Re: PO FTV-1', 'Free freight on FTV-1 after all.', now(), :'v') returning id as e2 \gset
 select public.freight_promises_save(:'e2', '[{"terms":"free","po":"FTV-1","said_by":"vendor","quote":"Free freight on FTV-1 after all."}]') = 1 as saved_2;
+select public.freight_promise_apply(id) = 'person_set' as person_set from public.freight_promises where email_id = :'e2';
 select freight_terms = 'charged' as person_terms_stand from public.orders where id = :'o';
 select exists (select 1 from public.tasks t join public.freight_promises p on t.auto_key = 'freightterms:' || p.id where p.email_id = :'e2' and t.done_at is null) as person_gets_task;
 
@@ -60,9 +63,8 @@ insert into public.email_threads (organization_id, gmail_thread_id, subject, ven
 insert into public.emails (organization_id, gmail_id, thread_id, direction, from_email, to_emails, subject, received_at, vendor_id)
   values ('00000000-0000-0000-0000-000000000001', 'ft-e3', :'t2', 'in', 'rep@freight-test.example', array['orders@example.com'], 'Show special', now(), :'v') returning id as e3 \gset
 select public.freight_promises_save(:'e3', '[{"terms":"free_over","free_over":"1000","said_by":"vendor","quote":"Free freight over $1,000 on your show order."}]') = 1 as saved_3;
-select id as p3, task_id as task3 from public.freight_promises where email_id = :'e3' \gset
-select status = 'needs_order' as asks_which_order from public.freight_promises where id = :'p3';
-select title like 'Which order?%' and done_at is null as which_order_task from public.tasks where id = :'task3';
+select id as p3 from public.freight_promises where email_id = :'e3' \gset
+select status = 'review' as waits_for_a_person from public.freight_promises where id = :'p3';
 insert into public.orders (organization_id, vendor_id, status, po_number, order_date, est_cost) values ('00000000-0000-0000-0000-000000000001', :'v', 'open', 'FTV-2', current_date, 1500) returning id as o2 \gset
 set role authenticated;
 select set_config('request.jwt.claims', json_build_object('sub', :'admin_id', 'role', 'authenticated')::text, false) is not null as as_admin;
@@ -70,7 +72,6 @@ select public.freight_promise_set_order(:'p3', :'o2') = 'applied' as picked;
 reset role;
 select set_config('request.jwt.claims', '', false) is not null as claims_cleared_2;
 select free_over = 1000 and free_shipping and freight_terms_source = 'person' and freight_terms_source_email_id = :'e3' as picked_order_has_terms from public.orders where id = :'o2';
-select done_at is not null as which_order_task_done from public.tasks where id = :'task3';
 
 -- the queue reads only shared vendor mail about freight
 select count(*) = 0 as read_mail_not_queued from public.mail_freight_queue('00000000-0000-0000-0000-000000000001', 50) q where q.email_id in (:'e1', :'e2', :'e3');
@@ -78,9 +79,10 @@ select count(*) = 0 as read_mail_not_queued from public.mail_freight_queue('0000
 -- clean up
 delete from public.tasks where vendor_id = :'v';
 delete from public.order_checks where vendor_id = :'v';
+delete from public.review_items where entity_id in (select id from public.freight_promises where vendor_id = :'v');
 delete from public.freight_promises where vendor_id = :'v';
 delete from public.email_drafts where vendor_id = :'v';
-delete from public.email_threads where id in (:'t1', :'t2');
+delete from public.email_threads where id in (:'t1', :'t2', :'t3');
 delete from public.vendor_links where vendor_id = :'v';
 delete from public.orders where vendor_id = :'v';
 delete from public.vendors where id = :'v';

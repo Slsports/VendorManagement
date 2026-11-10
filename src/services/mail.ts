@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import type { Email, EmailAttachment, EmailSenderKind, EmailThreadStatus, MailAccount, Mailbox, MailView, MailWatch, VendorLinkKind } from '@/types'
 import { TEST_LOGIN_PATTERN } from '@/services/reviews'
-import type { Database } from '@/types/database'
+import type { Database, Json } from '@/types/database'
 
 export interface NamedRef { id: string; name: string }
 export interface VendorRef extends NamedRef { is_active: boolean; parent_company?: string | null; aliases?: string[] | null }
@@ -317,6 +317,8 @@ export interface SendEmailInput {
   body: string
   attachments?: { name: string; mime: string; base64: string }[]
   vendor_link_ids?: string[]
+  /** Files saved with a draft (Dana, Nov 9): attached from storage when it sends. */
+  draft_files?: DraftFile[]
   /** A new email from my own mailbox instead of orders@ (Dana, Oct 11). */
   mailbox_id?: string | null
   /** Sent from Mail › Drafts: the draft goes away once it is sent. */
@@ -627,7 +629,7 @@ export interface DraftRow {
   id: string; owner_id: string; created_by: string | null; to_emails: string[]; cc_emails: string[]; subject: string; body: string
   thread_id: string | null; reply_to_email_id: string | null; forward_email_id: string | null; vendor_id: string | null; mailbox_id: string | null
   note: string | null; gmail_draft_id: string | null; signature: string | null; routing_send_id: string | null; confirmation_id: string | null; updated_at: string
-  order_id: string | null; attach_routing_letter: boolean; vendor_link_ids: string[]
+  order_id: string | null; attach_routing_letter: boolean; vendor_link_ids: string[]; files: Json; availability_ask_id: string | null
   vendor: { id: string; name: string } | null; owner: { full_name: string } | null
 }
 
@@ -648,8 +650,21 @@ export async function listDrafts(organizationId: string, ownerId: string | null)
 }
 
 /** Save (or update) a draft from the compose window. Returns its id. */
-export async function saveDraft(organizationId: string, ownerId: string, d: { id?: string | null; to: string[]; cc: string[]; subject: string; body: string; thread_id?: string | null; reply_to_email_id?: string | null; forward_email_id?: string | null; vendor_id?: string | null; mailbox_id?: string | null; signature?: string | null; vendor_link_ids?: string[] }): Promise<string> {
-  const row = { organization_id: organizationId, owner_id: ownerId, to_emails: d.to, cc_emails: d.cc, subject: d.subject, body: d.body, signature: d.signature ?? null, thread_id: d.thread_id ?? null, reply_to_email_id: d.reply_to_email_id ?? null, forward_email_id: d.forward_email_id ?? null, vendor_id: d.vendor_id ?? null, mailbox_id: d.mailbox_id ?? null, ...(d.vendor_link_ids ? { vendor_link_ids: d.vendor_link_ids } : {}) }
+/** A file kept with a draft (Dana, Nov 9: "save this to my drafts with the order attached"). */
+export interface DraftFile { name: string; mime: string; path: string; size: number }
+
+/** Keep a file from the computer (or one VMS made) with a draft: stored under the organization's drafts folder. */
+export async function uploadDraftFile(organizationId: string, file: File): Promise<DraftFile> {
+  const path = `${organizationId}/drafts/${crypto.randomUUID()}-${file.name.replace(/[^A-Za-z0-9._-]+/g, '_')}`
+  const { error } = await supabase.storage.from('vendor-files').upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false })
+  if (error) throw error
+  return { name: file.name, mime: file.type || 'application/octet-stream', path, size: file.size }
+}
+
+export const draftFilesOf = (files: unknown): DraftFile[] => (Array.isArray(files) ? files.filter((f): f is DraftFile => !!f && typeof f === 'object' && typeof (f as DraftFile).path === 'string') : [])
+
+export async function saveDraft(organizationId: string, ownerId: string, d: { id?: string | null; to: string[]; cc: string[]; subject: string; body: string; thread_id?: string | null; reply_to_email_id?: string | null; forward_email_id?: string | null; vendor_id?: string | null; mailbox_id?: string | null; signature?: string | null; vendor_link_ids?: string[]; files?: DraftFile[]; availability_ask_id?: string | null }): Promise<string> {
+  const row = { organization_id: organizationId, owner_id: ownerId, to_emails: d.to, cc_emails: d.cc, subject: d.subject, body: d.body, signature: d.signature ?? null, thread_id: d.thread_id ?? null, reply_to_email_id: d.reply_to_email_id ?? null, forward_email_id: d.forward_email_id ?? null, vendor_id: d.vendor_id ?? null, mailbox_id: d.mailbox_id ?? null, ...(d.vendor_link_ids ? { vendor_link_ids: d.vendor_link_ids } : {}), ...(d.files ? { files: d.files as unknown as Json } : {}), ...(d.availability_ask_id !== undefined ? { availability_ask_id: d.availability_ask_id } : {}) }
   if (d.id) {
     const { error } = await supabase.from('email_drafts').update(row).eq('id', d.id)
     if (error) throw error
