@@ -4360,3 +4360,5 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
 - Nov 10: Dana made the key "vms-personal" in "Dana's Individual Org" (never expires) and saved it in Supabase as
   ANTHROPIC_API_KEY_PERSONAL (12:08 pm). Claude calls kept succeeding afterwards. Check: that org's "Spend this month" in the
   Claude Console should start rising from $0.00 (credit $109.49 at setup).
+- Nov 10 (Dana's Console screenshot, ~12:25 pm): "Dana's Individual Org" spend this month $0.28, credit $109.49 -> $109.21.
+  VMS is using the personal key first. Working.
