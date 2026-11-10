@@ -34,9 +34,10 @@ export function VendorSnoparkSection({ vendorId }: { vendorId: string }) {
     try { window.open(await signedFileUrl(path), '_blank', 'noopener') } catch (e) { toast.error(errorMessage(e)) }
   }
   if (!q.data) return null
-  const seasons = [...new Set(q.data.files.map((f) => f.season_label!))].sort().reverse()
+  // only Sno-Park seasons (2026-2027), not other season words older files carry
+  const seasons = [...new Set(q.data.files.map((f) => f.season_label!).filter((l) => /^\d{4}-\d{4}$/.test(l)))].sort().reverse()
   return (
-    <section className="rounded-2xl border border-stone-200 bg-white p-5">
+    <section className="rounded-2xl border border-stone-200 bg-white p-5 lg:col-span-3">
       <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500"><Snowflake className="size-4" aria-hidden="true" />Sno-Park passes</h2>
       <p className="mt-2 text-sm text-stone-700">Season {q.data.season.label} <Badge tone={q.data.season.status === 'open' ? 'success' : 'neutral'}>{q.data.season.status === 'open' ? 'Open' : 'Closed'}</Badge> · {q.data.onHand} book{q.data.onHand === 1 ? '' : 's'} on hand.</p>
       <Link to={ROUTES.snopark} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-brand px-3 py-2 text-sm font-medium text-brand-foreground shadow-sm hover:bg-brand-hover"><Snowflake className="size-4" aria-hidden="true" />Open the permit submission page</Link>
@@ -53,7 +54,7 @@ export function VendorSnoparkSection({ vendorId }: { vendorId: string }) {
                   return (
                     <div key={f.label} className="rounded-xl border border-stone-200 p-3">
                       <p className="flex items-center gap-1.5 text-sm font-medium text-stone-800"><Folder className="size-4 text-stone-400" aria-hidden="true" />{f.label} <span className="text-xs font-normal text-stone-500">({mine.length})</span></p>
-                      {mine.length ? <ul className="mt-1 space-y-0.5 text-xs">{mine.map((x) => <li key={x.id}><button type="button" onClick={() => open(x.storage_path)} className="text-left text-brand hover:underline">{x.file_name ?? x.label}</button></li>)}</ul> : <p className="mt-1 text-xs text-stone-400">Empty</p>}
+                      {mine.length ? <ul className="mt-1 space-y-0.5 text-xs">{mine.map((x) => <li key={x.id} className="truncate"><button type="button" onClick={() => open(x.storage_path)} title={x.file_name ?? x.label} className="text-left text-brand hover:underline">{x.file_name ?? x.label}</button></li>)}</ul> : <p className="mt-1 text-xs text-stone-400">Empty</p>}
                     </div>
                   )
                 })}
