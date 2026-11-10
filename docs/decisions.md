@@ -4276,5 +4276,6 @@ VMS): every conversation in a staff mailbox with a vendor on it, either directio
 ## Nov 10, 2026 — A staff conversation handled through orders@ is handled (0333)
 Dana: "check his unanswered mail against the orders email. He may have handled something through orders@ that started in
 his jarrett@." When orders@ sends a reply in a conversation with the same subject (Re:/Fwd: aside) and vendor as a staff
-mailbox conversation waiting on us, that conversation is marked handled, from now on and in a back-check. Two of Jarrett's
-were left alone because orders@ had not finished them either (Gold Medal invoice, Knockaround order information).
+mailbox conversation waiting on us, that conversation is marked handled, from now on and in a back-check. The back-check
+handled 12 of Jarrett's (Rod's Power, Salter's, Dick's Mountain Tackle, Hendrix invoice 596984, Nike socks, Baffin, Swimsuit
+Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ conversation.
