@@ -4251,3 +4251,11 @@ payee's name off a Bill.com notice on Oct 16; now "Bill.com"), and Mia Burton (m
 John Burton's wife) had been sorted on Oct 19 as a Maryellen Reynolds rep from her "PLANET COTTON" email, which put her on
 Planet Cotton's contacts and the cc of the (never sent) shipment request; she is now "not a vendor". Nothing was ever sent to
 her by VMS.
+
+## Nov 10, 2026 — Two sorter checks (0331); Dana on the 120-day window
+Dana ("go"): the sender sorter can now answer "staff" (time cards, schedules, Paychex, pay, applications), stored as ours with
+no card, never a vendor or rep; and the accounting contact proposer gives a contact a person's name only when most of that
+address's mail carries it, so a relaying service (Bill.com) gets the company alone. Back-check in the migration drops person
+names that a minority of the contact's mail carried. Dana on the old 120-day Bill.com window: "anything that only has you go
+back 120 days for payments will obviously not see any of the old invoices so that was not logical. It just created more work
+for me." Removed in 0330.
