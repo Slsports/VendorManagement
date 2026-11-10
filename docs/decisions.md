@@ -4299,6 +4299,14 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
 - Nov 10, Dana: "the 'ask vms' button that is on the vendor pages. I want it on all the pages so the staff can get quick
   answers." Ask VMS is now in the top bar of every page, next to Help (from a vendor or order page the chat knows which
   one). It shows for whoever has Ask VMS ticked in Settings › Users (today: Jarrett) and for admins.
+- Nov 10, Dana: "turn on Ask VMS for Trevor". Done (Settings › Users tick); Jarrett and Trevor have it, admins always do.
+- Nov 10, Dana: Claude plan credits for VMS's Claude use (VMS spent $163.20 in October, $87.35 Nov 1-10). Her personal Max 5x
+  ($100/month API credit) is now linked to "Dana's Individual Org" (the only organization it offered; first $100 added Nov 10,
+  next Nov 11). VMS's key is in the "Shaver Lake Sports Inc" Console org. Next: link the business Team account's credit
+  ($100 Premium + $20 x 2 Standard = $140/month) to "Shaver Lake Sports Inc"; then, with Dana's go, VMS uses a second key
+  from "Dana's Individual Org" for some work (e.g. Ask VMS, bulk reading), falling back to the main key when it runs out.
+- Nov 10 (Dana's screenshot of the business Team billing): the Team credit is already linked to "Shaver Lake Sports Inc"
+  (since Oct 14) and is $60/month, not $140: 3 seats, $75/month plan total, which matches three Standard seats at $20 each.
 
 ## Nov 10, 2026 — Sno-Park receiving, packets and the season-end check (migration 0334, function snopark v3)
 - Dana, Nov 10, on the final 2024-25 packet (form plus photocopies of the book covers): books are numbered "DB 543" (day) and
