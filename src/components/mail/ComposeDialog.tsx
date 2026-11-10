@@ -10,6 +10,7 @@ import { errorMessage } from '@/lib/utils'
 import { fillSignature, LOGO_URL } from '@/lib/signature'
 import { Button, FormField, Input, Textarea } from '@/components/ui'
 import { VendorFilePicker } from './VendorFilePicker'
+import { VendorPicker } from '@/components/vendors/VendorPicker'
 import { AddressInput } from './AddressInput'
 
 export interface ComposeDraft {
@@ -92,7 +93,14 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
   // billing@ for people with the Accounting tick (Dana, Nov 3: "I need to be able to send from billing@")
   const billBox = profile?.sees_accounting ? (boxes.data ?? []).find((b) => b.kind === 'accounting') : undefined
   const fromBoxes = [myBox, billBox].filter((b): b is NonNullable<typeof b> => !!b)
-  const links = useSupabaseQuery(async () => (draft.vendor_id ? (await listVendorLinks(draft.vendor_id)).filter((l) => l.storage_path) : []), [draft.vendor_id])
+  // whose files to attach from: the email's vendor, or any vendor picked (Dana, Nov 9: "attach from any vendor's files")
+  const [fileVendor, setFileVendor] = useState<{ id: string; name: string } | null>(null)
+  const [choosingVendor, setChoosingVendor] = useState(false)
+  const filesOf = fileVendor?.id ?? draft.vendor_id ?? null
+  const links = useSupabaseQuery(async () => (filesOf ? (await listVendorLinks(filesOf)).filter((l) => l.storage_path) : []), [filesOf])
+  // the names of files picked from any vendor, so their chips stay when another vendor's files are open
+  const [linkLabels, setLinkLabels] = useState<Map<string, string>>(new Map())
+  const rememberLabels = (ids: string[]) => setLinkLabels((m) => { const n = new Map(m); for (const l of links.data ?? []) if (ids.includes(l.id)) n.set(l.id, l.label); return n })
 
   useEffect(() => {
     // Replies start with the cursor above the quoted mail.
@@ -255,7 +263,14 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
                 ))}
               </ul>
             ) : null}
-            <VendorFilePicker links={links.data ?? []} selected={linkIds} onChange={setLinkIds} orderId={draft.order_id} threadId={draft.thread_id} />
+            <VendorFilePicker links={links.data ?? []} selected={linkIds} onChange={(ids) => { rememberLabels(ids); setLinkIds(ids) }} orderId={fileVendor ? null : draft.order_id} threadId={fileVendor ? null : draft.thread_id}
+              labels={linkLabels} vendorName={fileVendor?.name ?? null} onOtherVendor={() => setChoosingVendor(true)} />
+            {choosingVendor ? (
+              <div className="mt-2 flex items-center gap-2">
+                <VendorPicker className="min-w-0 flex-1" autoFocus placeholder="Whose files? Type a vendor name" onPick={(v) => { rememberLabels(linkIds); setFileVendor({ id: v.id, name: v.name }); setChoosingVendor(false) }} />
+                <Button type="button" size="sm" variant="ghost" onClick={() => setChoosingVendor(false)}>Cancel</Button>
+              </div>
+            ) : null}
           </div>
           <FormField label="Message" htmlFor="compose-body">
             <Textarea id="compose-body" ref={bodyRef} value={body} onChange={(e) => setBody(e.target.value)} rows={12} />

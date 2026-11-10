@@ -289,7 +289,8 @@ export default function VendorDetailPage() {
         <VendorLightspeedBox vendor={v} canEdit={canEdit} onChange={() => void vendorQ.refetch()} />
 
         <VendorOrderingPanel vendor={{ id: v.id, name: v.name, aliases: v.aliases }} assignedBuyerId={v.assigned_buyer_id} canEdit={canEdit} windows={v.vendor_order_windows} />
-        <VendorDocumentsSection vendorId={v.id} vendorName={v.name} organizationId={v.organization_id} userId={profile?.id ?? null} canEdit={canEdit} />
+        <VendorDocumentsSection vendorId={v.id} vendorName={v.name} organizationId={v.organization_id} userId={profile?.id ?? null} canEdit={canEdit}
+          onEmailFile={(l) => setDraft({ to: ourReps(v).map((p) => p.email).filter((e): e is string => !!e).slice(0, 1), subject: l.label, body: `Hi,\n\nAttached is ${l.label}.\n\nThank you,`, vendor_id: v.id, order_id: l.order_id, vendor_link_ids: [l.id], note: `Attaching ${l.file_name ?? l.label}. It goes to our main rep; change the To line if it's for someone else.` })} />
         <VendorMailSection vendorId={v.id} organizationId={v.organization_id} onNewEmail={canEdit ? () => compose(suggestions[0] ? [suggestions[0].email] : []) : undefined} />
         <VendorRepGroupCard vendorId={v.id} group={v.rep_groups} />
 

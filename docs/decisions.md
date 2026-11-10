@@ -4211,3 +4211,7 @@ remembers the choice per person, like the dashboard boxes.
   an ask-the-rep draft keeps its link so the reply is still read. "I cannot attach anything from my computer or phone": the
   Attach from computer button was at the bottom of the email box under the signature; it now sits right under Subject.
   Why it didn't work for her is not confirmed yet (asked for a screenshot if it still doesn't).
+- Nov 9, Dana ("yes both"): attaching a vendor's documents without downloading and uploading. (1) Email it on every file
+  in a vendor's Documents: a new email to our main rep with the file attached, its name as the subject. (2) Attach from any
+  vendor's files in every email box: pick a vendor, open their folders, tick files; files from several vendors can go in
+  one email (an email with no vendor too).

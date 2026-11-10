@@ -31,7 +31,9 @@ const MAX_MB = MAX_UPLOAD_MB
  * Invoices…) with a year folder inside. Drop files on a folder or use Upload; files from email land in the
  * right folder on their own. Move puts a file in another folder or year.
  */
-export function VendorDocumentsSection({ vendorId, vendorName, organizationId, userId, canEdit }: { vendorId: string; vendorName: string; organizationId: string; userId: string | null; canEdit: boolean }) {
+export function VendorDocumentsSection({ vendorId, vendorName, organizationId, userId, canEdit, onEmailFile }: { vendorId: string; vendorName: string; organizationId: string; userId: string | null; canEdit: boolean
+  /** Email it (Dana, Nov 9): a new email with this file attached, no download and upload. */
+  onEmailFile?: (l: VendorLinkRow) => void }) {
   // Paid and In Bill.com show only to people with the Accounting tick (Dana: Trevor and Jarrett never see paid tags)
   const seesAccounting = !!useAuth().profile?.sees_accounting
   const q = useSupabaseQuery(() => listVendorLinks(vendorId), [vendorId])
@@ -210,6 +212,7 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
         {/* the actions right under the name, in words, at any width (Dana, Oct 10) */}
         <div className="mt-1 flex flex-wrap items-center gap-x-1 text-xs">
           <button type="button" onClick={() => open(l)} aria-label={`Open ${l.label}`} className="rounded px-1.5 py-0.5 font-medium text-brand hover:bg-stone-100">Open</button>
+          {canEdit && onEmailFile && l.storage_path ? <button type="button" onClick={() => onEmailFile(l)} aria-label={`Email ${l.label}`} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900" title="A new email with this file attached"><Mail className="size-3.5" aria-hidden="true" />Email it</button> : null}
           {l.storage_path ? <button type="button" onClick={() => void download(l)} aria-label={`Download ${l.label}`} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-stone-600 hover:bg-stone-100 hover:text-stone-900"><Download className="size-3.5" aria-hidden="true" />Download</button> : null}
           {canEdit ? (<>
             {l.kind === 'proof' || l.kind === 'approved_proof' ? (
