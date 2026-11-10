@@ -218,3 +218,16 @@ export async function updateBookNumbers(bookId: string, bookNumber: string, firs
   const { error } = await supabase.rpc('snopark_book_update', { p_book: bookId, p_book_number: bookNumber, p_first: first, p_last: last })
   if (error) throw error
 }
+
+/** The box was entered in Lightspeed by hand before VMS received it: recorded without a second LS PO. */
+export async function enteredByHand(shipmentId: string, note: string | null): Promise<void> {
+  const { error } = await supabase.rpc('snopark_shipment_entered_by_hand', { p_shipment: shipmentId, p_note: note })
+  if (error) throw error
+}
+
+/** The State's orders this season, for the receiving picker (newest first). */
+export async function seasonOrders(vendorId: string, seasonLabel: string): Promise<{ id: string; po_number: string | null; order_date: string | null; description: string | null; status: string }[]> {
+  const { data, error } = await supabase.from('orders').select('id, po_number, order_date, description, status').eq('vendor_id', vendorId).gte('order_date', `${seasonLabel.slice(0, 4)}-07-01`).order('order_date', { ascending: false }).limit(20)
+  if (error) throw error
+  return data ?? []
+}

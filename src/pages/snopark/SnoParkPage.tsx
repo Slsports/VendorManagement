@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useLiveTable } from '@/hooks/useLiveTable'
 import { useTableSort } from '@/hooks/useTableSort'
-import { deleteBook, getSeason, lsSold, openSeasonByHand, seasonCheck, startShipment, updateBookNumbers, uploadSeasonForm, type SeasonView } from '@/services/snopark'
+import { deleteBook, getSeason, lsSold, openSeasonByHand, seasonCheck, seasonOrders, startShipment, updateBookNumbers, uploadSeasonForm, type SeasonView } from '@/services/snopark'
 import { ROUTES } from '@/lib/constants'
 import { shortDate } from '@/lib/freight'
 import { errorMessage } from '@/lib/utils'
@@ -15,7 +15,7 @@ import { BackLink } from '@/components/shared/BackLink'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Modal } from '@/components/shared/Modal'
 import { SortHeader } from '@/components/shared/SortHeader'
-import { Alert, Badge, Button, FormField, Input, Spinner } from '@/components/ui'
+import { Alert, Badge, Button, FormField, Input, Select, Spinner } from '@/components/ui'
 import type { SnoparkBook } from '@/types'
 
 /**
@@ -186,25 +186,35 @@ export default function SnoParkPage() {
           </section>
         </div>
       )}
-      {receiving && view ? <ReceiveBooks seasonId={view.season.id} onClose={() => setReceiving(false)} onDone={(id) => { setReceiving(false); navigate(`${ROUTES.snoparkReceive}/${id}`) }} /> : null}
+      {receiving && view ? <ReceiveBooks view={view} onClose={() => setReceiving(false)} onDone={(id) => { setReceiving(false); navigate(`${ROUTES.snoparkReceive}/${id}`) }} /> : null}
       {editing ? <EditBook book={editing} onClose={() => setEditing(null)} onDone={() => { setEditing(null); void q.refetch() }} /> : null}
       {opening ? <OpenSeason onClose={() => setOpening(false)} onDone={() => { setOpening(false); void q.refetch() }} /> : null}
     </div>
   )
 }
 
-function ReceiveBooks({ seasonId, onClose, onDone }: { seasonId: string; onClose: () => void; onDone: (id: string) => void }) {
+function ReceiveBooks({ view, onClose, onDone }: { view: SeasonView; onClose: () => void; onDone: (id: string) => void }) {
   const [received, setReceived] = useState(() => new Date().toISOString().slice(0, 10))
+  const [orderId, setOrderId] = useState('')
+  const orders = useSupabaseQuery(async () => (view.vendor ? seasonOrders(view.vendor.id, view.season.label) : []), [view.vendor?.id, view.season.label])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   async function submit() {
     setBusy(true); setError(null)
-    try { onDone(await startShipment(seasonId, received, null)) } catch (err) { setError(errorMessage(err)) } finally { setBusy(false) }
+    try { onDone(await startShipment(view.season.id, received, orderId || null)) } catch (err) { setError(errorMessage(err)) } finally { setBusy(false) }
   }
   return (
     <Modal title="Receive books" submitLabel={busy ? 'Opening…' : 'Start'} busy={busy} onSubmit={submit} onClose={onClose}>
       <p className="text-sm text-stone-600">A box from the State. Next: scan the sheet that came in it, enter every book, and VMS checks the box against the sheet before the books go into Lightspeed.</p>
-      <FormField label="Received on" htmlFor="sp-received"><Input id="sp-received" type="date" value={received} onChange={(e) => setReceived(e.target.value)} required /></FormField>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <FormField label="Received on" htmlFor="sp-received"><Input id="sp-received" type="date" value={received} onChange={(e) => setReceived(e.target.value)} required /></FormField>
+        <FormField label="For the order" htmlFor="sp-order" hint="The order to the State this box answers">
+          <Select id="sp-order" value={orderId} onChange={(e) => setOrderId(e.target.value)}>
+            <option value="">{orders.isLoading ? 'Loading…' : orders.data?.length ? 'Pick the order' : 'No order on file this season'}</option>
+            {(orders.data ?? []).map((o) => <option key={o.id} value={o.id}>{o.order_date ? shortDate(o.order_date) : ''} {o.po_number ?? ''}{o.description ? ` · ${o.description.slice(0, 60)}` : ''}{o.status === 'received' ? ' (received)' : ''}</option>)}
+          </Select>
+        </FormField>
+      </div>
       {error ? <Alert variant="error">{error}</Alert> : null}
     </Modal>
   )

@@ -4360,3 +4360,6 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
 - Nov 10: Dana made the key "vms-personal" in "Dana's Individual Org" (never expires) and saved it in Supabase as
   ANTHROPIC_API_KEY_PERSONAL (12:08 pm). Claude calls kept succeeding afterwards. Check: that org's "Spend this month" in the
   Claude Console should start rising from $0.00 (credit $109.49 at setup).
+- Dana, Nov 10: "We do have an order that has already been received … It has already been entered in LS." Migration
+  0335: **Already in Lightspeed** on the receiving page (snopark_shipment_entered_by_hand) runs the same check and records
+  the box without a second LS PO; Receive books now asks which order the box answers (orders this season, received ones too).
