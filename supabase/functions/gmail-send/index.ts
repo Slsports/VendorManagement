@@ -23,6 +23,7 @@ interface SendRequest {
   body: string
   attachments?: MimeAttachment[]     // from the computer, base64
   vendor_link_ids?: string[]         // files from the vendor's Links & files
+  draft_files?: { name: string; mime?: string | null; path: string }[] // files saved with a draft (Dana, Nov 9), under <org>/drafts/
   mailbox_id?: string | null         // a new email from my own mailbox instead of orders@
   draft_id?: string | null           // sent from Mail › Drafts: the draft (and its Gmail copy) goes away
   signature?: string | null          // as shown (and maybe changed) in the compose window; left out = the person's usual one
@@ -110,6 +111,13 @@ Deno.serve(async (req) => {
         if (error || !blob) throw new Error(`Could not read ${l.file_name}: ${error?.message ?? 'missing'}`)
         attachments.push({ name: l.file_name ?? 'file', mime: l.mime_type ?? blob.type ?? 'application/octet-stream', base64: bytesToBase64(new Uint8Array(await blob.arrayBuffer())) })
       }
+    }
+    // Files saved with a draft (Dana, Nov 9: "save this to my drafts with the order attached"): only from this organization's drafts folder
+    for (const f of r.draft_files ?? []) {
+      if (typeof f?.path !== 'string' || !f.path.startsWith(`${me.organization_id}/drafts/`) || f.path.includes('..')) continue
+      const { data: blob, error } = await db.storage.from('vendor-files').download(f.path)
+      if (error || !blob) throw new Error(`Could not read ${f.name}: ${error?.message ?? 'missing'}`)
+      attachments.push({ name: f.name || 'file', mime: f.mime || blob.type || 'application/octet-stream', base64: bytesToBase64(new Uint8Array(await blob.arrayBuffer())) })
     }
     // The freight routing letter (Dana, Oct 13): the version this send is for, or the current one.
     let routingSend: { id: string; letter_id: string } | null = null

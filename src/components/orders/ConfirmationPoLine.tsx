@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { CircleCheck, Mail } from 'lucide-react'
-import { getDraft, type DraftRow } from '@/services/mail'
+import { getDraft, type DraftRow, draftFilesOf } from '@/services/mail'
 import type { OrderCheckRow } from '@/services/orderChecks'
 import { poNorm, poState } from '@/lib/poCheck'
 import { matchLink } from '@/lib/mailSearch'
@@ -79,7 +79,7 @@ export function ConfirmationPoLine({ c, onChanged }: { c: OrderCheckRow; onChang
       </Alert>
       {draft ? (
         <ComposeDialog
-          draft={{ draft_id: draft.id, order_id: draft.order_id, vendor_link_ids: draft.vendor_link_ids, to: draft.to_emails, cc: draft.cc_emails, subject: draft.subject, body: draft.body, thread_id: draft.thread_id, reply_to_email_id: draft.reply_to_email_id, forward_email_id: draft.forward_email_id, vendor_id: draft.vendor_id, mailbox_id: draft.mailbox_id, note: draft.note ?? undefined, signature: draft.signature, routing_send_id: draft.routing_send_id, confirmation_id: draft.confirmation_id }}
+          draft={{ draft_id: draft.id, order_id: draft.order_id, vendor_link_ids: draft.vendor_link_ids, saved_files: draftFilesOf(draft.files), to: draft.to_emails, cc: draft.cc_emails, subject: draft.subject, body: draft.body, thread_id: draft.thread_id, reply_to_email_id: draft.reply_to_email_id, forward_email_id: draft.forward_email_id, vendor_id: draft.vendor_id, mailbox_id: draft.mailbox_id, note: draft.note ?? undefined, signature: draft.signature, routing_send_id: draft.routing_send_id, confirmation_id: draft.confirmation_id }}
           onClose={() => { setDraft(null); onChanged() }}
           onSent={() => { toast.success('Sent'); onChanged() }} />
       ) : null}

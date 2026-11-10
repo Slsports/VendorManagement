@@ -4,7 +4,7 @@ import { availabilityEmail } from './availability'
 describe('ask the rep', () => {
   it('lists every item with its Vendor ID and quantity', () => {
     const m = availabilityEmail('LAZY ONE', [{ vid: 'PJ123', name: 'Bear Bellies PJ', qty: 6 }, { vid: null, name: 'Slipper', qty: 0 }])
-    expect(m.subject).toContain('LAZY ONE')
+    expect(m.subject).toBe('LAZY ONE reorder for Shaver Lake Sports')
     expect(m.body).toContain('PJ123')
     expect(m.body).toContain("(we'd order 6)")
     expect(m.body).toContain('(no Vendor ID)')

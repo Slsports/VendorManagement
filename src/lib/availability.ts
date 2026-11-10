@@ -7,7 +7,8 @@ export interface AskItem { vid: string | null; name: string | null; qty: number 
 export function availabilityEmail(vendorName: string, items: AskItem[], attached = false): { subject: string; body: string } {
   const rows = items.map((i) => `${(i.vid || '(no Vendor ID)').padEnd(14)}  ${(i.name || '').slice(0, 60)}${i.qty ? `  (we'd order ${i.qty})` : ''}`)
   return {
-    subject: `Can we still order these? ${vendorName} reorder for Shaver Lake Sports`,
+    // Dana, Nov 9: "take out the 'Can we still order these?' … It should just say: Paricon reorder for Shaver Lake Sports"
+    subject: `${vendorName} reorder for Shaver Lake Sports`,
     body: [
       'Hi,',
       '',

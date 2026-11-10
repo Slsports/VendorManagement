@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import { FileText, Inbox, Paperclip, Send, Trash2, X } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { deleteDraft, listMailboxes, saveDraft, sendEmail, type SendEmailInput } from '@/services/mail'
+import { deleteDraft, listMailboxes, saveDraft, sendEmail, uploadDraftFile, type DraftFile, type SendEmailInput } from '@/services/mail'
 import { listAddressBook } from '@/services/contacts'
 import { listVendorLinks } from '@/services/lines'
 import { errorMessage } from '@/lib/utils'
@@ -43,6 +43,8 @@ export interface ComposeDraft {
   availability_ask_id?: string | null
   /** Files made for this email, attached from the start (Dana, Nov 9: the suggested order's items as an Excel sheet). */
   files?: File[]
+  /** Files kept with a saved draft (Dana, Nov 9: "save this to my drafts with the order attached"). */
+  saved_files?: DraftFile[]
 }
 
 const MAX_BYTES = 20 * 1024 * 1024
@@ -70,6 +72,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
   const [subject, setSubject] = useState(draft.subject)
   const [body, setBody] = useState(draft.body)
   const [files, setFiles] = useState<File[]>(draft.files ?? [])
+  const [savedFiles, setSavedFiles] = useState<DraftFile[]>(draft.saved_files ?? [])
   const [linkIds, setLinkIds] = useState<string[]>(draft.vendor_link_ids ?? [])
   const [sending, setSending] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -107,7 +110,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
 
   async function submit(e: FormEvent) {
     e.preventDefault()
-    const total = files.reduce((n, f) => n + f.size, 0)
+    const total = files.reduce((n, f) => n + f.size, 0) + savedFiles.reduce((n, f) => n + (f.size || 0), 0)
     if (total > MAX_BYTES) return toast.error('Attachments add up to more than 20 MB. Leave some out or send them separately.')
     setSending(true)
     try {
@@ -122,6 +125,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
         body,
         attachments: await Promise.all(files.map(async (f) => ({ name: f.name, mime: f.type || 'application/octet-stream', base64: await readBase64(f) }))),
         vendor_link_ids: linkIds,
+        draft_files: savedFiles,
         mailbox_id: draft.thread_id ? null : fromBox || null,
         draft_id: draftId,
         signature,
@@ -173,13 +177,18 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
     if (!organization || !profile) return
     setSaving(true)
     try {
+      // files from the computer (or made by VMS) are kept with the draft (Dana, Nov 9)
+      const kept = [...savedFiles, ...(await Promise.all(files.map((f) => uploadDraftFile(organization.id, f))))]
       const id = await saveDraft(organization.id, profile.id, {
         id: draftId, to: splitAddresses(to), cc: splitAddresses(cc), subject, body,
         thread_id: draft.thread_id ?? null, reply_to_email_id: draft.reply_to_email_id ?? null, forward_email_id: draft.forward_email_id ?? null,
         vendor_id: draft.vendor_id ?? null, mailbox_id: draft.thread_id ? null : fromBox || null, signature, vendor_link_ids: linkIds,
+        files: kept, availability_ask_id: draft.availability_ask_id ?? null,
       })
       setDraftId(id)
-      toast.success(files.length ? 'Saved in Drafts (attach the files again when you send)' : 'Saved in Drafts')
+      setSavedFiles(kept)
+      setFiles([])
+      toast.success(kept.length ? `Saved in Drafts with ${kept.length === 1 ? 'its file' : `its ${kept.length} files`}` : 'Saved in Drafts')
       onClose()
     } catch (err) {
       toast.error(errorMessage(err))
@@ -222,15 +231,7 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
             <AddressInput id="compose-cc" value={cc} onChange={setCc} book={book.data ?? []} placeholder="Type a name, email or company to copy someone" />
           </FormField>
           <FormField label="Subject" htmlFor="compose-subject"><Input id="compose-subject" value={subject} onChange={(e) => setSubject(e.target.value)} required /></FormField>
-          <FormField label="Message" htmlFor="compose-body">
-            <Textarea id="compose-body" ref={bodyRef} value={body} onChange={(e) => setBody(e.target.value)} rows={12} />
-          </FormField>
-          <FormField label="Signature" htmlFor="compose-signature" hint="Goes under your message, with the logo. Changes here are for this email only.">
-            <div className="rounded-lg border border-stone-200 bg-stone-50 p-2">
-              {signature.trim() ? <img src={LOGO_URL.replace(/^https:\/\/[^/]+/, '')} alt="Shaver Lake Sports" width={240} height={31} className="mb-1.5 h-auto max-w-[240px]" /> : null}
-              <Textarea id="compose-signature" value={signature} onChange={(e) => setSignature(e.target.value)} rows={Math.min(8, Math.max(3, signature.split('\n').length))} className="bg-white text-sm" />
-            </div>
-          </FormField>
+          {/* the attachments sit right under the subject, in sight without scrolling (Dana, Nov 9) */}
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <Button type="button" size="sm" variant="secondary" onClick={() => fileInput.current?.click()} leftIcon={<Paperclip className="size-4" aria-hidden="true" />}>Attach from computer</Button>
@@ -238,8 +239,14 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
                 : <label className="flex items-center gap-1.5 text-sm text-stone-700"><input type="checkbox" checked={attachLetter} onChange={(e) => setAttachLetter(e.target.checked)} className="size-4 accent-brand" />Attach our routing letter</label>}
               <input ref={fileInput} type="file" multiple className="hidden" onChange={(e) => { setFiles((f) => [...f, ...Array.from(e.target.files ?? [])]); e.target.value = '' }} />
             </div>
-            {files.length ? (
+            {files.length || savedFiles.length ? (
               <ul className="mt-2 flex flex-wrap gap-2">
+                {savedFiles.map((f) => (
+                  <li key={f.path} className="inline-flex items-center gap-1 rounded-lg bg-stone-100 px-2 py-1 text-xs text-stone-700">
+                    {f.name}
+                    <button type="button" onClick={() => setSavedFiles((all) => all.filter((x) => x.path !== f.path))} aria-label={`Remove ${f.name}`} className="text-stone-400 hover:text-red-600"><X className="size-3.5" aria-hidden="true" /></button>
+                  </li>
+                ))}
                 {files.map((f, i) => (
                   <li key={`${f.name}-${i}`} className="inline-flex items-center gap-1 rounded-lg bg-stone-100 px-2 py-1 text-xs text-stone-700">
                     {f.name}
@@ -250,6 +257,15 @@ export function ComposeDialog({ draft, suggestions = [], onClose, onSent }: { dr
             ) : null}
             <VendorFilePicker links={links.data ?? []} selected={linkIds} onChange={setLinkIds} orderId={draft.order_id} threadId={draft.thread_id} />
           </div>
+          <FormField label="Message" htmlFor="compose-body">
+            <Textarea id="compose-body" ref={bodyRef} value={body} onChange={(e) => setBody(e.target.value)} rows={12} />
+          </FormField>
+          <FormField label="Signature" htmlFor="compose-signature" hint="Goes under your message, with the logo. Changes here are for this email only.">
+            <div className="rounded-lg border border-stone-200 bg-stone-50 p-2">
+              {signature.trim() ? <img src={LOGO_URL.replace(/^https:\/\/[^/]+/, '')} alt="Shaver Lake Sports" width={240} height={31} className="mb-1.5 h-auto max-w-[240px]" /> : null}
+              <Textarea id="compose-signature" value={signature} onChange={(e) => setSignature(e.target.value)} rows={Math.min(8, Math.max(3, signature.split('\n').length))} className="bg-white text-sm" />
+            </div>
+          </FormField>
         </div>
         <div className="flex items-center justify-between gap-2 border-t border-stone-200 px-4 py-3">
           <p className="text-xs text-stone-500">Sends from {fromAddress} as {profile?.full_name ?? 'you'}.</p>

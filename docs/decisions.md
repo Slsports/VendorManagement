@@ -4205,3 +4205,9 @@ remembers the choice per person, like the dashboard boxes.
   put inline in the email. I want it attached as an excel spreadsheet." The suggested order shows UPC after Vendor ID. Email
   the rep and Add to PO now attach an Excel sheet (Vendor ID, UPC, description, quantity; Add to PO also unit cost and
   total, and the original order on a second tab when no confirmation came back) and the email body only points to it.
+- Nov 9, Dana (Paricon › Ordering › Run order › Email the rep): subject is now "<Vendor> reorder for Shaver Lake Sports" (no
+  "Can we still order these?"). "I should be able to save this to my drafts with the order attached": migration 0328, Save
+  draft keeps every attachment (computer/phone files and files VMS made) in storage with the draft, and Send attaches them;
+  an ask-the-rep draft keeps its link so the reply is still read. "I cannot attach anything from my computer or phone": the
+  Attach from computer button was at the bottom of the email box under the signature; it now sits right under Subject.
+  Why it didn't work for her is not confirmed yet (asked for a screenshot if it still doesn't).

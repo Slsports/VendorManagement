@@ -9,8 +9,8 @@ From a suggested order you can email the rep the item list and ask which items a
 ## How to
 1. Open the vendor's suggested order.
 2. Click **Email the rep** at the bottom.
-3. An email opens, addressed to the vendor's rep, with every item on the suggested order attached as an Excel spreadsheet (Vendor ID, UPC, description and the quantity we would order). The items are not typed into the email itself. Change the wording or the address if you like.
-4. Click **Send**.
+3. An email opens, addressed to the vendor's rep, with the subject "[Vendor] reorder for Shaver Lake Sports", with every item on the suggested order attached as an Excel spreadsheet (Vendor ID, UPC, description and the quantity we would order). The items are not typed into the email itself. Change the wording or the address if you like.
+4. Click **Send**, or **Save draft** to finish later: the spreadsheet stays attached, and Claude still reads the rep's reply once it goes. To send a different file, take the spreadsheet off with its **x** and click **Attach from computer**.
 
 ## When the rep replies
 - Within a few minutes Claude reads the reply (and any file they attach) and marks each item: available, discontinued, replaced (with what), out of stock (back when), or not clear.
