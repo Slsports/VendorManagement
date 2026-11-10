@@ -26,7 +26,7 @@ vi.mock('@/services/mail', () => ({ resolveEmailSender, resolveSenderMany, getSe
 const item = {
   id: 'ri1', organization_id: 'o1', kind: 'email_sender', entity_type: 'email_sender', entity_id: 's1', title: 'Mail from @wfsports.com looks like WORLD FAMOUS SPORTS',
   details: { sender_id: 's1', sender_key: 'wfsports.com', is_domain: true, display_name: 'Amy Lee', message_count: 42, proposed_vendor_id: 'v-wfs', proposed_vendor_name: 'WORLD FAMOUS SPORTS', proposal_note: 'named in 38 of 42 emails', samples: ['Your order'] },
-  status: 'pending', created_by: null, created_at: '', resolved_by: null, resolved_at: null, resolution_note: null, assigned_to: null, assigned_at: null,
+  status: 'pending', created_by: null, created_at: '', resolved_by: null, resolved_at: null, resolution_note: null, assigned_to: null, assigned_at: null, parked_at: null,
 } as ReviewItem
 
 describe('EmailSenderReview', () => {

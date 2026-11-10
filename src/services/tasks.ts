@@ -31,7 +31,7 @@ const TASK_SELECT = `*,
  * request = Claude closed it because Dana asked · vms = VMS closed it on its own (Dana, Oct 23: kept apart so she can check
  * them).
  */
-export type TaskView = 'mine' | 'given' | 'done' | 'request' | 'vms' | 'all'
+export type TaskView = 'mine' | 'given' | 'done' | 'request' | 'vms' | 'all' | 'parked'
 export const CLOSED_VIEWS = ['done', 'request', 'vms'] as const
 const CLOSED_HOW = { done: 'person', request: 'request', vms: 'vms' } as const
 
@@ -43,8 +43,13 @@ export async function listTasks(organizationId: string, view: TaskView, personId
     q = q.not('done_at', 'is', null).eq('closed_how', CLOSED_HOW[view])
     if (personId) q = q.or(`assigned_to.eq.${personId},created_by.eq.${personId}`)
     q = q.order('done_at', { ascending: false }).limit(300)
+  } else if (view === 'parked') {
+    // older than a year at birth (Dana, Nov 10): out of the way until unparked
+    q = q.is('done_at', null).not('parked_at', 'is', null)
+    if (personId) q = q.or(`assigned_to.eq.${personId},created_by.eq.${personId}`)
+    q = q.order('created_at', { ascending: false }).limit(500)
   } else {
-    q = q.is('done_at', null)
+    q = q.is('done_at', null).is('parked_at', null)
     if (personId && view === 'mine') q = q.eq('assigned_to', personId)
     if (personId && view === 'given') q = q.eq('created_by', personId).neq('assigned_to', personId)
     q = q.order('due_date', { ascending: true, nullsFirst: false }).order('created_at').limit(1000)
@@ -76,7 +81,7 @@ export interface TaskAbout { vendor_id?: string | null; order_id?: string | null
 /** For the dashboard: reminders that have come for the person, and tasks they gave that someone finished. */
 export async function listNotices(organizationId: string, personId: string): Promise<{ reminders: TaskRow[]; finished: TaskRow[] }> {
   const [r, f] = await Promise.all([
-    supabase.from('tasks').select(TASK_SELECT).eq('organization_id', organizationId).eq('assigned_to', personId).is('done_at', null)
+    supabase.from('tasks').select(TASK_SELECT).eq('organization_id', organizationId).eq('assigned_to', personId).is('done_at', null).is('parked_at', null)
       .not('remind_at', 'is', null).lte('remind_at', new Date().toISOString()).is('reminder_seen_at', null).order('remind_at'),
     supabase.from('tasks').select(TASK_SELECT).eq('organization_id', organizationId).eq('created_by', personId).not('done_at', 'is', null)
       .is('done_seen_at', null).neq('done_by', personId).order('done_at', { ascending: false }),
@@ -180,4 +185,19 @@ export async function markTaskPaid(taskId: string): Promise<void> {
 export async function savePayLinks(organizationId: string, edenred: string | null, billcom: string | null): Promise<void> {
   const { error } = await supabase.rpc('org_set_pay_links', { p_org: organizationId, p_edenred: edenred, p_billcom: billcom })
   if (error) throw error
+}
+
+/** Unpark one thing (a task, review card, conversation, accounting paper or paperwork check) so it is back on its list. */
+export async function unpark(kind: 'task' | 'review' | 'thread' | 'document' | 'check', id: string): Promise<void> {
+  const { error } = await supabase.rpc('park_release', { p_kind: kind, p_id: id })
+  if (error) throw error
+  if (kind === 'task') tasksChanged()
+}
+
+/** Dana only: everything parked of one kind comes back. Returns how many. */
+export async function unparkAll(kind: 'task' | 'review' | 'thread' | 'document' | 'check'): Promise<number> {
+  const { data, error } = await supabase.rpc('park_release_all', { p_kind: kind })
+  if (error) throw error
+  if (kind === 'task') tasksChanged()
+  return data
 }

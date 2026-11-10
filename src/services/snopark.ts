@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { addVendorLink, uploadVendorFile } from '@/services/lines'
 import type { Json, SnoparkBook, SnoparkReport, SnoparkReportRow, SnoparkSeason, VendorLink } from '@/types'
 
-export interface SeasonView { season: SnoparkSeason; books: SnoparkBook[]; reports: SnoparkReport[]; vendor: { id: string; name: string } | null }
+export interface SeasonView { season: SnoparkSeason; books: SnoparkBook[]; reports: SnoparkReport[]; vendor: { id: string; name: string } | null; form: VendorLink | null }
 
 /** The open season, else the latest one; null when none has been opened. */
 export async function getSeason(organizationId: string, seasonId?: string | null): Promise<SeasonView | null> {
@@ -13,14 +13,15 @@ export async function getSeason(organizationId: string, seasonId?: string | null
   if (error) throw error
   const season = seasons?.[0]
   if (!season) return null
-  const [books, reports, vendor] = await Promise.all([
+  const [books, reports, vendor, form] = await Promise.all([
     supabase.from('snopark_books').select('*').eq('season_id', season.id).order('kind').order('first_permit'),
     supabase.from('snopark_reports').select('*').eq('season_id', season.id).order('seq'),
     season.vendor_id ? supabase.from('vendors').select('id, name').eq('id', season.vendor_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    season.form_link_id ? supabase.from('vendor_links').select('*').eq('id', season.form_link_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
   ])
   if (books.error) throw books.error
   if (reports.error) throw reports.error
-  return { season, books: books.data ?? [], reports: reports.data ?? [], vendor: vendor.data ?? null }
+  return { season, books: books.data ?? [], reports: reports.data ?? [], vendor: vendor.data ?? null, form: form.data ?? null }
 }
 
 export async function listSeasons(organizationId: string): Promise<SnoparkSeason[]> {
@@ -114,4 +115,18 @@ export async function lsSold(seasonId: string, through?: string): Promise<{ day:
   const out = { day: 0, season: 0 }
   for (const r of data ?? []) out[r.kind] = r.qty
   return out
+}
+
+/** The State's Report of Operations form for this season (they send a new one every year), filed under the vendor. */
+export async function uploadSeasonForm(season: SnoparkSeason, vendorId: string, file: File, userId: string): Promise<VendorLink> {
+  if (!/\.xlsx$/i.test(file.name)) throw new Error('The State\'s form is an Excel file (.xlsx)')
+  const storage_path = await uploadVendorFile(season.organization_id, vendorId, file)
+  const today = new Date().toISOString().slice(0, 10)
+  const link = await addVendorLink({
+    organization_id: season.organization_id, vendor_id: vendorId, kind: 'snopark_form', label: file.name.replace(/\.xlsx$/i, ''), storage_path, file_name: file.name, file_size: file.size, mime_type: file.type || null,
+    received_at: today, doc_year: Number(season.label.slice(0, 4)), season_label: season.label, source: 'upload', created_by: userId, notes: `The State's Sno-Park Report of Operations form for ${season.label}; VMS fills it for each report`,
+  })
+  const { error } = await supabase.from('snopark_seasons').update({ form_link_id: link.id }).eq('id', season.id)
+  if (error) throw error
+  return link
 }

@@ -19,8 +19,10 @@ export type OrderCheckRow = OrderCheck & {
 const SELECT = '*, vendor:vendors!order_checks_vendor_id_fkey(id, name, po_code), order:orders!order_checks_order_id_fkey(id, po_number, order_date, description, est_cost, status), document:vendor_links!order_checks_document_id_fkey(id, label, file_name, storage_path, mime_type, url), assignee:profiles!order_checks_assigned_to_fkey(full_name), email:emails!order_checks_email_id_fkey(id, thread_id)'
 
 /** Waiting on a person (to review, pick the order, or a failed read): one person's, or everyone's. Oldest first. */
-export async function listOpenChecks(organizationId: string, profileId: string | null): Promise<OrderCheckRow[]> {
+export async function listOpenChecks(organizationId: string, profileId: string | null, parked: 'no' | 'only' = 'no'): Promise<OrderCheckRow[]> {
   let q = supabase.from('order_checks').select(SELECT).eq('organization_id', organizationId).in('status', ['to_review', 'needs_order', 'failed'])
+  // checks on paperwork older than a year wait in Parked (Dana, Nov 10)
+  q = parked === 'only' ? q.not('parked_at', 'is', null) : q.is('parked_at', null)
   if (profileId) q = q.eq('assigned_to', profileId)
   const { data, error } = await q.order('created_at').limit(100)
   if (error) throw error

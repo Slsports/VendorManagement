@@ -18,7 +18,7 @@ import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
 
 const TIME_BUDGET_MS = 100_000
 const MAX_FILE = 15 * 1024 * 1024
-const BACK_DAYS = 365
+const BACK_DAYS = 365   // until the organization's read_mail_since says further (the history reader, Dana, Nov 10)
 const CHECK_STATUS_DAYS = 120
 
 interface Att { id: string; file_name: string; mime_type: string | null; size: number | null; gmail_attachment_id: string | null; storage_path: string | null; vendor_link_id: string | null }
@@ -66,13 +66,23 @@ Deno.serve(async (req) => {
 })
 
 const SELECT = 'id, organization_id, gmail_id, gmail_box, vendor_id, subject, body_text, to_emails, received_at, mailbox_id, thread_id, attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, storage_path, vendor_link_id)'
-const since = () => new Date(Date.now() - BACK_DAYS * 86_400_000).toISOString()
+let readSince: string | null = null
+/** The oldest mail to read: the organization's read_mail_since (stepped back a month a day), else 12 months. */
+async function since(db: SupabaseClient): Promise<string> {
+  if (readSince) return readSince
+  const { data } = await db.from('organizations').select('read_mail_since').eq('is_active', true)
+  const dates = (data ?? []).map((o) => o.read_mail_since as string | null).filter((d): d is string => !!d)
+  readSince = dates.length ? `${dates.sort()[0]}T00:00:00Z` : new Date(Date.now() - BACK_DAYS * 86_400_000).toISOString()
+  return readSince
+}
+/** Older than a year: history, not open work (Dana, Nov 10: "old orders it finds come in as closed history"). */
+const isHistory = (iso: string) => new Date(iso).getTime() < Date.now() - 365 * 86_400_000
 const looksLikeJunk = (a: Att) => /^(image\d*|outlook|logo|signature|att\d+)\b/i.test(a.file_name) || /\.(ics|vcf|htm|html)$/i.test(a.file_name)
 
 /** Sort a batch of our sent mail: which emails place an order. */
 async function sortStep(db: SupabaseClient) {
   const { data } = await db.from('emails').select(SELECT).eq('direction', 'out').is('copy_of', null).is('order_scanned_at', null).is('order_scan', null)
-    .gte('received_at', since()).order('received_at', { ascending: false }).limit(30)
+    .gte('received_at', await since(db)).order('received_at', { ascending: false }).limit(30)
   const mails = (data ?? []) as unknown as Mail[]
   if (!mails.length) return 0
   const now = new Date().toISOString()
@@ -331,11 +341,11 @@ async function createOrder(db: SupabaseClient, m: Mail, r: SentOrderReading, fro
   const store = r.store && (stores ?? []).some((s) => s.code === r.store) ? [r.store] : []
   const lineTotal = r.items.reduce((s, l) => s + (l.unit_cost ?? 0) * l.quantity, 0)
   const { data, error } = await db.from('orders').insert({
-    organization_id: m.organization_id, vendor_id: m.vendor_id, status: 'open', source: 'email', order_date: day(m.received_at),
+    organization_id: m.organization_id, vendor_id: m.vendor_id, status: isHistory(m.received_at) ? 'received' : 'open', source: 'email', order_date: day(m.received_at),
     po_number: r.po_number, description: r.description, est_cost: r.total ?? (lineTotal > 0 ? Math.round(lineTotal * 100) / 100 : null),
     est_ship_date: /^\d{4}-\d{2}-\d{2}$/.test(r.ship_date ?? '') ? r.ship_date : null,
     placed_by: who?.full_name ?? r.placed_by, placed_by_id: who?.id ?? null, store_codes: store,
-    notes: [day(m.received_at) < plusDays(day(new Date().toISOString()), -CHECK_STATUS_DAYS) ? `Added from ${from}, check status.` : `Added from ${from}.`, r.note].filter(Boolean).join(' '),
+    notes: [isHistory(m.received_at) ? `Added from ${from} history (older than a year), treated as received.` : day(m.received_at) < plusDays(day(new Date().toISOString()), -CHECK_STATUS_DAYS) ? `Added from ${from}, check status.` : `Added from ${from}.`, r.note].filter(Boolean).join(' '),
     ...extra,
   }).select('id').single()
   if (error) throw new Error(error.message)

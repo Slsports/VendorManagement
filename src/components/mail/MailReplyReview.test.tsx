@@ -10,7 +10,7 @@ vi.mock('@/services/mail', () => ({ answerMailReply }))
 const item = {
   id: 'ri1', organization_id: 'o1', kind: 'mail_reply', entity_type: 'email_thread', entity_id: 't1', title: 'Does this need an answer? Account notice',
   details: { thread_id: 't1', from: 'Bill.com', snippet: 'Your statement is ready', note: 'A statement notice; maybe nothing to do' },
-  status: 'pending', created_by: null, created_at: '', resolved_by: null, resolved_at: null, resolution_note: null, assigned_to: null, assigned_at: null,
+  status: 'pending', created_by: null, created_at: '', resolved_by: null, resolved_at: null, resolution_note: null, assigned_to: null, assigned_at: null, parked_at: null,
 } as ReviewItem
 
 describe('MailReplyReview', () => {

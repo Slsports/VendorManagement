@@ -15,6 +15,7 @@ Every paper that comes to billing@ is read and filed on its own into Accounting 
 6. The policy and contract pages show their own papers under **Documents**.
 
 ## Good to know
+- Papers needing a look that are more than a year old wait in the **Parked** tab, out of the counts, until unparked (see "Parked: things older than a year wait out of the way").
 - Filing runs every minute, newest mail first, back through the whole mailbox. **File now** on the Documents page looks at the next emails right away.
 - Pictures in signatures, vendor catalogs and flyers are left in their email, each with the reason. So are PDFs over 30 MB and other files over 15 MB: open those from the email.
 - A big PDF (over 5 MB, like a full policy) is read by its first pages, where the declarations page is, and the whole file is filed. A file VMS could not see at all is never left out: it goes to **Needs a look** with a note. So are papers from a contact set to **Leave them in the email** (Emery Jensen invoices live in bill.com).

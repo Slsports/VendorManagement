@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BookOpen, Plus, Snowflake } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useLiveTable } from '@/hooks/useLiveTable'
 import { useTableSort } from '@/hooks/useTableSort'
-import { addBooks, deleteBook, getSeason, lsSold, openSeasonByHand, type AddBooksInput } from '@/services/snopark'
+import { addBooks, deleteBook, getSeason, lsSold, openSeasonByHand, uploadSeasonForm, type AddBooksInput, type SeasonView } from '@/services/snopark'
 import { ROUTES } from '@/lib/constants'
 import { shortDate } from '@/lib/freight'
 import { errorMessage } from '@/lib/utils'
@@ -69,6 +69,7 @@ export default function SnoParkPage() {
               <p className="mt-1 text-lg font-semibold text-stone-900">{view.season.label} <Badge tone={view.season.status === 'open' ? 'success' : 'neutral'}>{view.season.status === 'open' ? 'Open' : 'Closed'}</Badge></p>
               <p className="mt-1 text-xs text-stone-600">Reports due the 15th, the first for {reportTitle({ kind: 'monthly', month: view.season.first_report_month }).replace(' report', '')} on {shortDate(view.season.first_report_month.slice(0, 4) + '-12-15')}. Final due {shortDate(view.season.final_due)}.</p>
               {view.vendor ? <Link to={`${ROUTES.vendors}/${view.vendor.id}`} className="mt-1 inline-block text-xs text-brand hover:underline">{view.vendor.name}</Link> : null}
+              <SeasonForm view={view} canEdit={canEdit} userId={profile?.id ?? null} onDone={() => { void q.refetch() }} />
             </div>
             <div className="rounded-2xl border border-stone-200 bg-white p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Permits on hand</p>
@@ -221,5 +222,22 @@ function OpenSeason({ onClose, onDone }: { onClose: () => void; onDone: () => vo
       <FormField label="Season" htmlFor="sp-season" hint="Written like 2026-2027"><Input id="sp-season" value={label} onChange={(e) => setLabel(e.target.value)} required /></FormField>
       {error ? <Alert variant="error">{error}</Alert> : null}
     </Modal>
+  )
+}
+
+/** The State's form for the season: they send a new one every year; VMS fills whichever is on file. */
+function SeasonForm({ view, canEdit, userId, onDone }: { view: SeasonView; canEdit: boolean; userId: string | null; onDone: () => void }) {
+  const [busy, setBusy] = useState(false)
+  const ref = useRef<HTMLInputElement>(null)
+  async function pick(files: FileList | null) {
+    if (!files?.[0] || !view.vendor || !userId) return
+    setBusy(true)
+    try { await uploadSeasonForm(view.season, view.vendor.id, files[0], userId); toast.success("The State's form is on file for this season"); onDone() } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(false); if (ref.current) ref.current.value = '' }
+  }
+  return (
+    <div className="mt-2 text-xs text-stone-600">
+      {view.form ? <p>The State's form: <span className="font-medium text-stone-800">{view.form.file_name}</span></p> : <p>The State's form for this season is not on file; VMS uses the 2026-2027 form it was built with.</p>}
+      {canEdit ? <label className="mt-1 inline-block cursor-pointer text-brand hover:underline">{busy ? 'Uploading…' : view.form ? 'Replace it' : "Upload the State's form (.xlsx)"}<input ref={ref} type="file" accept=".xlsx" className="sr-only" disabled={busy} onChange={(e) => pick(e.target.files)} /></label> : null}
+    </div>
   )
 }

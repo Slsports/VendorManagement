@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useViewAs } from '@/hooks/useViewAs'
 import { useTasksQuery } from '@/hooks/useTasksQuery'
 import { useTableSort } from '@/hooks/useTableSort'
-import { CLOSED_VIEWS, deleteTask, getTask, listTasks, type TaskRow, type TaskView } from '@/services/tasks'
+import { CLOSED_VIEWS, deleteTask, getTask, listTasks, unpark, type TaskRow, type TaskView } from '@/services/tasks'
 import { aboutText, dateText, dueState, dueText, remindText, repeatLabel, todayLocal } from '@/lib/tasks'
 import { ROUTES } from '@/lib/constants'
 import { cn, errorMessage } from '@/lib/utils'
@@ -29,7 +29,7 @@ export default function TasksPage() {
   const { personId, isMe, personName } = useViewAs()
   const [params, setParams] = useSearchParams()
   const everyone = !personId
-  const view: TaskView = (['mine', 'given', 'done', 'request', 'vms'] as const).find((v) => v === params.get('view')) ?? 'mine'
+  const view: TaskView = (['mine', 'given', 'done', 'request', 'vms', 'parked'] as const).find((v) => v === params.get('view')) ?? 'mine'
   const closed = (CLOSED_VIEWS as readonly string[]).includes(view)
   const listView: TaskView = everyone && !closed ? 'all' : view
   const q = useTasksQuery(async () => (organization ? listTasks(organization.id, listView, personId) : []), [organization?.id, listView, personId])
@@ -64,6 +64,9 @@ export default function TasksPage() {
     else next.set('view', v)
     setParams(next, { replace: true })
   }
+  async function bringBack(t: TaskRow) {
+    try { await unpark('task', t.id); toast.success('Back on the list') } catch (e) { toast.error(errorMessage(e)) }
+  }
   async function remove(t: TaskRow) {
     if (!window.confirm(`Delete the task "${t.title}"?`)) return
     try { await deleteTask(t.id); toast.success('Task deleted') } catch (e) { toast.error(errorMessage(e)) }
@@ -76,6 +79,8 @@ export default function TasksPage() {
     { v: 'done', label: 'Done' },
     { v: 'request', label: 'Closed at your request' },
     { v: 'vms', label: 'Closed by VMS' },
+    // older than a year at birth (Dana, Nov 10): out of the way until unparked
+    { v: 'parked', label: 'Parked' },
   ]
 
   return (
@@ -95,7 +100,7 @@ export default function TasksPage() {
         : q.error ? <Alert variant="error">{q.error}</Alert>
         : rows.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-stone-300 py-12 text-center text-sm text-stone-600">
-            {view === 'done' ? 'Nothing ticked done yet.' : view === 'request' ? 'Nothing closed at your request.' : view === 'vms' ? 'Nothing closed by VMS.' : view === 'given' ? 'No open tasks given to others.' : 'Nothing on the list.'}
+            {view === 'done' ? 'Nothing ticked done yet.' : view === 'request' ? 'Nothing closed at your request.' : view === 'vms' ? 'Nothing closed by VMS.' : view === 'parked' ? 'Nothing parked. Tasks about something older than a year wait here.' : view === 'given' ? 'No open tasks given to others.' : 'Nothing on the list.'}
             {!closed ? <> <button type="button" onClick={() => setAdding(true)} className="font-medium text-brand hover:underline">Add a task</button></> : null}
           </p>
         ) : (
@@ -134,6 +139,7 @@ export default function TasksPage() {
                       <td className="whitespace-nowrap px-3 py-2 text-stone-600">{!t.created_by || t.created_by === t.assigned_to ? '' : t.created_by === profile?.id ? 'Me' : first(t.giver?.full_name)}</td>
                       <td className="px-3 py-2 text-stone-700"><AboutLinks task={t} /></td>
                       <td className="px-3 py-2 text-right">
+                        {view === 'parked' ? <button type="button" onClick={() => void bringBack(t)} className="mr-2 rounded-md border border-stone-300 px-2 py-0.5 text-xs font-medium text-stone-700 hover:bg-stone-50">Unpark</button> : null}
                         <button type="button" onClick={() => void remove(t)} aria-label={`Delete ${t.title}`} title="Delete" className="rounded-md p-1 text-stone-400 hover:bg-red-50 hover:text-red-700"><Trash2 className="size-4" aria-hidden="true" /></button>
                       </td>
                     </tr>

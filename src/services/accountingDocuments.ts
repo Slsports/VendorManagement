@@ -17,14 +17,16 @@ export async function listDocumentFolders(organizationId: string): Promise<Docum
   return (data ?? []) as DocumentFolder[]
 }
 
-export interface DocumentFilters { category?: string; party?: string; year?: number; status?: 'review'; q?: string }
+export interface DocumentFilters { category?: string; party?: string; year?: number; status?: 'review' | 'parked'; q?: string }
 
 export async function listDocuments(organizationId: string, f: DocumentFilters, limit = 500): Promise<AccountingDocument[]> {
   let q = supabase.from('accounting_documents').select('*').eq('organization_id', organizationId).neq('status', 'new')
   if (f.category) q = q.eq('category', f.category as AccountingCategory)
   if (f.party) q = q.eq('party', f.party)
   if (f.year) q = q.eq('doc_year', f.year)
-  if (f.status) q = q.eq('status', f.status)
+  // papers older than a year that need a look wait in Parked (Dana, Nov 10)
+  if (f.status === 'parked') q = q.eq('status', 'review').not('parked_at', 'is', null)
+  else if (f.status) q = q.eq('status', f.status).is('parked_at', null)
   if (f.q?.trim()) {
     const term = f.q.trim().replace(/[%_\\]/g, (c) => `\\${c}`)
     q = q.or(`file_name.ilike.%${term}%,party.ilike.%${term}%,number.ilike.%${term}%,what.ilike.%${term}%,original_name.ilike.%${term}%`)
@@ -45,14 +47,16 @@ export async function listDocumentsFor(where: { policy_id?: string; contract_id?
   return data ?? []
 }
 
-export async function countDocuments(organizationId: string): Promise<{ filed: number; review: number }> {
-  const [a, b] = await Promise.all([
+export async function countDocuments(organizationId: string): Promise<{ filed: number; review: number; parked: number }> {
+  const [a, b, c] = await Promise.all([
     supabase.from('accounting_documents').select('id', { count: 'exact', head: true }).eq('organization_id', organizationId).eq('status', 'filed'),
-    supabase.from('accounting_documents').select('id', { count: 'exact', head: true }).eq('organization_id', organizationId).eq('status', 'review'),
+    supabase.from('accounting_documents').select('id', { count: 'exact', head: true }).eq('organization_id', organizationId).eq('status', 'review').is('parked_at', null),
+    supabase.from('accounting_documents').select('id', { count: 'exact', head: true }).eq('organization_id', organizationId).eq('status', 'review').not('parked_at', 'is', null),
   ])
   if (a.error) throw a.error
   if (b.error) throw b.error
-  return { filed: a.count ?? 0, review: b.count ?? 0 }
+  if (c.error) throw c.error
+  return { filed: a.count ?? 0, review: b.count ?? 0, parked: c.count ?? 0 }
 }
 
 /** How many emails in the accounting mailbox still wait for the filing step (it runs every minute, newest first). */

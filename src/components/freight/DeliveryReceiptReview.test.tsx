@@ -14,7 +14,7 @@ vi.mock('@/services/mail', () => ({ listVendorNames, clearPickerCache: vi.fn() }
 const item = {
   id: 'ri1', organization_id: 'o1', kind: 'delivery_receipt', entity_type: 'delivery_receipt', entity_id: 'd1', title: 'Delivery receipt 518-563231: which vendor shipped it?',
   details: { carrier: 'XPO', pro_number: '518-563231', shipper_name: 'ROYAL DELUXE ACCESSORIES LLC', po_numbers: ['60851'], delivered_on: '2026-09-14', thread_id: 't1' },
-  status: 'pending', created_by: null, created_at: '', resolved_by: null, resolved_at: null, resolution_note: null, assigned_to: null, assigned_at: null,
+  status: 'pending', created_by: null, created_at: '', resolved_by: null, resolved_at: null, resolution_note: null, assigned_to: null, assigned_at: null, parked_at: null,
 } as ReviewItem
 
 describe('DeliveryReceiptReview', () => {

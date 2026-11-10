@@ -35,6 +35,8 @@ const STATUS_TABS: { value: ThreadFilters['status']; label: string }[] = [
   { value: 'handled', label: 'Handled' },
   { value: 'all', label: 'All' },
   { value: 'snoozed', label: 'Snoozed' },
+  // conversations waiting on us from more than a year ago (Dana, Nov 10)
+  { value: 'parked', label: 'Parked' },
   { value: 'deleted', label: 'Deleted' },
 ]
 

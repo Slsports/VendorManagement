@@ -4166,6 +4166,12 @@ be handed to anyone (it stays in that mailbox); a private one shows "share it to
 Nov 9, Dana, on WFS's vendor page: "Their info and What they sell … needs to not be expanded when we open the page. You have to
 scroll for days to get to your documents." The Overview's Their info and what they sell is closed until Show is clicked and
 remembers the choice per person, like the dashboard boxes.
+
+## Nov 10, 2026 — Planet Cotton shipment email skipped; non-WWD credits stay "for Dana to check"
+Dana: "skip it, Planet Cotton usually comes in under 10% shipping." The PO 26569 shipment details request (on hold since
+Oct 30) is skipped. Non-WWD credit requests: VMS marks the credit received for Dana to check and finish, not closed on its own;
+Dana: "that is fine."
+
 - Nov 9, Dana: World Famous credit task (credit memo CM2600409, $71.70, Sep 11, for I87727-1): "Keep it waiting, re-word it so
   it's not late." The credit is in no WWD data VMS has (Edenred uploads through Nov 4, Payment History through Sep 15; the
   two invoices are not marked paid yet). Task renamed "Waiting for WWD to post World Famous credit CM2600409 ($71.70)" with
@@ -4215,6 +4221,64 @@ remembers the choice per person, like the dashboard boxes.
   in a vendor's Documents: a new email to our main rep with the file attached, its name as the subject. (2) Attach from any
   vendor's files in every email box: pick a vendor, open their folders, tick files; files from several vendors can go in
   one email (an email with no vendor too).
+Nov 10, same: Trevor's "Send the shipment details email: PLANET COTTON, PO 26569" task closed (request) and the two waiting
+drafts removed. Dana wants to "button up the shipping email draft and the routing instructions document" next: the shipping
+email that lands in Trevor's Drafts on confirmation still carries the Oct 20 placeholder wording, and no routing letter has
+ever been uploaded at Freight › Routing letter (0 on file). Waiting for Dana's wording and go.
+
+## Nov 10, 2026 — The State's Sno-Park form changes every season (0329)
+Dana sent the 2026-2027 Report of Operations form: "They send us new forms to use every year. You have to use this one and it
+auto calculates the amounts owed." Same layout as last year's (day rows 15-24, season rows 29-34), with the grand total one row
+down (J37) and the month label area a row down (G40). VMS now: ships with the blank 2026-2027 form as its template; a season
+can carry its own form, uploaded on the Sno-Park page (filed under CA Snow Park as "Sno-Park form"); the filler finds the
+grand total cell and the label area by their formula and merge, keeps every formula of the State's, writes the quantity
+formula into the rows where the State's own sheet left it out, and writes the worked-out values too.
+Nov 10, Dana on season end: the State emails a reminder with the form (Apr 20 "PreWrap Up" and May 28 "Season Closing - Final
+Report" this year, both with the printed OHV 54SP PDF; the unsold box is on that PDF). The unsold books go back in the envelope,
+and Cat photocopies every book being returned first: one year the State charged for a book they said was not returned and,
+with no copy, the store had to pay. Dana is undecided whether the whole process runs through VMS or Cat keeps doing it by hand
+and uploads her submissions for the record. Not decided.
+
+## Nov 10, 2026 — Vendors paid through Bill.com are checked against it (0330)
+Dana, on three Hendrix invoices showing unpaid in VMS while Bill.com had paid them: "If you see a vendor I am paying in
+bill.com you need to mark it as a bill.com paid vendor." Confirmed cause: VMS matched invoices to Bill.com only for vendors
+with the check on (EJD alone) and only invoices from the last 120 days; Hendrix's were from May and July. Now every vendor
+with a Bill.com payment or bill is checked (30 vendors today), a new Bill.com payment turns the check on by itself, and
+matching and Paid have no age limit (the "enter it in Bill.com" task keeps its 120-day window). Back-check run in the migration.
+The "277 days" Dana saw was the age of her own Feb 5 forward of Hendrix's past-due notice to Bill.com's inbox, not an invoice.
+Two wrong records fixed the same day: the Bill.com accounting contact had been named "BILL · John Burton" (Claude took the
+payee's name off a Bill.com notice on Oct 16; now "Bill.com"), and Mia Burton (mburtonjeep@gmail.com, a former employee and
+John Burton's wife) had been sorted on Oct 19 as a Maryellen Reynolds rep from her "PLANET COTTON" email, which put her on
+Planet Cotton's contacts and the cc of the (never sent) shipment request; she is now "not a vendor". Nothing was ever sent to
+her by VMS.
+
+## Nov 10, 2026 — Two sorter checks (0331); Dana on the 120-day window
+Dana ("go"): the sender sorter can now answer "staff" (time cards, schedules, Paychex, pay, applications), stored as ours with
+no card, never a vendor or rep; and the accounting contact proposer gives a contact a person's name only when most of that
+address's mail carries it, so a relaying service (Bill.com) gets the company alone. Back-check in the migration drops person
+names that a minority of the contact's mail carried. Dana on the old 120-day Bill.com window: "anything that only has you go
+back 120 days for payments will obviously not see any of the old invoices so that was not logical. It just created more work
+for me." Removed in 0330.
+
+## Nov 10, 2026 — The holding tank and the history reader (0332)
+Dana ("go, build the tank and the history reader"): anything VMS asks a person to do or look at that is about something
+older than 12 months is parked (tasks, review cards and paperwork checks, conversations waiting on us, accounting papers
+needing a look): out of every list and count, in a Parked tab on each list, unparked one at a time or (Dana) all at once;
+new mail unparks a conversation, filing unparks a paper; new items park themselves at birth. Counts at the back-check:
+847 conversations and 1,467 accounting papers; no tasks or cards were that old. History: orders@ mail is already in VMS back
+to December 2023 (17,124 emails); what stopped at 12 months was the reading. organizations.read_mail_since (today: 12 months
+back) is the oldest mail the sent-orders and ordering-service readers look at; a daily job moves it back a month while the
+day's Claude spend is under history_daily_cap_usd ($10), until the first email on file. Orders found from more than a year
+ago come in as received history with a note, never open work. Jarrett's mailbox (all of it, back to 2015, is already in
+VMS): every conversation in a staff mailbox with a vendor on it, either direction, is shared to Orders and tied to the vendor
+(71 of his were vendor conversations not yet shared); billing@ is untouched.
+
+## Nov 10, 2026 — A staff conversation handled through orders@ is handled (0333)
+Dana: "check his unanswered mail against the orders email. He may have handled something through orders@ that started in
+his jarrett@." When orders@ sends a reply in a conversation with the same subject (Re:/Fwd: aside) and vendor as a staff
+mailbox conversation waiting on us, that conversation is marked handled, from now on and in a back-check. The back-check
+handled 12 of Jarrett's (Rod's Power, Salter's, Dick's Mountain Tackle, Hendrix invoice 596984, Nike socks, Baffin, Swimsuit
+Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ conversation.
 - Nov 10, Dana ("yes go"): so Claude can see VMS screens and live supplier pages. Confirmed cause of "can't see the screens":
   the test login signs in, but the cloud workspace's saved key for the VMS database replaces the login on every request
   after that (401 "requires a valid Bearer token"). Done: the workspace now allows vms.shaverlakesports.com, the VMS

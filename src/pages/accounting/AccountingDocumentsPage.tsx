@@ -3,9 +3,10 @@ import { Link, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { ChevronRight, FolderOpen, RefreshCw, Search, UploadCloud } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { unparkAll } from '@/services/tasks'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useLiveTable } from '@/hooks/useLiveTable'
-import { countUnfiledEmails, dropDocument, listDocumentFolders, listDocuments, runFiling, type DocumentFolder, type DropResult } from '@/services/accountingDocuments'
+import { countUnfiledEmails, dropDocument, listDocumentFolders, listDocuments, runFiling, type DocumentFolder, type DropResult, countDocuments } from '@/services/accountingDocuments'
 import { listMailboxes } from '@/services/mail'
 import { ACCOUNTING_CATEGORIES, categoryLabel } from '@/lib/accounting'
 import { folderLabel } from '@/lib/accountingDocuments'
@@ -21,7 +22,7 @@ import { Alert, Badge, Button, Input, Spinner } from '@/components/ui'
  * filed here on its own, every minute, newest first, back through the whole mailbox.
  */
 export default function AccountingDocumentsPage() {
-  const { organization, profile } = useAuth()
+  const { organization, profile, isAdmin } = useAuth()
   const [params, setParams] = useSearchParams()
   const category = params.get('category') ?? ''
   const party = params.get('party') ?? ''
@@ -41,12 +42,15 @@ export default function AccountingDocumentsPage() {
   const docs = useSupabaseQuery(async () => {
     if (!organization) return []
     if (tab === 'review') return listDocuments(organization.id, { status: 'review' })
+    if (tab === 'parked') return listDocuments(organization.id, { status: 'parked' })
     if (q) return listDocuments(organization.id, { q })
     if (inFolder) return listDocuments(organization.id, { category, party, year })
     return []
   }, [organization?.id, tab, q, category, party, year, tick])
   const parties = [...new Set((folders.data ?? []).map((f) => f.party))].sort()
-  const reviewCount = (folders.data ?? []).reduce((n, f) => n + Number(f.review_n), 0)
+  const counts = useSupabaseQuery(async () => (organization ? countDocuments(organization.id) : null), [organization?.id, tick])
+  const reviewCount = counts.data?.review ?? 0
+  const parkedCount = counts.data?.parked ?? 0
   const total = (folders.data ?? []).reduce((n, f) => n + Number(f.n), 0)
 
   const go = (next: Record<string, string>) => {
@@ -83,6 +87,7 @@ export default function AccountingDocumentsPage() {
         <nav className="inline-flex rounded-lg border border-stone-200 bg-white p-0.5 text-sm">
           <button type="button" onClick={() => go({})} className={cn('rounded-md px-3 py-1.5', tab === 'folders' && !q ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-100')}>Folders <span className="opacity-70">{total.toLocaleString()}</span></button>
           <button type="button" onClick={() => go({ tab: 'review' })} className={cn('rounded-md px-3 py-1.5', tab === 'review' ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-100')}>Needs a look {reviewCount ? <Badge tone={tab === 'review' ? 'neutral' : 'warning'} className="ml-1">{reviewCount}</Badge> : null}</button>
+          {parkedCount ? <button type="button" onClick={() => go({ tab: 'parked' })} className={cn('rounded-md px-3 py-1.5', tab === 'parked' ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-100')}>Parked <span className="opacity-70">{parkedCount}</span></button> : null}
         </nav>
         <form className="relative ml-auto w-full sm:w-72" onSubmit={(e) => { e.preventDefault(); go({ q: search.trim() }) }}>
           <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-stone-400" aria-hidden="true" />
@@ -90,7 +95,15 @@ export default function AccountingDocumentsPage() {
         </form>
       </div>
 
-      {tab === 'review' ? (
+      {tab === 'parked' ? (
+        <section className="rounded-2xl border border-stone-200 bg-white">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-100 px-4 py-3 text-sm text-stone-600">
+            <span>Papers that need a look but are more than a year old (Dana, Nov 10). They wait here, out of the counts, until unparked. Answering a question or filing one brings it back on its own.</span>
+            {isAdmin ? <Button size="sm" variant="secondary" onClick={() => { if (window.confirm(`Unpark all ${parkedCount} papers? They go back to Needs a look.`)) void unparkAll('document').then((n) => { toast.success(`${n} back on Needs a look`); refresh() }).catch((e) => toast.error(errorMessage(e))) }}>Unpark all</Button> : null}
+          </div>
+          {docs.isLoading ? <Spinner label="Loading…" className="m-4 text-brand" /> : <DocumentRows docs={docs.data ?? []} parties={parties} onChanged={refresh} empty="Nothing parked." />}
+        </section>
+      ) : tab === 'review' ? (
         <section className="rounded-2xl border border-stone-200 bg-white">
           <div className="border-b border-stone-100 px-4 py-3 text-sm text-stone-600">Papers VMS filed but was not sure about. Each shows its doubt; where it is a choice, the question and its answers are buttons: click the answer and it is filed that way. <strong>Keep as filed</strong> keeps the folder and name as they are; the pencil moves or renames.</div>
           {docs.isLoading ? <Spinner label="Loading…" className="m-4 text-brand" /> : <DocumentRows docs={docs.data ?? []} parties={parties} onChanged={refresh} empty="Nothing waiting. Everything filed looked sure." />}

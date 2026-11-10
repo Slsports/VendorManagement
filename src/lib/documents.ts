@@ -24,7 +24,7 @@ export const DOC_FOLDERS: { id: DocFolder; label: string; kinds: VendorLinkKind[
   { id: 'sales_reports', label: 'Sales reports', kinds: ['sales_report'] },
   { id: 'inventory_counts', label: 'Inventory counts', kinds: ['inventory_count'] },
   // the State's Sno-Park reports and the scans of sold passes (Dana, Nov 5)
-  { id: 'snopark', label: 'Sno-Park', kinds: ['snopark_report', 'snopark_scan'] },
+  { id: 'snopark', label: 'Sno-Park', kinds: ['snopark_report', 'snopark_scan', 'snopark_form'] },
   { id: 'other', label: 'Other', kinds: ['other', 'website'] },
 ]
 
