@@ -4166,3 +4166,8 @@ be handed to anyone (it stays in that mailbox); a private one shows "share it to
 Nov 9, Dana, on WFS's vendor page: "Their info and What they sell … needs to not be expanded when we open the page. You have to
 scroll for days to get to your documents." The Overview's Their info and what they sell is closed until Show is clicked and
 remembers the choice per person, like the dashboard boxes.
+
+## Nov 10, 2026 — Planet Cotton shipment email skipped; non-WWD credits stay "for Dana to check"
+Dana: "skip it, Planet Cotton usually comes in under 10% shipping." The PO 26569 shipment details request (on hold since
+Oct 30) is skipped. Non-WWD credit requests: VMS marks the credit received for Dana to check and finish, not closed on its own;
+Dana: "that is fine."
