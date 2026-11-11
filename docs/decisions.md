@@ -4371,3 +4371,11 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   submission report against the number of sales in Lightspeed to be sure we balance." / "Permits on hand - Season Totals".
 - Nov 10 (Dana's Console screenshot, ~12:25 pm): "Dana's Individual Org" spend this month $0.28, credit $109.49 -> $109.21.
   VMS is using the personal key first. Working.
+- Nov 10, Dana ("yes, please send"): the "Enter … in Bill.com" tasks. VMS had never forwarded to Bill.com: only invoices
+  emailed after a vendor's switch went on are sent, and the 28 vendors switched on Nov 4 (8:42 am) had sent none since.
+  Sent now to shaverlakesports1@bill.com (first forwards, all delivered): Planet Cotton 173315 ($1,062.31) and 173353
+  ($541.76), Nationwide 32962 ($745.00) and 32968 ($533.50, one email). Their tasks close when the bills appear in Bill.com.
+  Not sent, tasks closed at her request: Chains Required 6525907 and A-One 32298 (Dec 2024, paid through WWD Jan 18, 2025),
+  Nationwide 32745, 32767, 32769 (Edenred, paid through WWD), Hendrix 601451 ($0.00 no-charge damage replacement).
+  EJD and Stihl stay with Dana's Gmail forward. The "277 invoices in 30 days" was files VMS saved (266 older mail, 124 of
+  them our own sent mail); 11 invoices actually arrived from those vendors in 30 days.
