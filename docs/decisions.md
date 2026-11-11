@@ -4445,3 +4445,8 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   (still PO PARICON-11-20-25, FOB Kent, same 10 items, $9,820.77), so VMS had filed it on last year's order and made an
   empty order from her PO correction. Filled in: the 10 lines, cost, date, note; the email and sheet moved to it; Ted's two
   freight emails made one quote (7 pallets, 2,559 lbs, ready Nov 12, $2,274) with one task for Trevor (migration 0345).
+- Nov 11: Dana's first Paricon email was last year's sheet by mistake ("about a 4k dif in price"); she sent the correct
+  one (PO Paricon-11-10-26, 11 items). VMS's re-read failed (a mix of kept and new items sent nulls; sent-orders fixed,
+  defaultToNull false) after removing the old items; re-read, the order now matches the sheet. SB-130 has no price on the
+  sheet and its total box shows 4, so the sheet total is $4 high ($5,985.58 priced). Ted's $2,274 quote was for the wrong
+  order; noted on the quote.

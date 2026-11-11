@@ -419,7 +419,7 @@ async function setLines(db: SupabaseClient, org: string, orderId: string, items:
       organization_id: org, order_id: orderId, sort_order: start + i, vendor_item_id: l.vendor_item_id, description: l.description, quantity: l.quantity, unit_cost: l.unit_cost ?? 0,
       ...(was ? { retail_price: was.retail_price, retail_edited: was.retail_edited, upc: was.upc, notes: was.notes } : {}),
     }
-  }))
+  }), { defaultToNull: false })  // a mix of kept and new items: a new one's missing fields take the column default, not null (Nov 11, Paricon)
   if (error) throw new Error(error.message)
 }
 
