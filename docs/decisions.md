@@ -4435,3 +4435,18 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   tick them and Mark paid, or None of these; it closes itself once none of those is unpaid (migration 0342). Re-check:
   Sandboxx (Aug 14, sprayer invoice) and Scope (Dec 22 $54.63, Apr 10 late fees) paid invoices that were never filed in
   VMS, so there is nothing to mark.
+- Nov 11, Dana ("yes go, check all vendors and fix them"): 739 invoices had no number read (Claude only read Bill.com
+  vendors' invoices from the last 120 days), so paid ones like Scope 1216/1235/1267/1284/1288 showed unpaid. Claude now
+  reads every invoice with no number once, any vendor, any age (number, date, PO, total; only blanks filled), with a
+  catch-up job every 5 minutes until done; then Bill.com matching runs. Vendors whose Bill.com name differs (Kelli's =
+  Kelli's Gifts, Dick's Mountain Tackle) are checked when the number, amount and first word match (migration 0344).
+  Coastal Pet 8920 ($5,900 = a Sticker Pack Inc. bill) and Happy INV-122386 ($210.26 = Salters Distributing) left for Dana.
+- Nov 11, Dana ("Yes"): the Paricon order she emailed Ted on Nov 10 is PO Paricon11-10-26. Her sheet was last year's
+  (still PO PARICON-11-20-25, FOB Kent, same 10 items, $9,820.77), so VMS had filed it on last year's order and made an
+  empty order from her PO correction. Filled in: the 10 lines, cost, date, note; the email and sheet moved to it; Ted's two
+  freight emails made one quote (7 pallets, 2,559 lbs, ready Nov 12, $2,274) with one task for Trevor (migration 0345).
+- Nov 11: Dana's first Paricon email was last year's sheet by mistake ("about a 4k dif in price"); she sent the correct
+  one (PO Paricon-11-10-26, 11 items). VMS's re-read failed (a mix of kept and new items sent nulls; sent-orders fixed,
+  defaultToNull false) after removing the old items; re-read, the order now matches the sheet. SB-130 has no price on the
+  sheet and its total box shows 4, so the sheet total is $4 high ($5,985.58 priced). Ted's $2,274 quote was for the wrong
+  order; noted on the quote.
