@@ -4435,3 +4435,9 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   tick them and Mark paid, or None of these; it closes itself once none of those is unpaid (migration 0342). Re-check:
   Sandboxx (Aug 14, sprayer invoice) and Scope (Dec 22 $54.63, Apr 10 late fees) paid invoices that were never filed in
   VMS, so there is nothing to mark.
+- Nov 11, Dana ("yes go, check all vendors and fix them"): 739 invoices had no number read (Claude only read Bill.com
+  vendors' invoices from the last 120 days), so paid ones like Scope 1216/1235/1267/1284/1288 showed unpaid. Claude now
+  reads every invoice with no number once, any vendor, any age (number, date, PO, total; only blanks filled), with a
+  catch-up job every 5 minutes until done; then Bill.com matching runs. Vendors whose Bill.com name differs (Kelli's =
+  Kelli's Gifts, Dick's Mountain Tackle) are checked when the number, amount and first word match (migration 0344).
+  Coastal Pet 8920 ($5,900 = a Sticker Pack Inc. bill) and Happy INV-122386 ($210.26 = Salters Distributing) left for Dana.

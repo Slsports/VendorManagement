@@ -44,6 +44,18 @@ Deno.serve(async (req) => {
         const since = /^\d{4}-\d{2}-\d{2}$/.test(String(b.since ?? '')) ? String(b.since) : '2025-01-01'
         return json(await syncOrg(db, c, { since, pages: 80 }))
       }
+      // catch-up (Dana, Nov 11): invoices with no number, any vendor, any age, read 15 at a time, then matched to Bill.com
+      if (body.action === 'read_papers') {
+        const { data: orgs } = await db.from('organizations').select('id')
+        const out: unknown[] = []
+        for (const o of (orgs ?? []) as { id: string }[]) {
+          const read = await readPapers(db, o.id, 15)
+          const { data: matched, error } = await db.rpc('billcom_match_papers', { p_org: o.id })
+          if (error) throw new Error(error.message)
+          out.push({ organization_id: o.id, read, matched })
+        }
+        return json(out)
+      }
       if (body.action !== 'sync') throw new HttpError(400, 'Unknown action')
       const { data: conns } = await db.from('billcom_connections').select('*').not('password', 'is', null)
       const out: unknown[] = []
@@ -290,12 +302,12 @@ function billedAs(vendor: string, vendorBox: string | null, read: boolean): stri
   return vendorBox
 }
 
-async function readPapers(db: SupabaseClient, org: string): Promise<number> {
-  const { data } = await db.rpc('billcom_papers_queue', { p_org: org, p_limit: 12 })
+async function readPapers(db: SupabaseClient, org: string, limit = 12): Promise<number> {
+  const { data } = await db.rpc('billcom_papers_queue', { p_org: org, p_limit: limit })
   let n = 0
   for (const p of (data ?? []) as BillcomPaper[]) {
     const r = await readBillcomPaper(db, org, p).catch(() => null)
-    const { error } = await db.rpc('billcom_paper_read', { p_link: p.id, p_number: r?.doc_number ?? null, p_po: r?.po_number ?? null, p_total: r?.total ?? null, p_billed_as: billedAs(p.vendor_name, r?.billed_as ?? null, !!r) })
+    const { error } = await db.rpc('billcom_paper_read', { p_link: p.id, p_number: r?.doc_number ?? null, p_po: r?.po_number ?? null, p_total: r?.total ?? null, p_billed_as: billedAs(p.vendor_name, r?.billed_as ?? null, !!r), p_date: /^\d{4}-\d{2}-\d{2}$/.test(r?.invoice_date ?? '') ? r!.invoice_date : null })
     if (error) throw new Error(error.message)
     n++
   }
