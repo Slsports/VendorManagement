@@ -4441,3 +4441,7 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   catch-up job every 5 minutes until done; then Bill.com matching runs. Vendors whose Bill.com name differs (Kelli's =
   Kelli's Gifts, Dick's Mountain Tackle) are checked when the number, amount and first word match (migration 0344).
   Coastal Pet 8920 ($5,900 = a Sticker Pack Inc. bill) and Happy INV-122386 ($210.26 = Salters Distributing) left for Dana.
+- Nov 11, Dana ("Yes"): the Paricon order she emailed Ted on Nov 10 is PO Paricon11-10-26. Her sheet was last year's
+  (still PO PARICON-11-20-25, FOB Kent, same 10 items, $9,820.77), so VMS had filed it on last year's order and made an
+  empty order from her PO correction. Filled in: the 10 lines, cost, date, note; the email and sheet moved to it; Ted's two
+  freight emails made one quote (7 pallets, 2,559 lbs, ready Nov 12, $2,274) with one task for Trevor (migration 0345).
