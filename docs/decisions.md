@@ -4424,3 +4424,8 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   every tab, the vendor activity, the Accounting calendar and the dashboard notices, but kept in the table so the rule that
   made them cannot make them again (migration 0339). Marked now: the 53 "Which order?" freight tasks (Nov 9) and the 6
   "Enter … in Bill.com" tasks (Nov 10).
+- Nov 11, Dana ("yes go"): Nationwide 32962 ($745.00) and 32968 ($533.50) were paid by credit card over the phone on
+  9/23/26 (her Sep 28 email); marked paid, their Bill.com tasks closed as made by mistake (Claude had forwarded them to the
+  Bill.com inbox on Nov 10; Dana deletes them there). Nationwide stopped taking payment through the WWD portal on Sep 15,
+  2026 (Lorenne): check or Bill.com; a note is on the vendor (migration 0341). Cause: VMS read the paid email but it named no
+  invoice numbers, so it marked nothing (5 such payment emails, 3 vendors: Nationwide, Sandboxx, Scope).
