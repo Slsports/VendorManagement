@@ -33,15 +33,18 @@ describe('snopark', () => {
 
 describe('receiving a box (Nov 10)', () => {
   const per = { day: 25, season: 10 }
-  it('cuts a confirmed sheet into whole books numbered from the first book, and checks the last one', async () => {
-    const { rowsFromSheet, EMPTY_SHEET, bookNumberAfter } = await import('./snopark')
-    const sheet = { ...EMPTY_SHEET, day: { from: 7751, to: 7825, books: 3, permits: 75 }, season: { from: 10591, to: 10610, books: 2, permits: 20 } }
-    const ok = rowsFromSheet(sheet, per, { day: { first: 'DB 543', last: 'DB 545' }, season: { first: 'SB 1130', last: '' } })
+  it('makes the books from the sheet rows, numbered from the first book, and checks the last one', async () => {
+    const { booksFromSheetRows, newSheetRow, sheetFromRows, EMPTY_SHEET, bookNumberAfter } = await import('./snopark')
+    const rows = [{ ...newSheetRow('day', '7751', '7825'), first_book: 'DB 543', last_book: 'DB 545' }, { ...newSheetRow('day', '9001', '9025'), first_book: 'DB 600', last_book: '' }, { ...newSheetRow('season', '10591', '10610'), first_book: 'SB 1130', last_book: 'SB 1131' }]
+    const ok = booksFromSheetRows(rows, per)
     expect(ok.error).toBeNull()
-    expect(ok.rows.map((r) => `${r.book_number}:${r.first_permit}-${r.last_permit}`)).toEqual(['DB 543:7751-7775', 'DB 544:7776-7800', 'DB 545:7801-7825', 'SB 1130:10591-10600', 'SB 1131:10601-10610'])
-    expect(rowsFromSheet(sheet, per, { day: { first: 'DB 543', last: 'DB 546' }, season: { first: 'SB 1130', last: '' } }).error).toMatch(/4 day books, but the sheet's range/)
-    expect(rowsFromSheet(sheet, per, { day: { first: '', last: '' } }).error).toMatch(/enter the first day book number/)
-    expect(rowsFromSheet({ ...EMPTY_SHEET, day: { from: 7751, to: 7774, books: 1, permits: 24 } }, per, { day: { first: 'DB 1', last: '' } }).error).toMatch(/not a whole number of books/)
+    expect(ok.books.map((r) => `${r.book_number}:${r.first_permit}-${r.last_permit}`)).toEqual(['DB 543:7751-7775', 'DB 544:7776-7800', 'DB 545:7801-7825', 'DB 600:9001-9025', 'SB 1130:10591-10600', 'SB 1131:10601-10610'])
+    expect(booksFromSheetRows([{ ...rows[0]!, last_book: 'DB 546' }], per).error).toMatch(/is 3 books of 25, but DB 543 to DB 546 is 4 books/)
+    expect(booksFromSheetRows([{ ...rows[0]!, first_book: '' }], per).error).toMatch(/first book number/)
+    expect(booksFromSheetRows([{ ...newSheetRow('day', '7751', '7774'), first_book: 'DB 1', last_book: '' }], per).error).toMatch(/not a whole number/)
+    const sheet = sheetFromRows(EMPTY_SHEET, rows, per)
+    expect(sheet.day).toEqual({ from: 7751, to: 9025, books: 4, permits: 100 })
+    expect(sheet.rows?.[0]).toEqual({ kind: 'day', from: 7751, to: 7825, books: 3, first_book: 'DB 543', last_book: 'DB 545' })
     expect(bookNumberAfter('B0099', 1)).toBe('B0100')
   })
   it('names what is wrong with a row before it is saved', async () => {

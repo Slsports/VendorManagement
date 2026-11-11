@@ -4400,3 +4400,10 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   Vendor Packet, Final Report). The State's own forms keep their numbers ("01", "02", "03") in their names.
 - This season (2026-2027): the packet is filed from the Sep 1 email by the same job; the agreement and first order are not
   made again (Dana sent them Nov 2; her packet task is closed).
+- Dana, Nov 10, receiving in one step: "why aren't we doing it all in step 1? We are looking at the sheet and we have the
+  books in front of us. We confirm the permit numbers, just add columns for the 1st book and last book for each row and we
+  click confirmed … if not [in order] we need a button to add another row … WE don't usually look in every book … We have
+  only had an entire book missing." The receiving page is now one step: the sheet's rows (Kind, From, Including, Books and
+  Permits worked out, First book #, Last book # suggested), Add another row, then Confirmed, books received (or Confirmed,
+  already in Lightspeed). VMS makes every book; the check is the book count against each range (migration 0338 reads the
+  rows). No returns before the final submission; a half-sold book at season end is handled on the final report.

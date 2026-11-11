@@ -10,11 +10,10 @@ import { signedFileUrl } from '@/services/lines'
 import { ROUTES } from '@/lib/constants'
 import { shortDate } from '@/lib/freight'
 import { errorMessage } from '@/lib/utils'
-import { EMPTY_SHEET, KIND_LABELS, SHIPMENT_STATUS, bookNumberAfter, newRow, rowProblem, rowsFromSheet, sheetBooks, type BookRowInput, type Difference, type Sheet } from '@/lib/snopark'
+import { EMPTY_SHEET, KIND_LABELS, SHIPMENT_STATUS, bookNumberAfter, booksFromSheetRows, newSheetRow, sheetFromRows, sheetRowBooks, sheetRowsOf, type Difference, type Sheet, type SheetRow } from '@/lib/snopark'
 import { BackLink } from '@/components/shared/BackLink'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
-import type { SnoparkBook } from '@/types'
 
 /**
  * Receiving a box of Sno-Park books (Dana, Nov 10, 2026): the State's sheet that came in the box is scanned and read, the
@@ -43,8 +42,7 @@ export default function SnoParkReceivePage() {
         actions={<Badge tone={st.tone}>{st.text}</Badge>} />
       {view.flowchart ? <p className="mb-4 text-sm"><FileLink link={view.flowchart} icon={<FileText className="size-4" aria-hidden="true" />} label="The State's instructions (flowchart)" /></p> : null}
       <div className="space-y-6">
-        <SheetStep view={view} locked={locked} userId={profile?.id ?? null} onDone={() => { void q.refetch() }} />
-        <BooksStep view={view} locked={locked} onDone={() => { void q.refetch() }} />
+        <SheetStep view={view} locked={locked} isAdmin={isAdmin} userId={profile?.id ?? null} onDone={() => { void q.refetch() }} />
         <CheckStep view={view} locked={locked} isAdmin={isAdmin} onDone={() => { void q.refetch() }} />
         <MapStep view={view} canEdit={canEdit} onDone={() => { void q.refetch() }} />
       </div>
@@ -71,7 +69,7 @@ function MapStep({ view, canEdit, onDone }: { view: ShipmentView; canEdit: boole
   }
   return (
     <section className={`rounded-2xl border p-5 ${done ? 'border-stone-200 bg-white' : 'border-amber-200 bg-amber-50'}`}>
-      <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500"><Printer className="size-4" aria-hidden="true" />4. The Sno-Park map</h2>
+      <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500"><Printer className="size-4" aria-hidden="true" />3. The Sno-Park map</h2>
       {done ? <p className="mt-2 text-sm text-stone-700">Printed {shortDate(view.season.map_printed_at!)} and copies made for the register. <FileLink link={view.map} icon={<Map className="size-4" aria-hidden="true" />} label={`${view.season.label} map`} /></p> : (
         <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-amber-900">
           <p className="grow">Print this season's map, make copies and put them by the register: <FileLink link={view.map} icon={<Map className="size-4" aria-hidden="true" />} label={`${view.season.label} Sno-Park map`} /></p>
@@ -82,176 +80,131 @@ function MapStep({ view, canEdit, onDone }: { view: ShipmentView; canEdit: boole
   )
 }
 
-/** 1. The State's sheet: a photo or scan, read by VMS, confirmed by the person. */
-function SheetStep({ view, locked, userId, onDone }: { view: ShipmentView; locked: boolean; userId: string | null; onDone: () => void }) {
-  const { shipment } = view
+/**
+ * 1. The sheet and the books, in one go (Dana, Nov 10): the sheet's ranges (read by VMS from the scan, or typed), the
+ * first and last book number from the covers on each range, and VMS makes every book. Nobody opens a book: a missing
+ * book shows up as book numbers that do not add up to the sheet's range.
+ */
+function SheetStep({ view, locked, userId, onDone }: { view: ShipmentView; locked: boolean; isAdmin: boolean; userId: string | null; onDone: () => void }) {
+  const { shipment, season } = view
+  const per = { day: season.day_per_book, season: season.season_per_book }
   const saved = (shipment.sheet as unknown as Sheet | null) ?? null
-  const [edit, setEdit] = useState<Sheet | null>(null)
-  const sheet = edit ?? saved ?? EMPTY_SHEET
+  const [edit, setEdit] = useState<{ sheet: Sheet; rows: SheetRow[] } | null>(null)
+  const sheet = edit?.sheet ?? saved ?? EMPTY_SHEET
+  const rows = edit?.rows ?? sheetRowsOf(saved)
   const [busy, setBusy] = useState<string | null>(null)
+  const [result, setResult] = useState<string | null>(null)
   const ref = useRef<HTMLInputElement>(null)
-  const confirmed = !!shipment.sheet_confirmed_at
-  const num = (v: number | null) => (v == null ? '' : String(v))
-  const setKind = (k: 'day' | 'season', f: 'from' | 'to' | 'books' | 'permits', v: string) => setEdit({ ...sheet, [k]: { ...sheet[k], [f]: v === '' ? null : Number(v) } })
+  const done = shipment.status === 'done'
+  const confirmed = !!shipment.sheet_confirmed_at && view.books.length > 0
+  const editing = !!edit || !confirmed
+  const startEdit = () => setEdit({ sheet, rows: rows.length ? rows : [newSheetRow('day'), newSheetRow('season')] })
+  const setRows = (next: SheetRow[]) => setEdit({ sheet, rows: next })
+  const setRow = (key: string, patch: Partial<SheetRow>) => setRows(rows.map((r) => {
+    if (r.key !== key) return r
+    const n = { ...r, ...patch }
+    // the last book number follows the first and the range, unless typed over
+    if ((patch.first_book !== undefined || patch.from !== undefined || patch.to !== undefined || patch.kind !== undefined) && n.first_book.trim()) {
+      const size = sheetRowBooks(n, per[n.kind])
+      if (!size.error && size.n > 0 && (patch.first_book !== undefined || !n.last_book.trim() || n.last_book === bookNumberAfter(r.first_book, sheetRowBooks(r, per[r.kind]).n - 1))) n.last_book = bookNumberAfter(n.first_book, size.n - 1)
+    }
+    return n
+  }))
 
   async function pick(files: FileList | null) {
     if (!files?.[0] || !view.vendor || !userId) return
     setBusy('read')
     try {
       const r = await uploadSheet(shipment, view.vendor.id, files[0], userId)
-      setEdit(r.sheet)
-      toast.success(r.sheet.unclear?.length ? 'Sheet read; check the numbers marked unclear' : 'Sheet read; check the numbers')
+      setEdit({ sheet: r.sheet, rows: sheetRowsOf(r.sheet) })
+      toast.success(r.sheet.unclear?.length ? 'Sheet read; check the numbers marked unclear' : 'Sheet read; check the numbers against the paper')
       onDone()
     } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(null); if (ref.current) ref.current.value = '' }
-  }
-  async function confirm() {
-    setBusy('confirm')
-    try { await confirmSheet(shipment.id, { ...sheet, unclear: [] }); setEdit(null); toast.success('Sheet confirmed'); onDone() } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(null) }
   }
   async function open() {
     if (!view.sheetFile?.storage_path) return
     try { window.open(await signedFileUrl(view.sheetFile.storage_path), '_blank', 'noopener') } catch (e) { toast.error(errorMessage(e)) }
   }
+  /** Confirm: the sheet is saved from the rows, the books are made, the check runs; balanced → Lightspeed (or recorded as already there). */
+  async function confirm(how: 'ls' | 'byhand') {
+    const made = booksFromSheetRows(rows, per)
+    if (made.error) { toast.error(made.error); return }
+    setBusy(how)
+    try {
+      await confirmSheet(shipment.id, sheetFromRows(sheet, rows, per))
+      await saveShipmentBooks(shipment.id, made.books.map((b) => ({ kind: b.kind, book_number: b.book_number.trim(), first_permit: Number(b.first_permit), last_permit: Number(b.last_permit) })))
+      const d = await checkShipment(shipment.id)
+      setEdit(null)
+      if (d.length) { toast.error(`${d.length} difference${d.length === 1 ? '' : 's'} with the sheet; see below`); onDone(); return }
+      if (how === 'byhand') { await enteredByHand(shipment.id, null); toast.success(`${made.books.length} books on hand; recorded without a second PO in Lightspeed`) }
+      else { const r = await receiveInLs(shipment.id); setResult(r.note); toast.success(r.stock_ok ? `${made.books.length} books on hand and in Lightspeed as PO ${r.po}` : 'In Lightspeed; Dana has a task to look at the stock') }
+      onDone()
+    } catch (e) { toast.error(errorMessage(e)); onDone() } finally { setBusy(null) }
+  }
+  const totals = (kind: 'day' | 'season') => rows.filter((r) => r.kind === kind).reduce((t, r) => { const x = sheetRowBooks(r, per[kind]); return { n: t.n + x.n, permits: t.permits + x.permits } }, { n: 0, permits: 0 })
 
   return (
     <section className="rounded-2xl border border-stone-200 bg-white p-5">
-      <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500"><FileCheck className="size-4" aria-hidden="true" />1. The State's sheet</h2>
-      <p className="mt-1 text-sm text-stone-600">The Vendor Permit Request Form (confirmation sheet) that came in the box. Upload the scan or PDF from your computer, or take a picture on your phone; VMS reads the State's verification box (the permit ranges, books and permits issued) and you check it against the paper.</p>
+      <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500"><FileCheck className="size-4" aria-hidden="true" />1. The State's sheet and the books</h2>
+      <p className="mt-1 text-sm text-stone-600">The confirmation sheet that came in the box. Upload the scan or PDF, or take a picture on your phone; VMS reads the permit ranges. Check them against the paper, type the first and last book number from the covers for each range, and confirm. VMS makes every book with its permit numbers.</p>
       <div className="mt-3 flex flex-wrap items-center gap-3">
         {view.sheetFile ? <button type="button" onClick={open} className="text-sm text-brand hover:underline">{view.sheetFile.file_name}</button> : null}
-        {!locked ? <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-800 hover:bg-stone-50"><Camera className="size-4" aria-hidden="true" />{busy === 'read' ? 'Reading the sheet…' : view.sheetFile ? 'Upload or scan it again' : 'Upload or scan the sheet'}<input ref={ref} type="file" accept="image/*,application/pdf" className="sr-only" disabled={busy !== null} onChange={(e) => pick(e.target.files)} /></label> : null}
+        {!locked && !done ? <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-800 hover:bg-stone-50"><Camera className="size-4" aria-hidden="true" />{busy === 'read' ? 'Reading the sheet…' : view.sheetFile ? 'Upload or scan it again' : 'Upload or scan the sheet'}<input ref={ref} type="file" accept="image/*,application/pdf" className="sr-only" disabled={busy !== null} onChange={(e) => pick(e.target.files)} /></label> : null}
+        {!locked && !done && !saved && !edit ? <button type="button" className="text-sm text-brand hover:underline" onClick={startEdit}>No sheet? Type it in</button> : null}
       </div>
+      {sheet.unclear?.length && editing ? <Alert variant="warning" className="mt-3">VMS was not sure about: {sheet.unclear.join('; ')}. Look at the paper and correct the numbers before you confirm.</Alert> : null}
       {(saved || edit) ? (
-        <div className="mt-4">
-          {sheet.unclear?.length ? <Alert variant="warning">VMS was not sure about: {sheet.unclear.join('; ')}. Look at the paper and correct the numbers before you confirm.</Alert> : null}
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead><tr className="text-left text-xs uppercase tracking-wide text-stone-500"><th className="py-2 pr-3">Issued</th><th className="py-2 pr-3">From</th><th className="py-2 pr-3">Including</th><th className="py-2 pr-3">Books</th><th className="py-2 pr-3">Permits</th></tr></thead>
-              <tbody className="divide-y divide-stone-100">
-                {(['day', 'season'] as const).map((k) => (
-                  <tr key={k}>
-                    <td className="py-2 pr-3 font-medium text-stone-900">{KIND_LABELS[k]} permits</td>
-                    {(['from', 'to', 'books', 'permits'] as const).map((f) => (
-                      <td key={f} className="py-2 pr-3"><Input type="number" inputMode="numeric" value={num(sheet[k][f])} onChange={(e) => setKind(k, f, e.target.value)} disabled={locked || confirmed && !edit} className="w-28" aria-label={`${KIND_LABELS[k]} ${f}`} /></td>
-                    ))}
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead><tr className="text-left text-xs uppercase tracking-wide text-stone-500"><th className="py-2 pr-3">Kind</th><th className="py-2 pr-3">From</th><th className="py-2 pr-3">Including</th><th className="py-2 pr-3">Books</th><th className="py-2 pr-3">Permits</th><th className="py-2 pr-3">First book #</th><th className="py-2 pr-3">Last book #</th><th className="py-2" /></tr></thead>
+            <tbody className="divide-y divide-stone-100">
+              {rows.map((r) => {
+                const size = sheetRowBooks(r, per[r.kind])
+                return (
+                  <tr key={r.key} className={size.error && r.from && r.to ? 'bg-red-50/60' : ''}>
+                    <td className="py-1.5 pr-3"><Select value={r.kind} onChange={(e) => setRow(r.key, { kind: e.target.value as 'day' | 'season' })} disabled={!editing} aria-label="Kind"><option value="day">Day</option><option value="season">Season</option></Select></td>
+                    <td className="py-1.5 pr-3"><Input type="number" inputMode="numeric" value={r.from} onChange={(e) => setRow(r.key, { from: e.target.value })} disabled={!editing} className="w-28" aria-label="From permit" /></td>
+                    <td className="py-1.5 pr-3"><Input type="number" inputMode="numeric" value={r.to} onChange={(e) => setRow(r.key, { to: e.target.value })} disabled={!editing} className="w-28" aria-label="Including permit" /></td>
+                    <td className="py-1.5 pr-3 text-stone-700">{r.from && r.to ? size.n : ''}{size.error && r.from && r.to ? <span className="ml-2 text-xs text-red-700">{size.error}</span> : null}</td>
+                    <td className="py-1.5 pr-3 text-stone-700">{r.from && r.to && !size.error ? size.permits : ''}</td>
+                    <td className="py-1.5 pr-3"><Input value={r.first_book} onChange={(e) => setRow(r.key, { first_book: e.target.value })} disabled={!editing} placeholder={r.kind === 'day' ? 'DB 543' : 'SB 1130'} className="w-28" aria-label="First book number" /></td>
+                    <td className="py-1.5 pr-3"><Input value={r.last_book} onChange={(e) => setRow(r.key, { last_book: e.target.value })} disabled={!editing} className="w-28" aria-label="Last book number" /></td>
+                    <td className="py-1.5 text-right">{editing ? <button type="button" onClick={() => setRows(rows.filter((x) => x.key !== r.key))} className="text-stone-400 hover:text-red-700" aria-label="Remove row"><Trash2 className="size-4" /></button> : null}</td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="mt-3 grid gap-3 sm:grid-cols-3">
-            <FormField label="Season on the sheet" htmlFor="sh-season"><Input id="sh-season" value={sheet.season_label ?? ''} onChange={(e) => setEdit({ ...sheet, season_label: e.target.value || null })} disabled={locked || confirmed && !edit} /></FormField>
-            <FormField label="Date shipped" htmlFor="sh-shipped"><Input id="sh-shipped" type="date" value={sheet.shipped_on ?? ''} onChange={(e) => setEdit({ ...sheet, shipped_on: e.target.value || null })} disabled={locked || confirmed && !edit} /></FormField>
-          </div>
-          {!locked ? (
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              {confirmed && !edit ? <><p className="text-sm text-emerald-800">Confirmed {shortDate(shipment.sheet_confirmed_at!)}.</p><Button variant="secondary" onClick={() => setEdit(sheet)}>Change it</Button></> : <Button onClick={confirm} disabled={busy !== null}>{busy === 'confirm' ? 'Saving…' : 'The sheet says this'}</Button>}
-              {edit && confirmed ? <Button variant="ghost" onClick={() => setEdit(null)}>Cancel</Button> : null}
-            </div>
-          ) : null}
-        </div>
-      ) : !locked ? <p className="mt-3 text-xs text-stone-500">No sheet in the box? Type the numbers from it instead: <button type="button" className="text-brand hover:underline" onClick={() => setEdit(EMPTY_SHEET)}>enter the sheet by hand</button>. Without a sheet, VMS can only check the book sizes.</p> : null}
-    </section>
-  )
-}
-
-/** 2. Every book in the box: its number from the cover, its first and last permit. */
-function BooksStep({ view, locked, onDone }: { view: ShipmentView; locked: boolean; onDone: () => void }) {
-  const { shipment, season } = view
-  const per = { day: season.day_per_book, season: season.season_per_book }
-  const fromSaved = (books: SnoparkBook[]): BookRowInput[] => books.map((b) => ({ key: b.id, kind: b.kind, book_number: b.book_number, first_permit: String(b.first_permit), last_permit: String(b.last_permit) }))
-  const [rows, setRows] = useState<BookRowInput[] | null>(null)
-  const sheet = (shipment.sheet as unknown as Sheet | null) ?? null
-  const shown = rows ?? fromSaved(view.books)
-  const [busy, setBusy] = useState(false)
-  const onReport = view.books.filter((b) => b.status !== 'on_hand')
-  const dirty = rows !== null
-
-  // Dana, Nov 10: the first and last book number of each kind fill every row, book numbers and permits together
-  const [fill, setFill] = useState<{ day: { first: string; last: string }; season: { first: string; last: string } } | null>(null)
-  const dayRange = sheet ? sheetBooks(sheet, 'day', per.day) : null
-  const seasonRange = sheet ? sheetBooks(sheet, 'season', per.season) : null
-  function fillRows() {
-    if (!sheet || !fill) return
-    const r = rowsFromSheet(sheet, per, { day: dayRange ? fill.day : undefined, season: seasonRange ? fill.season : undefined })
-    if (r.error) { toast.error(r.error); return }
-    setRows(r.rows)
-    setFill(null)
-  }
-  const setFirst = (kind: 'day' | 'season', v: string) => setFill((f) => {
-    const cur = f ?? { day: { first: '', last: '' }, season: { first: '', last: '' } }
-    const range = kind === 'day' ? dayRange : seasonRange
-    const last = range && v.trim() ? bookNumberAfter(v, range.n - 1) : cur[kind].last
-    return { ...cur, [kind]: { first: v, last } }
-  })
-  function update(key: string, patch: Partial<BookRowInput>) { setRows(shown.map((r) => (r.key === key ? { ...r, ...patch } : r))) }
-  function add(kind: 'day' | 'season') {
-    const mine = shown.filter((r) => r.kind === kind)
-    const last = mine[mine.length - 1]
-    const nextFirst = last && Number(last.last_permit) ? Number(last.last_permit) + 1 : null
-    const m = last?.book_number.match(/^(.*?)(\d+)$/)
-    const nextBook = m ? `${m[1]}${String(Number(m[2]) + 1).padStart(m[2]!.length, '0')}` : ''
-    setRows([...shown, newRow(kind, nextFirst ? String(nextFirst) : '', nextFirst ? String(nextFirst + per[kind] - 1) : '', nextBook)])
-  }
-  async function save() {
-    const bad = shown.map((r) => rowProblem(r, per)).filter((p) => p && /^(Book number|Permit numbers|Last before first)$/.test(p))
-    if (bad.length) { toast.error('Every row needs a book number and its first and last permit'); return }
-    setBusy(true)
-    try {
-      const n = await saveShipmentBooks(shipment.id, shown.map((r) => ({ kind: r.kind, book_number: r.book_number.trim(), first_permit: Number(r.first_permit), last_permit: Number(r.last_permit) })))
-      setRows(null)
-      toast.success(`${n} book${n === 1 ? '' : 's'} saved`)
-      onDone()
-    } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(false) }
-  }
-
-  return (
-    <section className="rounded-2xl border border-stone-200 bg-white p-5">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">2. The books in the box</h2>
-      <p className="mt-1 text-sm text-stone-600">One row per book, from its cover: the book number and the first and last permit number inside. A day book holds {per.day} permits, a season book {per.season}; a row of another size is marked.</p>
-      {onReport.length ? <p className="mt-2 text-xs text-stone-500">{onReport.length} book{onReport.length === 1 ? ' from this box is' : 's from this box are'} already on a report and cannot be changed here.</p> : null}
-      {dirty && shown.length ? <Alert variant="info" className="mt-3">{shown.some((r) => !r.book_number.trim()) ? <>Type each book's number from its cover in the <strong>Book #</strong> column, then click <strong>Save the books</strong> at the bottom.</> : <>Check the rows against the books in the box, then click <strong>Save the books</strong> at the bottom.</>}</Alert> : null}
-      <div className="mt-3 overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead><tr className="text-left text-xs uppercase tracking-wide text-stone-500"><th className="py-2 pr-3">Kind</th><th className="py-2 pr-3">Book #</th><th className="py-2 pr-3">Starting permit #</th><th className="py-2 pr-3">Ending permit #</th><th className="py-2 pr-3">Permits</th><th className="py-2" /></tr></thead>
-          <tbody className="divide-y divide-stone-100">
-            {shown.length === 0 ? <tr><td colSpan={6} className="py-3 text-sm text-stone-500">No books entered yet.</td></tr> : null}
-            {shown.map((r) => {
-              const problem = rowProblem(r, per)
-              const n = Number(r.last_permit) - Number(r.first_permit) + 1
-              return (
-                <tr key={r.key} className={problem && r.first_permit && r.last_permit && r.book_number ? 'bg-red-50/60' : ''}>
-                  <td className="py-1.5 pr-3"><Select value={r.kind} onChange={(e) => update(r.key, { kind: e.target.value as 'day' | 'season' })} disabled={locked} aria-label="Kind"><option value="day">Day</option><option value="season">Season</option></Select></td>
-                  <td className="py-1.5 pr-3"><Input value={r.book_number} onChange={(e) => update(r.key, { book_number: e.target.value })} disabled={locked} placeholder="from the cover" className="w-32" aria-label="Book number" /></td>
-                  <td className="py-1.5 pr-3"><Input type="number" inputMode="numeric" value={r.first_permit} onChange={(e) => update(r.key, { first_permit: e.target.value, last_permit: r.last_permit || (e.target.value ? String(Number(e.target.value) + per[r.kind] - 1) : '') })} disabled={locked} className="w-28" aria-label="Starting permit" /></td>
-                  <td className="py-1.5 pr-3"><Input type="number" inputMode="numeric" value={r.last_permit} onChange={(e) => update(r.key, { last_permit: e.target.value })} disabled={locked} className="w-28" aria-label="Ending permit" /></td>
-                  <td className="py-1.5 pr-3 text-stone-700">{Number.isFinite(n) && n > 0 ? n : ''}{problem === 'Book number' && r.first_permit && r.last_permit ? <span className="ml-2 text-xs text-amber-700">type the book # from the cover</span> : problem && r.first_permit && r.last_permit ? <span className="ml-2 text-xs text-red-700">{problem}</span> : null}</td>
-                  <td className="py-1.5 text-right">{!locked ? <button type="button" onClick={() => setRows(shown.filter((x) => x.key !== r.key))} className="text-stone-400 hover:text-red-700" aria-label="Remove row"><Trash2 className="size-4" /></button> : null}</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-      {fill && !locked ? (
-        <div className="mt-3 rounded-xl border border-stone-200 bg-stone-50 p-4">
-          <p className="text-sm text-stone-700">From the sheet: {dayRange ? <><strong>{dayRange.n} day book{dayRange.n === 1 ? '' : 's'}</strong> (permits {dayRange.from} to {dayRange.to})</> : 'no day books'}{seasonRange ? <> and <strong>{seasonRange.n} season book{seasonRange.n === 1 ? '' : 's'}</strong> (permits {seasonRange.from} to {seasonRange.to})</> : ' and no season books'}. Type the first and last book number from the covers; VMS fills every row with its book number and permit numbers.</p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {dayRange ? <div className="grid grid-cols-2 gap-3"><FormField label="First day book #" htmlFor="fill-day-first"><Input id="fill-day-first" value={fill.day.first} onChange={(e) => setFirst('day', e.target.value)} placeholder="DB 543" /></FormField><FormField label="Last day book #" htmlFor="fill-day-last"><Input id="fill-day-last" value={fill.day.last} onChange={(e) => setFill({ ...fill, day: { ...fill.day, last: e.target.value } })} /></FormField></div> : null}
-            {seasonRange ? <div className="grid grid-cols-2 gap-3"><FormField label="First season book #" htmlFor="fill-season-first"><Input id="fill-season-first" value={fill.season.first} onChange={(e) => setFirst('season', e.target.value)} placeholder="SB 1130" /></FormField><FormField label="Last season book #" htmlFor="fill-season-last"><Input id="fill-season-last" value={fill.season.last} onChange={(e) => setFill({ ...fill, season: { ...fill.season, last: e.target.value } })} /></FormField></div> : null}
-          </div>
-          <div className="mt-3 flex gap-2"><Button onClick={fillRows}>Fill the rows</Button><Button variant="ghost" onClick={() => setFill(null)}>Cancel</Button></div>
+                )
+              })}
+            </tbody>
+            <tfoot><tr className="text-xs text-stone-600"><td className="py-2 pr-3" colSpan={3}>Totals</td><td className="py-2 pr-3">{totals('day').n} day · {totals('season').n} season</td><td className="py-2 pr-3">{totals('day').permits} day · {totals('season').permits} season</td><td colSpan={3} /></tr></tfoot>
+          </table>
         </div>
       ) : null}
-      {!locked ? (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Button variant="secondary" onClick={() => add('day')}><Plus className="size-4" aria-hidden="true" />Day book</Button>
-          <Button variant="secondary" onClick={() => add('season')}><Plus className="size-4" aria-hidden="true" />Season book</Button>
-          {sheet && shipment.sheet_confirmed_at && !shown.length && !fill ? <Button variant="ghost" onClick={() => setFill({ day: { first: '', last: '' }, season: { first: '', last: '' } })}>Fill the rows from the sheet</Button> : null}
-          <span className="grow" />
-          {dirty ? <Button variant="ghost" onClick={() => setRows(null)}>Cancel</Button> : null}
-          <Button onClick={save} disabled={busy || (!dirty && view.books.length > 0)}>{busy ? 'Saving…' : 'Save the books'}</Button>
+      {(saved || edit) ? (
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <FormField label="Season on the sheet" htmlFor="sh-season"><Input id="sh-season" value={sheet.season_label ?? ''} onChange={(e) => setEdit({ sheet: { ...sheet, season_label: e.target.value || null }, rows })} disabled={!editing} /></FormField>
+          <FormField label="Date shipped" htmlFor="sh-shipped"><Input id="sh-shipped" type="date" value={sheet.shipped_on ?? ''} onChange={(e) => setEdit({ sheet: { ...sheet, shipped_on: e.target.value || null }, rows })} disabled={!editing} /></FormField>
         </div>
+      ) : null}
+      {editing && !locked && (saved || edit) ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Button variant="secondary" onClick={() => setRows([...rows, newSheetRow('day')])}><Plus className="size-4" aria-hidden="true" />Add another row</Button>
+          <span className="grow" />
+          {edit && confirmed ? <Button variant="ghost" onClick={() => setEdit(null)}>Cancel</Button> : null}
+          <Button onClick={() => confirm('ls')} disabled={busy !== null}>{busy === 'ls' ? 'Making the books…' : 'Confirmed, books received'}</Button>
+          <Button variant="secondary" onClick={() => confirm('byhand')} disabled={busy !== null}>{busy === 'byhand' ? 'Making the books…' : 'Confirmed, already in Lightspeed'}</Button>
+        </div>
+      ) : null}
+      {!editing ? (
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+          <p className="text-emerald-800">Confirmed {shortDate(shipment.sheet_confirmed_at!)}: {view.books.filter((b) => b.kind === 'day').length} day and {view.books.filter((b) => b.kind === 'season').length} season books on hand.</p>
+          {!locked && !done ? <Button variant="ghost" onClick={startEdit}>Change it</Button> : null}
+        </div>
+      ) : null}
+      {result ? <Alert variant="success" className="mt-3">{result}</Alert> : null}
+      {view.books.length ? (
+        <details className="mt-3 text-sm">
+          <summary className="cursor-pointer text-stone-600">The {view.books.length} books VMS made</summary>
+          <ul className="mt-2 grid gap-x-6 gap-y-0.5 text-xs text-stone-700 sm:grid-cols-2 lg:grid-cols-3">{view.books.map((b) => <li key={b.id}>{KIND_LABELS[b.kind]} {b.book_number}: {b.first_permit} – {b.last_permit}</li>)}</ul>
+        </details>
       ) : null}
     </section>
   )
@@ -260,6 +213,7 @@ function BooksStep({ view, locked, onDone }: { view: ShipmentView; locked: boole
 /** 3. The check, and what happens next: Lightspeed, or the email to the State. */
 function CheckStep({ view, locked, isAdmin, onDone }: { view: ShipmentView; locked: boolean; isAdmin: boolean; onDone: () => void }) {
   const { shipment } = view
+  const show = shipment.status === 'off' || shipment.status === 'done' || shipment.status === 'balanced'
   const diffs = (shipment.differences as unknown as Difference[]) ?? []
   const [busy, setBusy] = useState<string | null>(null)
   const [note, setNote] = useState('')
@@ -309,9 +263,10 @@ function CheckStep({ view, locked, isAdmin, onDone }: { view: ShipmentView; lock
     } catch (e) { toast.error(errorMessage(e)); onDone() } finally { setBusy(null) }
   }
 
+  if (!show) return null
   return (
     <section className="rounded-2xl border border-stone-200 bg-white p-5">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">3. The check</h2>
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">2. The check</h2>
       {shipment.status === 'done' ? (
         <div className="mt-2 space-y-2 text-sm text-stone-700">
           <p>The box balanced{shipment.accepted_note ? ` (accepted by Dana: ${shipment.accepted_note})` : ''} and the books are in Lightspeed{shipment.ls_order_id ? ` as PO ${shipment.ls_order_id}` : ''}, with the dated note on each permit item.</p>
@@ -319,7 +274,7 @@ function CheckStep({ view, locked, isAdmin, onDone }: { view: ShipmentView; lock
         </div>
       ) : (
         <>
-          <p className="mt-1 text-sm text-stone-600">When every book is entered, click <strong>All books received</strong>. VMS compares the books with the sheet and the standard book sizes. If it all matches, the books go into Lightspeed by themselves: a purchase order under the State's vendor, checked in, and a dated note on each permit item saying who received which books and permit numbers. For a box someone already entered in Lightspeed by hand, click <strong>Already in Lightspeed</strong> instead: the check still runs, and no second purchase order is made.</p>
+          <p className="mt-1 text-sm text-stone-600">When you confirm the sheet, VMS compares the books it made with the sheet's ranges. If it all matches, the books go into Lightspeed by themselves: a purchase order under the State's vendor, checked in, and a dated note on each permit item saying who received which books and permit numbers (or, for a box already entered by hand, the box is recorded without a second purchase order).</p>
           {diffs.length ? (
             <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-900">
               <p className="font-semibold">The box does not match:</p>
@@ -330,12 +285,12 @@ function CheckStep({ view, locked, isAdmin, onDone }: { view: ShipmentView; lock
           {result ? <Alert variant="success" className="mt-3">{result}</Alert> : null}
           {!locked ? (
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <Button onClick={run} disabled={busy !== null || !ready}>{busy === 'check' ? 'Checking…' : 'All books received'}</Button>
+              <Button onClick={run} disabled={busy !== null || !ready}>{busy === 'check' ? 'Checking…' : 'Check again'}</Button>
               {shipment.status === 'off' ? <Button variant="secondary" onClick={flag} disabled={busy !== null}>{busy === 'flag' ? 'Drafting…' : shipment.draft_id ? 'Draft the email again' : 'Email the State'}</Button> : null}
               {shipment.status === 'off' && shipment.draft_id ? <Link to={`/mail?view=drafts&draft=${shipment.draft_id}`} className="text-sm text-brand hover:underline">Open the email to send</Link> : null}
               {shipment.status === 'balanced' ? <Button variant="secondary" onClick={toLs} disabled={busy !== null}>{busy === 'ls' ? 'Entering…' : 'Enter it in Lightspeed'}</Button> : null}
               {ready && shipment.status !== 'off' ? <Button variant="ghost" onClick={byHand} disabled={busy !== null}>{busy === 'byhand' ? 'Checking…' : 'Already in Lightspeed'}</Button> : null}
-              {!ready ? <p className="text-xs text-stone-500">Confirm the sheet and save the books first.</p> : null}
+              {!ready ? <p className="text-xs text-stone-500">Confirm the sheet first.</p> : null}
             </div>
           ) : null}
           {!locked && isAdmin && shipment.status === 'off' ? (
