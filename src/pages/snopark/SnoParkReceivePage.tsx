@@ -5,12 +5,12 @@ import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useLiveTable } from '@/hooks/useLiveTable'
-import { acceptShipment, checkShipment, confirmSheet, enteredByHand, flagShipment, getShipment, mapPrinted, receiveInLs, removeShipment, saveShipmentBooks, uploadSheet, type ShipmentView } from '@/services/snopark'
+import { acceptShipment, checkShipment, confirmSheet, enteredByHand, flagShipment, getShipment, mapPrinted, receiveInLs, removeShipment, saveShipmentBooks, uploadCovers, uploadSheet, type ShipmentView } from '@/services/snopark'
 import { signedFileUrl } from '@/services/lines'
 import { ROUTES } from '@/lib/constants'
 import { shortDate } from '@/lib/freight'
 import { errorMessage } from '@/lib/utils'
-import { EMPTY_SHEET, KIND_LABELS, SHIPMENT_STATUS, bookNumberAfter, booksFromSheetRows, newSheetRow, sheetFromRows, sheetRowBooks, sheetRowsOf, type Difference, type Sheet, type SheetRow } from '@/lib/snopark'
+import { EMPTY_SHEET, KIND_LABELS, SHIPMENT_STATUS, applyCovers, bookNumberAfter, booksFromSheetRows, newSheetRow, sheetFromRows, sheetRowBooks, sheetRowsOf, type Difference, type Sheet, type SheetRow } from '@/lib/snopark'
 import { BackLink } from '@/components/shared/BackLink'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
@@ -100,7 +100,9 @@ function SheetStep({ view, locked, userId, onDone }: { view: ShipmentView; locke
   const rows = edit?.rows ?? sheetRowsOf(saved)
   const [busy, setBusy] = useState<string | null>(null)
   const [result, setResult] = useState<string | null>(null)
+  const [coverNote, setCoverNote] = useState<string | null>(null)
   const ref = useRef<HTMLInputElement>(null)
+  const coverRef = useRef<HTMLInputElement>(null)
   const done = shipment.status === 'done'
   const confirmed = !!shipment.sheet_confirmed_at && view.books.length > 0
   const editing = !!edit || !confirmed
@@ -127,6 +129,26 @@ function SheetStep({ view, locked, userId, onDone }: { view: ShipmentView; locke
       onDone()
     } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(null); if (ref.current) ref.current.value = '' }
   }
+  /** The covers: VMS reads the book numbers and permit numbers and puts them on the matching rows. */
+  async function pickCovers(files: FileList | null) {
+    if (!files?.length || !view.vendor || !userId) return
+    setBusy('covers')
+    try {
+      let cur = rows.length ? rows : sheetRowsOf(saved)
+      let placed = 0
+      const unplaced: string[] = []
+      const unclear: string[] = []
+      for (const f of Array.from(files)) {
+        const r = await uploadCovers(shipment, view.vendor.id, f, userId)
+        const a = applyCovers(cur, r.covers)
+        cur = a.rows; placed += a.placed; unplaced.push(...a.unplaced); unclear.push(...r.unclear)
+      }
+      setEdit({ sheet, rows: cur })
+      setCoverNote([placed ? `${placed} cover${placed === 1 ? '' : 's'} matched to the sheet.` : 'No cover matched a row on the sheet.', unplaced.length ? `Not on the sheet: ${unplaced.join(', ')}.` : '', unclear.length ? `Unsure about: ${unclear.join('; ')}.` : ''].filter(Boolean).join(' '))
+      toast.success(placed ? 'Covers read; check the book numbers' : 'Covers read, but none matched the sheet')
+      onDone()
+    } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(null); if (coverRef.current) coverRef.current.value = '' }
+  }
   async function open() {
     if (!view.sheetFile?.storage_path) return
     try { window.open(await signedFileUrl(view.sheetFile.storage_path), '_blank', 'noopener') } catch (e) { toast.error(errorMessage(e)) }
@@ -152,12 +174,14 @@ function SheetStep({ view, locked, userId, onDone }: { view: ShipmentView; locke
   return (
     <section className="rounded-2xl border border-stone-200 bg-white p-5">
       <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500"><FileCheck className="size-4" aria-hidden="true" />1. The State's sheet and the books</h2>
-      <p className="mt-1 text-sm text-stone-600">The confirmation sheet that came in the box. Upload the scan or PDF, or take a picture on your phone; VMS reads the permit ranges. Check them against the paper, type the first and last book number from the covers for each range, and confirm. VMS makes every book with its permit numbers.</p>
+      <p className="mt-1 text-sm text-stone-600">The confirmation sheet that came in the box. Upload the scan or PDF, or take a picture on your phone; VMS reads the permit ranges. Then photograph the covers of the first and last book of each kind: VMS reads their book numbers and permit numbers and puts them on the matching rows (or type them). Check against the paper and confirm. VMS makes every book with its permit numbers.</p>
       <div className="mt-3 flex flex-wrap items-center gap-3">
         {view.sheetFile ? <button type="button" onClick={open} className="text-sm text-brand hover:underline">{view.sheetFile.file_name}</button> : null}
         {!locked && !done ? <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-800 hover:bg-stone-50"><Camera className="size-4" aria-hidden="true" />{busy === 'read' ? 'Reading the sheet…' : view.sheetFile ? 'Upload or scan it again' : 'Upload or scan the sheet'}<input ref={ref} type="file" accept="image/*,application/pdf" className="sr-only" disabled={busy !== null} onChange={(e) => pick(e.target.files)} /></label> : null}
+        {!locked && !done && (saved || edit) && editing ? <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-stone-800 hover:bg-stone-50"><Camera className="size-4" aria-hidden="true" />{busy === 'covers' ? 'Reading the covers…' : 'Photograph the first and last books'}<input ref={coverRef} type="file" accept="image/*,application/pdf" multiple className="sr-only" disabled={busy !== null} onChange={(e) => pickCovers(e.target.files)} /></label> : null}
         {!locked && !done && !saved && !edit ? <button type="button" className="text-sm text-brand hover:underline" onClick={startEdit}>No sheet? Type it in</button> : null}
       </div>
+      {coverNote ? <p className="mt-2 text-xs text-stone-600">{coverNote}</p> : null}
       {sheet.unclear?.length && editing ? <Alert variant="warning" className="mt-3">VMS was not sure about: {sheet.unclear.join('; ')}. Look at the paper and correct the numbers before you confirm.</Alert> : null}
       {(saved || edit) ? (
         <div className="mt-4 overflow-x-auto">

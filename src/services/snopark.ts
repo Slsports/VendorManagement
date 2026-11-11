@@ -2,7 +2,7 @@
 import { supabase } from '@/lib/supabase'
 import { addVendorLink, uploadVendorFile } from '@/services/lines'
 import { photoForUpload } from '@/lib/photo'
-import type { Difference, Sheet, SeasonCheck } from '@/lib/snopark'
+import type { CoverReading, Difference, Sheet, SeasonCheck } from '@/lib/snopark'
 import type { Json, SnoparkBook, SnoparkOrder, SnoparkReport, SnoparkReportRow, SnoparkSeason, SnoparkShipment, VendorLink } from '@/types'
 
 export interface SeasonView { season: SnoparkSeason; books: SnoparkBook[]; reports: SnoparkReport[]; shipments: SnoparkShipment[]; orders: SnoparkOrder[]; vendor: { id: string; name: string } | null; form: VendorLink | null; map: VendorLink | null; flowchart: VendorLink | null; people: Record<string, string> }
@@ -279,4 +279,17 @@ export async function signatureUrl(path: string): Promise<string> {
 export async function removeShipment(shipmentId: string): Promise<void> {
   const { error } = await supabase.rpc('snopark_shipment_remove', { p_shipment: shipmentId })
   if (error) throw error
+}
+
+/** A photo of book covers (the first and last book of each kind), filed with the box and read by VMS. */
+export async function uploadCovers(shipment: SnoparkShipment, vendorId: string, raw: File, userId: string): Promise<{ link: VendorLink; covers: CoverReading[]; unclear: string[] }> {
+  const file = await photoForUpload(raw)
+  const storage_path = await uploadVendorFile(shipment.organization_id, vendorId, file)
+  const link = await addVendorLink({
+    organization_id: shipment.organization_id, vendor_id: vendorId, kind: 'snopark_sheet', label: `Book covers ${shipment.received_on}`, storage_path, file_name: file.name, file_size: file.size, mime_type: file.type || null,
+    received_at: shipment.received_on, doc_year: Number(shipment.received_on.slice(0, 4)), doc_date: shipment.received_on, order_id: shipment.order_id, source: 'upload', created_by: userId,
+    notes: 'The covers of the first and last books in the box, read by VMS for the book numbers and permit numbers.',
+  })
+  const r = await invoke<{ covers: CoverReading[]; unclear: string[] }>({ action: 'read_covers', shipment_id: shipment.id, link_id: link.id })
+  return { link, covers: r.covers, unclear: r.unclear }
 }
