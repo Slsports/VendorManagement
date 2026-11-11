@@ -110,6 +110,9 @@ or match senders. A contact that was filed in the wrong place is deleted when it
 When Claude closes tasks because Dana asked, set `closed_how = 'request'` with the reason in `done_note`; anything VMS closes
 on its own is `vms` (the default for a task closed with no `done_by`). Dana checks the **Closed by VMS** tab, so every
 automatic close needs a plain `done_note` saying what VMS saw.
+**Made by mistake (Dana, Nov 11):** a task that should never have been made (wrong reading, rule that misfired) is closed with
+`closed_how = 'mistake'` and a `done_note`: hidden from every list, feed, calendar and notice, never deleted (its auto_key row
+stops the rule making it again). When fixing a rule that made wrong tasks, close its open wrong ones as `mistake` (migration 0339).
 **Done means closed (Dana, Nov 7):** "I will always want a task closed when the items have been completed, whether I mark it
 or vms does." Every task, review card and paperwork check VMS makes needs a rule that closes it when the thing is done, by
 any route (filed by hand, by Claude, by another screen); never leave her lists holding finished work. Any data fix Claude

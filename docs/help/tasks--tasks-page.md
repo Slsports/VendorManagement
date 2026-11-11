@@ -14,6 +14,7 @@ The Tasks page lists your tasks. The **My tasks** box on the dashboard shows how
    - **Done**: tasks a person ticked done.
    - **Closed at your request**: tasks Claude closed because you asked (old paperwork, old proofs…). The note says why.
    - **Closed by VMS**: tasks VMS closed on its own because it saw the work was done (a payment showed as paid, the new contract is on file, the PO was approved). **Why VMS closed it** says what it saw; click the task's vendor, order or email to check.
+   - Tasks VMS should never have made (a wrong reading, an invoice that never needed entering) are not on any tab, in the vendor's activity or on the calendar. VMS keeps them out of sight so the same wrong task does not come back.
 3. Click a column name (**Task**, **Due**, **Remind**, **Assigned to**, **From**, **About**) to sort; click again to reverse.
 4. Click a task's name to see or change it.
 

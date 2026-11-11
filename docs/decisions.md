@@ -4415,3 +4415,12 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   Nationwide 32745, 32767, 32769 (Edenred, paid through WWD), Hendrix 601451 ($0.00 no-charge damage replacement).
   EJD and Stihl stay with Dana's Gmail forward. The "277 invoices in 30 days" was files VMS saved (266 older mail, 124 of
   them our own sent mail); 11 invoices actually arrived from those vendors in 30 days.
+- Nov 11, Dana ("yes, fix the rule" … "yes go on both"): "Enter … in Bill.com" tasks only for bills that need entering.
+  No task for a WWD invoice (on a WWD record by its number, or it came in an Edenred email), one of $0.00 or less, or one
+  already marked paid; the 120 days count from the invoice's own date, so a 2024 invoice filed in November is not new.
+  Open tasks that fit close themselves, saying why (migration 0340).
+- Nov 11, Dana: "when you close erroneous notifications I think they should be deleted, not just closed. They clog up the
+  activity feeds." Agreed instead: tasks that should never have been made are closed as "made by mistake" and hidden from
+  every tab, the vendor activity, the Accounting calendar and the dashboard notices, but kept in the table so the rule that
+  made them cannot make them again (migration 0339). Marked now: the 53 "Which order?" freight tasks (Nov 9) and the 6
+  "Enter … in Bill.com" tasks (Nov 10).
