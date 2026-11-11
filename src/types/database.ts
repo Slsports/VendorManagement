@@ -1160,6 +1160,8 @@ export type Database = {
       shipment_requests_waiting: { Args: { p_org: string }; Returns: number }
       freight_terms_review_answer: { Args: { p_item: string; p_order: string | null }; Returns: string }
       freight_promise_set_order: { Args: { p_promise: string; p_order: string | null }; Returns: string }
+      payment_notice_choices: { Args: { p_email: string }; Returns: { id: string; label: string; doc_number: string | null; doc_date: string | null; doc_total: number | null; received_at: string | null; storage_path: string | null; file_name: string | null; mime_type: string | null }[] }
+      payment_notice_pick: { Args: { p_email: string; p_links: string[] }; Returns: number }
       credit_request_make: { Args: { p_email: string; p_what: string; p_invoice: string | null; p_amount: number | null; p_signer: string | null }; Returns: string | null }
       credit_request_followup: { Args: { p_task: string }; Returns: string | null }
       mail_credit_queue: { Args: { p_org: string; p_limit?: number }; Returns: { email_id: string; subject: string | null; body_text: string | null; sent_at: string; vendor: string | null; to_emails: string[] }[] }

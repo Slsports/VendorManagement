@@ -4429,3 +4429,9 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   Bill.com inbox on Nov 10; Dana deletes them there). Nationwide stopped taking payment through the WWD portal on Sep 15,
   2026 (Lorenne): check or Bill.com; a note is on the vendor (migration 0341). Cause: VMS read the paid email but it named no
   invoice numbers, so it marked nothing (5 such payment emails, 3 vendors: Nationwide, Sandboxx, Scope).
+- Nov 11, Dana ("yes go, build it and re-check them"): a payment email that names no invoice numbers marks the vendor's
+  unpaid invoices that came earlier in the same conversation (also any filed later from it). When none did, and the email is
+  from the last 120 days with unpaid invoices from the 120 days before it, an Accounting task asks which ones it paid:
+  tick them and Mark paid, or None of these; it closes itself once none of those is unpaid (migration 0342). Re-check:
+  Sandboxx (Aug 14, sprayer invoice) and Scope (Dec 22 $54.63, Apr 10 late fees) paid invoices that were never filed in
+  VMS, so there is nothing to mark.

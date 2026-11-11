@@ -10,6 +10,8 @@ import { fetchAttachment, listEdenredUnplaced, fileAttachmentToVendor, type Unpl
 import { kickOrderChecks } from '@/services/orderChecks'
 import { listVendorOrdersForFreight } from '@/services/freight'
 import { getFreightPromise, setFreightPromiseOrder, freightPromiseText } from '@/services/freightTerms'
+import { listPaymentChoices, markPaymentInvoices } from '@/services/paymentNotices'
+import { downloadVendorFile } from '@/services/lines'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
 import { VendorPicker } from '@/components/vendors/VendorPicker'
 import { money as formatCurrency } from '@/lib/freight'
@@ -33,6 +35,8 @@ export function TaskGo({ task, onGo }: { task: TaskRow; onGo: () => void }) {
   if (kind === 'edenred' && id && !task.done_at) return <div className="space-y-3">{go}<EdenredFilesPanel emailId={id} onAllFiled={onGo} /></div>
   // freight terms from an email VMS couldn't tie to an order (Dana, Nov 7): the vendor's orders right here, pick one
   if (kind === 'freightorder' && id && !task.done_at) return <div className="space-y-3">{go}<FreightOrderPanel promiseId={id} vendorId={task.vendor_id} onPicked={onGo} /></div>
+  // a payment email that names no invoices (Dana, Nov 11): the vendor's unpaid invoices right here, tick the ones it paid
+  if (kind === 'payask' && id && !task.done_at) return <div className="space-y-3">{go}<PaymentInvoicesPanel emailId={id} onDone={onGo} /></div>
   return go
 }
 
@@ -202,6 +206,54 @@ function PayPanel({ task, bill, id, onDone }: { task: TaskRow; bill: 'wwd' | 'or
           )}
         </>
       )}
+    </section>
+  )
+}
+
+function PaymentInvoicesPanel({ emailId, onDone }: { emailId: string; onDone: () => void }) {
+  const q = useSupabaseQuery(() => listPaymentChoices(emailId), [emailId])
+  const { view, viewer } = useDocumentViewer()
+  const [ticked, setTicked] = useState<Record<string, boolean>>({})
+  const [busy, setBusy] = useState(false)
+  const list = q.data ?? []
+  const picked = list.filter((l) => ticked[l.id]).map((l) => l.id)
+
+  async function mark(ids: string[]) {
+    setBusy(true)
+    try {
+      const n = await markPaymentInvoices(emailId, ids)
+      toast.success(n ? `Marked ${n} invoice${n === 1 ? '' : 's'} paid` : 'Noted: none of these')
+      onDone()
+    } catch (e) {
+      toast.error(errorMessage(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (q.isLoading) return <p className="text-sm text-stone-500">Loading the invoices…</p>
+  if (!list.length) return <p className="text-sm text-emerald-700">None of this vendor's invoices from before the payment is unpaid any more.</p>
+  return (
+    <section className="rounded-xl border border-amber-200 bg-amber-50/60 p-3 text-sm">
+      <p className="font-semibold text-stone-900">Which invoices did this payment pay?</p>
+      <ul className="mt-2 divide-y divide-stone-200 rounded-lg bg-white ring-1 ring-stone-200">
+        {list.map((l) => (
+          <li key={l.id} className="flex flex-wrap items-center gap-2 p-2">
+            <input type="checkbox" checked={!!ticked[l.id]} onChange={(e) => setTicked((x) => ({ ...x, [l.id]: e.target.checked }))}
+              aria-label={`Paid: ${l.doc_number ? `invoice ${l.doc_number}` : l.label}`} className="size-4 rounded border-stone-300" />
+            <button type="button" disabled={!l.storage_path} onClick={() => view({ name: l.file_name ?? l.label, mime: l.mime_type, load: () => downloadVendorFile(l.storage_path!) })}
+              className="inline-flex items-center gap-1 text-left font-medium text-brand hover:underline disabled:text-stone-700 disabled:no-underline">
+              <FileText className="size-4 shrink-0" aria-hidden="true" />{l.doc_number ? `Invoice ${l.doc_number}` : l.label}
+            </button>
+            <span className="ml-auto text-xs text-stone-500">{[l.doc_date ?? l.received_at, l.doc_total != null ? formatCurrency(l.doc_total) : null].filter(Boolean).join(' · ')}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Button size="sm" disabled={busy || !picked.length} onClick={() => mark(picked)}><CircleCheck className="mr-1 size-4" aria-hidden="true" />Mark paid</Button>
+        <Button size="sm" variant="ghost" disabled={busy} onClick={() => mark([])}>None of these</Button>
+      </div>
+      {viewer}
     </section>
   )
 }
