@@ -10,7 +10,7 @@ export async function vendorActivityFeed(organizationId: string, vendorId: strin
     supabase.from('orders').select('id, po_number, order_date, placed_by, date_received, date_entered_ls, entered_by, paid_date')
       .or(`vendor_id.eq.${vendorId},brand_vendor_id.eq.${vendorId}`).order('order_date', { ascending: false, nullsFirst: false }).limit(limit),
     supabase.from('tasks').select('id, title, done_at, done_note, closed_how, done_by')
-      .eq('vendor_id', vendorId).not('done_at', 'is', null).order('done_at', { ascending: false }).limit(limit),
+      .eq('vendor_id', vendorId).not('done_at', 'is', null).neq('closed_how', 'mistake').order('done_at', { ascending: false }).limit(limit),
     supabase.from('notes').select('id, body, created_at, created_by').eq('entity_type', 'vendor').eq('entity_id', vendorId).order('created_at', { ascending: false }).limit(limit),
     supabase.from('profiles').select('id, full_name, email').eq('organization_id', organizationId),
   ])

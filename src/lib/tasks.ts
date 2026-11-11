@@ -158,6 +158,8 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   if (kind === 'freightissue' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open the conversation' }
   // freight terms from an email: which order they are for, or the order a person set differently
   if (kind === 'freightorder' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open the email' }
+  // a payment email that names no invoices (Dana, Nov 11): the email itself; the invoices to tick are in the task box
+  if (kind === 'payask' && t.thread_id && id) return { kind: 'page', to: `/mail/${t.thread_id}?email=${id}`, label: 'Open the payment email' }
   if (kind === 'freightterms' && t.order_id) return { kind: 'page', to: `/orders/${t.order_id}`, label: "Open the order's freight" }
   // Tell me when they reply (Dana, Oct 19): straight to their reply
   if (kind === 'reply' && t.thread_id) return { kind: 'page', to: `/mail/${t.thread_id}`, label: 'Open their reply' }

@@ -83,7 +83,7 @@ export async function listNotices(organizationId: string, personId: string): Pro
   const [r, f] = await Promise.all([
     supabase.from('tasks').select(TASK_SELECT).eq('organization_id', organizationId).eq('assigned_to', personId).is('done_at', null).is('parked_at', null)
       .not('remind_at', 'is', null).lte('remind_at', new Date().toISOString()).is('reminder_seen_at', null).order('remind_at'),
-    supabase.from('tasks').select(TASK_SELECT).eq('organization_id', organizationId).eq('created_by', personId).not('done_at', 'is', null)
+    supabase.from('tasks').select(TASK_SELECT).eq('organization_id', organizationId).eq('created_by', personId).not('done_at', 'is', null).neq('closed_how', 'mistake')
       .is('done_seen_at', null).neq('done_by', personId).order('done_at', { ascending: false }),
   ])
   if (r.error) throw r.error
@@ -112,12 +112,15 @@ export async function completeTask(id: string, note?: string | null): Promise<st
   return data
 }
 
-/** Accounting tasks (Dana, Oct 16): open ones, finished ones, or those due in a date range (the calendar). */
+/**
+ * Accounting tasks (Dana, Oct 16): open ones, finished ones, or those due in a date range (the calendar). Tasks closed as
+ * made by mistake are never shown (Dana, Nov 11; migration 0339).
+ */
 export async function listAccountingTasks(organizationId: string, opts: { view: 'open' | 'done' | 'range'; from?: string; to?: string }): Promise<TaskRow[]> {
   let q = supabase.from('tasks').select(TASK_SELECT).eq('organization_id', organizationId).eq('area', 'accounting')
   if (opts.view === 'open') q = q.is('done_at', null).order('due_date', { ascending: true, nullsFirst: false }).order('created_at').limit(1000)
-  else if (opts.view === 'done') q = q.not('done_at', 'is', null).order('done_at', { ascending: false }).limit(300)
-  else q = q.gte('due_date', opts.from ?? '1900-01-01').lte('due_date', opts.to ?? '2999-12-31').order('due_date').limit(2000)
+  else if (opts.view === 'done') q = q.not('done_at', 'is', null).neq('closed_how', 'mistake').order('done_at', { ascending: false }).limit(300)
+  else q = q.or('closed_how.is.null,closed_how.neq.mistake').gte('due_date', opts.from ?? '1900-01-01').lte('due_date', opts.to ?? '2999-12-31').order('due_date').limit(2000)
   const { data, error } = await q
   if (error) throw error
   return (data ?? []) as unknown as TaskRow[]

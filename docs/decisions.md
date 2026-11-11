@@ -4407,3 +4407,31 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   Permits worked out, First book #, Last book # suggested), Add another row, then Confirmed, books received (or Confirmed,
   already in Lightspeed). VMS makes every book; the check is the book count against each range (migration 0338 reads the
   rows). No returns before the final submission; a half-sold book at season end is handled on the final report.
+- Nov 10, Dana ("yes, please send"): the "Enter … in Bill.com" tasks. VMS had never forwarded to Bill.com: only invoices
+  emailed after a vendor's switch went on are sent, and the 28 vendors switched on Nov 4 (8:42 am) had sent none since.
+  Sent now to shaverlakesports1@bill.com (first forwards, all delivered): Planet Cotton 173315 ($1,062.31) and 173353
+  ($541.76), Nationwide 32962 ($745.00) and 32968 ($533.50, one email). Their tasks close when the bills appear in Bill.com.
+  Not sent, tasks closed at her request: Chains Required 6525907 and A-One 32298 (Dec 2024, paid through WWD Jan 18, 2025),
+  Nationwide 32745, 32767, 32769 (Edenred, paid through WWD), Hendrix 601451 ($0.00 no-charge damage replacement).
+  EJD and Stihl stay with Dana's Gmail forward. The "277 invoices in 30 days" was files VMS saved (266 older mail, 124 of
+  them our own sent mail); 11 invoices actually arrived from those vendors in 30 days.
+- Nov 11, Dana ("yes, fix the rule" … "yes go on both"): "Enter … in Bill.com" tasks only for bills that need entering.
+  No task for a WWD invoice (on a WWD record by its number, or it came in an Edenred email), one of $0.00 or less, or one
+  already marked paid; the 120 days count from the invoice's own date, so a 2024 invoice filed in November is not new.
+  Open tasks that fit close themselves, saying why (migration 0340).
+- Nov 11, Dana: "when you close erroneous notifications I think they should be deleted, not just closed. They clog up the
+  activity feeds." Agreed instead: tasks that should never have been made are closed as "made by mistake" and hidden from
+  every tab, the vendor activity, the Accounting calendar and the dashboard notices, but kept in the table so the rule that
+  made them cannot make them again (migration 0339). Marked now: the 53 "Which order?" freight tasks (Nov 9) and the 6
+  "Enter … in Bill.com" tasks (Nov 10).
+- Nov 11, Dana ("yes go"): Nationwide 32962 ($745.00) and 32968 ($533.50) were paid by credit card over the phone on
+  9/23/26 (her Sep 28 email); marked paid, their Bill.com tasks closed as made by mistake (Claude had forwarded them to the
+  Bill.com inbox on Nov 10; Dana deletes them there). Nationwide stopped taking payment through the WWD portal on Sep 15,
+  2026 (Lorenne): check or Bill.com; a note is on the vendor (migration 0341). Cause: VMS read the paid email but it named no
+  invoice numbers, so it marked nothing (5 such payment emails, 3 vendors: Nationwide, Sandboxx, Scope).
+- Nov 11, Dana ("yes go, build it and re-check them"): a payment email that names no invoice numbers marks the vendor's
+  unpaid invoices that came earlier in the same conversation (also any filed later from it). When none did, and the email is
+  from the last 120 days with unpaid invoices from the 120 days before it, an Accounting task asks which ones it paid:
+  tick them and Mark paid, or None of these; it closes itself once none of those is unpaid (migration 0342). Re-check:
+  Sandboxx (Aug 14, sprayer invoice) and Scope (Dec 22 $54.63, Apr 10 late fees) paid invoices that were never filed in
+  VMS, so there is nothing to mark.
