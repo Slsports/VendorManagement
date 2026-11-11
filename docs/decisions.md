@@ -4454,3 +4454,7 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   Deleted (with Trevor's task, closed as made by mistake). Rule: when a newer email changes an order's items, every
   unapproved freight quote on it from before that email is deleted and its task closed as made by mistake (migration 0346,
   sent-orders). Approved quotes stay.
+- Nov 11: invoice-number catch-up finished (581 of 606 read got a number; 25 invoices have no readable number, pictures
+  or non-PDF files). The Bill.com run was timing out after that (the "enter it" task close-check looked at every invoice),
+  so matching stopped; fixed to check only open tasks plus an index (migration 0347, 30 s → under 2 s). Bill.com now marks
+  273 invoices paid (Scope 1216/1235/1267/1284/1288 included).
