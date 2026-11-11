@@ -4450,3 +4450,7 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   defaultToNull false) after removing the old items; re-read, the order now matches the sheet. SB-130 has no price on the
   sheet and its total box shows 4, so the sheet total is $4 high ($5,985.58 priced). Ted's $2,274 quote was for the wrong
   order; noted on the quote.
+- Nov 11, Dana: "The 2274 needs to be deleted … totally erroneous info. I never want vms to do something like that."
+  Deleted (with Trevor's task, closed as made by mistake). Rule: when a newer email changes an order's items, every
+  unapproved freight quote on it from before that email is deleted and its task closed as made by mistake (migration 0346,
+  sent-orders). Approved quotes stay.

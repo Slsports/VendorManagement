@@ -206,7 +206,10 @@ async function readStep(db: SupabaseClient, sent: Mail) {
     if (orderId) {
       const mode = await settled(db, orderId) ? 'fill' : change === 'revises' || change === 'resends' ? 'replace' : adding || change === 'adds' ? 'append' : 'fill'
       await fileOn(db, m, orderId, r, used, mode)
-      if (mode === 'replace' && change === 'revises') await revisedTotal(db, orderId, r.total, `Revised by our email of ${day(m.received_at)}.`)
+      if (mode === 'replace' && change === 'revises') {
+        await revisedTotal(db, orderId, r.total, `Revised by our email of ${day(m.received_at)}.`)
+        await dropOldQuotes(db, orderId, m.id)
+      }
       await db.rpc('order_checks_refind', { p_org: m.organization_id, p_vendor: m.vendor_id })
       return await finish(db, m, { result: mode === 'replace' ? (change === 'revises' ? 'revised' : 'resent') : adding ? 'added_to' : 'linked', order_id: orderId, po: r.po_number })
     }
@@ -423,6 +426,15 @@ async function setLines(db: SupabaseClient, org: string, orderId: string, items:
   if (error) throw new Error(error.message)
 }
 
+/**
+ * A changed order's freight quotes from before the change are wrong (Dana, Nov 11: "The 2274 needs to be deleted … totally
+ * erroneous info. I never want vms to do something like that"): they are deleted and their tasks closed as made by mistake.
+ */
+async function dropOldQuotes(db: SupabaseClient, orderId: string, emailId: string) {
+  const { error } = await db.rpc('order_revised_drop_quotes', { p_order: orderId, p_email: emailId })
+  if (error) throw new Error(error.message)
+}
+
 /** A changed order's new total becomes the estimate (until the final cost is known), with a note naming the email. */
 async function revisedTotal(db: SupabaseClient, orderId: string, total: number | null, note: string) {
   const { data: o } = await db.from('orders').select('final_cost, notes').eq('id', orderId).single()
@@ -497,6 +509,7 @@ async function serviceStep(db: SupabaseClient, m: InMail) {
       if (orderId && one.status === 'changed') {
         await fileOn(db, mail, orderId, reading, keep, 'replace', fileNote)
         await revisedTotal(db, orderId, one.total, `Changed per the ${via} of ${day(m.received_at)}.`)
+        await dropOldQuotes(db, orderId, m.id)
         orderIds.push(orderId)
         continue
       }
