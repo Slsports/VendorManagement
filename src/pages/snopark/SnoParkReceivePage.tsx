@@ -1,11 +1,11 @@
 import { useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Camera, FileCheck, FileText, Map, Plus, Printer, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useLiveTable } from '@/hooks/useLiveTable'
-import { acceptShipment, checkShipment, confirmSheet, enteredByHand, flagShipment, getShipment, mapPrinted, receiveInLs, saveShipmentBooks, uploadSheet, type ShipmentView } from '@/services/snopark'
+import { acceptShipment, checkShipment, confirmSheet, enteredByHand, flagShipment, getShipment, mapPrinted, receiveInLs, removeShipment, saveShipmentBooks, uploadSheet, type ShipmentView } from '@/services/snopark'
 import { signedFileUrl } from '@/services/lines'
 import { ROUTES } from '@/lib/constants'
 import { shortDate } from '@/lib/freight'
@@ -24,6 +24,7 @@ import { Alert, Badge, Button, FormField, Input, Select, Spinner, Textarea } fro
 export default function SnoParkReceivePage() {
   const { id } = useParams<{ id: string }>()
   const { profile, isAdmin } = useAuth()
+  const navigate = useNavigate()
   const q = useSupabaseQuery(async () => (id ? getShipment(id) : null), [id])
   useLiveTable('snopark_shipments', id ? `id=eq.${id}` : null, () => { void q.refetch() })
   const canEdit = ['admin', 'manager', 'buyer'].includes(profile?.role ?? '')
@@ -34,12 +35,17 @@ export default function SnoParkReceivePage() {
   const { shipment } = view
   const locked = shipment.status === 'done' || !canEdit
   const st = SHIPMENT_STATUS[shipment.status]
+  const empty = shipment.status === 'open' && !shipment.sheet_link_id && !shipment.sheet && view.books.length === 0
+  async function remove() {
+    if (!window.confirm('Remove this empty box? Only for one started by mistake.')) return
+    try { await removeShipment(shipment.id); toast.success('Box removed'); navigate(ROUTES.snopark) } catch (e) { toast.error(errorMessage(e)) }
+  }
   return (
     <div>
       <BackLink fallback={ROUTES.snopark} fallbackLabel="Sno-Park" />
       <PageHeader title={`Books received ${shortDate(shipment.received_on)}`}
         description={view.order ? <>For the order {view.order.po_number ? <Link to={`${ROUTES.orders}/${view.order.id}`} className="text-brand hover:underline">{view.order.po_number}</Link> : <Link to={`${ROUTES.orders}/${view.order.id}`} className="text-brand hover:underline">placed {view.order.order_date ? shortDate(view.order.order_date) : ''}</Link>}{view.order.description ? ` (${view.order.description})` : ''}. Scan the State's sheet, enter every book, and VMS checks the box against the sheet before anything goes into Lightspeed.</> : "Scan the State's sheet, enter every book, and VMS checks the box against the sheet before anything goes into Lightspeed."}
-        actions={<Badge tone={st.tone}>{st.text}</Badge>} />
+        actions={<div className="flex items-center gap-3"><Badge tone={st.tone}>{st.text}</Badge>{empty && canEdit ? <button type="button" onClick={remove} className="text-xs text-stone-500 hover:text-red-700">Remove this empty box</button> : null}</div>} />
       {view.flowchart ? <p className="mb-4 text-sm"><FileLink link={view.flowchart} icon={<FileText className="size-4" aria-hidden="true" />} label="The State's instructions (flowchart)" /></p> : null}
       <div className="space-y-6">
         <SheetStep view={view} locked={locked} isAdmin={isAdmin} userId={profile?.id ?? null} onDone={() => { void q.refetch() }} />

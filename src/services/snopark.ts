@@ -274,3 +274,9 @@ export async function signatureUrl(path: string): Promise<string> {
   if (error) throw error
   return data.signedUrl
 }
+
+/** A box started by mistake, with no sheet and no books. */
+export async function removeShipment(shipmentId: string): Promise<void> {
+  const { error } = await supabase.rpc('snopark_shipment_remove', { p_shipment: shipmentId })
+  if (error) throw error
+}
