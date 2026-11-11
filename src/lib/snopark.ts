@@ -192,18 +192,25 @@ export interface CoverReading { kind: 'day' | 'season'; book_number: string; fir
  * The covers onto the sheet's rows (Dana, Nov 11): a cover whose beginning permit is a row's From is that row's first book,
  * one whose ending permit is the row's Including is its last book. Covers that fit no row are named.
  */
-export function applyCovers(rows: SheetRow[], covers: CoverReading[]): { rows: SheetRow[]; placed: number; unplaced: string[] } {
+export function applyCovers(rows: SheetRow[], covers: CoverReading[], perBook: { day: number; season: number } = { day: 25, season: 10 }): { rows: SheetRow[]; placed: number; unplaced: string[] } {
   let placed = 0
   const unplaced: string[] = []
   const next = rows.map((r) => ({ ...r }))
   for (const c of covers) {
     let hit = false
+    const pos = c.position?.match(/(\d+)\s*of\s*(\d+)/i)
     for (const r of next) {
       if (r.kind !== c.kind || !r.from || !r.to) continue
       const from = Number(r.from), to = Number(r.to)
+      const n = sheetRowBooks(r, perBook[r.kind]).n
       if (c.first_permit === from) { r.first_book = c.book_number.trim(); hit = true }
       if (c.last_permit === to) { r.last_book = c.book_number.trim(); hit = true }
       if (!hit && c.first_permit != null && c.last_permit != null && c.first_permit >= from && c.last_permit <= to) hit = true   // a middle book: fine, nothing to fill
+      // the permit numbers were cut off in the photo, but the sticker says "20 of 20" and the row holds 20 books
+      if (!hit && c.first_permit == null && c.last_permit == null && pos && Number(pos[2]) === n) {
+        if (Number(pos[1]) === n) { r.last_book = c.book_number.trim(); hit = true }
+        else if (Number(pos[1]) === 1) { r.first_book = c.book_number.trim(); hit = true }
+      }
     }
     if (hit) placed++
     else unplaced.push(`${c.book_number.trim()} (${c.kind}${c.first_permit != null ? ` ${c.first_permit}` : ''}${c.last_permit != null ? `–${c.last_permit}` : ''})`)

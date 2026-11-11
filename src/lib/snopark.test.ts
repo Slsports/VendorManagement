@@ -54,7 +54,7 @@ describe('receiving a box (Nov 10)', () => {
       { kind: 'season', book_number: 'S 0864', first_permit: 8631, last_permit: 8640, position: '1 of 10' },
       { kind: 'season', book_number: 'S 0873', first_permit: 8721, last_permit: 8730, position: '10 of 10' },
       { kind: 'day', book_number: 'D 0207', first_permit: 5151, last_permit: 5175, position: '1 of 20' },
-      { kind: 'day', book_number: 'D 0226', first_permit: 5626, last_permit: 5650, position: '20 of 20' },
+      { kind: 'day', book_number: 'D 0226', first_permit: null, last_permit: null, position: '20 of 20' },
       { kind: 'day', book_number: 'D 0999', first_permit: 9001, last_permit: 9025, position: null },
     ])
     expect(r.rows.map((x) => `${x.first_book}..${x.last_book}`)).toEqual(['D 0207..D 0226', 'S 0864..S 0873'])
