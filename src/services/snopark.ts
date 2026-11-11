@@ -3,9 +3,9 @@ import { supabase } from '@/lib/supabase'
 import { addVendorLink, uploadVendorFile } from '@/services/lines'
 import { photoForUpload } from '@/lib/photo'
 import type { Difference, Sheet, SeasonCheck } from '@/lib/snopark'
-import type { Json, SnoparkBook, SnoparkReport, SnoparkReportRow, SnoparkSeason, SnoparkShipment, VendorLink } from '@/types'
+import type { Json, SnoparkBook, SnoparkOrder, SnoparkReport, SnoparkReportRow, SnoparkSeason, SnoparkShipment, VendorLink } from '@/types'
 
-export interface SeasonView { season: SnoparkSeason; books: SnoparkBook[]; reports: SnoparkReport[]; shipments: SnoparkShipment[]; vendor: { id: string; name: string } | null; form: VendorLink | null }
+export interface SeasonView { season: SnoparkSeason; books: SnoparkBook[]; reports: SnoparkReport[]; shipments: SnoparkShipment[]; orders: SnoparkOrder[]; vendor: { id: string; name: string } | null; form: VendorLink | null; map: VendorLink | null; flowchart: VendorLink | null; people: Record<string, string> }
 
 /** The open season, else the latest one; null when none has been opened. */
 export async function getSeason(organizationId: string, seasonId?: string | null): Promise<SeasonView | null> {
@@ -15,17 +15,23 @@ export async function getSeason(organizationId: string, seasonId?: string | null
   if (error) throw error
   const season = seasons?.[0]
   if (!season) return null
-  const [books, reports, shipments, vendor, form] = await Promise.all([
+  const one = (linkId: string | null) => (linkId ? supabase.from('vendor_links').select('*').eq('id', linkId).maybeSingle() : Promise.resolve({ data: null, error: null }))
+  const [books, reports, shipments, orders, vendor, form, map, flowchart, people] = await Promise.all([
     supabase.from('snopark_books').select('*').eq('season_id', season.id).order('kind').order('first_permit'),
     supabase.from('snopark_reports').select('*').eq('season_id', season.id).order('seq'),
     supabase.from('snopark_shipments').select('*').eq('season_id', season.id).order('received_on', { ascending: false }),
+    supabase.from('snopark_orders').select('*').eq('season_id', season.id).order('seq'),
     season.vendor_id ? supabase.from('vendors').select('id, name').eq('id', season.vendor_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
-    season.form_link_id ? supabase.from('vendor_links').select('*').eq('id', season.form_link_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    one(season.form_link_id), one(season.map_link_id), one(season.flowchart_link_id),
+    supabase.from('profiles').select('id, full_name').eq('organization_id', organizationId),
   ])
   if (books.error) throw books.error
   if (reports.error) throw reports.error
   if (shipments.error) throw shipments.error
-  return { season, books: books.data ?? [], reports: reports.data ?? [], shipments: shipments.data ?? [], vendor: vendor.data ?? null, form: form.data ?? null }
+  if (orders.error) throw orders.error
+  const names: Record<string, string> = {}
+  for (const p of people.data ?? []) names[p.id] = p.full_name ?? ''
+  return { season, books: books.data ?? [], reports: reports.data ?? [], shipments: shipments.data ?? [], orders: orders.data ?? [], vendor: vendor.data ?? null, form: form.data ?? null, map: map.data ?? null, flowchart: flowchart.data ?? null, people: names }
 }
 
 export async function listSeasons(organizationId: string): Promise<SnoparkSeason[]> {
@@ -146,7 +152,7 @@ export async function uploadSeasonForm(season: SnoparkSeason, vendorId: string, 
 }
 
 // ---- receiving a box (Dana, Nov 10) -----------------------------------------------------------------------------
-export interface ShipmentView { shipment: SnoparkShipment; season: SnoparkSeason; books: SnoparkBook[]; sheetFile: VendorLink | null; vendor: { id: string; name: string } | null; order: { id: string; po_number: string | null; order_date: string | null; description: string | null } | null }
+export interface ShipmentView { shipment: SnoparkShipment; season: SnoparkSeason; books: SnoparkBook[]; sheetFile: VendorLink | null; vendor: { id: string; name: string } | null; order: { id: string; po_number: string | null; order_date: string | null; description: string | null } | null; map: VendorLink | null; flowchart: VendorLink | null }
 
 export async function startShipment(seasonId: string, receivedOn: string, orderId: string | null): Promise<string> {
   const { data, error } = await supabase.rpc('snopark_shipment_start', { p_season: seasonId, p_received: receivedOn, p_order: orderId })
@@ -167,7 +173,11 @@ export async function getShipment(id: string): Promise<ShipmentView | null> {
   if (season.error) throw season.error
   if (books.error) throw books.error
   const vendor = season.data.vendor_id ? (await supabase.from('vendors').select('id, name').eq('id', season.data.vendor_id).maybeSingle()).data : null
-  return { shipment, season: season.data, books: books.data ?? [], sheetFile: sheetFile.data ?? null, vendor, order: order.data ?? null }
+  const [map, flowchart] = await Promise.all([
+    season.data.map_link_id ? supabase.from('vendor_links').select('*').eq('id', season.data.map_link_id).maybeSingle() : Promise.resolve({ data: null }),
+    season.data.flowchart_link_id ? supabase.from('vendor_links').select('*').eq('id', season.data.flowchart_link_id).maybeSingle() : Promise.resolve({ data: null }),
+  ])
+  return { shipment, season: season.data, books: books.data ?? [], sheetFile: sheetFile.data ?? null, vendor, order: order.data ?? null, map: map.data ?? null, flowchart: flowchart.data ?? null }
 }
 
 /** The State's sheet: filed under the vendor, then read by Claude. */
@@ -230,4 +240,37 @@ export async function seasonOrders(vendorId: string, seasonLabel: string): Promi
   const { data, error } = await supabase.from('orders').select('id, po_number, order_date, description, status').eq('vendor_id', vendorId).gte('order_date', `${seasonLabel.slice(0, 4)}-07-01`).order('order_date', { ascending: false }).limit(20)
   if (error) throw error
   return data ?? []
+}
+
+// ---- orders to the State and the map (Dana, Nov 10) ------------------------------------------------------------
+/** A new permit request: the next number in the season, the form filled and named Dana's way, the email drafted. */
+export async function startOrder(seasonId: string, dayBooks: number, seasonBooks: number, requestedOn: string): Promise<{ draft_id: string | null; file_name: string; signed: boolean }> {
+  const { data: id, error } = await supabase.rpc('snopark_order_start', { p_season: seasonId, p_day_books: dayBooks, p_season_books: seasonBooks, p_requested_on: requestedOn, p_by: null })
+  if (error) throw error
+  return invoke<{ draft_id: string | null; file_name: string; signed: boolean }>({ action: 'order_form', order_id: id })
+}
+
+/** The form filled again (a draft not sent yet), for instance after the signature was added. */
+export const refillOrder = (orderRowId: string) => invoke<{ draft_id: string | null; file_name: string; signed: boolean }>({ action: 'order_form', order_id: orderRowId })
+
+export async function mapPrinted(seasonId: string): Promise<void> {
+  const { error } = await supabase.rpc('snopark_map_printed', { p_season: seasonId })
+  if (error) throw error
+}
+
+/** The admin's handwritten signature (PNG or JPEG), kept in the private signatures bucket; VMS places it on the State's forms. */
+export async function uploadSignature(organizationId: string, profileId: string, file: File): Promise<string> {
+  if (!/^image\/(png|jpeg)$/.test(file.type)) throw new Error('The signature needs to be a PNG or JPEG picture')
+  const path = `${organizationId}/${profileId}-${Date.now()}.${file.type === 'image/png' ? 'png' : 'jpg'}`
+  const { error } = await supabase.storage.from('signatures').upload(path, file, { contentType: file.type, upsert: false })
+  if (error) throw error
+  const { error: pErr } = await supabase.from('profiles').update({ signature_path: path }).eq('id', profileId)
+  if (pErr) throw pErr
+  return path
+}
+
+export async function signatureUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.storage.from('signatures').createSignedUrl(path, 300)
+  if (error) throw error
+  return data.signedUrl
 }

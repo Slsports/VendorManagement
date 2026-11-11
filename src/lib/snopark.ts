@@ -64,7 +64,9 @@ export function nextBookNumber(books: Pick<SnoparkBook, 'kind' | 'book_number' |
 // ---- receiving a box (Dana, Nov 10) -----------------------------------------------------------------------------
 /** The State's shipment sheet (form OHV 145SP) as Claude read it and the person confirmed it. */
 export interface SheetKind { from: number | null; to: number | null; books: number | null; permits: number | null }
-export interface Sheet { season_label: string | null; shipped_on: string | null; requested?: { day_books: number | null; day_permits: number | null; season_books: number | null; season_permits: number | null }; day: SheetKind; season: SheetKind; unclear?: string[] }
+/** One range on the sheet with the books it came in (Dana, Nov 10): the entry for receiving. */
+export interface SheetRow { key: string; kind: 'day' | 'season'; from: string; to: string; first_book: string; last_book: string }
+export interface Sheet { season_label: string | null; shipped_on: string | null; requested?: { day_books: number | null; day_permits: number | null; season_books: number | null; season_permits: number | null }; day: SheetKind; season: SheetKind; rows?: { kind: 'day' | 'season'; from: number; to: number; books: number; first_book: string; last_book: string }[]; unclear?: string[] }
 export const EMPTY_SHEET: Sheet = { season_label: null, shipped_on: null, day: { from: null, to: null, books: null, permits: null }, season: { from: null, to: null, books: null, permits: null }, unclear: [] }
 
 export interface Difference { kind: 'day' | 'season'; text: string }
@@ -80,20 +82,85 @@ export interface BookRowInput { key: string; kind: 'day' | 'season'; book_number
 
 let rowSeq = 0
 export const newRow = (kind: 'day' | 'season', first = '', last = '', book = ''): BookRowInput => ({ key: `r${++rowSeq}`, kind, book_number: book, first_permit: first, last_permit: last })
+export const newSheetRow = (kind: 'day' | 'season', from = '', to = ''): SheetRow => ({ key: `s${++rowSeq}`, kind, from, to, first_book: '', last_book: '' })
 
-/**
- * The book rows a confirmed sheet suggests: the sheet's range cut into books of the season's standard size. Only when the
- * range is a whole number of books; the book numbers are typed from the covers.
- */
-export function rowsFromSheet(sheet: Sheet, perBook: { day: number; season: number }): BookRowInput[] {
-  const out: BookRowInput[] = []
+/** The sheet's rows to edit: the saved rows, else one row per kind from what Claude read. */
+export function sheetRowsOf(sheet: Sheet | null): SheetRow[] {
+  if (!sheet) return []
+  if (sheet.rows?.length) return sheet.rows.map((r) => ({ ...newSheetRow(r.kind, String(r.from), String(r.to)), first_book: r.first_book ?? '', last_book: r.last_book ?? '' }))
+  const out: SheetRow[] = []
   for (const kind of ['day', 'season'] as const) {
     const k = sheet[kind]
-    if (k.from == null || k.to == null || k.to < k.from) continue
-    const per = perBook[kind]
-    const n = k.to - k.from + 1
-    if (n % per !== 0 || n / per > 200) continue
-    for (let i = 0; i < n / per; i++) out.push(newRow(kind, String(k.from + i * per), String(k.from + i * per + per - 1)))
+    if (k.from != null && k.to != null) out.push(newSheetRow(kind, String(k.from), String(k.to)))
+  }
+  return out
+}
+
+/** "DB 543" → { prefix: "DB ", num: 543, width: 3 }; null when the number does not end in digits. */
+export function parseBookNumber(text: string): { prefix: string; num: number; width: number } | null {
+  const m = text.trim().match(/^(.*?)(\d+)$/)
+  if (!m) return null
+  return { prefix: m[1]!, num: Number(m[2]), width: m[2]!.length }
+}
+
+/** The book number that comes n after another: "DB 543" + 2 → "DB 545". */
+export function bookNumberAfter(first: string, n: number): string {
+  const b = parseBookNumber(first)
+  if (!b) return ''
+  return `${b.prefix}${String(b.num + n).padStart(b.width, '0')}`
+}
+
+/** A sheet row's size: how many whole books its range holds, or why it cannot be used. */
+export function sheetRowBooks(r: SheetRow, per: number): { n: number; permits: number; error: string | null } {
+  const from = Number(r.from), to = Number(r.to)
+  if (!r.from || !r.to || !Number.isFinite(from) || !Number.isFinite(to)) return { n: 0, permits: 0, error: 'From and Including permit numbers' }
+  if (to < from) return { n: 0, permits: 0, error: 'Including is before From' }
+  const permits = to - from + 1
+  if (permits % per !== 0) return { n: Math.floor(permits / per), permits, error: `${permits} permits is not a whole number of ${r.kind} books of ${per}; ask the State` }
+  return { n: permits / per, permits, error: null }
+}
+
+/**
+ * The books a box holds, from the sheet's rows (Dana, Nov 10: "we enter the from and including permit numbers … vms puts
+ * in how many books and total permits and then we put in the book number range"). Each row becomes n whole books
+ * numbered from its first book; the last book number has to land on n, else the reason comes back.
+ */
+export function booksFromSheetRows(rows: SheetRow[], perBook: { day: number; season: number }): { books: BookRowInput[]; error: string | null } {
+  const out: BookRowInput[] = []
+  for (const r of rows) {
+    const per = perBook[r.kind]
+    const size = sheetRowBooks(r, per)
+    const label = `${r.kind} range ${r.from || '?'} to ${r.to || '?'}`
+    if (size.error) return { books: [], error: `${label}: ${size.error}.` }
+    const first = parseBookNumber(r.first_book)
+    if (!first) return { books: [], error: `${label}: the first book number should end in digits, like DB 543.` }
+    if (r.last_book.trim()) {
+      const last = parseBookNumber(r.last_book)
+      if (!last || last.prefix.trim().toUpperCase() !== first.prefix.trim().toUpperCase()) return { books: [], error: `${label}: the last book number should look like the first one (${r.first_book.trim()}).` }
+      const count = last.num - first.num + 1
+      if (count !== size.n) return { books: [], error: `${label} is ${size.n} book${size.n === 1 ? '' : 's'} of ${per}, but ${r.first_book.trim()} to ${r.last_book.trim()} is ${count} book${count === 1 ? '' : 's'}. A book may be missing from the box; check the covers against the sheet.` }
+    }
+    const from = Number(r.from)
+    for (let i = 0; i < size.n; i++) out.push(newRow(r.kind, String(from + i * per), String(from + i * per + per - 1), bookNumberAfter(r.first_book, i)))
+  }
+  if (!out.length) return { books: [], error: 'Enter at least one range from the sheet.' }
+  const seen = new Set<string>()
+  for (const b of out) {
+    const k = `${b.kind}:${b.book_number.toUpperCase()}`
+    if (seen.has(k)) return { books: [], error: `Book ${b.book_number} comes up twice; check the book number ranges.` }
+    seen.add(k)
+  }
+  return { books: out, error: null }
+}
+
+/** The sheet as saved from the rows: the rows themselves plus one range per kind for the check and the summaries. */
+export function sheetFromRows(base: Sheet, rows: SheetRow[], perBook: { day: number; season: number }): Sheet {
+  const out: Sheet = { ...base, unclear: [], rows: rows.map((r) => ({ kind: r.kind, from: Number(r.from), to: Number(r.to), books: sheetRowBooks(r, perBook[r.kind]).n, first_book: r.first_book.trim(), last_book: r.last_book.trim() })) }
+  for (const kind of ['day', 'season'] as const) {
+    const mine = rows.filter((r) => r.kind === kind)
+    const n = mine.reduce((t, r) => t + sheetRowBooks(r, perBook[kind]).n, 0)
+    const permits = mine.reduce((t, r) => t + sheetRowBooks(r, perBook[kind]).permits, 0)
+    out[kind] = mine.length ? { from: Math.min(...mine.map((r) => Number(r.from))), to: Math.max(...mine.map((r) => Number(r.to))), books: n, permits } : { from: null, to: null, books: null, permits: null }
   }
   return out
 }
@@ -111,3 +178,9 @@ export function rowProblem(r: BookRowInput, perBook: { day: number; season: numb
 
 /** The season-end check as stored on the season. */
 export interface SeasonCheck { day: { ls: number; reported: number }; season: { ls: number; reported: number }; off: boolean; through: string; emailed_at?: string | null; email_error?: string | null }
+
+export const ORDER_STATUS: Record<'draft' | 'sent' | 'received', { text: string; tone: 'neutral' | 'warning' | 'success' }> = {
+  draft: { text: 'To send', tone: 'warning' },
+  sent: { text: 'Sent', tone: 'neutral' },
+  received: { text: 'Received', tone: 'success' },
+}

@@ -398,11 +398,11 @@ export async function fileAttachmentToVendor(attachmentId: string, vendorId: str
   if (error) throw await functionError(error)
 }
 
-export interface PersonSignature { id: string; full_name: string; email: string; email_signature: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null }
+export interface PersonSignature { id: string; full_name: string; email: string; email_signature: string | null; signature_name: string | null; job_title: string | null; direct_phone: string | null; signature_path: string | null }
 
 /** Everyone's signature details, for Settings > Mail (admins edit them). */
 export async function listSignatures(organizationId: string): Promise<PersonSignature[]> {
-  const { data, error } = await supabase.from('profiles').select('id, full_name, email, email_signature, signature_name, job_title, direct_phone').eq('organization_id', organizationId).eq('is_active', true).not('email', 'ilike', TEST_LOGIN_PATTERN).order('full_name')
+  const { data, error } = await supabase.from('profiles').select('id, full_name, email, email_signature, signature_name, job_title, direct_phone, signature_path').eq('organization_id', organizationId).eq('is_active', true).not('email', 'ilike', TEST_LOGIN_PATTERN).order('full_name')
   if (error) throw error
   return data ?? []
 }
