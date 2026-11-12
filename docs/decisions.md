@@ -4514,3 +4514,7 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   ("email orders@…" looked run together); the gap at a style change is now a little wider (applies from the next save).
 - Nov 12, Dana: "i didnt mean for you to leave out trevors name, just his trevor@ email." Questions: Trevor Jenkins by name,
   at orders@ (her version 3 already says so; the starting letter in VMS now does too).
+- Nov 12, Dana: "Take off all websites where we have no control over their shipping: Ali Express, Amazon, Bassetts, Costco,
+  Rods (he drops off the worms, no shipping), Scope, Talahi, Walmart, Web Restaurant, All Faire vendors." New vendor tick
+  **No routing letter** (vendors.no_routing_letter), ticked for those nine; retail stores and vendors billed through Faire
+  by default are left out with no tick. They leave the no-email list and every Prepare emails (migration 0357).

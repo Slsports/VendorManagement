@@ -176,6 +176,7 @@ export default function VendorDetailPage() {
             {v.is_fishing ? <Badge tone="info">Fishing</Badge> : null}
             {v.billcom_send ? <Badge tone="success">Invoices to Bill.com</Badge> : null}
             {v.web_orders ? <Badge tone="info">Web orders, no confirmation</Badge> : null}
+            {v.no_routing_letter ? <Badge tone="neutral">No routing letter</Badge> : null}
             {v.is_retail_store ? <Badge tone="info">Retail store</Badge> : null}
             {v.no_freight ? <Badge tone="info">They ship it, no freight</Badge> : null}
             {v.fixed_prices ? <Badge tone="info">Prices set for the season</Badge> : null}

@@ -281,7 +281,7 @@ export type Database = {
           is_active: boolean; created_by: string | null; created_at: string; updated_at: string
           ask_before_pictures: boolean; usual_charges: UsualCharge[]; order_set_at_show: boolean
           ls_active_items: number | null; ls_archived_items: number | null; ls_items_checked_at: string | null; ls_status: 'active' | 'inactive' | 'none' | null
-          wwd_active: boolean | null; wwd_active_as_of: string | null; parent_company: string | null; wwd_billing_names: string[]; order_sheet_senders: string[]; vendor_id_rule: string | null; ask_freight_quote: boolean; no_freight: boolean; fixed_prices: boolean; no_order_checks: boolean }
+          wwd_active: boolean | null; wwd_active_as_of: string | null; parent_company: string | null; wwd_billing_names: string[]; order_sheet_senders: string[]; vendor_id_rule: string | null; ask_freight_quote: boolean; no_freight: boolean; no_routing_letter: boolean; fixed_prices: boolean; no_order_checks: boolean }
         Insert: {
           id?: string; organization_id: string; name: string; lightspeed_name?: string | null; lightspeed_vendor_id?: string | null; po_code?: string | null; aliases?: string[]
           rep_group_id?: string | null; assigned_buyer_id?: string | null; payment_terms_id?: string | null
@@ -294,7 +294,7 @@ export type Database = {
           is_active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string
           ask_before_pictures?: boolean; usual_charges?: UsualCharge[]; order_set_at_show?: boolean
           ls_active_items?: number | null; ls_archived_items?: number | null; ls_items_checked_at?: string | null
-          wwd_active?: boolean | null; wwd_active_as_of?: string | null; parent_company?: string | null; wwd_billing_names?: string[]; order_sheet_senders?: string[]; vendor_id_rule?: string | null; ask_freight_quote?: boolean; no_freight?: boolean; fixed_prices?: boolean; no_order_checks?: boolean }
+          wwd_active?: boolean | null; wwd_active_as_of?: string | null; parent_company?: string | null; wwd_billing_names?: string[]; order_sheet_senders?: string[]; vendor_id_rule?: string | null; ask_freight_quote?: boolean; no_freight?: boolean; no_routing_letter?: boolean; fixed_prices?: boolean; no_order_checks?: boolean }
         Update: {
           id?: string; organization_id?: string; name?: string; lightspeed_name?: string | null; lightspeed_vendor_id?: string | null; po_code?: string | null; aliases?: string[]
           rep_group_id?: string | null; assigned_buyer_id?: string | null; payment_terms_id?: string | null
@@ -307,7 +307,7 @@ export type Database = {
           is_active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string
           ask_before_pictures?: boolean; usual_charges?: UsualCharge[]; order_set_at_show?: boolean
           ls_active_items?: number | null; ls_archived_items?: number | null; ls_items_checked_at?: string | null
-          wwd_active?: boolean | null; wwd_active_as_of?: string | null; parent_company?: string | null; wwd_billing_names?: string[]; order_sheet_senders?: string[]; vendor_id_rule?: string | null; ask_freight_quote?: boolean; no_freight?: boolean; fixed_prices?: boolean; no_order_checks?: boolean }
+          wwd_active?: boolean | null; wwd_active_as_of?: string | null; parent_company?: string | null; wwd_billing_names?: string[]; order_sheet_senders?: string[]; vendor_id_rule?: string | null; ask_freight_quote?: boolean; no_freight?: boolean; no_routing_letter?: boolean; fixed_prices?: boolean; no_order_checks?: boolean }
         Relationships: [
           { foreignKeyName: 'vendors_organization_id_fkey'; columns: ['organization_id']; isOneToOne: false; referencedRelation: 'organizations'; referencedColumns: ['id'] },
           { foreignKeyName: 'vendors_rep_group_id_fkey'; columns: ['rep_group_id']; isOneToOne: false; referencedRelation: 'rep_groups'; referencedColumns: ['id'] },
