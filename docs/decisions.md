@@ -4518,3 +4518,6 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   Rods (he drops off the worms, no shipping), Scope, Talahi, Walmart, Web Restaurant, All Faire vendors." New vendor tick
   **No routing letter** (vendors.no_routing_letter), ticked for those nine; retail stores and vendors billed through Faire
   by default are left out with no tick. They leave the no-email list and every Prepare emails (migration 0357).
+- Nov 12, Dana: "If I am asking to see something in vms that I can find on my own, please tell me where to access it.
+  Unless I am asking you to look for something specific. But if is is to see screens or docs that I can see myself please
+  tell me." Added to CLAUDE.md for every session.

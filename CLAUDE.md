@@ -38,6 +38,9 @@ by Vercel from the branch `claude/ecstatic-carson-ziz2a9`.
   EdenRed, a vendor's file), match each field to the label that system shows on its own screen, not to its internal
   field name (the portal's `rebateProgram` is shown as "Zero Upcharge"). Before a new import writes anything, give Dana
   the list: their label → where it goes in VMS.
+- **Tell her where it is (Dana, Nov 12).** When Dana asks to see a screen or document she can open in VMS herself, tell her
+  where it is (menu path and button names), along with what she asked. Only when she asks Claude to look for something
+  specific does Claude find it and show it (screenshot, file).
 - **Never say something doesn't exist until every source is checked (Dana, Oct 17).** Saved pages, screenshots, the
   data and the code. If not all are checked, say "I haven't confirmed this".
 
