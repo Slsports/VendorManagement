@@ -4510,3 +4510,5 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   any store logo in vms to transparent." email-logo.png and email-logo@2x.png (the signature logo, every VMS email and the
   routing letter PDF) are now transparent, same file names, so emails already sent show it too. Other brand files were
   already transparent (the app icons keep their green square). CLAUDE.md logo rule updated.
+- Nov 12: Dana saved routing letter version 3 herself. The PDF drew too narrow a space where plain text meets a link or bold
+  ("email orders@…" looked run together); the gap at a style change is now a little wider (applies from the next save).

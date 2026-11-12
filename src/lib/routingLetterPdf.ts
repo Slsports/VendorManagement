@@ -239,7 +239,8 @@ class Writer {
             this.page.drawLine({ start: { x: cx, y: base - 1.2 }, end: { x: cx + tw, y: base - 1.2 }, thickness: 0.5, color: LINK })
             this.link(cx, base - 2, cx + tw, base + size, p.url)
           }
-          cx += font.widthOfTextAtSize(text, size)
+          // a style change (plain → bold or a link) gets a slightly wider gap, so the words never look run together
+          cx += font.widthOfTextAtSize(text, size) + (p.spaceAfter ? 1.2 : 0)
         }
         this.y -= LEAD
       }
