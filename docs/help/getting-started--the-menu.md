@@ -8,7 +8,7 @@ The menu down the left side of the screen takes you to every page. It is grouped
 
 ## How to
 1. Click a page name, for example **Vendors**, to open it. The page you are on is highlighted.
-2. **Orders** has an arrow next to it. Click the arrow to show the order statuses (**All orders**, **Open**, **Awaiting confirmation**, **Confirmed**, **Shipped**, **Received**, **Entered**, **Ready to pay**, **Paid**, **Cancelled**) and click one to see only those orders.
+2. **Orders** has an arrow next to it. Click the arrow to show the order statuses (**All orders**, **Sent**, **Placed**, **Confirmed**, **Shipped**, **Received**, **Entered**, **Ready to pay**, **Paid**, **Cancelled**) and click one to see only those orders.
 3. To make the menu narrow (icons only), click **Collapse** at the bottom of the menu. Click the same button again to widen it.
 
 ## Good to know

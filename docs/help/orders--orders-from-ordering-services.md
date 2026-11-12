@@ -9,7 +9,7 @@ When NuORDER, Faire, MarketTime or a vendor's web store emails us that our order
 ## How it works
 1. Claude reads the email: which vendor the order is with, the order number, items, total and ship date.
 2. If the order is already in VMS (same PO or order number, or the same vendor, date and total), the email and its items are added to that order. An order typed in without an amount gets the amount.
-3. If not, it is added as a new order, status **Open**, with the note "Added from NuORDER order email" (or the service's name).
+3. If not, it is added as a new order, status **Sent**, with the note "Added from NuORDER order email" (or the service's name).
 4. The vendor's contact named in the email (like "Gold Medal International's Contact Information: Jessica Kane") is added to the vendor's **Reps & contacts** as a **Rep**, and shows as who took the order.
 
 ## Good to know

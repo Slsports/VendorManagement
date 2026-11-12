@@ -8,7 +8,7 @@ The Orders page lists every order, from placement to payment. Tabs across the to
 
 ## How to
 1. Click **Orders** in the menu.
-2. Click a tab at the top: **All**, or a status such as **Open**, **Shipped** or **Ready to pay**. Each tab shows how many orders it holds.
+2. Click a tab at the top: **All**, or a status such as **Sent**, **Shipped** or **Ready to pay**. Each tab shows how many orders it holds.
 3. Click the date in the **Ordered** column to open that order. Click the vendor name to open the vendor.
 
 ## Good to know

@@ -13,7 +13,7 @@
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { readBook } from '../_shared/sheetFile.ts'
 import { CORS, errorResponse, json, serviceClient } from '../_shared/caller.ts'
-import { aiEnabled, isReadableFile, readSentOrder, readServiceOrder, sortSentEmails, type PaperFile, type SentOrderReading, type ServiceOrderReading } from '../_shared/ai.ts'
+import { aiEnabled, isReadableFile, readOrderAcks, readSentOrder, readServiceOrder, sortSentEmails, type PaperFile, type SentOrderReading, type ServiceOrderReading } from '../_shared/ai.ts'
 import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
 
 const TIME_BUDGET_MS = 100_000
@@ -59,11 +59,33 @@ Deno.serve(async (req) => {
       if (!m) break
       read.push(await readStep(db, m))
     }
-    return json({ sorted, services, read })
+    // Sent → Placed (Dana, Nov 12): the vendor's replies on a Sent order's conversation, read once
+    const acks = Date.now() - started < TIME_BUDGET_MS * 0.85 ? await ackStep(db).catch((e) => ({ error: e instanceof Error ? e.message : String(e) })) : null
+    return json({ sorted, services, read, acks })
   } catch (e) {
     return errorResponse(e)
   }
 })
+
+/** Replies to our order emails: Claude says which ones acknowledge the order; those orders become Placed. */
+async function ackStep(db: SupabaseClient) {
+  const { data, error } = await db.rpc('order_ack_candidates', { p_limit: 15 })
+  if (error) throw new Error(error.message)
+  const rows = (data ?? []) as { email_id: string; order_id: string; organization_id: string; po: string | null; vendor: string; from_email: string | null; subject: string | null; body: string }[]
+  if (!rows.length) return { read: 0, placed: 0 }
+  let placed = 0
+  const byOrg = new Map<string, typeof rows>()
+  for (const r of rows) byOrg.set(r.organization_id, [...(byOrg.get(r.organization_id) ?? []), r])
+  for (const [org, list] of byOrg) {
+    const yes = await readOrderAcks(db, org, list.map((r) => ({ id: r.email_id, vendor: r.vendor, po: r.po, from: r.from_email, subject: r.subject, text: r.body })))
+    for (const r of list) {
+      const { data: moved, error: e2 } = await db.rpc('order_ack_save', { p_email: r.email_id, p_order: r.order_id, p_received: yes.has(r.email_id) })
+      if (e2) throw new Error(e2.message)
+      if (moved) placed++
+    }
+  }
+  return { read: rows.length, placed }
+}
 
 const SELECT = 'id, organization_id, gmail_id, gmail_box, vendor_id, subject, body_text, to_emails, received_at, mailbox_id, thread_id, attachments:email_attachments(id, file_name, mime_type, size, gmail_attachment_id, storage_path, vendor_link_id)'
 let readSince: string | null = null

@@ -42,8 +42,9 @@ export const ORDER_STATUSES = [
 export type OrderStatus = (typeof ORDER_STATUSES)[number]
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  open: 'Open',
-  awaiting_confirmation: 'Awaiting confirmation',
+  // Dana, Nov 12: Sent until they say they got it, Placed until their confirmation
+  open: 'Sent',
+  awaiting_confirmation: 'Placed',
   confirmed: 'Confirmed',
   shipped: 'Shipped',
   received: 'Received',

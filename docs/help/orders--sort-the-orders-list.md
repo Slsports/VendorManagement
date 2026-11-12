@@ -14,5 +14,5 @@ Every column on the Orders list can be sorted by clicking its header.
 ## Good to know
 - The list starts newest order first.
 - Dates and cost sort largest or newest first on the first click; names sort A to Z.
-- **Status** sorts in the order an order moves: Open, Awaiting confirmation, Confirmed, Shipped, Received, Entered, Ready to pay, Paid, Cancelled.
+- **Status** sorts in the order an order moves: Sent, Placed, Confirmed, Shipped, Received, Entered, Ready to pay, Paid, Cancelled.
 - The vendor page's **Order history** table sorts the same way.

@@ -32,7 +32,7 @@ const DOC_WORD: Record<string, string> = {
 /** pictures and website links would drown the feed */
 const SKIP_DOCS = new Set(['image', 'website'])
 const STATUS_WORD: Record<string, string> = {
-  open: 'Open', awaiting_confirmation: 'Waiting for confirmation', confirmed: 'Confirmed', shipped: 'Shipped', received: 'Received',
+  open: 'Sent', awaiting_confirmation: 'Placed', confirmed: 'Confirmed', shipped: 'Shipped', received: 'Received',
   entered: 'Entered', ready_to_pay: 'Ready to pay', paid: 'Paid', cancelled: 'Cancelled',
 }
 

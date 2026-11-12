@@ -3,7 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
-import { getOrder, moveOrderVendor, threadsOfEmails, updateOrder } from '@/services/orders'
+import { getOrder, markOrderPlaced, moveOrderVendor, threadsOfEmails, updateOrder } from '@/services/orders'
 import { ORDER_STATUSES, ORDER_STATUS_LABELS, ROUTES, type OrderStatus } from '@/lib/constants'
 import { BILLING_ROUTE_LABELS, PAID_VIA_LABELS, money, showLabel } from '@/lib/vendors'
 import { errorMessage } from '@/lib/utils'
@@ -48,6 +48,9 @@ export default function OrderDetailPage() {
   // the carrier or vendor email that moved it to Shipped (Dana, Nov 4), one click
   const shippedId = q.data?.shipped_email_id ?? null
   const shippedThread = useSupabaseQuery(async () => (shippedId ? (await threadsOfEmails([shippedId])).get(shippedId) ?? null : null), [shippedId])
+  // their reply that moved it from Sent to Placed (Dana, Nov 12), one click
+  const ackId = q.data?.ack_email_id ?? null
+  const ackThread = useSupabaseQuery(async () => (ackId ? (await threadsOfEmails([ackId])).get(ackId) ?? null : null), [ackId])
   const o = q.data
   if (q.isLoading) return <div className="flex justify-center py-16"><Spinner label="Loading order…" className="text-brand" /></div>
   if (q.error || !o) return <Alert variant="error">{q.error ?? 'Order not found'}</Alert>
@@ -88,7 +91,7 @@ export default function OrderDetailPage() {
       <PageHeader
         eyebrow="Order"
         title={o.vendor ? o.vendor.name : 'Order'}
-        description={<span className="inline-flex flex-wrap items-center gap-2"><OrderStatusBadge status={o.status} />{o.order_date ? <span>{d(o.order_date)}</span> : null}{o.source !== 'manual' ? <Badge tone="neutral">from {o.source.replaceAll('_', ' ')}</Badge> : null}{o.art_approved_at ? <Badge tone="success">Artwork approved {new Date(o.art_approved_at).toLocaleDateString()}</Badge> : null}{o.shipped_email_id && shippedThread.data ? <Link to={`/mail/${shippedThread.data}?email=${o.shipped_email_id}`} className="text-sm font-medium text-brand hover:underline">Shipped per email</Link> : null}</span>}
+        description={<span className="inline-flex flex-wrap items-center gap-2"><OrderStatusBadge status={o.status} />{o.order_date ? <span>{d(o.order_date)}</span> : null}{o.source !== 'manual' ? <Badge tone="neutral">from {o.source.replaceAll('_', ' ')}</Badge> : null}{o.art_approved_at ? <Badge tone="success">Artwork approved {new Date(o.art_approved_at).toLocaleDateString()}</Badge> : null}{o.status === 'open' && canEdit ? <Button size="sm" variant="secondary" onClick={async () => { try { await markOrderPlaced(o.id); toast.success('Now placed'); await q.refetch() } catch (err) { toast.error(errorMessage(err)) } }}>They received it</Button> : null}{o.ack_email_id && ackThread.data ? <Link to={`/mail/${ackThread.data}?email=${o.ack_email_id}`} className="text-sm font-medium text-brand hover:underline">{o.ack_how === 'confirmation' ? 'Their confirmation' : 'They replied they got it'}{o.ack_at ? ` ${new Date(o.ack_at).toLocaleDateString()}` : ''}</Link> : null}{o.shipped_email_id && shippedThread.data ? <Link to={`/mail/${shippedThread.data}?email=${o.shipped_email_id}`} className="text-sm font-medium text-brand hover:underline">Shipped per email</Link> : null}</span>}
         actions={canEdit ? (
           <div className="flex flex-wrap items-center gap-2">
             <AskButton orderId={o.id} />

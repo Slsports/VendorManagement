@@ -116,6 +116,12 @@ export async function getOrder(id: string): Promise<OrderDetail> {
   return { ...row, order_status_history: (row.order_status_history ?? []).sort((a, b) => a.changed_at.localeCompare(b.changed_at)), documents: docs ?? [] }
 }
 
+/** They received it (Dana, Nov 12): a Sent order becomes Placed, for a phone call or a reply VMS didn't see. */
+export async function markOrderPlaced(id: string): Promise<void> {
+  const { error } = await supabase.rpc('order_mark_placed', { p_order: id })
+  if (error) throw error
+}
+
 export async function updateOrder(id: string, changes: TablesUpdate<'orders'>): Promise<Order> {
   const { data, error } = await supabase.from('orders').update(changes).eq('id', id).select('*').single()
   if (error) throw error

@@ -14,6 +14,6 @@ Use the search box and the season filter on the Orders page to find one order fa
 
 ## Good to know
 - The search looks at the vendor name, what was ordered, the PO number and the name of the person who placed it.
-- The search and season stay in place when you switch status tabs, so you can search inside **Open** or **Paid**.
+- The search and season stay in place when you switch status tabs, so you can search inside **Sent** or **Paid**.
 - Search and season are kept in the page address, so Back from an order returns you to the same filtered list.
 - To see every order from one vendor, open the vendor page instead: its **Order history** lists them all with totals.

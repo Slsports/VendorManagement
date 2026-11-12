@@ -4525,3 +4525,10 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   the letter is passed along: vms.shaverlakesports.com/ship/new. It asks our PO number and their company name first; a PO
   matching one order puts the answers on that order (request made if none, quote, Trevor's task); otherwise a quote waits
   on Which order? with a task for Trevor (migration 0358, shipment-requests submit_open). Nothing about our orders is shown.
+- Nov 12, Dana: "'Placed' isnt exactly accurate - that should be 'sent' … Placed doesnt exist until its been acknowledge
+  with a reply that they received it. And the its not 'confirmed until the email us confirmation." "two days is good for
+  reminder" … "whoever sent it, go". Statuses shown as **Sent** (open) → **Placed** (awaiting_confirmation) → Confirmed.
+  Claude reads the vendor's replies on the order's conversation (sent-orders) and a "got it" moves Sent → Placed with the
+  email linked; a confirmation filed does too; **They received it** on the order. Still Sent 2 business days after our
+  latest order email (last 30 days): "No reply yet" task + follow-up draft for whoever sent it (mailbox owner, else who
+  placed it), closing itself when the order moves on. Back-check: open orders from her sheets are Placed (migration 0359).
