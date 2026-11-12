@@ -207,7 +207,7 @@ function SheetStep({ view, locked, userId, onDone }: { view: ShipmentView; locke
                 const size = sheetRowBooks(r, per[r.kind])
                 return (
                   <tr key={r.key} className={size.error && r.from && r.to ? 'bg-red-50/60' : ''}>
-                    <td className="py-1.5 pr-3"><Select value={r.kind} onChange={(e) => setRow(r.key, { kind: e.target.value as 'day' | 'season' })} disabled={!editing} aria-label="Kind"><option value="day">Day</option><option value="season">Season</option></Select></td>
+                    <td className="min-w-32 py-1.5 pr-3"><Select value={r.kind} onChange={(e) => setRow(r.key, { kind: e.target.value as 'day' | 'season' })} disabled={!editing} aria-label="Kind"><option value="day">Day</option><option value="season">Season</option></Select></td>
                     <td className="py-1.5 pr-3"><Input type="number" inputMode="numeric" value={r.from} onChange={(e) => setRow(r.key, { from: e.target.value })} disabled={!editing} className="w-28" aria-label="From permit" /></td>
                     <td className="py-1.5 pr-3"><Input type="number" inputMode="numeric" value={r.to} onChange={(e) => setRow(r.key, { to: e.target.value })} disabled={!editing} className="w-28" aria-label="Including permit" /></td>
                     <td className="py-1.5 pr-3 text-stone-700">{r.from && r.to ? size.n : ''}{size.error && r.from && r.to ? <span className="ml-2 text-xs text-red-700">{size.error}</span> : null}</td>
