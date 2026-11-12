@@ -176,6 +176,9 @@ export function taskTarget(t: { auto_key: string | null; order_id: string | null
   if (kind === 'proof' && t.vendor_id) return { kind: 'page', to: `/vendors/${t.vendor_id}?folder=proofs${id ? `&doc=${id}` : ''}`, label: 'Open the proof' }
   if (kind === 'credit' && t.vendor_id) return { kind: 'page', to: `/vendors/${t.vendor_id}?folder=credits${id ? `&doc=${id}` : ''}`, label: 'Open the credit' }
   // an invoice not in Bill.com yet (Dana, Oct 27, Emery Jensen): the invoice itself, to enter it
+  // half freight (Dana, Nov 12): the email asking the vendor for half, with our freight bill attached
+  if (kind === 'halfcredit' && t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the email to send' }
+  if (kind === 'halfcredit' && t.order_id) return { kind: 'page', to: `/orders/${t.order_id}`, label: 'Open the order' }
   // an order nobody answered in 2 business days (Dana, Nov 12): the follow-up email ready to send; once sent, the order
   if (kind === 'noreply' && t.draft_id) return { kind: 'page', to: `/mail?view=drafts&draft=${t.draft_id}`, label: 'Open the follow-up email' }
   if (kind === 'noreply' && id) return { kind: 'page', to: `/orders/${id}`, label: 'Open the order' }

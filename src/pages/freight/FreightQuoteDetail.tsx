@@ -93,6 +93,8 @@ function QuoteView({ quote: f, refetch }: { quote: FreightQuoteRow; refetch: () 
         </div>
       </section>
 
+      <QuoteShare order={f.order} prices={choices.map((c) => ({ label: c.label, cost: c.cost }))} />
+
       <section className="mb-4 rounded-2xl border border-stone-200 bg-white p-4">
         <div className="flex flex-wrap items-center gap-3">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-stone-500">Our price</h2>
@@ -149,5 +151,32 @@ function PickOrder({ quote, canEdit, busy, onPick }: { quote: FreightQuoteRow; c
         </div>
       ) : null}
     </Alert>
+  )
+}
+
+/**
+ * What we pay (Dana, Nov 12): each price as a share of the order, and with half freight our half (the vendor credits half
+ * once we send them the freight bill), or with a cap the most we pay.
+ */
+function QuoteShare({ order, prices }: { order: { est_cost: number | null; freight_terms: string | null; freight_cap_pct: number | null } | null; prices: { label: string; cost: number | null }[] }) {
+  const goods = order?.est_cost != null ? Number(order.est_cost) : null
+  const terms = order?.freight_terms ?? null
+  const cap = order?.freight_cap_pct != null ? Number(order.freight_cap_pct) : null
+  const shown = prices.filter((p) => p.cost !== null) as { label: string; cost: number }[]
+  if (!shown.length || (!goods && terms !== 'half')) return null
+  const capAmt = terms === 'capped' && cap !== null && goods ? Math.round(goods * cap) / 100 : null
+  const pct = (n: number) => (goods ? ` · ${((n / goods) * 100).toFixed(1)}% of the order` : '')
+  return (
+    <section className="mb-4 rounded-2xl border border-stone-200 bg-white p-4 text-sm">
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-stone-500">What we pay</h2>
+      {terms === 'half' ? <p className="mt-1 text-stone-700">Half freight: we pay half. With our own carrier the vendor credits half once Trevor sends them the freight bill.</p> : null}
+      {capAmt !== null ? <p className="mt-1 text-stone-700">Capped at {cap}%: we pay at most {money(capAmt)} ({cap}% of {money(goods)}); the vendor pays the rest.</p> : null}
+      <ul className="mt-2 space-y-1">
+        {shown.map((p) => {
+          const ours = terms === 'half' ? Math.round(p.cost * 50) / 100 : capAmt !== null ? Math.min(p.cost, capAmt) : p.cost
+          return <li key={p.label} className="text-stone-900"><span className="font-medium">{p.label}:</span> {money(p.cost)}{terms === 'half' || capAmt !== null ? <> · <strong>we pay {money(ours)}</strong></> : null}{pct(ours)}</li>
+        })}
+      </ul>
+    </section>
   )
 }

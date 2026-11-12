@@ -1,7 +1,7 @@
 ---
 title: Credits you ask vendors for
 section: Tasks
-keywords: credit, credit memo, damage, shortage, missing items, Trevor, 7 days, follow-up email, draft, Received, On Edenred, Edenred upload, WWD credit
+keywords: half freight, freight credit, credit, credit memo, damage, shortage, missing items, Trevor, 7 days, follow-up email, draft, Received, On Edenred, Edenred upload, WWD credit
 who: Everyone
 ---
 When you email a vendor from orders@ asking for a credit (damaged goods, a shortage, missing or wrong items, an overcharge), VMS tracks it until the credit is in, so nothing is forgotten.
@@ -18,3 +18,6 @@ When you email a vendor from orders@ asking for a credit (damaged goods, a short
 - A credit that comes in with no request is filed and marked Received, and gets **On Edenred** when the upload shows it. No task.
 - Hardware store suppliers (vendors ticked **Bought for SLH**, like Emery Jensen) are filed only: no request, no task.
 - VMS reads outgoing orders@ vendor mail from the last 60 days, so requests sent before this was built are tracked too.
+
+## Half freight
+On a half-freight order the vendor credits half the freight once they have our freight bill. When the freight bill is matched to the order (**Freight › Freight bills**), Trevor gets a task **Ask (vendor) for half the freight: PO … ($…)**. **Go to it** opens the email in his Drafts with the bill attached, asking for a credit for half. Once he sends it, the credit is tracked here like any other until it comes in.

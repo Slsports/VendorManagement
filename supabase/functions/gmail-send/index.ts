@@ -114,7 +114,8 @@ Deno.serve(async (req) => {
     }
     // Files saved with a draft (Dana, Nov 9: "save this to my drafts with the order attached"): only from this organization's drafts folder
     for (const f of r.draft_files ?? []) {
-      if (typeof f?.path !== 'string' || !f.path.startsWith(`${me.organization_id}/drafts/`) || f.path.includes('..')) continue
+      // drafts' own files, and a freight bill VMS attached (the half-freight credit email, Nov 12)
+      if (typeof f?.path !== 'string' || !(f.path.startsWith(`${me.organization_id}/drafts/`) || f.path.startsWith(`${me.organization_id}/freight/`)) || f.path.includes('..')) continue
       const { data: blob, error } = await db.storage.from('vendor-files').download(f.path)
       if (error || !blob) throw new Error(`Could not read ${f.name}: ${error?.message ?? 'missing'}`)
       attachments.push({ name: f.name || 'file', mime: f.mime || blob.type || 'application/octet-stream', base64: bytesToBase64(new Uint8Array(await blob.arrayBuffer())) })

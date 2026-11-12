@@ -5,7 +5,7 @@ import type { FreightQuote } from '@/types'
 
 export type FreightQuoteRow = FreightQuote & {
   vendor: { id: string; name: string } | null
-  order: { id: string; po_number: string | null; order_date: string | null; est_cost: number | null; status: string } | null
+  order: { id: string; po_number: string | null; order_date: string | null; est_cost: number | null; status: string; freight_terms: string | null; freight_cap_pct: number | null } | null
   email: { id: string; subject: string | null; received_at: string; from_name: string | null; from_email: string | null } | null
   approver: { full_name: string } | null
 }
@@ -17,7 +17,7 @@ export interface QuoteDetails {
   total_weight?: number | null; value?: number | null; hazardous?: boolean | null; notes?: string | null
 }
 
-const SELECT = '*, vendor:vendors!freight_quotes_vendor_id_fkey(id, name), order:orders!freight_quotes_order_id_fkey(id, po_number, order_date, est_cost, status), email:emails!freight_quotes_email_id_fkey(id, subject, received_at, from_name, from_email), approver:profiles!freight_quotes_approved_by_fkey(full_name)'
+const SELECT = '*, vendor:vendors!freight_quotes_vendor_id_fkey(id, name), order:orders!freight_quotes_order_id_fkey(id, po_number, order_date, est_cost, status, freight_terms, freight_cap_pct), email:emails!freight_quotes_email_id_fkey(id, subject, received_at, from_name, from_email), approver:profiles!freight_quotes_approved_by_fkey(full_name)'
 
 export type QuoteFilter = 'waiting' | 'needs_order' | 'approved' | 'all'
 

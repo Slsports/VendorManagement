@@ -4534,3 +4534,11 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   placed it), closing itself when the order moves on. Back-check: open orders from her sheets are Placed (migration 0359).
 - Nov 12: first reading of replies placed 9 Sent orders; G & S Originals' "Can you call me" was not a "got it" and went
   back to Sent; the reader now counts only replies that plainly say they have the order.
+- Nov 12, Dana (half and capped freight): "the vendor only requires a copy of our invoice from the freight co to credit us
+  for half the freight" … "Capped over 10% needs a quote" … "Trevor sends it, go". Stansport PO STANSPORT91226 (Sept):
+  their quote $480.18, ours $281.47 through Pinnacle (Oak Harbor), saved $198.71 ($99.35 of our half); credit T1709229
+  came Oct 8, the day after Dana sent the Priority One bill. Built (migration 0360): capped at 10% or less ships without a
+  quote, over 10% needs the form; a freight bill line on a half-freight order gives Trevor "Ask … for half the freight"
+  with the email (bill attached, half named) in his Drafts; once sent, the credit is tracked like any credit we ask for.
+  The freight quote page shows **What we pay** (our half, the cap's most, share of the order). gmail-send attaches a
+  freight bill from <org>/freight/ on a draft.

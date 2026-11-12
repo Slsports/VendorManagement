@@ -15,6 +15,7 @@ No order ships until its freight quote is approved. When a vendor emails a freig
 6. If it says **Which order?**, pick the order from the list and click **Use this order** first.
 
 ## Good to know
+- **What we pay** on the quote page shows each price as a share of the order. On a half-freight order it shows our half of each (with our own carrier the vendor credits half once Trevor sends them the freight bill); on a capped order, the most we pay under the cap.
 - VMS finds the order by our PO number, then the vendor's own order or invoice number, then the conversation, then Claude compares the quote with the vendor's open orders. If it still can't tell, it asks you.
 - **Save prices** keeps the prices without approving. **Not a freight quote** clears it if Claude got it wrong. **Change it** opens an approved quote again.
 - The order page shows **Waiting on freight quote** until one is approved.
