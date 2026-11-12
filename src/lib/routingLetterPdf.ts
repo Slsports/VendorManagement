@@ -16,8 +16,8 @@ export const DEFAULT_LETTER: RoutingLetterContent = {
     {
       heading: '1. Before you ship: check the freight cost',
       body: [
-        '- **Under 10% of the merchandise cost:** go ahead and ship with your carrier and add the freight to the invoice.',
-        '- **10% or more:** please do not ship. Send us your freight quote and fill out our Shipment Details form (the link is in our order email). Trevor, our Inventory & Logistics Specialist, will schedule the shipment, by UPS for boxes or LTL for pallets, and let you know when it will be picked up.',
+        '- **10% or less of the merchandise cost:** go ahead and ship with your carrier and add the freight to the invoice.',
+        '- **Over 10%:** please do not ship. Send us your freight quote and fill out our Shipment Details form (the link is in our order email). Trevor, our Inventory & Logistics Specialist, will schedule the shipment, by UPS for boxes or LTL for pallets, and let you know when it will be picked up.',
         '- **Free freight** (you pay the shipping): use the carrier of your choice.',
       ].join('\n'),
     },

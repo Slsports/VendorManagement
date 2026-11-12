@@ -4501,3 +4501,8 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
 - Nov 12, Dana: a red note at the top of the vendors' shipment details form: "NOTE: IF FREIGHT IS FREE OR YOUR RATE QUOTE
   CAME IN AT 10% OR LESS YOU ARE AUTHORIZED TO SHIP AND YOU DO NOT NEED TO FILL THIS OUT." (Her "10% or less"; the letter
   and emails say "under 10%" — asked her which.)
+- Nov 12, Dana: "10% or less everywhere. Yes, store logo." Freight at 10% or less of the merchandise ships; over 10% needs
+  the quote and the form — in the letter (version 2), the shipment details email and follow-up, the routing email, the
+  order's freight card and the "Shipped without an approved freight quote" list (migration 0356). The vendor-facing pages
+  (shipment form, contact confirmation, routing receipt) show the store's own logo (store-logo.png, a transparent copy of
+  the email logo, so no white box on the tinted page).

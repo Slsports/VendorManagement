@@ -13,7 +13,7 @@ export const DEFAULT_ROUTING_EMAIL = `Hello {first_name},
 
 Over the past year, freight on some of our orders has run 70% to 120% of the merchandise cost: boxes that were too large for what was in them, orders split across many small cartons, and carrier charges we never approved. Shaver Lake is a remote mountain delivery area, so every extra carton adds up fast. We can't keep absorbing those costs, so we have updated our routing instructions. They are attached; please share them with your shipping department.
 
-In short: if the freight on an order is under 10% of the merchandise cost, go ahead and ship it and add the freight to the invoice. If it is 10% or more, please send us your freight quote and the shipment details first, and we will schedule the shipment. And please pack our orders in the fewest, fullest boxes possible.
+In short: if the freight on an order is 10% or less of the merchandise cost, go ahead and ship it and add the freight to the invoice. If it is over 10%, please send us your freight quote and the shipment details first, and we will schedule the shipment. And please pack our orders in the fewest, fullest boxes possible.
 
 {open_orders}
 Please click below to confirm you received them:

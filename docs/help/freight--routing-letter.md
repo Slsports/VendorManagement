@@ -25,7 +25,7 @@ You can still click **Upload a PDF instead** to use a letter made in Word.
 - The table shows each person: vendor, name, email, version, the date it was sent and the date they confirmed. **Not confirmed** lists who hasn't clicked yet.
 - Anyone who hasn't confirmed after 7 days gets one reminder email.
 - A new version: save or upload it, then click **Everyone who had an earlier version**. They each confirm the new one.
-- The letter says: freight under 10% of the merchandise cost, the vendor ships and adds it to the invoice; 10% or more, they send their quote and fill out our Shipment Details form, and Trevor schedules the shipment. It also explains how to pack boxes for UPS.
+- The letter says: freight 10% or less of the merchandise cost, the vendor ships and adds it to the invoice; over 10%, they send their quote and fill out our Shipment Details form, and Trevor schedules the shipment. It also explains how to pack boxes for UPS.
 - The newest version also goes with every shipment details email.
 - Vendors with open orders and no email address are listed so you can add one.
 - Each vendor's page has a **Routing letter** box with the same list for that vendor. When writing any email you can tick **Attach our routing letter**.
