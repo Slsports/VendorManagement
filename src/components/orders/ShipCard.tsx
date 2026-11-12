@@ -35,7 +35,7 @@ export function ShipCard({ order, canEdit, onChange, focus = false }: {
     setBusy(action)
     try {
       await orderShipAction(order.id, action)
-      toast.success(action === 'start' ? 'Shipping email and task made' : 'Marked received')
+      toast.success(action === 'start' ? 'Handed to logistics' : 'Marked received')
       await step.refetch()
       onChange()
     } catch (err) {
@@ -64,13 +64,15 @@ export function ShipCard({ order, canEdit, onChange, focus = false }: {
       {s?.task?.assignee ? <p className="mt-1 text-xs text-stone-600">With {s.task.assignee.full_name.split(' ')[0]}{s.task.done_at ? ' · done' : ''}</p> : null}
       <ol className="mt-3 space-y-3 text-sm">
         <li>
-          <p className="font-medium text-stone-800">1. Shipping email with our routing instructions</p>
+          <p className="font-medium text-stone-800">1. Shipment details email (our routing letter attached)</p>
           {order.ship_email_sent_at ? (
             <p className="mt-1 flex items-center gap-1.5 text-emerald-800"><CircleCheck className="size-4" aria-hidden="true" />Sent {shortDate(order.ship_email_sent_at)}</p>
           ) : s?.draft_id ? (
-            <Button size="sm" className="mt-1" loading={busy === 'draft'} onClick={() => void openDraft()} leftIcon={<Mail className="size-4" aria-hidden="true" />}>Open the shipping email</Button>
+            <Button size="sm" className="mt-1" loading={busy === 'draft'} onClick={() => void openDraft()} leftIcon={<Mail className="size-4" aria-hidden="true" />}>Open the shipment details email</Button>
+          ) : s?.request_status === 'skipped' ? (
+            <p className="mt-1 text-xs text-stone-500">Not needed for this order.</p>
           ) : s?.task ? (
-            <p className="mt-1 text-xs text-stone-500">It waits in {s.task.assignee?.full_name.split(' ')[0] ?? 'their'}'s Mail › Drafts.</p>
+            <p className="mt-1 text-xs text-stone-500">It waits in {s.task.assignee?.full_name.split(' ')[0] ?? 'their'}'s Mail › Drafts (Freight › Shipment details).</p>
           ) : null}
         </li>
         <li>
@@ -90,7 +92,7 @@ export function ShipCard({ order, canEdit, onChange, focus = false }: {
       {!step.isLoading && !s?.task && order.status === 'confirmed' && canEdit ? (
         <div className="mt-3 border-t border-stone-200 pt-3">
           <p className="text-xs text-stone-500">Not handed to logistics yet.</p>
-          <Button size="sm" className="mt-1" loading={busy === 'start'} onClick={() => void act('start')}>Make the shipping email and task</Button>
+          <Button size="sm" className="mt-1" loading={busy === 'start'} onClick={() => void act('start')}>Hand it to logistics</Button>
         </div>
       ) : null}
       {draft ? (

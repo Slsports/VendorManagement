@@ -9,7 +9,7 @@ Every order has one status that shows how far along it is, from sent to paid.
 ## The statuses, in order
 1. **Sent**: we emailed the order and nobody has answered yet.
 2. **Placed**: the vendor told us they received it; waiting for their confirmation. A reply like "Got it" moves the order here by itself (Claude reads the replies on the order's email conversation), and so does their confirmation coming in. **They received it** at the top of the order sets it by hand, for a phone call or a reply VMS didn't see. **They replied they got it** at the top opens their email.
-3. **Confirmed**: the vendor confirmed it. The shipping email is ready and Trevor gets a "Ship and receive" task.
+3. **Confirmed**: the vendor confirmed it. The shipment details email is ready in Trevor's Drafts and he gets a "Ship and receive" task.
 4. **Shipped**: on its way. A packing slip landing in the vendor's **Shipping** folder moves the order here by itself, and so does an email from the carrier, a freight broker (like Pinnacle) or the vendor saying our PO was picked up or is in transit. The order's **Shipment notes** then say who carries it, the BOL or tracking number and the expected date, and **Shipped per email** at the top opens that email.
 5. **Received**: in the store. **Mark received** in the order's **Shipping & receiving** box sets it.
 6. **Entered**: entered in LS.

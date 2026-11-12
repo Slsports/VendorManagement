@@ -184,17 +184,20 @@ export async function quotedFreightRate(vendorId: string, since: string | null):
 export interface ShipStep {
   task: { id: string; done_at: string | null; assignee: { full_name: string } | null } | null
   draft_id: string | null
+  /** the shipment details request: ready, sent, opened, answered, confirmed, disputed, skipped, cancelled */
+  request_status: string | null
 }
 
 /** The order's Ship and receive task and its shipping email still in Drafts (seen by its owner and the admin). */
 export async function getShipStep(orderId: string): Promise<ShipStep> {
   const [t, d] = await Promise.all([
     supabase.from('tasks').select('id, done_at, assignee:profiles!tasks_assigned_to_fkey(full_name)').eq('auto_key', `ship:${orderId}`).maybeSingle(),
-    supabase.from('email_drafts').select('id').eq('order_id', orderId).limit(1).maybeSingle(),
+    // the shipment details email (Nov 12: the only shipping email now) waiting in Trevor's Drafts
+    supabase.from('shipment_requests').select('status, review_draft_id').eq('order_id', orderId).maybeSingle(),
   ])
   if (t.error) throw t.error
   if (d.error) throw d.error
-  return { task: t.data as unknown as ShipStep['task'], draft_id: d.data?.id ?? null }
+  return { task: t.data as unknown as ShipStep['task'], draft_id: d.data?.review_draft_id ?? null, request_status: d.data?.status ?? null }
 }
 
 /** Start the shipping steps by hand, or mark the order received (which closes the task). */

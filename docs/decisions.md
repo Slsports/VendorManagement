@@ -4542,3 +4542,7 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   with the email (bill attached, half named) in his Drafts; once sent, the credit is tracked like any credit we ask for.
   The freight quote page shows **What we pay** (our half, the cap's most, share of the order). gmail-send attaches a
   freight bill from <org>/freight/ on a draft.
+- Nov 12, Dana: "yes remove old". The October placeholder "Shipping instructions for PO …" email is no longer made on a
+  confirmed order; the shipment details email is the one shipping email, and the Ship and receive task and the order's
+  Shipping & receiving box point to it (**Hand it to logistics** by hand makes both). None of the old drafts was waiting
+  (migration 0361).
