@@ -4485,3 +4485,14 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
 - Nov 12: the Lightspeed refresh token went invalid on Nov 6 and nothing said so until Claude found it on Nov 12 (no sales
   or items copied for five days). ls_connection_watch (every 10 minutes) gives Dana a task while the sync keeps failing and
   closes it when it works; Dana reconnected Nov 12 and the sync caught up.
+- Nov 12, Dana: a new routing letter, editable in VMS ("Lets create a new One. And when its done Can it be somewhere in
+  vms where I can edit it anytime?"). Her points: no UPS number for vendors (they packed badly on ours); packing for UPS
+  with more detail and UPS's own page linked; Trevor schedules LTL and UPS; forklift, no lift gate; carrier of choice when
+  the vendor pays; first: "if your freight quote comes in under 10% of merchandise cost go ahead and ship. If over 10% then
+  we need a freight quote and they need to fill out our form"; questions to orders@ only. "Why packing matters" uses her
+  Daisy order (23 boxes, $887.48, 70% of merchandise, credited Oct 2) and Trevor's Gold Medal review (179 lb billed as 302
+  lb, $1,140.99), without vendor names; "keep the last sentence" (we ask for the extra freight to be credited).
+  Built: Freight › Routing letter › **Edit the letter** (title, shaded intro, sections, closing, footer; Preview the PDF;
+  Save as version N; VMS draws the PDF; routing_letters.content). "yes follow the 10% rule, go": the shipment details
+  email and its follow-up say it, an order that ships ends its request, "Shipped without an approved freight quote" leaves
+  out freight known to be under 10% (migration 0355). ups.com allowed in the environment (UPS blocks automated reading).

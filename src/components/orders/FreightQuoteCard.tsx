@@ -32,7 +32,7 @@ export function FreightQuoteCard({ orderId, status, freeShipping, webOrders }: {
       ) : shipped ? (
         <p className="mt-2 text-sm font-medium text-red-800">Shipped without an approved freight quote.</p>
       ) : (
-        <p className="mt-2 text-sm text-stone-600">No freight quote yet. The vendor should send one before it ships.</p>
+        <p className="mt-2 text-sm text-stone-600">No freight quote yet. Under 10% of the merchandise cost the vendor may ship and add the freight to the invoice; 10% or more needs their quote and our OK first.</p>
       )}
       <Link to={ROUTES.routingLetter} className="mt-3 inline-block text-xs font-medium text-brand hover:underline">Our routing letter</Link>
     </section>

@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabase'
 import type { RoutingLetter, RoutingLetterSend } from '@/types'
+import type { Json } from '@/types/database'
 import { checkUploadSize, readForUpload, uploadError } from '@/lib/upload'
+import { buildRoutingLetterPdf, routingLetterFileName, type RoutingLetterContent } from '@/lib/routingLetterPdf'
 
 // The freight routing letter (Dana, Oct 13): versions, who it went to, and who confirmed receiving it.
 
@@ -9,9 +11,9 @@ export type RoutingSendRow = RoutingLetterSend & { vendor: { id: string; name: s
 
 export const DEFAULT_ROUTING_EMAIL = `Hello {first_name},
 
-Over the past year, freight on some of our orders has run 70% to 120% of the merchandise cost: boxes that were too large for what was in them, orders split across many small cartons, and carrier charges we never approved. Shaver Lake is a remote mountain delivery area, so every extra carton adds up fast. We can't keep absorbing those costs, so we have tightened our shipping procedures.
+Over the past year, freight on some of our orders has run 70% to 120% of the merchandise cost: boxes that were too large for what was in them, orders split across many small cartons, and carrier charges we never approved. Shaver Lake is a remote mountain delivery area, so every extra carton adds up fast. We can't keep absorbing those costs, so we have updated our routing instructions. They are attached; please share them with your shipping department.
 
-Effective October 14, 2026, no order ships until we have approved a freight quote. Our routing instructions are attached. Please share them with your shipping department.
+In short: if the freight on an order is under 10% of the merchandise cost, go ahead and ship it and add the freight to the invoice. If it is 10% or more, please send us your freight quote and the shipment details first, and we will schedule the shipment. And please pack our orders in the fewest, fullest boxes possible.
 
 {open_orders}
 Please click below to confirm you received them:
@@ -33,6 +35,25 @@ export async function addRoutingLetter(organizationId: string, file: File, f: { 
   const { data, error } = await supabase.rpc('routing_letter_add', { p_org: organizationId, p_path: path, p_file_name: file.name, p_effective: f.effective, p_note: f.note, p_subject: f.subject, p_body: f.body })
   if (error) throw error
   return data as string
+}
+
+/**
+ * Save the letter written in VMS as a new version (Dana, Nov 12): VMS draws the PDF from the words, files it like an
+ * uploaded one, and keeps the words on the version so the next edit starts from them.
+ */
+export async function saveWrittenLetter(organizationId: string, version: number, content: RoutingLetterContent, f: { effective: string | null; note: string; subject: string; body: string }): Promise<string> {
+  const file = new File([await routingLetterPdfBlob(content)], routingLetterFileName(version), { type: 'application/pdf' })
+  const id = await addRoutingLetter(organizationId, file, f)
+  const { error } = await supabase.from('routing_letters').update({ content: content as unknown as Json }).eq('id', id)
+  if (error) throw error
+  return id
+}
+
+/** The letter as a PDF, drawn from its words with the store's logo. */
+export async function routingLetterPdfBlob(content: RoutingLetterContent): Promise<Blob> {
+  const logo = await fetch('/brand/sls/email-logo@2x.png').then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null)
+  const bytes = await buildRoutingLetterPdf(content, logo ? new Uint8Array(logo) : null)
+  return new Blob([bytes as BlobPart], { type: 'application/pdf' })
 }
 
 export async function updateRoutingEmail(letterId: string, subject: string, body: string): Promise<void> {

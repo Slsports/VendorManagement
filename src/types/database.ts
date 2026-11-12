@@ -465,9 +465,9 @@ export type Database = {
         Relationships: []
       }
       routing_letters: {
-        Row: { id: string; organization_id: string; version: number; storage_path: string; file_name: string; effective_on: string | null; note: string | null; email_subject: string; email_body: string; created_by: string | null; created_at: string }
-        Insert: { id?: string; organization_id: string; version: number; storage_path: string; file_name: string; effective_on?: string | null; note?: string | null; email_subject?: string; email_body: string; created_by?: string | null; created_at?: string }
-        Update: { id?: string; organization_id?: string; version?: number; storage_path?: string; file_name?: string; effective_on?: string | null; note?: string | null; email_subject?: string; email_body?: string; created_by?: string | null; created_at?: string }
+        Row: { id: string; organization_id: string; version: number; storage_path: string; file_name: string; effective_on: string | null; note: string | null; email_subject: string; email_body: string; created_by: string | null; created_at: string; content: Json | null }
+        Insert: { id?: string; organization_id: string; version: number; storage_path: string; file_name: string; effective_on?: string | null; note?: string | null; email_subject?: string; email_body: string; created_by?: string | null; created_at?: string; content?: Json | null }
+        Update: { id?: string; organization_id?: string; version?: number; storage_path?: string; file_name?: string; effective_on?: string | null; note?: string | null; email_subject?: string; email_body?: string; created_by?: string | null; created_at?: string; content?: Json | null }
         Relationships: []
       }
       routing_letter_sends: {

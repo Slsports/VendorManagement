@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { FileText, Mail, Upload } from 'lucide-react'
+import { FileText, Mail, PenLine, Upload } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useTableSort } from '@/hooks/useTableSort'
@@ -15,6 +15,7 @@ import { SortHeader } from '@/components/shared/SortHeader'
 import { FoldSection } from '@/components/shared/FoldSection'
 import { Alert, Badge, Button, FormField, Input, Spinner, Textarea } from '@/components/ui'
 import type { RoutingLetter } from '@/types'
+import { RoutingLetterEditor } from '@/components/freight/RoutingLetterEditor'
 
 type Show = 'all' | 'waiting' | 'drafts'
 
@@ -29,6 +30,7 @@ export default function RoutingLetterPage() {
   const sends = useSupabaseQuery(async () => (organization ? listRoutingSends(organization.id) : []), [organization?.id])
   const missing = useSupabaseQuery(async () => (organization ? listRoutingMissing(organization.id, 'open_orders') : []), [organization?.id])
   const [uploading, setUploading] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [busy, setBusy] = useState<RoutingWho | null>(null)
   const [show, setShow] = useState<Show>('all')
   const current = letters.data?.[0] ?? null
@@ -65,19 +67,26 @@ export default function RoutingLetterPage() {
     <div className="pb-16">
       <BackLink fallback={ROUTES.freight} fallbackLabel="Freight" />
       <PageHeader title="Routing letter" description="Our freight routing instructions: who it went to, and who confirmed they received it."
-        actions={canEdit ? <Button onClick={() => setUploading(true)} leftIcon={<Upload className="size-4" aria-hidden="true" />}>{current ? 'Upload a new version' : 'Upload the letter'}</Button> : undefined} />
+        actions={canEdit ? (
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => { setUploading(false); setEditing(true) }} leftIcon={<PenLine className="size-4" aria-hidden="true" />}>Edit the letter</Button>
+            <Button variant="secondary" onClick={() => { setEditing(false); setUploading(true) }} leftIcon={<Upload className="size-4" aria-hidden="true" />}>Upload a PDF instead</Button>
+          </div>
+        ) : undefined} />
 
       {letters.isLoading ? <div className="flex justify-center py-12"><Spinner label="Loading…" className="text-brand" /></div> : letters.error ? <Alert variant="error">{letters.error}</Alert> : null}
 
+      {editing && organization ? <RoutingLetterEditor organizationId={organization.id} current={current} onClose={() => setEditing(false)} onSaved={async () => { setEditing(false); await letters.refetch() }} /> : null}
       {uploading && organization ? <UploadLetter organizationId={organization.id} previous={current} onClose={() => setUploading(false)} onDone={async () => { setUploading(false); await letters.refetch() }} /> : null}
 
-      {current ? (
+      {current && !editing ? (
         <section className="mb-4 rounded-2xl border border-stone-200 bg-white p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-stone-900">Version {current.version}{current.effective_on ? <span className="ml-2 text-sm font-normal text-stone-500">effective {shortDate(current.effective_on)}</span> : null}</h2>
               <button type="button" onClick={() => void open(current)} className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline"><FileText className="size-4" aria-hidden="true" />{current.file_name}</button>
               {current.note ? <p className="mt-1 text-sm text-stone-600">{current.note}</p> : null}
+              <p className="mt-1 text-xs text-stone-500">{current.content ? 'Written in VMS: Edit the letter changes it.' : 'Uploaded as a PDF.'}</p>
               <p className="mt-2 text-sm text-stone-700">Sent to {sent.length} {sent.length === 1 ? 'person' : 'people'} · {confirmed.length} confirmed · {drafts.length} waiting in Drafts</p>
             </div>
             {canEdit ? (
@@ -91,7 +100,7 @@ export default function RoutingLetterPage() {
           </div>
           {canEdit ? <EmailText letter={current} onSaved={() => void letters.refetch()} /> : null}
         </section>
-      ) : !letters.isLoading && !uploading ? <Alert variant="info" className="mb-4">No routing letter yet. Click <strong>Upload the letter</strong> to add the PDF.</Alert> : null}
+      ) : !letters.isLoading && !uploading ? <Alert variant="info" className="mb-4">No routing letter yet. Click <strong>Edit the letter</strong> to write it in VMS, or <strong>Upload a PDF instead</strong>.</Alert> : null}
 
       {(missing.data ?? []).length ? (
         <FoldSection title="Vendors with open orders and no email address" summary={`${missing.data!.length}`} className="mb-4">

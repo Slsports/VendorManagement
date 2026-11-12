@@ -4,10 +4,10 @@ section: Freight
 keywords: shipment details, send the shipment details email, drafts, freight quote, form, link, pallet, LTL, parcel, UPS, FedEx, confirmed order, Trevor, 3 business days, follow-up, free freight, half freight, capped freight, Reference 1
 who: Everyone
 ---
-The moment an order is confirmed, VMS writes the email to the vendor and puts it in Trevor's Drafts (Inventory & Logistics Specialist). Nothing goes until Trevor presses **Send**. Vendors who charge freight get a link to a short form for the shipment details and their quote; vendors who agreed to free, half or capped freight are asked to confirm it. Nothing ships until the freight is OK'd.
+The moment an order is confirmed, VMS writes the email to the vendor and puts it in Trevor's Drafts (Inventory & Logistics Specialist). Nothing goes until Trevor presses **Send**. Vendors who charge freight are told the 10% rule (Dana, Nov 12): if the freight is under 10% of the merchandise cost they ship and add it to the invoice; if it is 10% or more they hold it and use the link to a short form for the shipment details and their quote. Vendors who agreed to free, half or capped freight are asked to confirm it.
 
 ## What goes out
-- **We pay freight:** the shipment details email. Trevor gets a task **Send the shipment details email: [vendor], PO [number]**; **Go to it** opens the email in Mail › Drafts. He checks it and presses **Send**, and the task closes. The email says we now require a freight quote before anything ships, unless they pay the full freight including backorders. Paying vendors just reply to say so; the others click the link.
+- **We pay freight:** the shipment details email. Trevor gets a task **Send the shipment details email: [vendor], PO [number]**; **Go to it** opens the email in Mail › Drafts. He checks it and presses **Send**, and the task closes. The email says: under 10% of the merchandise cost, go ahead and ship and invoice the freight; 10% or more, hold it and fill in the form; paying the full freight, just reply. Our routing letter is attached.
 - **Free freight agreed, shown on the confirmation:** nothing goes out. The order shows "The vendor confirmed these terms on the confirmation."
 - **Free freight agreed, not on the confirmation:** a short email asking them to confirm this order and any backorders ship free. No form link, so nobody thinks they can fill it in and charge us.
 - **Half or capped freight agreed, not on the confirmation:** an email asking them to confirm the terms, with the form link so we see our share before it ships.
@@ -25,11 +25,12 @@ The moment an order is confirmed, VMS writes the email to the vendor and puts it
 Claude reads the reply. "We ship free" or "yes, those terms" confirms the terms on the order. Shipment details written in the email land the same way the form would. "Freight will be charged" on an order where we agreed free, half or capped goes to whoever placed the order as a task, with an FYI task for Trevor, and the conversation moves to the buyer.
 
 ## Nothing back in 3 business days
-Trevor gets a task **No shipment details yet: [vendor], PO [number]** with the follow-up email ready in his Drafts. **Go to it** opens the email; send it as is or change it. The task finishes itself when the form or a reply with the details comes in.
+Trevor gets a task **No shipment details yet: [vendor], PO [number]** with the follow-up email ready in his Drafts. **Go to it** opens the email; send it as is or change it. The follow-up repeats the 10% rule. The task finishes itself when the form or a reply with the details comes in, or when the order ships.
 
 ## Where to see it
 - **Freight › Shipment details**: **See the form vendors get** opens the form as a preview (nothing saved). The list shows every request with sent, opened and answered dates, the method and the status. **Waiting** shows what is still with vendors, red past 3 business days. **Send now** sends one that is ready, the same as sending it from Drafts.
 - The order page's **Shipment details** box and each vendor's page show the same.
+- **Shipped without an approved freight quote** (Freight › Freight quotes) leaves out an order whose freight is known and under 10% of the merchandise.
 - The dashboard's **Freight bills** box has a line with how many are waiting.
 
 ## Good to know
