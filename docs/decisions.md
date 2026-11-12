@@ -4498,3 +4498,6 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   out freight known to be under 10% (migration 0355). ups.com allowed in the environment (UPS blocks automated reading).
 - Nov 12: version 1 of the new routing letter saved through Freight › Routing letter › Edit the letter (by the test login,
   as Dana asked: "Upload this letter so I can make my changes"). No emails prepared or sent.
+- Nov 12, Dana: a red note at the top of the vendors' shipment details form: "NOTE: IF FREIGHT IS FREE OR YOUR RATE QUOTE
+  CAME IN AT 10% OR LESS YOU ARE AUTHORIZED TO SHIP AND YOU DO NOT NEED TO FILL THIS OUT." (Her "10% or less"; the letter
+  and emails say "under 10%" — asked her which.)

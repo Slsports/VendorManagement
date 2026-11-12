@@ -108,6 +108,10 @@ function TheForm({ token, initial, onDone, preview = false }: { token: string; i
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); void submit() }} className="space-y-6">
+      {/* Dana, Nov 12: in red, first thing on the form */}
+      <p role="note" className="rounded-xl border-2 border-red-600 bg-red-50 px-4 py-3 text-base font-bold uppercase text-red-700">
+        Note: If freight is free or your rate quote came in at 10% or less you are authorized to ship and you do not need to fill this out.
+      </p>
       <header>
         <h1 className="text-2xl font-semibold">Shipment details for Shaver Lake Sports</h1>
         <p className="mt-1 text-sm text-stone-600">{initial.vendor}{initial.po ? ` · our PO ${initial.po}` : ''}{initial.description ? ` · ${initial.description}` : ''}</p>

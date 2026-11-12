@@ -15,6 +15,7 @@ The moment an order is confirmed, VMS writes the email to the vendor and puts it
 - It goes to whoever sent us the confirmation, with the vendor's Shipping contact and our rep copied. Free-freight web-order vendors (Kelli's) and paperwork-only vendors (Rossignol) are skipped.
 
 ## The form
+At the very top, in red: "NOTE: IF FREIGHT IS FREE OR YOUR RATE QUOTE CAME IN AT 10% OR LESS YOU ARE AUTHORIZED TO SHIP AND YOU DO NOT NEED TO FILL THIS OUT."
 1. The vendor picks **Pallet (LTL)** or **Parcel (UPS / FedEx)**; only that set of questions shows.
 2. Pickup location, the contact there, hours and days pickups are allowed, the ready date, and for pallets whether it is residential, needs a lift gate or is limited access.
 3. One block per pallet or package size with **Add another**: pieces, weight, sizes, class and NMFC if known, stackable and hazmat (pallets), large package and additional handling (parcel).
