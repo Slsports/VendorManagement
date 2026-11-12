@@ -5,6 +5,7 @@
 //   {action:"send", id}        — a signed-in editor presses Send now: that one request goes
 //   {action:"form", token}     — no login: the form's data (marks it opened)
 //   {action:"submit", token, method, answers} — no login: the vendor's answers
+//   {action:"submit_open", po, company, method, answers} — no login: the routing letter's form link, found by our PO
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { CORS, caller, errorResponse, HttpError, json, serviceClient } from '../_shared/caller.ts'
 import { aiEnabled, readShipmentReply } from '../_shared/ai.ts'
@@ -17,9 +18,23 @@ Deno.serve(async (req) => {
   const db = serviceClient()
   const started = Date.now()
   try {
-    const body = (await req.json().catch(() => ({}))) as { action?: string; token?: string; id?: string; method?: string; answers?: Record<string, unknown> }
+    const body = (await req.json().catch(() => ({}))) as { action?: string; token?: string; id?: string; method?: string; answers?: Record<string, unknown>; po?: string; company?: string }
     const cronSecret = Deno.env.get('MAIL_CRON_SECRET')
     const trusted = !!cronSecret && req.headers.get('x-cron-secret') === cronSecret
+
+    // the form link printed in the routing letter (Dana, Nov 12): no token, found by our PO number; nothing about our orders goes back
+    if (body.action === 'submit_open') {
+      const answers = body.answers ?? {}
+      if (JSON.stringify(answers).length > 60_000) throw new HttpError(400, 'Too much text')
+      if (body.method !== 'pallet' && body.method !== 'parcel') throw new HttpError(400, 'Pick Pallet or Parcel')
+      const po = String(body.po ?? '').trim()
+      const company = String(body.company ?? '').trim()
+      if (!po) throw new HttpError(400, 'Please give our PO number.')
+      if (!company) throw new HttpError(400, 'Please give your company name.')
+      const { data, error } = await db.rpc('shipment_form_submit_open', { p_po: po, p_company: company, p_method: body.method, p_answers: answers })
+      if (error) throw new HttpError(400, error.message)
+      return json(data)
+    }
 
     if (body.action === 'form' || body.action === 'submit') {
       if (!body.token || !UUID.test(body.token)) throw new HttpError(404, 'This link is not valid.')

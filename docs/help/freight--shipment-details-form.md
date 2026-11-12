@@ -22,6 +22,9 @@ At the very top, in red: "NOTE: IF FREIGHT IS FREE OR YOUR RATE QUOTE CAME IN AT
 4. Their freight quote and anything else we should know. **Send to Shaver Lake Sports** finishes it.
 5. The answers land on the order's **Shipment details** box and become a freight quote under **Freight › Freight quotes**, with a task for Trevor to price it (Priority One for pallets, WWEX/UPS for parcel) and approve the cheaper one. A pickup contact we didn't have is saved on the vendor as the Shipping contact.
 
+## The form link in the routing letter
+The routing letter prints one link to the same form: **vms.shaverlakesports.com/ship/new**, so anyone the letter is passed to can use it. It starts with **Our PO number** and **Your company name**. When the PO matches one of our orders, the answers land on that order exactly as from the order email. When it doesn't, the freight quote waits on **Freight › Freight quotes › Which order?** and Trevor gets a task to pick the order. Nothing about our orders shows to whoever opens the link.
+
 ## If they reply by email instead
 Claude reads the reply. "We ship free" or "yes, those terms" confirms the terms on the order. Shipment details written in the email land the same way the form would. "Freight will be charged" on an order where we agreed free, half or capped goes to whoever placed the order as a task, with an FYI task for Trevor, and the conversation moves to the buyer.
 

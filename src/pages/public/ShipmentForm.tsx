@@ -29,12 +29,16 @@ export default function ShipmentFormPage() {
   const [done, setDone] = useState<string | null>(null)
   // a look at what vendors see (Dana, Oct 31), with nothing recorded and nothing sent
   const preview = token === 'preview'
+  // the one link printed in the routing letter (Dana, Nov 12): no order yet, they give our PO number
+  const open = token === 'new'
   const sample: Loaded = { vendor: 'Example Vendor Co', po: '26000', description: 'Spring order', kind: 'details', method: null, answered_at: null, answers: {}, status: 'sent' }
   useEffect(() => {
-    if (preview) return
+    if (preview || open) return
     call({ action: 'form', token }).then((d) => setData(d as Loaded)).catch(() => setError('This link is not valid. Please email orders@shaverlakesports.com.'))
   }, [token, preview])
-  const shown = preview ? sample : data
+  const blankForm: Loaded = { vendor: '', po: null, description: null, kind: 'details', method: null, answered_at: null, answers: {}, status: 'sent' }
+  const [openDone, setOpenDone] = useState<{ company: string; po: string } | null>(null)
+  const shown = preview ? sample : open ? blankForm : data
   return (
     <main className="min-h-screen bg-stone-50 px-4 py-8 text-stone-900">
       <div className="mx-auto max-w-2xl">
@@ -42,8 +46,8 @@ export default function ShipmentFormPage() {
         {preview ? <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">Preview: this is what a vendor sees from the link in our email. Nothing you enter here is saved or sent.</p> : null}
         {error ? <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</p>
           : !shown ? <p className="text-sm text-stone-500">Loading…</p>
-          : done ? <Thanks vendor={shown.vendor} po={shown.po} />
-          : <TheForm token={token} initial={shown} onDone={setDone} preview={preview} />}
+          : done ? <Thanks vendor={openDone?.company ?? shown.vendor} po={openDone?.po ?? shown.po} />
+          : <TheForm token={token} initial={shown} onDone={setDone} preview={preview} open={open} onOpenDone={setOpenDone} />}
       </div>
     </main>
   )
@@ -58,7 +62,9 @@ function Thanks({ vendor, po }: { vendor: string; po: string | null }) {
   )
 }
 
-function TheForm({ token, initial, onDone, preview = false }: { token: string; initial: Loaded; onDone: (m: string) => void; preview?: boolean }) {
+function TheForm({ token, initial, onDone, preview = false, open = false, onOpenDone }: { token: string; initial: Loaded; onDone: (m: string) => void; preview?: boolean; open?: boolean; onOpenDone?: (x: { company: string; po: string }) => void }) {
+  const [po, setPo] = useState('')
+  const [vendorName, setVendorName] = useState('')
   const a = initial.answers as Record<string, string | string[] | Item[] | undefined>
   const [method, setMethod] = useState<Method | ''>(initial.method ?? '')
   const [f, setF] = useState({
@@ -80,6 +86,8 @@ function TheForm({ token, initial, onDone, preview = false }: { token: string; i
 
   async function submit() {
     setErr(null)
+    if (open && !po.trim()) { setErr('Please give our PO number (it is on our purchase order).'); return }
+    if (open && !vendorName.trim()) { setErr('Please give your company name.'); return }
     if (!method) { setErr('Pick Pallet or Parcel first.'); return }
     if (!f.company.trim() || !f.zip.trim()) { setErr('Please give the pickup company and ZIP code.'); return }
     if (!f.contact_name.trim() || (!f.contact_email.trim() && !f.contact_phone.trim())) { setErr('Please give a pickup contact with an email or phone.'); return }
@@ -89,10 +97,11 @@ function TheForm({ token, initial, onDone, preview = false }: { token: string; i
     if (preview) { setErr('This is a preview: nothing is sent.'); return }
     setBusy(true)
     try {
-      await call({ action: 'submit', token, method, answers: {
+      await call({ ...(open ? { action: 'submit_open', po: po.trim(), company: vendorName.trim() } : { action: 'submit', token }), method, answers: {
         ...f, quote_amount: f.quote_amount.replace(/[^0-9.]/g, ''), services,
         items: items.map((i) => ({ count: Number(i.count) || 1, weight: num(i.weight), length: num(i.length), width: num(i.width), height: num(i.height), freight_class: i.freight_class, nmfc: i.nmfc, stackable: i.stackable, hazmat: i.hazmat, large: i.large, additional_handling: i.additional_handling, description: i.description })),
       } })
+      if (open) onOpenDone?.({ company: vendorName.trim(), po: po.trim() })
       onDone('ok')
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Something went wrong. Please try again or email orders@shaverlakesports.com.')
@@ -114,9 +123,19 @@ function TheForm({ token, initial, onDone, preview = false }: { token: string; i
       </p>
       <header>
         <h1 className="text-2xl font-semibold">Shipment details for Shaver Lake Sports</h1>
-        <p className="mt-1 text-sm text-stone-600">{initial.vendor}{initial.po ? ` · our PO ${initial.po}` : ''}{initial.description ? ` · ${initial.description}` : ''}</p>
+        {open ? null : <p className="mt-1 text-sm text-stone-600">{initial.vendor}{initial.po ? ` · our PO ${initial.po}` : ''}{initial.description ? ` · ${initial.description}` : ''}</p>}
         {answered ? <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">You already sent this on {new Date(initial.answered_at!).toLocaleDateString()}. Sending it again replaces those answers.</p> : null}
       </header>
+
+      {open ? (
+        <section className="rounded-2xl border border-stone-200 bg-white p-5">
+          <h2 className="text-base font-semibold">Which order?</h2>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <FormField label="Our PO number" htmlFor="sf-po"><Input id="sf-po" value={po} onChange={(e) => setPo(e.target.value)} required placeholder="From our purchase order" /></FormField>
+            <FormField label="Your company name" htmlFor="sf-vendor"><Input id="sf-vendor" value={vendorName} onChange={(e) => setVendorName(e.target.value)} required /></FormField>
+          </div>
+        </section>
+      ) : null}
 
       <section className="rounded-2xl border border-stone-200 bg-white p-5">
         <h2 className="text-base font-semibold">How is this shipping?</h2>

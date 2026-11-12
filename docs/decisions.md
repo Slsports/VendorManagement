@@ -4521,3 +4521,7 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
 - Nov 12, Dana: "If I am asking to see something in vms that I can find on my own, please tell me where to access it.
   Unless I am asking you to look for something specific. But if is is to see screens or docs that I can see myself please
   tell me." Added to CLAUDE.md for every session.
+- Nov 12, Dana ("go single link"): one link to the shipment details form, printed in the routing letter so it works when
+  the letter is passed along: vms.shaverlakesports.com/ship/new. It asks our PO number and their company name first; a PO
+  matching one order puts the answers on that order (request made if none, quote, Trevor's task); otherwise a quote waits
+  on Which order? with a task for Trevor (migration 0358, shipment-requests submit_open). Nothing about our orders is shown.
