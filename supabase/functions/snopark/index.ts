@@ -9,6 +9,8 @@
 //                                           verification box) and the person confirms it on the receiving page
 //   { action: 'read_covers', shipment_id, link_id } → Claude reads a photo of book covers (book number, beginning and ending
 //                                           permit); the receiving page matches them to the sheet's rows (Dana, Nov 11)
+//   { action: 'ls_pos', shipment_id }     → the LS purchase orders for the State's vendor since the box's order date, so a box
+//                                           entered in LS by hand is tied to the PO that is there (Dana, Nov 12)
 //   { action: 'receive_ls', shipment_id } → a balanced box goes into LS: the purchase order, checked in, and the dated note
 //                                           line on each permit item ("<date> <employee> Received X Day and X Season passes…")
 //   { action: 'season_check', season_id } → LS's sales for the season against everything reported; when off, VMS emails Dana
@@ -27,7 +29,7 @@ import { CORS, HttpError, type Caller, caller, errorResponse, json, serviceClien
 import { SNOPARK_TEMPLATE_B64 } from '../_shared/snoparkTemplate.ts'
 import { formPdf, packetPdf, type FormRow, type PacketPart } from '../_shared/snoparkPdf.ts'
 import { fillAgreement, fillOrderForm, type AgreementInfo } from '../_shared/snoparkForms.ts'
-import { lsAccessToken, lsGet, lsPost, lsPut } from '../_shared/lightspeed.ts'
+import { lsAccessToken, lsGet, lsGetAll, lsPost, lsPut } from '../_shared/lightspeed.ts'
 import { claudeClient, logUsage, sys } from '../_shared/claudeClient.ts'
 import { SCAN_MODEL, imageType } from '../_shared/ai.ts'
 import { Gmail, googleAccessToken } from '../_shared/gmail.ts'
@@ -64,6 +66,7 @@ if (import.meta.main) Deno.serve(async (req) => {
       case 'read_sheet': return json(await readSheet(db, me, must(body.shipment_id, 'Which shipment?'), must(body.link_id, 'Which file?')))
       case 'read_covers': return json(await readCovers(db, me, must(body.shipment_id, 'Which shipment?'), must(body.link_id, 'Which file?')))
       case 'receive_ls': return json(await receiveLs(db, me, must(body.shipment_id, 'Which shipment?')))
+      case 'ls_pos': return json(await lsPosForShipment(db, me, must(body.shipment_id, 'Which shipment?')))
       case 'season_check': return json(await seasonCheck(db, me.organization_id, must(body.season_id, 'Which season?')))
       default: throw new HttpError(400, 'What should be done?')
     }
@@ -267,6 +270,31 @@ async function readCovers(db: SupabaseClient, me: Caller, shipmentId: string, li
   const reading = res.parsed_output
   if (!reading) throw new Error('Claude could not read the covers')
   return { ok: true, covers: reading.covers, unclear: reading.unclear }
+}
+
+// ---- the LS purchase orders a box entered by hand could be (Dana, Nov 12) ------------------------------------------
+async function lsPosForShipment(db: SupabaseClient, me: Caller, shipmentId: string) {
+  const org = me.organization_id
+  const { data: sh } = await db.from('snopark_shipments').select('id, organization_id, season_id, order_id, received_on').eq('id', shipmentId).maybeSingle()
+  if (!sh || sh.organization_id !== org) throw new HttpError(404, 'Shipment not found')
+  const { data: s } = await db.from('snopark_seasons').select('vendor_id, label').eq('id', sh.season_id).single()
+  const { data: vendor } = s?.vendor_id ? await db.from('vendors').select('lightspeed_vendor_id').eq('id', s.vendor_id).single() : { data: null }
+  if (!vendor?.lightspeed_vendor_id) return { ok: true, pos: [], why: 'The State\'s vendor is not matched to a Lightspeed vendor' }
+  const { data: order } = sh.order_id ? await db.from('orders').select('order_date').eq('id', sh.order_id).maybeSingle() : { data: null }
+  const from = order?.order_date ?? `${s!.label.slice(0, 4)}-09-01`
+  const { token } = await lsAccessToken(db, org)
+  const { data: conn } = await db.from('lightspeed_connections').select('account_id').eq('organization_id', org).maybeSingle()
+  type Po = { orderID: string; refNum?: string; orderedDate?: string; receivedDate?: string; complete?: string; archived?: string }
+  type Line = { orderID: string; itemID?: string; quantity?: string }
+  const pos = await lsGetAll<Po>(token, `/Account/${conn!.account_id}/Order.json?vendorID=${vendor.lightspeed_vendor_id}&timeStamp=${encodeURIComponent(`>,${from}T00:00:00-07:00`)}`, 'Order', 5)
+  const ids = pos.map((p) => p.orderID)
+  const lines = ids.length ? await lsGetAll<Line>(token, `/Account/${conn!.account_id}/OrderLine.json?orderID=${encodeURIComponent(`IN,[${ids.join(',')}]`)}`, 'OrderLine', 5) : []
+  const { data: used } = await db.from('snopark_shipments').select('ls_order_id').eq('organization_id', org).not('ls_order_id', 'is', null)
+  const taken = new Set((used ?? []).map((u) => String(u.ls_order_id)))
+  return { ok: true, pos: pos.filter((p) => p.archived !== 'true').map((p) => ({
+    ls_order_id: String(p.orderID), ref: p.refNum ?? null, ordered: p.orderedDate?.slice(0, 10) ?? null, received: p.receivedDate?.slice(0, 10) ?? null, complete: p.complete === 'true',
+    qty: lines.filter((l) => String(l.orderID) === String(p.orderID)).reduce((n, l) => n + Number(l.quantity ?? 0), 0), already_used: taken.has(String(p.orderID)),
+  })) }
 }
 
 // ---- a balanced box into Lightspeed --------------------------------------------------------------------------------

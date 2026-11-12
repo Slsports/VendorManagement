@@ -230,10 +230,14 @@ export async function updateBookNumbers(bookId: string, bookNumber: string, firs
 }
 
 /** The box was entered in Lightspeed by hand before VMS received it: recorded without a second LS PO. */
-export async function enteredByHand(shipmentId: string, note: string | null): Promise<void> {
-  const { error } = await supabase.rpc('snopark_shipment_entered_by_hand', { p_shipment: shipmentId, p_note: note })
+export async function enteredByHand(shipmentId: string, note: string | null, lsOrder?: string | null, lsRef?: string | null): Promise<void> {
+  const { error } = await supabase.rpc('snopark_shipment_entered_by_hand', { p_shipment: shipmentId, p_note: note, p_ls_order: lsOrder ?? null, p_ls_ref: lsRef ?? null })
   if (error) throw error
 }
+
+export interface LsPoChoice { ls_order_id: string; ref: string | null; ordered: string | null; received: string | null; complete: boolean; qty: number; already_used: boolean }
+/** The LS purchase orders a box entered by hand could be (the State's vendor, since the order date). */
+export const shipmentLsPos = (shipmentId: string) => invoke<{ pos: LsPoChoice[]; why?: string }>({ action: 'ls_pos', shipment_id: shipmentId })
 
 /** The State's orders this season, for the receiving picker (newest first). */
 export async function seasonOrders(vendorId: string, seasonLabel: string): Promise<{ id: string; po_number: string | null; order_date: string | null; description: string | null; status: string }[]> {

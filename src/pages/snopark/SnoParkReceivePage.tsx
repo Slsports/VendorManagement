@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useLiveTable } from '@/hooks/useLiveTable'
-import { acceptShipment, checkShipment, confirmSheet, enteredByHand, flagShipment, getShipment, mapPrinted, receiveInLs, removeShipment, saveShipmentBooks, uploadCovers, uploadSheet, type ShipmentView } from '@/services/snopark'
+import { acceptShipment, checkShipment, confirmSheet, enteredByHand, flagShipment, getShipment, mapPrinted, receiveInLs, removeShipment, saveShipmentBooks, shipmentLsPos, uploadCovers, uploadSheet, type LsPoChoice, type ShipmentView } from '@/services/snopark'
 import { signedFileUrl } from '@/services/lines'
 import { ROUTES } from '@/lib/constants'
 import { shortDate } from '@/lib/freight'
@@ -14,6 +14,7 @@ import { EMPTY_SHEET, KIND_LABELS, SHIPMENT_STATUS, applyCovers, bookNumberAfter
 import { BackLink } from '@/components/shared/BackLink'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Alert, Badge, Button, FormField, Input, Select, Spinner, Textarea } from '@/components/ui'
+import { Modal } from '@/components/shared/Modal'
 
 /**
  * Receiving a box of Sno-Park books (Dana, Nov 10, 2026): the State's sheet that came in the box is scanned and read, the
@@ -101,6 +102,7 @@ function SheetStep({ view, locked, userId, onDone }: { view: ShipmentView; locke
   const [busy, setBusy] = useState<string | null>(null)
   const [result, setResult] = useState<string | null>(null)
   const [coverNote, setCoverNote] = useState<string | null>(null)
+  const [poPick, setPoPick] = useState<{ pos: LsPoChoice[]; chosen: string } | null>(null)
   const ref = useRef<HTMLInputElement>(null)
   const coverRef = useRef<HTMLInputElement>(null)
   const done = shipment.status === 'done'
@@ -164,10 +166,23 @@ function SheetStep({ view, locked, userId, onDone }: { view: ShipmentView; locke
       const d = await checkShipment(shipment.id)
       setEdit(null)
       if (d.length) { toast.error(`${d.length} difference${d.length === 1 ? '' : 's'} with the sheet; see below`); onDone(); return }
-      if (how === 'byhand') { await enteredByHand(shipment.id, null); toast.success(`${made.books.length} books on hand; recorded without a second PO in Lightspeed`) }
+      if (how === 'byhand') {
+        // tie the box to the PO that is already in Lightspeed (Dana, Nov 12): one match goes through, several ask
+        const { pos } = await shipmentLsPos(shipment.id).catch(() => ({ pos: [] as LsPoChoice[] }))
+        const open = pos.filter((p) => !p.already_used)
+        if (open.length === 1) { await enteredByHand(shipment.id, null, open[0]!.ls_order_id, open[0]!.ref); toast.success(`${made.books.length} books on hand, tied to Lightspeed PO ${open[0]!.ref ?? open[0]!.ls_order_id}`) }
+        else if (open.length > 1) { setPoPick({ pos: open, chosen: open[0]!.ls_order_id }); return }
+        else { await enteredByHand(shipment.id, null); toast.success(`${made.books.length} books on hand; no Lightspeed PO found for the State since the order date, so none was tied`) }
+      }
       else { const r = await receiveInLs(shipment.id); setResult(r.note); toast.success(r.stock_ok ? `${made.books.length} books on hand and in Lightspeed as PO ${r.po}` : 'In Lightspeed; Dana has a task to look at the stock') }
       onDone()
     } catch (e) { toast.error(errorMessage(e)); onDone() } finally { setBusy(null) }
+  }
+  async function finishWithPo() {
+    if (!poPick) return
+    const po = poPick.pos.find((p) => p.ls_order_id === poPick.chosen)
+    setBusy('byhand')
+    try { await enteredByHand(shipment.id, null, po?.ls_order_id ?? null, po?.ref ?? null); setPoPick(null); toast.success(po ? `Tied to Lightspeed PO ${po.ref ?? po.ls_order_id}` : 'Recorded'); onDone() } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(null) }
   }
   const totals = (kind: 'day' | 'season') => rows.filter((r) => r.kind === kind).reduce((t, r) => { const x = sheetRowBooks(r, per[kind]); return { n: t.n + x.n, permits: t.permits + x.permits } }, { n: 0, permits: 0 })
 
@@ -230,6 +245,19 @@ function SheetStep({ view, locked, userId, onDone }: { view: ShipmentView; locke
         </div>
       ) : null}
       {result ? <Alert variant="success" className="mt-3">{result}</Alert> : null}
+      {poPick ? (
+        <Modal title="Which Lightspeed purchase order is this box?" submitLabel={busy ? 'Saving…' : 'This one'} busy={busy !== null} onSubmit={finishWithPo} onClose={() => setPoPick(null)}>
+          <p className="text-sm text-stone-600">Lightspeed has more than one purchase order for the State since this order. Pick the one made for this box, so the order and the box point at it.</p>
+          <div className="space-y-2">
+            {poPick.pos.map((p) => (
+              <label key={p.ls_order_id} className="flex items-start gap-2 rounded-lg border border-stone-200 p-3 text-sm">
+                <input type="radio" name="lspo" checked={poPick.chosen === p.ls_order_id} onChange={() => setPoPick({ ...poPick, chosen: p.ls_order_id })} className="mt-1" />
+                <span><span className="font-medium text-stone-900">PO {p.ref ?? p.ls_order_id}</span> · ordered {p.ordered ?? '?'}{p.received ? ` · received ${p.received}` : ''} · {p.qty} permits{p.complete ? ' · complete' : ''}</span>
+              </label>
+            ))}
+          </div>
+        </Modal>
+      ) : null}
       {view.books.length ? (
         <details className="mt-3 text-sm">
           <summary className="cursor-pointer text-stone-600">The {view.books.length} books VMS made</summary>

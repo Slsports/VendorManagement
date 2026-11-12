@@ -4478,3 +4478,10 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
 - Dana, Nov 12: "Remove checking pricing from snow park. It is the same all season. If they change it, it would be before
   the season starts and we would adjust it before we get any orders." vendors.fixed_prices (migration 0352), set on CA
   SNO-PARK: no Check-in pricing or Report used card on its orders; a tick on the vendor edit form.
+- Dana, Nov 12: "Ls already has a po for this order. And its not the one you created. How do we complete this order to be
+  sure it syncs with the po already in ls." Confirmed, already in Lightspeed now looks up the State's LS purchase orders
+  since the order date and ties the box and the VMS order to it (ls_order_id, reference), asking which when there are
+  several (migration 0353, snopark function ls_pos). The Nov 2 order is tied to LS PO 89 (reference 145SP-2026, 600 permits).
+- Nov 12: the Lightspeed refresh token went invalid on Nov 6 and nothing said so until Claude found it on Nov 12 (no sales
+  or items copied for five days). ls_connection_watch (every 10 minutes) gives Dana a task while the sync keeps failing and
+  closes it when it works; Dana reconnected Nov 12 and the sync caught up.
