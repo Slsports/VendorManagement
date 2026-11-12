@@ -20,6 +20,8 @@ describe('vendor activity feed', () => {
     expect(d.doc?.storage_path).toBe('a/b.pdf')
     expect(docItem({ ...doc, kind: 'image' })).toBeNull()
     expect(docItem({ ...doc, kind: 'price_list', doc_number: null, po_number: null, source: 'upload', file_name: '2026 Price List.pdf' })!.text).toBe('Filed price list: 2026 Price List.pdf')
+    // our order taken from our own sent email: sent, never "received" (Dana, Nov 12)
+    expect(docItem({ ...doc, kind: 'order', doc_number: null, po_number: 'SLIPPERYRACER11-10-26', source: 'email' })!.text).toBe('Sent our order for PO SLIPPERYRACER11-10-26')
   })
 
   it('order moves and closed tasks', () => {

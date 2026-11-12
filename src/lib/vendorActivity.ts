@@ -52,7 +52,9 @@ export function docItem(d: FeedDoc): FeedItem | null {
   if (SKIP_DOCS.has(d.kind)) return null
   const word = DOC_WORD[d.kind] ?? 'file'
   const paper = ['invoice', 'credit', 'confirmation', 'payment'].includes(d.kind)
-  const verb = d.source === 'email' || paper ? 'Received' : 'Filed'
+  // our own order from our sent email was sent, not received (Dana, Nov 12: "We have no idea if they received it until we
+  // receive a response from them … Activity log should only say that I sent it")
+  const verb = d.kind === 'order' || d.kind === 'ls_po' ? (d.source === 'email' ? 'Sent' : 'Filed') : d.source === 'email' || paper ? 'Received' : 'Filed'
   const parts = [`${verb} ${word}`]
   if (d.doc_number) parts.push(d.doc_number)
   if (d.po_number) parts.push(`for PO ${d.po_number}`)
