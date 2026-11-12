@@ -4475,3 +4475,6 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   letter or freight section; the order page shows no shipment, freight quote, free shipping or freight allowance cards;
   shipment requests for the vendor are skipped at birth; it never shows as missing a routing letter; its orders carry free
   freight from the start. The tick is on the vendor edit form ("They pay the freight and ship it").
+- Dana, Nov 12: "Remove checking pricing from snow park. It is the same all season. If they change it, it would be before
+  the season starts and we would adjust it before we get any orders." vendors.fixed_prices (migration 0352), set on CA
+  SNO-PARK: no Check-in pricing or Report used card on its orders; a tick on the vendor edit form.

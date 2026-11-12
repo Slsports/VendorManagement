@@ -178,6 +178,7 @@ export default function VendorDetailPage() {
             {v.web_orders ? <Badge tone="info">Web orders, no confirmation</Badge> : null}
             {v.is_retail_store ? <Badge tone="info">Retail store</Badge> : null}
             {v.no_freight ? <Badge tone="info">They ship it, no freight</Badge> : null}
+            {v.fixed_prices ? <Badge tone="info">Prices set for the season</Badge> : null}
             {v.is_slh_vendor ? <Badge tone="info">Bought for SLH</Badge> : null}
             {v.ask_before_pictures ? <Badge tone="neutral">Pictures saved by hand</Badge> : null}
             {v.is_delivery_vendor ? <Badge tone="neutral">Delivery vendor</Badge> : null}

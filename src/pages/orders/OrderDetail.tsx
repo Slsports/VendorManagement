@@ -124,7 +124,8 @@ export default function OrderDetailPage() {
               </section>
             )
           })}
-          <CheckInPricing order={o} canEdit={canEdit} onOrderChange={q.refetch} />
+          {/* prices set by the vendor for the season (Sno-Park; Dana, Nov 12): nothing to price at check-in */}
+          {o.vendor?.fixed_prices ? null : <CheckInPricing order={o} canEdit={canEdit} onOrderChange={q.refetch} />}
           <WwdInvoiceList orderId={o.id} title="WWD invoices for this order" />
           {o.notes ? <section className="rounded-2xl border border-stone-200 bg-white p-5"><h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Dana's notes</h2><p className="mt-2 whitespace-pre-line text-sm text-stone-800">{o.notes}</p></section> : null}
           {extra.length ? <section className="rounded-2xl border border-stone-200 bg-white p-5"><h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Also on the sheet</h2><dl className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">{extra.map(([k, v]) => <div key={k}><dt className="text-xs font-medium text-stone-500">{k}</dt><dd className="text-sm text-stone-900">{v}</dd></div>)}</dl></section> : null}
@@ -143,7 +144,7 @@ export default function OrderDetailPage() {
           {o.vendor?.no_freight ? null : <FreeShippingCard order={o} vendor={o.vendor} canEdit={canEdit} onChange={q.refetch} />}
           {o.vendor?.no_freight ? null : <FreightAllowanceCard key={`${o.freight_allowance_offered}-${o.freight_allowance}-${o.freight_allowance_pay_by}-${o.freight_allowance_received}`} order={o} vendorOffers={!!o.vendor?.freight_allowance_on_time} canEdit={canEdit} onChange={q.refetch} />}
           <OrderPaperworkSection orderId={o.id} documents={o.documents} />
-          {o.vendor ? <ReportUsedCard orderId={o.id} vendorId={o.vendor.id} reportId={o.sales_report_id} canEdit={canEdit} onChange={() => void q.refetch()} /> : null}
+          {o.vendor && !o.vendor.fixed_prices ? <ReportUsedCard orderId={o.id} vendorId={o.vendor.id} reportId={o.sales_report_id} canEdit={canEdit} onChange={() => void q.refetch()} /> : null}
           {o.vendor ? <OrderDocumentsSection orderId={o.id} vendorId={o.vendor.id} organizationId={o.organization_id} userId={profile?.id ?? null} documents={o.documents} canEdit={canEdit} onChange={q.refetch} /> : null}
           <section className="rounded-2xl border border-stone-200 bg-white p-5">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">History</h2>
