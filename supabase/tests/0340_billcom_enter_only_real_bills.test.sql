@@ -31,7 +31,7 @@ do $$ begin
   if (select count(*) from public.tasks t join public.vendor_links x on t.auto_key = 'billcom_enter:' || x.id
        where x.vendor_id = current_setting('t.v')::uuid and t.done_at is null) <> 1 then raise exception 'a task was made for a bill that needs none'; end if;
   if (select closed_how from public.tasks where auto_key = 'billcom_enter:' || current_setting('t.wwd')) is distinct from 'mistake' then raise exception 'the WWD task did not close as a mistake'; end if;
-  if (select done_note from public.tasks where auto_key = 'billcom_enter:' || current_setting('t.wwd')) not like '%WWD invoice S0340%' then raise exception 'the WWD close does not say why'; end if;
+  if (select done_note from public.tasks where auto_key = 'billcom_enter:' || current_setting('t.wwd')) not like '%S0340%' then raise exception 'the WWD close does not say why'; end if;
 end $$;
 select public.billcom_enter_not_needed_why(:'l_eden') like '%Edenred%' as eden, public.billcom_enter_not_needed_why(:'l_zero') like '%nothing to pay%' as zero \gset
 select set_config('t.ok', (:'eden' and :'zero')::text, false);

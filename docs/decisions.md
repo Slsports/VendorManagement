@@ -4458,3 +4458,8 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   or non-PDF files). The Bill.com run was timing out after that (the "enter it" task close-check looked at every invoice),
   so matching stopped; fixed to check only open tasks plus an index (migration 0347, 30 s → under 2 s). Bill.com now marks
   273 invoices paid (Scope 1216/1235/1267/1284/1288 included).
+- Nov 12, Dana ("Yes make wwd pmt automatically"): an invoice is Paid when WWD's records show a paid date for the same
+  vendor and invoice number ("WWD (invoice <seq>)"), whenever either side changes; back-check over everything on file
+  (migration 0348). "Remind me to look at Coastal pet": a task for Dana opens Coastal Pet invoice 8920 ($5,900, the number
+  and amount of a paid Sticker Pack Inc. Bill.com bill). "Happy is not a vendor???": HAPPY came from Lightspeed (LS vendor
+  1016, two s'mores kits); the invoice under it is Salter's INV-122386 (Cat's "Salter's Invoice - Happy") — asked Dana.

@@ -16,6 +16,7 @@ An invoice VMS knows is paid shows a green **Paid** tag in the vendor's Invoices
 ## Good to know
 - Invoices, payment reminders and past-due notices are not payments; they don't mark anything paid.
 - Private mailboxes and the Accounting mailbox are never read for this.
+- An invoice from a vendor you pay through WWD gets **Paid** with the date WWD paid it and WWD's invoice number (like "WWD (invoice 7264671)"), as soon as WWD's records show it paid.
 - WWD invoices and Bill.com keep their own paid status on the Payments page. For every vendor you pay through Bill.com (VMS turns the check on by itself the first time a Bill.com payment to that vendor comes in), the invoice gets **Paid** once Bill.com shows it paid, however old it is.
 - Claude reads the invoice number, date and total on every invoice filed, for any vendor and however old, so it can be matched to Bill.com and to payment emails.
 - A vendor whose name in Bill.com is a little different (like "Kelli's Gifts" for Kelli's) is matched by the invoice number and amount.
