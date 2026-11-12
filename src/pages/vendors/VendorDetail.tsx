@@ -128,10 +128,11 @@ export default function VendorDetailPage() {
     ['Ordering', v.ordering_frequency ? ORDERING_FREQUENCY_LABELS[v.ordering_frequency] : null],
     ['Minimum order', v.minimum_order],
     ['PO abbreviation', v.po_code],
-    ['Free shipping', freeShippingRule(v)],
-    ['Freight program', v.free_shipping_policy ? v.freight_program : null],
-    ['Freight routing', v.freight_routing],
-    ['Freight allowance', v.freight_allowance_on_time ? 'Credits the freight back when paid on time' : null],
+    ['Free shipping', v.no_freight ? null : freeShippingRule(v)],
+    ['Freight program', v.free_shipping_policy && !v.no_freight ? v.freight_program : null],
+    ['Freight routing', v.no_freight ? null : v.freight_routing],
+    ['Freight allowance', v.freight_allowance_on_time && !v.no_freight ? 'Credits the freight back when paid on time' : null],
+    ['Shipping', v.no_freight ? 'They pay the freight and ship it' : null],
     ['Item names', v.vid_in_description ? 'Vendor ID last: NAME VENDORID' : 'No Vendor ID in item names'],
     ['Product types', v.product_types],
     ['Pickup', [v.pickup_address, v.pickup_times].filter(Boolean).join(' · ') || null],
@@ -176,6 +177,7 @@ export default function VendorDetailPage() {
             {v.billcom_send ? <Badge tone="success">Invoices to Bill.com</Badge> : null}
             {v.web_orders ? <Badge tone="info">Web orders, no confirmation</Badge> : null}
             {v.is_retail_store ? <Badge tone="info">Retail store</Badge> : null}
+            {v.no_freight ? <Badge tone="info">They ship it, no freight</Badge> : null}
             {v.is_slh_vendor ? <Badge tone="info">Bought for SLH</Badge> : null}
             {v.ask_before_pictures ? <Badge tone="neutral">Pictures saved by hand</Badge> : null}
             {v.is_delivery_vendor ? <Badge tone="neutral">Delivery vendor</Badge> : null}
@@ -287,7 +289,7 @@ export default function VendorDetailPage() {
         </div>
         {/* CA Sno-Park: the permit submission page link sits at the top of its page (Dana, Nov 10) */}
         <VendorSnoparkSection vendorId={v.id} />
-        <VendorRoutingLetter vendorId={v.id} organizationId={v.organization_id} />
+        {v.no_freight ? null : <VendorRoutingLetter vendorId={v.id} organizationId={v.organization_id} />}
         <VendorLightspeedBox vendor={v} canEdit={canEdit} onChange={() => void vendorQ.refetch()} />
 
         <VendorOrderingPanel vendor={{ id: v.id, name: v.name, aliases: v.aliases }} assignedBuyerId={v.assigned_buyer_id} canEdit={canEdit} windows={v.vendor_order_windows} />
@@ -304,7 +306,7 @@ export default function VendorDetailPage() {
         <VendorOrdersSection vendorId={v.id} vendorName={v.name} canAdd={canEdit} />
         <VendorPaymentsSection vendorId={v.id} />
         <VendorShipmentSection vendorId={v.id} />
-        <VendorFreightSection vendorId={v.id} />
+        {v.no_freight ? null : <VendorFreightSection vendorId={v.id} />}
         <WwdInvoiceList fold vendorId={v.id} />
 
         <FoldSection id="notes" open={notesOpen} onOpenChange={setNotesOpen} title="Notes" summary={notesQ.isLoading ? null : notesQ.data?.length ? `${notesQ.data.length} note${notesQ.data.length === 1 ? '' : 's'}` : 'None'} className="lg:col-span-1">

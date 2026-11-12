@@ -4450,3 +4450,8 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   defaultToNull false) after removing the old items; re-read, the order now matches the sheet. SB-130 has no price on the
   sheet and its total box shows 4, so the sheet total is $4 high ($5,985.58 priced). Ted's $2,274 quote was for the wrong
   order; noted on the quote.
+- Dana, Nov 12: "We do not pay freight on snopark passes. The state pays and ships FedEx. We dont need Any reference to
+  freight on sp." vendors.no_freight (migration 0346), set on CA SNO-PARK: the vendor page shows no freight facts, routing
+  letter or freight section; the order page shows no shipment, freight quote, free shipping or freight allowance cards;
+  shipment requests for the vendor are skipped at birth; it never shows as missing a routing letter; its orders carry free
+  freight from the start. The tick is on the vendor edit form ("They pay the freight and ship it").

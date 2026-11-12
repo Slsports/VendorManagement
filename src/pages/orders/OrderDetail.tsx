@@ -66,7 +66,7 @@ export default function OrderDetailPage() {
     ['Order', [
       ['Ordered', d(o.order_date)], ['Season', o.season], ['Show', o.show_code ? `${showLabel(o.show_code)}${o.show_inferred ? ' (inferred from the date)' : ''}` : null],
       ['Placed by', o.placed_by], ['Store', o.store_codes.join(', ')], ['Route', o.billing_route ? BILLING_ROUTE_LABELS[o.billing_route] : null],
-      ['Est. cost', money(o.est_cost)], ['Freight', o.freight_cost !== null ? money(o.freight_cost) : o.freight_notes], ['Est. ship', d(o.est_ship_date)], ['PO', o.po_number],
+      ['Est. cost', money(o.est_cost)], ['Freight', o.vendor?.no_freight ? null : o.freight_cost !== null ? money(o.freight_cost) : o.freight_notes], ['Est. ship', d(o.est_ship_date)], ['PO', o.po_number],
     ]],
     ['Receiving & entry', [
       ['Received', d(o.date_received)], ['Backorder', o.backorder ? 'Yes' : null], ['Shipment notes', o.shipment_notes],
@@ -137,10 +137,11 @@ export default function OrderDetailPage() {
           <LsPoCard key={o.ls_po_number ?? ''} order={o} vendor={o.vendor} documents={o.documents} canEdit={canEdit} onChange={() => void q.refetch()} focus={focusPo} />
           <RecordTasks className="rounded-2xl border border-stone-200 bg-white p-5" preset={{ order: { id: o.id, name: [o.po_number ? `PO ${o.po_number}` : null, o.description].filter(Boolean).join(' · ') || 'This order' }, vendor: o.vendor ? { id: o.vendor.id, name: o.vendor.name } : null }} />
           {o.vendor ? <OrderRepsCard orderId={o.id} vendorId={o.vendor.id} takenBy={o.taken_by} canEdit={canEdit} onChange={q.refetch} /> : null}
-          <ShipmentRequestCard orderId={o.id} canEdit={canEdit} />
-          <FreightQuoteCard orderId={o.id} status={o.status} freeShipping={o.free_shipping} webOrders={!!o.vendor?.web_orders} />
-          <FreeShippingCard order={o} vendor={o.vendor} canEdit={canEdit} onChange={q.refetch} />
-          <FreightAllowanceCard key={`${o.freight_allowance_offered}-${o.freight_allowance}-${o.freight_allowance_pay_by}-${o.freight_allowance_received}`} order={o} vendorOffers={!!o.vendor?.freight_allowance_on_time} canEdit={canEdit} onChange={q.refetch} />
+          {/* a vendor who pays the freight and ships it (the State, Sno-Park; Dana, Nov 12) has no freight cards */}
+          {o.vendor?.no_freight ? null : <ShipmentRequestCard orderId={o.id} canEdit={canEdit} />}
+          {o.vendor?.no_freight ? null : <FreightQuoteCard orderId={o.id} status={o.status} freeShipping={o.free_shipping} webOrders={!!o.vendor?.web_orders} />}
+          {o.vendor?.no_freight ? null : <FreeShippingCard order={o} vendor={o.vendor} canEdit={canEdit} onChange={q.refetch} />}
+          {o.vendor?.no_freight ? null : <FreightAllowanceCard key={`${o.freight_allowance_offered}-${o.freight_allowance}-${o.freight_allowance_pay_by}-${o.freight_allowance_received}`} order={o} vendorOffers={!!o.vendor?.freight_allowance_on_time} canEdit={canEdit} onChange={q.refetch} />}
           <OrderPaperworkSection orderId={o.id} documents={o.documents} />
           {o.vendor ? <ReportUsedCard orderId={o.id} vendorId={o.vendor.id} reportId={o.sales_report_id} canEdit={canEdit} onChange={() => void q.refetch()} /> : null}
           {o.vendor ? <OrderDocumentsSection orderId={o.id} vendorId={o.vendor.id} organizationId={o.organization_id} userId={profile?.id ?? null} documents={o.documents} canEdit={canEdit} onChange={q.refetch} /> : null}
