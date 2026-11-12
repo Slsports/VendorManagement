@@ -4496,3 +4496,5 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   Save as version N; VMS draws the PDF; routing_letters.content). "yes follow the 10% rule, go": the shipment details
   email and its follow-up say it, an order that ships ends its request, "Shipped without an approved freight quote" leaves
   out freight known to be under 10% (migration 0355). ups.com allowed in the environment (UPS blocks automated reading).
+- Nov 12: version 1 of the new routing letter saved through Freight › Routing letter › Edit the letter (by the test login,
+  as Dana asked: "Upload this letter so I can make my changes"). No emails prepared or sent.

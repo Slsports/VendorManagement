@@ -100,7 +100,7 @@ export default function RoutingLetterPage() {
           </div>
           {canEdit ? <EmailText letter={current} onSaved={() => void letters.refetch()} /> : null}
         </section>
-      ) : !letters.isLoading && !uploading ? <Alert variant="info" className="mb-4">No routing letter yet. Click <strong>Edit the letter</strong> to write it in VMS, or <strong>Upload a PDF instead</strong>.</Alert> : null}
+      ) : !letters.isLoading && !uploading && !editing ? <Alert variant="info" className="mb-4">No routing letter yet. Click <strong>Edit the letter</strong> to write it in VMS, or <strong>Upload a PDF instead</strong>.</Alert> : null}
 
       {(missing.data ?? []).length ? (
         <FoldSection title="Vendors with open orders and no email address" summary={`${missing.data!.length}`} className="mb-4">
