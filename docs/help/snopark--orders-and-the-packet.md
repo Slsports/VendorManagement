@@ -22,3 +22,4 @@ Permit books are ordered from the State with their permit request form (OHV 145S
 - Dana's signature picture is uploaded once in **Settings › Mail**, under her name (**Signature picture**). Without it the forms are filled but not signed, and the page says so.
 - The store's answers on the agreement (business name, numbers, addresses, hours) are kept in VMS from the 2026-2027 agreement. Tell Dana if any of them change.
 - **Make the form again** on an order that is not sent yet fills the form afresh, for instance after the signature was added.
+- **Remove** on an order that is not sent yet (a test, a mistake) takes away the draft email, its task, the filled form and the VMS order. A sent order cannot be removed.

@@ -297,3 +297,9 @@ export async function uploadCovers(shipment: SnoparkShipment, vendorId: string, 
   const r = await invoke<{ covers: CoverReading[]; unclear: string[] }>({ action: 'read_covers', shipment_id: shipment.id, link_id: link.id })
   return { link, covers: r.covers, unclear: r.unclear }
 }
+
+/** A Sno-Park order never sent (a test, a mistake): the draft, the task, the form and the VMS order go with it. */
+export async function removeOrder(orderRowId: string): Promise<void> {
+  const { error } = await supabase.rpc('snopark_order_remove', { p_order: orderRowId })
+  if (error) throw error
+}

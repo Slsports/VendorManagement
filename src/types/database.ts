@@ -1225,6 +1225,7 @@ export type Database = {
       snopark_order_start: { Args: { p_season: string; p_day_books: number; p_season_books: number; p_requested_on?: string | null; p_by?: string | null }; Returns: string }
       snopark_map_printed: { Args: { p_season: string }; Returns: undefined }
       snopark_shipment_remove: { Args: { p_shipment: string }; Returns: undefined }
+      snopark_order_remove: { Args: { p_order: string }; Returns: undefined }
       snopark_shipment_entered_by_hand: { Args: { p_shipment: string; p_note?: string | null; p_ls_order?: string | null; p_ls_ref?: string | null }; Returns: undefined }
       park_release: { Args: { p_kind: string; p_id: string }; Returns: undefined }
       park_release_all: { Args: { p_kind: string }; Returns: number }

@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { useLiveTable } from '@/hooks/useLiveTable'
 import { useTableSort } from '@/hooks/useTableSort'
-import { deleteBook, getSeason, lsSold, mapPrinted, openSeasonByHand, refillOrder, seasonCheck, seasonOrders, startOrder, startShipment, updateBookNumbers, uploadSeasonForm, type SeasonView } from '@/services/snopark'
+import { deleteBook, getSeason, lsSold, mapPrinted, openSeasonByHand, refillOrder, removeOrder, seasonCheck, seasonOrders, startOrder, startShipment, updateBookNumbers, uploadSeasonForm, type SeasonView } from '@/services/snopark'
 import { signedFileUrl } from '@/services/lines'
 import { ROUTES } from '@/lib/constants'
 import { shortDate } from '@/lib/freight'
@@ -239,6 +239,11 @@ function OrdersSection({ view, canEdit, onDone }: { view: SeasonView; canEdit: b
     setBusy(o.id)
     try { const r = await refillOrder(o.id); toast.success(`Form made again${r.signed ? '' : ' (no signature on file yet)'}`); onDone() } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(null) }
   }
+  async function remove(o: SnoparkOrder) {
+    if (!window.confirm(`Remove order #${o.seq}? The draft email, its task, the filled form and the VMS order go with it. Only for an order that was not sent.`)) return
+    setBusy(o.id)
+    try { await removeOrder(o.id); toast.success(`Order #${o.seq} removed`); onDone() } catch (e) { toast.error(errorMessage(e)) } finally { setBusy(null) }
+  }
   return (
     <section className="rounded-2xl border border-stone-200 bg-white p-5">
       <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-stone-500"><Send className="size-4" aria-hidden="true" />Orders to the State</h2>
@@ -261,6 +266,7 @@ function OrdersSection({ view, canEdit, onDone }: { view: SeasonView; canEdit: b
                       {o.order_id ? <Link to={`${ROUTES.orders}/${o.order_id}`} className="text-brand hover:underline">Order</Link> : null}
                       {o.status === 'draft' && o.draft_id ? <Link to={`/mail?view=drafts&draft=${o.draft_id}`} className="text-brand hover:underline">Open the email to send</Link> : null}
                       {o.status === 'draft' && canEdit ? <button type="button" onClick={() => refill(o)} disabled={busy !== null} className="text-stone-500 hover:text-brand">{busy === o.id ? 'Making…' : 'Make the form again'}</button> : null}
+                      {o.status === 'draft' && canEdit ? <button type="button" onClick={() => remove(o)} disabled={busy !== null} className="text-stone-500 hover:text-red-700">Remove</button> : null}
                       {o.email_id ? <Link to={`/mail/email/${o.email_id}`} className="text-brand hover:underline">Email</Link> : null}
                     </span>
                   </td>
