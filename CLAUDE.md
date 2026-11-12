@@ -58,9 +58,10 @@ by Vercel from the branch `claude/ecstatic-carson-ziz2a9`.
 - **Headers stay on screen (Dana, Oct 21).** Every table and report keeps its header row on screen while scrolling (global
   rule in `src/index.css`: sticky `thead th`; a table's `overflow-x-auto` box also scrolls down). Don't fight it with
   per-table styles.
-- **Logos: never a white box (Dana, Oct 31).** On any page or email with a tinted background, use the transparent logo
-  (`/brand/sls/logo-horizontal.svg` or `logo-stacked.svg`); the white-background `email-logo*.png` is only for email
-  clients that cannot show SVG. "I never want the white background on a beige page."
+- **Logos: never a white box (Dana, Oct 31; Nov 12 "be sure to change any store logo in vms to transparent").** Every
+  store logo file is transparent. The store's own logo (Shaver Lake Sports + fish) is `/brand/sls/email-logo.png` /
+  `email-logo@2x.png` (emails, signatures, PDFs) and `store-logo.png` (vendor-facing pages); `logo-horizontal.svg` and
+  `logo-stacked.svg` are the VMS app logo. Never add a logo with a white or solid background.
 - **Save is always in reach.** Long edit forms end with the shared `StickySaveBar` (Save / Cancel pinned to
   the bottom of the screen, full-width on phones, shows "Saving…" and the error). Short forms and pop-up
   boxes keep their buttons where they are.

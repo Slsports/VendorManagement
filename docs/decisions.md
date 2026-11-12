@@ -4506,3 +4506,7 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   order's freight card and the "Shipped without an approved freight quote" list (migration 0356). The vendor-facing pages
   (shipment form, contact confirmation, routing receipt) show the store's own logo (store-logo.png, a transparent copy of
   the email logo, so no white box on the tinted page).
+- Nov 12, Dana: "I use a dark bg in my email on my phone and saw … my logo in my signature was white bg. be sure to change
+  any store logo in vms to transparent." email-logo.png and email-logo@2x.png (the signature logo, every VMS email and the
+  routing letter PDF) are now transparent, same file names, so emails already sent show it too. Other brand files were
+  already transparent (the app icons keep their green square). CLAUDE.md logo rule updated.
