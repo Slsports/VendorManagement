@@ -119,7 +119,7 @@ export default function SnoParkReportPage() {
           {candidates.length === 0 ? <p className="mt-2 text-sm text-stone-600">No books on hand. Enter them on the <Link to={ROUTES.snopark} className="text-brand hover:underline">Sno-Park page</Link> first.</p> : (
             <div className="mt-3 overflow-x-auto">
               <table className="w-full text-sm">
-                <thead><tr className="text-left text-xs uppercase tracking-wide text-stone-500"><th className="py-2 pr-3">{isFinal ? 'Sold out' : 'Empty'}</th><th className="py-2 pr-3">Book</th><th className="py-2 pr-3">Kind</th><th className="py-2 pr-3">Permits</th><th className="py-2 pr-3">Count</th>{isFinal ? <th className="py-2 pr-3">Last permit sold</th> : null}</tr></thead>
+                <thead><tr className="text-left text-xs uppercase tracking-wide text-stone-500"><th className="py-2 pr-3">{isFinal ? 'Sold out' : 'Empty'}</th><th className="py-2 pr-3">Book</th><th className="py-2 pr-3">Type</th><th className="py-2 pr-3">Permits</th><th className="py-2 pr-3">Count</th>{isFinal ? <th className="py-2 pr-3">Last permit sold</th> : null}</tr></thead>
                 <tbody className="divide-y divide-stone-100">
                   {candidates.map((b) => <BookRow key={b.id} book={b} isFinal={isFinal} locked={locked} pick={pickOf(b)} onChange={(v) => setPicked((p) => ({ ...p, [b.id]: v }))} />)}
                 </tbody>

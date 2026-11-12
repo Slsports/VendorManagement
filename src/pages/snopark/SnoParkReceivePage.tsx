@@ -201,13 +201,13 @@ function SheetStep({ view, locked, userId, onDone }: { view: ShipmentView; locke
       {(saved || edit) ? (
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="text-left text-xs uppercase tracking-wide text-stone-500"><th className="py-2 pr-3">Kind</th><th className="py-2 pr-3">From</th><th className="py-2 pr-3">Including</th><th className="py-2 pr-3">Books</th><th className="py-2 pr-3">Permits</th><th className="py-2 pr-3">First book #</th><th className="py-2 pr-3">Last book #</th><th className="py-2" /></tr></thead>
+            <thead><tr className="text-left text-xs uppercase tracking-wide text-stone-500"><th className="py-2 pr-3">Type</th><th className="py-2 pr-3">From</th><th className="py-2 pr-3">Including</th><th className="py-2 pr-3">Books</th><th className="py-2 pr-3">Permits</th><th className="py-2 pr-3">First book #</th><th className="py-2 pr-3">Last book #</th><th className="py-2" /></tr></thead>
             <tbody className="divide-y divide-stone-100">
               {rows.map((r) => {
                 const size = sheetRowBooks(r, per[r.kind])
                 return (
                   <tr key={r.key} className={size.error && r.from && r.to ? 'bg-red-50/60' : ''}>
-                    <td className="min-w-32 py-1.5 pr-3"><Select value={r.kind} onChange={(e) => setRow(r.key, { kind: e.target.value as 'day' | 'season' })} disabled={!editing} aria-label="Kind"><option value="day">Day</option><option value="season">Season</option></Select></td>
+                    <td className="min-w-32 py-1.5 pr-3"><Select value={r.kind} onChange={(e) => setRow(r.key, { kind: e.target.value as 'day' | 'season' })} disabled={!editing} aria-label="Type"><option value="day">Day</option><option value="season">Season</option></Select></td>
                     <td className="py-1.5 pr-3"><Input type="number" inputMode="numeric" value={r.from} onChange={(e) => setRow(r.key, { from: e.target.value })} disabled={!editing} className="w-28" aria-label="From permit" /></td>
                     <td className="py-1.5 pr-3"><Input type="number" inputMode="numeric" value={r.to} onChange={(e) => setRow(r.key, { to: e.target.value })} disabled={!editing} className="w-28" aria-label="Including permit" /></td>
                     <td className="py-1.5 pr-3 text-stone-700">{r.from && r.to ? size.n : ''}{size.error && r.from && r.to ? <span className="ml-2 text-xs text-red-700">{size.error}</span> : null}</td>

@@ -161,7 +161,7 @@ export default function SnoParkPage() {
                   <thead>
                     <tr className="text-left text-xs uppercase tracking-wide text-stone-500">
                       <SortHeader label="Book" sortKey="book" sort={sort} onSort={toggle} />
-                      <SortHeader label="Kind" sortKey="kind" sort={sort} onSort={toggle} />
+                      <SortHeader label="Type" sortKey="kind" sort={sort} onSort={toggle} />
                       <SortHeader label="Permits" sortKey="permits" sort={sort} onSort={toggle} />
                       <SortHeader label="Count" sortKey="count" sort={sort} onSort={toggle} />
                       <SortHeader label="Received" sortKey="received" sort={sort} onSort={toggle} />
