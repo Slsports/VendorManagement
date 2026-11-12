@@ -4512,3 +4512,5 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   already transparent (the app icons keep their green square). CLAUDE.md logo rule updated.
 - Nov 12: Dana saved routing letter version 3 herself. The PDF drew too narrow a space where plain text meets a link or bold
   ("email orders@…" looked run together); the gap at a style change is now a little wider (applies from the next save).
+- Nov 12, Dana: "i didnt mean for you to leave out trevors name, just his trevor@ email." Questions: Trevor Jenkins by name,
+  at orders@ (her version 3 already says so; the starting letter in VMS now does too).

@@ -56,7 +56,7 @@ export const DEFAULT_LETTER: RoutingLetterContent = {
       heading: '4. Ship to',
       body: '**Shaver Lake Sports**\n41777 Tollhouse Road\nShaver Lake, CA 93664\n\nWe have a forklift on site. **No lift gate is needed.**',
     },
-    { heading: '5. Questions', body: 'Please email [orders@shaverlakesports.com](mailto:orders@shaverlakesports.com).' },
+    { heading: '5. Questions', body: 'Please contact Trevor Jenkins, our Inventory & Logistics Specialist, at [orders@shaverlakesports.com](mailto:orders@shaverlakesports.com).' },
   ],
   closing: 'Thank you for helping us keep freight costs down.',
   footer: 'Shaver Lake Sports Inc. · 41777 Tollhouse Road, Shaver Lake, CA 93664 · Mailing: P.O. Box 60, Shaver Lake, CA 93664 · shaverlakesports.com',
