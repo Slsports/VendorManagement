@@ -13,6 +13,8 @@ values (:'org', :'vc', 'invoice', 'coastal', 'x/c1.pdf', '8344', 5900, '2025-04-
 insert into public.billcom_bills (organization_id, bill_id, vendor_name, invoice_number, invoice_date, due_date, amount, due_amount, payment_status, first_seen_at, synced_at)
 values (:'org', 'bk-0344', 'Kellitest''s Gifts', '1587344', '2025-04-01', '2025-05-01', 2562.91, 0, 'PAID', now(), now()),
        (:'org', 'bc-0344', 'Sticker Test Inc.', '8344', '2025-04-01', '2025-05-01', 5900, 0, 'PAID', now(), now());
+insert into public.vendor_payments (organization_id, source, payee, process_date, amount, billcom_payment_id, billcom_bill_id)
+values (:'org', 'billcom', 'Kellitest''s Gifts', '2025-04-20', 2562.91, 'pk-0344', 'bk-0344');
 select set_config('t.old', :'l_old', false), set_config('t.k', :'l_k', false), set_config('t.c', :'l_c', false),
        set_config('t.vk', :'vk', false), set_config('t.vc', :'vc', false), set_config('t.org', :'org', false);
 do $$ begin

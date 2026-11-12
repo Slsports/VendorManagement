@@ -4467,3 +4467,6 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   should be a transfer … They may have just entered Happy as a vendor when they assembled the kits in LS because there
   really is no vendor" (LS "assemble": marshmallows, Hershey bars and graham crackers make a s'mores kit). Salter's
   INV-122386 moved from HAPPY to Salter's Distributing (migration 0349). Dana will look at how the kits were entered in LS.
+- Nov 12, Dana: "I always need actual paid dates please change them." Invoices paid in Bill.com now get the date of
+  Bill.com's payment on that bill (payment list process date), and wait until that payment is read; the 308 that showed
+  Nov 11/12 were corrected (migration 0350). WWD uses WWD's paid date; payment emails the date they give.
