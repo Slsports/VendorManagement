@@ -940,7 +940,7 @@ export async function sortSentEmails(db: SupabaseClient, org: string, emails: Se
 
 // ---- did the vendor say they got our order? (Dana, Nov 12: Sent → Placed) --------------------------------------------
 const OrderAckAnswer = z.object({
-  received: z.array(z.number()).describe('The numbers of the replies in which the vendor (or their rep) says they received our order, are processing or entering it, or will send a confirmation. Leave out automatic out-of-office or vacation replies, delivery failures, questions that do not say they got it, and replies from our own store.'),
+  received: z.array(z.number()).describe('The numbers of the replies in which the vendor (or their rep) says they received our order, are processing or entering it, or will send a confirmation. Only count a reply that plainly says they have the order ("got it", "received", "will process", "entered", a confirmation or order form attached). Leave out a request to call or talk, a question, automatic out-of-office or vacation replies, delivery failures, and replies from our own store.'),
 })
 export interface OrderAckEmail { id: string; vendor: string; po: string | null; from: string | null; subject: string | null; text: string }
 

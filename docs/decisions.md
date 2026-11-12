@@ -4532,3 +4532,5 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   email linked; a confirmation filed does too; **They received it** on the order. Still Sent 2 business days after our
   latest order email (last 30 days): "No reply yet" task + follow-up draft for whoever sent it (mailbox owner, else who
   placed it), closing itself when the order moves on. Back-check: open orders from her sheets are Placed (migration 0359).
+- Nov 12: first reading of replies placed 9 Sent orders; G & S Originals' "Can you call me" was not a "got it" and went
+  back to Sent; the reader now counts only replies that plainly say they have the order.
