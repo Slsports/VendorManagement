@@ -4450,6 +4450,26 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   defaultToNull false) after removing the old items; re-read, the order now matches the sheet. SB-130 has no price on the
   sheet and its total box shows 4, so the sheet total is $4 high ($5,985.58 priced). Ted's $2,274 quote was for the wrong
   order; noted on the quote.
+- Nov 11, Dana: "The 2274 needs to be deleted … totally erroneous info. I never want vms to do something like that."
+  Deleted (with Trevor's task, closed as made by mistake). Rule: when a newer email changes an order's items, every
+  unapproved freight quote on it from before that email is deleted and its task closed as made by mistake (migration 0346,
+  sent-orders). Approved quotes stay.
+- Nov 11: invoice-number catch-up finished (581 of 606 read got a number; 25 invoices have no readable number, pictures
+  or non-PDF files). The Bill.com run was timing out after that (the "enter it" task close-check looked at every invoice),
+  so matching stopped; fixed to check only open tasks plus an index (migration 0347, 30 s → under 2 s). Bill.com now marks
+  273 invoices paid (Scope 1216/1235/1267/1284/1288 included).
+- Nov 12, Dana ("Yes make wwd pmt automatically"): an invoice is Paid when WWD's records show a paid date for the same
+  vendor and invoice number ("WWD (invoice <seq>)"), whenever either side changes; back-check over everything on file
+  (migration 0348). "Remind me to look at Coastal pet": a task for Dana opens Coastal Pet invoice 8920 ($5,900, the number
+  and amount of a paid Sticker Pack Inc. Bill.com bill). "Happy is not a vendor???": HAPPY came from Lightspeed (LS vendor
+  1016, two s'mores kits); the invoice under it is Salter's INV-122386 (Cat's "Salter's Invoice - Happy") — asked Dana.
+- Nov 12, Dana: "Happy is not a vendor. At the end of a season if we have leftover s'mores kits we bring them to sls. It
+  should be a transfer … They may have just entered Happy as a vendor when they assembled the kits in LS because there
+  really is no vendor" (LS "assemble": marshmallows, Hershey bars and graham crackers make a s'mores kit). Salter's
+  INV-122386 moved from HAPPY to Salter's Distributing (migration 0349). Dana will look at how the kits were entered in LS.
+- Nov 12, Dana: "I always need actual paid dates please change them." Invoices paid in Bill.com now get the date of
+  Bill.com's payment on that bill (payment list process date), and wait until that payment is read; the 308 that showed
+  Nov 11/12 were corrected (migration 0350). WWD uses WWD's paid date; payment emails the date they give.
 - Dana, Nov 12: "We do not pay freight on snopark passes. The state pays and ships FedEx. We dont need Any reference to
   freight on sp." vendors.no_freight (migration 0346), set on CA SNO-PARK: the vendor page shows no freight facts, routing
   letter or freight section; the order page shows no shipment, freight quote, free shipping or freight allowance cards;

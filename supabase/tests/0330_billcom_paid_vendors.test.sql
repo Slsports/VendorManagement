@@ -2,8 +2,8 @@
 begin;
 select '00000000-0000-0000-0000-000000000001'::uuid as org \gset
 insert into public.vendors (organization_id, name) values (:'org', 'Hendrix Test 0330') returning id as v \gset
-insert into public.vendor_payments (organization_id, source, payee, vendor_id, process_date, amount, billcom_payment_id)
-values (:'org', 'billcom', 'Hendrix Test 0330', :'v', '2026-06-01', 1213.50, 'pay-0330');
+insert into public.vendor_payments (organization_id, source, payee, vendor_id, process_date, amount, billcom_payment_id, billcom_bill_id)
+values (:'org', 'billcom', 'Hendrix Test 0330', :'v', '2026-06-01', 1213.50, 'pay-0330', 'bill-0330');
 do $$ begin
   if not (select billcom_check from public.vendors where name = 'Hendrix Test 0330') then raise exception 'a Bill.com payment did not switch the check on'; end if;
 end $$;

@@ -20,6 +20,7 @@ No order ships until its freight quote is approved. When a vendor emails a freig
 - The order page shows **Waiting on freight quote** until one is approved.
 - Orders that shipped without an approved quote are listed in red at the bottom of the Freight quotes page.
 - Free-freight orders and web orders (like Kelli's) don't need a quote.
+- When a newer email changes an order's items (you send a corrected order, or the ordering service says it changed), VMS deletes the freight quotes on that order from before the change that nobody approved, and closes their tasks. The vendor needs to quote the new order. An approved quote is never deleted.
 - A quote can come from the shipment details form the vendor filled in (see "Shipment details and the freight quote from the vendor"); it shows the form's answers instead of an email.
 - When an invoice comes for an order with an approved quote, Claude checks the invoice's freight against it.
 - When you write to a vendor or routing company with a price you got yourself (for example "we got XPO for $1,043, we'll use them"), VMS reads it and approves the vendor's quote for that order at your price, so you don't have to click **Approve**. This works from orders@ and from Dana's own inbox. From Dana's inbox VMS keeps only the carrier and the amount.
