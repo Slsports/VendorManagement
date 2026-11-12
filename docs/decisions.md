@@ -4463,3 +4463,7 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   (migration 0348). "Remind me to look at Coastal pet": a task for Dana opens Coastal Pet invoice 8920 ($5,900, the number
   and amount of a paid Sticker Pack Inc. Bill.com bill). "Happy is not a vendor???": HAPPY came from Lightspeed (LS vendor
   1016, two s'mores kits); the invoice under it is Salter's INV-122386 (Cat's "Salter's Invoice - Happy") — asked Dana.
+- Nov 12, Dana: "Happy is not a vendor. At the end of a season if we have leftover s'mores kits we bring them to sls. It
+  should be a transfer … They may have just entered Happy as a vendor when they assembled the kits in LS because there
+  really is no vendor" (LS "assemble": marshmallows, Hershey bars and graham crackers make a s'mores kit). Salter's
+  INV-122386 moved from HAPPY to Salter's Distributing (migration 0349). Dana will look at how the kits were entered in LS.
