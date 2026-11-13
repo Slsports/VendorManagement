@@ -4569,3 +4569,13 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   Preview of the freight email on Templates (migration 0363, writes nothing). The freight email now goes to the vendor's own
   main rep when there is no shipping, orders or rep-group contact (migration 0364; open orders with no address 54 → 27,
   the rest have no email on file at all).
+- Nov 13, Dana: "Paricon is out of cm130 (hardwood snowboard) so im putting it back on slippery racers order. I need to be able
+  to edit these orders and resend. Where can I do it without downloading to my computer?" Built: **What we ordered** at the
+  top of the order page, read straight off the vendor's own Excel order form we emailed (function order-form, module
+  _shared/orderForm.ts: the order's Vendor IDs find the Model column, the row formulas say which cells are typed into, the
+  case pack, price, units and total). **Edit the order** opens the whole form with a box per color; **Send the changes**
+  writes the numbers into the same spreadsheet (layout and formulas kept, a typed-over formula put back), files it as
+  "<name> REVISED M-D-YY.xlsx" with the earlier copy marked old, updates the order's lines and total, and drafts the reply
+  in the conversation the order went out in with the revised form attached; the person presses Send (Nov 9 rule). Also
+  Nov 13: "it says the vendor received it. We have no idea if they received if until we receive a response from them…
+  Activity log should only say that I sent it" — the activity feed reads "Sent our order for PO …" for our own sent order.

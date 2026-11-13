@@ -24,6 +24,7 @@ import { OrderPoCard } from '@/components/orders/OrderPoCard'
 import { OrderSourceCard } from '@/components/orders/OrderSourceCard'
 import { OrderRepsCard } from '@/components/orders/OrderRepsCard'
 import { CheckInPricing } from '@/components/orders/CheckInPricing'
+import { OrderFormCard } from '@/components/orders/OrderFormCard'
 import { FreeShippingCard } from '@/components/orders/FreeShippingCard'
 import { FreightQuoteCard } from '@/components/orders/FreightQuoteCard'
 import { ShipmentRequestCard } from '@/components/orders/ShipmentRequestCard'
@@ -117,6 +118,8 @@ export default function OrderDetailPage() {
       {o.vendor ? <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-stone-200 bg-white px-5 py-3 text-sm"><span className="font-medium text-stone-700">Add-ons until it ships</span><AddOnsChoice order={{ id: o.id, po_number: o.po_number, order_date: o.order_date, est_ship_date: o.est_ship_date, status: o.status, addons: o.addons, description: o.description }} vendor={o.vendor} canEdit={canEdit} onChanged={() => void q.refetch()} /></div> : null}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
+          {/* what we ordered, off the vendor's own order form, with Edit the order / Send the changes (Dana, Nov 13) */}
+          <OrderFormCard orderId={o.id} canEdit={canEdit} onChange={q.refetch} />
           {groups.map(([title, facts]) => {
             const shown = facts.filter(([, v]) => v !== null && v !== undefined && v !== '')
             if (!shown.length) return null
