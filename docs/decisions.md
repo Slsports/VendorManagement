@@ -4681,4 +4681,9 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   $15,992.08, received through 6/28/26); six rows → B671464 / 76302 2/5/25 (7 shipments, $15,450.66); seven rows →
   B671629 8/27/23 (8 shipments, $16,067.07). The sheet imports leave the folded rows out (order_merges). Not folded, not
   proposed: the 2023 58982-xx rows and the 2024 PULSEW24CLOTHING rows.
+- Nov 13, Dana ("Yes, if you can confirm the same pattern for 2024, do it"): confirmed by Worldwide's invoice numbers and
+  folded (migration 0383): Pulse W24 clothing 9/11/24 (invoices 68259, -02…-05; 5 shipments, $14,081.36), Shaver Lake C
+  8/27/24 (73370, -02…-04; 4 shipments, $10,554.89), fall 2023 SO 58982 8/17/23 (invoices -02…-12; 13 shipments,
+  $62,900.54), 67635 / 67635-02 ($28,386.82) and 73375 / 73375-02B ($11,232.08). A folded order that is paid takes
+  Worldwide's invoice total as its final cost (order_fold_final_cost). WFS went from 78 order rows to 28 orders.
 
