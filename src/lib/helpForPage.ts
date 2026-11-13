@@ -18,6 +18,7 @@ const PAGES: [RegExp, PageHelp][] = [
   [/^\/ls-pos/, { name: 'LS POs', slugs: ['ordering--ls-po', 'orders--our-po-number', 'settings--ls-po-reviewers'], sections: ['Ordering'] }],
   [/^\/item-names/, { name: 'Item names', slugs: ['ordering--clean-up-item-names', 'orders--vendor-id-in-item-names'], sections: ['Ordering'] }],
   [/^\/freight/, { name: 'Freight', sections: ['Freight'] }],
+  [/^\/templates/, { name: 'Templates', sections: ['Templates'] }],
   [/^\/payments/, { name: 'Payments', sections: ['Payments'] }],
   [/^\/(sales-reports|reports|inventory-counts)/, { name: 'Reports', sections: ['Reports'] }],
   [/^\/review/, { name: 'the Review queue', sections: ['Review queue'] }],

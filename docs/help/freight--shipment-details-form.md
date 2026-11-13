@@ -4,16 +4,11 @@ section: Freight
 keywords: shipment details, send the shipment details email, drafts, freight quote, form, link, pallet, LTL, parcel, UPS, FedEx, confirmed order, Trevor, 3 business days, follow-up, free freight, half freight, capped freight, Reference 1
 who: Everyone
 ---
-The moment an order is confirmed, VMS writes the email to the vendor and puts it in Trevor's Drafts (Inventory & Logistics Specialist). Nothing goes until Trevor presses **Send**. Vendors who charge freight are told the 10% rule (Dana, Nov 12): if the freight is 10% or less of the merchandise cost they ship and add it to the invoice; if it is over 10% they hold it and use the link to a short form for the shipment details and their quote. Vendors who agreed to free, half or capped freight are asked to confirm it.
+Once an order is confirmed, VMS writes the **Freight email** and puts it in Trevor's Drafts (see "The Freight email for an order"). It tells the vendor what to do for their freight terms and links to the form below for that order. Nothing goes until someone presses **Send**.
 
-## What goes out
-- **We pay freight:** the shipment details email. Trevor gets a task **Send the shipment details email: [vendor], PO [number]**; **Go to it** opens the email in Mail › Drafts. He checks it and presses **Send**, and the task closes. The email says: 10% or less of the merchandise cost, go ahead and ship and invoice the freight; over 10%, hold it and fill in the form; paying the full freight, just reply. Our routing letter is attached.
-- **Free freight agreed, shown on the confirmation:** nothing goes out. The order shows "The vendor confirmed these terms on the confirmation."
-- **Free freight agreed, not on the confirmation:** a short email asking them to confirm this order and any backorders ship free. No form link, so nobody thinks they can fill it in and charge us.
-- **Half freight agreed, not on the confirmation:** an email asking them to confirm they cover half, with the form link so we see our share and can shop it before it ships.
-- **Capped freight, not on the confirmation:** capped at 10% or less, they confirm the cap and ship without a quote. Capped over 10%, they confirm the cap and fill in the form, and hold the shipment until we OK the freight.
-- **The check emails never go out on their own.** Trevor gets a task **Check freight on the confirmation: [vendor], PO [number]** and the email waits in his Drafts. He opens the order and reads the confirmation: if the terms are there, he clicks **The confirmation shows the agreed terms** in the order's Shipping box and the task closes with no email; if not, **Go to it** on the task opens the order, and the email is in Mail › Drafts to send as is or change.
-- It goes to whoever sent us the confirmation, with the vendor's Shipping contact and our rep copied. Free-freight web-order vendors (Kelli's) and paperwork-only vendors (Rossignol) are skipped.
+## Nothing to do for the vendor
+- **Free freight shown on the confirmation:** no email; the order shows "The vendor confirmed these terms on the confirmation."
+- Free-freight web-order vendors (Kelli's) and paperwork-only vendors (Rossignol) are skipped.
 
 ## The form
 At the very top, in red: "NOTE: IF FREIGHT IS FREE OR YOUR RATE QUOTE CAME IN AT 10% OR LESS YOU ARE AUTHORIZED TO SHIP AND YOU DO NOT NEED TO FILL THIS OUT."

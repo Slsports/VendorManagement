@@ -25,8 +25,8 @@ begin
   if r.send_as <> v_trevor then raise exception 'not sent as Trevor'; end if;
   v_req := r.id; v_tok := r.token;
   select * into r from public.shipment_request_email(v_req);
-  if r.subject not like 'Shipment details and freight quote for our PO T268 (your order SO5551)' then raise exception 'subject wrong: %', r.subject; end if;
-  if r.body not like '%including backorders%' or r.body not like '%/ship/' || v_tok || '%' or r.body not like 'Hi Pat,%' then raise exception 'body wrong'; end if;
+  if r.subject <> 'Freight for our PO T268 – Shaver Lake Sports' then raise exception 'subject wrong: %', r.subject; end if;
+  if r.body not like '%any backorders ship free%' or r.body not like '%/ship/' || v_tok || '%' or r.body not like 'Hi Pat,%' then raise exception 'body wrong'; end if;
 
   -- sent: follow-up due in 3 business days
   insert into public.emails (organization_id, thread_id, gmail_id, direction, from_email, to_emails, subject, received_at, body_text, vendor_id)
@@ -57,9 +57,9 @@ begin
   update public.orders set status = 'awaiting_confirmation', freight_terms = 'free' where id = v_order;
   update public.orders set status = 'confirmed' where id = v_order;
   select * into r from public.shipment_requests where order_id = v_order;
-  if r.kind <> 'free_check' then raise exception 'free_check expected, got %', r.kind; end if;
+  if r.kind <> 'details' then raise exception 'the one Freight email expected (0362), got %', r.kind; end if;
   select * into r from public.shipment_request_email(r.id);
-  if r.body not like '%understanding we would receive free shipping%' or r.body like '%/ship/%' then raise exception 'free_check wording wrong'; end if;
+  if r.body not like '%Free freight:%' then raise exception 'free freight wording wrong'; end if;
   select id into v_req from public.shipment_requests where order_id = v_order;
   perform public.shipment_request_sent(v_req, v_email2);
   perform public.shipment_request_reply(v_req, v_email, '{"answer":"free","note":"ships free"}'::jsonb);
@@ -72,7 +72,7 @@ begin
   update public.orders set status = 'confirmed' where id = v_order;
   select id into v_req from public.shipment_requests where order_id = v_order;
   select * into r from public.shipment_request_email(v_req);
-  if r.body not like '%cover half of the freight%' or r.body not like '%/ship/%' then raise exception 'half wording wrong'; end if;
+  if r.body not like '%Half freight:%' or r.body not like '%/ship/%' then raise exception 'half wording wrong'; end if;
   perform public.shipment_request_sent(v_req, v_email2);
   if public.shipment_request_reply(v_req, v_email, '{"answer":"charged"}'::jsonb) <> 'disputed' then raise exception 'not disputed'; end if;
   select id into v_task from public.tasks where auto_key = 'shipdispute:' || v_req;

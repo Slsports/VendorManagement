@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync, writeFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { PDFDocument } from 'pdf-lib'
 import { DEFAULT_LETTER, buildRoutingLetterPdf, letterContentOf, parseBody, parseRuns } from './routingLetterPdf'
 
@@ -35,5 +36,11 @@ describe('routing letter text', () => {
   it('drops characters the PDF fonts cannot draw instead of failing', async () => {
     const bytes = await buildRoutingLetterPdf({ ...DEFAULT_LETTER, intro: 'Freight ≥ 10% 😀 → quote' }, null)
     expect(bytes.length).toBeGreaterThan(1000)
+  })
+
+  it('matches the sending side (gmail-send draws each order\'s copy with its own form link)', () => {
+    const app = readFileSync(resolve(process.cwd(), 'src/lib/routingLetterPdf.ts'), 'utf8').split('\n').slice(1).join('\n')
+    const fn = readFileSync(resolve(process.cwd(), 'supabase/functions/_shared/routingLetterPdf.ts'), 'utf8').split('\n').slice(1).join('\n')
+    expect(app).toBe(fn)
   })
 })

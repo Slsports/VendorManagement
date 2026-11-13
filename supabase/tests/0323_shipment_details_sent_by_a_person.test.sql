@@ -13,7 +13,7 @@ begin
   select * into s from public.shipment_requests where order_id = v_order;
   if s.kind <> 'details' or s.status <> 'ready' or not s.hold or s.review_task_id is null or s.review_draft_id is null then raise exception 'details request not held for a person: % % % %', s.kind, s.status, s.hold, s.review_task_id; end if;
   select * into t from public.tasks where id = s.review_task_id;
-  if t.auto_key <> 'shipsend:' || s.id or t.draft_id <> s.review_draft_id or t.title not like 'Send the shipment details email: TEST DETAILS VENDOR 0323, PO T323%' then raise exception 'task wrong: % %', t.auto_key, t.title; end if;
+  if t.auto_key <> 'shipsend:' || s.id or t.draft_id <> s.review_draft_id or t.title not like 'Send the freight email: TEST DETAILS VENDOR 0323, PO T323%' then raise exception 'task wrong: % %', t.auto_key, t.title; end if;
   if (select owner_id from public.email_drafts where id = s.review_draft_id) <> s.send_as then raise exception 'draft not in the sender''s Drafts'; end if;
   -- the person sends it: the request is sent, the clock starts, the task closes as theirs
   insert into public.emails (organization_id, thread_id, gmail_id, direction, from_email, to_emails, subject, received_at, body_text, vendor_id)
@@ -21,7 +21,7 @@ begin
   perform public.mail_command_sent(s.review_draft_id, v_out, v_trevor);
   if (select status from public.shipment_requests where id = s.id) <> 'sent' or (select followup_due_at from public.shipment_requests where id = s.id) is null then raise exception 'sending the draft did not send the request'; end if;
   select * into t from public.tasks where id = s.review_task_id;
-  if t.done_at is null or t.closed_how <> 'person' or t.done_note <> 'Sent the vendor the shipment details email.' then raise exception 'task not closed by the send: % %', t.closed_how, t.done_note; end if;
+  if t.done_at is null or t.closed_how <> 'person' or t.done_note <> 'Sent the vendor the freight email.' then raise exception 'task not closed by the send: % %', t.closed_how, t.done_note; end if;
   delete from public.shipment_requests where order_id = v_order;
   delete from public.tasks where order_id = v_order;
   delete from public.email_drafts where order_id = v_order;

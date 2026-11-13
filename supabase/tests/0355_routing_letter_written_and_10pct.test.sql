@@ -14,7 +14,7 @@ begin
   select * into r from public.shipment_requests where order_id = v_order;
   if r.id is null or r.kind <> 'details' then raise exception 'no details request'; end if;
   select * into r from public.shipment_request_email(r.id);
-  if r.body not like '%10% or less of the merchandise cost: go ahead and ship%' or r.body not like '%Over 10%: please hold the shipment%' then raise exception 'email does not follow the 10%% rule: %', r.body; end if;
+  if r.body not like '%Freight 10% or less of our merchandise cost:** ship it%' or r.body not like '%Over 10%:** fill out the freight form%' then raise exception 'email does not follow the 10%% rule: %', r.body; end if;
   -- the order ships on its own (under 10%): the request ends
   update public.orders set status = 'shipped' where id = v_order;
   if exists (select 1 from public.shipment_requests where order_id = v_order and status in ('ready', 'sent', 'opened')) then raise exception 'request still open after shipping'; end if;

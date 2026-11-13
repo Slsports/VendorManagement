@@ -11,6 +11,7 @@ import { aiEnabled, readVendorBusiness } from '../_shared/ai.ts'
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2'
 import { parseMessage, type GmailMessage } from '../_shared/mailParse.ts'
 import { type Caller, CORS, caller, errorResponse, HttpError, json, serviceClient } from '../_shared/caller.ts'
+import { buildRoutingLetterPdf, letterContentOf } from '../_shared/routingLetterPdf.ts'
 
 interface SendRequest {
   thread_id?: string | null          // VMS thread to reply in
@@ -37,6 +38,21 @@ interface SendRequest {
 }
 
 const EMAIL = /^[^@\s,;<>]+@[^@\s,;<>]+\.[^@\s,;<>]+$/
+
+/** The routing letter for one order's Freight email: the general form link (/ship/new) becomes this order's own link. */
+async function letterForOrder(db: SupabaseClient, draftId: string, org: string, letter: { content?: unknown }): Promise<Uint8Array | null> {
+  const content = letterContentOf(letter.content)
+  if (!content) return null
+  const { data: d } = await db.from('email_drafts').select('order_id, organization_id').eq('id', draftId).maybeSingle()
+  if (!d?.order_id || d.organization_id !== org) return null
+  const { data: s } = await db.from('shipment_requests').select('token').eq('order_id', d.order_id).maybeSingle()
+  if (!s?.token) return null
+  const swap = (t: string) => t.replaceAll('https://vms.shaverlakesports.com/ship/new', `https://vms.shaverlakesports.com/ship/${s.token}`)
+    .replaceAll('vms.shaverlakesports.com/ship/new', `vms.shaverlakesports.com/ship/${s.token}`)
+  const mine = { ...content, intro: swap(content.intro), closing: swap(content.closing), sections: content.sections.map((x) => ({ heading: x.heading, body: swap(x.body) })) }
+  const logo = await fetch('https://vms.shaverlakesports.com/brand/sls/email-logo@2x.png').then((res) => (res.ok ? res.arrayBuffer() : null)).catch(() => null)
+  return await buildRoutingLetterPdf(mine, logo ? new Uint8Array(logo) : null)
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
@@ -123,20 +139,27 @@ Deno.serve(async (req) => {
     // The freight routing letter (Dana, Oct 13): the version this send is for, or the current one.
     let routingSend: { id: string; letter_id: string } | null = null
     if (r.routing_send_id || r.attach_routing_letter) {
-      let letter: { storage_path: string; file_name: string; organization_id: string } | null = null
+      let letter: { storage_path: string; file_name: string; organization_id: string; content?: unknown } | null = null
       if (r.routing_send_id) {
         const { data: rs } = await db.from('routing_letter_sends').select('id, letter_id, organization_id, letter:routing_letters!routing_letter_sends_letter_id_fkey(storage_path, file_name, organization_id)').eq('id', r.routing_send_id).maybeSingle()
         if (!rs || rs.organization_id !== me.organization_id) throw new HttpError(404, 'Routing letter send not found')
         routingSend = { id: rs.id, letter_id: rs.letter_id }
         letter = rs.letter as unknown as typeof letter
       } else {
-        const { data } = await db.from('routing_letters').select('storage_path, file_name, organization_id').eq('organization_id', me.organization_id).order('version', { ascending: false }).limit(1).maybeSingle()
+        const { data } = await db.from('routing_letters').select('storage_path, file_name, organization_id, content').eq('organization_id', me.organization_id).order('version', { ascending: false }).limit(1).maybeSingle()
         letter = data
       }
       if (!letter) throw new HttpError(400, 'No routing letter uploaded yet (Freight › Routing letter)')
-      const { data: blob, error } = await db.storage.from('vendor-files').download(letter.storage_path)
-      if (error || !blob) throw new Error(`Could not read the routing letter: ${error?.message ?? 'missing'}`)
-      attachments.push({ name: letter.file_name, mime: 'application/pdf', base64: bytesToBase64(new Uint8Array(await blob.arrayBuffer())) })
+      // the Freight email (Dana, Nov 13: "The freight letter should include the link to the form that ties it to our vendor
+      // and po"): a letter written in VMS is drawn for this order, its form link going straight to the order's form
+      const orderLetter = !routingSend && r.draft_id ? await letterForOrder(db, r.draft_id, me.organization_id, letter) : null
+      if (orderLetter) {
+        attachments.push({ name: letter.file_name, mime: 'application/pdf', base64: bytesToBase64(orderLetter) })
+      } else {
+        const { data: blob, error } = await db.storage.from('vendor-files').download(letter.storage_path)
+        if (error || !blob) throw new Error(`Could not read the routing letter: ${error?.message ?? 'missing'}`)
+        attachments.push({ name: letter.file_name, mime: 'application/pdf', base64: bytesToBase64(new Uint8Array(await blob.arrayBuffer())) })
+      }
     }
     if (r.forward_email_id) {
       const { data: e } = await db.from('emails').select('gmail_id, gmail_box, organization_id, attachments:email_attachments(file_name, mime_type, gmail_attachment_id)').eq('id', r.forward_email_id).single()

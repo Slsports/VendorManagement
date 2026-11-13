@@ -10,6 +10,7 @@ import { fetchAttachment, listEdenredUnplaced, fileAttachmentToVendor, type Unpl
 import { kickOrderChecks } from '@/services/orderChecks'
 import { listVendorOrdersForFreight } from '@/services/freight'
 import { getFreightPromise, setFreightPromiseOrder, freightPromiseText } from '@/services/freightTerms'
+import { FreightEmailButton } from '@/components/orders/FreightEmailButton'
 import { listPaymentChoices, markPaymentInvoices } from '@/services/paymentNotices'
 import { downloadVendorFile } from '@/services/lines'
 import { useDocumentViewer } from '@/hooks/useDocumentViewer'
@@ -35,6 +36,8 @@ export function TaskGo({ task, onGo }: { task: TaskRow; onGo: () => void }) {
   if (kind === 'edenred' && id && !task.done_at) return <div className="space-y-3">{go}<EdenredFilesPanel emailId={id} onAllFiled={onGo} /></div>
   // freight terms from an email VMS couldn't tie to an order (Dana, Nov 7): the vendor's orders right here, pick one
   if (kind === 'freightorder' && id && !task.done_at) return <div className="space-y-3">{go}<FreightOrderPanel promiseId={id} vendorId={task.vendor_id} onPicked={onGo} /></div>
+  // a task at the freight stage (Dana, Nov 13): the order's Freight email one click away too
+  if (['freight_quote', 'shipreq', 'shipcheck', 'ship'].includes(kind) && task.order_id && !task.done_at) return <div className="flex flex-wrap items-center gap-2">{go}<FreightEmailButton orderId={task.order_id} size="md" onSent={onGo} /></div>
   // a payment email that names no invoices (Dana, Nov 11): the vendor's unpaid invoices right here, tick the ones it paid
   if (kind === 'payask' && id && !task.done_at) return <div className="space-y-3">{go}<PaymentInvoicesPanel emailId={id} onDone={onGo} /></div>
   return go

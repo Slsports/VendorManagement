@@ -7,7 +7,7 @@ export async function vendorActivityFeed(organizationId: string, vendorId: strin
     supabase.rpc('vendor_recent_activity', { p_vendor: vendorId, p_limit: Math.min(limit, 50) }),
     supabase.from('vendor_links').select('id, kind, label, file_name, doc_number, doc_date, doc_total, received_at, created_at, source, storage_path, mime_type, order:orders!vendor_links_order_id_fkey(po_number)')
       .eq('vendor_id', vendorId).not('kind', 'in', '(image,website)').order('created_at', { ascending: false }).limit(limit * 4),
-    supabase.from('orders').select('id, po_number, order_date, placed_by, date_received, date_entered_ls, entered_by, paid_date')
+    supabase.from('orders').select('id, po_number, order_date, placed_by, date_received, date_entered_ls, entered_by, paid_date, status')
       .or(`vendor_id.eq.${vendorId},brand_vendor_id.eq.${vendorId}`).order('order_date', { ascending: false, nullsFirst: false }).limit(limit),
     supabase.from('tasks').select('id, title, done_at, done_note, closed_how, done_by')
       .eq('vendor_id', vendorId).not('done_at', 'is', null).neq('closed_how', 'mistake').order('done_at', { ascending: false }).limit(limit),

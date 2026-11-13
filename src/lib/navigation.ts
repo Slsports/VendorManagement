@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Banknote, Building2, MessagesSquare, Calculator, CalendarDays, ChartColumn, CircleHelp, ClipboardCheck, ClipboardList, Contact, FileText, FolderOpen, LayoutDashboard, Lightbulb, ListTodo, Mail, Package, Receipt, Settings, ShoppingCart, Snowflake, SpellCheck, Tags, Truck, Undo2, Upload, Users, UsersRound } from 'lucide-react'
+import { Banknote, Building2, MessagesSquare, Calculator, CalendarDays, ChartColumn, CircleHelp, ClipboardCheck, ClipboardList, Contact, FileText, FolderOpen, LayoutDashboard, Lightbulb, ListTodo, Mail, Package, FileStack, Receipt, Settings, ShoppingCart, Snowflake, SpellCheck, Tags, Truck, Undo2, Upload, Users, UsersRound } from 'lucide-react'
 import { ORDER_STATUSES, ORDER_STATUS_LABELS, ROUTES, type UserRole } from './constants'
 
 export interface NavChild {
@@ -63,6 +63,8 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       { label: 'Returns & Credits', to: ROUTES.returns, icon: Undo2 },
       { label: 'Incoming Shipments', to: ROUTES.shipments, icon: Truck },
       { label: 'Freight', to: ROUTES.freight, icon: Receipt },
+      // what VMS writes to vendors, in one place to read and edit (Dana, Nov 13)
+      { label: 'Templates', to: ROUTES.templates, icon: FileStack, roles: ['admin', 'manager', 'buyer'] },
       { label: 'Supplies', to: ROUTES.supplies, icon: Package },
       // Sno-Park passes: books on hand and the monthly reports to the State (Dana, Nov 5)
       { label: 'Sno-Park', to: ROUTES.snopark, icon: Snowflake },

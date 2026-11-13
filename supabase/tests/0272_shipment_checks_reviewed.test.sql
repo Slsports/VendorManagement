@@ -11,9 +11,9 @@ begin
   insert into public.vendor_links (organization_id, vendor_id, kind, label, storage_path, received_at, order_id, email_id) values (v_org, v_vendor, 'confirmation', 'Conf 77', 'x/0269.pdf', current_date, v_order, v_email);
   update public.orders set status = 'confirmed' where id = v_order;
   select * into s from public.shipment_requests where order_id = v_order;
-  if s.kind <> 'free_check' or s.status <> 'ready' or not s.hold or s.review_task_id is null or s.review_draft_id is null then raise exception 'check not held for Trevor: % % % %', s.kind, s.status, s.hold, s.review_task_id; end if;
+  if s.kind <> 'details' or s.status <> 'ready' or not s.hold or s.review_task_id is null or s.review_draft_id is null then raise exception 'check not held for Trevor: % % % %', s.kind, s.status, s.hold, s.review_task_id; end if;
   if (select assigned_to from public.tasks where id = s.review_task_id) <> v_trevor then raise exception 'task not Trevor''s'; end if;
-  if (select body from public.email_drafts where id = s.review_draft_id) not like '%understanding we would receive free shipping%' then raise exception 'draft wording wrong'; end if;
+  if (select body from public.email_drafts where id = s.review_draft_id) not like '%Free freight:%' then raise exception 'draft wording wrong'; end if;
   -- the tick on the order: settled, draft gone, task closed, nothing sent
   update public.orders set freight_terms_confirmed_at = now(), freight_terms_confirmed_how = 'person' where id = v_order;
   if (select status from public.shipment_requests where id = s.id) <> 'confirmed' then raise exception 'tick did not settle the check'; end if;

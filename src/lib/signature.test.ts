@@ -25,6 +25,13 @@ describe('signatures', () => {
     const html = htmlEmail('Please confirm: https://vms.shaverlakesports.com/r/abc-123.', null)
     expect(html).toContain('<a href="https://vms.shaverlakesports.com/r/abc-123" style="color:#0f6b3a">https://vms.shaverlakesports.com/r/abc-123</a>.')
   })
+  it('shows a template\'s [Click Here](link) and **bold** as a link and bold, and plainly in text', () => {
+    const html = htmlEmail('**2. Half freight:** fill out our form: [Click Here](https://vms.shaverlakesports.com/ship/abc).', 'Dana')
+    expect(html).toContain('<b>2. Half freight:</b>')
+    expect(html).toContain('<a href="https://vms.shaverlakesports.com/ship/abc" style="color:#0f6b3a;font-weight:bold">Click Here</a>')
+    expect(html).not.toContain('](')
+    expect(textEmail('**Cap:** [Click Here](https://x.example/a)', null)).toBe('Cap: Click Here: https://x.example/a\n')
+  })
   it('matches the sending side', () => {
     const app = readFileSync(resolve(process.cwd(), 'src/lib/signature.ts'), 'utf8').split('\n').slice(2).join('\n')
     const fn = readFileSync(resolve(process.cwd(), 'supabase/functions/_shared/signature.ts'), 'utf8').split('\n').slice(2).join('\n')

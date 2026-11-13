@@ -106,6 +106,7 @@ export const ROUTES = {
   team: '/team',
   tasks: '/tasks',
   supplies: '/supplies',
+  templates: '/templates',
   notifications: '/notifications',
   accounting: '/accounting',
   accountingMail: '/accounting/mail',

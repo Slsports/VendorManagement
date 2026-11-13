@@ -18,6 +18,7 @@ import { ReportUsedCard } from '@/components/orders/ReportUsedCard'
 import { RecordTasks } from '@/components/tasks/RecordTasks'
 import { LsPoCard } from '@/components/ordering/LsPoCard'
 import { ShipCard } from '@/components/orders/ShipCard'
+import { FreightEmailButton } from '@/components/orders/FreightEmailButton'
 import { OrderBackorders } from '@/components/orders/OrderBackorders'
 import { OrderPoCard } from '@/components/orders/OrderPoCard'
 import { OrderSourceCard } from '@/components/orders/OrderSourceCard'
@@ -95,6 +96,7 @@ export default function OrderDetailPage() {
         actions={canEdit ? (
           <div className="flex flex-wrap items-center gap-2">
             <AskButton orderId={o.id} />
+            {['open', 'awaiting_confirmation', 'confirmed', 'shipped'].includes(o.status) && !o.vendor?.no_freight ? <FreightEmailButton orderId={o.id} onSent={() => void q.refetch()} /> : null}
             {changingVendor ? (
               <span className="flex items-center gap-2">
                 <VendorPicker autoFocus className="w-60" placeholder="The real vendor" onPick={async (v) => {
