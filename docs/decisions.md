@@ -4668,4 +4668,12 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   and Freight % (freight ÷ goods; "collect" when the invoice carries none because the carrier bills us) and a total line.
   Freight is Worldwide's freight amount on the invoice, else its freight line, else the freight Claude read on the vendor's
   own invoice (migration 0379). WFS2426: $724.05 freight on $21,783 of goods, 3.3%; shipments 1 and 2 went UPS collect.
+- Nov 13, Dana ("Ok fold"): WFS's per-shipment sheet rows folded into one order per show (migrations 0380, 0381;
+  order_fold_parts merges each part with everything it had, history rows keep their own dates, the kept order's cost
+  becomes the sum when it was itself only the first shipment, received date the last shipment's, and a part's Paid never
+  pays the order while an invoice on it is open). Folded: I88198-2/-3/-4 → WFS2426 (5 shipments); WORLD020526 → I87727
+  (4 shipments, $966.36, back to Entered because I87727-3 $838.20 is unpaid); nine rows → B671437 8/26/25 (10 shipments,
+  $15,992.08, received through 6/28/26); six rows → B671464 / 76302 2/5/25 (7 shipments, $15,450.66); seven rows →
+  B671629 8/27/23 (8 shipments, $16,067.07). The sheet imports leave the folded rows out (order_merges). Not folded, not
+  proposed: the 2023 58982-xx rows and the 2024 PULSEW24CLOTHING rows.
 
