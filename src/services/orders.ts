@@ -9,7 +9,7 @@ export interface OrderRow extends Order {
 export type OrderView = 'open' | 'overdue' | 'future' | 'payments_due'
 const OPEN_STATUSES: OrderStatus[] = ['open', 'awaiting_confirmation', 'confirmed', 'shipped']
 export const ORDER_VIEW_LABELS: Record<OrderView, { title: string; help: string }> = {
-  open: { title: 'Open orders', help: 'Placed, not yet received.' },
+  open: { title: 'On order', help: 'Sent, Placed, Confirmed or Shipped and never received. VMS closes an order out when Worldwide bills the shipment, the vendor\'s invoice is on file, or it shows paid in Bill.com or Worldwide.' },
   overdue: { title: 'Overdue orders', help: 'Not received and more than 30 days past their ship date.' },
   future: { title: 'Future-dated orders', help: 'Pre-bookings shipping more than 30 days from now.' },
   payments_due: { title: 'Payments due', help: 'Entered in LS, not yet paid.' },

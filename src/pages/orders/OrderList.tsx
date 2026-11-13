@@ -62,6 +62,7 @@ export default function OrderListPage() {
     setParams(next, { replace: true })
   }
   const total = Object.values(counts.data ?? {}).reduce((a, b) => a + b, 0)
+  const onOrder = (['open', 'awaiting_confirmation', 'confirmed', 'shipped'] as const).reduce((n, s) => n + (counts.data?.[s] ?? 0), 0)
 
   return (
     <div>
@@ -69,7 +70,9 @@ export default function OrderListPage() {
       {view ? <BackLink fallback={ROUTES.dashboard} fallbackLabel="Dashboard" /> : null}
       <nav aria-label="Order status" className="mb-4 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <ul className="flex w-max gap-1 rounded-xl bg-stone-100 p-1">
-          <li><Link to={`${ROUTES.orders}${season ? `?season=${season}` : ''}`} aria-current={!status ? 'page' : undefined} className={tab(!status)}>All{total ? ` (${total})` : ''}</Link></li>
+          <li><Link to={`${ROUTES.orders}${season ? `?season=${season}` : ''}`} aria-current={!status && !view ? 'page' : undefined} className={tab(!status && !view)}>All{total ? ` (${total})` : ''}</Link></li>
+          {/* On order (Dana, Nov 13): every order sent and never received, whatever its stage */}
+          <li><Link to={`${ROUTES.orders}?view=open${season ? `&season=${season}` : ''}`} aria-current={view === 'open' ? 'page' : undefined} className={tab(view === 'open')}>On order{onOrder ? ` (${onOrder})` : ''}</Link></li>
           {ORDER_STATUSES.filter((s) => (counts.data?.[s] ?? 0) > 0 || s === status).map((s) => (
             <li key={s}><Link to={`${ROUTES.orders}?status=${s}${season ? `&season=${season}` : ''}`} aria-current={status === s ? 'page' : undefined} className={tab(status === s)}>{ORDER_STATUS_LABELS[s]}{counts.data?.[s] ? ` (${counts.data[s]})` : ''}</Link></li>
           ))}

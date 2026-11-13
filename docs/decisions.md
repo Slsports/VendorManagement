@@ -4619,3 +4619,14 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   The page hides nothing: everything coming is the table, and orders past their ship or arrival day and not marked
   received sit in their own fold underneath (48 today, nearly all Feb 2026 show orders that came in and were never marked).
   The show cycle is in CLAUDE.md ("How ordering runs").
+- Nov 13, Dana: "I need a tab on the status for open orders. That would be all orders sent, that have never been received
+  … show orders closed out if they are showing as paid in bill.com or wwd." … "Go do both." Built (migrations 0371, 0372):
+  **On order** tab and menu item (Sent/Placed/Confirmed/Shipped); the hourly close-out: a WWD invoice or a vendor invoice on
+  file, or a received date already on the order, makes it Received as of that date; all WWD invoices paid, or a Bill.com
+  bill paid, makes it Paid as of the payment (history rows dated by the papers). WFS shipment invoices (PO plus -2/-3 or a
+  glued digit) tie to their order. The Nov 3 Placed Order Summary was re-imported first (1,252 refreshed, 12 added, 333
+  status moves, re-dated by the sheet's dates). On order went from 108 to 80 today. The fold of WFS's per-shipment order
+  rows into one order per show is still to come, shown to Dana first.
+- Nov 13, Dana, on WFS: "We place one order at each show so twice a year. They always split them up into different orders
+  … they may take 3 or 4 or more shipments … They keep the same invoice number, but they add a -2, -3, -4." And the hikers:
+  Eastman Footwear, ordered 2/2/26, received 10/19/26 per the sheet (WWD shipped 9/23 under PO SPR2026), AR due 11/24/26.

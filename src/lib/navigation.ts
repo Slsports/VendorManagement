@@ -31,6 +31,7 @@ export interface NavGroup {
 
 const ORDER_CHILDREN: readonly NavChild[] = [
   { label: 'All orders', to: ROUTES.orders },
+  { label: 'On order', to: `${ROUTES.orders}?view=open` },
   ...ORDER_STATUSES.map((s) => ({ label: ORDER_STATUS_LABELS[s], to: `${ROUTES.orders}?status=${s}` })),
 ]
 

@@ -42,10 +42,11 @@ describe('navForRole', () => {
     expect(navForRole(null)).toEqual([])
   })
 
-  it('lists one Orders sub-item per status plus All', () => {
+  it('lists All, On order, then one Orders sub-item per status', () => {
     const orders = navForRole('admin').flatMap((g) => g.items).find((i) => i.label === 'Orders')
-    expect(orders?.children?.length).toBe(10)
+    expect(orders?.children?.length).toBe(11)
     expect(orders?.children?.[0]?.to).toBe(ROUTES.orders)
+    expect(orders?.children?.[1]).toEqual({ label: 'On order', to: `${ROUTES.orders}?view=open` })
   })
 })
 
