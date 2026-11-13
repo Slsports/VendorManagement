@@ -4641,7 +4641,7 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
 - Nov 13, Dana ("Keep it under reef sport, go on all"): Reef Sport is one vendor, REEF SPORT SUNCARE. SANDBOXX GROUP LLC,
   SANDBOXX and "FAIRE/SANDBOXX/REEF SPORT SUNCARE" merged into it (everything moved, their names are aliases), Direct,
   Bill.com sending/checking kept; the 6 orders that were in VMS twice merged (7 orders left, migration 0374). Still to do
-  once Dana names the owner: Sandboxx Group as its rep group with the owner as main rep (contacts: Tom Dawson, Sandboxx;
+  once Dana names the owner (done the same day, "Tom Dawson is the owner", migration 0384): Sandboxx Group as its rep group with the owner as main rep (contacts: Tom Dawson, Sandboxx;
   Jeff Turner, Turner Group Reps).
 - Nov 13: Dana's Nov 8 Placed Order Summary (Google Drive) loaded over the Nov 3 load: 6 orders moved to Entered (Okuma,
   Gold Medal ×2, World Famous I87727, Ace USA, Eastman) once the sheet may move a status VMS set **forward** (never back;
