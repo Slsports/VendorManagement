@@ -1,4 +1,4 @@
--- 0376: the admin saves a page's wording; a manager reads it but cannot change it.
+-- 0382: the admin saves a page's wording; a manager reads it but cannot change it.
 do $$
 declare v_org uuid := '00000000-0000-0000-0000-000000000001'; n int;
 begin

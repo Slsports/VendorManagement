@@ -4650,5 +4650,35 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
 - Nov 13, Dana ("Is there any way that the paragraph under the title of each page can be edited by me anytime?" … "I like
   editing it on its page so I can view what's on it as I type - go"): a pencil at the end of the paragraph under a page's
   title (admin only) edits it in place; **Save** shows her wording to everyone, **Use the original** puts the built-in one
-  back (page_texts, migration 0376). Pages about one record (a vendor, an order) build theirs and have no pencil. Reminder
+  back (page_texts, migration 0382). Pages about one record (a vendor, an order) build theirs and have no pencil. Reminder
   task made for her: fix the Sno-Park page's paragraph (due Nov 14).
+- Nov 13, Dana, WFS ("as the wfs orders come in, and the invoice continues to match the invoice number of previous ones with
+  the appended -2, -3, -4, etc vms needs to keep referencing the confirmation from that season's order, or orders and
+  matching the product until we have received all items in" … "the back check follows my rule of marking things with
+  actual date it happened" … "Ok go"): built (migrations 0376-0378). A vendor tick **Ships one order in several
+  shipments** (WFS has it). For such a vendor an invoice is a shipment, never the whole order: `order_shipments` (one row
+  per invoice, in ship-date order, with units and the running count) and `order_tally(order)` (the confirmation's items
+  against every invoice billed so far, sizes counted against their item; items billed but not confirmed listed apart).
+  The order is Shipped ("Shipped in part … still to come" in its note) while anything is left and Received, dated the
+  last shipment, when the confirmation is filled; with no confirmation item list it stays on order. Order page: the
+  **Received so far** box (shipments with one-click invoices, the ordered/in/still table). Vendor feed: "Shipment n of
+  PO … arrived" dated the ship day. Back-check: the first-invoice close-outs of WFS orders from this morning were undone and
+  re-run as shipments; every history row carries the invoice date. WFS2426 today: 5 shipments (8/24, 9/25 ×2, 10/19,
+  10/29), 1,098 confirmed units, 413 in, 685 still to come, plus 27 billed items the SO 88198 spreadsheet (a
+  "processing + backordered" list, not a full confirmation) never listed. Worldwide's row for I88198-5 ($13,101.75) has no
+  lines or date yet, so that shipment takes its 425 units and Oct 29 date from Claude's reading of the vendor's invoice.
+  Still to do, shown to Dana first: fold the per-shipment sheet rows (I88198-2/-3/-4, the ten B671437 rows, WORLD020526)
+  into their one order per show.
+- Nov 13, Dana ("add a column for freight percentage"): the Received so far box is a table per shipment with Goods, Freight
+  and Freight % (freight ÷ goods; "collect" when the invoice carries none because the carrier bills us) and a total line.
+  Freight is Worldwide's freight amount on the invoice, else its freight line, else the freight Claude read on the vendor's
+  own invoice (migration 0379). WFS2426: $724.05 freight on $21,783 of goods, 3.3%; shipments 1 and 2 went UPS collect.
+- Nov 13, Dana ("Ok fold"): WFS's per-shipment sheet rows folded into one order per show (migrations 0380, 0381;
+  order_fold_parts merges each part with everything it had, history rows keep their own dates, the kept order's cost
+  becomes the sum when it was itself only the first shipment, received date the last shipment's, and a part's Paid never
+  pays the order while an invoice on it is open). Folded: I88198-2/-3/-4 → WFS2426 (5 shipments); WORLD020526 → I87727
+  (4 shipments, $966.36, back to Entered because I87727-3 $838.20 is unpaid); nine rows → B671437 8/26/25 (10 shipments,
+  $15,992.08, received through 6/28/26); six rows → B671464 / 76302 2/5/25 (7 shipments, $15,450.66); seven rows →
+  B671629 8/27/23 (8 shipments, $16,067.07). The sheet imports leave the folded rows out (order_merges). Not folded, not
+  proposed: the 2023 58982-xx rows and the 2024 PULSEW24CLOTHING rows.
+

@@ -25,6 +25,7 @@ import { OrderSourceCard } from '@/components/orders/OrderSourceCard'
 import { OrderRepsCard } from '@/components/orders/OrderRepsCard'
 import { CheckInPricing } from '@/components/orders/CheckInPricing'
 import { OrderFormCard } from '@/components/orders/OrderFormCard'
+import { ReceivedSoFarCard } from '@/components/orders/ReceivedSoFarCard'
 import { FreeShippingCard } from '@/components/orders/FreeShippingCard'
 import { FreightQuoteCard } from '@/components/orders/FreightQuoteCard'
 import { ShipmentRequestCard } from '@/components/orders/ShipmentRequestCard'
@@ -120,6 +121,7 @@ export default function OrderDetailPage() {
         <div className="space-y-6 lg:col-span-2">
           {/* what we ordered, off the vendor's own order form, with Edit the order / Send the changes (Dana, Nov 13) */}
           <OrderFormCard orderId={o.id} canEdit={canEdit} onChange={q.refetch} />
+          <ReceivedSoFarCard orderId={o.id} documents={o.documents} shipsInParts={!!o.vendor?.ships_in_parts} />
           {groups.map(([title, facts]) => {
             const shown = facts.filter(([, v]) => v !== null && v !== undefined && v !== '')
             if (!shown.length) return null

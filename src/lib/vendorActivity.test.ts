@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildFeed, docItem, emailItem, orderItems, statusItem, taskItem } from './vendorActivity'
+import { buildFeed, docItem, emailItem, orderItems, shipmentItem, statusItem, taskItem } from './vendorActivity'
 
 const doc = { id: 'd1', kind: 'invoice', label: 'Invoice 184482', file_name: 'x.pdf', doc_number: '184482', doc_date: '2026-01-28', doc_total: 10606.6, received_at: '2026-02-01', created_at: '2026-10-20T10:00:00Z', source: 'email', storage_path: 'a/b.pdf', mime_type: 'application/pdf', po_number: 'BECKER-1-13-26' }
 
@@ -22,6 +22,15 @@ describe('vendor activity feed', () => {
     expect(docItem({ ...doc, kind: 'price_list', doc_number: null, po_number: null, source: 'upload', file_name: '2026 Price List.pdf' })!.text).toBe('Filed price list: 2026 Price List.pdf')
     // our order taken from our own sent email: sent, never "received" (Dana, Nov 12)
     expect(docItem({ ...doc, kind: 'order', doc_number: null, po_number: 'SLIPPERYRACER11-10-26', source: 'email' })!.text).toBe('Sent our order for PO SLIPPERYRACER11-10-26')
+  })
+
+  it('a shipment of an order that ships in parts, dated the day it shipped', () => {
+    const sh = shipmentItem({ id: 'x1', order_id: 'o1', po_number: 'WFS2426', seq: 3, invoice_number: 'I881983', shipped_on: '2026-09-25', units: 306, received_so_far: 352, ordered_total: 1098 })!
+    expect(sh.text).toBe('Shipment 3 of PO WFS2426 arrived (invoice I881983): 352 of 1098 items in, 746 still to come')
+    expect(sh.at).toBe('2026-09-25')
+    expect(sh.to).toBe('/orders/o1')
+    expect(shipmentItem({ id: 'x2', order_id: 'o1', po_number: null, seq: 1, invoice_number: 'I1', shipped_on: '2026-09-25', units: 12, received_so_far: 12, ordered_total: 0 })!.text).toBe('Shipment 1 of an order arrived (invoice I1): 12 units')
+    expect(shipmentItem({ id: 'x3', order_id: 'o1', po_number: null, seq: 1, invoice_number: 'I1', shipped_on: null, units: 0, received_so_far: 0, ordered_total: 0 })).toBeNull()
   })
 
   it('order moves and closed tasks', () => {

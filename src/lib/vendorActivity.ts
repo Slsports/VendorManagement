@@ -11,6 +11,7 @@ export type FeedStatus = { id: string; order_id: string; po_number: string | nul
 export type FeedOrder = { id: string; po_number: string | null; order_date: string | null; placed_by: string | null; date_received: string | null; date_entered_ls: string | null; entered_by: string | null; paid_date: string | null; status?: string | null }
 export type FeedTask = { id: string; title: string; done_at: string; done_note: string | null; closed_how: string | null; who: string | null }
 export type FeedNote = { id: string; body: string; created_at: string; who: string | null }
+export type FeedShipment = { id: string; order_id: string; po_number: string | null; seq: number; invoice_number: string; shipped_on: string | null; units: number; received_so_far: number; ordered_total: number }
 
 export type FeedItem = {
   key: string
@@ -102,7 +103,15 @@ export function noteItem(n: FeedNote): FeedItem {
 }
 
 /** Everything, newest first, the first `limit`. */
-export function buildFeed(src: { emails: FeedEmail[]; docs: FeedDoc[]; orders: FeedOrder[]; statuses: FeedStatus[]; tasks: FeedTask[]; notes: FeedNote[] }, limit: number): FeedItem[] {
+/** A shipment of an order that ships in parts (Dana, Nov 13, WFS), dated the day it shipped. */
+export function shipmentItem(s: FeedShipment): FeedItem | null {
+  if (!s.shipped_on) return null
+  const po = s.po_number ? `PO ${s.po_number}` : 'an order'
+  const count = Number(s.ordered_total) > 0 ? `: ${Math.min(Number(s.received_so_far), Number(s.ordered_total))} of ${Number(s.ordered_total)} items in, ${Math.max(Number(s.ordered_total) - Number(s.received_so_far), 0)} still to come` : Number(s.units) > 0 ? `: ${Number(s.units)} units` : ''
+  return { key: `sh:${s.id}`, at: s.shipped_on, kind: 'order', text: `Shipment ${s.seq} of ${po} arrived (invoice ${s.invoice_number})${count}`, to: `/orders/${s.order_id}` }
+}
+
+export function buildFeed(src: { emails: FeedEmail[]; docs: FeedDoc[]; orders: FeedOrder[]; statuses: FeedStatus[]; tasks: FeedTask[]; notes: FeedNote[]; shipments?: FeedShipment[] }, limit: number): FeedItem[] {
   const all: FeedItem[] = [
     ...src.emails.map(emailItem),
     ...src.docs.map(docItem).filter((x): x is FeedItem => !!x),
@@ -110,6 +119,7 @@ export function buildFeed(src: { emails: FeedEmail[]; docs: FeedDoc[]; orders: F
     ...src.statuses.map(statusItem).filter((x): x is FeedItem => !!x),
     ...src.tasks.map(taskItem),
     ...src.notes.map(noteItem),
+    ...(src.shipments ?? []).map(shipmentItem).filter((x): x is FeedItem => !!x),
   ]
   return all.sort((a, b) => (sortKey(a.at) < sortKey(b.at) ? 1 : sortKey(a.at) > sortKey(b.at) ? -1 : 0)).slice(0, limit)
 }

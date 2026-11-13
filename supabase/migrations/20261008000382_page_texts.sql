@@ -1,4 +1,4 @@
--- 0376 — The paragraph under each page's title is Dana's to edit on the page (Dana, Nov 13: "Is there any way that the
+-- 0382 — The paragraph under each page's title is Dana's to edit on the page (Dana, Nov 13: "Is there any way that the
 -- paragraph under the title of each page can be edited by me anytime?" … "I like editing it on its page so I can view
 -- what's on it as I type - go"). A saved wording replaces the built-in one for everyone; removing it puts the original back.
 set local lock_timeout = '5s';

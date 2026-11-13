@@ -112,3 +112,5 @@ export type VendorNameCheck = Tables<'vendor_name_checks'>
 export type AskChat = Tables<'ask_chats'>
 export type AskMessage = Tables<'ask_messages'>
 export type ChangeRequest = Tables<'change_requests'>
+export type OrderShipment = Tables<'order_shipments'>
+export type OrderTallyRow = Database['public']['Functions']['order_tally']['Returns'][number]

@@ -281,7 +281,7 @@ export type Database = {
           is_active: boolean; created_by: string | null; created_at: string; updated_at: string
           ask_before_pictures: boolean; usual_charges: UsualCharge[]; order_set_at_show: boolean
           ls_active_items: number | null; ls_archived_items: number | null; ls_items_checked_at: string | null; ls_status: 'active' | 'inactive' | 'none' | null
-          wwd_active: boolean | null; wwd_active_as_of: string | null; parent_company: string | null; wwd_billing_names: string[]; order_sheet_senders: string[]; vendor_id_rule: string | null; ask_freight_quote: boolean; no_freight: boolean; no_routing_letter: boolean; fixed_prices: boolean; no_order_checks: boolean }
+          wwd_active: boolean | null; wwd_active_as_of: string | null; parent_company: string | null; wwd_billing_names: string[]; order_sheet_senders: string[]; vendor_id_rule: string | null; ask_freight_quote: boolean; no_freight: boolean; no_routing_letter: boolean; fixed_prices: boolean; no_order_checks: boolean; ships_in_parts: boolean }
         Insert: {
           id?: string; organization_id: string; name: string; lightspeed_name?: string | null; lightspeed_vendor_id?: string | null; po_code?: string | null; aliases?: string[]
           rep_group_id?: string | null; assigned_buyer_id?: string | null; payment_terms_id?: string | null
@@ -294,7 +294,7 @@ export type Database = {
           is_active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string
           ask_before_pictures?: boolean; usual_charges?: UsualCharge[]; order_set_at_show?: boolean
           ls_active_items?: number | null; ls_archived_items?: number | null; ls_items_checked_at?: string | null
-          wwd_active?: boolean | null; wwd_active_as_of?: string | null; parent_company?: string | null; wwd_billing_names?: string[]; order_sheet_senders?: string[]; vendor_id_rule?: string | null; ask_freight_quote?: boolean; no_freight?: boolean; no_routing_letter?: boolean; fixed_prices?: boolean; no_order_checks?: boolean }
+          wwd_active?: boolean | null; wwd_active_as_of?: string | null; parent_company?: string | null; wwd_billing_names?: string[]; order_sheet_senders?: string[]; vendor_id_rule?: string | null; ask_freight_quote?: boolean; no_freight?: boolean; no_routing_letter?: boolean; fixed_prices?: boolean; no_order_checks?: boolean; ships_in_parts?: boolean }
         Update: {
           id?: string; organization_id?: string; name?: string; lightspeed_name?: string | null; lightspeed_vendor_id?: string | null; po_code?: string | null; aliases?: string[]
           rep_group_id?: string | null; assigned_buyer_id?: string | null; payment_terms_id?: string | null
@@ -307,7 +307,7 @@ export type Database = {
           is_active?: boolean; created_by?: string | null; created_at?: string; updated_at?: string
           ask_before_pictures?: boolean; usual_charges?: UsualCharge[]; order_set_at_show?: boolean
           ls_active_items?: number | null; ls_archived_items?: number | null; ls_items_checked_at?: string | null
-          wwd_active?: boolean | null; wwd_active_as_of?: string | null; parent_company?: string | null; wwd_billing_names?: string[]; order_sheet_senders?: string[]; vendor_id_rule?: string | null; ask_freight_quote?: boolean; no_freight?: boolean; no_routing_letter?: boolean; fixed_prices?: boolean; no_order_checks?: boolean }
+          wwd_active?: boolean | null; wwd_active_as_of?: string | null; parent_company?: string | null; wwd_billing_names?: string[]; order_sheet_senders?: string[]; vendor_id_rule?: string | null; ask_freight_quote?: boolean; no_freight?: boolean; no_routing_letter?: boolean; fixed_prices?: boolean; no_order_checks?: boolean; ships_in_parts?: boolean }
         Relationships: [
           { foreignKeyName: 'vendors_organization_id_fkey'; columns: ['organization_id']; isOneToOne: false; referencedRelation: 'organizations'; referencedColumns: ['id'] },
           { foreignKeyName: 'vendors_rep_group_id_fkey'; columns: ['rep_group_id']; isOneToOne: false; referencedRelation: 'rep_groups'; referencedColumns: ['id'] },
@@ -1094,6 +1094,12 @@ export type Database = {
           { foreignKeyName: 'billcom_forwards_email_id_fkey'; columns: ['email_id']; isOneToOne: true; referencedRelation: 'emails'; referencedColumns: ['id'] },
         ]
       }
+      order_shipments: {
+        Row: { id: string; organization_id: string; order_id: string; seq: number; invoice_key: string; invoice_number: string; wwd_invoice_id: string | null; vendor_link_id: string | null; shipped_on: string | null; amount: number | null; freight: number | null; units: number; received_so_far: number; ordered_total: number; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; order_id: string; seq: number; invoice_key: string; invoice_number: string; wwd_invoice_id?: string | null; vendor_link_id?: string | null; shipped_on?: string | null; amount?: number | null; freight?: number | null; units?: number; received_so_far?: number; ordered_total?: number; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; order_id?: string; seq?: number; invoice_key?: string; invoice_number?: string; wwd_invoice_id?: string | null; vendor_link_id?: string | null; shipped_on?: string | null; amount?: number | null; freight?: number | null; units?: number; received_so_far?: number; ordered_total?: number; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
       wwd_invoice_lines: {
         Row: { id: string; organization_id: string; invoice_id: string; line_no: number; vendor_item_id: string | null; upc: string | null; description: string | null; quantity: number | null; unit_price: number | null; unit_discount: number | null; amount: number | null; is_freight: boolean; created_at: string }
         Insert: { id?: string; organization_id: string; invoice_id: string; line_no: number; vendor_item_id?: string | null; upc?: string | null; description?: string | null; quantity?: number | null; unit_price?: number | null; unit_discount?: number | null; amount?: number | null; is_freight?: boolean; created_at?: string }
@@ -1173,6 +1179,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      order_tally: { Args: { p_order: string }; Returns: { item_key: string; vendor_item_id: string; description: string | null; ordered: number; received: number; still: number; on_confirmation: boolean }[] }
       resolve_booth_rep: { Args: { p_item: string; p_yes: boolean }; Returns: undefined }
       edenred_unplaced_files: { Args: { p_email: string }; Returns: { id: string; file_name: string; mime_type: string | null; gmail_attachment_id: string | null; note: string | null }[] }
       edenred_task_close: { Args: { p_email: string }; Returns: number }
