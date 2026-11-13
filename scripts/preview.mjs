@@ -13,7 +13,7 @@ loadEnv()
 const args = process.argv.slice(2)
 const flag = (name) => args.includes(name)
 const opt = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback)
-const paths = args.filter((a, i) => a.startsWith('/') && args[i - 1] !== '--out')
+const paths = args.filter((a, i) => a.startsWith('/') && args[i - 1] !== '--out' && args[i - 1] !== '--click' && args[i - 1] !== '--count')
 const out = opt('--out', join(process.env.TMPDIR ?? '/tmp', 'vms-preview'))
 mkdirSync(out, { recursive: true })
 const email = process.env.VMS_TEST_EMAIL
@@ -46,6 +46,7 @@ const browser = await chromium.launch(browserPath ? { executablePath: browserPat
 try {
   for (const [label, viewport] of [['computer', { width: 1366, height: 900 }], ['phone', { width: 390, height: 844 }]]) {
     const page = await browser.newPage({ viewport, deviceScaleFactor: label === 'phone' ? 2 : 1 })
+    page.on('pageerror', (e) => console.log(label, 'page error:', e.message))
     await page.goto(`${base}/login`)
     await page.fill('#email', email)
     await page.fill('#password', password)
@@ -55,6 +56,11 @@ try {
       await page.goto(`${base}${p}`)
       await page.waitForLoadState('networkidle').catch(() => {})
       await page.waitForTimeout(1500)
+      // --click "Button text": press a button on the page before the screenshot (to see a box that opens)
+      const clickText = args[args.indexOf('--click') + 1]
+      if (args.includes('--click') && clickText) { await page.getByRole('button', { name: clickText, exact: true }).first().click(); await page.waitForTimeout(1200) }
+      // --count "css selector": say how many of these the page has (checking a list rendered in full)
+      if (args.includes('--count')) console.log(label, 'count', await page.locator(args[args.indexOf('--count') + 1]).count())
       const file = join(out, `${label}${p.replace(/[^a-z0-9]+/gi, '_') || '_home'}.png`)
       await page.screenshot({ path: file, fullPage: !flag('--viewport-only') })
       console.log(file)

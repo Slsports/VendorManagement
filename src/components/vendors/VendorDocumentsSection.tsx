@@ -202,6 +202,7 @@ export function VendorDocumentsSection({ vendorId, vendorName, organizationId, u
           {seesAccounting && l.kind === 'invoice' && l.paid_at && l.paid_thread_id ? <Link to={l.paid_email_id ? matchLink(l.paid_thread_id, { email_id: l.paid_email_id }) : `${ROUTES.mail}/${l.paid_thread_id}`} className="mr-1 text-brand hover:underline">payment email</Link> : null}
           {l.kind === 'confirmation' && l.replaced_po ? <Badge tone="success" className="mr-1">Final (replaced PO {l.replaced_po})</Badge> : null}
           {l.kind === 'confirmation' && l.superseded_at ? <Badge tone="neutral" className="mr-1">Old: replaced by an updated confirmation</Badge> : null}
+          {l.kind === 'order' && l.superseded_at ? <Badge tone="neutral" className="mr-1">Old: replaced by a revised order</Badge> : null}
           {folder && folder.kinds.length > 1 && folder.id !== 'proofs' ? <Badge tone="neutral" className="mr-1">{LINK_KIND_LABELS[l.kind]}</Badge> : null}
           {l.store_code ? <Badge tone="info" className="mr-1">{l.store_code}</Badge> : null}
           {l.doc_number || l.doc_total != null ? <span className="mr-1 font-medium text-stone-700">{[l.doc_number ? `#${l.doc_number}` : null, l.doc_date ? new Date(`${l.doc_date}T12:00:00`).toLocaleDateString() : null, l.doc_total != null ? `$${Number(l.doc_total).toFixed(2)}` : null].filter(Boolean).join(' · ')} ·</span> : null}
