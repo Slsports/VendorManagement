@@ -72,7 +72,7 @@ export async function policyActivityFeed(policyId: string, limit: number): Promi
     }),
     ...(pays.data ?? []).flatMap((p) => {
       const out: AccountingFeedItem[] = []
-      out.push({ key: `pay:${p.id}`, at: p.pay_on, kind: 'payment', text: `Autopay of ${money(p.amount)} to ${p.payee} due to draft${p.confirmed_email_id ? ', confirmed by their email' : ''}`, to: p.email_id && thread.get(p.email_id) ? `/mail/${thread.get(p.email_id)}` : undefined })
+      out.push({ key: `pay:${p.id}`, at: p.pay_on, kind: 'payment', text: `Autopay of ${money(p.amount)} to ${p.payee} set to draft ${new Date(`${p.pay_on}T12:00:00`).toLocaleDateString()}${p.confirmed_email_id ? ', confirmed by their email' : ''}`, to: p.email_id && thread.get(p.email_id) ? `/mail/${thread.get(p.email_id)}` : undefined })
       return out
     }),
   ]
