@@ -14,7 +14,7 @@ One email per order tells the vendor what to do about freight. It lists the four
 Click **Freight email** and the email opens ready to change or send:
 - at the top of any order (Sent, Placed, Confirmed or Shipped)
 - in the order's **Shipping & receiving** box
-- on the vendor page, in the **Freight email** box, next to each open order
+- on the vendor page, in the **Freight** card, next to each order still to ship
 - on freight tasks (**Get freight quote**, **No shipment details yet**, **Check freight on the confirmation**, **Ship and receive**)
 - next to an open order in the vendor's **Activity feed**
 

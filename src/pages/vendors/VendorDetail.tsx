@@ -30,7 +30,6 @@ import { VendorShowsSection } from '@/components/vendors/VendorShowsSection'
 import { VendorOrdersSection } from '@/components/vendors/VendorOrdersSection'
 import { VendorMailSection } from '@/components/vendors/VendorMailSection'
 import { VendorPaymentsSection } from '@/components/vendors/VendorPaymentsSection'
-import { VendorFreightSection } from '@/components/vendors/VendorFreightSection'
 import { VendorShipmentSection } from '@/components/vendors/VendorShipmentSection'
 import { VendorSnoparkSection } from '@/components/vendors/VendorSnoparkSection'
 import { WwdInvoiceList } from '@/components/payments/WwdInvoiceList'
@@ -38,8 +37,7 @@ import { ComposeDialog, type ComposeDraft } from '@/components/mail/ComposeDialo
 import { VendorScorecard } from '@/components/scores/VendorScorecard'
 import { VendorItemRulesSection } from '@/components/vendors/VendorItemRulesSection'
 import { PhoneLinks } from '@/components/shared/Phones'
-import { VendorRoutingLetter } from '@/components/vendors/VendorRoutingLetter'
-import { VendorFreightEmail } from '@/components/vendors/VendorFreightEmail'
+import { VendorFreightCard } from '@/components/vendors/VendorFreightCard'
 import { VendorConfirmBox } from '@/components/vendors/VendorConfirmBox'
 import { VendorActivityFeed } from '@/components/vendors/VendorActivityFeed'
 import { Alert, Badge, Button, Select, Spinner, Textarea } from '@/components/ui'
@@ -292,8 +290,8 @@ export default function VendorDetailPage() {
         </div>
         {/* CA Sno-Park: the permit submission page link sits at the top of its page (Dana, Nov 10) */}
         <VendorSnoparkSection vendorId={v.id} />
-        {v.no_freight ? null : <VendorFreightEmail vendorId={v.id} canEdit={canEdit} />}
-        {v.no_freight ? null : <VendorRoutingLetter vendorId={v.id} organizationId={v.organization_id} />}
+        {/* one Freight card: routing letter, freight email per order, shipments (Dana, Nov 13) */}
+        {v.no_freight ? null : <VendorFreightCard vendorId={v.id} organizationId={v.organization_id} canEdit={canEdit} />}
         <VendorLightspeedBox vendor={v} canEdit={canEdit} onChange={() => void vendorQ.refetch()} />
 
         <VendorOrderingPanel vendor={{ id: v.id, name: v.name, aliases: v.aliases }} assignedBuyerId={v.assigned_buyer_id} canEdit={canEdit} windows={v.vendor_order_windows} />
@@ -310,7 +308,6 @@ export default function VendorDetailPage() {
         <VendorOrdersSection vendorId={v.id} vendorName={v.name} canAdd={canEdit} />
         <VendorPaymentsSection vendorId={v.id} />
         <VendorShipmentSection vendorId={v.id} />
-        {v.no_freight ? null : <VendorFreightSection vendorId={v.id} />}
         <WwdInvoiceList fold vendorId={v.id} />
 
         <FoldSection id="notes" open={notesOpen} onOpenChange={setNotesOpen} title="Notes" summary={notesQ.isLoading ? null : notesQ.data?.length ? `${notesQ.data.length} note${notesQ.data.length === 1 ? '' : 's'}` : 'None'} className="lg:col-span-1">

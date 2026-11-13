@@ -4562,3 +4562,10 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   activity feed (freight_email_open, any order not cancelled). Wording in message_templates, edited on the new
   **Templates** page (menu); the routing letter listed there too. The old per-terms check emails are replaced; the tick
   "confirmation shows the agreed terms" still settles free freight and caps of 10% or less (migration 0362).
+- Nov 13, Dana ("we only need one card for freight for each vendor. We can log whether a vendor received our most current
+  routing letter in the Freight card" … "go, both"): the vendor page has one **Freight** card: the routing letter (has the
+  current version / not confirmed / older version / not sent, Open the letter, Every send), the Freight email for each order
+  still to ship, and Shipments (carrier bills, folded). The Routing letter, Freight email and Freight boxes are gone.
+  Preview of the freight email on Templates (migration 0363, writes nothing). The freight email now goes to the vendor's own
+  main rep when there is no shipping, orders or rep-group contact (migration 0364; open orders with no address 54 → 27,
+  the rest have no email on file at all).
