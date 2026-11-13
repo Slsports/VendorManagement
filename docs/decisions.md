@@ -4579,3 +4579,10 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   in the conversation the order went out in with the revised form attached; the person presses Send (Nov 9 rule). Also
   Nov 13: "it says the vendor received it. We have no idea if they received if until we receive a response from them…
   Activity log should only say that I sent it" — the activity feed reads "Sent our order for PO …" for our own sent order.
+- Nov 13, Dana: "an order placed 1-19-26 (10 months ago) is showing as 'placed' as of today … Why is this old, closed and
+  received order even in my activity feed?" Cause (confirmed): the sent-mail history reader made SLIPPERY011926 on Nov 6
+  from the Jan 19-21 "Missing items" emails; on Nov 12 the new Sent → Placed rule read Marcy's Jan 20 reply and stamped
+  the move with Nov 12. Fixed (migration 0365): a move made from a reply is dated by the reply (ack_at and the history
+  row); back-check re-dated the 8 moves made Nov 12. Dana: the January order "is the same order" as PO 6914, "we received
+  the confirmation from sr on 1/20/26": its emails, file and lines moved to 6914 (acknowledged Jan 20) and the duplicate
+  was removed.
