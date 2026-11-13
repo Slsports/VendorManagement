@@ -4599,3 +4599,8 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   business days; a renewal task on any policy closes itself when the new premium is the same, lower or up less than 1%
   and stays (titled with the increase) when it is up 1% or more; "Personal, not SLSI" mark on companies and papers; an
   activity feed on policy and company pages. "yes go all".
+- Nov 13, Dana: "IRS and FTB send immediate payment confirmations so Those should notify me immediately if they were not made
+  by the date due to give me time to make them if the payment didnt go to avoid fines." On file, IRS Direct Pay and FTB Web
+  Pay confirmations come the moment a payment is scheduled or made (days ahead) and nothing follows. Migration 0368: for a
+  tax payee the confirmation counts up to 45 days ahead, and with none by the start of the due date the task is made at once
+  and reminds her; insurers and the bank keep the 3-business-day check. The autopay sweep runs hourly.

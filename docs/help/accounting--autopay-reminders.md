@@ -11,8 +11,9 @@ When a payment is scheduled to come out of the bank (an estimated tax payment MB
 2. Each payment with a date still to come becomes a task, for example **Autopay Dec 26: FTB $2,000.00 (2026 CA estimated tax)**. One that still has to be paid by hand says **Pay by …** instead.
 3. The task reminds you 5 days before the date, the way you get reminders (text or email). Click it to open the email the payment came from.
 4. On the payment date VMS closes the task itself (it shows under **Closed by VMS** on the Tasks page, dated the payment date). An insurer's scheduled-payment reminder never makes a separate "Pay" task: one reminder, closed on the date.
-5. If no payment confirmation reaches billing@ within 3 business days of the date, VMS makes a new task: **Check on the autopay that was supposed to draft on Nov 9: Drive Insurance $2,842.64**. Look at the bank or their account; the task closes itself when a confirmation email comes in later.
-6. For an insurance policy, the payment is written on the policy's **Policy years** (the term, the amount, the date) and shows in the policy's **Activity feed**.
+5. IRS and FTB payments: Direct Pay and Web Pay email a confirmation the moment a payment is scheduled or made. If none has reached billing@ by the start of the due date, VMS makes a task right away and reminds you, **IRS $87,000.00 (2026 federal estimated tax) is due Jan 15: no payment confirmation on file, make it today if it was not made**, so there is time to pay that day. It closes itself when the confirmation comes in.
+6. For an insurer or the bank, if no payment confirmation reaches billing@ within 3 business days of the date, VMS makes a new task: **Check on the autopay that was supposed to draft on Nov 9: Drive Insurance $2,842.64**. Look at the bank or their account; the task closes itself when a confirmation email comes in later.
+7. For an insurance policy, the payment is written on the policy's **Policy years** (the term, the amount, the date) and shows in the policy's **Activity feed**.
 
 ## Autopays that repeat without an email
 Some autopays come out on the same schedule without a new email each time. VMS reminds you 5 days before the next one from the pattern, with **(expected)** in the title and last time's amount:
