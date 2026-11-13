@@ -331,6 +331,12 @@ export type Database = {
           { foreignKeyName: 'vendor_emails_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
         ]
       }
+      page_texts: {
+        Row: { organization_id: string; page_key: string; description: string; updated_by: string | null; updated_at: string }
+        Insert: { organization_id: string; page_key: string; description: string; updated_by?: string | null; updated_at?: string }
+        Update: { organization_id?: string; page_key?: string; description?: string; updated_by?: string | null; updated_at?: string }
+        Relationships: []
+      }
       order_merges: {
         Row: { id: string; organization_id: string; kept_order_id: string; merged_order_id: string; source_key: string | null; po_number: string | null; snapshot: Json; note: string | null; merged_by: string | null; merged_at: string }
         Insert: { id?: string; organization_id: string; kept_order_id: string; merged_order_id: string; source_key?: string | null; po_number?: string | null; snapshot: Json; note?: string | null; merged_by?: string | null; merged_at?: string }

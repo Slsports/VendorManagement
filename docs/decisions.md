@@ -4647,3 +4647,8 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   Gold Medal ×2, World Famous I87727, Ace USA, Eastman) once the sheet may move a status VMS set **forward** (never back;
   migration 0375). 3 sheet rows not matched to an order were left for Dana (Scope 8/4 $2,456, Yakima 8/6 $175.82, Zebco
   9/2 $446.04: VMS has Scope 8/4 $2,832, Yakima 8/9 $209.39 and Zebco 9/2 $1,032.36).
+- Nov 13, Dana ("Is there any way that the paragraph under the title of each page can be edited by me anytime?" … "I like
+  editing it on its page so I can view what's on it as I type - go"): a pencil at the end of the paragraph under a page's
+  title (admin only) edits it in place; **Save** shows her wording to everyone, **Use the original** puts the built-in one
+  back (page_texts, migration 0376). Pages about one record (a vendor, an order) build theirs and have no pencil. Reminder
+  task made for her: fix the Sno-Park page's paragraph (due Nov 14).
