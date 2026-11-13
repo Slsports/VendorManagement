@@ -4546,3 +4546,7 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   confirmed order; the shipment details email is the one shipping email, and the Ship and receive task and the order's
   Shipping & receiving box point to it (**Hand it to logistics** by hand makes both). None of the old drafts was waiting
   (migration 0361).
+- Nov 13, Dana: "I want them all deleted so reset that." The 118 routing letter emails that Prepare emails (vendors with
+  open orders) had put in Mail › Drafts for version 7 were deleted with their send rows, none sent; the Routing letter page
+  is back to nothing prepared. Pending her go: save her edited email text, an "Email the routing letter" button on each
+  vendor page, and a Documents & Email Templates page.
