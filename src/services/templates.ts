@@ -1,0 +1,51 @@
+import { supabase } from '@/lib/supabase'
+import type { MessageTemplate } from '@/types'
+
+// What VMS writes to vendors, in one place to read and edit (Dana, Nov 13: "anytime we have an email draft or letter that
+// sends to vendors I want them in one place where I can edit any time I want").
+
+export async function listTemplates(organizationId: string): Promise<MessageTemplate[]> {
+  const { data, error } = await supabase.from('message_templates').select('*').eq('organization_id', organizationId).order('category').order('title')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function saveTemplate(organizationId: string, key: string, subject: string, body: string): Promise<void> {
+  const { error } = await supabase.from('message_templates').update({ subject, body }).eq('organization_id', organizationId).eq('key', key)
+  if (error) throw error
+}
+
+/** The order's Freight email draft (made now when there is none): one click from anywhere (Dana, Nov 13). */
+export async function openFreightEmail(orderId: string): Promise<string> {
+  const { data, error } = await supabase.rpc('freight_email_open', { p_order: orderId })
+  if (error) throw error
+  return data as string
+}
+
+/** A vendor's orders still to ship (Sent, Placed, Confirmed, Shipped) and when their freight email went. */
+export async function listOpenOrdersForFreight(vendorId: string) {
+  const { data, error } = await supabase.from('orders').select('id, po_number, order_date, est_cost, status, ship_email_sent_at')
+    .eq('vendor_id', vendorId).in('status', ['open', 'awaiting_confirmation', 'confirmed', 'shipped']).order('order_date', { ascending: false, nullsFirst: false }).limit(20)
+  if (error) throw error
+  return (data ?? []).map((o) => ({ ...o, sent: o.ship_email_sent_at as string | null }))
+}
+
+export interface FreightPreview { subject: string; body: string; to_emails: string[]; form_ready: boolean; has_letter: boolean }
+
+/** The Freight email filled in for one order, from the wording on screen (saved or not). Writes nothing (Dana, Nov 13). */
+export async function previewFreightEmail(orderId: string, subject: string, body: string): Promise<FreightPreview> {
+  const { data, error } = await supabase.rpc('freight_email_preview', { p_order: orderId, p_subject: subject, p_body: body })
+  if (error) throw error
+  const row = (data ?? [])[0]
+  if (!row) throw new Error('That order was not found.')
+  return row
+}
+
+/** Orders to preview with: every order still to ship, newest first. */
+export async function listOrdersForPreview(organizationId: string) {
+  const { data, error } = await supabase.from('orders').select('id, po_number, order_date, status, vendor:vendors!orders_vendor_id_fkey(name)')
+    .eq('organization_id', organizationId).in('status', ['open', 'awaiting_confirmation', 'confirmed', 'shipped'])
+    .order('order_date', { ascending: false, nullsFirst: false }).limit(300)
+  if (error) throw error
+  return (data ?? []).map((o) => ({ id: o.id, po: o.po_number as string | null, status: o.status as string, vendor: (o.vendor as { name: string } | null)?.name ?? 'Vendor' }))
+}

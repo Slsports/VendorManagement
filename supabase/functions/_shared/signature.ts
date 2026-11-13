@@ -30,8 +30,13 @@ export function placeSignature(body: string, signature: string | null): { top: s
 /** Plain text version of the email. */
 export function textEmail(body: string, signature: string | null): string {
   const p = placeSignature(body, signature)
-  return [p.top, p.signature, p.quoted].filter((x) => x).join('\n\n') + '\n'
+  return [plainMarks(p.top), p.signature, p.quoted].filter((x) => x).join('\n\n') + '\n'
 }
+
+/** A template's marks in plain text (Nov 13, the Freight email): [Click Here](url) → "Click Here: url", **bold** → bold. */
+export const plainMarks = (s: string) => s
+  .replace(/\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g, '$1: $2')
+  .replace(/\*\*([^*\n]+)\*\*/g, '$1')
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 const lines = (s: string) => esc(s).replace(/\n/g, '<br>')
@@ -40,7 +45,11 @@ const linkify = (s: string) => s
   .replace(/(^|[\s|])((?:https?:\/\/)?(?:www\.)?shaverlakesports\.com)(?![^<]*>)/gi, (_m, pre: string, url: string) => `${pre}<a href="https://${url.replace(/^https?:\/\//, '')}" style="color:#0f6b3a">${url}</a>`)
 
 /** Full web addresses in the message become links (the routing letter's "I received it" link, Oct 13). */
-const links = (s: string) => s.replace(/(^|[\s(])(https:\/\/[^\s<>"]+[^\s<>".,;:)])/g, (_m, pre: string, url: string) => `${pre}<a href="${url}" style="color:#0f6b3a">${url}</a>`)
+const links = (s: string) => s
+  // a template's [Click Here](url) and **bold** (Nov 13, the Freight email)
+  .replace(/\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g, (_m, text: string, url: string) => `<a href="${url}" style="color:#0f6b3a;font-weight:bold">${text}</a>`)
+  .replace(/\*\*([^*<]+)\*\*/g, '<b>$1</b>')
+  .replace(/(^|[\s(])(https:\/\/[^\s<>"]+[^\s<>".,;:)])/g, (_m, pre: string, url: string) => `${pre}<a href="${url}" style="color:#0f6b3a">${url}</a>`)
 
 /** HTML version: the body, then the logo and the signature, then any quoted mail in grey. */
 export function htmlEmail(body: string, signature: string | null, logoUrl = LOGO_URL): string {

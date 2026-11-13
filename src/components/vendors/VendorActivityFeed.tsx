@@ -8,6 +8,7 @@ import { downloadVendorFile } from '@/services/lines'
 import type { FeedItem } from '@/lib/vendorActivity'
 import { shortDate } from '@/lib/utils'
 import { Button } from '@/components/ui'
+import { FreightEmailButton } from '@/components/orders/FreightEmailButton'
 
 const FIRST = 12
 const MORE = 30
@@ -53,6 +54,7 @@ export function VendorActivityFeed({ organizationId, vendorId, onNote }: { organ
                   <li key={r.key} className="flex gap-2">
                     <span aria-hidden="true" className="text-stone-400">•</span>
                     {line(r)}
+                    {r.freight_order_id ? <span className="shrink-0"><FreightEmailButton orderId={r.freight_order_id} variant="ghost" /></span> : null}
                   </li>
                 ))}
               </ul>

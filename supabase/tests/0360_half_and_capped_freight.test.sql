@@ -13,13 +13,13 @@ begin
   insert into public.vendor_links (organization_id, vendor_id, kind, label, storage_path, received_at, order_id, email_id) values (v_org, v, 'confirmation', 'Conf', 'x/0360a.pdf', current_date, o, e);
   update public.orders set status = 'confirmed' where id = o;
   select * into r from public.shipment_request_email((select id from public.shipment_requests where order_id = o));
-  if r.body not like '%can ship it without sending us a quote%' or r.body like '%/ship/%' then raise exception 'cap 8%%: wrong email: %', r.body; end if;
+  if r.body not like '%Cap of 10% or less of our merchandise cost:** reply to this email to confirm the cap and ship it%' then raise exception 'cap 8%%: wrong email: %', r.body; end if;
   -- capped 15%: quote and form
   insert into public.orders (organization_id, vendor_id, status, po_number, source, free_shipping, freight_terms, freight_cap_pct) values (v_org, v, 'awaiting_confirmation', 'C0360B', 'manual', false, 'capped', 15) returning id into o2;
   insert into public.vendor_links (organization_id, vendor_id, kind, label, storage_path, received_at, order_id, email_id) values (v_org, v, 'confirmation', 'Conf B', 'x/0360b.pdf', current_date, o2, e);
   update public.orders set status = 'confirmed' where id = o2;
   select * into r from public.shipment_request_email((select id from public.shipment_requests where order_id = o2));
-  if r.body not like '%/ship/%' or r.body not like '%hold the shipment%' then raise exception 'cap 15%%: no form'; end if;
+  if r.body not like '%/ship/%' or r.body not like '%Cap over 10%:** fill out the freight form%' then raise exception 'cap 15%%: no form'; end if;
 
   -- half freight: the bill line on the order → Trevor's email asking for half, bill attached
   insert into public.orders (organization_id, vendor_id, status, po_number, source, free_shipping, freight_terms) values (v_org, v, 'shipped', 'H0360', 'manual', false, 'half') returning id into o3;

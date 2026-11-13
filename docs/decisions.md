@@ -4550,6 +4550,18 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   open orders) had put in Mail › Drafts for version 7 were deleted with their send rows, none sent; the Routing letter page
   is back to nothing prepared. Pending her go: save her edited email text, an "Email the routing letter" button on each
   vendor page, and a Documents & Email Templates page.
+- Nov 13, Dana ("go, I will test with Paricon when its done"): the **Freight email**, one per order, her wording paragraph
+  by paragraph: thanks; find your terms; routing letter attached, keep it on record; 1 free (reply to confirm, ship, no
+  quote or approval); 2 half (we approve a quote first: Click Here); 3 cap (10% or less: reply and ship; over 10%: Click
+  Here, we get back to you promptly); 4 we pay (10% or less: ship and invoice, click here to confirm the routing
+  instructions; over 10%: Click Here); the form fills in our PO; questions to orders@. Drafted only once the confirmation
+  is checked (Confirmed) — "Vms should not send freight letters until we have compared the confirmation with our order".
+  Every Click Here is the order's own form; the attached routing letter is drawn for that order with its form link
+  (gmail-send); the receipt click records the routing letter for that person (no automatic reminder). One-click
+  **Freight email** button: order header, Shipping & receiving, vendor page box, freight tasks, open orders in the
+  activity feed (freight_email_open, any order not cancelled). Wording in message_templates, edited on the new
+  **Templates** page (menu); the routing letter listed there too. The old per-terms check emails are replaced; the tick
+  "confirmation shows the agreed terms" still settles free freight and caps of 10% or less (migration 0362).
 - Nov 13, Dana: "Paricon is out of cm130 (hardwood snowboard) so im putting it back on slippery racers order. I need to be able
   to edit these orders and resend. Where can I do it without downloading to my computer?" Built: **What we ordered** at the
   top of the order page, read straight off the vendor's own Excel order form we emailed (function order-form, module

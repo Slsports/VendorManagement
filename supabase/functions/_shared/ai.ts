@@ -1782,7 +1782,7 @@ export interface ShipmentReplyEmail { email_id: string; from: string | null; sub
 
 /** What the vendor's reply says about freight: free, the terms we asked about, charged, the details themselves, or nothing. */
 export async function readShipmentReply(db: SupabaseClient, org: string, e: ShipmentReplyEmail): Promise<ShipmentReplyReading | null> {
-  const asked = e.kind === 'details' ? 'the shipment details and their freight quote when the freight is over 10% of the merchandise (or a reply that they pay the full freight, backorders included; at 10% or less they may simply ship it and invoice the freight, Dana, Nov 12)'
+  const asked = e.kind === 'details' ? 'to follow our Freight email (Dana, Nov 13): free freight → reply confirming this order and any backorders ship free (answer "free"); a freight cap of 10% or less → reply confirming the cap and ship (answer "terms_ok"); half freight, a cap over 10%, or we pay over 10% → fill out our freight form with their quote (shipment details written in the reply count as "details"); we pay 10% or less → just ship and invoice the freight'
     : e.kind === 'free_check' ? 'to confirm the order ships free to us, backorders included'
     : e.kind === 'half_check' ? 'to confirm they cover half of the freight, and the shipment details' : `to confirm freight is capped at ${e.cap_pct ?? '?'}% of the order, and the shipment details`
   const res = await claude().messages.parse({

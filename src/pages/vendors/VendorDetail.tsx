@@ -39,6 +39,7 @@ import { VendorScorecard } from '@/components/scores/VendorScorecard'
 import { VendorItemRulesSection } from '@/components/vendors/VendorItemRulesSection'
 import { PhoneLinks } from '@/components/shared/Phones'
 import { VendorRoutingLetter } from '@/components/vendors/VendorRoutingLetter'
+import { VendorFreightEmail } from '@/components/vendors/VendorFreightEmail'
 import { VendorConfirmBox } from '@/components/vendors/VendorConfirmBox'
 import { VendorActivityFeed } from '@/components/vendors/VendorActivityFeed'
 import { Alert, Badge, Button, Select, Spinner, Textarea } from '@/components/ui'
@@ -291,6 +292,7 @@ export default function VendorDetailPage() {
         </div>
         {/* CA Sno-Park: the permit submission page link sits at the top of its page (Dana, Nov 10) */}
         <VendorSnoparkSection vendorId={v.id} />
+        {v.no_freight ? null : <VendorFreightEmail vendorId={v.id} canEdit={canEdit} />}
         {v.no_freight ? null : <VendorRoutingLetter vendorId={v.id} organizationId={v.organization_id} />}
         <VendorLightspeedBox vendor={v} canEdit={canEdit} onChange={() => void vendorQ.refetch()} />
 

@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { CircleCheck, Mail, PackageCheck } from 'lucide-react'
+import { CircleCheck, PackageCheck } from 'lucide-react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { getShipStep, orderShipAction } from '@/services/orders'
-import { getDraft, type DraftRow, draftFilesOf } from '@/services/mail'
 import type { Order } from '@/types'
 import { errorMessage, shortDate } from '@/lib/utils'
 import { Button } from '@/components/ui'
-import { ComposeDialog } from '@/components/mail/ComposeDialog'
+import { FreightEmailButton } from '@/components/orders/FreightEmailButton'
 import { SharedFreightPick } from '@/components/freight/SharedFreightPick'
 
 const BEFORE = ['open', 'awaiting_confirmation']
@@ -24,7 +23,6 @@ export function ShipCard({ order, canEdit, onChange, focus = false }: {
   const step = useSupabaseQuery(() => getShipStep(order.id), [order.id, order.status])
   const box = useRef<HTMLElement>(null)
   useEffect(() => { if (focus) box.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }) }, [focus])
-  const [draft, setDraft] = useState<DraftRow | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   if (BEFORE.includes(order.status) || order.status === 'cancelled' || order.vendor?.web_orders) return null
   const s = step.data
@@ -44,19 +42,6 @@ export function ShipCard({ order, canEdit, onChange, focus = false }: {
       setBusy(null)
     }
   }
-  async function openDraft() {
-    if (!s?.draft_id) return
-    setBusy('draft')
-    try {
-      const d = await getDraft(s.draft_id)
-      if (d) setDraft(d)
-      else toast('That email was already sent or deleted. Look in Mail › Sent.')
-    } catch (err) {
-      toast.error(errorMessage(err))
-    } finally {
-      setBusy(null)
-    }
-  }
 
   return (
     <section ref={box} className={`rounded-2xl border p-5 ${s?.task && !s.task.done_at ? 'border-amber-300 bg-amber-50' : 'border-stone-200 bg-white'} ${focus ? 'ring-4 ring-brand/40' : ''}`}>
@@ -64,16 +49,13 @@ export function ShipCard({ order, canEdit, onChange, focus = false }: {
       {s?.task?.assignee ? <p className="mt-1 text-xs text-stone-600">With {s.task.assignee.full_name.split(' ')[0]}{s.task.done_at ? ' · done' : ''}</p> : null}
       <ol className="mt-3 space-y-3 text-sm">
         <li>
-          <p className="font-medium text-stone-800">1. Shipment details email (our routing letter attached)</p>
+          <p className="font-medium text-stone-800">1. Freight email (our routing letter attached)</p>
           {order.ship_email_sent_at ? (
             <p className="mt-1 flex items-center gap-1.5 text-emerald-800"><CircleCheck className="size-4" aria-hidden="true" />Sent {shortDate(order.ship_email_sent_at)}</p>
-          ) : s?.draft_id ? (
-            <Button size="sm" className="mt-1" loading={busy === 'draft'} onClick={() => void openDraft()} leftIcon={<Mail className="size-4" aria-hidden="true" />}>Open the shipment details email</Button>
           ) : s?.request_status === 'skipped' ? (
             <p className="mt-1 text-xs text-stone-500">Not needed for this order.</p>
-          ) : s?.task ? (
-            <p className="mt-1 text-xs text-stone-500">It waits in {s.task.assignee?.full_name.split(' ')[0] ?? 'their'}'s Mail › Drafts (Freight › Shipment details).</p>
           ) : null}
+          {canEdit ? <div className="mt-1"><FreightEmailButton orderId={order.id} label={order.ship_email_sent_at ? 'Send again' : 'Freight email'} onSent={() => { void step.refetch(); onChange() }} /></div> : null}
         </li>
         <li>
           <p className="font-medium text-stone-800">2. Route the freight and finish the LS PO</p>
@@ -94,12 +76,6 @@ export function ShipCard({ order, canEdit, onChange, focus = false }: {
           <p className="text-xs text-stone-500">Not handed to logistics yet.</p>
           <Button size="sm" className="mt-1" loading={busy === 'start'} onClick={() => void act('start')}>Hand it to logistics</Button>
         </div>
-      ) : null}
-      {draft ? (
-        <ComposeDialog
-          draft={{ draft_id: draft.id, order_id: draft.order_id, vendor_link_ids: draft.vendor_link_ids, saved_files: draftFilesOf(draft.files), to: draft.to_emails, cc: draft.cc_emails, subject: draft.subject, body: draft.body, thread_id: draft.thread_id, reply_to_email_id: draft.reply_to_email_id, forward_email_id: draft.forward_email_id, vendor_id: draft.vendor_id, mailbox_id: draft.mailbox_id, note: draft.note ?? undefined, signature: draft.signature, routing_send_id: draft.routing_send_id, confirmation_id: draft.confirmation_id, attach_routing_letter: draft.attach_routing_letter }}
-          onClose={() => { setDraft(null); void step.refetch() }}
-          onSent={() => { toast.success('Sent'); onChange() }} />
       ) : null}
     </section>
   )

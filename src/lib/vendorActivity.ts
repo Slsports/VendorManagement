@@ -8,7 +8,7 @@ export type FeedEmail = { email_id: string; thread_id: string; received_at: stri
 export type FeedDoc = { id: string; kind: string; label: string; file_name: string | null; doc_number: string | null; doc_date: string | null; doc_total: number | null; received_at: string | null; created_at: string; source: string | null; storage_path: string | null; mime_type: string | null; po_number: string | null }
 export type FeedStatus = { id: string; order_id: string; po_number: string | null; from_status: string | null; to_status: string; changed_at: string; who: string | null }
 /** an order's own dates (Dana, Nov 3: "received order PO XYZ and date"; "Entered to LS by <employee> on <date>") */
-export type FeedOrder = { id: string; po_number: string | null; order_date: string | null; placed_by: string | null; date_received: string | null; date_entered_ls: string | null; entered_by: string | null; paid_date: string | null }
+export type FeedOrder = { id: string; po_number: string | null; order_date: string | null; placed_by: string | null; date_received: string | null; date_entered_ls: string | null; entered_by: string | null; paid_date: string | null; status?: string | null }
 export type FeedTask = { id: string; title: string; done_at: string; done_note: string | null; closed_how: string | null; who: string | null }
 export type FeedNote = { id: string; body: string; created_at: string; who: string | null }
 
@@ -19,6 +19,8 @@ export type FeedItem = {
   text: string
   /** a page in VMS to open, or a file to show */
   to?: string
+  /** an order still to ship: the Freight email button (Dana, Nov 13) */
+  freight_order_id?: string
   doc?: FeedDoc
 }
 
@@ -80,7 +82,8 @@ export function orderItems(o: FeedOrder): FeedItem[] {
   const po = o.po_number ? `PO ${o.po_number}` : 'an order'
   const to = `/orders/${o.id}`
   const out: FeedItem[] = []
-  if (o.order_date) out.push({ key: `o:${o.id}:placed`, at: o.order_date, kind: 'order', text: `${o.placed_by ? `${o.placed_by} placed` : 'Placed'} order ${po}`, to })
+  const open = !!o.status && ['open', 'awaiting_confirmation', 'confirmed', 'shipped'].includes(o.status)
+  if (o.order_date) out.push({ key: `o:${o.id}:placed`, at: o.order_date, kind: 'order', text: `${o.placed_by ? `${o.placed_by} placed` : 'Placed'} order ${po}`, to, ...(open ? { freight_order_id: o.id } : {}) })
   if (o.date_received) out.push({ key: `o:${o.id}:received`, at: o.date_received, kind: 'order', text: `Received order ${po}`, to })
   if (o.date_entered_ls) out.push({ key: `o:${o.id}:entered`, at: o.date_entered_ls, kind: 'order', text: `${po[0]!.toUpperCase()}${po.slice(1)} entered to LS${o.entered_by ? ` by ${o.entered_by}` : ''}`, to })
   if (o.paid_date) out.push({ key: `o:${o.id}:paid`, at: o.paid_date, kind: 'order', text: `Paid ${po}`, to })
