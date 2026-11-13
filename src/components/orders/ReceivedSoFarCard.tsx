@@ -48,7 +48,7 @@ export function ReceivedSoFarCard({ orderId, documents, shipsInParts }: { orderI
               <li key={s.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
                 <span className="font-medium text-stone-900">Shipment {s.seq}</span>
                 <span className="text-stone-600">{s.shipped_on ? shortDate(s.shipped_on) : 'date not known'}</span>
-                {doc ? <button type="button" onClick={() => openInvoice(s)} className="text-brand hover:underline">invoice {s.invoice_number}</button>
+                {doc ? <button type="button" onClick={() => openInvoice(s)} className="text-brand hover:underline">invoice {doc.doc_number ?? s.invoice_number}</button>
                   : s.wwd_invoice_id ? <Link to={`${ROUTES.payments}?invoice=${s.wwd_invoice_id}`} className="text-brand hover:underline">invoice {s.invoice_number}</Link>
                     : <span className="text-stone-700">invoice {s.invoice_number}</span>}
                 {s.amount !== null ? <span className="text-stone-600">{money(Number(s.amount))}</span> : null}
