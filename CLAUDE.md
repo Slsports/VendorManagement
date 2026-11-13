@@ -93,6 +93,10 @@ duplicates." Any change to how VMS files or sorts things (folders, paperwork kin
 with a back-check that re-applies the new rule to everything already filed, for every vendor, and reports counts to Dana.
 Never save a second copy: link to the file on file (`linkExistingCopy` in gmail-sync, the same check in gmail-read and
 uploads); `vendor_links_dedupe()` merges any that slip in (hourly cron).
+**A back-check keeps the original date (Dana, Nov 13).** "Anything you mark in the backcheck doesn't show the date of the
+backcheck, it has to carry the original date of the activity." A status move, a task close, a payment, a filed paper or a
+feed line that a back-check (or any catch-up read of old mail) writes is dated by when the thing happened (the email, the
+payment date, the paper's date), never by when VMS caught up (migration 0365 re-dated the Sent → Placed moves this way).
 
 ## Newer email wins (Nov 2)
 Dana: "Newer email should win throughout VMS - that would apply to orders and confirmations also." When a later email about

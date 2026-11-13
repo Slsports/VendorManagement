@@ -1,7 +1,7 @@
 ---
 title: Track insurance policies and renewals
 section: Accounting
-keywords: insurance, policy, renewal, premium, Cal Fair, Hudson, Deans & Homer, Hub, autopay, renewed, policy received, personal insurance, Goosehead, Bamboo, Steadily, Drive, Progressive, Markel, Aunt Julia, SJ&E
+keywords: insurance, policy, renewal, premium, Cal Fair, Hudson, Deans & Homer, Hub, autopay, renewed, policy received, personal insurance, Goosehead, Bamboo, Steadily, Drive, Progressive, Markel, Aunt Julia, SJ&E, premium up, activity feed, closed by VMS
 who: People with the Accounting tick
 ---
 The Insurance page is the tracker: every policy, when it renews, what each year cost and who paid, and the renewal task that appears 30 days ahead.
@@ -15,6 +15,8 @@ The Insurance page is the tracker: every policy, when it renews, what each year 
 
 ## Good to know
 - A renewal task appears 30 days before each active policy's renewal date, with the checklist from the renewal procedure.
+- VMS closes the renewal task itself when the new premium is known and is the same, lower, or up less than 1% against last term: the premium comes from the renewal papers it filed, or, for a policy paid in one autopay per term (Progressive), from the autopay reminder. The policy year is recorded and the renewal date moves on. When the premium is up 1% or more, the task stays and is retitled **Premium up 5.7% ($3,015.64 → $3,200.00): look before closing**; close it with **Renewed** once you have looked. With no earlier premium on file, the task stays and says so.
+- Every policy page has an **Activity feed**: its papers, the tasks made and closed and why, the premiums and autopays, and the emails they came from, newest first. Each line opens the thing itself.
 - Policies on **autopay** say so on the task: confirm the payment went through, do not pay twice.
 - Cal Fair issues a new policy number if a policy lapses; the old ones are kept under Prior numbers (also the quote numbers, CFPQ and COMQ). VMS files a paper with an old number or a quote number under the right policy. A policy that was replaced (SJ&E Road's Cal Fair and Steadily, replaced by Orion180) is retired: tick **Show retired policies** to see it.
 - The agent on each policy is a contact with phone numbers: Sam Gibbs at Hub International for the business, David Wagner at Goosehead for personal insurance.

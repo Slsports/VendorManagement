@@ -37,6 +37,8 @@ export async function getAccountingContact(id: string): Promise<{ contact: Accou
 export interface ContactInput {
   /** Only deadlines notify (Paychex, Blue Shield): their mail is filed as Handled. */
   quiet?: boolean
+  /** Personal, not SLSI (Dana, Nov 13): their papers file with no store and VMS never asks which business. */
+  personal?: boolean
   company: string
   person: string
   role: string
@@ -53,7 +55,7 @@ export interface ContactInput {
 
 /** Create or update a contact and its addresses, then re-match the mail so the conversations follow. */
 export async function saveAccountingContact(organizationId: string, id: string | null, input: ContactInput): Promise<string> {
-  const row = { company: input.company.trim(), person: input.person.trim(), role: input.role.trim(), category: input.category, phones: input.phones.map((p) => p.trim()).filter(Boolean), notes: input.notes.trim(), status: input.status, filing: input.filing, filing_note: input.filing_note.trim(), ...(input.quiet === undefined ? {} : { quiet: input.quiet }) }
+  const row = { company: input.company.trim(), person: input.person.trim(), role: input.role.trim(), category: input.category, phones: input.phones.map((p) => p.trim()).filter(Boolean), notes: input.notes.trim(), status: input.status, filing: input.filing, filing_note: input.filing_note.trim(), ...(input.personal === undefined ? {} : { personal: input.personal }), ...(input.quiet === undefined ? {} : { quiet: input.quiet }) }
   let contactId = id
   if (contactId) {
     const { error } = await supabase.from('accounting_contacts').update(row).eq('id', contactId)

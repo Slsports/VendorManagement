@@ -9,10 +9,11 @@ Every paper that comes to billing@ is read and filed on its own into Accounting 
 ## How to
 1. Click **Accounting** in the menu, then **Documents**. Click a category, then a company, then a year to see the files. Click a file name to open it.
 2. The envelope on a row opens the email the paper came from. The pencil moves or renames it: change the facts (date, company, amount, state) and the name follows the rule on its own; type a name of your own to keep it.
-3. **Needs a look** lists papers VMS filed but was not sure about, with a note on why. When the doubt is a choice (whose license, which building, which company), the row asks the question and shows the answers as buttons: click the right one and the paper is filed that way, renamed by the rule. **Keep as filed** keeps the folder and the name exactly as they are. The pencil moves or renames it by hand.
-4. **Drop box**: drag papers from your computer onto the box at the top (or **choose files**). Each is read, named and filed, and the list shows where it went. A line about the files (for example "2024 Cal Fair policies") helps when the paper itself says little.
-5. In a billing@ email, each file shows **Filed: Insurance › Cal Fair › 2026** (click it to go there) or **Left here** with the reason. **File in Accounting** files one by hand, whatever VMS thought of it.
-6. The policy and contract pages show their own papers under **Documents**.
+3. A paper marked **Personal** (ticked on the paper with the pencil, or on its company's card as **Personal, not SLSI**) has no store and is never asked which business it belongs to.
+4. **Needs a look** lists papers VMS filed but was not sure about, with a note on why. When the doubt is a choice (whose license, which building, which company), the row asks the question and shows the answers as buttons: click the right one and the paper is filed that way, renamed by the rule. **Keep as filed** keeps the folder and the name exactly as they are. The pencil moves or renames it by hand.
+5. **Drop box**: drag papers from your computer onto the box at the top (or **choose files**). Each is read, named and filed, and the list shows where it went. A line about the files (for example "2024 Cal Fair policies") helps when the paper itself says little.
+6. In a billing@ email, each file shows **Filed: Insurance › Cal Fair › 2026** (click it to go there) or **Left here** with the reason. **File in Accounting** files one by hand, whatever VMS thought of it.
+7. The policy and contract pages show their own papers under **Documents**.
 
 ## Good to know
 - Papers needing a look that are more than a year old wait in the **Parked** tab, out of the counts, until unparked (see "Parked: things older than a year wait out of the way").

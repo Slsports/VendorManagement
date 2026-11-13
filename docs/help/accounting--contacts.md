@@ -17,7 +17,9 @@ Accounting contacts are the people and companies in the billing@ mail: the accou
 - A contact you send proof of insurance to (the bank) shows a **Proof of insurance** box with the last one sent. Click it to see every proof sent, each with its email.
 - The category sorts their mail under Accounting → Mail and, later, decides where their documents are filed.
 - **Only tell me about deadlines** files all their mail as Handled and makes a task only for a deadline you have to meet (Paychex, Blue Shield).
-- Same person or company twice? On one card, pick the other under **Same person or company twice?** and click **Merge**. Emails, conversations and counts move over.
+- Same person or company twice? On one card, pick the other under **Same person or company twice?** and click **Merge**. Emails, conversations and counts move over. (Drive Insurance and Progressive are one card, Progressive.)
+- **Personal, not SLSI**: tick it on a company whose papers are the owners' own (Progressive, Goosehead, Bamboo). Their papers file with no store, VMS never asks which business they belong to, and papers already filed under that company follow the tick.
+- Every company card has an **Activity feed**: the emails in and out, the papers filed from them, and the tasks those made and how they closed, newest first.
 - Ignored contacts stay under **Ignored** and can be brought back. Newsletters and one-off senders are never proposed.
 - When you save a contact, tick ✓ or ✕, or change its email addresses, VMS matches that contact's conversations again, old mail included. New mail finds its contact as it arrives, and VMS looks for new people only in mail that came in since its last look.
 - **Their papers** on a contact: normally the files they email are filed in Documents. Choose **Leave them in the email** for a company whose invoices are handled elsewhere (Emery Jensen goes to bill.com) and say where; their files then show that note instead of being filed, and any already filed are taken back out.

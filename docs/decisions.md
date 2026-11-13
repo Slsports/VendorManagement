@@ -4592,3 +4592,10 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   row); back-check re-dated the 8 moves made Nov 12. Dana: the January order "is the same order" as PO 6914, "we received
   the confirmation from sr on 1/20/26": its emails, file and lines moved to 6914 (acknowledged Jan 20) and the duplicate
   was removed.
+- Nov 13, Dana: "when you do the backcheck make sure that anything you mark in the backcheck doesn't show the date of the
+  backcheck, it has to carry the original date of the activity." Standing rule (CLAUDE.md, "A back-check keeps the
+  original date"). Also Nov 13: Drive is Progressive, the same company (one card, both addresses); autopay reminders make
+  one task that closes on the payment date, and a check task follows when no payment confirmation comes within 3
+  business days; a renewal task on any policy closes itself when the new premium is the same, lower or up less than 1%
+  and stays (titled with the increase) when it is up 1% or more; "Personal, not SLSI" mark on companies and papers; an
+  activity feed on policy and company pages. "yes go all".

@@ -98,6 +98,7 @@ export function DocumentRows({ docs, parties, showFolder = true, onChanged, empt
                   <button type="button" onClick={() => open(d)} className="inline-flex max-w-full items-start gap-1.5 text-left font-medium text-stone-900 hover:text-brand">
                     <FileText className="mt-0.5 size-4 shrink-0 text-stone-400" aria-hidden="true" /><span className="break-words">{d.file_name}</span>
                   </button>
+                  {d.personal ? <Badge tone="neutral" className="mr-1 align-middle">Personal</Badge> : null}
                   {d.status === 'review' ? <span className="mt-0.5 block text-xs text-amber-800"><Badge tone="warning" className="mr-1">Needs a look</Badge>{d.claude_note}</span> : d.claude_note ? <span className="mt-0.5 block text-xs text-stone-500">{d.claude_note}</span> : null}
                   {d.status === 'review' && d.question && choicesOf(d).length ? (
                     <span className="mt-1.5 flex flex-wrap items-center gap-1.5">

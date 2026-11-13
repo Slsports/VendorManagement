@@ -23,7 +23,7 @@ export function DocumentEditDialog({ doc, parties, policies, contracts, onClose,
   const [f, setF] = useState({
     category: doc.category as AccountingCategory, party: doc.party, doc_year: String(doc.doc_year), whose: doc.whose as AccountingWhose, kind: doc.kind as AccountingDocumentKind,
     doc_date: doc.doc_date ?? '', number: doc.number, what: doc.what, amount: doc.amount == null ? '' : String(doc.amount), status_word: doc.status_word,
-    policy_id: doc.policy_id ?? '', contract_id: doc.contract_id ?? '', file_name: doc.file_name,
+    policy_id: doc.policy_id ?? '', contract_id: doc.contract_id ?? '', file_name: doc.file_name, personal: doc.personal,
   })
   const [busy, setBusy] = useState(false)
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }))
@@ -38,7 +38,7 @@ export function DocumentEditDialog({ doc, parties, policies, contracts, onClose,
     try {
       const saved = await updateDocument(doc.id, {
         category: f.category, party: f.party.trim(), doc_year: year, whose: f.whose, kind: f.kind, doc_date: f.doc_date || null, number: f.number.trim(), what: f.what.trim(), amount, status_word: f.status_word.trim().toLowerCase(),
-        policy_id: f.policy_id || null, contract_id: f.contract_id || null,
+        policy_id: f.policy_id || null, contract_id: f.contract_id || null, personal: f.personal,
         // only a name typed here is sent; left alone, the name follows the facts
         ...(f.file_name.trim() && f.file_name.trim() !== doc.file_name ? { file_name: f.file_name.trim() } : {}),
         status: 'filed',
@@ -101,6 +101,8 @@ export function DocumentEditDialog({ doc, parties, policies, contracts, onClose,
           </Select>
         </FormField>
       ) : null}
+      {/* Personal, not SLSI (Dana, Nov 13): no store, no store question */}
+      <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={f.personal} onChange={(e) => setF((x) => ({ ...x, personal: e.target.checked, whose: e.target.checked ? '' : x.whose }))} /> Personal, not SLSI (no store)</label>
       <FormField label="File name" htmlFor="d-name" hint="Leave it alone and it follows the facts above by the naming rule; type one to keep your own.">
         <Input id="d-name" value={f.file_name} onChange={(e) => set('file_name', e.target.value)} />
       </FormField>
