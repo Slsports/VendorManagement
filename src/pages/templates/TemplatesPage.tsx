@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { FileText, Pencil } from 'lucide-react'
+import { Eye, FileText, Pencil } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { listTemplates, saveTemplate } from '@/services/templates'
@@ -9,6 +9,7 @@ import { ROUTES } from '@/lib/constants'
 import { errorMessage } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StickySaveBar } from '@/components/shared/StickySaveBar'
+import { FreightEmailPreview } from '@/components/templates/FreightEmailPreview'
 import { Alert, Button, FormField, Input, Spinner, Textarea } from '@/components/ui'
 import type { MessageTemplate } from '@/types'
 
@@ -22,6 +23,7 @@ export default function TemplatesPage() {
   const canEdit = role === 'admin' || role === 'manager' || role === 'buyer'
   const q = useSupabaseQuery(async () => (organization ? listTemplates(organization.id) : []), [organization?.id])
   const [editing, setEditing] = useState<string | null>(null)
+  const [preview, setPreview] = useState<{ subject: string; body: string } | null>(null)
   const groups = new Map<string, MessageTemplate[]>()
   for (const t of q.data ?? []) groups.set(t.category, [...(groups.get(t.category) ?? []), t])
   if (!groups.has('Freight')) groups.set('Freight', [])
@@ -55,7 +57,10 @@ export default function TemplatesPage() {
                       <h3 className="font-semibold text-stone-900">{t.title}</h3>
                       {t.description ? <p className="text-sm text-stone-600">{t.description}</p> : null}
                     </div>
-                    {canEdit ? <Button size="sm" variant="secondary" onClick={() => setEditing(t.key)} leftIcon={<Pencil className="size-4" aria-hidden="true" />}>Edit</Button> : null}
+                    <div className="flex gap-2">
+                      {t.key === 'freight_email' ? <Button size="sm" variant="secondary" onClick={() => setPreview({ subject: t.subject, body: t.body })} leftIcon={<Eye className="size-4" aria-hidden="true" />}>Preview</Button> : null}
+                      {canEdit ? <Button size="sm" variant="secondary" onClick={() => setEditing(t.key)} leftIcon={<Pencil className="size-4" aria-hidden="true" />}>Edit</Button> : null}
+                    </div>
                   </div>
                   {t.subject ? <p className="mt-3 text-sm"><span className="text-stone-500">Subject: </span><span className="font-medium text-stone-900">{t.subject}</span></p> : null}
                   <pre className="mt-2 max-h-96 overflow-y-auto whitespace-pre-wrap rounded-lg bg-stone-50 p-3 font-sans text-sm text-stone-800">{t.body}</pre>
@@ -65,6 +70,7 @@ export default function TemplatesPage() {
           </div>
         </section>
       ))}
+      {preview ? <FreightEmailPreview subject={preview.subject} body={preview.body} onClose={() => setPreview(null)} /> : null}
       <p className="text-sm text-stone-500">More emails move here one group at a time: orders (the no-reply follow-up, PO requests, the reorder email), vendors (the contact confirmation) and credits.</p>
     </div>
   )
@@ -75,6 +81,7 @@ function TemplateEditor({ organizationId, t, onClose, onSaved }: { organizationI
   const [body, setBody] = useState(t.body)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [preview, setPreview] = useState(false)
   async function save(e: FormEvent) {
     e.preventDefault()
     setSaving(true)
@@ -95,6 +102,8 @@ function TemplateEditor({ organizationId, t, onClose, onSaved }: { organizationI
       <p className="mt-2 rounded-lg bg-stone-50 p-2 text-xs text-stone-600">Keep the words in curly brackets, like <strong>{'{po}'}</strong>: VMS fills them in for each email. Put two stars around words for bold: <strong>**like this**</strong>. A link: <strong>[Click Here]({'{form_link}'})</strong>.</p>
       <FormField label="Subject" htmlFor={`tpl-subj-${t.key}`} className="mt-3"><Input id={`tpl-subj-${t.key}`} value={subject} onChange={(e) => setSubject(e.target.value)} /></FormField>
       <FormField label="Email" htmlFor={`tpl-body-${t.key}`} className="mt-3"><Textarea id={`tpl-body-${t.key}`} rows={22} value={body} onChange={(e) => setBody(e.target.value)} /></FormField>
+      {t.key === 'freight_email' ? <Button type="button" size="sm" variant="secondary" className="mt-2" onClick={() => setPreview(true)} leftIcon={<Eye className="size-4" aria-hidden="true" />}>Preview (before saving)</Button> : null}
+      {preview ? <FreightEmailPreview subject={subject} body={body} onClose={() => setPreview(false)} /> : null}
       <StickySaveBar className="mt-3" saving={saving} error={error} label="Save" onCancel={onClose} />
     </form>
   )

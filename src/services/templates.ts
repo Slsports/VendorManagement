@@ -29,3 +29,23 @@ export async function listOpenOrdersForFreight(vendorId: string) {
   if (error) throw error
   return (data ?? []).map((o) => ({ ...o, sent: o.ship_email_sent_at as string | null }))
 }
+
+export interface FreightPreview { subject: string; body: string; to_emails: string[]; form_ready: boolean; has_letter: boolean }
+
+/** The Freight email filled in for one order, from the wording on screen (saved or not). Writes nothing (Dana, Nov 13). */
+export async function previewFreightEmail(orderId: string, subject: string, body: string): Promise<FreightPreview> {
+  const { data, error } = await supabase.rpc('freight_email_preview', { p_order: orderId, p_subject: subject, p_body: body })
+  if (error) throw error
+  const row = (data ?? [])[0]
+  if (!row) throw new Error('That order was not found.')
+  return row
+}
+
+/** Orders to preview with: every order still to ship, newest first. */
+export async function listOrdersForPreview(organizationId: string) {
+  const { data, error } = await supabase.from('orders').select('id, po_number, order_date, status, vendor:vendors!orders_vendor_id_fkey(name)')
+    .eq('organization_id', organizationId).in('status', ['open', 'awaiting_confirmation', 'confirmed', 'shipped'])
+    .order('order_date', { ascending: false, nullsFirst: false }).limit(300)
+  if (error) throw error
+  return (data ?? []).map((o) => ({ id: o.id, po: o.po_number as string | null, status: o.status as string, vendor: (o.vendor as { name: string } | null)?.name ?? 'Vendor' }))
+}

@@ -1168,6 +1168,7 @@ export type Database = {
       freight_promise_set_order: { Args: { p_promise: string; p_order: string | null }; Returns: string }
       order_mark_placed: { Args: { p_order: string }; Returns: boolean }
       freight_email_open: { Args: { p_order: string }; Returns: string }
+      freight_email_preview: { Args: { p_order: string; p_subject: string; p_body: string }; Returns: { subject: string; body: string; to_emails: string[]; form_ready: boolean; has_letter: boolean }[] }
       payment_notice_choices: { Args: { p_email: string }; Returns: { id: string; label: string; doc_number: string | null; doc_date: string | null; doc_total: number | null; received_at: string | null; storage_path: string | null; file_name: string | null; mime_type: string | null }[] }
       payment_notice_pick: { Args: { p_email: string; p_links: string[] }; Returns: number }
       credit_request_make: { Args: { p_email: string; p_what: string; p_invoice: string | null; p_amount: number | null; p_signer: string | null }; Returns: string | null }
