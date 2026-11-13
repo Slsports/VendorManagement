@@ -45,7 +45,7 @@ export function VendorOrderingPanel({ vendor, assignedBuyerId, canEdit, classNam
   const summary = flag.isLoading ? null : f ? `On the card: ${ORDERING_STAGE_LABELS[f.stage as 'check' | 'to_order']}` : report.data ? `Sales report ${new Date(`${report.data.run_date}T12:00:00`).toLocaleDateString()}` : 'Not on the card'
   return (
     <>
-      <FoldSection title="Ordering Reports" summary={summary} className={className}>
+      <FoldSection title="Ordering Reports & History" summary={summary} className={className}>
         {f ? (
           <p className="mb-2 flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
             <span className="font-medium">On the Ordering card: {ORDERING_STAGE_LABELS[f.stage as 'check' | 'to_order']}</span>

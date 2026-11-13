@@ -4584,7 +4584,7 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   the Freight email goes To whoever our latest order email on that order went to; for orders from her sheets, our email
   to the vendor naming the PO; else our main rep; else the vendor's email. Their shipping/freight people are copied only
   when they emailed us about that order; nobody else (migration 0366, unsent requests and drafts re-addressed).
-  Also: the vendor page's **Ordering** box is now **Ordering Reports**, with **Order history** folded inside it.
+  Also: the vendor page's **Ordering** box is now **Ordering Reports & History** (renamed again the same day), with **Order history** folded inside it.
 - Nov 13, Dana: "an order placed 1-19-26 (10 months ago) is showing as 'placed' as of today … Why is this old, closed and
   received order even in my activity feed?" Cause (confirmed): the sent-mail history reader made SLIPPERY011926 on Nov 6
   from the Jan 19-21 "Missing items" emails; on Nov 12 the new Sent → Placed rule read Marcy's Jan 20 reply and stamped

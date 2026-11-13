@@ -4,10 +4,10 @@ section: Vendors
 keywords: order history, orders, spend, last order, add order, past orders, bought through, emery jensen, ejd, sls order, paricon
 who: Admin, managers and buyers
 ---
-**Order history** sits inside the **Ordering Reports** box, folded; click **Order history** to open it. It lists every order placed with the vendor, newest first, with totals.
+**Order history** sits inside the **Ordering Reports & History** box, folded; click **Order history** to open it. It lists every order placed with the vendor, newest first, with totals.
 
 ## How to
-1. Open the vendor's page, open **Ordering Reports**, then click **Order history**.
+1. Open the vendor's page, open **Ordering Reports & History**, then click **Order history**.
 2. Read the summary at the top right: number of orders, total spent, last order date, which seasons and shows they are bought for.
 3. Click a column header (**Ordered**, **Status**, **What**, **Store**, **By**, **Cost**, **Ship**, **Paid**) to sort. Click again to reverse.
 4. Click an order's date to open the order.
