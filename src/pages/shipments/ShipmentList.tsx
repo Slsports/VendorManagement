@@ -11,6 +11,7 @@ import { ORDER_STATUS_LABELS, ROUTES } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { SortHeader } from '@/components/shared/SortHeader'
+import { FoldSection } from '@/components/shared/FoldSection'
 import { Alert, Badge, Button, Input, Select, Spinner } from '@/components/ui'
 
 type View = 'table' | 'week' | 'month'
@@ -33,8 +34,6 @@ export default function ShipmentListPage() {
   const view = (['table', 'week', 'month'].find((v) => v === params.get('view')) ?? 'table') as View
   const from = params.get('from') ?? ''
   const to = params.get('to') ?? ''
-  // with no window set, the table starts 30 days back: the old sheet orders never marked received stay out of the way
-  const showAll = params.get('all') === '1'
   const store = params.get('store') ?? ''
   const status = params.get('status') ?? ''
   const who = params.get('q') ?? ''
@@ -53,10 +52,11 @@ export default function ShipmentListPage() {
     (!store || r.order.store_codes.includes(store))
     && (!status || r.order.status === status)
     && (!who || `${r.order.vendor?.name ?? ''} ${r.order.po_number ?? ''} ${r.order.description ?? ''}`.toLowerCase().includes(who.toLowerCase())))
-  const defaultFrom = !from && !to && !showAll ? iso(addDays(today, -30)) : null
-  const windowed = view === 'table' ? (defaultFrom ? filtered.filter((r) => !r.day || r.day >= defaultFrom) : inWindow(filtered, from || null, to || null)) : filtered
-  const rows = sortIncoming(windowed)
-  const older = defaultFrom ? filtered.filter((r) => r.day && r.day < defaultFrom).length : 0
+  // nothing is hidden (Dana, Nov 13: show orders placed in August and February ship months later): the table holds what is
+  // coming, and the orders past their day and not marked received sit in their own section underneath
+  const windowed = view === 'table' ? inWindow(filtered, from || null, to || null) : filtered
+  const rows = sortIncoming(windowed.filter((r) => !r.late))
+  const pastRows = sortIncoming(windowed.filter((r) => r.late))
   const { sorted, sort, toggle } = useTableSort(rows, {
     day: (r) => r.day ?? '9999',
     vendor: (r) => r.order.vendor?.name ?? '',
@@ -66,7 +66,7 @@ export default function ShipmentListPage() {
     status: (r) => r.order.status,
     store: (r) => r.order.store_codes.join(', '),
   }, { param: 'in_sort' })
-  const late = rows.filter((r) => r.late).length
+  const late = pastRows.length
 
   // the calendar
   const range = view === 'week'
@@ -100,8 +100,7 @@ export default function ShipmentListPage() {
           <>
             <label className="flex items-center gap-1.5 text-sm text-stone-700">From <Input type="date" value={from} onChange={(e) => set({ from: e.target.value })} className="h-9 w-40" aria-label="From date" /></label>
             <label className="flex items-center gap-1.5 text-sm text-stone-700">To <Input type="date" value={to} onChange={(e) => set({ to: e.target.value })} className="h-9 w-40" aria-label="To date" /></label>
-            {from || to || showAll ? <Button size="sm" variant="ghost" onClick={() => set({ from: null, to: null, all: null })}>Last 30 days on</Button> : null}
-            {older ? <Button size="sm" variant="ghost" onClick={() => set({ all: '1' })}>Show {older} older</Button> : null}
+            {from || to ? <Button size="sm" variant="ghost" onClick={() => set({ from: null, to: null })}>Any date</Button> : null}
           </>
         ) : (
           <>
@@ -120,11 +119,12 @@ export default function ShipmentListPage() {
           {(['open', 'awaiting_confirmation', 'confirmed', 'shipped'] as const).map((s) => <option key={s} value={s}>{ORDER_STATUS_LABELS[s]}</option>)}
         </Select>
         <Input value={who} onChange={(e) => set({ q: e.target.value })} placeholder="Vendor, PO or words" aria-label="Vendor, PO or words" className="h-9 w-52" />
-        {q.isLoading ? <Spinner label="Loading…" className="text-brand" /> : <span className="text-sm text-stone-500">{rows.length} {rows.length === 1 ? 'order' : 'orders'}{late ? <span className="text-red-700">, {late} late</span> : null}</span>}
+        {q.isLoading ? <Spinner label="Loading…" className="text-brand" /> : <span className="text-sm text-stone-500">{rows.length} coming{late ? <span className="text-red-700">, {late} past their day</span> : null}</span>}
       </div>
       {q.error ? <Alert variant="error">{q.error}</Alert> : null}
 
       {view === 'table' ? (
+        <>
         <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white">
           <table className="min-w-full text-sm">
             <thead className="bg-stone-50 text-left text-xs font-semibold uppercase tracking-wide text-stone-500">
@@ -159,6 +159,36 @@ export default function ShipmentListPage() {
             </tbody>
           </table>
         </div>
+        {pastRows.length ? (
+          <FoldSection className="mt-6" title="Past their day, not marked received" summary={`${pastRows.length} ${pastRows.length === 1 ? 'order' : 'orders'}`}>
+            <p className="mb-3 text-sm text-stone-600">Their ship or arrival day has passed and nobody marked them received. Most of the old ones came in long ago: open the order and click <strong>Mark received</strong>; chase the rest.</p>
+            <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white">
+              <table className="min-w-full text-sm">
+                <thead className="bg-stone-50 text-left text-xs font-semibold uppercase tracking-wide text-stone-500">
+                  <tr><th className="px-4 py-2">Was expected</th><th className="px-3 py-2">Vendor</th><th className="px-3 py-2">PO</th><th className="px-3 py-2">What</th><th className="px-3 py-2">Ordered</th><th className="px-3 py-2">Carrier</th><th className="px-3 py-2">Status</th><th className="px-3 py-2">Store</th></tr>
+                </thead>
+                <tbody className="divide-y divide-stone-100">
+                  {pastRows.map((r) => (
+                    <tr key={r.order.id} className="align-top bg-red-50/40">
+                      <td className="max-w-64 px-4 py-2 font-medium text-red-700">
+                        <span className="whitespace-nowrap">{dayWord(r)}</span>
+                        {r.from.to ? <Link to={r.from.to} className="mt-0.5 block text-xs font-normal text-stone-500 hover:text-brand hover:underline">{r.from.label}</Link> : <span className="mt-0.5 block text-xs font-normal text-stone-500">{r.from.label}</span>}
+                      </td>
+                      <td className="px-3 py-2">{r.order.vendor ? <Link to={`${ROUTES.vendors}/${r.order.vendor.id}`} className="text-stone-900 hover:text-brand hover:underline">{r.order.vendor.name}</Link> : '—'}</td>
+                      <td className="whitespace-nowrap px-3 py-2"><Link to={`${ROUTES.orders}/${r.order.id}`} className="font-medium text-brand hover:underline">{r.order.po_number ?? 'Open the order'}</Link></td>
+                      <td className="max-w-56 px-3 py-2 text-stone-700"><span className="line-clamp-2">{r.order.description ?? ''}</span></td>
+                      <td className="whitespace-nowrap px-3 py-2 text-stone-700">{r.order.order_date ? fmt(r.order.order_date) : '—'}</td>
+                      <td className="whitespace-nowrap px-3 py-2 text-stone-700">{r.carrier ?? '—'}{r.tracking ? <span className="block text-xs text-stone-500">{r.tracking}</span> : null}</td>
+                      <td className="whitespace-nowrap px-3 py-2"><Badge tone="neutral">{ORDER_STATUS_LABELS[r.order.status]}</Badge></td>
+                      <td className="whitespace-nowrap px-3 py-2 text-stone-600">{r.order.store_codes.join(', ')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </FoldSection>
+        ) : null}
+        </>
       ) : (
         <div className="grid gap-4 lg:grid-cols-3">
           <section className="lg:col-span-2">

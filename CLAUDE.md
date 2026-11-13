@@ -164,6 +164,13 @@ Vite + React 19 + TypeScript + Tailwind 4, Supabase (project `bpdpkytfmpbwpbmpej
 - Types are hand-maintained in `src/types/database.ts`; add Row/Insert/Update and function Returns for
   every schema change, then aliases in `src/types/index.ts`.
 
+## How ordering runs (Dana, Nov 13)
+Two WWD shows a year in Reno: the last week or so of August and the first week of February (dates move a little). 80-100
+orders go in over the show's 3 days, and many more are finalized after it, into September/October and February/March
+(2024-08: 98 orders, 2025-02: 67, 2025-08: 122, 2026-02: 149, 2026-09: 51). Show orders carry ship dates months out
+(a February order ships in late summer and fall; an August order in December through April). Never hide or age out an
+order by its order date; a window on "what is coming" goes by the expected ship or arrival day.
+
 ## What exists (October 2026)
 Vendors (778, with routes WWD / Faire / direct, standing fine/hold/last resort/do-not-order with reason
 tags, free-shipping policy and threshold, freight routing, fishing flag, WWD zero-upcharge), rep groups,

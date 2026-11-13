@@ -4613,3 +4613,9 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   click to the email or the order; table soonest first, week and month calendars, From/To window, store, status and
   vendor filters; late rows red; received orders drop off. 108 live orders today, 64 with a ship date, 10 with a carrier
   arrival date.
+- Nov 13, Dana, on Incoming Shipments: "We frequently place 80-100 orders in a 3 day span at the WWD shows in Reno. The last
+  week or so in August and the first week in Feb … We also finalize alot of orders after the show so those dates can roll
+  into sept/oct. And Feb/march." Confirmed in the orders (2024-08: 98, 2025-02: 67, 2025-08: 122, 2026-02: 149, 2026-09: 51).
+  The page hides nothing: everything coming is the table, and orders past their ship or arrival day and not marked
+  received sit in their own fold underneath (48 today, nearly all Feb 2026 show orders that came in and were never marked).
+  The show cycle is in CLAUDE.md ("How ordering runs").
