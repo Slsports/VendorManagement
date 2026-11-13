@@ -8,7 +8,7 @@ Some vendors fill one order in several shipments. World Famous Sports takes one 
 
 ## How to
 1. Tick **Ships one order in several shipments** on the vendor (vendor page › **Edit** › the ticks near the bottom). World Famous Sports already has it.
-2. Open the order. Under **What we ordered**, the **Received so far** box lists each shipment with its date, invoice and amount, and the running count. Click the invoice number to open the invoice.
+2. Open the order. Under **What we ordered**, the **Received so far** box lists each shipment with its date, invoice, **Goods**, **Freight** and **Freight %** (freight as a share of the goods; "collect" when the invoice carries no freight because the carrier bills us), and its units, with a total line. Click the invoice number to open the invoice.
 3. The table underneath is the confirmation's items: **Ordered**, **In** and **Still to come** for each. Items that came in but are not on the confirmation sit in a fold at the bottom, so you can see what the vendor sent that it never confirmed.
 4. The order shows as **Shipped** while something is still to come (the note on the order says "Shipped in part" with the count) and becomes **Received** on its own, dated the last shipment, once every confirmed item is in. If VMS has no item list from a confirmation, the order stays on order until someone marks it received.
 

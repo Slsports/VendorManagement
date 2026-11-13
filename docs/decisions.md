@@ -4664,4 +4664,8 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   lines or date yet, so that shipment takes its 425 units and Oct 29 date from Claude's reading of the vendor's invoice.
   Still to do, shown to Dana first: fold the per-shipment sheet rows (I88198-2/-3/-4, the ten B671437 rows, WORLD020526)
   into their one order per show.
+- Nov 13, Dana ("add a column for freight percentage"): the Received so far box is a table per shipment with Goods, Freight
+  and Freight % (freight ÷ goods; "collect" when the invoice carries none because the carrier bills us) and a total line.
+  Freight is Worldwide's freight amount on the invoice, else its freight line, else the freight Claude read on the vendor's
+  own invoice (migration 0379). WFS2426: $724.05 freight on $21,783 of goods, 3.3%; shipments 1 and 2 went UPS collect.
 

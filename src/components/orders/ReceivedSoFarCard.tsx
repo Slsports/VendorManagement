@@ -10,6 +10,18 @@ import { shortDate } from '@/lib/utils'
 import type { VendorLink } from '@/types'
 import { Badge } from '@/components/ui'
 
+/** the goods on a shipment: the invoice less its freight (a freight-only line is left out) */
+function goodsOf(s: { amount: number | null; freight: number | null }): number | null {
+  if (s.amount === null) return null
+  return Math.max(Number(s.amount) - Number(s.freight ?? 0), 0)
+}
+/** freight as a share of the goods, "collect" when the invoice carries none (the carrier bills us) */
+function pct(freight: number | null, goods: number | null): string {
+  if (freight === null || goods === null || goods <= 0) return '—'
+  if (Number(freight) === 0) return 'collect'
+  return `${((Number(freight) / goods) * 100).toFixed(1)}%`
+}
+
 /**
  * Received so far (Dana, Nov 13, World Famous Sports): an order that ships in several shipments keeps the confirmation as
  * the list to fill. Each invoice (I88198, -2, -3 …) is a shipment; the box shows them with their dates and the running
@@ -27,6 +39,8 @@ export function ReceivedSoFarCard({ orderId, documents, shipsInParts }: { orderI
   const ordered = onConf.reduce((n, r) => n + Number(r.ordered), 0)
   const received = onConf.reduce((n, r) => n + Math.min(Number(r.received), Number(r.ordered)), 0)
   const still = onConf.reduce((n, r) => n + Number(r.still), 0)
+  const totGoods = shipments.reduce((n, s) => n + (goodsOf(s) ?? 0), 0)
+  const totFreight = shipments.reduce((n, s) => n + Number(s.freight ?? 0), 0)
   const openInvoice = (s: (typeof shipments)[number]) => {
     const doc = documents.find((d) => d.id === s.vendor_link_id)
     if (doc?.storage_path) view({ name: doc.file_name ?? doc.label, mime: doc.mime_type, load: () => downloadVendorFile(doc.storage_path!) })
@@ -41,22 +55,41 @@ export function ReceivedSoFarCard({ orderId, documents, shipsInParts }: { orderI
       </div>
       <p className="mt-1 text-xs text-stone-500">This vendor ships one order in several shipments. Each invoice is a shipment; the order stays on order until the confirmation is filled.</p>
       {shipments.length ? (
-        <ul className="mt-3 divide-y divide-stone-100 text-sm">
-          {shipments.map((s) => {
-            const doc = documents.find((d) => d.id === s.vendor_link_id)
-            return (
-              <li key={s.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
-                <span className="font-medium text-stone-900">Shipment {s.seq}</span>
-                <span className="text-stone-600">{s.shipped_on ? shortDate(s.shipped_on) : 'date not known'}</span>
-                {doc ? <button type="button" onClick={() => openInvoice(s)} className="text-brand hover:underline">invoice {doc.doc_number ?? s.invoice_number}</button>
-                  : s.wwd_invoice_id ? <Link to={`${ROUTES.payments}?invoice=${s.wwd_invoice_id}`} className="text-brand hover:underline">invoice {s.invoice_number}</Link>
-                    : <span className="text-stone-700">invoice {s.invoice_number}</span>}
-                {s.amount !== null ? <span className="text-stone-600">{money(Number(s.amount))}</span> : null}
-                <span className="text-stone-500">{Number(s.units) > 0 ? `${Number(s.units)} units` : 'items not read yet'}{s.seq > 1 && Number(s.units) > 0 ? ` · ${Number(s.received_so_far)} units in so far` : ''}</span>
-              </li>
-            )
-          })}
-        </ul>
+        <div className="mt-3 overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead className="text-left text-xs font-semibold uppercase tracking-wide text-stone-500">
+              <tr><th className="py-2 pr-3">Shipment</th><th className="py-2 pr-3">Date</th><th className="py-2 pr-3">Invoice</th><th className="py-2 pr-3 text-right">Goods</th><th className="py-2 pr-3 text-right">Freight</th><th className="py-2 pr-3 text-right">Freight %</th><th className="py-2 text-right">Units</th></tr>
+            </thead>
+            <tbody className="divide-y divide-stone-100">
+              {shipments.map((s) => {
+                const doc = documents.find((d) => d.id === s.vendor_link_id)
+                const goods = goodsOf(s)
+                return (
+                  <tr key={s.id}>
+                    <td className="py-1.5 pr-3 font-medium text-stone-900">{s.seq}</td>
+                    <td className="py-1.5 pr-3 text-stone-600">{s.shipped_on ? shortDate(s.shipped_on) : 'not known'}</td>
+                    <td className="py-1.5 pr-3">{doc ? <button type="button" onClick={() => openInvoice(s)} className="text-brand hover:underline">{doc.doc_number ?? s.invoice_number}</button>
+                      : s.wwd_invoice_id ? <Link to={`${ROUTES.payments}?invoice=${s.wwd_invoice_id}`} className="text-brand hover:underline">{s.invoice_number}</Link>
+                        : <span className="text-stone-700">{s.invoice_number}</span>}</td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{goods !== null ? money(goods) : '—'}</td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{s.freight !== null ? money(Number(s.freight)) : '—'}</td>
+                    <td className="py-1.5 pr-3 text-right tabular-nums">{pct(s.freight, goods)}</td>
+                    <td className="py-1.5 text-right tabular-nums text-stone-600">{Number(s.units) > 0 ? Number(s.units) : <span className="text-stone-400">not read yet</span>}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+            <tfoot className="text-sm font-medium text-stone-900">
+              <tr className="border-t border-stone-200">
+                <td className="py-2 pr-3" colSpan={3}>All shipments</td>
+                <td className="py-2 pr-3 text-right tabular-nums">{money(totGoods)}</td>
+                <td className="py-2 pr-3 text-right tabular-nums">{money(totFreight)}</td>
+                <td className="py-2 pr-3 text-right tabular-nums">{pct(totFreight, totGoods)}</td>
+                <td className="py-2 text-right tabular-nums">{shipments.reduce((n, s) => n + Number(s.units), 0)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       ) : <p className="mt-3 text-sm text-stone-500">No shipment yet.</p>}
       {onConf.length ? (
         <div className="mt-4 overflow-x-auto">

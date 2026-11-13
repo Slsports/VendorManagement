@@ -1089,9 +1089,9 @@ export type Database = {
         ]
       }
       order_shipments: {
-        Row: { id: string; organization_id: string; order_id: string; seq: number; invoice_key: string; invoice_number: string; wwd_invoice_id: string | null; vendor_link_id: string | null; shipped_on: string | null; amount: number | null; units: number; received_so_far: number; ordered_total: number; created_at: string; updated_at: string }
-        Insert: { id?: string; organization_id: string; order_id: string; seq: number; invoice_key: string; invoice_number: string; wwd_invoice_id?: string | null; vendor_link_id?: string | null; shipped_on?: string | null; amount?: number | null; units?: number; received_so_far?: number; ordered_total?: number; created_at?: string; updated_at?: string }
-        Update: { id?: string; organization_id?: string; order_id?: string; seq?: number; invoice_key?: string; invoice_number?: string; wwd_invoice_id?: string | null; vendor_link_id?: string | null; shipped_on?: string | null; amount?: number | null; units?: number; received_so_far?: number; ordered_total?: number; created_at?: string; updated_at?: string }
+        Row: { id: string; organization_id: string; order_id: string; seq: number; invoice_key: string; invoice_number: string; wwd_invoice_id: string | null; vendor_link_id: string | null; shipped_on: string | null; amount: number | null; freight: number | null; units: number; received_so_far: number; ordered_total: number; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; order_id: string; seq: number; invoice_key: string; invoice_number: string; wwd_invoice_id?: string | null; vendor_link_id?: string | null; shipped_on?: string | null; amount?: number | null; freight?: number | null; units?: number; received_so_far?: number; ordered_total?: number; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; order_id?: string; seq?: number; invoice_key?: string; invoice_number?: string; wwd_invoice_id?: string | null; vendor_link_id?: string | null; shipped_on?: string | null; amount?: number | null; freight?: number | null; units?: number; received_so_far?: number; ordered_total?: number; created_at?: string; updated_at?: string }
         Relationships: []
       }
       wwd_invoice_lines: {
