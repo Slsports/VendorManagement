@@ -4647,3 +4647,21 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   Gold Medal ×2, World Famous I87727, Ace USA, Eastman) once the sheet may move a status VMS set **forward** (never back;
   migration 0375). 3 sheet rows not matched to an order were left for Dana (Scope 8/4 $2,456, Yakima 8/6 $175.82, Zebco
   9/2 $446.04: VMS has Scope 8/4 $2,832, Yakima 8/9 $209.39 and Zebco 9/2 $1,032.36).
+- Nov 13, Dana, WFS ("as the wfs orders come in, and the invoice continues to match the invoice number of previous ones with
+  the appended -2, -3, -4, etc vms needs to keep referencing the confirmation from that season's order, or orders and
+  matching the product until we have received all items in" … "the back check follows my rule of marking things with
+  actual date it happened" … "Ok go"): built (migrations 0376-0378). A vendor tick **Ships one order in several
+  shipments** (WFS has it). For such a vendor an invoice is a shipment, never the whole order: `order_shipments` (one row
+  per invoice, in ship-date order, with units and the running count) and `order_tally(order)` (the confirmation's items
+  against every invoice billed so far, sizes counted against their item; items billed but not confirmed listed apart).
+  The order is Shipped ("Shipped in part … still to come" in its note) while anything is left and Received, dated the
+  last shipment, when the confirmation is filled; with no confirmation item list it stays on order. Order page: the
+  **Received so far** box (shipments with one-click invoices, the ordered/in/still table). Vendor feed: "Shipment n of
+  PO … arrived" dated the ship day. Back-check: the first-invoice close-outs of WFS orders from this morning were undone and
+  re-run as shipments; every history row carries the invoice date. WFS2426 today: 5 shipments (8/24, 9/25 ×2, 10/19,
+  10/29), 1,098 confirmed units, 413 in, 685 still to come, plus 27 billed items the SO 88198 spreadsheet (a
+  "processing + backordered" list, not a full confirmation) never listed. Worldwide's row for I88198-5 ($13,101.75) has no
+  lines or date yet, so that shipment takes its 425 units and Oct 29 date from Claude's reading of the vendor's invoice.
+  Still to do, shown to Dana first: fold the per-shipment sheet rows (I88198-2/-3/-4, the ten B671437 rows, WORLD020526)
+  into their one order per show.
+

@@ -131,7 +131,7 @@ export default function VendorDetailPage() {
     ['Freight program', v.free_shipping_policy && !v.no_freight ? v.freight_program : null],
     ['Freight routing', v.no_freight ? null : v.freight_routing],
     ['Freight allowance', v.freight_allowance_on_time && !v.no_freight ? 'Credits the freight back when paid on time' : null],
-    ['Shipping', v.no_freight ? 'They pay the freight and ship it' : null],
+    ['Shipping', v.no_freight ? 'They pay the freight and ship it' : v.ships_in_parts ? 'One order ships in several shipments; each invoice is checked against the confirmation' : null],
     ['Item names', v.vid_in_description ? 'Vendor ID last: NAME VENDORID' : 'No Vendor ID in item names'],
     ['Product types', v.product_types],
     ['Pickup', [v.pickup_address, v.pickup_times].filter(Boolean).join(' · ') || null],

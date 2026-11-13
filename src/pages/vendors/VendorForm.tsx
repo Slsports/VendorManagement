@@ -68,6 +68,7 @@ interface FormState {
   ask_freight_quote: boolean
   no_order_checks: boolean
   no_freight: boolean
+  ships_in_parts: boolean
   no_routing_letter: boolean
   fixed_prices: boolean
   order_sheet_senders: string
@@ -103,7 +104,7 @@ interface FormState {
 
 const EMPTY: FormState = {
   name: '', aliases: '', routes: [], defaultRoute: '', payMethod: '', rep_group_id: '', assigned_buyer_id: '', payment_terms_id: '', ordering_frequency: '',
-  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, freight_allowance_on_time: false, vid_in_description: false, item_name_vendor: '', is_fishing: false, billcom_send: false, billcom_check: false, billcom_pay_where: '', web_orders: false, is_retail_store: false, is_slh_vendor: false, ask_before_pictures: false, order_set_at_show: false, ask_freight_quote: false, no_order_checks: false, no_freight: false, no_routing_letter: false, fixed_prices: false, order_sheet_senders: '', vendor_id_rule: '', usual_charges: [], invoice_store_aliases: [],
+  is_delivery_vendor: false, is_active: true, needs_review: false, review_note: '', standing: 'ok', standing_tags: [], standing_review_date: '', do_not_order_reason: '', wwd_zero_upcharge: false, freight_allowance_on_time: false, vid_in_description: false, item_name_vendor: '', is_fishing: false, billcom_send: false, billcom_check: false, billcom_pay_where: '', web_orders: false, is_retail_store: false, is_slh_vendor: false, ask_before_pictures: false, order_set_at_show: false, ask_freight_quote: false, no_order_checks: false, no_freight: false, ships_in_parts: false, no_routing_letter: false, fixed_prices: false, order_sheet_senders: '', vendor_id_rule: '', usual_charges: [], invoice_store_aliases: [],
   website: '', phone: '', email: '', fax: '', account_number: '', catalog: '', address: '', city: '', state: '', postal_code: '',
   pickup_address: '', pickup_times: '', shipping_contact: '', shipping_contact_phone: '', shipping_contact_email: '', minimum_order: '', po_code: '', freight_program: '', free_shipping_policy: '', free_shipping_threshold: '', freight_routing: '', product_types: '',
   notes: '', return_notes: '', windows: [],
@@ -145,6 +146,7 @@ function formFromVendor(v: VendorDetail): FormState {
     ask_freight_quote: v.ask_freight_quote,
     no_order_checks: v.no_order_checks,
     no_freight: v.no_freight,
+    ships_in_parts: v.ships_in_parts,
     no_routing_letter: v.no_routing_letter,
     fixed_prices: v.fixed_prices,
     order_sheet_senders: (v.order_sheet_senders ?? []).join(', '),
@@ -249,6 +251,7 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
       ask_freight_quote: form.ask_freight_quote,
       no_order_checks: form.no_order_checks,
       no_freight: form.no_freight,
+      ships_in_parts: form.ships_in_parts,
       no_routing_letter: form.no_routing_letter,
       fixed_prices: form.fixed_prices,
       order_sheet_senders: form.order_sheet_senders.split(/[\s,;]+/).map((x) => x.trim().toLowerCase()).filter((x) => x.includes('@')),
@@ -400,6 +403,8 @@ function VendorFormBody({ vendor: v, terms }: { vendor: VendorDetail | null; ter
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.no_order_checks} onChange={(e) => set('no_order_checks', e.target.checked)} /> Paperwork only: we don't keep their orders in VMS, so their confirmations and invoices are just filed (no "Which order?")</label>
             {/* the State ships Sno-Park books itself (Dana, Nov 12): no freight anywhere for this vendor */}
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.no_freight} onChange={(e) => set('no_freight', e.target.checked)} /> They pay the freight and ship it (the State for Sno-Park): no freight boxes, emails or checks for this vendor</label>
+            {/* World Famous Sports (Dana, Nov 13): one show order, shipped as the goods come in, invoices I88198, -2, -3 … */}
+            <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.ships_in_parts} onChange={(e) => set('ships_in_parts', e.target.checked)} /> Ships one order in several shipments (WFS): each invoice is a shipment checked against the confirmation; the order stays on order until everything is in</label>
             {/* websites and drop-off locals (Dana, Nov 12): we have no control over how they ship */}
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.no_routing_letter} onChange={(e) => set('no_routing_letter', e.target.checked)} /> No routing letter (a website or a local who drops off: we have no control over how they ship). Retail stores and Faire vendors are left out on their own.</label>
             <label className="flex items-center gap-2 text-sm text-stone-800"><input type="checkbox" className="size-4 accent-brand" checked={form.fixed_prices} onChange={(e) => set('fixed_prices', e.target.checked)} /> Their prices are set for the season (Sno-Park permits): no check-in pricing on their orders</label>

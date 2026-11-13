@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import { buildFeed, type FeedDoc, type FeedItem, type FeedOrder, type FeedStatus, type FeedTask, type FeedNote } from '@/lib/vendorActivity'
+import { buildFeed, type FeedDoc, type FeedItem, type FeedOrder, type FeedShipment, type FeedStatus, type FeedTask, type FeedNote } from '@/lib/vendorActivity'
 
 /** Everything done with a vendor, newest first (Dana, Nov 3): emails, papers, orders, tasks and notes. */
 export async function vendorActivityFeed(organizationId: string, vendorId: string, limit: number): Promise<FeedItem[]> {
@@ -23,6 +23,10 @@ export async function vendorActivityFeed(organizationId: string, vendorId: strin
       .order('changed_at', { ascending: false }).limit(limit)
     : { data: [], error: null }
   if (statuses.error) throw statuses.error
+  const shipments = orderRows.length
+    ? await supabase.from('order_shipments').select('id, order_id, seq, invoice_number, shipped_on, units, received_so_far, ordered_total').in('order_id', orderRows.map((o) => o.id)).not('shipped_on', 'is', null).order('shipped_on', { ascending: false }).limit(limit)
+    : { data: [], error: null }
+  if (shipments.error) throw shipments.error
   const po = new Map(orderRows.map((o) => [o.id, o.po_number]))
   return buildFeed({
     emails: emails.data ?? [],
@@ -31,5 +35,6 @@ export async function vendorActivityFeed(organizationId: string, vendorId: strin
     statuses: (statuses.data ?? []).map((s) => ({ id: s.id, order_id: s.order_id, po_number: po.get(s.order_id) ?? null, from_status: s.from_status, to_status: s.to_status, changed_at: s.changed_at, who: s.changed_by ? name.get(s.changed_by) ?? null : null }) as FeedStatus),
     tasks: (tasks.data ?? []).map((t) => ({ id: t.id, title: t.title, done_at: t.done_at!, done_note: t.done_note, closed_how: t.closed_how, who: t.done_by ? name.get(t.done_by) ?? null : null }) as FeedTask),
     notes: (notes.data ?? []).map((n) => ({ id: n.id, body: n.body, created_at: n.created_at, who: n.created_by ? name.get(n.created_by) ?? null : null }) as FeedNote),
+    shipments: (shipments.data ?? []).map((x) => ({ ...x, po_number: po.get(x.order_id) ?? null }) as FeedShipment),
   }, limit)
 }
