@@ -14,8 +14,8 @@ interface Details { vendor_name?: string; a?: Side; b?: Side; common?: string[] 
 
 /**
  * Two orders that look like the same order entered twice (Dana, Oct 31): same vendor and show, the same kinds of items,
- * not two different confirmations. Keep one (the other is cancelled as a copy, its papers, mail and tasks moved over) or
- * Not the same order. Nothing is cancelled without this answer.
+ * not two different confirmations. Keep one (the other is merged into it: its notes, papers, mail and tasks move over; Dana, Nov 13) or
+ * Not the same order. Nothing is merged without this answer.
  */
 export function OrderDuplicateReview({ item, canEdit, onDone }: { item: ReviewItem; canEdit: boolean; onDone: () => void | Promise<void> }) {
   const d = (item.details ?? {}) as Details
@@ -25,7 +25,7 @@ export function OrderDuplicateReview({ item, canEdit, onDone }: { item: ReviewIt
     try {
       const { error } = await supabase.rpc('order_duplicate_answer', { p_item: item.id, p_keep: keep })
       if (error) throw error
-      toast.success(keep ? 'Kept one; the other is cancelled as a copy' : 'Both kept')
+      toast.success(keep ? 'Kept one; the other is merged into it' : 'Both kept')
       await onDone()
     } catch (err) {
       toast.error(errorMessage(err))

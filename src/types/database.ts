@@ -331,6 +331,14 @@ export type Database = {
           { foreignKeyName: 'vendor_emails_vendor_id_fkey'; columns: ['vendor_id']; isOneToOne: false; referencedRelation: 'vendors'; referencedColumns: ['id'] },
         ]
       }
+      order_merges: {
+        Row: { id: string; organization_id: string; kept_order_id: string; merged_order_id: string; source_key: string | null; po_number: string | null; snapshot: Json; note: string | null; merged_by: string | null; merged_at: string }
+        Insert: { id?: string; organization_id: string; kept_order_id: string; merged_order_id: string; source_key?: string | null; po_number?: string | null; snapshot: Json; note?: string | null; merged_by?: string | null; merged_at?: string }
+        Update: { id?: string; organization_id?: string; kept_order_id?: string; merged_order_id?: string; source_key?: string | null; po_number?: string | null; snapshot?: Json; note?: string | null; merged_by?: string | null; merged_at?: string }
+        Relationships: [
+          { foreignKeyName: 'order_merges_kept_order_id_fkey'; columns: ['kept_order_id']; isOneToOne: false; referencedRelation: 'orders'; referencedColumns: ['id'] },
+        ]
+      }
       vendor_stores: {
         Row: { organization_id: string | null; vendor_id: string; store_id: string; created_at: string }
         Insert: { organization_id?: string | null; vendor_id: string; store_id: string; created_at?: string }

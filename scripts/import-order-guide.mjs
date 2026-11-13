@@ -173,7 +173,11 @@ const cols = 'organization_id, vendor_id, status, order_date, season, show_code,
 const D = (d) => (d ? lit(d) + '::date' : 'null')
 const N = (n) => (n === null || n === undefined ? 'null' : String(n))
 let skipped = 0
+// a row whose order was merged into another as a true duplicate stays merged (Dana, Nov 13; migration 0373)
+const mergedKeys = new Set((await query(`select source_key from public.order_merges where organization_id = ${lit(ORG)} and source_key is not null`)).map((m) => m.source_key))
+let merged = 0
 const vals = rows.map((r) => {
+  if (mergedKeys.has(r.key)) { merged++; return null }
   const vid = vendorIdFor(r.sheetVendor); if (!vid) { skipped++; return null }
   return `(${lit(ORG)}, ${lit(vid)}::uuid, ${lit(r.status)}::public.order_status, ${D(r.orderDate)}, ${r.season ? lit(r.season) + '::public.order_season' : 'null'}, ${lit(r.show?.code || null)}, ${!!r.show}, ${lit(r.placedBy)}, ${textArray(r.stores)}, ${r.route ? lit(r.route) + '::public.billing_route' : 'null'}, ${lit(r.description)}, ${D(r.estShip)}, ${N(r.estCost)}, ${N(r.freight)}, ${lit(r.freightNotes)}, ${D(r.received)}, ${lit(r.po)}, ${lit(r.arDue)}, ${D(r.arDueDate)}, ${D(r.enteredLs)}, ${lit(r.enteredBy)}, ${r.backorder}, ${lit(r.shipNotes)}, ${r.creditsDue}, ${lit(r.creditNotes)}, ${D(r.creditsReceived)}, ${r.okToPay}, ${lit(r.notes)}, ${N(r.finalCost)}, ${D(r.paidDate)}, ${lit(r.paidVia)}, ${lit(r.paidRef)}, ${N(r.costBasis)}, 'order_guide', ${lit(r.key)}, ${lit(r.sheet)}, ${lit(JSON.stringify(r.extra))}::jsonb)`
 }).filter(Boolean)
@@ -192,4 +196,4 @@ for (let i = 0; i < vals.length; i += 100) {
   insert into public.orders (${cols}) values ${vals.slice(i, i + 100).join(',\n')} on conflict (organization_id, source_key) where source_key is not null do update set ${updates}`)
 }
 await query(`insert into public.activity_log (organization_id, entity_type, action, details) values (${lit(ORG)}, 'order', 'import', ${lit(JSON.stringify({ source: 'order_guide', file: args.file.split('/').pop(), orders: vals.length, vendors_created: toCreate.size }))}::jsonb)`)
-console.log(`orders written ${vals.length}${skipped ? ` (skipped ${skipped} without a vendor)` : ''}`)
+console.log(`orders written ${vals.length}${skipped ? ` (skipped ${skipped} without a vendor)` : ''}${merged ? `, ${merged} merged into another order left as they are` : ''}`)

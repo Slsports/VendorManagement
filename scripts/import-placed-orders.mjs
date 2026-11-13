@@ -129,6 +129,13 @@ const rows = sheetRows.map((o) => {
 // ---------- match to orders on file ----------
 const onFile = await query(`select id, vendor_id, order_date::text as order_date, est_cost::float8 as est_cost, final_cost::float8 as final_cost, public.po_key(po_number) as po, status::text as status, source_key from public.orders where organization_id = ${lit(ORG)}`)
 const byKey = new Map(onFile.filter((o) => o.source_key).map((o) => [o.source_key, o]))
+// a row whose order was merged into another as a true duplicate is left out: the kept order has its own row (Dana, Nov 13;
+// migration 0373)
+const mergedSnaps = await query(`select source_key, snapshot ->> 'vendor_id' as vendor_id, snapshot ->> 'order_date' as order_date, (snapshot ->> 'est_cost')::float8 as est_cost, public.po_key(snapshot ->> 'po_number') as po from public.order_merges where organization_id = ${lit(ORG)}`)
+const mergedKeys = new Set(mergedSnaps.map((m) => m.source_key).filter(Boolean))
+const mergedRows = rows.filter((r) => mergedKeys.has(r.key))
+for (const r of mergedRows) rows.splice(rows.indexOf(r), 1)
+if (mergedRows.length) console.log(`rows of orders merged into another (left as they are): ${mergedRows.length}`)
 const taken = new Set()
 const near = (a, b) => a !== null && b !== null && Math.abs(Number(a) - Number(b)) < 0.005
 const poKey = (p) => String(p || '').toLowerCase().replace(/^\s*(p\.?\s?o\.?|purchase order)\s*(#|no\.?|number)?\s*/, '').replace(/[^a-z0-9]/g, '') || null
@@ -169,12 +176,14 @@ for (const r of rows) {
     if (!m && poKey(r.po)) { c = mine.filter((o) => o.po === poKey(r.po)); if (c.length === 1) { m = c[0]; how.po++ } }
     if (!m && r.estCost !== null) { c = mine.filter((o) => near(o.est_cost, r.estCost) && descOf.get(o.id) === descKey(r.description)); if (c.length === 1) { m = c[0]; how.cost++ } }
   }
+  // the same order as a copy that was merged into another (the Buying Guide's copy of a sheet row): left out
+  if (!m && vid && mergedSnaps.some((x) => x.vendor_id === vid && ((x.order_date === r.orderDate && near(x.est_cost, r.estCost)) || (poKey(r.po) && x.po === poKey(r.po))))) { r.mergedCopy = true; how.merged = (how.merged || 0) + 1; continue }
   if (m) { taken.add(m.id); r.match = m } else how.new++
 }
 const statusMoves = rows.filter((r) => r.match && r.match.status !== r.status)
-console.log(`matched: same key ${how.key}, date+cost ${how.date_cost}, PO ${how.po}, cost ${how.cost} | new orders ${how.new} | status changes ${statusMoves.length} | freight allowance ${rows.filter((r) => r.allowance).length}`)
+console.log(`matched: same key ${how.key}, date+cost ${how.date_cost}, PO ${how.po}, cost ${how.cost} | new orders ${how.new} | same as a merged copy (left out) ${how.merged || 0} | status changes ${statusMoves.length} | freight allowance ${rows.filter((r) => r.allowance).length}`)
 console.log(`orders on file not on the sheet: ${onFile.filter((o) => !taken.has(o.id)).length}`)
-if (args.verbose) for (const r of rows.filter((r) => !r.match).slice(0, 40)) console.log(`  new: ${r.sheet.slice(0, 2)} ${r.sheetVendor} | ${r.orderDate} | ${r.estCost} | ${r.description?.slice(0, 40)}`)
+if (args.verbose) for (const r of rows.filter((r) => !r.match && !r.mergedCopy).slice(0, 40)) console.log(`  new: ${r.sheet.slice(0, 2)} ${r.sheetVendor} | ${r.orderDate} | ${r.estCost} | ${r.description?.slice(0, 40)}`)
 if (dry) { console.log('\nDry run only. Nothing written.'); process.exit(0) }
 
 // ---------- write ----------
@@ -191,7 +200,7 @@ const RANK = { open: 0, awaiting_confirmation: 1, confirmed: 2, shipped: 3, rece
 const stmts = []
 let inserted = 0, updated = 0
 for (const r of rows) {
-  if (!r.vendorId) continue
+  if (!r.vendorId || r.mergedCopy) continue
   const allowanceSet = r.allowance ? `, freight_allowance_offered = true, freight_allowance = coalesce(freight_allowance, ${N(r.allowanceAmount)}), freight_allowance_pay_by = coalesce(freight_allowance_pay_by, ${D(r.arDueDate)})` : ''
   if (r.match) {
     const cur = r.match.status

@@ -4630,3 +4630,11 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
 - Nov 13, Dana, on WFS: "We place one order at each show so twice a year. They always split them up into different orders
   … they may take 3 or 4 or more shipments … They keep the same invoice number, but they add a -2, -3, -4." And the hikers:
   Eastman Footwear, ordered 2/2/26, received 10/19/26 per the sheet (WWD shipped 9/23 under PO SPR2026), AR due 11/24/26.
+- Nov 13, Dana ("If any orders show up twice, for the identical order and invoice cost, they should be merged, not shown as
+  'cancelled' … cancelled to me means we placed it and either we cancelled it or the vendor did … I want all notes, etc on
+  both entries merged into the surviving record also" … "go on all"): a true duplicate is **merged**, never Cancelled.
+  order_duplicate_merge moves every link to the kept order, adds every note of the copy (labelled "From the merged copy
+  (PO …)"), fills its blanks, takes the further-along status, adds a "Merged …" line, then removes the copy from every
+  list; order_merges remembers it and both sheet imports leave its row out. The "The same order twice?" card's **Keep this
+  one** merges. Back-check: the 17 orders Cancelled as copies were merged (Foremost, Bear Paw ×2, World Famous ×2, Lazy One,
+  Diamond Visions, Eagle Claw, …); 8 real cancels stay Cancelled (migration 0373).
