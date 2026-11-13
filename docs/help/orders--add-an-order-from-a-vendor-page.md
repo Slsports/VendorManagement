@@ -8,7 +8,7 @@ Add an order by hand, for example one placed by phone or bought online with the 
 
 ## How to
 1. Open the vendor (click **Vendors** in the menu, then the vendor).
-2. In the **Order history** box, click **Add order**.
+2. Open **Ordering Reports**; on the **Order history** line, click **Add order**.
 3. Fill in **What was ordered** (required). The rest is optional: **Order date** (today to start), **Total cost**, **Placed by** (you to start; anyone, even without a VMS login), **Order taken by** (the rep who wrote it), **PO or order number**, **Store**, **Paid by**, **Notes**.
 4. If it is already paid, tick **Already paid** and set the date.
 5. Click **Add order**.

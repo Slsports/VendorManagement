@@ -10,12 +10,14 @@ begin
     values (v_org, th, 'm0360-1', 'in', 'jean@stans0360.example', 'Jean Clark', '{orders@shaverlakesports.com}', 'Conf', now() - interval '1 day', 'Confirmed.', v) returning id into e;
   -- capped 8%: no quote needed
   insert into public.orders (organization_id, vendor_id, status, po_number, source, free_shipping, freight_terms, freight_cap_pct) values (v_org, v, 'awaiting_confirmation', 'C0360A', 'manual', false, 'capped', 8) returning id into o;
+  insert into public.emails (organization_id, thread_id, gmail_id, direction, from_email, to_emails, subject, received_at, body_text, vendor_id, order_id) values (v_org, th, 'ord-0360-1', 'out', 'orders@shaverlakesports.com', '{jean@stans0360.example}', 'Our order', now() - interval '3 days', 'Our order.', v, o); -- 0365: the freight email goes to whoever we ordered with
   insert into public.vendor_links (organization_id, vendor_id, kind, label, storage_path, received_at, order_id, email_id) values (v_org, v, 'confirmation', 'Conf', 'x/0360a.pdf', current_date, o, e);
   update public.orders set status = 'confirmed' where id = o;
   select * into r from public.shipment_request_email((select id from public.shipment_requests where order_id = o));
   if r.body not like '%Cap of 10% or less of our merchandise cost:** reply to this email to confirm the cap and ship it%' then raise exception 'cap 8%%: wrong email: %', r.body; end if;
   -- capped 15%: quote and form
   insert into public.orders (organization_id, vendor_id, status, po_number, source, free_shipping, freight_terms, freight_cap_pct) values (v_org, v, 'awaiting_confirmation', 'C0360B', 'manual', false, 'capped', 15) returning id into o2;
+  insert into public.emails (organization_id, thread_id, gmail_id, direction, from_email, to_emails, subject, received_at, body_text, vendor_id, order_id) values (v_org, th, 'ord-0360-2', 'out', 'orders@shaverlakesports.com', '{jean@stans0360.example}', 'Our order', now() - interval '3 days', 'Our order.', v, o2); -- 0365: the freight email goes to whoever we ordered with
   insert into public.vendor_links (organization_id, vendor_id, kind, label, storage_path, received_at, order_id, email_id) values (v_org, v, 'confirmation', 'Conf B', 'x/0360b.pdf', current_date, o2, e);
   update public.orders set status = 'confirmed' where id = o2;
   select * into r from public.shipment_request_email((select id from public.shipment_requests where order_id = o2));
@@ -23,6 +25,7 @@ begin
 
   -- half freight: the bill line on the order → Trevor's email asking for half, bill attached
   insert into public.orders (organization_id, vendor_id, status, po_number, source, free_shipping, freight_terms) values (v_org, v, 'shipped', 'H0360', 'manual', false, 'half') returning id into o3;
+  insert into public.emails (organization_id, thread_id, gmail_id, direction, from_email, to_emails, subject, received_at, body_text, vendor_id, order_id) values (v_org, th, 'ord-0360-3', 'out', 'orders@shaverlakesports.com', '{jean@stans0360.example}', 'Our order', now() - interval '3 days', 'Our order.', v, o3); -- 0365: the freight email goes to whoever we ordered with
   insert into public.freight_bills (organization_id, invoice_number, total, storage_path, file_name) values (v_org, 'P1-0360', 281.47, v_org || '/freight/x-0360.pdf', 'Priority1Invoice0360.pdf') returning id into b;
   insert into public.freight_bill_lines (organization_id, bill_id, amount, order_id) values (v_org, b, 281.47, o3);
   select * into t from public.tasks where auto_key like 'halfcredit:%' and order_id = o3;

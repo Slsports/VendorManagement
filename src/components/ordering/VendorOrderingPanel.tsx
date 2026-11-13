@@ -1,6 +1,6 @@
 import { ROUTES } from '@/lib/constants'
 import { Link } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import toast from 'react-hot-toast'
 import { X } from 'lucide-react'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
@@ -21,12 +21,14 @@ import { useSuggestedParam } from '@/hooks/useSuggestedParam'
  * On a vendor page: where the vendor is on the Ordering card, the two flags, Run report / Run order, the sales report,
  * the suggested order, and the vendor's ordering windows beside the sales report date (Dana, Oct 21: one box, not two).
  */
-export function VendorOrderingPanel({ vendor, assignedBuyerId, canEdit, className, windows }: {
+export function VendorOrderingPanel({ vendor, assignedBuyerId, canEdit, className, windows, children }: {
   vendor: { id: string; name: string; aliases?: string[] }
   assignedBuyerId?: string | null
   windows?: Pick<VendorOrderWindow, 'id' | 'kind' | 'label' | 'months' | 'notes'>[]
   canEdit: boolean
   className?: string
+  /** shown last, inside the card (the vendor page puts Order history here, folded; Dana, Nov 13) */
+  children?: ReactNode
 }) {
   const flag = useSupabaseQuery(() => getOpenOrderingItem(vendor.id), [vendor.id])
   const report = useSupabaseQuery(() => latestSalesReport(vendor.id), [vendor.id])
@@ -43,7 +45,7 @@ export function VendorOrderingPanel({ vendor, assignedBuyerId, canEdit, classNam
   const summary = flag.isLoading ? null : f ? `On the card: ${ORDERING_STAGE_LABELS[f.stage as 'check' | 'to_order']}` : report.data ? `Sales report ${new Date(`${report.data.run_date}T12:00:00`).toLocaleDateString()}` : 'Not on the card'
   return (
     <>
-      <FoldSection title="Ordering" summary={summary} className={className}>
+      <FoldSection title="Ordering Reports" summary={summary} className={className}>
         {f ? (
           <p className="mb-2 flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
             <span className="font-medium">On the Ordering card: {ORDERING_STAGE_LABELS[f.stage as 'check' | 'to_order']}</span>
@@ -77,6 +79,7 @@ export function VendorOrderingPanel({ vendor, assignedBuyerId, canEdit, classNam
             <SalesReportUpload vendor={vendor} variant="ghost" onSaved={(used) => { void report.refetch(); if (!used) setOpen(true) }} />
           </div>
         ) : null}
+        {children}
       </FoldSection>
       {open ? <SuggestedOrderDialog vendor={vendor} onClose={() => setOpen(false)} /> : null}
     </>

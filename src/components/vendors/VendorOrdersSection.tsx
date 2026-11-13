@@ -1,12 +1,13 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus } from 'lucide-react'
+import { ChevronRight, Plus } from 'lucide-react'
 import { AddOrderDialog } from '@/components/orders/AddOrderDialog'
 import { Button } from '@/components/ui'
 import { FoldSection } from '@/components/shared/FoldSection'
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery'
 import { vendorOrderSummary } from '@/services/orders'
 import { ROUTES } from '@/lib/constants'
+import { cn } from '@/lib/utils'
 import { money, showLabel } from '@/lib/vendors'
 import { orderShippingLine } from '@/lib/freight'
 import { ORDER_STATUSES } from '@/lib/constants'
@@ -15,7 +16,7 @@ import { SortHeader } from '@/components/shared/SortHeader'
 import { useTableSort } from '@/hooks/useTableSort'
 
 /** Every order we have placed with this vendor, newest first, with the totals that tell you when they buy. */
-export function VendorOrdersSection({ vendorId, vendorName, canAdd = false }: { vendorId: string; vendorName?: string; canAdd?: boolean }) {
+export function VendorOrdersSection({ vendorId, vendorName, canAdd = false, nested = false }: { vendorId: string; vendorName?: string; canAdd?: boolean; nested?: boolean }) {
   const q = useSupabaseQuery(() => vendorOrderSummary(vendorId), [vendorId])
   const [adding, setAdding] = useState(false)
   const s = q.data
@@ -33,7 +34,7 @@ export function VendorOrdersSection({ vendorId, vendorName, canAdd = false }: { 
   const summary = q.isLoading ? null : !s || !s.count ? 'None' : `${s.count} order${s.count === 1 ? '' : 's'} · ${money(s.totalSpend)}`
   return (
     <>
-      <FoldSection title="Order history" summary={summary} className="lg:col-span-3"
+      <Holder nested={nested} summary={summary}
         actions={canAdd ? <Button size="sm" variant="secondary" onClick={() => setAdding(true)} leftIcon={<Plus className="size-4" aria-hidden="true" />}>Add order</Button> : null}>
         {s && s.count ? (
           <p className="text-xs text-stone-500">
@@ -79,9 +80,29 @@ export function VendorOrdersSection({ vendorId, vendorName, canAdd = false }: { 
             </table>
           </div>
         )}
-      </FoldSection>
+      </Holder>
       {adding ? <AddOrderDialog vendor={{ id: vendorId, name: vendorName ?? 'this vendor' }} onClose={() => setAdding(false)} onSaved={() => void q.refetch()} /> : null}
     </>
+  )
+}
+
+/** Its own card, or (Dana, Nov 13: "combine Order History into Ordering Reports with it collapsed") a folded part of the
+ * vendor's Ordering Reports card. */
+function Holder({ nested, summary, actions, children }: { nested: boolean; summary: string | null; actions: ReactNode; children: ReactNode }) {
+  const [open, setOpen] = useState(false)
+  if (!nested) return <FoldSection title="Order history" summary={summary} className="lg:col-span-3" actions={actions}>{children}</FoldSection>
+  return (
+    <div className="mt-4 border-t border-stone-100 pt-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-left">
+          <ChevronRight className={cn('size-4 shrink-0 text-stone-400 transition-transform', open && 'rotate-90')} aria-hidden="true" />
+          <span className="text-sm font-semibold uppercase tracking-wide text-stone-600">Order history</span>
+          {summary ? <span className="text-sm text-stone-500">{summary}</span> : null}
+        </button>
+        {actions}
+      </div>
+      {open ? <div className="mt-2">{children}</div> : null}
+    </div>
   )
 }
 

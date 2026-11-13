@@ -15,18 +15,18 @@ begin
   insert into public.orders (organization_id, vendor_id, status, po_number, source, placed_by_id, free_shipping) values (v_org, v_vendor, 'awaiting_confirmation', 'T268', 'manual', v_buyer, false) returning id into v_order;
   insert into public.vendor_links (organization_id, vendor_id, kind, label, storage_path, received_at, order_id, email_id, doc_number) values (v_org, v_vendor, 'confirmation', 'Conf 5551', 'x/0268.pdf', current_date, v_order, v_email, 'SO5551');
 
-  -- confirmed → a 'details' request to the sender, cc shipping + rep
+  -- confirmed → a 'details' request; no order email on file, so our main rep (Nov 13, 0365); shipping only when they wrote
   update public.orders set status = 'confirmed' where id = v_order;
   select * into r from public.shipment_requests where order_id = v_order;
   if r.id is null then raise exception 'no request'; end if;
   if r.kind <> 'details' or r.status <> 'ready' then raise exception 'kind/status wrong: % %', r.kind, r.status; end if;
-  if r.to_emails <> array['orders@vendor.example'] then raise exception 'to wrong: %', r.to_emails; end if;
-  if not ('ship@vendor.example' = any (r.cc_emails)) or not ('rita@reps.example' = any (r.cc_emails)) then raise exception 'cc wrong: %', r.cc_emails; end if;
+  if r.to_emails <> array['rita@reps.example'] then raise exception 'to wrong: %', r.to_emails; end if;
+  if cardinality(r.cc_emails) <> 0 then raise exception 'cc wrong: %', r.cc_emails; end if;
   if r.send_as <> v_trevor then raise exception 'not sent as Trevor'; end if;
   v_req := r.id; v_tok := r.token;
   select * into r from public.shipment_request_email(v_req);
   if r.subject <> 'Freight for our PO T268 – Shaver Lake Sports' then raise exception 'subject wrong: %', r.subject; end if;
-  if r.body not like '%any backorders ship free%' or r.body not like '%/ship/' || v_tok || '%' or r.body not like 'Hi Pat,%' then raise exception 'body wrong'; end if;
+  if r.body not like '%any backorders ship free%' or r.body not like '%/ship/' || v_tok || '%' or r.body not like 'Hi Rita,%' then raise exception 'body wrong'; end if;
 
   -- sent: follow-up due in 3 business days
   insert into public.emails (organization_id, thread_id, gmail_id, direction, from_email, to_emails, subject, received_at, body_text, vendor_id)

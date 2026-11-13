@@ -4579,3 +4579,9 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   in the conversation the order went out in with the revised form attached; the person presses Send (Nov 9 rule). Also
   Nov 13: "it says the vendor received it. We have no idea if they received if until we receive a response from them…
   Activity log should only say that I sent it" — the activity feed reads "Sent our order for PO …" for our own sent order.
+- Nov 13, Dana ("the freight email should always go to the person we placed the order with … we dont send anything
+  directly to their freight dept unless they emailed us about something" … "We don't place orders by phone" … "go"):
+  the Freight email goes To whoever our latest order email on that order went to; for orders from her sheets, our email
+  to the vendor naming the PO; else our main rep; else the vendor's email. Their shipping/freight people are copied only
+  when they emailed us about that order; nobody else (migration 0365, unsent requests and drafts re-addressed).
+  Also: the vendor page's **Ordering** box is now **Ordering Reports**, with **Order history** folded inside it.

@@ -8,6 +8,7 @@ begin
   insert into public.emails (organization_id, thread_id, gmail_id, direction, from_email, from_name, to_emails, subject, received_at, body_text, vendor_id)
     values (v_org, v_thread, 'm0323-1', 'in', 'sales@v323.example', 'Lee', '{orders@shaverlakesports.com}', 'Order 88', now() - interval '1 hour', 'Confirmed.', v_vendor) returning id into v_email;
   insert into public.orders (organization_id, vendor_id, status, po_number, source, free_shipping, freight_terms) values (v_org, v_vendor, 'awaiting_confirmation', 'T323', 'manual', false, 'charged') returning id into v_order;
+  insert into public.emails (organization_id, thread_id, gmail_id, direction, from_email, to_emails, subject, received_at, body_text, vendor_id, order_id) values (v_org, v_thread, 'ord-0323-1', 'out', 'orders@shaverlakesports.com', '{sales@v323.example}', 'Our order', now() - interval '3 days', 'Our order.', v_vendor, v_order); -- 0365: the freight email goes to whoever we ordered with
   insert into public.vendor_links (organization_id, vendor_id, kind, label, storage_path, received_at, order_id, email_id) values (v_org, v_vendor, 'confirmation', 'Conf 88', 'x/0323.pdf', current_date, v_order, v_email);
   update public.orders set status = 'confirmed' where id = v_order;
   select * into s from public.shipment_requests where order_id = v_order;
