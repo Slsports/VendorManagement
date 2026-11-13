@@ -4604,3 +4604,5 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   Pay confirmations come the moment a payment is scheduled or made (days ahead) and nothing follows. Migration 0368: for a
   tax payee the confirmation counts up to 45 days ahead, and with none by the start of the due date the task is made at once
   and reminds her; insurers and the bank keep the 3-business-day check. The autopay sweep runs hourly.
+- Nov 13, Dana: "give the test login Accounting." Claude (testing) sees Accounting (migration 0369) so Claude can check the
+  policy and company pages; it only looks. The Users page hides the test login on purpose.
