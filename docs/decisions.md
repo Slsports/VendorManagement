@@ -4638,3 +4638,12 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   list; order_merges remembers it and both sheet imports leave its row out. The "The same order twice?" card's **Keep this
   one** merges. Back-check: the 17 orders Cancelled as copies were merged (Foremost, Bear Paw ×2, World Famous ×2, Lazy One,
   Diamond Visions, Eagle Claw, …); 8 real cancels stay Cancelled (migration 0373).
+- Nov 13, Dana ("Keep it under reef sport, go on all"): Reef Sport is one vendor, REEF SPORT SUNCARE. SANDBOXX GROUP LLC,
+  SANDBOXX and "FAIRE/SANDBOXX/REEF SPORT SUNCARE" merged into it (everything moved, their names are aliases), Direct,
+  Bill.com sending/checking kept; the 6 orders that were in VMS twice merged (7 orders left, migration 0374). Still to do
+  once Dana names the owner: Sandboxx Group as its rep group with the owner as main rep (contacts: Tom Dawson, Sandboxx;
+  Jeff Turner, Turner Group Reps).
+- Nov 13: Dana's Nov 8 Placed Order Summary (Google Drive) loaded over the Nov 3 load: 6 orders moved to Entered (Okuma,
+  Gold Medal ×2, World Famous I87727, Ace USA, Eastman) once the sheet may move a status VMS set **forward** (never back;
+  migration 0375). 3 sheet rows not matched to an order were left for Dana (Scope 8/4 $2,456, Yakima 8/6 $175.82, Zebco
+  9/2 $446.04: VMS has Scope 8/4 $2,832, Yakima 8/9 $209.39 and Zebco 9/2 $1,032.36).
