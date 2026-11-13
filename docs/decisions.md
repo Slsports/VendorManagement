@@ -4606,3 +4606,10 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   and reminds her; insurers and the bank keep the 3-business-day check. The autopay sweep runs hourly.
 - Nov 13, Dana: "give the test login Accounting." Claude (testing) sees Accounting (migration 0369) so Claude can check the
   policy and company pages; it only looks. The Users page hides the test login on purpose.
+- Nov 13, Dana: "Isnt all the data available for incoming shipments? We just need to build the page?" … "go". Built: Incoming
+  Shipments (menu › Operations): every Sent/Placed/Confirmed/Shipped order by the day it is expected, read from what is on
+  file (the latest carrier email on the order with its ETA, status, carrier and tracking; the vendor's shipment-form ready
+  date and carrier; the order's expected ship date; a delivery receipt), each line saying where the day came from with one
+  click to the email or the order; table soonest first, week and month calendars, From/To window, store, status and
+  vendor filters; late rows red; received orders drop off. 108 live orders today, 64 with a ship date, 10 with a carrier
+  arrival date.
