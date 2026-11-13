@@ -1,4 +1,4 @@
--- 0365 — Who the Freight email goes to (Dana, Nov 13: "the freight email should always go to the person we placed the order
+-- 0366 — Who the Freight email goes to (Dana, Nov 13: "the freight email should always go to the person we placed the order
 -- with because they are usually the ones who will send it off for fulfillment and shipping. we dont send anything directly
 -- to their freight dept unless they emailed us about something" … "go").
 --   To: whoever our latest order email on this order went to (re-sent to someone else: that person). Not found on the

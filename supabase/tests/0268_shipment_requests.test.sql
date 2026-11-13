@@ -15,7 +15,7 @@ begin
   insert into public.orders (organization_id, vendor_id, status, po_number, source, placed_by_id, free_shipping) values (v_org, v_vendor, 'awaiting_confirmation', 'T268', 'manual', v_buyer, false) returning id into v_order;
   insert into public.vendor_links (organization_id, vendor_id, kind, label, storage_path, received_at, order_id, email_id, doc_number) values (v_org, v_vendor, 'confirmation', 'Conf 5551', 'x/0268.pdf', current_date, v_order, v_email, 'SO5551');
 
-  -- confirmed → a 'details' request; no order email on file, so our main rep (Nov 13, 0365); shipping only when they wrote
+  -- confirmed → a 'details' request; no order email on file, so our main rep (Nov 13, 0366); shipping only when they wrote
   update public.orders set status = 'confirmed' where id = v_order;
   select * into r from public.shipment_requests where order_id = v_order;
   if r.id is null then raise exception 'no request'; end if;

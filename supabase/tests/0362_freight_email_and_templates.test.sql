@@ -11,7 +11,7 @@ begin
   insert into public.emails (organization_id, thread_id, gmail_id, direction, from_email, from_name, to_emails, subject, received_at, body_text, vendor_id)
     values (v_org, th, 'm0362-1', 'in', 'ted@pari0362.example', 'Ted Morton', '{orders@shaverlakesports.com}', 'Conf', now() - interval '1 day', 'Confirmed.', v) returning id into e;
   insert into public.orders (organization_id, vendor_id, status, po_number, source, free_shipping, freight_terms) values (v_org, v, 'awaiting_confirmation', 'P0362', 'manual', false, 'half') returning id into o;
-  insert into public.emails (organization_id, thread_id, gmail_id, direction, from_email, to_emails, subject, received_at, body_text, vendor_id, order_id) values (v_org, th, 'ord-0362-1', 'out', 'orders@shaverlakesports.com', '{ted@pari0362.example}', 'Our order', now() - interval '3 days', 'Our order.', v, o); -- 0365: the freight email goes to whoever we ordered with
+  insert into public.emails (organization_id, thread_id, gmail_id, direction, from_email, to_emails, subject, received_at, body_text, vendor_id, order_id) values (v_org, th, 'ord-0362-1', 'out', 'orders@shaverlakesports.com', '{ted@pari0362.example}', 'Our order', now() - interval '3 days', 'Our order.', v, o); -- 0366: the freight email goes to whoever we ordered with
   insert into public.vendor_links (organization_id, vendor_id, kind, label, storage_path, received_at, order_id, email_id) values (v_org, v, 'confirmation', 'Conf', 'x/0362.pdf', current_date, o, e);
   update public.orders set status = 'confirmed' where id = o;
   select * into s from public.shipment_requests where order_id = o;
@@ -26,7 +26,7 @@ begin
   -- one click on an order that is only Placed: a draft
   perform set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
   insert into public.orders (organization_id, vendor_id, status, po_number, source, free_shipping) values (v_org, v, 'awaiting_confirmation', 'P0362B', 'manual', false) returning id into o2;
-  insert into public.emails (organization_id, thread_id, gmail_id, direction, from_email, to_emails, subject, received_at, body_text, vendor_id, order_id) values (v_org, th, 'ord-0362-2', 'out', 'orders@shaverlakesports.com', '{ted@pari0362.example}', 'Our order', now() - interval '3 days', 'Our order.', v, o2); -- 0365: the freight email goes to whoever we ordered with
+  insert into public.emails (organization_id, thread_id, gmail_id, direction, from_email, to_emails, subject, received_at, body_text, vendor_id, order_id) values (v_org, th, 'ord-0362-2', 'out', 'orders@shaverlakesports.com', '{ted@pari0362.example}', 'Our order', now() - interval '3 days', 'Our order.', v, o2); -- 0366: the freight email goes to whoever we ordered with
   d := public.freight_email_open(o2);
   if d is null or not exists (select 1 from public.email_drafts where id = d and order_id = o2 and subject = 'Freight for our PO P0362B – Shaver Lake Sports') then raise exception 'no draft from the button'; end if;
   if public.freight_email_open(o2) <> d then raise exception 'a second draft instead of the same one'; end if;

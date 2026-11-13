@@ -4583,5 +4583,12 @@ Station, Gold Medal invoice, Knockaround): the live copy of each is the orders@ 
   directly to their freight dept unless they emailed us about something" … "We don't place orders by phone" … "go"):
   the Freight email goes To whoever our latest order email on that order went to; for orders from her sheets, our email
   to the vendor naming the PO; else our main rep; else the vendor's email. Their shipping/freight people are copied only
-  when they emailed us about that order; nobody else (migration 0365, unsent requests and drafts re-addressed).
+  when they emailed us about that order; nobody else (migration 0366, unsent requests and drafts re-addressed).
   Also: the vendor page's **Ordering** box is now **Ordering Reports**, with **Order history** folded inside it.
+- Nov 13, Dana: "an order placed 1-19-26 (10 months ago) is showing as 'placed' as of today … Why is this old, closed and
+  received order even in my activity feed?" Cause (confirmed): the sent-mail history reader made SLIPPERY011926 on Nov 6
+  from the Jan 19-21 "Missing items" emails; on Nov 12 the new Sent → Placed rule read Marcy's Jan 20 reply and stamped
+  the move with Nov 12. Fixed (migration 0365): a move made from a reply is dated by the reply (ack_at and the history
+  row); back-check re-dated the 8 moves made Nov 12. Dana: the January order "is the same order" as PO 6914, "we received
+  the confirmation from sr on 1/20/26": its emails, file and lines moved to 6914 (acknowledged Jan 20) and the duplicate
+  was removed.
